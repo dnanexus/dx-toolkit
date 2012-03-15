@@ -41,6 +41,16 @@ public:
 };*/
 /////////////////////////////////////////////////
 
+// TODO: - Add = operator for map
+//       - Iterator support
+//       - Create same copy constructors (as = operators)
+//       - Provide == operator
+//       - Overload << & >> operator ??
+//       - Support strict flag for utf-8 enforcement
+//       - Write tests
+//       - Run ests using STL algorithms for JSON
+
+
 // One possible way of design:
 enum json_values {
   JSON_UNDEFINED = 0,
@@ -101,7 +111,22 @@ public:
   //JSON(Array);
   //JSON(Object);
   //JSON(Value* v);
-  JSON(const JSON& rhs);
+  JSON(const JSON &rhs);
+  JSON(const json_values &rhs);
+
+  /*template <typename T>
+  JSON(const json_values &rhs, T x) {
+    switch(rhs) {
+      case JSON_ARRAY: val = new Array(x); break;
+      case JSON_OBJECT: val = new Object(x); break;
+      case JSON_INTEGER: val = new Integer(x); break;
+      case JSON_REAL: val = new Real(x); break;
+      case JSON_STRING: val = new String(x); break;
+      case JSON_BOOLEAN: val = new Boolean(x); break;
+      case JSON_NULL: val = new Null(x); break;
+      default: throw JSON_exception("Illegal json_values value for JSON initialization");
+    }
+  }*/
 
   template<typename T>
   JSON(const T& x);
@@ -116,10 +141,16 @@ public:
   std::string toString() const;
   // ... similarly for all possible types
 
-  JSON& operator [](const size_t &indx) const;
-  JSON& operator [](const std::string &s) const;
-  JSON& operator [](const JSON &j) const;
-  JSON& operator [](const char str[]) const;
+  const JSON& operator [](const size_t &indx) const;
+  const JSON& operator [](const std::string &s) const;
+  const JSON& operator [](const JSON &j) const;
+  const JSON& operator [](const char *str) const;
+
+  JSON& operator [](const size_t &indx);
+  JSON& operator [](const std::string &s);
+  JSON& operator [](const JSON &j);
+  JSON& operator [](const char *str);
+
 
   // A non-templatized specialization is always preferred over template version
   template<typename T> JSON& operator =(const T &rhs);
@@ -147,17 +178,6 @@ public:
 //  template<typename T> 
 //  operator T*();
 
-  // Provide implicit conversion operators
-
-/*
-  JSON& operator =(const JSON& rhs);
-  JSON& operator =(const int &x);
-  JSON& operator =(const char &c);
-  JSON& operator =(const int64 &x);
-  JSON& operator =(const double &x);
-  JSON& operator =(const bool &x);
-  JSON& operator =(const std::string &s);
-*/
   const json_values type() const { return (val == NULL) ? JSON_UNDEFINED : val->type(); }
 
   size_t size() const;
@@ -175,8 +195,9 @@ public:
   }
   push_back(Number_integer(2));
 */
-  void push_back(JSON j);
-  
+  void push_back(const JSON &j);
+  void erase(const size_t &indx);
+  void erase(const std::string &key);
   // create a reference version for push_back
 
  /* void push_back(const String&);
@@ -274,6 +295,7 @@ public:
   const json_values type() const { return JSON_OBJECT; }
   Value* returnMyNewCopy() const { return new Object(*this); }
   void read(std::istream &in);
+  void erase(const std::string &key);
 };
 
 class Array: public Value {
@@ -295,9 +317,10 @@ public:
   const json_values type() const { return JSON_ARRAY; }
   Value* returnMyNewCopy() const { return new Array(*this); }
   void read(std::istream &in);
-  void push_back(JSON &j) {
+  void push_back(const JSON &j) {
     val.push_back(j);
   }
+  void erase(const size_t &i);
 };
 
 class Boolean: public Value {

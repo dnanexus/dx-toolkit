@@ -294,6 +294,7 @@ void JSON::write(std::ostream &out) const {
   if (this->type() == JSON_UNDEFINED) {
     throw JSON_exception("Cannot call write() method on uninitialized json object");
   }
+  out.precision(std::numeric_limits<double>::digits10);
   val->write(out);
   out.flush();
 }
@@ -305,7 +306,7 @@ void JSON::parse(const std::string &jstr) {
 
 // TODO: Dynamic casts can be turned into static casts for efficiency reasons
 // TODO: Create const version for each of them
-JSON& JSON::operator[](const std::string &s) const {
+const JSON& JSON::operator[](const std::string &s) const {
   if (this->type() != JSON_OBJECT)
     throw JSON_exception("Cannot use string to index value of a non-JSON_OBJECT using [] operator");
   Object *o = dynamic_cast<Object*>(val);
@@ -313,11 +314,11 @@ JSON& JSON::operator[](const std::string &s) const {
   return o->jsonAtKey(s);
 }
 
-JSON& JSON::operator[](const char str[]) const {
+const JSON& JSON::operator[](const char *str) const {
   return operator[](std::string(str));
 }
 
-JSON& JSON::operator[](const size_t &indx) const {
+const JSON& JSON::operator[](const size_t &indx) const {
   if (this->type() != JSON_ARRAY)
     throw JSON_exception("Cannot use integer to index value of non-JSON_ARRAY using [] operator");
   Array *a = dynamic_cast<Array*>(val);
@@ -325,7 +326,7 @@ JSON& JSON::operator[](const size_t &indx) const {
   return a->jsonAtIndex(indx);
 }
 
-JSON& JSON::operator[](const JSON &j) const {
+const JSON& JSON::operator[](const JSON &j) const {
   if (this->type() == JSON_ARRAY) {
     size_t i;
     Integer *ptr1;
@@ -358,6 +359,13 @@ JSON& JSON::operator[](const JSON &j) const {
   throw JSON_exception("Only JSON_OBJECT and JSON_ARRAY can be indexed using []");
 }
 
+// A dirty hack for creating non-const versions of [] overload using const versions above
+JSON& JSON::operator [](const size_t &indx) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[indx]); }
+JSON& JSON::operator [](const std::string &s) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[s]); }
+JSON& JSON::operator [](const JSON &j) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[j]); }
+JSON& JSON::operator [](const char *str) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[str]); }
+
+
 /*
 JSON::JSON(Value *v) {
   if (v != NULL) {
@@ -368,6 +376,19 @@ JSON::JSON(Value *v) {
 }
 */
 
+JSON::JSON(const json_values &rhs) {
+  switch(rhs) {
+    case JSON_ARRAY: val = new Array(); break;
+    case JSON_OBJECT: val = new Object(); break;
+    case JSON_INTEGER: val = new Integer(); break;
+    case JSON_REAL: val = new Real(); break;
+    case JSON_STRING: val = new String(); break;
+    case JSON_BOOLEAN: val = new Boolean(); break;
+    case JSON_NULL: val = new Null(); break;
+    default: throw JSON_exception("Illegal json_values value for JSON initialization");
+  }
+}
+    
 JSON::JSON(const JSON &rhs) {
   if(rhs.type() != JSON_UNDEFINED)
     val = rhs.val->returnMyNewCopy();
@@ -441,7 +462,7 @@ size_t JSON::size() const {
   return tmp->val.size();
 }
 
-void JSON::push_back(JSON j) {
+void JSON::push_back(const JSON &j) {
   if (this->type() != JSON_ARRAY)
     throw JSON_exception("Cannot push_back to a non-array");
   Array *tmp = dynamic_cast<Array*>(this->val);
@@ -465,6 +486,18 @@ std::string JSON::toString() const {
 
 void JSON::read(std::istream &in) {
   JSON_Utility::ReadJSONValue(in, *this, true);
+}
+
+void JSON::erase(const size_t &indx) {
+  if (this->type() != JSON_ARRAY)
+    throw JSON_exception("erase(size_t) can only be called for a JSON_ARRAY");
+  (dynamic_cast<Array*>(this->val))->erase(indx);
+}
+
+void JSON::erase(const std::string &indx) {
+  if (this->type() != JSON_OBJECT)
+    throw JSON_exception("erase(string) can only be called for a JSON_OBJECT");
+  (dynamic_cast<Object*>(this->val))->erase(indx);
 }
 
 void String::read(std::istream &in) {
@@ -582,4 +615,15 @@ void Array::read(std::istream &in) {
     JSON_Utility::ReadJSONValue(in, val[val.size() - 1u], false);
     firstKey = false;
   }while(true);
+}
+
+void Object::erase(const std::string &key) {
+  if(val.erase(key) == 0)
+    throw JSON_exception("Cannot erase non-existent key from a JSON_OBJECT. Key supplied = " + key);
+}
+
+void Array::erase(const size_t &indx) {
+  if(indx >= val.size())
+    throw JSON_exception("Cannot erase out of bound element in a JSON_ARRAY. indx supplied = " + indx);
+  val.erase(val.begin() + indx);
 }
