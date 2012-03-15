@@ -1,0 +1,123 @@
+#!/usr/bin/env v8cgi
+
+/** Usage : dx_fetchFile <File_ID> <auth_token> [chunk_size]
+    Description: Prints the content of file to stdout.
+    chunk_size : Number of bytes to get in each HTTP call
+*/
+var http = require('http');
+
+var security_context = system.env.SECURITY_CONTEXT;
+if (security_context === undefined) {
+  system.stderr("ERROR: SECURITY_CONTEXT enviornment variable not set");
+  throw new Error("throwing error from dx_fetchFile: becasue exit(1) does not work in v8cgi");
+}
+security_context = JSON.parse(security_context);
+var apiserverHost = (system.env.APISERVER_HOST === undefined) ? "127.0.0.1" : system.env.APISERVER_HOST;
+var apiserverPort = (system.env.APISERVER_PORT === undefined) ? "8124" : system.env.APISERVER_PORT;
+
+var apiserverPath = apiserverHost + ":" + apiserverPort;
+
+/** @brief Makes an http request to apiserver using v8cgi's http module
+ *  @internal
+ *  This function provides a wrapper for making HTTP request via http module
+ *  of v8cgi. The input request for this function should be built with buildReq()
+ *  @tparam Hash inputReq A JSON hash describing HTTP Request parameters
+ *  @markdown
+ *  - _url_: (required) A string containing url for HTTP request
+ *  - _method_: (required) A string containing HTTP request type (ex: "GET", "POST")
+ *  - _header_: (optional) A hash/sring containing header to be sent with request.
+ *  - _data_: (optional) A hash/string containing data to be  sent with request.
+ *  @endmarkdown
+ *  @return The full response of http request.
+*/
+function httpReq(inputReq) {
+  var request = new http.ClientRequest(apiserverPath + inputReq.url);
+  request.method = inputReq.method.toUpperCase();
+
+  if (inputReq.method.toUpperCase() in {'POST': '', 'PUT': '', 'DELETE': ''} && inputReq.data != undefined) {
+
+    // v8cgi http seems to fail if object is empty (so explicitly convert it into empty object string)
+    if (isObject(inputReq.data)) {
+      inputReq.data = JSON.stringify(inputReq.data);
+    } else { // For case of Arrays, etc
+      inputReq.data = inputReq.data.toString("utf-8");
+    }
+    request.post = inputReq.data;
+  }
+  if (inputReq.header != undefined) {
+    request.header(inputReq.header);
+  }
+  return request.send(false);
+}
+
+/** @brief This function is used for verifying status code of http req.
+ *  @internal
+ *  Matches returnedCode and expectedCode values, if they differ then
+ *  an exception is thrown.
+ *  @tparam Integer returnedCode Status code returned by server.
+ *  @tparam Integer expectedCode Expected value for status code.
+ *  @tparam String route (optional) The path for HTTP request, if provided will be added
+ *   in exception thrown by the function.
+ */
+function verifyStatusCode(returnedCode, expectedCode, route) {
+  if (route === undefined) {
+    route = "";
+  }
+  if (returnedCode != expectedCode) {
+    system.stderr("dx_fetchFile() - Unexpected HTTP response code while accessing route \"" + route + "\". Expected: " + expectedCode + " Got: " + returnedCode);
+    throw new Error("throwing error from dx_fetchFile: becasue exit(1) does not work in v8cgi");
+  }
+}
+
+function main() {
+  if(system.args.length < 2 || system.args.length > 3) {
+    system.stderr.writeLine("Usage:");
+    system.stderr.writeLine("dx_fetchFile <File_ID> [chunk_size]");
+    system.stderr.writeLine("\nchunk_size = Number of bytes to be fetched in a single HTTP request");
+    throw new Error("throwing error from dx_fetchFile: becasue exit(1) does not work in v8cgi");
+  } 
+  var CHUNK_SIZE = 2 * 1024 * 1024; // Default is 2 MB
+  
+  if(system.args.length == 3) {
+    CHUNK_SIZE = parseInt(system.args[2], 10);
+  }
+  
+  var MAX_RETRY = 10; // Maximum number of retries to fetch a particular range.
+
+  var header = {};
+  var id = parseInt(system.args[1], 10);
+  header.Authorization = security_context.auth_token_type + " " + security_context.auth_token;
+  var resp = httpReq({url: "/files/" + id + "/meta", method: "GET", header: header});
+  verifyStatusCode(resp.status, 200, "GET /files/" + id + "/meta");
+  var fileSize = JSON.parse(resp.data.toString("utf-8")).size;
+  var numChunks = Math.ceil(fileSize / CHUNK_SIZE);
+    
+  var tries = 0;
+  for(i = 0; i < numChunks ; ++i) {
+    var lowByte = i * CHUNK_SIZE;
+    var highByte = Math.min((i + 1)*CHUNK_SIZE - 1, fileSize - 1);
+    // In Range header, both bytes are inclusive, so Range: 0-3, fetches 4 bytes.
+    var totalBytes = highByte - lowByte + 1; // Will always be CHUNK_SIZE except possibly for last fetch
+    
+    if(tries >= MAX_RETRY) {
+      system.stderr("Error: Unable to fetch Byte-Range: " + lowByte + "-" + highByte + ". Number of unsuccesful attempts made = " + MAX_RETRY + ". Will exit now. Try with lower CHUNK_SIZE");
+      throw new Error("throwing error from dx_fetchFile: becasue exit(1) does not work in v8cgi");
+    }
+
+    header["Range"] = "bytes=" + lowByte + "-" + highByte;
+    resp = httpReq({url: "/files/" + id, method: "GET", header: header});
+    verifyStatusCode(resp.status, 206, "GET /files/" + id);
+    // Check if we recieve expected number of bytes back - else rety
+    if(parseInt(resp.header("Content-Length"), 10) !== totalBytes) {
+      tries++; // Increment number of try for this particular range
+      i--; // Try to get this range again
+      continue; // Fetch the same range again - right now - GOOOOOOOO!
+    }
+    tries = 0; // This range was recieved succesfuly - reset tries for next range
+    // Everything was good - spit out data on stdout for this range
+    system.stdout.write(resp.data);
+  }
+  system.stdout.flush(); // Write any remaining data
+  exit(0); // Completed printing out contents of file succesfuly. Exit cleanly.
+}
+main(); // Call main (entry point for this program)

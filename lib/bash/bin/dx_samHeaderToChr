@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+
+import os, sys, json, fileinput, re
+from optparse import OptionParser
+import dxpy
+
+chromosomes = []; i = 0
+
+for line in fileinput.input():
+    if re.match("^\@", line) == None:
+        break
+    if re.match("^\@SQ", line) == None:
+        continue
+    seqname, seqlen = re.search("^\@SQ\s+SN:(.+?)\s+LN:(.+)$", line).groups()
+    chromosomes.append([seqname, i, int(seqlen)])
+    i += 1
+
+j = dxpy.new_dxjson({"name": "some_genome", "chromosomes": chromosomes})
+
+properties = j.describe()
+properties.update(j.get_properties())
+print json.dumps(properties)

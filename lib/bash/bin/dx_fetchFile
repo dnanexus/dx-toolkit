@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+import os, sys, json
+from optparse import OptionParser
+import dxpy
+
+parser = OptionParser(usage="%prog [options] file_id", description="Download a DNAnexus file")
+parser.add_option("-o", "--output", help="Save to this filename instead of the name property or id of the file object", default=None)
+(opts, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error("Incorrect number of arguments")
+
+file_id = args[0]
+
+if opts.output:
+    dest_filename = opts.output
+else:
+    try:
+        dest_filename = os.path.basename(dxpy.api.fileGetProperties(file_id)['name'])
+    except KeyError:
+        dest_filename = file_id
+
+dxpy.download_dxfile(file_id, dest_filename)

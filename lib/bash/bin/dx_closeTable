@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+
+import os, sys, json, fileinput, re
+from optparse import OptionParser
+import dxpy
+
+parser = OptionParser(usage="%prog [options] table_id", description="Close a DNAnexus table.")
+parser.add_option("--no_block", help="Do not wait for the table to close", action='store_true', default=False)
+(opts, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error("Incorrect number of arguments")
+
+table_id = args[0]
+
+if opts.no_block:
+    dxpy.open_dxtable(table_id).close()
+else:
+    dxpy.open_dxtable(table_id).close(block=True)

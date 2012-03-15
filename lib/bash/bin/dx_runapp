@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+import os, sys, json
+from optparse import OptionParser
+import dxpy, dxpy.app_builder
+from dxpy.exceptions import DXJobFailureError
+
+parser = OptionParser(usage="%prog app_name [options]", description="Run a DNAnexus app. Example: %prog my_app -iparam1=value1 -iparam2=value2")
+parser.add_option("-i", "--input", help="App input parameter", action='append')
+parser.add_option("-w", "--wait", help="Wait for the launched job to complete, exit with code 1 if job fails", action='store_true')
+(opts, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.print_help()
+    parser.error("Incorrect number of arguments")
+
+app_name = args[0]
+
+if app_name[:4] == 'app-':
+    app_id = app_name
+else:
+    app_id = dxpy.search(classname="app", properties={"name": app_name}).next()
+
+app_input = dict([x.split("=") for x in opts.input])
+
+job = dxpy.DXApp(app_id).run(app_input)
+
+logging.info("Launched job "+job.get_id())
+
+if opts.wait:
+    logging.info("Waiting for job to complete...")
+    try:
+        job.wait_on_done()
+        print json.dumps(job.describe()["output"])
+    except DXJobFailureError as e:
+        logging.error("Job did not complete successfully: %s" % e.message)
+        sys.exit(1)

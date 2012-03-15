@@ -1,0 +1,249 @@
+'''
+DXFile Handler
+**************
+
+This remote file handler is a file-like object.
+'''
+
+from dxpy.bindings import *
+
+class DXFile(DXClass):
+    '''
+    :param dxid: Object ID
+    :type dxid: string
+    :param keep_open: Indicates whether the remote file should be kept open when exiting the context manager or when the destructor is called on the file handler
+    :type keep_open: boolean
+
+    Remote file object handler
+    '''
+
+    _class = "file"
+
+    _describe = staticmethod(dxpy.api.fileDescribe)
+    _get_properties = staticmethod(dxpy.api.fileGetProperties)
+    _set_properties = staticmethod(dxpy.api.fileSetProperties)
+    _add_types = staticmethod(dxpy.api.fileAddTypes)
+    _remove_types = staticmethod(dxpy.api.fileRemoveTypes)
+    _destroy = staticmethod(dxpy.api.fileDestroy)
+
+    _keep_open = False
+    _write_buf = ""
+
+    def __init__(self, dxid=None, keep_open=False, buffer_size=1024*1024*100):
+        if dxid is not None:
+            self.set_id(dxid)
+        self._keep_open = keep_open
+        # Default maximum buffer size is 100MB
+        self._bufsize = buffer_size
+
+    def new(self, media_type=None):
+        """
+        :param media_type: Internet Media Type
+        :type media_type: string
+
+        Creates a new remote file with media_type, if given.
+
+        """
+
+        req_input = {}
+        if media_type is not None:
+            req_input["media"] = media_type
+
+        resp = dxpy.api.fileNew(req_input)
+        self.set_id(resp["id"])
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if (not self._keep_open) and self._get_state() == "open":
+            self.close()
+
+    def __del__(self):
+        if self._write_buf != "":
+            self.flush()
+
+    def __iter__(self):
+        buffer = self.read(self._bufsize)
+        done = False
+        while not done:
+            if "\n" in buffer:
+                lines = buffer.splitlines()
+                for i in range(len(lines) - 1):
+                    yield lines[i]
+                buffer = lines[len(lines) - 1]
+            else:
+                more = self.read(self._bufsize)
+                if more == "":
+                    done = True
+                else:
+                    buffer = buffer + more
+        if buffer:
+            yield buffer
+
+    def set_id(self, dxid):
+        '''
+        :param dxid: Object ID
+        :type dxid: string
+        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
+
+        Discards the currently stored ID and associates the handler
+        with *dxid*.  As a side effect, it also flushes the buffer for
+        the previous file object if the buffer is nonempty.
+        '''
+        if self._write_buf != "":
+            self.flush()
+
+        DXClass.set_id(self, dxid)
+
+        # Reset state
+        self._pos = 0
+        self._file_length = None
+        self._write_buf = ""
+        self._cur_part = 1
+
+    def read(self, size=None):
+        '''
+        :param size: Maximum number of bytes to be read
+        :type size: integer
+        :rtype: string
+
+        Returns the next *size* bytes or until the end of file if no
+        *size* is given or there are fewer than *size* bytes left in
+        the file.
+
+        '''
+
+        resp = dxpy.api.fileDownload(self._dxid)
+        url = resp["url"]
+        headers = {}
+
+        if self._file_length is None:
+            resp = requests.head(url)
+            self._file_length = int(resp.headers['content-length'])
+
+        if self._pos == self._file_length:
+            return ""
+
+        if self._pos > 0 or size is not None:
+            endbyte = self._file_length - 1
+            if size is not None:
+                endbyte = min(self._pos + size - 1, endbyte)
+
+            headers["Range"] = "bytes=" + str(self._pos) + "-" + str(endbyte)
+            self._pos = endbyte + 1
+        else:
+            self._pos = self._file_length
+
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        return resp.content
+
+    def seek(self, offset):
+        '''
+        :param offset: Position in the file to seek to
+        :type offset: integer
+
+        Seeks to *offset* bytes from the beginning of the file.  This
+        is a no-op if the file is open for writing.
+
+        '''
+        self._pos = offset
+
+    def flush(self):
+        '''
+        Flushes the internal buffer
+        '''
+        self.upload_part(self._write_buf, self._cur_part)
+        self._write_buf = ""
+        self._cur_part += 1
+
+    def write(self, string):
+        '''
+        :param str: String to be written
+        :type str: string
+
+        Writes the string *string* to the file.
+
+        .. note::
+
+            Writing to remote files is append-only.  Using **seek()** will not affect where the next **write** will occur.
+
+        TODO: Provide input for setting _cur_part here or elsewhere
+
+        '''
+
+        remaining_space = (self._bufsize - len(self._write_buf))
+        self._write_buf += string[:remaining_space]
+        if len(self._write_buf) == self._bufsize:
+            self.flush()
+            self.write(string[remaining_space:])
+
+    def closed(self):
+        '''
+        :returns: Whether the remote file is closed
+        :rtype: boolean
+
+        Returns :const:`True` if the remote file is closed and
+        :const:`False` otherwise.  Note that if it is not closed, it
+        can be in either the "open" and "closing" states.
+        '''
+
+        return self.describe()["state"] == "closed"
+
+    def close(self, block=False):
+        '''
+        :param block: Indicates whether this function should block until the remote file has closed or not.
+        :type block: boolean
+
+        Attempts to close the file.  Note that the remote file cannot
+        be closed until all parts have been fully uploaded, and an
+        exception will be thrown in this case.
+        '''
+
+        if self._write_buf != "":
+            self.flush()
+
+        dxpy.api.fileClose(self._dxid)
+
+        if block:
+            self._wait_on_close()
+
+    def wait_on_close(self, timeout=sys.maxint):
+        '''
+        :param timeout: Max amount of time to wait until the file is closed.
+        :type timeout: integer
+        :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the remote file has been closed
+
+        Wait until the remote file is closed.
+        '''
+        self._wait_on_close(timeout)
+
+    def upload_part(self, data, index=None):
+        """
+        :param data: Data to be uploaded in this part
+        :type data: string
+        :param index: Index of part to be uploaded; must be in [1, 10000]
+        :type index: integer
+        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is in the wrong range, :exc:`requests.exceptions.HTTPError` if upload fails
+
+        Requests a URL for uploading a part, and uploads the data in
+        *data* as part number *index* for the associated file.  If no
+        value for *index* is given, it is assumed that this is the
+        only part to be uploaded.
+
+        """
+
+        req_input = {}
+        if index is not None:
+            req_input["index"] = int(index)
+
+        resp = dxpy.api.fileUpload(self._dxid, req_input)
+        url = resp["url"]
+        headers = {}
+        headers['Content-Length'] = str(len(data))
+
+        resp = requests.post(url, data=data, headers=headers)
+        resp.raise_for_status()
+
+        # TODO: Consider retrying depending on the status

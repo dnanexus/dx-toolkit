@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+
+import os, sys, json, re
+from optparse import OptionParser
+import dxpy
+
+parser = OptionParser("Usage: %prog sam_filename table_id chroms")
+(opts, args) = parser.parse_args()
+if len(args) != 3:
+    parser.error("Incorrect number of arguments")
+
+sam_filename, table_id, chromosomes_id = args
+
+security_context=json.loads(os.environ['SECURITY_CONTEXT'])
+
+chromosomes = dxpy.DXJSON(chromosomes_id).get()['chromosomes']
+
+if chromosomes is None:
+    raise Exception("Object %s has no chromosomes property" % chromosomes_id)
+chrom_name2id = dict([(c[0], c[1]) for c in chromosomes])
+
+# See http://samtools.sourceforge.net/SAM1.pdf
+mappings_schema = [
+    "QNAME:string",
+    "FLAG:int32",
+    "chr:int32", # RNAME
+    "start:double", # POS
+    "MAPQ:int32",
+    "CIGAR:string",
+    "RNEXT:string",
+    "PNEXT:int32",
+    "TLEN:int32",
+    "SEQ:string",
+    "QUAL:string",
+    "OPT:string",
+    "stop:double"
+];
+
+if table_id == "0":
+    # dxtable = dxpy.new_dxtable(mappings_schema, chr_col="chr", lo_col="start", hi_col="stop")
+    dxtable = dxpy.new_dxtable(mappings_schema)
+else:
+    dxtable = dxpy.open_dxtable(table_id)
+
+with open(sam_filename, 'r') as sam_file:
+    i = 0; table_rows = []
+    for line in sam_file:
+        # Ignore SAM header
+        if line[0] == '@':
+            continue
+        sam_record = line.split("\t", 11)
+        if len(sam_record) < 11:
+            raise Exception("Unexpected number of entries in file %s, line %d" % (sam_filename, i))
+        sam_record[-1] = sam_record[-1].rstrip()
+        # Initialize OPT field, if empty
+        if len(sam_record) == 11: sam_record.append('')
+        for field in 1, 3, 4, 7, 8:
+            sam_record[field] = int(sam_record[field])
+        # Replace reference name with id
+        try:
+            sam_record[2] = chrom_name2id[sam_record[2]]
+        except KeyError:
+            if sam_record[2] == '*':
+                continue
+            else:
+                raise Exception("Reference name %s not found in chrom info object %s" % (sam_record[2], chromosomes_id))
+        
+        al_len = 0
+        cigar = re.split('(\d+)', sam_record[5])
+        for p in range(len(cigar)):
+            c = cigar[p]
+            if c == 'M' or c == 'D' or c == 'N' or c == 'X' or c == 'P' or c == '=':
+                al_len += int(cigar[p-1])
+        
+        rpos = int(sam_record[3]) + al_len
+        sam_record.append(rpos)
+        
+        table_rows.append(sam_record)
+        i += 1
+        if i % 40000 == 0:
+            dxtable.add_rows(table_rows, int(i/40000))
+            table_rows = []
+    if len(table_rows) > 0:
+        dxtable.add_rows(table_rows, int(i/40000)+1)
+    print json.dumps({'table_id': dxtable.get_id()})

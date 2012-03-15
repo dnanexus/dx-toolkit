@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+import os, sys, json, fileinput, re
+from optparse import OptionParser
+import dxpy, dxpy.app_builder
+
+parser = OptionParser(usage="%prog [options] app_dir", description="Upload a DNAnexus app.")
+parser.add_option("-f", "--overwrite", help="Overwrite existing app with same name", action='store_true', default=False)
+(opts, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.print_help()
+    parser.error("Incorrect number of arguments")
+
+app_src_dir = args[0]
+
+if not os.path.isdir(app_src_dir):
+    parser.error("%s is not a directory" % app_src_dir)
+
+if not os.path.exists(os.path.join(app_src_dir, "dxapp")):
+    parser.error("Directory %s does not contain dxapp: not a valid DNAnexus application source directory" % app_src_dir)
+
+dxpy.app_builder.build(app_src_dir)
+bundled_resources = dxpy.app_builder.upload_resources(app_src_dir)
+
+app_id = dxpy.app_builder.upload_app(app_src_dir, bundled_resources, overwrite=opts.overwrite)
+
+print "Created app:", json.dumps(dxpy.api.appDescribe(app_id))

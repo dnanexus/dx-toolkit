@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+# Resolve symlinks, so we can use relative paths
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+DX_BINDIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+DX_LIBDIR="${DX_BINDIR}/.."
+
+source "${DX_LIBDIR}/dx_helpers.sh"
+
+unpack "$@"
