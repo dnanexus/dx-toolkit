@@ -18,7 +18,7 @@ writer = csv.writer(sys.stdout)
 dxtable = dxpy.open_dxtable(table_id)
 
 if not opts.no_header:
-    writer.writerow(map(lambda(x): x.split(":")[0], dxtable.describe()["columns"]))
+    writer.writerow([col.split(":")[0] for col in dxtable.describe()["columns"]])
 
 for row in dxtable:
     writer.writerow(row)

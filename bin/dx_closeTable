@@ -13,7 +13,13 @@ if len(args) != 1:
 
 table_id = args[0]
 
+table = dxpy.open_dxtable(table_id)
+
+if table.describe()['state'] == 'closed':
+    print "Table %s is already closed" % table_id
+    sys.exit()
+
 if opts.no_block:
-    dxpy.open_dxtable(table_id).close()
+    table.close()
 else:
-    dxpy.open_dxtable(table_id).close(block=True)
+    table.close(block=True)
