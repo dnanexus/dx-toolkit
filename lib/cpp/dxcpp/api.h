@@ -2,472 +2,377 @@
 #define DXCPP_API_H
 
 #include "json.h"
+
+
+JSON systemSearch(const string &input_params=string("{}"));
+JSON systemSearch(const JSON &input_params);
+
+
+JSON userDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON userDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON userGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON userGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON userSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON userSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON userGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON userGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON userRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON userRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON userGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON userGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON userAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON userAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON userRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON userRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON groupNew(const string &input_params=string("{}"));
+JSON groupNew(const JSON &input_params);
+
+
+JSON groupDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON groupDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON groupDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON groupDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON groupGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON groupGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON groupSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON groupSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON groupGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON groupGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON groupRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON groupRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON groupGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON groupGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON groupAddMembers(const string &object_id, const string &input_params=string("{}"));
+JSON groupAddMembers(const string &object_id, const JSON &input_params);
+
+
+JSON groupRemoveMembers(const string &object_id, const string &input_params=string("{}"));
+JSON groupRemoveMembers(const string &object_id, const JSON &input_params);
+
+
+JSON groupAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON groupAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON groupRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON groupRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON jsonNew(const string &input_params=string("{}"));
+JSON jsonNew(const JSON &input_params);
+
+
+JSON jsonDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON jsonDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON jsonDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON jsonDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON jsonGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON jsonGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON jsonSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON jsonSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON jsonGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON jsonGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON jsonRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON jsonRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON jsonGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON jsonGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON jsonAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON jsonAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON jsonRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON jsonRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON jsonGet(const string &object_id, const string &input_params=string("{}"));
+JSON jsonGet(const string &object_id, const JSON &input_params);
+
+
+JSON jsonSet(const string &object_id, const string &input_params=string("{}"));
+JSON jsonSet(const string &object_id, const JSON &input_params);
+
+
+JSON collectionNew(const string &input_params=string("{}"));
+JSON collectionNew(const JSON &input_params);
+
+
+JSON collectionDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON collectionDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON collectionDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON collectionDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON collectionGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON collectionGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON collectionSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON collectionSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON collectionGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON collectionGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON collectionRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON collectionRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON collectionGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON collectionGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON collectionAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON collectionAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON collectionRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON collectionRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON collectionGet(const string &object_id, const string &input_params=string("{}"));
+JSON collectionGet(const string &object_id, const JSON &input_params);
+
+
+JSON fileNew(const string &input_params=string("{}"));
+JSON fileNew(const JSON &input_params);
+
+
+JSON fileDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON fileDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON fileDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON fileDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON fileGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON fileGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON fileSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON fileSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON fileGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON fileGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON fileRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON fileRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON fileGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON fileGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON fileAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON fileAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON fileRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON fileRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON fileUpload(const string &object_id, const string &input_params=string("{}"));
+JSON fileUpload(const string &object_id, const JSON &input_params);
+
+
+JSON fileClose(const string &object_id, const string &input_params=string("{}"));
+JSON fileClose(const string &object_id, const JSON &input_params);
+
+
+JSON fileDownload(const string &object_id, const string &input_params=string("{}"));
+JSON fileDownload(const string &object_id, const JSON &input_params);
+
+
+JSON tableNew(const string &input_params=string("{}"));
+JSON tableNew(const JSON &input_params);
+
+
+JSON tableDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON tableDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON tableExtend(const string &object_id, const string &input_params=string("{}"));
+JSON tableExtend(const string &object_id, const JSON &input_params);
+
+
+JSON tableDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON tableDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON tableGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON tableGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON tableSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON tableSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON tableGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON tableGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON tableRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON tableRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON tableGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON tableGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON tableAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON tableAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON tableRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON tableRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON tableAddRows(const string &object_id, const string &input_params=string("{}"));
+JSON tableAddRows(const string &object_id, const JSON &input_params);
+
+
+JSON tableClose(const string &object_id, const string &input_params=string("{}"));
+JSON tableClose(const string &object_id, const JSON &input_params);
+
+
+JSON tableGet(const string &object_id, const string &input_params=string("{}"));
+JSON tableGet(const string &object_id, const JSON &input_params);
+
+
+JSON appNew(const string &input_params=string("{}"));
+JSON appNew(const JSON &input_params);
+
+
+JSON appDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON appDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON appDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON appDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON appGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON appGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON appSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON appSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON appGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON appGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON appRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON appRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON appGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON appGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON appAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON appAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON appRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON appRemoveTypes(const string &object_id, const JSON &input_params);
+
+
+JSON appRun(const string &object_id, const string &input_params=string("{}"));
+JSON appRun(const string &object_id, const JSON &input_params);
+
+
+JSON jobNew(const string &input_params=string("{}"));
+JSON jobNew(const JSON &input_params);
+
+
+JSON jobDescribe(const string &object_id, const string &input_params=string("{}"));
+JSON jobDescribe(const string &object_id, const JSON &input_params);
+
+
+JSON jobDestroy(const string &object_id, const string &input_params=string("{}"));
+JSON jobDestroy(const string &object_id, const JSON &input_params);
+
+
+JSON jobGetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON jobGetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON jobSetProperties(const string &object_id, const string &input_params=string("{}"));
+JSON jobSetProperties(const string &object_id, const JSON &input_params);
+
+
+JSON jobGetPermissions(const string &object_id, const string &input_params=string("{}"));
+JSON jobGetPermissions(const string &object_id, const JSON &input_params);
+
+
+JSON jobRevokePermission(const string &object_id, const string &input_params=string("{}"));
+JSON jobRevokePermission(const string &object_id, const JSON &input_params);
+
+
+JSON jobGrantPermission(const string &object_id, const string &input_params=string("{}"));
+JSON jobGrantPermission(const string &object_id, const JSON &input_params);
+
+
+JSON jobAddTypes(const string &object_id, const string &input_params=string("{}"));
+JSON jobAddTypes(const string &object_id, const JSON &input_params);
+
+
+JSON jobRemoveTypes(const string &object_id, const string &input_params=string("{}"));
+JSON jobRemoveTypes(const string &object_id, const JSON &input_params);
+
+
 #include "dxcpp.h"
-
-namespace dxpy {
-
-
-  JSON systemSearch(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/system/search", input_params.to_string());
-  }
-
-
-  JSON userDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON userGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON userSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON userGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON userRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON userGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON userAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON userRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON groupNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/group/new", input_params.to_string());
-  }
-
-
-  JSON groupDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON groupDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON groupGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON groupSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON groupGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON groupRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON groupGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON groupAddMembers(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addMembers"), input_params.to_string());
-  }
-
-
-  JSON groupRemoveMembers(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeMembers"), input_params.to_string());
-  }
-
-
-  JSON groupAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON groupRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON jsonNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/json/new", input_params.to_string());
-  }
-
-
-  JSON jsonDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON jsonDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON jsonGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON jsonSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON jsonGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON jsonRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON jsonGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON jsonAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON jsonRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON jsonGet(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/get"), input_params.to_string());
-  }
-
-
-  JSON jsonSet(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/set"), input_params.to_string());
-  }
-
-
-  JSON collectionNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/collection/new", input_params.to_string());
-  }
-
-
-  JSON collectionDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON collectionDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON collectionGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON collectionSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON collectionGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON collectionRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON collectionGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON collectionAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON collectionRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON collectionGet(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/get"), input_params.to_string());
-  }
-
-
-  JSON fileNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/file/new", input_params.to_string());
-  }
-
-
-  JSON fileDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON fileDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON fileGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON fileSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON fileGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON fileRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON fileGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON fileAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON fileRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON fileUpload(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/upload"), input_params.to_string());
-  }
-
-
-  JSON fileClose(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/close"), input_params.to_string());
-  }
-
-
-  JSON fileDownload(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/download"), input_params.to_string());
-  }
-
-
-  JSON tableNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/table/new", input_params.to_string());
-  }
-
-
-  JSON tableDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON tableExtend(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/extend"), input_params.to_string());
-  }
-
-
-  JSON tableDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON tableGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON tableSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON tableGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON tableRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON tableGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON tableAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON tableRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON tableAddRows(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addRows"), input_params.to_string());
-  }
-
-
-  JSON tableClose(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/close"), input_params.to_string());
-  }
-
-
-  JSON tableGet(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/get"), input_params.to_string());
-  }
-
-
-  JSON appNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/app/new", input_params.to_string());
-  }
-
-
-  JSON appDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON appDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON appGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON appSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON appGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON appRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON appGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON appAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON appRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-  JSON appRun(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/run"), input_params.to_string());
-  }
-
-
-  JSON jobNew(JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest("/job/new", input_params.to_string());
-  }
-
-
-  JSON jobDescribe(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/describe"), input_params.to_string());
-  }
-
-
-  JSON jobDestroy(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/destroy"), input_params.to_string());
-  }
-
-
-  JSON jobGetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getProperties"), input_params.to_string());
-  }
-
-
-  JSON jobSetProperties(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/setProperties"), input_params.to_string());
-  }
-
-
-  JSON jobGetPermissions(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/getPermissions"), input_params.to_string());
-  }
-
-
-  JSON jobRevokePermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/revokePermission"), input_params.to_string());
-  }
-
-
-  JSON jobGrantPermission(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/grantPermission"), input_params.to_string());
-  }
-
-
-  JSON jobAddTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/addTypes"), input_params.to_string());
-  }
-
-
-  JSON jobRemoveTypes(string object_id, JSON input_params=JSON("{}")) {
-    return dxpy::DXHTTPRequest(string("/") + object_id + string("/removeTypes"), input_params.to_string());
-  }
-
-
-}
 
 #endif
 

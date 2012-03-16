@@ -39,9 +39,9 @@ class TestSearch(unittest.TestCase):
 
         count = 0
         for result in dxpy.search(classname="json", properties=properties):
-            self.assertTrue(result in json_ids)
-            json_ids.remove(result)
-            count += 1
+            if result in json_ids:
+                json_ids.remove(result)
+                count += 1
         # Make sure we found the correct number of objects
         self.assertEqual(count, len(jsons))
         # Make sure each JSON object was found
@@ -211,11 +211,16 @@ class TestDXTable(unittest.TestCase):
             table_to_extend.close()
         except:
             self.fail("Error occurred when creating a table")
+            table_to_extend.destroy()
+
+        try:
+            self.dxtable = extend_dxtable(table_to_extend.get_id(),
+                                          ['c:int32', 'd:string'])
+        except:
+            self.fail("Could not extend table");
         finally:
             table_to_extend.destroy()
 
-        self.dxtable = extend_dxtable(table_to_extend.get_id(),
-                                      ['c:int32', 'd:string'])
         self.assertEqual(self.dxtable.describe()["columns"],
                          ['a:string', 'b:int32', 'c:int32', 'd:string'])
         self.dxtable.add_rows([[10, "End row 1"], [20, "End row 2"]])

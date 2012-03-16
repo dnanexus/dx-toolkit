@@ -1,27 +1,26 @@
 #ifndef DXCPP_BINDINGS_DXJSON_H
 #define DXCPP_BINDINGS_DXJSON_H
 
-#import "../bindings.h"
+#include "../bindings.h"
 
-namespace dxpy {
-  using namespace dxpy;
+class DXJSON: public DXClass {
+ public:
+  JSON describe() const { return jsonDescribe(dxid_); }
+  JSON getProperties(const JSON &keys=JSON()) const { return jsonGetProperties(dxid_, keys); }
+  void setProperties(const JSON &properties) const { jsonSetProperties(dxid_, properties); }
+  void addTypes(const JSON &types) const { jsonAddTypes(dxid_, types); }
+  void removeTypes(const JSON &types) const { jsonRemoveTypes(dxid_, types); }
+  void destroy() { jsonDestroy(dxid_); }
 
-  class DXJSON: public DXClass {
-  public:
-    JSON describe() { return jsonDescribe(dxid); }
-    JSON getProperties() { return jsonGetProperties(dxid); }
-    void setProperties() { jsonSetProperties(dxid); }
-    void addTypes() { jsonAddTypes(dxid); }
-    void removeTypes() { jsonRemoveTypes(dxid); }
-    void destroy() { jsonDestroy(dxid); }
+  // JSON-specific functions
 
-    // JSON-specific functions
+  DXJSON() {}
+  DXJSON(const string &dxid) { this->setID(dxid); }
+  void create(const JSON &to_store);
+  JSON get() const;
+  void set(const JSON &to_store) const;
+};
 
-    DXJSON(JSON to_store);
-    void create(JSON to_store);
-    void get();
-    void set();
-  };
-}
+DXJSON newDXJSON(const JSON &to_store);
 
 #endif

@@ -1,27 +1,26 @@
 #ifndef DXCPP_BINDINGS_DXCOLLECTION_H
 #define DXCPP_BINDINGS_DXCOLLECTION_H
 
-#import "../bindings.h"
+#include "../bindings.h"
 
-namespace dxpy {
-  using namespace dxpy;
+class DXCollection: public DXClass {
+ public:
+  JSON describe() const { return collectionDescribe(dxid_); }
+  JSON getProperties(const JSON &keys) const { return collectionGetProperties(dxid_, keys); }
+  void setProperties(const JSON &properties) const { collectionSetProperties(dxid_, properties); }
+  void addTypes(const JSON &types) const { collectionAddTypes(dxid_, types); }
+  void removeTypes(const JSON &types) const { collectionRemoveTypes(dxid_, types); }
+  void destroy() { collectionDestroy(dxid_); }
 
-  class DXCollection: public DXClass {
-  public:
-    JSON describe() { return collectionDescribe(dxid); }
-    JSON getProperties() { return collectionGetProperties(dxid); }
-    void setProperties() { collectionSetProperties(dxid); }
-    void addTypes() { collectionAddTypes(dxid); }
-    void removeTypes() { collectionRemoveTypes(dxid); }
-    void destroy() { collectionDestroy(dxid); }
+  // Collection-specific functions
 
-    // Collection-specific functions
+  DXCollection() {}
+  DXCollection(const string &dxid) { this->setID(dxid); }
+  void create(const JSON &to_store);
+  JSON get() const;
+  void set(const JSON &to_store) const;
+};
 
-    DXCollection(JSON to_store);
-    void create(JSON to_store);
-    void get();
-    void set();
-  };
-}
+DXCollection newDXCollection(const JSON &to_store);
 
 #endif

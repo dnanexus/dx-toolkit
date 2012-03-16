@@ -1,47 +1,46 @@
 #ifndef DXCPP_BINDINGS_H
 #define DXCPP_BINDINGS_H
 
-#import<string>
-#import "dxcpp.h"
-#import "api.h"
-#import "json.h"
+#include<string>
+#include "dxcpp.h"
 
-namespace dxpy {
+using namespace std;
 
-  using namespace std;
+JSON search();
+// TODO: Figure out signature
+//classname=None, properties=None, typename=None, #permission=None,
+//         describe=False
 
-  JSON search();
-  // TODO: Figure out signature
-  //classname=None, properties=None, typename=None, #permission=None,
-  //         describe=False
+class DXClass {
+ protected:
+  string dxid_;
+  void wait_on_state(const string &state="closed") const;
 
-  class DXClass {
-  protected:
-    string dxid;
+ public:
+  string getID() const { return dxid_; }
+  virtual void setID(const string &dxid) { dxid_ = dxid; }
 
-  public:
-    DXClass() {}
-  DXClass(string dxid_) : dxid(dxid_) {}
+  /** Returns a JSON object with, at minimum, the keys "id", "class",
+   * "types", and "createdAt".  Other fields may also be included,
+   * depending on the class.
+   * @return JSON description
+   */
+  virtual JSON describe() const = 0;
+  virtual JSON getProperties(const JSON &keys=JSON()) const = 0;
+  virtual void setProperties(const JSON &properties) const = 0;
+  virtual JSON getTypes() const { JSON desc = this->describe(); return desc["types"]; }
+  virtual void addTypes(const JSON &types) const = 0;
+  virtual void removeTypes(const JSON &types) const = 0;
+  virtual void destroy() = 0;
+};
 
-    string getID() { return dxid; }
-    virtual void setID(string dxid_) { dxid = dxid_; }
-
-    virtual JSON describe() =0;
-    virtual JSON getProperties() =0;
-    virtual void setProperties() =0;
-    virtual void addTypes() =0;
-    virtual void removeTypes() =0;
-    virtual void destroy() =0;
-  };
-}
-
-#import "bindings/dxuser.h"
-#import "bindings/dxgroup.h"
-#import "bindings/dxjson.h"
-#import "bindings/dxcollection.h"
-#import "bindings/dxfile.h"
-#import "bindings/dxtable.h"
-#import "bindings/dxapp.h"
-#import "bindings/dxjob.h"
+#include "bindings/dxuser.h"
+#include "bindings/dxgroup.h"
+#include "bindings/dxjson.h"
+#include "bindings/dxcollection.h"
+#include "bindings/dxfile.h"
+#include "bindings/dxtable.h"
+#include "bindings/dxapp.h"
+#include "bindings/dxjob.h"
 
 #endif

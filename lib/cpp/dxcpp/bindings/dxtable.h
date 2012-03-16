@@ -1,39 +1,63 @@
 #ifndef DXCPP_BINDINGS_DXTABLE_H
 #define DXCPP_BINDINGS_DXTABLE_H
 
-#import "bindings.h"
+#include "../bindings.h"
+#include "../api.h"
 
-namespace dxpy {
-  using namespace dxpy;
+/**
+ * @brief Remote table handler
+ *
+ */
+class DXTable: public DXClass {
+ public:
+  /** Describes the object.
+   * @see DXClass::describe()
+   */
+  JSON describe() const { return tableDescribe(dxid_); }
+  JSON getProperties(const JSON &keys) const { return tableGetProperties(dxid_, keys); }
+  void setProperties(const JSON &properties) const { tableSetProperties(dxid_, properties); }
+  void addTypes(const JSON &types) const { tableAddTypes(dxid_, types); }
+  void removeTypes(const JSON &types) const { tableRemoveTypes(dxid_, types); }
+  void destroy() { tableDestroy(dxid_); }
 
-  class DXTable: public DXClass {
-  public:
-    JSON describe() { return tableDescribe(dxid); }
-    JSON getProperties() { return tableGetProperties(dxid); }
-    void setProperties() { tableSetProperties(dxid); }
-    void addTypes() { tableAddTypes(dxid); }
-    void removeTypes() { tableRemoveTypes(dxid); }
-    void destroy() { tableDestroy(dxid); }
+  // Table-specific functions
 
-    // Table-specific functions
+  /**
+   * 
+   */
+  void create(const JSON &columns);
+  void create(const JSON &columns,
+	      const string &chr_col,
+	      const string &lo_col,
+	      const string &hi_col);
 
-    void create(JSON columns, string chr_col, string lo_col, string hi_col);
+  DXTable extend(const JSON &columns) const;
 
-    DXTable extend(JSON columns);
+  JSON getRows(const string &chr, const int lo, const int hi) const;
+  void addRows(const JSON &data, int index);
+  void addRows(const JSON &data); // For automatic index generation
 
-    JSON getRows();
-    void addRows(JSON data, int index);
-    void addRows(JSON data); // For automatic index generation
+  /**
+   * Attempts to close the remote table.
+   * @param block if true, waits until the table has finished closing before returning
+   */
+  void close(const bool block=false) const;
 
-    void close(bool block=false);
-    void wait_on_close();
-  };
+  /**
+   * Waits until the remote table has finished closing.
+   */
+  void wait_on_close() const;
+};
 
-  DXTable openDXTable(string dxid);
+DXTable openDXTable(const string &dxid);
 
-  DXTable newDXTable(JSON columns, string chr_col, string lo_col, string hi_col);
+DXTable newDXTable(const JSON &columns);
 
-  DXTable extendDXTable(string dxid, JSON columns);
-}
+DXTable newDXTable(const JSON &columns,
+		   const string &chr_col,
+		   const string &lo_col,
+		   const string &hi_col);
+
+DXTable extendDXTable(const string &dxid, const JSON &columns);
 
 #endif

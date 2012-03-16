@@ -3,14 +3,11 @@
 
 #include <stdlib.h>
 #include <map>
-#import "json.h"
+#include <string>
+#include "json.h"
+#include "exceptions.h"
 
 using namespace std;
-
-string g_APISERVER_HOST;
-string g_APISERVER_PORT;
-string g_APISERVER;
-JSON g_SECURITY_CONTEXT;
 
 // TODO: Put HTTP stuff here?
 
@@ -19,17 +16,18 @@ JSON g_SECURITY_CONTEXT;
 // Want to consider returning a string especially after a getRows call
 //
 
-namespace dxpy {
+JSON DXHTTPRequest(const string &resource, const string &data,
+		   const map<string, string> &headers=map<string, string>());
 
-  JSON DXHTTPRequest(const string &resource, const string &data);
+void setAPIServerInfo(const string &host="localhost",
+		      int port=8124,
+		      const string &protocol="http");
 
-  void setAPIServerInfo(const string &host=string("localhost"),
-			int port=8124,
-			const string &protocol=string("http"));
+void setSecurityContext(const JSON &security_context);
 
-  void setSecurityContext(JSON security_context);
+void loadFromEnvironment();
 
-  void loadFromEnvironment();
-}
+#include "api.h"
+#include "bindings.h"
 
 #endif

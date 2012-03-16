@@ -1,26 +1,22 @@
 #ifndef DXCPP_BINDINGS_DXAPP_H
 #define DXCPP_BINDINGS_DXAPP_H
 
-#import "bindings.h"
+#include "../bindings.h"
 
-namespace dxpy {
-  using namespace dxpy;
+class DXApp: public DXClass {
+ public:
+  JSON describe() const { return appDescribe(dxid_); }
+  JSON getProperties(const JSON &keys) const { return appGetProperties(dxid_, keys); }
+  void setProperties(const JSON &properties) const { appSetProperties(dxid_, properties); }
+  void addTypes(const JSON &types) const { appAddTypes(dxid_, types); }
+  void removeTypes(const JSON &types) const { appRemoveTypes(dxid_, types); }
+  void destroy() { appDestroy(dxid_); }
 
-  class DXApp: public DXClass {
-  public:
-    JSON describe() { return appDescribe(dxid); }
-    JSON getProperties() { return appGetProperties(dxid); }
-    void setProperties() { appSetProperties(dxid); }
-    void addTypes() { appAddTypes(dxid); }
-    void removeTypes() { appRemoveTypes(dxid); }
-    void destroy() { appDestroy(dxid); }
+  // App-specific functions
 
-    // App-specific functions
-
-    void createFromFile(string codefile);
-    void createFromString(string codestring);
-    void run();
-  };
-}
+  void createFromFile(const string &codefile) const;
+  void createFromString(const string &codestring) const;
+  void run() const;
+};
 
 #endif

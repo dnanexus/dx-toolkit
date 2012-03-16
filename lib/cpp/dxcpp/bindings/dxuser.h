@@ -1,20 +1,16 @@
 #ifndef DXCPP_BINDINGS_DXUSER_H
 #define DXCPP_BINDINGS_DXUSER_H
 
-#import "bindings.h"
+#include "../bindings.h"
 
-namespace dxpy {
-  using namespace dxpy;
-
-  class DXUser: public DXClass {
-  public:
-    JSON describe() { return userDescribe(dxid); }
-    JSON getProperties() { return userGetProperties(dxid); }
-    void setProperties() { userSetProperties(dxid); }
-    void addTypes() { userAddTypes(dxid); }
-    void removeTypes() { userRemoveTypes(dxid); }
-    void destroy() { throw; }
-  };
-}
+class DXUser: public DXClass {
+ public:
+  JSON describe() const { return userDescribe(dxid_); }
+  JSON getProperties(const JSON &keys) const { return userGetProperties(dxid_, keys); }
+  void setProperties(const JSON &properties) const { userSetProperties(dxid_, properties); }
+  void addTypes(const JSON &types) const { userAddTypes(dxid_, types); }
+  void removeTypes(const JSON &types) const { userRemoveTypes(dxid_, types); }
+  void destroy() { throw DXError(); }
+};
 
 #endif
