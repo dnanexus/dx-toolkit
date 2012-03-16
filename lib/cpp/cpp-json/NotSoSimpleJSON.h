@@ -17,42 +17,38 @@
 #include <limits>
 #include <typeinfo>
 #include <cmath>
+#include <algorithm>
 
 #include "utf8/source/utf8.h"
 
 typedef long long int64;
 
-class JSON_exception {
+class JSONException {
 public:
   std::string err;
-  JSON_exception(const std::string &e): err(e) {}
+  JSONException(const std::string &e): err(e) {}
 };
 
 /*
 // Base class for all JSON related runtime errors 
-class JSON_exception: public std::exception {
+class JSONException: public std::exception {
 public:
   std::string err;
-  JSON_exception(): err("An Unknown error occured");
-  JSON_exception(const std::string &e): err(e) {}
+  JSONException(): err("An Unknown error occured");
+  JSONException(const std::string &e): err(e) {}
   virtual const char* what() const throw() {
     return (const char*)err.c_str();
   }
-  virtual ~JSON_exception() throw() { }
+  virtual ~JSONException() throw() { }
 };*/
 /////////////////////////////////////////////////
 
-// TODO: - Add = operator for map
-//       - Iterator support - DONE
-//       - Create same copy constructors (as = operators)
-//       - Overload << & >> operator ??
-//       - Support strict flag for utf-8 enforcement (both object "keys", and json String values)
+// TODO: - Support strict flag for utf-8 enforcement (both object "keys", and json String values)
 //       - Write tests
 //       - Run tests using STL algorithms for JSON
-//       - Error when trying to do j8["key"] = j8 for a JSON_OBJECT j8 : Expected, but better if fixed 
-//       - Add something like count() function, so that we can check before accessing map values
+//       - Error when trying to do j8["key"] = j8 for a JSON_OBJECT j8 : Expected, but better if fixed
+//       - Document the code
 
-// One possible way of design:
 enum json_values {
   JSON_UNDEFINED = 0,
   JSON_OBJECT = 1,
@@ -81,7 +77,7 @@ public:
     std::cout<<"Dynamic castiiiiiiiiiing "<<std::string(typeid(T).name())<<std::endl;
     T *p = dynamic_cast<T*>(this);
     if (p == NULL)
-      throw JSON_exception("Illegal conversion from Value* to " + std::string(typeid(T).name()));
+      throw JSONException("Illegal conversion from Value* to " + std::string(typeid(T).name()));
     return p;
   }*/
 
@@ -119,30 +115,18 @@ public:
   static double epsilon; // initilized a top-level in NotSoSimpleJSON.cpp (default = 1e-12)
   static void setEpsilon(double v) { epsilon = v; }
   static double getEpsilon() { return epsilon;}
+  static JSON parse(const std::string &str) {
+    JSON tmp;
+    tmp.ReadFromString(str);
+    return tmp;
+  }
   // This will be a simple function call now
   //enum json_type type; // Default value if JSON_UNDEFINED
   
   JSON():val(NULL) {}
-  //JSON(std::string) { }
-  //JSON(Array);
-  //JSON(Object);
-  //JSON(Value* v);
+
   JSON(const JSON &rhs);
   JSON(const json_values &rhs);
-
-  /*template <typename T>
-  JSON(const json_values &rhs, T x) {
-    switch(rhs) {
-      case JSON_ARRAY: val = new Array(x); break;
-      case JSON_OBJECT: val = new Object(x); break;
-      case JSON_INTEGER: val = new Integer(x); break;
-      case JSON_REAL: val = new Real(x); break;
-      case JSON_STRING: val = new String(x); break;
-      case JSON_BOOLEAN: val = new Boolean(x); break;
-      case JSON_NULL: val = new Null(x); break;
-      default: throw JSON_exception("Illegal json_values value for JSON initialization");
-    }
-  }*/
 
   template<typename T>
   JSON(const T& x);
@@ -152,10 +136,8 @@ public:
   void write(std::ostream &out) const;
   void read(std::istream &in);
   
-  void parse(const std::string&); // Populate JSON from a string
-  std::string stringify() const;
-  std::string toString() const;
-  // ... similarly for all possible types
+  void ReadFromString(const std::string&); // Populate JSON from a string
+  std::string ToString(bool onlyTopLevel = false) const;
 
   bool operator ==(const JSON& other) const;
   bool operator !=(const JSON& other) const { return !(*this == other); }
@@ -164,12 +146,15 @@ public:
   const JSON& operator [](const std::string &s) const;
   const JSON& operator [](const JSON &j) const;
   const JSON& operator [](const char *str) const;
+  template<typename T>
+  const JSON& operator [](const T&x) const;
 
   JSON& operator [](const size_t &indx);
   JSON& operator [](const std::string &s);
   JSON& operator [](const JSON &j);
   JSON& operator [](const char *str);
-
+  template<typename T>
+  JSON& operator [](const T& x) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[x]); }
 
   // A non-templatized specialization is always preferred over template version
   template<typename T> JSON& operator =(const T &rhs);
@@ -183,58 +168,35 @@ public:
   template<typename T>
   JSON& operator =(const std::vector<T> &vec) {
     clear();
-    val = new Array(vec);
+    this->val = new Array(vec);
     return *this;
   }
-  
   template<typename T>
   JSON& operator =(const std::map<std::string, T> &m) {
     clear();
-    val = new Object(m);
+    this->val = new Object(m);
     return *this;
   }
 
-//  template<typename T> 
-//  operator T*();
-
+  template<typename T>
+  operator T() const;
+  
   const json_values type() const { return (val == NULL) ? JSON_UNDEFINED : val->type(); }
 
   size_t size() const;
   size_t length() const { return size(); }
-    // overloading of  [] for strings (object case), and size_t (array case)
   
-  // The functions below will throw error if type != JSON_ARRAY
-//  size_t length() const;
-//  size_t size() const; // should be alias for length, 
+  template<typename T>
+  bool has(const T &indx) const { return has(static_cast<size_t>(indx)); }
+  bool has(const size_t &indx) const;
+  bool has(const std::string &key) const;
+  bool has(const JSON &j) const;
+  bool has(const char *key) const;
 
-  /*template<class T>
-  void push_back(const T&) {
-    assert(type == JSON_ARRAY);
-    Value *v = new T; // If T is String, Number_integer;
-  }
-  push_back(Number_integer(2));
-*/
   void push_back(const JSON &j);
   void erase(const size_t &indx);
   void erase(const std::string &key);
-  // create a reference version for push_back
-
- /* void push_back(const String&);
-  void push_back(const Number_integer&);
-  void push_back(const Number_double&);
-  void push_back(const Boolean&); // Should allow pushing of JSON_TRUE, and JSON_FALSE
-  void push_back(const Null&); // Should allow pushing of JSON_NULL
-  void push_back(const Array&);
-  void push_back(const Object&);
-  void removeIndex(size_t index);*/
-  ////////////////////////////////////////////////////////////
-
-  // The function below will throw error if type != JSON_OBJECT
-//  void removeKey(String);
-//  const std::vector<std::string> getAllKeys() const;
-//  size_t countKeys() const;
-  ////////////////////////////////////////////////////////////
-  
+ 
   // Forward Iterators
   const_object_iterator object_begin() const;
   object_iterator object_begin();
@@ -284,6 +246,7 @@ public:
   bool isEqual(const Value *other) const;
   bool operator ==(const Integer& other) const { return isEqual(&other); }
   bool operator !=(const Integer &other) const { return !(*this == other); }
+
   // read() Should not be called for Integer and Real, 
   // use ReadNumberValue() instead for these two "special" classes
   void read(std::istream &in) { assert(false); }
@@ -334,14 +297,11 @@ public:
   Object() { }
   Object(const Object &rhs): val(rhs.val) {}
   
- /* template<typename T>
- 
-  // TODO: Fix the map issue (templatizing the iterator)
+  template<typename T> 
   Object(const std::map<std::string, T> &v) {
-    for (std::map<std::string, T>::const_iterator it = v.begin(); it != v.end(); ++it)
-      ;//val[it->first] = *(new JSON(it->second));
+    val.insert(v.begin(), v.end());
   }
-*/
+
   JSON& jsonAtKey(const std::string &s);
   const JSON& jsonAtKey(const std::string &s) const;
   void write(std::ostream &out) const;
@@ -422,21 +382,39 @@ JSON::JSON(const T& x) {
 template<typename T>
 JSON& JSON::operator =(const T &x) {
   if (!std::numeric_limits<T>::is_specialized)
-    throw JSON_exception("Sorry! We do not allow creating a JSON object from " + std::string(typeid(x).name()) + " type.");
+    throw JSONException("Sorry! We do not allow creating a JSON object from " + std::string(typeid(x).name()) + " type.");
   
   clear();
   if(std::numeric_limits<T>::is_integer)
-    val = new Integer(static_cast<int64>(x));
+    this->val = new Integer(static_cast<int64>(x));
   else
-    val = new Real(static_cast<double>(x));
+    this->val = new Real(static_cast<double>(x));
   return *this;
 }
-/*
+
 template<typename T>
-JSON::operator T*() {
-  T *p = dynamic_cast<T*>(this->val);
-  if (p == NULL)
-    throw JSON_exception("Illegal conversion from JSON to " + std::string(typeid(T).name()));
-  return p;
-}*/
+JSON::operator T() const {
+  json_values typ = this->type();
+  if (typ != JSON_INTEGER && typ != JSON_REAL && typ != JSON_BOOLEAN)
+    throw JSONException("No typecast available for this JSON object to a Numeric/Boolean type");
+
+  if (!std::numeric_limits<T>::is_specialized)
+    throw JSONException("You cannot convert this JSON object to Numeric/Boolean type.");
+  
+  switch(typ) {
+    case JSON_INTEGER: 
+      return static_cast<T>( ((Integer*)this->val)->val);
+    case JSON_REAL: 
+      return static_cast<T>( ((Real*)this->val)->val);
+    case JSON_BOOLEAN: 
+      return static_cast<T>( ((Boolean*)this->val)->val);
+    default: assert(false); // Should never happen (already checked at top)
+  }
+}
+
+template<typename T>
+const JSON& JSON::operator [](const T&x) const {
+  return (*(const_cast<const JSON*>(this)))[static_cast<size_t>(x)];
+}
+
 #endif
