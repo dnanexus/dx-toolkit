@@ -1,5 +1,7 @@
 #include "NotSoSimpleJSON.h"
 
+extern double JSON::epsilon = 1e-12;
+
 namespace JSON_Utility 
 { 
   void SkipWhiteSpace(std::istream &in)
@@ -626,4 +628,150 @@ void Array::erase(const size_t &indx) {
   if(indx >= val.size())
     throw JSON_exception("Cannot erase out of bound element in a JSON_ARRAY. indx supplied = " + indx);
   val.erase(val.begin() + indx);
+}
+
+bool Integer::isEqual(const Value *other) const {
+  const Integer *p = dynamic_cast<const Integer*>(other);
+  return (p != NULL && this->val == p->val);
+}
+
+bool Real::isEqual(const Value* other) const {
+  const Real *p = dynamic_cast<const Real*>(other);
+  return (p != NULL && (fabs(this->val - p->val) <= JSON::getEpsilon()));
+}
+
+bool String::isEqual(const Value* other) const {
+  const String *p = dynamic_cast<const String*>(other);
+  return (p != NULL && this->val == p->val);
+}
+
+bool Boolean::isEqual(const Value* other) const {
+  const Boolean *p = dynamic_cast<const Boolean*>(other);
+  return (p != NULL && this->val == p->val);
+}
+
+bool Null::isEqual(const Value* other) const {
+  const Null *p = dynamic_cast<const Null*>(other);
+  return (p != NULL);
+}
+
+bool Array::isEqual(const Value* other) const {
+  const Array *p = dynamic_cast<const Array*>(other);
+  return (p != NULL && this->val.size() == p->val.size() && equal(this->val.begin(), this->val.end(), p->val.begin()));
+}
+
+bool Object::isEqual(const Value* other) const {
+  const Object *p = dynamic_cast<const Object*>(other);
+  if (p == NULL || this->val.size() != p->val.size())
+    return false;
+  std::map<std::string, JSON>::const_iterator it1,it2;
+  for (it1 = this->val.begin(), it2 = p->val.begin(); it1 != this->val.end() && it2 != p->val.end(); ++it1, ++it2) {
+    if (it1->first != it2->first || it1->second != it2->second)
+      return false;
+  }
+  return (it1 == this->val.end() && it2 == p->val.end());
+}
+
+
+bool JSON::operator ==(const JSON& other) const {
+  if (this->type() != other.type() || this->type() == JSON_UNDEFINED)
+    return false;
+  return (this->val->isEqual(other.val));
+}
+
+JSON::const_object_iterator JSON::object_begin() const {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.begin();
+}
+
+JSON::const_array_iterator JSON::array_begin() const {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.begin();
+}
+
+JSON::object_iterator JSON::object_begin() {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.begin();
+}
+
+JSON::array_iterator JSON::array_begin() {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.begin();
+}
+
+JSON::const_object_iterator JSON::object_end() const {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.end();
+}
+
+JSON::const_array_iterator JSON::array_end() const {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.end();
+}
+
+JSON::object_iterator JSON::object_end() {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.end();
+}
+
+JSON::array_iterator JSON::array_end() {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.end();
+}
+
+// Reverse iterators
+JSON::const_object_reverse_iterator JSON::object_rbegin() const {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.rbegin();
+}
+
+JSON::const_array_reverse_iterator JSON::array_rbegin() const {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.rbegin();
+}
+
+JSON::object_reverse_iterator JSON::object_rbegin() {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.rbegin();
+}
+
+JSON::array_reverse_iterator JSON::array_rbegin() {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.rbegin();
+}
+
+JSON::const_object_reverse_iterator JSON::object_rend() const {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.rend();
+}
+
+JSON::const_array_reverse_iterator JSON::array_rend() const {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.rend();
+}
+
+JSON::object_reverse_iterator JSON::object_rend() {
+  if(this->type() != JSON_OBJECT)
+    throw JSON_exception("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
+  return (dynamic_cast<Object*>(this->val))->val.rend();
+}
+
+JSON::array_reverse_iterator JSON::array_rend() {
+  if(this->type() != JSON_ARRAY)
+    throw JSON_exception("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
+  return (dynamic_cast<Array*>(this->val))->val.rend();
 }

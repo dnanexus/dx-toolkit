@@ -43,7 +43,65 @@ int main() {
 
     JSON j5(JSON_BOOLEAN);
     j5 = true;
+
     std::cout<<"\nj5 = "<<j5.toString()<<"\n";
+    
+    // Equality tests
+    std::cout<<"\nj4 == j5: "<<((j4==j5)?"true":"false");
+
+    JSON j5_copy = j5;
+    std::cout<<"\nj5_copy == j5: "<<((j5_copy==j5) ? "true" : "false")<<"\n";
+    
+    JSON j6 = 12.21;
+    JSON j7 = 12.22;
+    assert(j6 != j7);
+    JSON::setEpsilon(.2);
+    assert(j6 == j7);
+    JSON::setEpsilon(1e-12);
+    
+    JSON j8(JSON_ARRAY);
+    j8.push_back(12.21);
+    j8.push_back("hello");
+    j8.push_back(j8);
+    std::cout<<"\nj8 = "<<j8.stringify()<<"\n";
+    JSON j9 = j8;
+    assert(j9 == j8);
+    j9.erase(2);
+    assert(j9 != j8);
+    assert(JSON(JSON_NULL) == JSON(JSON_NULL));
+   
+    // Iterator test
+    int i=0;
+    JSON j10(JSON_OBJECT);
+    j10["key1"] = 12;
+
+    j10["key2"] = 13;
+    j10["key3"] = j8;
+
+    j10["key4"] = j8;
+
+    std::cout<<"\nChecking forward iterators now ... j10 = "<<j10.toString()<<"\n";
+    for(JSON::array_iterator it = j8.array_begin();it != j8.array_end(); ++it, ++i) {
+      assert(j8[i] == *(it));
+    }
+    
+    for(JSON::object_iterator it = j10.object_begin();it != j10.object_end(); ++it) {
+      assert(j10[it->first] == it->second);
+      std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
+    } 
+    std::cout<<"\nChecking reverse now ...\n"; 
+    i = j8.size() - 1;
+    for(JSON::array_reverse_iterator it = j8.array_rbegin();it != j8.array_rend(); ++it, --i) {
+      assert(j8[i] == *(it));
+    }
+    
+    for(JSON::object_reverse_iterator it = j10.object_rbegin();it != j10.object_rend(); ++it) {
+      assert(j10[it->first] == it->second);
+      std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
+    } 
+
+
+    // 
     //typedef std::map<std::string, JSON> ObjectIterator
     //ObjectIterator it = j4.ObjectBegin();
     // JSON Iterators (different class);

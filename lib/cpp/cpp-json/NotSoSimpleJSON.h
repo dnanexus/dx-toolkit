@@ -16,6 +16,7 @@
 #include <ostream>
 #include <limits>
 #include <typeinfo>
+#include <cmath>
 
 #include "utf8/source/utf8.h"
 
@@ -42,14 +43,14 @@ public:
 /////////////////////////////////////////////////
 
 // TODO: - Add = operator for map
-//       - Iterator support
+//       - Iterator support - DONE
 //       - Create same copy constructors (as = operators)
-//       - Provide == operator
 //       - Overload << & >> operator ??
-//       - Support strict flag for utf-8 enforcement
+//       - Support strict flag for utf-8 enforcement (both object "keys", and json String values)
 //       - Write tests
-//       - Run ests using STL algorithms for JSON
-
+//       - Run tests using STL algorithms for JSON
+//       - Error when trying to do j8["key"] = j8 for a JSON_OBJECT j8 : Expected, but better if fixed 
+//       - Add something like count() function, so that we can check before accessing map values
 
 // One possible way of design:
 enum json_values {
@@ -74,7 +75,7 @@ public:
   virtual void write(std::ostream &out) const = 0;
   virtual Value* returnMyNewCopy() const = 0;
   virtual void read(std::istream &in) = 0;
-  
+  virtual bool isEqual(const Value* other) const = 0;
   /*template <typename T>
   operator T*() {
     std::cout<<"Dynamic castiiiiiiiiiing "<<std::string(typeid(T).name())<<std::endl;
@@ -100,12 +101,27 @@ class Object;
 // Class for top level json
 class JSON {
 public:
+
+  typedef std::map<std::string, JSON>::iterator object_iterator;
+  typedef std::map<std::string, JSON>::const_iterator const_object_iterator;
+  typedef std::vector<JSON>::iterator array_iterator;
+  typedef std::vector<JSON>::const_iterator const_array_iterator;
+
+  typedef std::map<std::string, JSON>::const_reverse_iterator object_reverse_iterator;
+  typedef std::map<std::string, JSON>::reverse_iterator const_object_reverse_iterator;
+  typedef std::vector<JSON>::reverse_iterator array_reverse_iterator;
+  typedef std::vector<JSON>::const_reverse_iterator const_array_reverse_iterator;
+
+
   // Will be exactly one of these 2
   Value *val; // Default: NULL
 
+  static double epsilon; // initilized a top-level in NotSoSimpleJSON.cpp (default = 1e-12)
+  static void setEpsilon(double v) { epsilon = v; }
+  static double getEpsilon() { return epsilon;}
   // This will be a simple function call now
   //enum json_type type; // Default value if JSON_UNDEFINED
-
+  
   JSON():val(NULL) {}
   //JSON(std::string) { }
   //JSON(Array);
@@ -140,6 +156,9 @@ public:
   std::string stringify() const;
   std::string toString() const;
   // ... similarly for all possible types
+
+  bool operator ==(const JSON& other) const;
+  bool operator !=(const JSON& other) const { return !(*this == other); }
 
   const JSON& operator [](const size_t &indx) const;
   const JSON& operator [](const std::string &s) const;
@@ -215,10 +234,34 @@ public:
 //  const std::vector<std::string> getAllKeys() const;
 //  size_t countKeys() const;
   ////////////////////////////////////////////////////////////
+  
+  // Forward Iterators
+  const_object_iterator object_begin() const;
+  object_iterator object_begin();
+  const_array_iterator array_begin() const;
+  array_iterator array_begin();
+ 
+  const_object_iterator object_end() const;
+  object_iterator object_end();
+  const_array_iterator array_end() const;
+  array_iterator array_end();
+
+  // Reverse Iterators
+  const_object_reverse_iterator object_rbegin() const;
+  object_reverse_iterator object_rbegin();
+  const_array_reverse_iterator array_rbegin() const;
+  array_reverse_iterator array_rbegin();
+ 
+  const_object_reverse_iterator object_rend() const;
+  object_reverse_iterator object_rend();
+  const_array_reverse_iterator array_rend() const;
+  array_reverse_iterator array_rend();
+
 
   ~JSON() { clear(); } 
   // TODO: Handle case of streams
 };
+
 
 /*ostream& operator >>(std::ostream& o, const Value& v) {
   v.write(o);
@@ -237,7 +280,10 @@ public:
   const json_values type() const { return JSON_INTEGER; }
   size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
   Value* returnMyNewCopy() const { return new Integer(*this); }
-  operator const Value* () { return this; }  
+  operator const Value* () { return this; }
+  bool isEqual(const Value *other) const;
+  bool operator ==(const Integer& other) const { return isEqual(&other); }
+  bool operator !=(const Integer &other) const { return !(*this == other); }
   // read() Should not be called for Integer and Real, 
   // use ReadNumberValue() instead for these two "special" classes
   void read(std::istream &in) { assert(false); }
@@ -253,7 +299,10 @@ public:
   const json_values type() const { return JSON_REAL; }
   size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
   Value* returnMyNewCopy() const { return new Real(*this); }
-  
+  bool isEqual(const Value *other) const;
+  bool operator ==(const Real& other) const { return isEqual(&other); }
+  bool operator !=(const Real& other) const { return !(*this == other); }
+ 
   // read() Should not be called for Integer and Real, 
   // use ReadNumberValue() instead for these two "special" classes
   void read(std::istream &in) { assert(false); }
@@ -271,6 +320,10 @@ public:
   std::string returnString() const { return val; }
   Value* returnMyNewCopy() const { return new String(*this); }
   void read(std::istream &in);
+  bool isEqual(const Value *other) const;
+  bool operator ==(const String& other) const { return isEqual(&other); }
+  bool operator !=(const String& other) const { return !(*this == other); }
+ 
   // Should have a constructor which allows creation from std::string directly.
 };
 
@@ -296,6 +349,9 @@ public:
   Value* returnMyNewCopy() const { return new Object(*this); }
   void read(std::istream &in);
   void erase(const std::string &key);
+  bool isEqual(const Value *other) const;
+  bool operator ==(const Object& other) const { return isEqual(&other); }
+  bool operator !=(const Object& other) const { return !(*this == other); }
 };
 
 class Array: public Value {
@@ -321,6 +377,11 @@ public:
     val.push_back(j);
   }
   void erase(const size_t &i);
+  bool isEqual(const Value* other) const;
+  bool operator ==(const Array& other) const { return isEqual(&other); }
+  bool operator !=(const Array& other) const { return !(*this == other); }
+ 
+
 };
 
 class Boolean: public Value {
@@ -335,6 +396,9 @@ public:
   void write(std::ostream &out) const { out<<((val) ? "true" : "false"); }
   Value* returnMyNewCopy() const { return new Boolean(*this); }
   void read(std::istream &in);
+  bool isEqual(const Value* other) const;
+  bool operator ==(const Boolean& other) const { return isEqual(&other); }
+  bool operator !=(const Boolean& other) const { return !(*this == other); } 
 };
 
 class Null: public Value {
@@ -343,6 +407,10 @@ public:
   const json_values type() const { return JSON_NULL; }
   Value* returnMyNewCopy() const { return new Null(*this); }
   void read(std::istream &in);
+  bool isEqual(const Value* other) const;
+  bool operator ==(const Null& other) const { return isEqual(&other); }
+  bool operator !=(const Null& other) const { return !(*this == other); } 
+
 };
 
 template<typename T>
