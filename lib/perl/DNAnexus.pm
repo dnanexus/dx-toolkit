@@ -45,7 +45,16 @@ sub DXHTTPRequest($;$%) {
     my $ua = LWP::UserAgent->new;
     my $response = $ua->request($request);
 
-    return decode_json($response->content);
+    if ($kwargs{want_full_response}) {
+        return $response;
+    } else {
+        for my $header (keys %{$response->headers}) {
+            if (lc($header) eq 'content-type' and ${$response->headers}{$header} =~ /^application\/json/) {
+                return decode_json($response->content);
+            }
+        }
+        return $response->content;
+    }
 }
 
 sub set_api_server_info(;$$$) {
