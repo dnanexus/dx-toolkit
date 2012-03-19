@@ -15,7 +15,7 @@ class DXCollection: public DXClass {
   // Collection-specific functions
 
   DXCollection() {}
-  DXCollection(const string &dxid) { this->setID(dxid); }
+  DXCollection(const string &dxid) { setID(dxid); }
   void create(const JSON &to_store);
   JSON get() const;
   void set(const JSON &to_store) const;

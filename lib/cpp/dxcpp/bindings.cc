@@ -4,5 +4,5 @@ JSON search() {
   return JSON();
 }
 
-void DXClass::wait_on_state(const string &state) const {
+void DXClass::waitOnState(const string &state) const {
 }

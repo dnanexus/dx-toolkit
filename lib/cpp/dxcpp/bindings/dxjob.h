@@ -15,7 +15,7 @@ class DXJob: public DXClass {
   // Job-specific functions
 
   void create(const JSON &fn_input, const string &fn_name);
-  void wait_on_done() const;
+  void waitOnDone() const;
 };
 
 #endif

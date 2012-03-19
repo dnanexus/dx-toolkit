@@ -36,8 +36,8 @@ void DXTable::close(const bool block) const {
 /**
  * Waits until the remote table has finished closing.
  */
-void DXTable::wait_on_close() const {
-  this->wait_on_state();
+void DXTable::waitOnClose() const {
+  waitOnState();
 }
 
 DXTable openDXTable(const string &dxid) {

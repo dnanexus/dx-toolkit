@@ -1,3 +1,6 @@
+#include <iostream>
+#include <fstream>
+#include <string>
 #include <gtest/gtest.h>
 #include "json.h"
 #include "dxcpp.h"
@@ -6,26 +9,112 @@ using namespace std;
 
 // TODO: Finish writing tests for other classes.
 
-class DXTableTest : public testing::Test {
+string getBaseName(const string& filename) {
+  size_t lastslash = filename.find_last_of("/\\");
+  return filename.substr(lastslash+1);
+}
+
+string foofilename = "";
+
+class DXFileTest : public testing::Test {
 public:
-  static DXTable dxtable;
-  static const JSON columns;
+  static const string foostr;
+  string tempfilename;
+
+  DXFile dxfile;
 
 protected:
+  virtual void SetUp() {
+    char name [L_tmpnam];
+    tmpnam(name);
+    tempfilename = string(name);
+
+    if (foofilename == "") {
+      char fooname [L_tmpnam];
+      tmpnam(fooname);
+      foofilename = string(fooname);
+      ofstream foofile(fooname);
+      foofile << foostr;
+      foofile.close();
+    }
+  }
+
   virtual void TearDown() {
+    remove(tempfilename.c_str());
+
     try {
-      this->dxtable.destroy();
+      dxfile.destroy();
     } catch (...) {
     }
   }
 };
 
-DXTable DXTableTest::dxtable = DXTable();
+const string DXFileTest::foostr = "foo\n";
+
+TEST_F(DXFileTest, UploadDownloadFiles) {
+  dxfile = uploadLocalFile(foofilename);
+  dxfile.waitOnClose();
+  ASSERT_FALSE(dxfile.is_open());
+
+  // TODO: Uncomment/fix for actual JSON interface
+  //  EXPECT_EQ(getBaseName(foofilename),
+  //	    dxfile.getProperties["name"]);
+
+  downloadDXFile(dxfile.getID(), tempfilename);
+
+  string stored;
+  ifstream downloadedfile(tempfilename.c_str());
+  downloadedfile >> stored;
+  ASSERT_EQ(foostr, stored);
+}
+
+TEST_F(DXFileTest, UploadString) {
+  // TODO
+}
+
+TEST_F(DXFileTest, WriteReadFile) {
+  // TODO
+
+  dxfile = newDXFile();
+  dxfile.write(DXFileTest::foostr.data(), DXFileTest::foostr.length());
+
+  DXFile same_dxfile = openDXFile(dxfile.getID());
+  same_dxfile.waitOnClose();
+
+  char buf[10];
+  same_dxfile.read(buf, foostr.length()+1);
+  ASSERT_EQ(buf, DXFileTest::foostr.c_str());
+  EXPECT_TRUE(same_dxfile.eof());
+
+  same_dxfile.seek(1);
+  EXPECT_FALSE(same_dxfile.eof());
+  same_dxfile.read(buf, foostr.length());
+  ASSERT_EQ(buf, DXFileTest::foostr.substr(1).c_str());
+}
+
+TEST_F(DXFileTest, StreamingOperators) {
+  // TODO: Test << and >>
+}
+
+class DXTableTest : public testing::Test {
+public:
+  DXTable dxtable;
+  static const JSON columns;
+
+protected:
+  virtual void TearDown() {
+    try {
+      dxtable.destroy();
+    } catch (...) {
+    }
+  }
+};
+
 const JSON DXTableTest::columns = JSON("[\"a:string\", \"b:int32\"]");
 
 TEST_F(DXTableTest, CreateDXTableTest) {
-  this->dxtable = newDXTable(DXTableTest::columns);
-  JSON desc = this->dxtable.describe();
+  dxtable = newDXTable(DXTableTest::columns);
+  JSON desc = dxtable.describe();
   ASSERT_EQ(DXTableTest::columns, desc["columns"]);
 }
 
@@ -38,15 +127,15 @@ TEST_F(DXTableTest, ExtendDXTableTest) {
     
 
     JSON more_cols("[\"c:int32\", \"d:string\"]");
-    this->dxtable = extendDXTable(table_to_extend.getID(),
+    dxtable = extendDXTable(table_to_extend.getID(),
 				  more_cols);
 
     ASSERT_EQ(JSON("[\"a:string\", \"b:int32\", \"c:int32\", \"d:string\"]"),
-	      this->dxtable.describe()["columns"]);
+	      dxtable.describe()["columns"]);
 
-    this->dxtable.addRows(JSON("[[10, \"End row 1\"], [20, \"End row 2\"]]"));
+    dxtable.addRows(JSON("[[10, \"End row 1\"], [20, \"End row 2\"]]"));
 
-    this->dxtable.close(true);
+    dxtable.close(true);
   } catch (int e) {
     try {
       table_to_extend.destroy();
@@ -57,7 +146,7 @@ TEST_F(DXTableTest, ExtendDXTableTest) {
 }
 
 TEST_F(DXTableTest, AddRowsTest) {
-  this->dxtable = newDXTable(DXTableTest::columns);
+  dxtable = newDXTable(DXTableTest::columns);
   // TODO: Finish this.
 }
 
@@ -156,5 +245,7 @@ TEST_F(DXJSONTest, GetSetTest) {
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   loadFromEnvironment();
-  return RUN_ALL_TESTS();
+  int result = RUN_ALL_TESTS();
+  remove(foofilename.c_str());
+  return result;
 }

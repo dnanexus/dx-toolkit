@@ -3,6 +3,6 @@
 void DXJob::create(const JSON &fn_input, const string &fn_name) {
 }
 
-void DXJob::wait_on_done() const {
-  this->wait_on_state("done");
+void DXJob::waitOnDone() const {
+  waitOnState("done");
 }

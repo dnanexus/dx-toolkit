@@ -46,7 +46,7 @@ class DXTable: public DXClass {
   /**
    * Waits until the remote table has finished closing.
    */
-  void wait_on_close() const;
+  void waitOnClose() const;
 };
 
 DXTable openDXTable(const string &dxid);

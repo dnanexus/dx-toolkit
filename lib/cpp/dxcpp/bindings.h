@@ -14,7 +14,7 @@ JSON search();
 class DXClass {
  protected:
   string dxid_;
-  void wait_on_state(const string &state="closed") const;
+  void waitOnState(const string &state="closed") const;
 
  public:
   string getID() const { return dxid_; }
@@ -28,7 +28,7 @@ class DXClass {
   virtual JSON describe() const = 0;
   virtual JSON getProperties(const JSON &keys=JSON()) const = 0;
   virtual void setProperties(const JSON &properties) const = 0;
-  virtual JSON getTypes() const { JSON desc = this->describe(); return desc["types"]; }
+  virtual JSON getTypes() const { JSON desc = describe(); return desc["types"]; }
   virtual void addTypes(const JSON &types) const = 0;
   virtual void removeTypes(const JSON &types) const = 0;
   virtual void destroy() = 0;

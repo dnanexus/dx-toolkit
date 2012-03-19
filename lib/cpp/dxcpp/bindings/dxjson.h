@@ -15,7 +15,7 @@ class DXJSON: public DXClass {
   // JSON-specific functions
 
   DXJSON() {}
-  DXJSON(const string &dxid) { this->setID(dxid); }
+  DXJSON(const string &dxid) { setID(dxid); }
   void create(const JSON &to_store);
   JSON get() const;
   void set(const JSON &to_store) const;

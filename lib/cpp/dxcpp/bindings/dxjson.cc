@@ -1,7 +1,7 @@
 #include "dxjson.h"
 
 void DXJSON::create(const JSON &to_store) {
-  this->setID("json-12345678901234567890abcd");
+  setID("json-12345678901234567890abcd");
 }
 
 JSON DXJSON::get() const {

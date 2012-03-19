@@ -6,20 +6,23 @@ void DXFile::setID(const string &dxid) {
 void DXFile::create() {
 }
 
-string DXFile::read() {
-  return "";
+void DXFile::read(char* s, int n) {
 }
 
-void DXFile::seek() {
+bool DXFile::eof() const {
+  return eof_;
+}
+
+void DXFile::seek(const int pos) {
 }
 
 void DXFile::flush() {
 }
 
-void DXFile::write() {
+void DXFile::write(const char* s, int n) {
 }
 
-void DXFile::upload_part() {
+void DXFile::uploadPart() {
 }
 
 bool DXFile::is_open() const {
@@ -29,8 +32,8 @@ bool DXFile::is_open() const {
 void DXFile::close(const bool block) const {
 }
 
-void DXFile::wait_on_close() const {
-  this->wait_on_state();
+void DXFile::waitOnClose() const {
+  waitOnState();
 }
 
 DXFile openDXFile(const string &dxid) {
