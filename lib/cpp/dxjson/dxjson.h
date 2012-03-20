@@ -1,5 +1,5 @@
-#ifndef __NOT_SO_SIMPLE_JSON_H__
-#define __NOT_SO_SIMPLE_JSON_H__
+#ifndef __DXJSON_H__
+#define __DXJSON_H__
 
 #include <cstdio>
 #include <cstring>
@@ -23,31 +23,23 @@
 
 typedef long long int64;
 
-namespace dx {
-  class JSONException {
-  public:
-    std::string err;
-    JSONException(const std::string &e): err(e) {}
-  };
+// TODO: 
+// - Support strict flag for utf-8 enforcement (both object "keys", and json String values) ?
 
-  /*
-  // Base class for all JSON related runtime errors 
-  class JSONException: public std::exception {
+namespace dx {
+
+  /** JSONException class: Inherits from std::exception
+    * Error of type JSONException is thrown by dxjson library.
+    */
+  class JSONException:public std::exception {
   public:
     std::string err;
-    JSONException(): err("An Unknown error occured");
     JSONException(const std::string &e): err(e) {}
-    virtual const char* what() const throw() {
+    const char* what() const throw() {
       return (const char*)err.c_str();
     }
-    virtual ~JSONException() throw() { }
-  };*/
-  /////////////////////////////////////////////////
-
-  // TODO: - Support strict flag for utf-8 enforcement (both object "keys", and json String values)
-  //       - Error when trying to do j8["key"] = j8 for a JSON_OBJECT j8 : Expected, but better if fixed
-  //       - Document the code
-
+    ~JSONException() throw() { }
+  };
   enum JSONValue {
     JSON_UNDEFINED = 0,
     JSON_OBJECT = 1,
@@ -357,7 +349,19 @@ namespace dx {
       */
     template<typename T>
     operator T() const;
-   
+    
+    /** Provide conversion functionality from JSON object to some fundamental data types.
+      * This generic version works only for numeric types (and has same effect as overloaded
+      * conversion operator). A specialization for std::string exist too.
+      * @return Value of JSON object in desired fundamental type
+      * @exception Throws error is a conversion is not possible.
+      */
+    template<typename T>
+    T get() const { 
+      // Reuses the conversion operator: operator T()
+      return static_cast<T>(*this); 
+    }
+
     /** Returns the type of current JSON object.
       * @return Type (a variable of type enum JSONValue) of current JSON object.
       */
@@ -617,7 +621,7 @@ namespace dx {
 
     if (!std::numeric_limits<T>::is_specialized)
       throw JSONException("You cannot convert this JSON object to Numeric/Boolean type.");
-    
+     
     switch(typ) {
       case JSON_INTEGER: 
         return static_cast<T>( ((Integer*)this->val)->val);
@@ -628,10 +632,18 @@ namespace dx {
       default: assert(false); // Should never happen (already checked at top)
     }
   }
-
+  
   template<typename T>
   const JSON& JSON::operator [](const T&x) const {
     return (*(const_cast<const JSON*>(this)))[static_cast<size_t>(x)];
   }
+  
+  template<>
+  inline std::string JSON::get<std::string>() const {
+    if (this->type() != JSON_STRING)
+      throw JSONException("You cannot use get<std::string>/ger<char*> for a non JSON_STRING value");
+    return ((String*)this->val)->val;
+  }
+  
 }
 #endif

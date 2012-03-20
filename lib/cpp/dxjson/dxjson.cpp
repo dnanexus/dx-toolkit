@@ -357,24 +357,6 @@ JSON& JSON::operator [](const std::string &s) { return const_cast<JSON&>( (*(con
 JSON& JSON::operator [](const JSON &j) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[j]); }
 JSON& JSON::operator [](const char *str) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[str]); }
 
-/*
-JSON::operator std::string() const {
-  std::cout<<"\nYAHOOOOOOOOOOOO!!!!\n";
-  if (this->type() != JSON_STRING)
-    throw JSONException("Cannot convert a non JSON_STRING object to std::string");
-  return ((String*)this->val)->val;
-}*/
-
-/*
-JSON::JSON(Value *v) {
-  if (v != NULL) {
-    val = v->returnMyNewCopy();
-  }
-  else
-    val = NULL;
-}
-*/
-
 JSON::JSON(const JSONValue &rhs) {
   switch(rhs) {
     case JSON_ARRAY: val = new Array(); break;
@@ -394,11 +376,7 @@ JSON::JSON(const JSON &rhs) {
   else
     val = NULL;
 }
-/*
-JSON::JSON(Integer rhs) {
-  this->val = rhs.returnMyNewCopy();
-}
-*/
+
 JSON& JSON::operator =(const JSON &rhs) {
   if (this == &rhs) // Self-assignment check
     return *this;

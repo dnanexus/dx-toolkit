@@ -68,7 +68,10 @@ int main() {
     j9.erase(2);
     assert(j9 != j8);
     assert(JSON(JSON_NULL) == JSON(JSON_NULL));
-   
+ 
+    // JSON_UNDEFINED != JSON_UNDEFINED
+    assert(JSON() != JSON());
+
     // Iterator test
     int i=0;
     JSON j10(JSON_OBJECT);
@@ -148,12 +151,25 @@ int main() {
      assert(j12["4.1"].toString() == "\"blahh\"");
      assert(long(j12["4"]) == 212l);
      assert(double(j12["1"]) < double(j11["2"]));
-
-     std::cout<<"\nAll assertions perfoemed\n";
+     
+     JSON j13(JSON_OBJECT);
+     j13["foo"] = "blah";
+     j13["foo2"] = 12;
+     j13["foo3"] = 12.32;
+     std::string str1 = j13["foo"].get<std::string>();
+     assert(str1 == "blah");
+     assert(j13["foo2"].get<int>() == 12);
+     assert(j13["foo3"].get<double>() == 12.32);
+     assert(j13["foo3"].get<bool>() == true);
+     
+     JSON j14(JSON_NULL);
+     assert(j14 == JSON_NULL);
+      
+     std::cout<<"\nAll assertions performed succesfully\n";
   }
-  catch (JSONException &e) 
+  catch (exception &e) 
   {
-    std::cout<<"\nErrror occured: \n"<<e.err<<"\n";
+    std::cout<<"\nErrror occured: \n"<<e.what()<<"\n";
   }
 
   return 0;
