@@ -13,9 +13,9 @@ int main() {
     j2["blah"] = "sdsdsd";
     j2["blah"] = "key";
     j2["lala"] = j1[j2["blah"]];
-    std::cout<<"\nj2 = \n"<<j2.ToString()<<"\n";
+    std::cout<<"\nj2 = \n"<<j2.toString()<<"\n";
     j2.erase("lala");
-    std::cout<<"\n j2 after erasing 'lala' = \n"<<j2.ToString()<<"\n";
+    std::cout<<"\n j2 after erasing 'lala' = \n"<<j2.toString()<<"\n";
     // JSON parse tests
     JSON j3 = JSON::parse("{\"blah\": [  21,232,\"foo\" , {\"key\": \"val1\"}, true, false, null]}");
     j3["blah"].push_back(1.23456789101112);
@@ -27,22 +27,22 @@ int main() {
     mp["lala"] = 12.11e-212;
     mp["dsdsd"] = 1212;
     j3["map"] = mp;
-    std::cout<<"\nj3 = "<<j3.ToString();
-    std::cout<<"\nj3[blah] = "<<j3["blah"].ToString();
-    std::cout<<"\nj3[blah][2] = "<<j3["blah"][2].ToString()<<"\n";
+    std::cout<<"\nj3 = "<<j3.toString();
+    std::cout<<"\nj3[blah] = "<<j3["blah"].toString();
+    std::cout<<"\nj3[blah][2] = "<<j3["blah"][2].toString()<<"\n";
    
     j3["blah"].erase(2);
-    std::cout<<"\nBlah after erasing indx = 2\n"<<j3["blah"].ToString()<<"\n";
+    std::cout<<"\nBlah after erasing indx = 2\n"<<j3["blah"].toString()<<"\n";
 
     JSON j4;
     std::string str = "{\"清华大学\": [\"this should look like second element\", \"\\u6e05\\u534e\\u5927\\u5b66\", \"\\n\\b\\t\\\"\"]    }";
     j4 = JSON::parse(str);
     
-    std::cout<<"j4 = "<<j4.ToString()<<"\n";
+    std::cout<<"j4 = "<<j4.toString()<<"\n";
 
     JSON j5(JSON_BOOLEAN);
     j5 = true;
-    std::cout<<"\nj5 = "<<j5.ToString()<<"\n";
+    std::cout<<"\nj5 = "<<j5.toString()<<"\n";
     
     // Equality tests
     std::cout<<"\nj4 == j5: "<<((j4==j5)?"true":"false");
@@ -61,7 +61,7 @@ int main() {
     j8.push_back(12.21);
     j8.push_back("hello");
     j8.push_back(j8);
-    std::cout<<"\nj8 = "<<j8.ToString()<<"\n";
+    std::cout<<"\nj8 = "<<j8.toString()<<"\n";
     JSON j9 = j8;
     assert(j9 == j8);
     j9.erase(2);
@@ -78,14 +78,14 @@ int main() {
 
     j10["key4"] = j8;
 
-    std::cout<<"\nChecking forward iterators now ... j10 = "<<j10.ToString()<<"\n";
+    std::cout<<"\nChecking forward iterators now ... j10 = "<<j10.toString()<<"\n";
     for(JSON::array_iterator it = j8.array_begin();it != j8.array_end(); ++it, ++i) {
       assert(j8[i] == *(it));
     }
     
     for(JSON::object_iterator it = j10.object_begin();it != j10.object_end(); ++it) {
       assert(j10[it->first] == it->second);
-      std::cout<<"Key = "<<it->first<<", Value = "<<it->second.ToString()<<endl;
+      std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
     } 
     std::cout<<"\nChecking reverse now ...\n"; 
     i = j8.size() - 1;
@@ -95,7 +95,7 @@ int main() {
     
     for(JSON::object_reverse_iterator it = j10.object_rbegin();it != j10.object_rend(); ++it) {
       assert(j10[it->first] == it->second);
-      std::cout<<"Key = "<<it->first<<", Value = "<<it->second.ToString()<<endl;
+      std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
     } 
  
     // 
@@ -130,7 +130,7 @@ int main() {
      assert(double(j11["1"]) == 1);
      assert(double(j11["2"]) == 12.33);
      assert(bool(j11["3"]) == true);
-     assert(j11["4.1"].ToString() == "\"blahh\"");
+     assert(j11["4.1"].toString() == "\"blahh\"");
      assert(long(j11["4"]) == 212l);
      assert(double(j11["1"]) < double(j11["2"]));
       
@@ -144,7 +144,7 @@ int main() {
      assert(double(j12["1"]) == 1);
      assert(double(j12["2"]) == 12.33);
      assert(bool(j12["3"]) == true);
-     assert(j12["4.1"].ToString() == "\"blahh\"");
+     assert(j12["4.1"].toString() == "\"blahh\"");
      assert(long(j12["4"]) == 212l);
      assert(double(j12["1"]) < double(j11["2"]));
 

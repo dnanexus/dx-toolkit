@@ -305,7 +305,7 @@ void JSON::write(std::ostream &out) const {
   out.flush();
 }
 
-void JSON::ReadFromString(const std::string &jstr) {
+void JSON::readFromString(const std::string &jstr) {
   std::stringstream inp(jstr);
   this->read(inp);
 }
@@ -334,24 +334,6 @@ const JSON& JSON::operator[](const size_t &indx) const {
 
 const JSON& JSON::operator[](const JSON &j) const {
   if (this->type() == JSON_ARRAY) {
-  /*  size_t i;
-    Integer *ptr1;
-    Real *ptr2;
-    switch(j.type()) {
-      case JSON_INTEGER:
-        ptr1 = dynamic_cast<Integer*>(j.val);
-        assert(ptr1 != NULL);
-        i = static_cast<size_t>(ptr1->val);
-        break;
-
-      case JSON_REAL:
-        ptr2 = dynamic_cast<Real*>(j.val);
-        assert(ptr2 != NULL);
-        i = static_cast<size_t>(ptr2->val);
-        break;
-
-      default: throw JSONException("Cannot use an non-numeric value to index JSON_ARRAY using []");
-    }*/
     return (*this)[size_t(j)];
   }
   if (this->type() == JSON_OBJECT) {
@@ -390,7 +372,7 @@ JSON::JSON(Value *v) {
 }
 */
 
-JSON::JSON(const json_values &rhs) {
+JSON::JSON(const JSONValue &rhs) {
   switch(rhs) {
     case JSON_ARRAY: val = new Array(); break;
     case JSON_OBJECT: val = new Object(); break;
@@ -399,7 +381,7 @@ JSON::JSON(const json_values &rhs) {
     case JSON_STRING: val = new String(); break;
     case JSON_BOOLEAN: val = new Boolean(); break;
     case JSON_NULL: val = new Null(); break;
-    default: throw JSONException("Illegal json_values value for JSON initialization");
+    default: throw JSONException("Illegal JSONValue value for JSON initialization");
   }
 }
     
@@ -456,7 +438,7 @@ JSON& JSON::operator =(const char s[]) {
 
 
 size_t JSON::size() const {
-  json_values t = type();
+  JSONValue t = type();
   if (t != JSON_ARRAY && t != JSON_OBJECT && t != JSON_STRING)
     throw JSONException("size()/length() can only be called for JSON_ARRAY/JSON_OBJECT/JSON_STRING");
   if(t == JSON_ARRAY) {
@@ -484,7 +466,7 @@ void JSON::push_back(const JSON &j) {
   tmp->push_back(j);
 }
 
-std::string JSON::ToString(bool onlyTopLevel) const {
+std::string JSON::toString(bool onlyTopLevel) const {
   if (onlyTopLevel && this->type() != JSON_OBJECT && this->type() != JSON_ARRAY)
     throw JSONException("Only a JSON_OBJECT/JSON_ARRAY can call toString() with onlyTopLevel flag set to true");
   std::stringstream in;
@@ -523,7 +505,7 @@ bool JSON::has(const JSON &j) const {
 }
 
 void JSON::read(std::istream &in) {
-  JSON_Utility::ReadJSONValue(in, *this, true);
+  JSON_Utility::ReadJSONValue(in, *this, false);
 }
 
 void JSON::erase(const size_t &indx) {
