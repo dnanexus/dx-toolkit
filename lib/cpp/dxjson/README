@@ -5,7 +5,7 @@ Installation:
 **************
   In directory dxjson/, run this command
   
-    $ sudo make_standard_lib.sh
+    $ sudo ./make_standard_lib.sh
   
   This will build a static library (libdxjson.a) and copy it to /usr/local/lib . Header files will be copied to /usr/local/include/dxjson/
 
@@ -48,10 +48,11 @@ Example Program & Compilation:
 *************************
 Documentation generation
 *************************
-  In top-level directory run this command (NOTE: You must have Doxygen installed on your system)
-    $ doxygen doxygen.config
+  In top-level directory run these commands (NOTE: You must have Doxygen installed on your system)
+    $ mkdir -p doc/cpp/dxjson
+    $ doxygen
 
-  This will generate documentation in ./doxygen/html. You can start looking at documentation by opening ./doxygen/html/index.html in a browser.
+  This will generate documentation in ./doc/cpp/dxjson/html. You can start looking at documentation by opening index.html in a browser.
 
 - EOF -
 
