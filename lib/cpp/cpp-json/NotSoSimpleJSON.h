@@ -44,8 +44,6 @@ public:
 /////////////////////////////////////////////////
 
 // TODO: - Support strict flag for utf-8 enforcement (both object "keys", and json String values)
-//       - Write tests
-//       - Run tests using STL algorithms for JSON
 //       - Error when trying to do j8["key"] = j8 for a JSON_OBJECT j8 : Expected, but better if fixed
 //       - Document the code
 
