@@ -32,8 +32,8 @@ sub DXHTTPRequest($;$%) {
     $data ||= {};
     die("Expected data to be a hash") if ref($data) ne "HASH";
 
-    my $method = $kwargs{method} || 'POST';
-    my $headers = $kwargs{headers} || {};
+    my $method = $kwargs{method} or 'POST';
+    my $headers = $kwargs{headers} or {};
 
     my $request = HTTP::Request->new($method, $APISERVER.$resource);
     $request->header($headers);
@@ -64,7 +64,7 @@ sub set_api_server_info(;$$$) {
     $protocol ||= 'http';
     
     $APISERVER_HOST = $host;
-    $APISERVER_HOST = $port;
+    $APISERVER_PORT = $port;
     $APISERVER = $protocol . "://" . $host . ":" . $port;
 }
 
