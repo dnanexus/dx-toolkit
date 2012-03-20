@@ -1,5 +1,5 @@
 #include <cstdio>
-#include "dxjson.h"
+#include <dxjson/dxjson.h>
 
 int main() {
   using namespace dx;
