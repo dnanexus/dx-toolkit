@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include "NotSoSimpleJSON.h"
+#include "dxjson.h"
 
 using namespace std;
-
+using namespace dx;
 TEST(JSONTest, CreationIndexingAndConstness) {
 
   JSON j1 = JSON::parse("{\"x\": 1, \"hello\": \"world\"}");

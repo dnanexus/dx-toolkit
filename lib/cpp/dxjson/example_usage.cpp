@@ -1,7 +1,8 @@
 #include <cstdio>
-#include "NotSoSimpleJSON.h"
+#include "dxjson.h"
 
 int main() {
+  using namespace dx;
   using namespace std;
   try 
   {

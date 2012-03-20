@@ -1,6 +1,9 @@
-#include "NotSoSimpleJSON.h"
+#include "dxjson.h"
+
+using namespace dx;
 
 extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
+
 
 namespace JSON_Utility 
 { 
