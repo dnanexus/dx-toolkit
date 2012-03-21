@@ -838,3 +838,8 @@ JSON::array_reverse_iterator JSON::array_rend() {
   return (dynamic_cast<Array*>(this->val))->val.rend();
 }
 
+void JSON::resize_array(size_t desired_size) {
+  if (this->type() != JSON_ARRAY)
+    throw JSONException("Cannot call resize_array() on a non JSON_ARRAY object");
+  ((Array*)this->val)->val.resize(desired_size);
+}

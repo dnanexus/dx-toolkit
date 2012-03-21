@@ -129,6 +129,34 @@ TEST(JSONTest, AssignmentAndCopyConstructor) {
   ASSERT_NE(j2["k1"], 1); // In this case, 1 will be converted to JSON, and 1.0 != 1 (in our json case)
 }
 
+TEST(JSONTest, ResizeArray) {
+  JSON j1(JSON_ARRAY);
+  ASSERT_EQ(j1.length(), 0);
+  j1.resize_array(10);
+  ASSERT_EQ(j1.length(), 10);
+  ASSERT_EQ(j1[0].type(), JSON_UNDEFINED);
+  
+  JSON j2(JSON_ARRAY);
+  for (int i = 0;i < 10 ; i++)
+    j2.push_back(i);
+  
+  JSON j3 = j2;
+  ASSERT_EQ(int(j2[4]), 4);
+  ASSERT_EQ(int(j2[9]), 9);
+  
+  j2.resize_array(5);
+  ASSERT_EQ(j2.length(), 5);
+  ASSERT_EQ(int(j2[4]), 4);
+  j2.resize_array(0);
+  ASSERT_EQ(j2.length(), 0);
+  
+  int lastval = int(j3[j3.length() -1 ]);
+  int len = j3.length();
+  j3.resize_array(j3.length()); // Should have no effect;
+  ASSERT_EQ(len, j3.length());
+  ASSERT_EQ(lastval, int(j3[len-1]));
+}
+
 TEST(JSONTest, UnicodeAndEscapeSequences) {
   
   // TODO: Add more unicode tests

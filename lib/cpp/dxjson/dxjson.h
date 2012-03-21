@@ -144,7 +144,7 @@ namespace dx {
     template<typename T>
     JSON(const T& x);
 
-    /** Clears the content of JSON object */
+    /** Clears the content of JSON object. Sets the type = JSON_UNDEFINED. */
     void clear() { delete val; val=NULL; }
 
     /** Writes the serialized JSON object to the output stream
@@ -366,6 +366,22 @@ namespace dx {
       * @return Type (a variable of type enum JSONValue) of current JSON object.
       */
     const JSONValue type() const { return (val == NULL) ? JSON_UNDEFINED : val->type(); }
+
+    /** Resizes an JSON_ARRAY.
+      * If current size of array = curr_size, and desired size provided by user = desired_size, then
+      *
+      * Case curr_size < desired_size: (desired_size - curr_size) number of JSON_UNDEFINED elements
+      * are pushed at the end of JSON_ARRAY object.
+      *
+      * Case curr_size > desired_size: Last (curr_size - desired_size) number of JSON elements
+      * are deleted from array
+      *
+      * Case curr_size == desired_size: No effect
+      *
+      * After executing this function, size() == desired_size
+      * @param desired_size The desired size of new array
+      */
+    void resize_array(size_t desired_size);
 
     /** Returns total number of element in a JSON_ARRAY or JSON_OBJECT.
       * It's illegal to call this method for any other type than JSON_ARRAY/JSON_OBJECT.
