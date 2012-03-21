@@ -18,13 +18,13 @@
 #include <typeinfo>
 #include <cmath>
 #include <algorithm>
+#include <stdint.h>
 
 #include "utf8/utf8.h"
 
 typedef long long int64;
 
 // TODO: 
-// - Support strict flag for utf-8 enforcement (both object "keys", and json String values) ?
 
 namespace dx {
 

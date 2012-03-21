@@ -3,6 +3,8 @@
 
 using namespace std;
 using namespace dx;
+
+
 TEST(JSONTest, CreationIndexingAndConstness) {
 
   JSON j1 = JSON::parse("{\"x\": 1, \"hello\": \"world\"}");
@@ -46,6 +48,69 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   ASSERT_EQ(j3_const[j3_const[4]], j2);
 }
 
+TEST(JSONTest, JSONEquality) {
+  JSON j1(JSON_NULL);
+  ASSERT_EQ(j1, JSON_NULL);
+
+  JSON j2,j3;
+  ASSERT_NE(j2, j3); // JSON_UNDEFINED != JSON_UNDEFINED
+
+  JSON j4 = JSON::parse("[]");
+  ASSERT_EQ(j4, j4);
+  
+  JSON j5(JSON_ARRAY);
+  ASSERT_EQ(j4, j5);
+
+  j4.push_back(12);
+  j5.push_back(12);
+  ASSERT_EQ(j4, j5);
+
+  j4.push_back(14);
+  ASSERT_NE(j4,j5);
+  j5.push_back(14);
+  ASSERT_EQ(j4, j5);
+
+  JSON obj = JSON::parse("{\"foo\": 1, \"blah\": null}");
+  j4.push_back(obj);
+  j5.push_back(obj);
+  ASSERT_EQ(j4, j5);
+  
+  ASSERT_EQ(j4[2]["blah"], JSON_NULL);
+
+
+  j4[2]["blah"] = "null";
+  ASSERT_NE(j4[2]["blah"], JSON_NULL);
+  ASSERT_NE(j4, j5);
+  
+  j4[2]["blah"] = JSON(JSON_NULL);
+  ASSERT_EQ(j4, j5);
+
+
+  j4[2]["new"] = 0;
+  ASSERT_NE(j4, j5);
+  
+  j5[2]["new"] = 0l;
+  j4[2]["new"] = 0.0;
+  ASSERT_NE(j4, j5);
+  
+  j4[2]["new"] = 0;
+  ASSERT_TRUE(j4 == j5);
+  ASSERT_FALSE(j4 != j5);
+
+  ASSERT_EQ(JSON::parse("{}"), JSON(JSON_OBJECT));
+}
+
+TEST(JSONTest, Miscellaneous) {
+  JSON j1 = "";
+  ASSERT_EQ(j1.toString(), "\"\"");
+  ASSERT_EQ(j1.get<std::string>(), "");
+  ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
+  ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
+  ASSERT_EQ(JSON::parse("[1.213e-2]"), JSON::parse("[.01213]"));
+  
+  ASSERT_EQ(JSON::parse("[1.213E-2]"), JSON::parse("[.1213e-1]"));
+}
+
 TEST(JSONTest, AssignmentAndCopyConstructor) {
   JSON j1 = vector<int>(5,0);
   ASSERT_EQ(j1.type(), JSON_ARRAY);
@@ -65,14 +130,83 @@ TEST(JSONTest, AssignmentAndCopyConstructor) {
 }
 
 TEST(JSONTest, UnicodeAndEscapeSequences) {
+  
   // TODO: Add more unicode tests
   JSON j1 = "\u6e05\u534e\u5927\u5b66";
   ASSERT_EQ(j1, "清华大学");
   
   JSON j2 = '\n';
   ASSERT_EQ(j2.toString(), "\"\\n\"");
+
+  ASSERT_EQ(JSON::parse("[\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]").toString(), "[\"\\\"\\\\/\\b\\f\\n\\r\\t\"]");
+  
+  ASSERT_EQ(JSON::parse("[\"\\u0012 escaped control character\"]").toString(), "[\"\\u0012 escaped control character\"]");
+  
+  ASSERT_EQ(JSON::parse("[\"\\u000a\"]").toString(), "[\"\\n\"]");
+  ASSERT_EQ(JSON::parse("[\"\\u000d\"]").toString(), "[\"\\r\"]");
+  ASSERT_EQ(JSON::parse("[\"\\u001f\"]").toString(), "[\"\\u001f\"]");
+  ASSERT_EQ(JSON::parse("[\"\\u0020\"]").toString(), "[\" \"]");
+  ASSERT_EQ(JSON::parse("[\"\\u0000\"]").toString(), "[\"\\u0000\"]");
+  ASSERT_EQ(JSON::parse("[\"\\uff13\"]").toString(), "[\"３\"]");
+  ASSERT_EQ(JSON::parse("[\"\\uD834\\uDD1E surrogate, four-byte UTF-8\"]").toString(), "[\"𝄞 surrogate, four-byte UTF-8\"]");
+  ASSERT_EQ(JSON::parse("[\"€þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\"]").toString(), "[\"€þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\"]");
+ 
+  JSON j3 = JSON::parse("\"\\u0821\"");
+  ASSERT_EQ(j3.get<std::string>().length(), 3);
+//  ASSERT_EQ(j3.get<std::string>(), std::string(""ࠡ "));
+/*  
+  // Construct an invalid utf8 (should be replaced with ��)
+  std::string temp = "[\"";
+  temp.push_back(0xc0);
+  temp.push_back(0x8a);
+  temp += "\"]";
+  temp = JSON::parse(temp).toString();
+  std::cout<<"2 = "<<unsigned(temp[2])<<"3 = "<<unsigned(temp[3])<<endl;
+  ASSERT_EQ(JSON::parse(temp).toString(), "[\"��\"]");
+  */
 }
 
+TEST(JSONTest, getAndConversionOperator) {
+  JSON j1 = JSON::parse("{}");
+  ASSERT_EQ(j1.type(), JSON_OBJECT);
+  j1["1"] = 1;
+  j1["2"] = 1.1;
+  j1["3"] = 0;
+  j1["4"] = "string";
+  j1["5"] = true;
+
+  ASSERT_EQ(j1["1"].get<int>(), 1);
+  ASSERT_EQ(j1["2"].get<int>(), 1);
+  ASSERT_TRUE( fabs(j1["2"].get<double>() - 1.1) < 1e-12);
+  ASSERT_EQ(j1["3"].get<bool>(), false);
+  ASSERT_EQ(j1["5"].get<bool>(), true);
+  ASSERT_EQ(j1["1"].get<bool>(), true);
+  ASSERT_EQ(j1["5"].get<int>(), 1);
+  ASSERT_EQ(j1["4"].get<string>(), "string");
+  ASSERT_EQ(j1["5"].get<bool>(), bool(j1["5"]));
+  ASSERT_EQ(j1["1"].get<short int>(), (short int)j1["1"]);
+  ASSERT_EQ(j1["1"].get<float>(), (float)j1["1"]);
+
+  bool flag = false;
+  try {
+    j1["4"].get<int>();
+    ASSERT_TRUE(false);
+  }
+  catch(exception &e) {
+    flag = true;
+  }
+  ASSERT_TRUE(flag);
+  
+  flag = false;
+  try {
+    j1["1"].get<std::string>();
+    ASSERT_TRUE(false);
+  }
+  catch(exception &e) {
+    flag = true;
+  }
+  ASSERT_TRUE(flag);
+}
 
 TEST(JSONTest, HasAndErase) {
   JSON j1 = JSON::parse("{\"k1\": \"k2\", \"k2\": [1,2,3,4], \"k3\": 14}");

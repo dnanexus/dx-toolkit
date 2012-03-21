@@ -7,6 +7,14 @@ extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
 
 namespace JSON_Utility 
 { 
+  
+  std::string itos(int i)  // convert int to string
+  {
+    std::stringstream s;
+    s << i;
+    return s.str();
+  }
+
   void SkipWhiteSpace(std::istream &in)
   {
     int c;
@@ -25,35 +33,46 @@ namespace JSON_Utility
       out<<'"';
 
     for (unsigned i = 0; i < s.length(); ++i) 
-    {  
-      switch (s[i]) 
-      { 
-      case '"': 
-        out<<"\\\""; 
-        break; 
-      case '\\': 
-        out<<"\\\\"; 
-        break; 
-      case '\b': 
-        out<<"\\b"; 
-        break; 
-      case '\f': 
-        out<<"\\f"; 
-        break; 
-      case '\n': 
-        out<<"\\n"; 
-        break; 
-      case '\r': 
-        out<<"\\r"; 
-        break; 
-      case '\t': 
-        out<<"\\t"; 
-        break; 
-      default: 
-        out<<s[i]; 
-      } 
+    { 
+      if(s[i] >= 0x0000 && s[i] <= 0x001f) // control character case
+      {
+        char temphex[5] = {0};
+        switch(s[i]) {
+          case '\b': 
+            out<<"\\b"; 
+            break; 
+          case '\f': 
+            out<<"\\f"; 
+            break; 
+          case '\n': 
+            out<<"\\n"; 
+            break; 
+          case '\r': 
+            out<<"\\r"; 
+            break; 
+          case '\t': 
+            out<<"\\t"; 
+            break;
+          default: 
+            out<<"\\u";
+            sprintf(temphex, "%04x", s[i]);
+            out<<std::string(temphex);
+            break;
+        }
+      }
+      else {
+        switch(s[i]) {
+          case '"': 
+            out<<"\\\""; 
+            break; 
+          case '\\': 
+            out<<"\\\\"; 
+            break; 
+          default: 
+            out<<s[i]; 
+        } 
+      }
     }
-
     if (enclosingQuotes)
       out<<'"';
   }
@@ -173,25 +192,26 @@ namespace JSON_Utility
     }
   }
 
-  std::string appendUTF8(int x) {
-    char tmp[5] = {0};
-    utf8::append(x, tmp);
-    return std::string(tmp);
-  }
+/*  std::string appendUTF8(uint32_t x) {
+    std::string temp_str = "";
+    //unsigned char tmp[5] = {0};
+    utf8::append(x, std::back_inserter(temp_str));
+    //return std::string(tmp);
+    return temp_str;
+  }*/
   // See this function in utf8 namespace to fix invalid utf8 characters
   // void fix_utf8_string(std::string& str);
   
-  inline int hexdigit_to_num(char ch) {
+  inline int32_t hexdigit_to_num(char ch) {
     if (ch >= '0' && ch <= '9')
-      return int(ch - '0');
+      return uint32_t(ch - '0');
     ch = toupper(ch);
     if (ch >= 'A' && ch <= 'F')
-      return int(ch - 'A' + 10);
-    throw JSONException("Invalid Hex digit: " + std::string(1,ch));
+      return uint32_t(ch - 'A' + 10);
+    throw JSONException("Invalid Hex digit in unicode escape \\uxxxx: " + std::string(1,ch));
   }
 
-  // This function assumes, int is at least 32 bit long
-  inline int string4_to_hex(char str[]) {
+  inline int32_t string4_to_hex(char str[]) {
     // We assume that str is always exactly 4 character long
     return ( (hexdigit_to_num(str[0]) << 12) +
              (hexdigit_to_num(str[1]) << 8)  +
@@ -217,6 +237,10 @@ namespace JSON_Utility
           throw JSONException("Unexpected EOF while reading string");
         
         char hex[4];
+        char temp_buffer[6];
+        int32_t first16bit, second16bit;
+        int32_t codepoint;
+        char tx; // temporary
         switch(ch) {
           case '"': out += '"';   break;
           case '\\': out += '\\'; break;
@@ -227,11 +251,50 @@ namespace JSON_Utility
           case 'r': out += '\r';  break;
           case 't': out += '\t';  break;
           
-          case 'u': 
+          case 'u':
             in.read(hex, 4);
             if(in.eof() || in.gcount() != 4u)
               throw JSONException("Expected exactly 4 hex digits after \\u");
-            out += appendUTF8(string4_to_hex(hex));
+            first16bit = string4_to_hex(hex);
+            /*if(first16bit >= 0x0000 && first16bit <= 0x001f) {
+              // Control character case, should be escaped
+              // http://stackoverflow.com/questions/4901133/json-and-escaping-characters
+              tx = char(first16bit);
+              if (tx == '\b' || tx == '\f' || tx == '\n' || tx == '\r' || tx == '\t')
+                out += tx;
+              else // If it is not one of special characters (above): escape it in hex form
+                out += ((((std::string("\\u") + hex[0]) + hex[1]) + hex[2]) + hex[3]);
+              break;
+            }*/
+          
+            codepoint = first16bit;
+            if(0xD800 <= first16bit && first16bit <= 0xDBFF) {
+              // Surrogate pair case
+              // Must have next 6 characters of the form: \uxxxx as well
+              in.read(temp_buffer, 6);
+              if(in.eof() || in.gcount() != 6u || temp_buffer[0] != '\\' || temp_buffer[1] != 'u')
+                throw JSONException("Missing surrogate pair in unicode sequence");
+              second16bit = string4_to_hex(&temp_buffer[2]);
+
+              if(0xDC00 <= second16bit && second16bit <= 0xDFFF) {
+                /* valid second surrogate */
+                codepoint = ((first16bit - 0xD800) << 10) + (second16bit - 0xDC00) + 0x10000;
+              }
+              else {
+                // Invalid second surrogate
+                throw JSONException("Invalid second 16 bit value in surrogate pair: first 16 bit = " + JSON_Utility::itos(first16bit) + " and second 16 bit = " + JSON_Utility::itos(second16bit));
+              }
+            }
+            try {
+              // changing it to utf8::unchecked::append will stop throwing of error
+              // in case of invalid utf8 point
+              utf8::append(codepoint, back_inserter(out));
+            } 
+            catch(utf8::invalid_code_point &e) {
+                std::string line;
+                getline(in, line);
+                throw JSONException("Invalid UTF-8 code point found in text. Value = " + itos(codepoint) + ". Location = " + line + "\nInternal message = " + e.what());
+            } 
             break;
           default:
             throw JSONException("Illegal escape sequence: \\" + std::string(1, ch));
