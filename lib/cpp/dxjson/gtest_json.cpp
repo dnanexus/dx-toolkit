@@ -1,9 +1,26 @@
 #include <gtest/gtest.h>
+#include <iostream>
 #include "dxjson.h"
 
 using namespace std;
 using namespace dx;
 
+bool exceptionflag;
+
+// A macro which asserts that a JSONException is thrown by provided statement
+#define ASSERT_JSONEXCEPTION(a) \
+  exceptionflag = false; \
+  try { a; ASSERT_TRUE(false); } catch(JSONException &e) { exceptionflag =  true; } \
+  ASSERT_TRUE(exceptionflag);
+
+// This function is useful for debuggin purposes (utf-8 cases)
+void printStringAsIntegers(string str) {
+  std::cout<<"\nString = "<<str<<"\nInteger version = ";
+  for(int i=0;i<str.length();i++) {
+    cout<<int(str[i])<<" ";
+  }
+  cout<<"\n";
+}
 
 TEST(JSONTest, CreationIndexingAndConstness) {
 
@@ -175,23 +192,63 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   ASSERT_EQ(JSON::parse("[\"\\u001f\"]").toString(), "[\"\\u001f\"]");
   ASSERT_EQ(JSON::parse("[\"\\u0020\"]").toString(), "[\" \"]");
   ASSERT_EQ(JSON::parse("[\"\\u0000\"]").toString(), "[\"\\u0000\"]");
+  std::string temp = "[\"x\"]";
+  temp[2] = char(0);
+  ASSERT_EQ(JSON::parse(temp).toString(), "[\"\\u0000\"]");
+
   ASSERT_EQ(JSON::parse("[\"\\uff13\"]").toString(), "[\"３\"]");
   ASSERT_EQ(JSON::parse("[\"\\uD834\\uDD1E surrogate, four-byte UTF-8\"]").toString(), "[\"𝄞 surrogate, four-byte UTF-8\"]");
   ASSERT_EQ(JSON::parse("[\"€þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\"]").toString(), "[\"€þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\"]");
  
   JSON j3 = JSON::parse("\"\\u0821\"");
-  ASSERT_EQ(j3.get<std::string>().length(), 3);
-//  ASSERT_EQ(j3.get<std::string>(), std::string(""ࠡ "));
-/*  
-  // Construct an invalid utf8 (should be replaced with ��)
-  std::string temp = "[\"";
+  std::string s1j3 = j3.get<std::string>();
+  ASSERT_EQ(s1j3.length(), 3); 
+  string s2j3 = "\"";
+  s2j3.push_back(-32);
+  s2j3.push_back(-96);
+  s2j3.push_back(-95);
+  s2j3.push_back('\"');
+  ASSERT_EQ(s1j3, (JSON::parse(s2j3)).get<std::string>());
+  
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\\udb00\""));
+  JSON::parse("\"\\ud800\\udc00\""); // Should not throw exception
+  
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\u12\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\u\""));
+  ASSERT_EQ(JSON::parse("\"\\\\u\"").get<std::string>(), "\\u");
+ 
+  // Construct an invalid utf8 (should be replaced with replacement character (U+FFFD))
+  temp = "\"";
   temp.push_back(0xc0);
   temp.push_back(0x8a);
-  temp += "\"]";
-  temp = JSON::parse(temp).toString();
-  std::cout<<"2 = "<<unsigned(temp[2])<<"3 = "<<unsigned(temp[3])<<endl;
-  ASSERT_EQ(JSON::parse(temp).toString(), "[\"��\"]");
-  */
+  temp += "\"";
+  temp = (JSON::parse(temp)).get<std::string>();
+  ASSERT_EQ(temp, "\ufffd");
+  
+  JSON j4(JSON_OBJECT);
+  j4[temp] = "blah";
+  ASSERT_EQ(j4["\ufffd"].get<std::string>(), "blah");
+  
+  j4["\u0021"] = "foo";
+  ASSERT_EQ(j4["!"].get<std::string>(), "foo");
+  ASSERT_TRUE(j4.toString().find("!") != string::npos);
+  ASSERT_FALSE(j4.toString().find("\\u0000") != string::npos);
+  j4[std::string(1, char(0))] = "foo2";
+  ASSERT_TRUE(j4.toString().find("\\u0000") != string::npos);
+  ASSERT_TRUE(j4.has("!"));
+  ASSERT_TRUE(j4.has("\u0021"));
+  ASSERT_TRUE(j4.has("\\u0000"));
+  ASSERT_TRUE(j4["\u0021"] == j4["!"]);
+  ASSERT_EQ(j4["\\u0000"], j4[std::string(1, 0)]);
+  
+  // Weird that string "\u0000" in C++ actually becomes "\u0001";
+  ASSERT_EQ("\u0000", "\u0001");
+  ASSERT_NE("\u0000", "\u0002");
+  //////////////////////////////////////////////////////////////
+
+  temp = JSON::parse("\"a\x80\xe0\xa0\xc0\xaf\xed\xa0\x80z\"").get<std::string>();
+  ASSERT_EQ(temp, "a\ufffd\ufffd\ufffd\ufffdz");
 }
 
 TEST(JSONTest, getAndConversionOperator) {
@@ -215,32 +272,18 @@ TEST(JSONTest, getAndConversionOperator) {
   ASSERT_EQ(j1["1"].get<short int>(), (short int)j1["1"]);
   ASSERT_EQ(j1["1"].get<float>(), (float)j1["1"]);
 
-  bool flag = false;
-  try {
-    j1["4"].get<int>();
-    ASSERT_TRUE(false);
-  }
-  catch(exception &e) {
-    flag = true;
-  }
-  ASSERT_TRUE(flag);
-  
-  flag = false;
-  try {
-    j1["1"].get<std::string>();
-    ASSERT_TRUE(false);
-  }
-  catch(exception &e) {
-    flag = true;
-  }
-  ASSERT_TRUE(flag);
+  ASSERT_JSONEXCEPTION(j1["4"].get<int>());
+  ASSERT_JSONEXCEPTION(j1["1"].get<std::string>());
 }
 
 TEST(JSONTest, HasAndErase) {
   JSON j1 = JSON::parse("{\"k1\": \"k2\", \"k2\": [1,2,3,4], \"k3\": 14}");
   JSON j2 = j1;
+  ASSERT_EQ(j1.length(), 3);
+  
   ASSERT_EQ(j1, j2);
   ASSERT_TRUE(j1.has("k1"));
+  
   j1.erase("k1");
   ASSERT_FALSE(j1.has("k1"));
   ASSERT_NE(j1, j2);
