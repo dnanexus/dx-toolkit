@@ -24,8 +24,9 @@
 
 typedef long long int64;
 
-// TODO: 
-
+// NOTE:
+// 1) UTF-8 validity is checked while reading JSON from a string;
+// 2) UTF-8 
 namespace dx {
 
   /** JSONException class: Inherits from std::exception
@@ -514,7 +515,7 @@ namespace dx {
     
     String() {}
     String(const std::string &v):val(v) {}
-    // TODO: Make sure cout<<stl::string workes as expected;
+    // TODO: Make sure cout<<stl::string works as expected;
     void write(std::ostream &out) const;
     const JSONValue type() const { return JSON_STRING; }
     std::string returnString() const { return val; }

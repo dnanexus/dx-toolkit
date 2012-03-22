@@ -7,7 +7,13 @@ extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
 
 namespace JSON_Utility 
 { 
-  
+ 
+  std::string getValidatedUTF8String(const std::string &src) {
+    std::string out;
+    utf8::replace_invalid(src.begin(), src.end(), back_inserter(out));
+    return out;
+  }
+
   std::string itos(int i)  // convert int to string
   {
     std::stringstream s;
@@ -34,8 +40,10 @@ namespace JSON_Utility
 
     for (unsigned i = 0; i < s.length(); ++i) 
     { 
-      if(s[i] >= 0x0000 && s[i] <= 0x001f) // control character case
+      if(s[i] >= 0x0000 && s[i] <= 0x001f)
       {
+        // Control character case, should be escaped
+        // http://stackoverflow.com/questions/4901133/json-and-escaping-characters
         char temphex[5] = {0};
         switch(s[i]) {
           case '\b': 
@@ -218,63 +226,51 @@ namespace JSON_Utility
              (hexdigit_to_num(str[2]) << 4) + 
              (hexdigit_to_num(str[3])) );
   }
-
-  std::string ReadString(std::istream &in) {
+  
+  std::string getJSONString(const std::string &inp) {
     std::string out = "";
-    int ch = in.get();
-    assert(ch == '"'); // First character in a string should be quote
-    do {
-      ch = in.get();
-      if (in.eof() || in.fail())
-        throw JSONException("Unexpected EOF while reading string");
-      
-      if (ch ==  '"') // String is over
-        break;
+    
+    std::string temp;
+    size_t inplength = inp.length();
 
-      if (ch == '\\') {
-        ch = in.get();
-        if (in.eof() || in.fail())
-          throw JSONException("Unexpected EOF while reading string");
-        
+    for (unsigned i = 0; i < inplength; i++) {
+      if (inp[i] != '\\') {
+        out += inp[i];
+      }
+      else {
+        if ( (i + 1) >= inplength)
+          throw JSONException("Cannot end a string with \\ charcter");
+        i++;
         char hex[4];
-        char temp_buffer[6];
         int32_t first16bit, second16bit;
         int32_t codepoint;
-        char tx; // temporary
-        switch(ch) {
-          case '"': out += '"';   break;
+        switch(inp[i]) {
+          case '"':  out += '"';   break;
           case '\\': out += '\\'; break;
-          case '/': out += '/';   break;
-          case 'b': out += '\b';  break;
-          case 'f': out += '\f';  break;
-          case 'n': out += '\n';  break;
-          case 'r': out += '\r';  break;
-          case 't': out += '\t';  break;
+          case '/':  out += '/';   break;
+          case 'b':  out += '\b';  break;
+          case 'f':  out += '\f';  break;
+          case 'n':  out += '\n';  break;
+          case 'r':  out += '\r';  break;
+          case 't':  out += '\t';  break;
           
           case 'u':
-            in.read(hex, 4);
-            if(in.eof() || in.gcount() != 4u)
+            if (i + 4 >= inplength)
               throw JSONException("Expected exactly 4 hex digits after \\u");
-            first16bit = string4_to_hex(hex);
-            /*if(first16bit >= 0x0000 && first16bit <= 0x001f) {
-              // Control character case, should be escaped
-              // http://stackoverflow.com/questions/4901133/json-and-escaping-characters
-              tx = char(first16bit);
-              if (tx == '\b' || tx == '\f' || tx == '\n' || tx == '\r' || tx == '\t')
-                out += tx;
-              else // If it is not one of special characters (above): escape it in hex form
-                out += ((((std::string("\\u") + hex[0]) + hex[1]) + hex[2]) + hex[3]);
-              break;
-            }*/
-          
+            copy(inp.begin() + i + 1, inp.begin() + i + 1 + 5, hex);
+            i += 4;
+            first16bit = string4_to_hex(hex); 
             codepoint = first16bit;
             if(0xD800 <= first16bit && first16bit <= 0xDBFF) {
               // Surrogate pair case
               // Must have next 6 characters of the form: \uxxxx as well
-              in.read(temp_buffer, 6);
-              if(in.eof() || in.gcount() != 6u || temp_buffer[0] != '\\' || temp_buffer[1] != 'u')
+              
+              if( (i + 6) >= inplength || inp[i + 1] != '\\' || inp[i + 2] != 'u')
                 throw JSONException("Missing surrogate pair in unicode sequence");
-              second16bit = string4_to_hex(&temp_buffer[2]);
+              i += 2;
+              copy(inp.begin() + i + 1, inp.begin() + i + 1 + 5, hex);
+              i += 4;
+              second16bit = string4_to_hex(hex);
 
               if(0xDC00 <= second16bit && second16bit <= 0xDFFF) {
                 /* valid second surrogate */
@@ -286,24 +282,36 @@ namespace JSON_Utility
               }
             }
             try {
-              // changing it to utf8::unchecked::append will stop throwing of error
-              // in case of invalid utf8 point
               utf8::append(codepoint, back_inserter(out));
             } 
             catch(utf8::invalid_code_point &e) {
-                std::string line;
-                getline(in, line);
-                throw JSONException("Invalid UTF-8 code point found in text. Value = " + itos(codepoint) + ". Location = " + line + "\nInternal message = " + e.what());
+                throw JSONException("Invalid UTF-8 code point found in text. Value = " + itos(codepoint) + ". Location = " + inp + "\nInternal message = " + e.what());
             } 
             break;
           default:
-            throw JSONException("Illegal escape sequence: \\" + std::string(1, ch));
-        }
+            throw JSONException("Illegal escape sequence: \\" + inp[i]);
+        } 
       }
-      else
-        out += char(ch);
-    }while(true);
-    return out;
+    }
+    return getValidatedUTF8String(out);
+  }
+
+  std::string ReadString(std::istream &in) {
+    std::string out = "";
+    int ch = in.get();
+    assert(ch == '"'); // First character in a string should be quote
+    std::string str;
+    int prev = 0;
+    do {
+      ch = in.get();
+      if (in.eof() || in.fail())
+        throw JSONException("Unexpected EOF while reading string");
+      if (ch ==  '"' && prev != '\\') // String is over
+        break;
+      str += char(ch);
+      prev = ch;
+    }while(1);
+    return getJSONString(str);
   }
 }
 
@@ -317,22 +325,20 @@ void Object::write(std::ostream &out) const {
 
   for (std::map<std::string, JSON>::const_iterator it = val.begin(); it != val.end(); ++it, firstElem = false) {
     if (!firstElem)
-      out<<", ";
+      out<<",";
     JSON_Utility::WriteEscapedString((*it).first, out, true);
-    out<<": ";
+    out<<":";
     (*it).second.write(out);
   }
   out<<"}"; 
 }
 
-// TODO: Figure out how to make [] work on constant members too (i.e. constant functions,
-//       but still returning a reference
 void Array::write(std::ostream &out) const {
   out<<"[";
   bool firstElem = true;
   for(unsigned i = 0; i < val.size(); ++i, firstElem = false) {
     if (!firstElem)
-      out<<", ";
+      out<<",";
     val[i].write(out);
   }
   out<<"]";
@@ -352,15 +358,22 @@ JSON& Array::jsonAtIndex(size_t i) {
 
 // STL map's [] operator cannot be used on constant objects
 const JSON& Object::jsonAtKey(const std::string &s) const {
-  std::map<std::string, JSON>::const_iterator it = val.find(s);
+  std::string jstr = JSON_Utility::getJSONString(s);
+  std::map<std::string, JSON>::const_iterator it = this->val.find(jstr);
   if (it == val.end())
     throw JSONException("Cannot add new key to a constant JSON_OBJECT");
   return it->second;
 }
 
 JSON& Object::jsonAtKey(const std::string &s) {
-  // Unlike array, create new json object for particualr key if previously didn't exist
-  return val[s];
+  std::string jstr = JSON_Utility::getJSONString(s);
+  std::map<std::string, JSON>::iterator it = this->val.find(jstr);
+
+  // Unlike const version, create a key if it doesn't exist
+  if (it == val.end())
+    return val[JSON_Utility::getJSONString(jstr)];
+  else
+    return it->second;
 }
 void JSON::write(std::ostream &out) const {
   if (this->type() == JSON_UNDEFINED) {
@@ -381,8 +394,10 @@ void JSON::readFromString(const std::string &jstr) {
 const JSON& JSON::operator[](const std::string &s) const {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot use string to index value of a non-JSON_OBJECT using [] operator");
-  Object *o = dynamic_cast<Object*>(val);
-  assert(o != NULL);
+  
+  // No need for dynamic_cast (since I already checked for JSON_OBJECT case), and 
+  // dynamic_cast is expensive
+  Object *o = static_cast<Object*>(val);
   return o->jsonAtKey(s);
 }
 
@@ -393,8 +408,7 @@ const JSON& JSON::operator[](const char *str) const {
 const JSON& JSON::operator[](const size_t &indx) const {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot use integer to index value of non-JSON_ARRAY using [] operator");
-  Array *a = dynamic_cast<Array*>(val);
-  assert(a != NULL); 
+  Array *a = static_cast<Array*>(val);
   return a->jsonAtIndex(indx);
 }
 
@@ -406,10 +420,8 @@ const JSON& JSON::operator[](const JSON &j) const {
     if(j.type() != JSON_STRING)
       throw JSONException("Cannot use a non-string value to index JSON_OBJECT using []");
 
-    String *ptr = dynamic_cast<String*>(j.val);
-    assert(ptr != NULL);
-    return (*this)[ptr->val];
-    
+    String *ptr = static_cast<String*>(j.val);
+    return (*this)[ptr->val]; 
   }
   throw JSONException("Only JSON_OBJECT and JSON_ARRAY can be indexed using []");
 }
@@ -456,7 +468,7 @@ JSON& JSON::operator =(const JSON &rhs) {
 
 JSON& JSON::operator =(const std::string &s) {
   clear();
-  val = new String(s);
+  val = new String(JSON_Utility::getJSONString(s));
   return *this;
 }
 
@@ -482,30 +494,30 @@ JSON& JSON::operator =(const char s[]) {
 
 
 size_t JSON::size() const {
+  // Using static_cast everywhere instead of dynamic_cast, since we explicitly check it's type
+  // before statically casting, and dynamic_cast is expensive
+
   JSONValue t = type();
   if (t != JSON_ARRAY && t != JSON_OBJECT && t != JSON_STRING)
     throw JSONException("size()/length() can only be called for JSON_ARRAY/JSON_OBJECT/JSON_STRING");
   if(t == JSON_ARRAY) {
-    Array *tmp = dynamic_cast<Array*>(this->val);
-    assert(tmp != NULL);
+    Array *tmp = static_cast<Array*>(this->val);
     return tmp->val.size();
   }
   else {
     if (t == JSON_OBJECT) {
-      Object *tmp = dynamic_cast<Object*>(this->val);
-      assert(tmp != NULL);
+      Object *tmp = static_cast<Object*>(this->val);
       return tmp->val.size();
     }
   }
-  String *tmp = dynamic_cast<String*>(this->val);
-  assert(tmp != NULL);
+  String *tmp = static_cast<String*>(this->val);
   return tmp->val.size();
 }
 
 void JSON::push_back(const JSON &j) {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot push_back to a non-array");
-  Array *tmp = dynamic_cast<Array*>(this->val);
+  Array *tmp = static_cast<Array*>(this->val);
   assert(tmp != NULL);
   tmp->push_back(j);
 }
@@ -528,7 +540,7 @@ bool JSON::has(const size_t &indx) const {
 bool JSON::has(const std::string &key) const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Illegal call to has(size_t) for non JSON_OBJECT object");
-  return (((Object*)(this->val))->val.count(key) > 0u);
+  return (((Object*)(this->val))->val.count(JSON_Utility::getJSONString(key)) > 0u);
 }
 
 bool JSON::has(const char *x) const {
@@ -555,13 +567,13 @@ void JSON::read(std::istream &in) {
 void JSON::erase(const size_t &indx) {
   if (this->type() != JSON_ARRAY)
     throw JSONException("erase(size_t) can only be called for a JSON_ARRAY");
-  (dynamic_cast<Array*>(this->val))->erase(indx);
+  (static_cast<Array*>(this->val))->erase(indx);
 }
 
 void JSON::erase(const std::string &indx) {
   if (this->type() != JSON_OBJECT)
     throw JSONException("erase(string) can only be called for a JSON_OBJECT");
-  (dynamic_cast<Object*>(this->val))->erase(indx);
+  (static_cast<Object*>(this->val))->erase(indx);
 }
 
 void String::read(std::istream &in) {
@@ -682,7 +694,7 @@ void Array::read(std::istream &in) {
 }
 
 void Object::erase(const std::string &key) {
-  if(val.erase(key) == 0)
+  if(val.erase(JSON_Utility::getJSONString(key)) == 0)
     throw JSONException("Cannot erase non-existent key from a JSON_OBJECT. Key supplied = " + key);
 }
 
@@ -744,102 +756,102 @@ bool JSON::operator ==(const JSON& other) const {
 JSON::const_object_iterator JSON::object_begin() const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.begin();
+  return (static_cast<Object*>(this->val))->val.begin();
 }
 
 JSON::const_array_iterator JSON::array_begin() const {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.begin();
+  return (static_cast<Array*>(this->val))->val.begin();
 }
 
 JSON::object_iterator JSON::object_begin() {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.begin();
+  return (static_cast<Object*>(this->val))->val.begin();
 }
 
 JSON::array_iterator JSON::array_begin() {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.begin();
+  return (static_cast<Array*>(this->val))->val.begin();
 }
 
 JSON::const_object_iterator JSON::object_end() const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.end();
+  return (static_cast<Object*>(this->val))->val.end();
 }
 
 JSON::const_array_iterator JSON::array_end() const {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.end();
+  return (static_cast<Array*>(this->val))->val.end();
 }
 
 JSON::object_iterator JSON::object_end() {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.end();
+  return (static_cast<Object*>(this->val))->val.end();
 }
 
 JSON::array_iterator JSON::array_end() {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.end();
+  return (static_cast<Array*>(this->val))->val.end();
 }
 
 // Reverse iterators
 JSON::const_object_reverse_iterator JSON::object_rbegin() const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.rbegin();
+  return (static_cast<Object*>(this->val))->val.rbegin();
 }
 
 JSON::const_array_reverse_iterator JSON::array_rbegin() const {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.rbegin();
+  return (static_cast<Array*>(this->val))->val.rbegin();
 }
 
 JSON::object_reverse_iterator JSON::object_rbegin() {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.rbegin();
+  return (static_cast<Object*>(this->val))->val.rbegin();
 }
 
 JSON::array_reverse_iterator JSON::array_rbegin() {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.rbegin();
+  return (static_cast<Array*>(this->val))->val.rbegin();
 }
 
 JSON::const_object_reverse_iterator JSON::object_rend() const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.rend();
+  return (static_cast<Object*>(this->val))->val.rend();
 }
 
 JSON::const_array_reverse_iterator JSON::array_rend() const {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.rend();
+  return (static_cast<Array*>(this->val))->val.rend();
 }
 
 JSON::object_reverse_iterator JSON::object_rend() {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
-  return (dynamic_cast<Object*>(this->val))->val.rend();
+  return (static_cast<Object*>(this->val))->val.rend();
 }
 
 JSON::array_reverse_iterator JSON::array_rend() {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
-  return (dynamic_cast<Array*>(this->val))->val.rend();
+  return (static_cast<Array*>(this->val))->val.rend();
 }
 
 void JSON::resize_array(size_t desired_size) {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot call resize_array() on a non JSON_ARRAY object");
-  ((Array*)this->val)->val.resize(desired_size);
+  (static_cast<Array*>(this->val))->val.resize(desired_size);
 }
