@@ -208,6 +208,7 @@ namespace dx {
     
     /** Access value stored inside JSON object by it's key 
       * @param s A pre-existing Key inside current object
+      * @note The parameter "s" will be treated as serialized JSON string
       * @return A constant reference to JSON value stored under given Key
       * @exception JSONException if key does not exist or this->type() != JSON_OBJECT
       */
@@ -225,6 +226,7 @@ namespace dx {
     
     /** Same as const JSON& operator[](const std::string &s), just that c style string 
       * "str" is converted to std::string, before calling it.
+      * @note The parameter "str" will be treated as serialized JSON string
       * @param str C style string, representing a key inside the object.
       * @return A constant reference to JSON value stored under given key.
       */
@@ -247,6 +249,7 @@ namespace dx {
       * Returns a non-constant reference, and the value can modifed.
       * @note If the specified key (parameter s) is not present, then it will be created
       *       and it's initial value will be set to JSON_UNDEFINED
+      * @note The parameter "s" will be treated as serialized JSON string
       */
     JSON& operator [](const std::string &s);
     
@@ -257,6 +260,7 @@ namespace dx {
 
     /** Same as JSON& operator[](const std::string &s), just that c style string 
       * "str" is converted to std::string, before calling it.
+      * @note The parameter "str" will be treated as serialized JSON string
       * @param str C style string, representing a key inside the object.
       * @return A constant reference to JSON value stored under given key.
       */
@@ -412,7 +416,8 @@ namespace dx {
     bool has(const size_t &indx) const;
 
     /** Returns true if the given std::string key represent a valid key in current JSON_OBJECT.
-      * Throws exception if called for non JSON_OBJECT.
+      * Throws exception if called for non JSON_OBJECT. 
+      * @note The parameter "key" will be treated as serialized JSON string
       * @param key the value to be looked for inside current JSON_OBJECT.
       * @return true if is a valid key, else false.
       */
@@ -424,6 +429,7 @@ namespace dx {
     
     /** Exactly same behavior as has(const std::string &key) function. The given C-string
       * is converted to std::string before executing the function.
+      * @note The parameter "key" will be treated as serialized JSON string
       */
     bool has(const char *key) const;
 
@@ -438,6 +444,7 @@ namespace dx {
     void erase(const size_t &indx);
     
     /** Removes a particular key and it's associated value inside a JSON_OBJECT
+      * @note The parameter "key" will be treated as serialized JSON string
       * @param key The key value to be removed from object.
       */
     void erase(const std::string &key);
@@ -654,7 +661,14 @@ namespace dx {
   const JSON& JSON::operator [](const T&x) const {
     return (*(const_cast<const JSON*>(this)))[static_cast<size_t>(x)];
   }
-  
+
+  /** Return back the string stored inside JSON_STRING object
+    * @note The returned string is in C++ style, and not escaped like it would be
+    *       if printed using toString() or write() method. So a newline will be 
+    *       present at ASCII 10, and not "\n" inside string. Also it will not contain
+    *       enclosing quotes.
+    * @return The C++ style string for contents of JSON_STRING object
+    */
   template<>
   inline std::string JSON::get<std::string>() const {
     if (this->type() != JSON_STRING)

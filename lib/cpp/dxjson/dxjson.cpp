@@ -227,7 +227,14 @@ namespace JSON_Utility
              (hexdigit_to_num(str[3])) );
   }
   
-  std::string getJSONString(const std::string &inp) {
+  // This function converts a json string (utf8) to a C++ string
+  // All escaped sequences are resolved and it is made sure that no invalid
+  // UTF-8 character is present in string after parsing (any invalid character 
+  // is replaced with the replacement character: U+FFFFD)
+  // Care must be taken to not call it two times for a string inside an operation
+  // (for example, while using [] operator)
+
+  std::string parseUtf8JsonString(const std::string &inp) {
     std::string out = "";
     
     std::string temp;
@@ -311,7 +318,7 @@ namespace JSON_Utility
       str += char(ch);
       prev = ch;
     }while(1);
-    return getJSONString(str);
+    return parseUtf8JsonString(str);
   }
 }
 
@@ -358,23 +365,18 @@ JSON& Array::jsonAtIndex(size_t i) {
 
 // STL map's [] operator cannot be used on constant objects
 const JSON& Object::jsonAtKey(const std::string &s) const {
-  std::string jstr = JSON_Utility::getJSONString(s);
-  std::map<std::string, JSON>::const_iterator it = this->val.find(jstr);
+  std::string cstr = JSON_Utility::parseUtf8JsonString(s);
+  std::map<std::string, JSON>::const_iterator it = this->val.find(cstr);
   if (it == val.end())
     throw JSONException("Cannot add new key to a constant JSON_OBJECT");
   return it->second;
 }
 
 JSON& Object::jsonAtKey(const std::string &s) {
-  std::string jstr = JSON_Utility::getJSONString(s);
-  std::map<std::string, JSON>::iterator it = this->val.find(jstr);
-
-  // Unlike const version, create a key if it doesn't exist
-  if (it == val.end())
-    return val[JSON_Utility::getJSONString(jstr)];
-  else
-    return it->second;
+  std::string cstr = JSON_Utility::parseUtf8JsonString(s);
+  return val[cstr];
 }
+
 void JSON::write(std::ostream &out) const {
   if (this->type() == JSON_UNDEFINED) {
     throw JSONException("Cannot call write() method on uninitialized json object");
@@ -468,7 +470,7 @@ JSON& JSON::operator =(const JSON &rhs) {
 
 JSON& JSON::operator =(const std::string &s) {
   clear();
-  val = new String(JSON_Utility::getJSONString(s));
+  val = new String(JSON_Utility::parseUtf8JsonString(s));
   return *this;
 }
 
@@ -540,7 +542,7 @@ bool JSON::has(const size_t &indx) const {
 bool JSON::has(const std::string &key) const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Illegal call to has(size_t) for non JSON_OBJECT object");
-  return (((Object*)(this->val))->val.count(JSON_Utility::getJSONString(key)) > 0u);
+  return (((Object*)(this->val))->val.count(JSON_Utility::parseUtf8JsonString(key)) > 0u);
 }
 
 bool JSON::has(const char *x) const {
@@ -628,7 +630,7 @@ void Object::read(std::istream &in) {
     ch = in.get();
     if(in.eof() || in.fail())
       throw JSONException("Unexpected EOF while parsing object. ch = " + std::string(1,ch));
-    
+      
     // End of parsing for this JSON object
     if (ch == '}')
       break;
@@ -694,7 +696,7 @@ void Array::read(std::istream &in) {
 }
 
 void Object::erase(const std::string &key) {
-  if(val.erase(JSON_Utility::getJSONString(key)) == 0)
+  if(val.erase(JSON_Utility::parseUtf8JsonString(key)) == 0)
     throw JSONException("Cannot erase non-existent key from a JSON_OBJECT. Key supplied = " + key);
 }
 

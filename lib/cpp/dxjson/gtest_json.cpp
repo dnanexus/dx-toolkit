@@ -40,7 +40,7 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   const JSON j2_const(j2);
   ASSERT_EQ("\"blah-changed\"", j2_const["k1"].toString());
   ASSERT_EQ(j2_const, JSON::parse("{\"k1\": \"blah-changed\", \"k2\": \"foo\", \"k3\": \"k1\"}"));
-  
+ 
   JSON j3(JSON_ARRAY);
   j3.push_back(j2);
   j3.push_back(true);
@@ -63,6 +63,36 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   ASSERT_EQ(j3_const[3], 12.34);
   ASSERT_NE(j3_const[3],12.3400001);
   ASSERT_EQ(j3_const[j3_const[4]], j2);
+
+  ASSERT_EQ(JSON::parse("{\"f\t\"     \r \v \t   \n      : \t  12}")["f\t"], 12);
+  
+  JSON j4 = JSON::parse("[0, 1, 2, 3]");
+  ASSERT_EQ(j4[0.01], 0);
+  ASSERT_EQ(j4[false], 0);
+  ASSERT_EQ(j4[true], 1);
+  ASSERT_EQ(j4[1.0], 1);
+
+  JSON j5 = vector<int>(5,-1);
+  ASSERT_EQ(j5.length(), 5);
+  ASSERT_EQ(j5[2], -1);
+
+  map<string, int> m;
+  m["0"] = 0;
+  m["1"] = 1;
+  JSON j6 = m;
+  ASSERT_EQ(j6.size(), 2);
+  ASSERT_EQ(j6["0"], 0);
+
+  // Invalid cases:
+  ASSERT_JSONEXCEPTION(JSON::parse("{\"a\":\"a"));
+  ASSERT_JSONEXCEPTION(JSON::parse("sa"));
+  ASSERT_JSONEXCEPTION(JSON::parse("å"));
+  ASSERT_JSONEXCEPTION(JSON::parse(""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\a\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1,2,3 foo]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1,]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("{\"f\" 12}"));
 }
 
 TEST(JSONTest, JSONEquality) {
@@ -113,6 +143,9 @@ TEST(JSONTest, JSONEquality) {
   j4[2]["new"] = 0;
   ASSERT_TRUE(j4 == j5);
   ASSERT_FALSE(j4 != j5);
+  JSON j6, j7;
+  j6 = j7 = j5;
+  ASSERT_TRUE(j5 == j7 && j6 == j7);
 
   ASSERT_EQ(JSON::parse("{}"), JSON(JSON_OBJECT));
 }
@@ -121,11 +154,16 @@ TEST(JSONTest, Miscellaneous) {
   JSON j1 = "";
   ASSERT_EQ(j1.toString(), "\"\"");
   ASSERT_EQ(j1.get<std::string>(), "");
-  ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
-  ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
-  ASSERT_EQ(JSON::parse("[1.213e-2]"), JSON::parse("[.01213]"));
-  
-  ASSERT_EQ(JSON::parse("[1.213E-2]"), JSON::parse("[.1213e-1]"));
+
+  JSON j2 = JSON::parse("[null, false, true, {\"0\": {\"1\": {\"2\": 21.23e-2}}}, [[[[2121]]]]]");
+  ASSERT_TRUE(j2.toString().find("false") != string::npos);
+  ASSERT_TRUE(j2.toString().find("\"false\"") == string::npos); 
+  ASSERT_TRUE(j2.toString().find("null") != string::npos);
+  ASSERT_TRUE(j2.toString().find("\"null\"") == string::npos);
+  ASSERT_TRUE(j2[4][0][0][0][0] == 2121);
+  ASSERT_TRUE(j2[3]["0"]["1"]["2"] == JSON(.2123));
+  ASSERT_TRUE(j2[0] == JSON(JSON_NULL));
+  ASSERT_TRUE(j2[1] == JSON(false));
 }
 
 TEST(JSONTest, AssignmentAndCopyConstructor) {
@@ -232,8 +270,20 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   
   j4["\u0021"] = "foo";
   ASSERT_EQ(j4["!"].get<std::string>(), "foo");
+  ASSERT_EQ(j4["\u0021"], j4["!"]); // Should be true since in c++, "\u0021" == "!"
+  ASSERT_EQ(j4["\\u0021"], j4["!"]);
+  ASSERT_TRUE(j4.has("\u0021"));
   ASSERT_TRUE(j4.toString().find("!") != string::npos);
+  
   ASSERT_FALSE(j4.toString().find("\\u0000") != string::npos);
+  const JSON j4_const(j4);
+  ASSERT_EQ(j4_const["!"].get<std::string>(), "foo");
+  ASSERT_EQ(j4_const["\u0021"], j4_const["!"]); // Should be true since in c++, "\u0021" == "!"
+  ASSERT_EQ(j4_const["\\u0021"], j4_const["!"]); 
+  ASSERT_TRUE(j4_const.has("\u0021"));
+  ASSERT_TRUE(j4_const.toString().find("!") != string::npos);
+  ASSERT_FALSE(j4_const.toString().find("\\u0000") != string::npos);
+  
   j4[std::string(1, char(0))] = "foo2";
   ASSERT_TRUE(j4.toString().find("\\u0000") != string::npos);
   ASSERT_TRUE(j4.has("!"));
@@ -243,12 +293,55 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   ASSERT_EQ(j4["\\u0000"], j4[std::string(1, 0)]);
   
   // Weird that string "\u0000" in C++ actually becomes "\u0001";
+  // These two lines below are not exactly JSON parser test.
+  // Just so that I remeber this fact.
   ASSERT_EQ("\u0000", "\u0001");
   ASSERT_NE("\u0000", "\u0002");
   //////////////////////////////////////////////////////////////
+  
+  JSON j5 = "\\u0000";
+  ASSERT_TRUE(j5.get<std::string>().find("\\u0000") == string::npos);
+  ASSERT_TRUE(j5.get<std::string>().find(char(0)) != string::npos);
+  ASSERT_TRUE(j5.toString().find(char(0)) == string::npos);
+  ASSERT_TRUE(j5.toString().find("\\u0000") != string::npos);
+  
+  JSON j6 = "\\u000a";
+  ASSERT_TRUE(j6.get<std::string>().find("\\u000a") == string::npos);
+  ASSERT_TRUE(j6.get<std::string>().find(char(10)) != string::npos);
+  ASSERT_TRUE(j6.toString().find(char(10)) == string::npos);
+  ASSERT_TRUE(j6.toString().find("\\u000a") == string::npos);
+  ASSERT_TRUE(j6.toString().find("\\n") != string::npos);
+  
+  JSON j7 = JSON::parse("{\"\\u000a\": 12}");
+  JSON j7_1;
+  JSON j7_2 = JSON::parse("{\"\\n\": 12}");
+  j7_1 = j7;
+  ASSERT_TRUE(j7 == j7_1 && j7_2 == j7);
+  ASSERT_TRUE(j7.has("\u000a"));
+  ASSERT_TRUE(j7.has("\\n"));
+  ASSERT_TRUE(j7.has("\\u000a"));
+  j7.erase("\\n");
+  ASSERT_FALSE(j7.has("\\u000A"));
+  j7_1.erase("\\u000a");
+  ASSERT_FALSE(j7_1.has("\u000a"));  
+  j7_2.erase("\u000a");
+  ASSERT_FALSE(j7_2.has("\\u000A"));
 
   temp = JSON::parse("\"a\x80\xe0\xa0\xc0\xaf\xed\xa0\x80z\"").get<std::string>();
   ASSERT_EQ(temp, "a\ufffd\ufffd\ufffd\ufffdz");
+
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\u000\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\u000 1\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\uD800\\u\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\\ux912\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\\ug123\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\\udc0\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\uå\""));
+  
+  JSON j8 = JSON::parse("{\"\\\\a\": 12}");
+  ASSERT_JSONEXCEPTION(j8["\\a"] = "");
+  j8["\\n"] = "";
+  ASSERT_EQ(j8["\\\\a"], 12);
 }
 
 TEST(JSONTest, getAndConversionOperator) {
@@ -323,11 +416,83 @@ TEST(JSONTest, HasAndErase) {
   ASSERT_TRUE(j1_const.has("k2"));
 }
 
+TEST(JSONTest, Numbers) {
+  JSON j1 = -1;
+  JSON j2 = JSON::parse("-1");
+  ASSERT_EQ(j1, j2);
+  
+  j1 = 1.0;
+  j2 = 1;
+  ASSERT_EQ(JSON(-1l), JSON(short(-1)));
+  ASSERT_EQ(JSON(1ll), JSON(uint8_t(1)));
+  ASSERT_NE(j1, j2); // REAL and INTEGER value are never equal in out implementation
+
+  double precision = JSON::getEpsilon();
+  JSON::setEpsilon(std::max(precision, 1e-12)); 
+  j1 = JSON::parse("-1e-20");
+  j2 = JSON::parse("-1e-23");
+  
+  ASSERT_EQ(j1, j2);
+
+  ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
+  ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
+  ASSERT_EQ(JSON::parse("[1.213e-2]"), JSON::parse("[.01213]")); 
+  ASSERT_EQ(JSON::parse("[1.213E-2]"), JSON::parse("[.1213e-1]")); 
+}
+
 TEST(JSONTest, TestPerformance) {
   // TODO
 }
 
 TEST(JSONTest, Iterators) {
+  JSON j1(JSON_OBJECT);
+  j1["0"] = 0;
+  j1["1"] = 1;
+  j1["2"] = 2;
+  j1["3"] = 3;
+  j1["4"] = 4;
+  int i=0;
+  for(JSON::object_iterator it = j1.object_begin(); it != j1.object_end(); ++i, ++it)
+    ASSERT_EQ(it->second, i);
+  
+  i = 4;
+  for(JSON::object_reverse_iterator it = j1.object_rbegin(); it != j1.object_rend(); --i, ++it)
+    ASSERT_EQ(it->second, i);
+
+  const JSON j1_const = j1;
+  i=0;
+  for(JSON::const_object_iterator it = j1_const.object_begin(); it != j1_const.object_end(); ++i, ++it)
+    ASSERT_EQ(it->second, i);
+  
+  i = 4;
+  for(JSON::const_object_reverse_iterator it = j1_const.object_rbegin(); it != j1_const.object_rend(); --i, ++it)
+    ASSERT_EQ(it->second, i);
+ 
+  JSON j2(JSON_ARRAY);
+  j2.resize_array(5);
+  j2[0] = 0;
+  j2[1] = 1;
+  j2[2] = 2;
+  j2[3] = 3;
+  j2[4] = 4;
+  i=0;
+  for(JSON::array_iterator it = j2.array_begin(); it != j2.array_end(); ++i, ++it)
+    ASSERT_EQ(*it, i);
+  
+  i = 4;
+  for(JSON::array_reverse_iterator it = j2.array_rbegin(); it != j2.array_rend(); --i, ++it)
+    ASSERT_EQ(*it, i);
+
+  const JSON j2_const = j2;
+  i=0;
+  for(JSON::const_array_iterator it = j2_const.array_begin(); it != j2_const.array_end(); ++i, ++it)
+    ASSERT_EQ(*it, i);
+  
+  i = 4;
+  for(JSON::const_array_reverse_iterator it = j2_const.array_rbegin(); it != j2_const.array_rend(); --i, ++it)
+    ASSERT_EQ(*it, i);
+
+  // TODO: Add more iterators test, specially those which use stl algorithms heavily
 
 }
 TEST(JSONTest, FloatingPointPrecision) {
