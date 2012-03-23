@@ -216,6 +216,7 @@ class DXTable(DXClass):
         while self._part_index <= 250000:
             if str(self._part_index) not in desc["parts"]:
                 return self._part_index
+            self._part_index += 1
 
         raise DXTableError("Usable part index not found.")
 
