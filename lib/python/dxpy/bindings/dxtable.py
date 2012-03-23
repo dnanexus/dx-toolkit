@@ -212,11 +212,10 @@ class DXTable(DXClass):
         desc = self.describe()
         if len(desc["parts"]) == 250000:
             raise DXTableError("250000 part indices already used.")
-        self._part_index += 1
-        while self._part_index <= 250000:
+        while self._part_index < 250000:
+            self._part_index += 1
             if str(self._part_index) not in desc["parts"]:
                 return self._part_index
-            self._part_index += 1
 
         raise DXTableError("Usable part index not found.")
 
