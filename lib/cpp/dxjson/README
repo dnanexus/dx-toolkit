@@ -40,19 +40,9 @@ Example Program & Compilation:
 
   On running ./helloworld.o, following output should be shown:
     
-    Contents of json j = {"hello": "world"}
+    Contents of json j = {"hello":"world"}
   
   
   You can look at example_usage.cpp and gtest_json.cpp file in top level directory for more example usage.
 
-*************************
-Documentation generation
-*************************
-  In top-level directory run these commands (NOTE: You must have Doxygen installed on your system)
-    $ mkdir -p doc/cpp/dxjson
-    $ doxygen
-
-  This will generate documentation in ./doc/cpp/dxjson/html. You can start looking at documentation by opening index.html in a browser.
-
 - EOF -
-
