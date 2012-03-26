@@ -159,6 +159,11 @@ TEST(JSONTest, CreationFromFile) {
   JSON j1;
   j1.read(ifs);
   ifs.close();
+  
+  ifs.open("test_data/pass1.json", fstream::in);
+  JSON j2;
+  j2.read(ifs);
+  ifs.close(); 
 }
 
 TEST(JSONTest, Miscellaneous) {
