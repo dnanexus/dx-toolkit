@@ -115,7 +115,9 @@ namespace JSON_Utility
   Value* ReadNumberValue(std::istream &in) {
     // TODO: Validate numbers more strictly.
     // Currently we parse whatever we get as number (using standard iostream approach)
-    // so a 'number' "12--323" will be parsed as 12
+    // so a 'number' "12--323" will be parsed as 12,
+    // or, 1+2 will be parsed as 1
+    // or, 012 will be treated as valid JSON number (when it is not: number cannot start with 0)
     // Ideally. we should throw error on illegal input
 
     Value *toReturn = NULL;
@@ -316,7 +318,7 @@ namespace JSON_Utility
       if (ch ==  '"' && prev != '\\') // String is over
         break;
       str += char(ch);
-      prev = ch;
+      prev = (prev == '\\') ? 0 : ch;
     }while(1);
     return parseUtf8JsonString(str);
   }
@@ -638,7 +640,7 @@ void Object::read(std::istream &in) {
     // Keys:value pairs must be separated by , inside JSON object 
     if (!firstKey && ch != ',')
       throw JSONException("Expected , while parsing object. Got : " + std::string(1,char(ch)));
-    
+
     if (!firstKey) {
       JSON_Utility::SkipWhiteSpace(in);
       ch = in.get();

@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include "dxjson.h"
-
+#include <fstream>
 using namespace std;
 using namespace dx;
 
@@ -84,6 +84,9 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   ASSERT_EQ(j6["0"], 0);
 
   // Invalid cases:
+  ASSERT_JSONEXCEPTION(JSON::parse("[\"\\x15\"]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[\\n]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[\"\\017\"]"));
   ASSERT_JSONEXCEPTION(JSON::parse("{\"a\":\"a"));
   ASSERT_JSONEXCEPTION(JSON::parse("sa"));
   ASSERT_JSONEXCEPTION(JSON::parse("å"));
@@ -150,6 +153,14 @@ TEST(JSONTest, JSONEquality) {
   ASSERT_EQ(JSON::parse("{}"), JSON(JSON_OBJECT));
 }
 
+TEST(JSONTest, CreationFromFile) {
+  std::fstream ifs;
+  ifs.open("test_data/pass1.json", fstream::in);
+  JSON j1;
+  j1.read(ifs);
+  ifs.close();
+}
+
 TEST(JSONTest, Miscellaneous) {
   JSON j1 = "";
   ASSERT_EQ(j1.toString(), "\"\"");
@@ -163,7 +174,7 @@ TEST(JSONTest, Miscellaneous) {
   ASSERT_TRUE(j2[4][0][0][0][0] == 2121);
   ASSERT_TRUE(j2[3]["0"]["1"]["2"] == JSON(.2123));
   ASSERT_TRUE(j2[0] == JSON(JSON_NULL));
-  ASSERT_TRUE(j2[1] == JSON(false));
+  ASSERT_TRUE(j2[1] == JSON(false)); 
 }
 
 TEST(JSONTest, AssignmentAndCopyConstructor) {
