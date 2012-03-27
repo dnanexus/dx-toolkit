@@ -10,7 +10,7 @@ methods return a remote table handler.
 
 from dxpy.bindings import *
 
-def open_dxtable(dxid):
+def open_dxtable(dxid, **kwargs):
     '''
     :param dxid: table ID
     :type dxid: string
@@ -31,7 +31,7 @@ def open_dxtable(dxid):
 
     '''
 
-    return DXTable(dxid)
+    return DXTable(dxid, **kwargs)
 
 def new_dxtable(columns, chr_col=None, lo_col=None, hi_col=None):
     '''

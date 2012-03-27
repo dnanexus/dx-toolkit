@@ -25,7 +25,7 @@ with dxpy.new_dxtable(columns=fastq_columns) as dxtable:
     fq_line, table_rows = [], []
     for line in fastq_fh:
         if i % 4 != 2: # skip quality header (third line in every 4-line block)
-            fq_line.append(line)
+            fq_line.append(line.rstrip("\n"))
         i += 1
         if i % 4 == 0:
             table_rows.append(fq_line)

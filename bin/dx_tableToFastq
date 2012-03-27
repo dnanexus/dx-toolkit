@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+import os, sys, json, logging
+logging.basicConfig(level=logging.DEBUG)
+
+from optparse import OptionParser
+import dxpy
+
+parser = OptionParser(usage="%prog dxtable-id [options]", description="Download a reads table into a FASTQ file")
+parser.add_option("-s", "--start_row", help="Start at this table row", type="int", default=0)
+parser.add_option("-e", "--end_row", help="End at this table row", type="int", default=None)
+(opts, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.print_help()
+    parser.error("Incorrect number of arguments")
+
+if opts.end_row is not None and opts.end_row <= opts.start_row:
+    parser.error("End row %d must be greater than start row %d" % (opts.end_row, opts.start_row))
+
+dxtable_id = args[0]
+
+for row in dxpy.open_dxtable(dxtable_id).iterate_rows(start=opts.start_row, end=opts.end_row):
+    print "\n".join([row[1], row[2], "+", row[3]])

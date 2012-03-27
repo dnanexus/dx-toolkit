@@ -15,7 +15,7 @@ TODO: Rewrite docstrings!
 import os
 from dxpy.bindings import *
 
-def open_dxfile(dxid):
+def open_dxfile(dxid, **kwargs):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -37,7 +37,7 @@ def open_dxfile(dxid):
 
     '''
 
-    return DXFile(dxid)
+    return DXFile(dxid, **kwargs)
 
 def new_dxfile(media_type=None):
     '''

@@ -143,15 +143,20 @@ class DXTable(DXClass):
 
         return dxpy.api.tableGet(self._dxid, get_rows_params)
 
-    def __iter__(self):
-        cursor = 0
-        nrows = int(self.describe()['size'])
-
-        while cursor < nrows:
+    def iterate_rows(self, start=0, end=None):
+        if end is None:
+            end = int(self.describe()['size'])
+        cursor = start
+        while cursor < end:
             buffer = self.get_rows(starting=cursor, limit=self._bufsize)['data']
+            if len(buffer) < 1: break
             for row in buffer:
                 yield row
-            cursor += self._bufsize
+                cursor += 1
+                if cursor >= end: break
+
+    def __iter__(self):
+        return self.iterate_rows()
 
     def extend(self, columns):
         '''
