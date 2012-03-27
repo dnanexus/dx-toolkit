@@ -1,5 +1,5 @@
 #include "dxjson.h"
-
+#include <cstdio>
 using namespace dx;
 
 extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
@@ -87,7 +87,7 @@ namespace JSON_Utility
 
   // Returns true if "ch" represent start of a number token in JSON
   bool isNumberStart(int ch) {
-    if (ch == '+' || ch == '-' || isdigit(ch) || ch == '.')
+    if (ch == '-' || isdigit(ch))
       return true;
     return false;
   }
@@ -111,7 +111,57 @@ namespace JSON_Utility
   bool isObjectStart(int ch) {
     return (ch == '{');
   }
-  
+ 
+  // This function is designed specifically for use from ReadNumberValue() only
+  // It assumes that string provided as input is of this form (regex): 
+  //  [0-9-]{1,1}[-0-9+eE.]*
+  // It will then perform extra assertions to make sure it corresponds to a valid JSON number
+  bool isValidJsonNumber(const std::string &s) {
+    unsigned len = s.length();
+    bool dot = false;
+    bool e = false;
+    if (len == 0)
+      return false;
+    
+    unsigned start = (s[0] == '-') ? 1 : 0;
+    if (!isdigit(s[start]))
+      return false;
+
+    if (start + 1 == len)
+      return true;
+    
+    if (s[start] == '0' && isdigit(s[start + 1]))
+      return false;
+    
+    for (unsigned i = start + 1; i < len; ++i) {
+      switch (s[i]) {
+        case '.': 
+          if (e || dot)
+            return false;
+          dot = true;
+          break;
+        case 'e': // Desired fall through to next case statement ('E')
+        case 'E': 
+          if (e)
+            return false;
+          e = true;
+          if (i + 1 >= len)
+            return false;
+          else {
+            if (s[i + 1] == '+' || s[i + 1] == '-') {
+              i++;
+              if (i + 1 >= len)
+                return false;
+            }
+          }
+          break;
+        default: 
+          if (!isdigit(s[i]))
+            return false;
+      }
+    }
+    return true;
+  }
   Value* ReadNumberValue(std::istream &in) {
     // TODO: Validate numbers more strictly.
     // Currently we parse whatever we get as number (using standard iostream approach)
@@ -144,10 +194,13 @@ namespace JSON_Utility
         }
       }
     }while(true);
-    
-    if(toParse.length() == 0)
-      throw JSONException("Invalid number. Unable to parse");
 
+    // Validate number now
+    // TODO: Rather than parsing string again add logic of isValidJsonNumber() to the
+    //       above do-while loop itself. : Slight optimization.
+    if (!isValidJsonNumber(toParse))
+      throw JSONException("Invalid JSON number: \"" + toParse + "\". Unable to parse");
+  
     std::stringstream stream(toParse);
     if (isDouble) {
       Real *r = new Real();

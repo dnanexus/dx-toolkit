@@ -310,7 +310,7 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   
   // Weird that string "\u0000" in C++ actually becomes "\u0001";
   // These two lines below are not exactly JSON parser test.
-  // Just so that I remeber this fact.
+  // Just so that I remember this fact.
   ASSERT_EQ("\u0000", "\u0001");
   ASSERT_NE("\u0000", "\u0002");
   //////////////////////////////////////////////////////////////
@@ -452,8 +452,52 @@ TEST(JSONTest, Numbers) {
 
   ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
   ASSERT_EQ(JSON::parse("[1e-1000]"), JSON::parse("[0.0]"));
-  ASSERT_EQ(JSON::parse("[1.213e-2]"), JSON::parse("[.01213]")); 
-  ASSERT_EQ(JSON::parse("[1.213E-2]"), JSON::parse("[.1213e-1]")); 
+  ASSERT_EQ(JSON::parse("[1.213e-2]"), JSON::parse("[0.01213]")); 
+  ASSERT_EQ(JSON::parse("[1.213E-2]"), JSON::parse("[0.1213e-1]")); 
+
+  ASSERT_NE(JSON::parse("[0.0]"), JSON::parse("[0]"));
+  ASSERT_EQ(JSON::parse("[0.00000000]"), JSON::parse("[0.0]"));
+  ASSERT_EQ(JSON::parse("[0.00]"), JSON::parse("[0.00E-2]"));
+  ASSERT_EQ(JSON::parse("[0.00]"), JSON::parse("[0e+0]"));
+  ASSERT_EQ(JSON::parse("[100.0]"), JSON::parse("[   1E+2   ]"));
+  ASSERT_EQ(JSON::parse("[1.0]"), JSON::parse("[1e-0]"));
+  ASSERT_EQ(JSON::parse("[10.0]"), JSON::parse("[0.1E+2  ]"));
+  ASSERT_EQ(JSON::parse("[-0]"), JSON::parse("[0]"));
+  
+  JSON::parse("[-123]"); // Should not throw exception
+
+  // These JSON::parse below are invalud json numbers
+  ASSERT_JSONEXCEPTION(JSON::parse("[01]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1+2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1 2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1-2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[.1]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[+1]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[+1e-23-2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[+1e+23.2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[0001]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[0..1]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1..23]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e-2.3]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e.3]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e+0.0"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e]")); 
+  ASSERT_JSONEXCEPTION(JSON::parse("[1f+2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1ee2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1eE2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e++2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e+-2]")); 
+  ASSERT_JSONEXCEPTION(JSON::parse("[e+2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[--1]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[-+1]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[+0]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1--2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1e12e2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[00]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[00001]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[.e-2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[0.2e-+23]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1+d2]"));
 }
 
 TEST(JSONTest, TestPerformance) {

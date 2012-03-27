@@ -640,7 +640,7 @@ namespace dx {
   template<typename T>
   JSON::operator T() const {
     JSONValue typ = this->type();
-    if (typ != JSON_INTEGER && typ != JSON_REAL && typ != JSON_BOOLEAN)
+    if (typ != JSON_INTEGER && typ != JSON_REAL && typ != JSON_BOOLEAN) 
       throw JSONException("No typecast available for this JSON object to a Numeric/Boolean type");
 
     if (!std::numeric_limits<T>::is_specialized)
