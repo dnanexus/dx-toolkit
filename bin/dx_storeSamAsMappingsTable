@@ -11,8 +11,6 @@ if len(args) != 3:
 
 sam_filename, table_id, chromosomes_id = args
 
-security_context=json.loads(os.environ['SECURITY_CONTEXT'])
-
 chromosomes = dxpy.DXJSON(chromosomes_id).get()['chromosomes']
 
 if chromosomes is None:
