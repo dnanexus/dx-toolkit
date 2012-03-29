@@ -38,7 +38,8 @@ if table_id == "0":
     # dxtable = dxpy.new_dxtable(mappings_schema, chr_col="chr", lo_col="start", hi_col="stop")
     dxtable = dxpy.new_dxtable(mappings_schema)
 else:
-    dxtable = dxpy.open_dxtable(table_id, keep_open=True)
+    dxtable = dxpy.open_dxtable(table_id)
+
 with open(sam_filename, 'r') as sam_file:
     i = 0; table_rows = []
     for line in sam_file:
