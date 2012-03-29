@@ -218,10 +218,12 @@ class DXTable(DXClass):
         if len(desc["parts"]) == 250000:
             raise DXTableError("250000 part indices already used.")
         self._part_index += 1
-        while self._part_index <= 250000:
+
+        while self._part_index <= 250000: 
             if str(self._part_index) not in desc["parts"]:
                 return self._part_index
-
+            self._part_index += 1
+        
         raise DXTableError("Usable part index not found.")
 
     def flush(self):
@@ -232,6 +234,7 @@ class DXTable(DXClass):
                               '{"data": [' + self._row_buf + '], "index":' + \
                                   str(self.get_unused_part_index())+'}',
                               jsonify_data=False)
+
         self._row_buf = []
         self._row_buf_size = 0
 

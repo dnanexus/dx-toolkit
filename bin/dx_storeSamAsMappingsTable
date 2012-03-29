@@ -38,8 +38,7 @@ if table_id == "0":
     # dxtable = dxpy.new_dxtable(mappings_schema, chr_col="chr", lo_col="start", hi_col="stop")
     dxtable = dxpy.new_dxtable(mappings_schema)
 else:
-    dxtable = dxpy.open_dxtable(table_id)
-
+    dxtable = dxpy.open_dxtable(table_id, keep_open=True)
 with open(sam_filename, 'r') as sam_file:
     i = 0; table_rows = []
     for line in sam_file:
@@ -76,8 +75,8 @@ with open(sam_filename, 'r') as sam_file:
         table_rows.append(sam_record)
         i += 1
         if i % 40000 == 0:
-            dxtable.add_rows(table_rows, int(i/40000))
+            dxtable.add_rows(table_rows)
             table_rows = []
     if len(table_rows) > 0:
-        dxtable.add_rows(table_rows, int(i/40000)+1)
+        dxtable.add_rows(table_rows)
     print json.dumps({'table_id': dxtable.get_id()})
