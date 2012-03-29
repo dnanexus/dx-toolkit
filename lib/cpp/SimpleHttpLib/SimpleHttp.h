@@ -36,7 +36,8 @@ public:
 
   // Using std::string for storing a binary buffer.
   // It might be more natural to use vector<char> instead, but there is no 
-  // performance degradation (other than "string" does not feel like a binary buffer naturally).
+  // performance degradation 
+  // (only possible meta-objection is: "string" does not feel like a binary buffer naturally).
   // But storing as std::string allows access to some string functions, which might be of use
   // if the response data was a text string (and not a binary buffer - though storage will work 
   // in both cases). For ex, we can print std::string by cout<<, etc.
