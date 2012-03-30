@@ -5,11 +5,11 @@
 
 class DXUser: public DXClass {
  public:
-  JSON describe() const { return userDescribe(dxid_); }
-  JSON getProperties(const JSON &keys) const { return userGetProperties(dxid_, keys); }
-  void setProperties(const JSON &properties) const { userSetProperties(dxid_, properties); }
-  void addTypes(const JSON &types) const { userAddTypes(dxid_, types); }
-  void removeTypes(const JSON &types) const { userRemoveTypes(dxid_, types); }
+  dx::JSON describe() const { return userDescribe(dxid_); }
+  dx::JSON getProperties(const dx::JSON &keys) const { return userGetProperties(dxid_, keys); }
+  void setProperties(const dx::JSON &properties) const { userSetProperties(dxid_, properties); }
+  void addTypes(const dx::JSON &types) const { userAddTypes(dxid_, types); }
+  void removeTypes(const dx::JSON &types) const { userRemoveTypes(dxid_, types); }
   void destroy() { throw DXError(); }
 };
 

@@ -1,12 +1,17 @@
 #include <algorithm>
 #include "dxcpp.h"
-#include "../SimpleHttpLib/SimpleHttp.h"
+#include "SimpleHttp.h"
 
 // Example environment variables
 //
 // APISERVER_PORT=8124
 // APISERVER_HOST=localhost
 // SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
+
+using namespace std;
+using namespace dx;
+
+bool g_ENV_LOADED = false;
 
 string g_APISERVER_HOST;
 string g_APISERVER_PORT;
@@ -15,13 +20,17 @@ JSON g_SECURITY_CONTEXT;
 
 JSON DXHTTPRequest(const string &resource, const string &data,
 		   const map<string, string> &headers) {
+  if (!g_ENV_LOADED) {
+    loadFromEnvironment();
+    g_ENV_LOADED = true;
+  }
+
   string url = g_APISERVER + resource;
   
   HttpHeaders req_headers;
-  JSON secContext(g_SECURITY_CONTEXT);
-  // TODO: Uncomment after JSON available
-  // headers["Authorization"] = secContext["auth_token_type"] +
-  //   " " + secContext["auth_token"];
+  JSON secContext = g_SECURITY_CONTEXT;
+  req_headers["Authorization"] = secContext["auth_token_type"].get<string>() +
+    " " + secContext["auth_token"].get<string>();
 
   string headername;
   bool content_type_set = false;
@@ -49,13 +58,13 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   req.send();
 
   if (req.responseCode != 200) {
-    // TODO: uncomment when JSON is available
-    // throw DXAPIError(response["error"]["type"],
-    // 		     response["error"]["message"],
-    // 		     req.responseCode);
+    JSON respJSON = JSON::parse(req.respData);
+    throw DXAPIError(respJSON["error"]["type"].get<string>(),
+    		     respJSON["error"]["message"].get<string>(),
+    		     req.responseCode);
   }
 
-  return JSON(req.respData);
+  return JSON::parse(req.respData);
 }
 
 void setAPIServerInfo(const string &host,
@@ -65,7 +74,7 @@ void setAPIServerInfo(const string &host,
   char portstr[10];
   sprintf(portstr, "%d", port);
   g_APISERVER_PORT = string(portstr);
-  g_APISERVER = protocol + "://" + host + g_APISERVER_PORT;
+  g_APISERVER = protocol + "://" + host + ":" + g_APISERVER_PORT;
 }
 
 void setSecurityContext(const JSON &security_context) {
@@ -79,5 +88,5 @@ void loadFromEnvironment() {
 		     atoi(getenv("APISERVER_PORT")));
 
   if (getenv("SECURITY_CONTEXT") != NULL)
-    g_SECURITY_CONTEXT = JSON(getenv("SECURITY_CONTEXT"));
+    g_SECURITY_CONTEXT = JSON::parse(getenv("SECURITY_CONTEXT"));
 }

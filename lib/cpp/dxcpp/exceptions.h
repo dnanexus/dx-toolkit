@@ -4,19 +4,21 @@
 #include <exception>
 #include <string>
 
-using namespace std;
-
-class DXError: public exception {
+class DXError: public std::exception {
 };
 
 class DXAPIError: public DXError {
-  DXAPIError(string name, string msg, int code);
+ public:
+  DXAPIError(std::string name, std::string msg, int code) {}
 };
 
 class DXFileError: public DXError {
 };
 
 class DXTableError: public DXError {
+};
+
+class DXNotImplementedError: public DXError {
 };
 
 #endif

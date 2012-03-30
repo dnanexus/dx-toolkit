@@ -13,7 +13,7 @@ class DXFile: public DXClass {
 		     *  stores length of the file so that accurate
 		     *  byte ranges can be requested.
 		     */
-  string buffer_; /* For use when writing remote files; stores a
+  std::string buffer_; /* For use when writing remote files; stores a
 		   * buffer of data that will be periodically flushed
 		   * to the API server.
 		   */
@@ -29,16 +29,16 @@ class DXFile: public DXClass {
   /** Describes the object.
    * @see DXClass::describe()
    */
-  JSON describe() const { return fileDescribe(dxid_); }
-  JSON getProperties(const JSON &keys) const { return fileGetProperties(dxid_, keys); }
-  void setProperties(const JSON &properties) const { fileSetProperties(dxid_, properties); }
-  void addTypes(const JSON &types) const { fileAddTypes(dxid_, types); }
-  void removeTypes(const JSON &types) const { fileRemoveTypes(dxid_, types); }
+  dx::JSON describe() const { return fileDescribe(dxid_); }
+  dx::JSON getProperties(const dx::JSON &keys) const { return fileGetProperties(dxid_, keys); }
+  void setProperties(const dx::JSON &properties) const { fileSetProperties(dxid_, properties); }
+  void addTypes(const dx::JSON &types) const { fileAddTypes(dxid_, types); }
+  void removeTypes(const dx::JSON &types) const { fileRemoveTypes(dxid_, types); }
   void destroy() { fileDestroy(dxid_); }
 
   // File-specific functions
 
-  void setID(const string &dxid);
+  void setID(const std::string &dxid);
   void create();
   void read(char* s, int n);
   bool eof() const;
@@ -53,17 +53,17 @@ class DXFile: public DXClass {
   // TODO: Provide streaming operators for all reasonable types
   DXFile & operator<<(bool foo);
   DXFile & operator>>(bool foo);
+
+  static DXFile openDXFile(const std::string &dxid);
+
+  static DXFile newDXFile(const std::string &mediaType="");
+
+  static void downloadDXFile(const std::string &dxid, const std::string &filename, int chunksize=1048576);
+
+  static DXFile uploadLocalFile(const std::string &filename, const std::string &media_type="");
+
+  // Do we even want uploadString?  What about uploadCharBuffer?
+  static DXFile uploadString(const std::string &to_upload, const std::string &media_type="");
 };
-
-DXFile openDXFile(const string &dxid);
-
-DXFile newDXFile(const string &mediaType="");
-
-void downloadDXFile(const string &dxid, const string &filename, int chunksize=1048576);
-
-DXFile uploadLocalFile(const string &filename, const string &media_type="");
-
-// Do we even want uploadString?  What about uploadCharBuffer?
-DXFile uploadString(const string &to_upload, const string &media_type="");
 
 #endif

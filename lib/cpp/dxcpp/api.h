@@ -1,375 +1,375 @@
 #ifndef DXCPP_API_H
 #define DXCPP_API_H
 
-#include "json.h"
+#include "dxjson/dxjson.h"
 
 
-JSON systemSearch(const string &input_params=string("{}"));
-JSON systemSearch(const JSON &input_params);
+dx::JSON systemSearch(const std::string &input_params="{}");
+dx::JSON systemSearch(const dx::JSON &input_params);
 
 
-JSON userDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON userDescribe(const string &object_id, const JSON &input_params);
+dx::JSON userDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON userGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON userGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON userSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON userSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON userGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON userGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON userRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON userRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON userGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON userGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON userAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON userAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON userRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON userRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON userRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupNew(const string &input_params=string("{}"));
-JSON groupNew(const JSON &input_params);
+dx::JSON groupNew(const std::string &input_params="{}");
+dx::JSON groupNew(const dx::JSON &input_params);
 
 
-JSON groupDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON groupDescribe(const string &object_id, const JSON &input_params);
+dx::JSON groupDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON groupDestroy(const string &object_id, const JSON &input_params);
+dx::JSON groupDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON groupGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON groupGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON groupSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON groupSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON groupGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON groupGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON groupRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON groupRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON groupGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON groupGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupAddMembers(const string &object_id, const string &input_params=string("{}"));
-JSON groupAddMembers(const string &object_id, const JSON &input_params);
+dx::JSON groupAddMembers(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupAddMembers(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupRemoveMembers(const string &object_id, const string &input_params=string("{}"));
-JSON groupRemoveMembers(const string &object_id, const JSON &input_params);
+dx::JSON groupRemoveMembers(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupRemoveMembers(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON groupAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON groupAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON groupRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON groupRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON groupRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON groupRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonNew(const string &input_params=string("{}"));
-JSON jsonNew(const JSON &input_params);
+dx::JSON jsonNew(const std::string &input_params="{}");
+dx::JSON jsonNew(const dx::JSON &input_params);
 
 
-JSON jsonDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON jsonDescribe(const string &object_id, const JSON &input_params);
+dx::JSON jsonDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON jsonDestroy(const string &object_id, const JSON &input_params);
+dx::JSON jsonDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON jsonGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON jsonGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON jsonSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON jsonSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON jsonGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON jsonGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON jsonRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON jsonRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON jsonGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON jsonGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON jsonAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON jsonAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON jsonRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON jsonRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonGet(const string &object_id, const string &input_params=string("{}"));
-JSON jsonGet(const string &object_id, const JSON &input_params);
+dx::JSON jsonGet(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonGet(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jsonSet(const string &object_id, const string &input_params=string("{}"));
-JSON jsonSet(const string &object_id, const JSON &input_params);
+dx::JSON jsonSet(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jsonSet(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionNew(const string &input_params=string("{}"));
-JSON collectionNew(const JSON &input_params);
+dx::JSON collectionNew(const std::string &input_params="{}");
+dx::JSON collectionNew(const dx::JSON &input_params);
 
 
-JSON collectionDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON collectionDescribe(const string &object_id, const JSON &input_params);
+dx::JSON collectionDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON collectionDestroy(const string &object_id, const JSON &input_params);
+dx::JSON collectionDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON collectionGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON collectionGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON collectionSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON collectionSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON collectionGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON collectionGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON collectionRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON collectionRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON collectionGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON collectionGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON collectionAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON collectionAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON collectionRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON collectionRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON collectionGet(const string &object_id, const string &input_params=string("{}"));
-JSON collectionGet(const string &object_id, const JSON &input_params);
+dx::JSON collectionGet(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON collectionGet(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileNew(const string &input_params=string("{}"));
-JSON fileNew(const JSON &input_params);
+dx::JSON fileNew(const std::string &input_params="{}");
+dx::JSON fileNew(const dx::JSON &input_params);
 
 
-JSON fileDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON fileDescribe(const string &object_id, const JSON &input_params);
+dx::JSON fileDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON fileDestroy(const string &object_id, const JSON &input_params);
+dx::JSON fileDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON fileGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON fileGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON fileSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON fileSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON fileGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON fileGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON fileRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON fileRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON fileGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON fileGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON fileAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON fileAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON fileRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON fileRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileUpload(const string &object_id, const string &input_params=string("{}"));
-JSON fileUpload(const string &object_id, const JSON &input_params);
+dx::JSON fileUpload(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileUpload(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileClose(const string &object_id, const string &input_params=string("{}"));
-JSON fileClose(const string &object_id, const JSON &input_params);
+dx::JSON fileClose(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileClose(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON fileDownload(const string &object_id, const string &input_params=string("{}"));
-JSON fileDownload(const string &object_id, const JSON &input_params);
+dx::JSON fileDownload(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON fileDownload(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableNew(const string &input_params=string("{}"));
-JSON tableNew(const JSON &input_params);
+dx::JSON tableNew(const std::string &input_params="{}");
+dx::JSON tableNew(const dx::JSON &input_params);
 
 
-JSON tableDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON tableDescribe(const string &object_id, const JSON &input_params);
+dx::JSON tableDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableExtend(const string &object_id, const string &input_params=string("{}"));
-JSON tableExtend(const string &object_id, const JSON &input_params);
+dx::JSON tableExtend(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableExtend(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON tableDestroy(const string &object_id, const JSON &input_params);
+dx::JSON tableDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON tableGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON tableGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON tableSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON tableSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON tableGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON tableGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON tableRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON tableRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON tableGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON tableGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON tableAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON tableAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON tableRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON tableRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableAddRows(const string &object_id, const string &input_params=string("{}"));
-JSON tableAddRows(const string &object_id, const JSON &input_params);
+dx::JSON tableAddRows(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableAddRows(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableClose(const string &object_id, const string &input_params=string("{}"));
-JSON tableClose(const string &object_id, const JSON &input_params);
+dx::JSON tableClose(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableClose(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON tableGet(const string &object_id, const string &input_params=string("{}"));
-JSON tableGet(const string &object_id, const JSON &input_params);
+dx::JSON tableGet(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableGet(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appNew(const string &input_params=string("{}"));
-JSON appNew(const JSON &input_params);
+dx::JSON appNew(const std::string &input_params="{}");
+dx::JSON appNew(const dx::JSON &input_params);
 
 
-JSON appDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON appDescribe(const string &object_id, const JSON &input_params);
+dx::JSON appDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON appDestroy(const string &object_id, const JSON &input_params);
+dx::JSON appDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON appGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON appGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON appSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON appSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON appGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON appGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON appRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON appRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON appGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON appGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON appAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON appAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON appRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON appRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON appRun(const string &object_id, const string &input_params=string("{}"));
-JSON appRun(const string &object_id, const JSON &input_params);
+dx::JSON appRun(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appRun(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobNew(const string &input_params=string("{}"));
-JSON jobNew(const JSON &input_params);
+dx::JSON jobNew(const std::string &input_params="{}");
+dx::JSON jobNew(const dx::JSON &input_params);
 
 
-JSON jobDescribe(const string &object_id, const string &input_params=string("{}"));
-JSON jobDescribe(const string &object_id, const JSON &input_params);
+dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobDestroy(const string &object_id, const string &input_params=string("{}"));
-JSON jobDestroy(const string &object_id, const JSON &input_params);
+dx::JSON jobDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobGetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON jobGetProperties(const string &object_id, const JSON &input_params);
+dx::JSON jobGetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobGetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobSetProperties(const string &object_id, const string &input_params=string("{}"));
-JSON jobSetProperties(const string &object_id, const JSON &input_params);
+dx::JSON jobSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobSetProperties(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobGetPermissions(const string &object_id, const string &input_params=string("{}"));
-JSON jobGetPermissions(const string &object_id, const JSON &input_params);
+dx::JSON jobGetPermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobGetPermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobRevokePermission(const string &object_id, const string &input_params=string("{}"));
-JSON jobRevokePermission(const string &object_id, const JSON &input_params);
+dx::JSON jobRevokePermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobRevokePermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobGrantPermission(const string &object_id, const string &input_params=string("{}"));
-JSON jobGrantPermission(const string &object_id, const JSON &input_params);
+dx::JSON jobGrantPermission(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobGrantPermission(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobAddTypes(const string &object_id, const string &input_params=string("{}"));
-JSON jobAddTypes(const string &object_id, const JSON &input_params);
+dx::JSON jobAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobAddTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
-JSON jobRemoveTypes(const string &object_id, const string &input_params=string("{}"));
-JSON jobRemoveTypes(const string &object_id, const JSON &input_params);
+dx::JSON jobRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON jobRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
 
 
 #include "dxcpp.h"
