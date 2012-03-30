@@ -11,7 +11,8 @@
 using namespace std;
 using namespace dx;
 
-bool g_ENV_LOADED = false;
+bool g_APISERVER_SET = false;
+bool g_SECURITY_CONTEXT_SET = false;
 
 string g_APISERVER_HOST;
 string g_APISERVER_PORT;
@@ -20,9 +21,12 @@ JSON g_SECURITY_CONTEXT;
 
 JSON DXHTTPRequest(const string &resource, const string &data,
 		   const map<string, string> &headers) {
-  if (!g_ENV_LOADED) {
+  if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
     loadFromEnvironment();
-    g_ENV_LOADED = true;
+  }
+  if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
+    std::cerr << "Error: API server information and/or security context not set." << std::endl;
+    throw;
   }
 
   string url = g_APISERVER + resource;
@@ -75,18 +79,24 @@ void setAPIServerInfo(const string &host,
   sprintf(portstr, "%d", port);
   g_APISERVER_PORT = string(portstr);
   g_APISERVER = protocol + "://" + host + ":" + g_APISERVER_PORT;
+
+  g_APISERVER_SET = true;
 }
 
 void setSecurityContext(const JSON &security_context) {
   g_SECURITY_CONTEXT = security_context;
+
+  g_SECURITY_CONTEXT_SET = true;
 }
 
 void loadFromEnvironment() {
-  if ((getenv("APISERVER_HOST") != NULL) and
+  if (!g_APISERVER_SET &&
+      (getenv("APISERVER_HOST") != NULL) &&
       (getenv("APISERVER_PORT") != NULL))
     setAPIServerInfo(getenv("APISERVER_HOST"),
 		     atoi(getenv("APISERVER_PORT")));
 
-  if (getenv("SECURITY_CONTEXT") != NULL)
-    g_SECURITY_CONTEXT = JSON::parse(getenv("SECURITY_CONTEXT"));
+  if (!g_SECURITY_CONTEXT_SET &&
+      getenv("SECURITY_CONTEXT") != NULL)
+    setSecurityContext(JSON::parse(getenv("SECURITY_CONTEXT")));
 }
