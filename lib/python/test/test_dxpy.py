@@ -203,19 +203,18 @@ class TestDXTable(unittest.TestCase):
         desc = self.dxtable.describe()
         self.assertEqual(desc["columns"], ['a:string', 'b:int32'])
 
-    @unittest.skip("Skipping table extension; not yet implemented in API server")    
     def test_extend_table(self):
         table_to_extend = dxpy.new_dxtable(['a:string', 'b:int32'])
         try:
             table_to_extend.add_rows([["Row 1", 1], ["Row 2", 2]], 1)
-            table_to_extend.close()
+            table_to_extend.close(block=True)
         except:
             self.fail("Error occurred when creating a table")
             table_to_extend.destroy()
 
         try:
-            self.dxtable = extend_dxtable(table_to_extend.get_id(),
-                                          ['c:int32', 'd:string'])
+            self.dxtable = dxpy.extend_dxtable(table_to_extend.get_id(),
+                                               ['c:int32', 'd:string'])
         except:
             self.fail("Could not extend table");
         finally:
@@ -246,11 +245,15 @@ class TestDXTable(unittest.TestCase):
         self.dxtable = dxpy.new_dxtable(['a:string', 'b:int32'])
         for i in range(64):
             self.dxtable.add_rows(data=[["row"+str(i), i]])
+
+        self.dxtable.flush()
+        desc = self.dxtable.describe()
+        self.assertEqual(len(desc["parts"]), 1)
+
         self.dxtable.close(block=True)
 
         desc = self.dxtable.describe()
         self.assertEqual(desc["size"], 64)
-        self.assertEqual(len(desc["parts"]), 1)
 
     def test_table_context_manager(self):
         with dxpy.new_dxtable(['a:string', 'b:int32']) as self.dxtable:
