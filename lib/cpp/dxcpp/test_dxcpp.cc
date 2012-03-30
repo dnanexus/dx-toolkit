@@ -114,6 +114,13 @@ protected:
 
 const JSON DXTableTest::columns = JSON::parse("[\"a:string\", \"b:int32\"]");
 
+TEST_F(DXTableTest, ColumnDescTest) {
+  JSON columns(JSON_ARRAY);
+  columns.push_back(DXTable::columnDesc("a", "string"));
+  columns.push_back(DXTable::columnDesc("b", "int32"));
+  ASSERT_EQ(DXTableTest::columns, columns);
+}
+
 TEST_F(DXTableTest, CreateDXTableTest) {
   dxtable = DXTable::newDXTable(DXTableTest::columns);
   JSON desc = dxtable.describe();

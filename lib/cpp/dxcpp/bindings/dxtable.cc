@@ -49,8 +49,19 @@ JSON DXTable::getRows(const JSON &column_names, const int starting, const int li
 
 JSON DXTable::getRows(const string &chr, const int lo, const int hi,
 		      const JSON &column_names, const int starting, const int limit) const {
-  throw DXNotImplementedError();
-  return JSON();
+  JSON input_params(JSON_OBJECT);
+  if (column_names.type() == JSON_ARRAY)
+    input_params["columns"] = column_names;
+  if (starting >= 0)
+    input_params["starting"] = starting;
+  if (limit >= 0)
+    input_params["limit"] = limit;
+  input_params["query"] = JSON(JSON_ARRAY);
+  input_params["query"].push_back(chr);
+  input_params["query"].push_back(lo);
+  input_params["query"].push_back(hi);
+
+  return tableGet(dxid_, input_params);
 }
 
 void DXTable::addRows(const JSON &data, int index) {
@@ -138,4 +149,10 @@ DXTable DXTable::newDXTable(const JSON &columns,
 DXTable DXTable::extendDXTable(const string &dxid, const JSON &columns) {
   DXTable table(dxid);
   return table.extend(columns);
+}
+
+JSON DXTable::columnDesc(const string &name,
+		const string &type) {
+  string col_desc = name + ":" + type;
+  return JSON(col_desc);
 }

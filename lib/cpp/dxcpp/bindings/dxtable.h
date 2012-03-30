@@ -80,8 +80,8 @@ class DXTable: public DXClass {
 
   static DXTable extendDXTable(const std::string &dxid, const dx::JSON &columns);
 
-  static dx::JSON makeColumnDescriptor(const std::string &name,
-				       const std::string &type);
+  static dx::JSON columnDesc(const std::string &name,
+			     const std::string &type);
 };
 
 #endif
