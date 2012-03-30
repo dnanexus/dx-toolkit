@@ -4,10 +4,8 @@
 #include <stdlib.h>
 #include <map>
 #include <string>
-#include "json.h"
+#include "dxjson/dxjson.h"
 #include "exceptions.h"
-
-using namespace std;
 
 // TODO: Put HTTP stuff here?
 
@@ -16,14 +14,14 @@ using namespace std;
 // Want to consider returning a string especially after a getRows call
 //
 
-JSON DXHTTPRequest(const string &resource, const string &data,
-		   const map<string, string> &headers=map<string, string>());
+dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
+		   const std::map<std::string, std::string> &headers=std::map<std::string, std::string>());
 
-void setAPIServerInfo(const string &host="localhost",
+void setAPIServerInfo(const std::string &host="localhost",
 		      int port=8124,
-		      const string &protocol="http");
+		      const std::string &protocol="http");
 
-void setSecurityContext(const JSON &security_context);
+void setSecurityContext(const dx::JSON &security_context);
 
 void loadFromEnvironment();
 

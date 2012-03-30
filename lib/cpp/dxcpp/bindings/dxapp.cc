@@ -1,5 +1,8 @@
 #include "dxapp.h"
 
+using namespace std;
+using namespace dx;
+
 void DXApp::createFromFile(const string &codefile) const {
 }
 

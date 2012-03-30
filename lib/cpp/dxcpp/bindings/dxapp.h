@@ -5,17 +5,17 @@
 
 class DXApp: public DXClass {
  public:
-  JSON describe() const { return appDescribe(dxid_); }
-  JSON getProperties(const JSON &keys) const { return appGetProperties(dxid_, keys); }
-  void setProperties(const JSON &properties) const { appSetProperties(dxid_, properties); }
-  void addTypes(const JSON &types) const { appAddTypes(dxid_, types); }
-  void removeTypes(const JSON &types) const { appRemoveTypes(dxid_, types); }
+  dx::JSON describe() const { return appDescribe(dxid_); }
+  dx::JSON getProperties(const dx::JSON &keys) const { return appGetProperties(dxid_, keys); }
+  void setProperties(const dx::JSON &properties) const { appSetProperties(dxid_, properties); }
+  void addTypes(const dx::JSON &types) const { appAddTypes(dxid_, types); }
+  void removeTypes(const dx::JSON &types) const { appRemoveTypes(dxid_, types); }
   void destroy() { appDestroy(dxid_); }
 
   // App-specific functions
 
-  void createFromFile(const string &codefile) const;
-  void createFromString(const string &codestring) const;
+  void createFromFile(const std::string &codefile) const;
+  void createFromString(const std::string &codestring) const;
   void run() const;
 };
 

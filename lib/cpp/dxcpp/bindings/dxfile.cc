@@ -1,5 +1,8 @@
 #include "dxfile.h"
 
+using namespace std;
+using namespace dx;
+
 void DXFile::setID(const string &dxid) {
 }
 
@@ -36,21 +39,21 @@ void DXFile::waitOnClose() const {
   waitOnState();
 }
 
-DXFile openDXFile(const string &dxid) {
+DXFile DXFile::openDXFile(const string &dxid) {
   return DXFile();
 }
 
-DXFile newDXFile(const string &mediaType) {
+DXFile DXFile::newDXFile(const string &mediaType) {
   return DXFile();
 }
 
-void downloadDXFile(const string &dxid, const string &filename, int chunksize) {
+void DXFile::downloadDXFile(const string &dxid, const string &filename, int chunksize) {
 }
 
-DXFile uploadLocalFile(const string &filename, const string &media_type) {
+DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type) {
   return DXFile();
 }
 
-DXFile uploadString(const string &to_upload, const string &media_type) {
+DXFile DXFile::uploadString(const string &to_upload, const string &media_type) {
   return DXFile();
 }
