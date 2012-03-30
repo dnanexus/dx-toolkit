@@ -328,7 +328,14 @@ TEST(JSONTest, TestPerformance) {
 }
 
 TEST(JSONTest, Iterators) {
-
+  JSON j1 = JSON::parse("[1, 2, 3, 4, 5]");
+  int i = 1;
+  for (JSON::const_array_iterator iter = j1.array_begin();
+       iter != j1.array_end();
+       iter++) {
+    ASSERT_EQ(i, iter->get<int>());
+    i++;
+  }
 }
 TEST(JSONTest, FloatingPointPrecision) {
   JSON j1 = 5.7;
