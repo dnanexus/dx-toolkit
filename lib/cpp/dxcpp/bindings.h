@@ -39,6 +39,7 @@ class DXClass {
 
 #include "bindings/dxuser.h"
 #include "bindings/dxgroup.h"
+#include "bindings/dxrecord.h"
 #include "bindings/dxcollection.h"
 #include "bindings/dxfile.h"
 #include "bindings/dxtable.h"

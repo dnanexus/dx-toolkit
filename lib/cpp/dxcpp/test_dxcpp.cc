@@ -11,6 +11,59 @@ using namespace dx;
 
 // TODO: Finish writing tests for other classes.
 
+//////////////
+// DXRecord //
+//////////////
+
+class DXRecordTest : public testing::Test {
+public:
+  static const JSON example_JSON;
+  static const JSON another_example_JSON;
+  DXRecord dxrecord;
+};
+
+const JSON DXRecordTest::example_JSON =
+  JSON::parse("{\"foo\": \"bar\", \"alpha\": [1, 2, 3]}");
+const JSON DXRecordTest::another_example_JSON =
+  JSON::parse("[\"foo\", \"bar\", {\"alpha\": [1, 2.340, -10]}]");
+
+TEST_F(DXRecordTest, CreateDestroyJSONTest) {
+  DXRecord first_record = DXRecord::newDXRecord(DXRecordTest::example_JSON);
+  ASSERT_EQ(DXRecordTest::example_JSON,
+	    first_record.get());
+  string firstID = first_record.getID();
+
+  DXRecord second_record = DXRecord(first_record.getID());
+  ASSERT_EQ(first_record.getID(), second_record.getID());
+  ASSERT_EQ(first_record.get(), second_record.get());
+
+  second_record.create(DXRecordTest::example_JSON);
+  ASSERT_NE(first_record.getID(), second_record.getID());
+  ASSERT_EQ(first_record.get(), second_record.get());
+
+  ASSERT_NO_THROW(first_record.describe());
+
+  first_record.destroy();
+  ASSERT_NO_THROW(first_record.getID());
+  ASSERT_THROW(first_record.describe(), DXAPIError);
+  second_record.destroy();
+  ASSERT_THROW(second_record.describe(), DXAPIError);
+}
+
+TEST_F(DXRecordTest, GetSetJSONTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord(DXRecordTest::example_JSON);
+  ASSERT_EQ(DXRecordTest::example_JSON, dxrecord.get());
+
+  dxrecord.set(DXRecordTest::another_example_JSON);
+  ASSERT_NE(DXRecordTest::example_JSON, dxrecord.get());
+  ASSERT_EQ(DXRecordTest::another_example_JSON, dxrecord.get());
+  dxrecord.destroy();
+}
+
+////////////
+// DXFile //
+////////////
+
 string getBaseName(const string& filename) {
   size_t lastslash = filename.find_last_of("/\\");
   return filename.substr(lastslash+1);
@@ -97,6 +150,10 @@ TEST_F(DISABLED_DXFileTest, WriteReadFile) {
 TEST_F(DISABLED_DXFileTest, StreamingOperators) {
   // TODO: Test << and >>
 }
+
+/////////////
+// DXTable //
+/////////////
 
 class DXTableTest : public testing::Test {
 public:
