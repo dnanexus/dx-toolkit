@@ -10,7 +10,7 @@ bool exceptionflag;
   try { a; ASSERT_TRUE(false); } catch(HttpRequestException &e) { exceptionflag =  true; } \
   ASSERT_TRUE(exceptionflag);
 
-TEST(JSONTest, Test_HTTP_GET) {
+TEST(HttpRequestTest, Test_HTTP_GET) {
   HttpRequest hr;
   hr.buildRequest(HTTP_GET, "http://www.google.com");
   hr.send();
@@ -23,7 +23,7 @@ TEST(JSONTest, Test_HTTP_GET) {
   ASSERT_TRUE(h.isPresent("Date"));
 }
 
-TEST(JSONTest, Test_HTTP_HEAD) {
+TEST(HttpRequestTest, Test_HTTP_HEAD) {
   HttpRequest hr = HttpRequest::request(HTTP_HEAD, "http://www.google.com");
   
   ASSERT_EQ(hr.respData.length(), 0u);
@@ -33,7 +33,7 @@ TEST(JSONTest, Test_HTTP_HEAD) {
   ASSERT_TRUE(h.isPresent("Date"));
 }
 
-TEST(JSONTest, Test_HTTP_HEADi_AND_GET) {
+TEST(HttpRequestTest, Test_HTTP_HEAD_AND_GET) {
   HttpRequest hr = HttpRequest::request(HTTP_HEAD, "http://www.google.com");
   
   ASSERT_EQ(hr.respData.length(), 0u);
