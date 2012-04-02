@@ -13,13 +13,18 @@
 #include "SimpleHttpHeaders.h"
 #include "Utility.h"
 
-typedef std::string HttpMethod;
+//typedef std::string HttpMethod;
+
+// TODO: How's this?  Might not be good if HTTP adds a request method
+// and we'd have to hardcode it in, no?
+enum HttpMethod { HTTP_POST, HTTP_HEAD, HTTP_GET, HTTP_DELETE, HTTP_PUT };
 
 class HttpClientRequest {
 private:
   CURL *curl;
 
 public:
+  // TODO: Rename these.
   HttpHeaders h_req, h_resp;
   HttpMethod method;
   std::string url;
@@ -67,11 +72,39 @@ public:
     respData = "";
     responseCode = -1;
     curl = NULL;
-    method = "POST";
+    method = HTTP_POST;
     url = "";
   }
 
   ~HttpClientRequest() { if (curl != NULL) { curl_easy_cleanup(curl); } } 
+
+  HttpClientRequest request(HttpMethod method,
+			    const std::string &url,
+			    const HttpHeaders &headers=HttpHeaders(),
+			    const char *ptr=NULL,
+			    const size_t &bytes=0);
+
+  /* Uses the input arguments to create a POST request and returns the
+   * request instance.  If ptr = NULL or bytes = 0, then no data is to be written.
+   */
+  static HttpClientRequest post(const std::string &url,
+				const HttpHeaders &headers=HttpHeaders(),
+				const char *ptr=NULL,
+				const size_t &bytes=0);
+
+  /* TODO: Check to see if we ever need the other arguments for HEAD
+   * and GET.  If so, then make them optional arguments.
+   * TODO: Also, is HEAD valid?
+   */
+
+  // Uses the input arguments to create a simple HEAD request and
+  // returns the request instance.
+  static HttpClientRequest head(const std::string &url);
+
+  // Uses the input arguments to create a GET request and returns the
+  // request instance. 
+  static HttpClientRequest get(const std::string &url,
+			       const HttpHeaders &headers=HttpHeaders());
 };
 
 class HttpClientRequestException : public std::exception {

@@ -94,25 +94,27 @@ static void assertLibCurlFunctions(CURLcode retVal, const std::string &msg = "")
 // Default constructor
 HttpClientRequest::HttpClientRequest():
   curl(NULL), 
-  method("POST"), 
+  method(HTTP_POST), 
   responseCode(-1)
 { }
 
 void HttpClientRequest::setMethod(const HttpMethod &m) {
-  method = "";
-  for(unsigned i = 0; i < m.size() ; ++i) {
-    method.push_back(toupper(m[i]));
-  }
+  method = m;
+
+  // method = "";
+  // for(unsigned i = 0; i < m.size() ; ++i) {
+  //   method.push_back(toupper(m[i]));
+  // }
 }
   
 void HttpClientRequest::send() {
-  if (method.compare("POST") != 0 && 
-      method.compare("GET") != 0 && 
-      method.compare("PUT") != 0 && 
-      method.compare("DELETE") != 0) 
-  {
-    throw HttpClientRequestException("Unknown HTTP Method type: '" + method + "'");
-  }
+  // if (method.compare("POST") != 0 && 
+  //     method.compare("GET") != 0 && 
+  //     method.compare("PUT") != 0 && 
+  //     method.compare("DELETE") != 0) 
+  // {
+  //   throw HttpClientRequestException("Unknown HTTP Method type: '" + method + "'");
+  // }
 
   // This function should never be called while "curl" member variable is in use
   if (curl != NULL)
@@ -144,7 +146,8 @@ void HttpClientRequest::send() {
        data. */ 
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_URL, url.c_str()) );
 
-    if(method.compare("POST") == 0) {
+    if (method == HTTP_POST) {
+      //    if(method.compare("POST") == 0) {
       assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POST, 1L) );
       if(reqData.length > 0u) {
         assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POSTFIELDS, reqData.data));
@@ -157,7 +160,9 @@ void HttpClientRequest::send() {
     // Make a copy of reqData, because read_callback (see if{} right below) will modify it
     reqData_struct reqData_temp = reqData;
 
-    if(method.compare("PUT") == 0) {
+    switch (method) {
+      //    if(method.compare("PUT") == 0) {
+    case HTTP_PUT:
       // Set the request type to PUT
       // Using two methods to do it just to be safe
       //  NOTE: CURLOPT_PUT will be deprecated in future libcurl)
@@ -170,17 +175,21 @@ void HttpClientRequest::send() {
         /** set data object to pass to callback function */
         assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_READDATA, &reqData_temp) );
       }
-    }
-    
-    if(method.compare("GET") == 0) {
+      //    }
+      break;
+    case HTTP_GET:
+      //    if(method.compare("GET") == 0) {
       assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_HTTPGET, 1l) );
-    }
-    
-    if(method.compare("DELETE") == 0) {
+      //}
+      break;
+    case HTTP_DELETE:
+      //    if(method.compare("DELETE") == 0) {
       assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE") );
+      //    }
+      break;
     }
 
-    // Set callback for reciveing headers from the response
+    // Set callback for receiving headers from the response
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headers_callback) );
     // "h_resp" is a member variable referencing HttpHeaders
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &h_resp) );
@@ -206,4 +215,36 @@ void HttpClientRequest::send() {
   {
     throw HttpClientRequestException("Unable to initialize object of type CURL");
   }
+}
+
+HttpClientRequest HttpClientRequest::request(HttpMethod method,
+					     const std::string &url,
+					     const HttpHeaders &headers,
+					     const char *ptr,
+					     const size_t &bytes) {
+  HttpClientRequest req;
+  req.setMethod(method);
+  req.setUrl(url);
+  req.setHeaders(headers);
+  if ((ptr != NULL) && (bytes != 0))
+    req.setReqData(ptr, bytes);
+
+  req.send();
+  return req;
+}
+
+HttpClientRequest HttpClientRequest::post(const std::string &url,
+					  const HttpHeaders &headers,
+					  const char *ptr,
+					  const size_t &bytes) {
+  return HttpClientRequest();
+}
+
+HttpClientRequest HttpClientRequest::head(const std::string &url) {
+  return HttpClientRequest();
+}
+
+HttpClientRequest HttpClientRequest::get(const std::string &url,
+					 const HttpHeaders &headers) {
+  return HttpClientRequest();
 }

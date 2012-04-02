@@ -125,7 +125,7 @@ class DXTable: public DXClass {
   void close(const bool block=false) ;
 
   /**
-   * Waits until the remote table has finished closing.
+   * Waits until the remote table is in the "closed" state.
    */
   void waitOnClose() const;
 

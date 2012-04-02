@@ -37,6 +37,9 @@ JSON DXHTTPRequest(const string &resource, const string &data,
     " " + secContext["auth_token"].get<string>();
 
   string headername;
+
+  // TODO: Reconsider this; would we rather just set the content-type
+  // to json always?
   bool content_type_set = false;
   for (map<string, string>::const_iterator iter = headers.begin();
        iter != headers.end();
@@ -57,7 +60,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // Attempt a POST request
   req.setUrl(url);
   req.setReqData(data.data(), data.size());
-  req.setMethod("POST");
+  req.setMethod(HTTP_POST);
   req.setHeaders(req_headers);
   req.send();
 

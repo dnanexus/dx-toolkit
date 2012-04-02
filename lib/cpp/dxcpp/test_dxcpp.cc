@@ -71,7 +71,7 @@ string getBaseName(const string& filename) {
 
 string foofilename = "";
 
-class DISABLED_DXFileTest : public testing::Test {
+class DXFileTest : public testing::Test {
 public:
   static const string foostr;
   string tempfilename;
@@ -104,16 +104,15 @@ protected:
   }
 };
 
-const string DISABLED_DXFileTest::foostr = "foo\n";
+const string DXFileTest::foostr = "foo\n";
 
-TEST_F(DISABLED_DXFileTest, UploadDownloadFiles) {
+TEST_F(DXFileTest, UploadDownloadFiles) {
   dxfile = DXFile::uploadLocalFile(foofilename);
   dxfile.waitOnClose();
   ASSERT_FALSE(dxfile.is_open());
 
-  // TODO: Uncomment/fix for actual JSON interface
-  //  EXPECT_EQ(getBaseName(foofilename),
-  //	    dxfile.getProperties["name"]);
+  EXPECT_EQ(getBaseName(foofilename),
+  	    dxfile.getProperties()["name"].get<string>());
 
   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
 
@@ -123,32 +122,42 @@ TEST_F(DISABLED_DXFileTest, UploadDownloadFiles) {
   ASSERT_EQ(foostr, stored);
 }
 
-TEST_F(DISABLED_DXFileTest, UploadString) {
-  // TODO
-}
-
-TEST_F(DISABLED_DXFileTest, WriteReadFile) {
+TEST_F(DXFileTest, WriteReadFile) {
   // TODO
 
   dxfile = DXFile::newDXFile();
-  dxfile.write(DISABLED_DXFileTest::foostr.data(), DISABLED_DXFileTest::foostr.length());
+  dxfile.write(DXFileTest::foostr.data(), DXFileTest::foostr.length());
 
   DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
   same_dxfile.waitOnClose();
 
   char buf[10];
   same_dxfile.read(buf, foostr.length()+1);
-  ASSERT_EQ(buf, DISABLED_DXFileTest::foostr.c_str());
+  ASSERT_EQ(buf, DXFileTest::foostr.c_str());
   EXPECT_TRUE(same_dxfile.eof());
 
   same_dxfile.seek(1);
   EXPECT_FALSE(same_dxfile.eof());
   same_dxfile.read(buf, foostr.length());
-  ASSERT_EQ(buf, DISABLED_DXFileTest::foostr.substr(1).c_str());
+  ASSERT_EQ(buf, DXFileTest::foostr.substr(1).c_str());
 }
 
-TEST_F(DISABLED_DXFileTest, StreamingOperators) {
-  // TODO: Test << and >>
+TEST_F(DXFileTest, StreamingOperators) {
+  dxfile = DXFile::newDXFile();
+  stringstream samestr;
+  dxfile  << "foo" << 1 << " " << 2.5 << endl;
+  samestr << "foo" << 1 << " " << 2.5 << endl;
+  dxfile  << "bar" << endl;
+  samestr << "bar" << endl;
+  dxfile.close(true);
+  
+  string stored;
+  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+  ifstream downloadedfile(tempfilename.c_str());
+  downloadedfile >> stored;
+  ASSERT_EQ(samestr.str(), stored);
+
+  // TODO: Test >> if/when implemented
 }
 
 /////////////

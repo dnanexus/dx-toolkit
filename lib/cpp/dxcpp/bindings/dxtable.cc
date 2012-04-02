@@ -95,7 +95,7 @@ void DXTable::addRows(const JSON &data) {
 int DXTable::getUnusedPartIndex() {
   const JSON desc = describe();
   if (desc["parts"].length() == 250000)
-    throw DXTableError();//"250000 part indices already used."
+    throw DXGTableError();//"250000 part indices already used."
 
   do {
     part_index_++;
@@ -103,7 +103,7 @@ int DXTable::getUnusedPartIndex() {
       return part_index_;
   } while (part_index_ < 250000);
 
-  throw DXTableError();//"Usable part index not found."
+  throw DXGTableError();//"Usable part index not found."
 }
 
 void DXTable::flush() {

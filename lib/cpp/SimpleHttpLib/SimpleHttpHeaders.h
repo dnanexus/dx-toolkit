@@ -11,7 +11,7 @@ class HttpHeaders {
 public:
   // See: http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
   // See: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-  //      for rational behind "statusLine" and separating headers on colons, etc
+  //      for rationale behind "statusLine" and separating headers on colons, etc
   std::map<std::string, std::string> header;
   std::string statusLine; // Makes sense only for response headers
   
@@ -29,6 +29,7 @@ public:
     return header[key];
   }
 
+  // TODO: Should we modify to be case-insensitive?
   bool isPresent(const std::string &key) const {
     return (header.count(key) > 0);
   }
