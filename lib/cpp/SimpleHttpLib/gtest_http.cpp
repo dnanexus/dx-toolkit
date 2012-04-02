@@ -33,6 +33,25 @@ TEST(JSONTest, Test_HTTP_HEAD) {
   ASSERT_TRUE(h.isPresent("Date"));
 }
 
+TEST(JSONTest, Test_HTTP_HEADi_AND_GET) {
+  HttpRequest hr = HttpRequest::request(HTTP_HEAD, "http://www.google.com");
+  
+  ASSERT_EQ(hr.respData.length(), 0u);
+  ASSERT_EQ(hr.responseCode, 200);
+  const HttpHeaders h = hr.getRespHeaders();
+  // Date header is present in google's page
+  ASSERT_TRUE(h.isPresent("Date"));
+
+  hr.buildRequest(HTTP_GET, "http://www.google.com");
+  hr.send();
+  ASSERT_EQ(hr.responseCode, 200);
+  // "<html" is present in google homepage
+  ASSERT_NE(hr.respData.find("<html"), string::npos);
+  const HttpHeaders h2 = hr.getRespHeaders();
+  // Date header is present in google's page
+  ASSERT_TRUE(h2.isPresent("Date"));
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
       return RUN_ALL_TESTS();
