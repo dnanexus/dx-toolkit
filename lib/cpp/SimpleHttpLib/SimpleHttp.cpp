@@ -65,7 +65,7 @@ static size_t write_callback(void *buffer, size_t size, size_t nmemb, void *user
 
 /* Callback for reading request data (for e.g., in PUT) */
 static size_t read_callback(void *data, size_t size, size_t nmemb, void *userdata) {
-  HttpClientRequest::reqData_struct *u = static_cast<HttpClientRequest::reqData_struct*>(userdata);
+  HttpRequest::reqData_struct *u = static_cast<HttpRequest::reqData_struct*>(userdata);
   
   // Set correct sizes
   size_t curl_size = size * nmemb; // This is the maximum size curl asked for
@@ -84,45 +84,26 @@ static size_t read_callback(void *data, size_t size, size_t nmemb, void *userdat
 
 static void assertLibCurlFunctions(CURLcode retVal, const std::string &msg = "") {
   if(retVal != CURLE_OK)
-    throw HttpClientRequestException( (msg.size() > 0u) ? msg.c_str() : "An error occured while using a libcurl functionality");
+    throw HttpRequestException( (msg.size() > 0u) ? msg.c_str() : "An error occured while using a libcurl functionality");
 }
 
 //////////////////////////////////////////////////
 /////////// Class method defintions //////////////
 //////////////////////////////////////////////////
-
-// Default constructor
-HttpClientRequest::HttpClientRequest():
-  curl(NULL), 
-  method(HTTP_POST), 
-  responseCode(-1)
-{ }
-
-void HttpClientRequest::setMethod(const HttpMethod &m) {
-  method = m;
-
-  // method = "";
-  // for(unsigned i = 0; i < m.size() ; ++i) {
-  //   method.push_back(toupper(m[i]));
-  // }
-}
   
-void HttpClientRequest::send() {
-  // if (method.compare("POST") != 0 && 
-  //     method.compare("GET") != 0 && 
-  //     method.compare("PUT") != 0 && 
-  //     method.compare("DELETE") != 0) 
-  // {
-  //   throw HttpClientRequestException("Unknown HTTP Method type: '" + method + "'");
-  // }
+void HttpRequest::send() {
+  // TODO: Not call curl_easy_cleanup() always at end of send()
+  //       Instead allow to reuse the same curl handle for subsequent requests
+  //       Much faster this way
 
   // This function should never be called while "curl" member variable is in use
   if (curl != NULL)
-    throw HttpClientRequestException("curl member variable is already in use. Cannot be reused until previous operation is complete");
+    throw HttpRequestException("curl member variable is already in use. Cannot be reused until previous operation is complete");
 
   curl = curl_easy_init();
 
   if(curl != NULL) {
+    respData = "";
     /* Set the user agent - optional */
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_USERAGENT, "DNAnexus: libcurl-C++ wrapper") );
   
@@ -133,7 +114,7 @@ void HttpClientRequest::send() {
     /* Set the header(s) */
     curl_slist *header = NULL;
     std::vector<std::string> header_vec;
-    header_vec = h_req.getAllHeadersAsVector();
+    header_vec = reqHeader.getAllHeadersAsVector(); //inefficient quick hack, use iterator instead
     for (unsigned i = 0;i < header_vec.size(); i++)
       header = curl_slist_append(header, header_vec[i].c_str());
     
@@ -145,67 +126,63 @@ void HttpClientRequest::send() {
        just as well be a https:// URL if that is what should receive the
        data. */ 
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_URL, url.c_str()) );
-
-    if (method == HTTP_POST) {
-      //    if(method.compare("POST") == 0) {
-      assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POST, 1L) );
-      if(reqData.length > 0u) {
-        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POSTFIELDS, reqData.data));
-        // To disallow strlen() on reqData, setting POSTFIELDSIZE explicitly
-        // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPOSTFIELDSIZE
-        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, reqData.length) );
-      }
-    }
    
-    // Make a copy of reqData, because read_callback (see if{} right below) will modify it
-    reqData_struct reqData_temp = reqData;
+    // Make a copy of reqData, because read_callback (see HTTP_PUT case below) will modify it
+    reqData_struct reqData_temp;
 
     switch (method) {
-      //    if(method.compare("PUT") == 0) {
-    case HTTP_PUT:
-      // Set the request type to PUT
-      // Using two methods to do it just to be safe
-      //  NOTE: CURLOPT_PUT will be deprecated in future libcurl)
-      assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_PUT, 1L) );
-      assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L) );
+      case HTTP_POST:
+        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POST, 1L) );
+        if(reqData.length > 0u) {
+          assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POSTFIELDS, reqData.data));
+          // To disallow strlen() on reqData, setting POSTFIELDSIZE explicitly
+          // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPOSTFIELDSIZE
+          assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, reqData.length) );
+        }
+        break;
+      case HTTP_PUT:
+        reqData_temp = reqData; // Make a copy, since it will be modified
+        // Set the request type to PUT
+        // Using two methods to do it just to be safe
+        // NOTE: CURLOPT_PUT will be deprecated in future libcurl)
+        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_PUT, 1L) );
+        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L) );
       
-      if (reqData.length > 0u) {
-        // Now set the read_call back function.
-        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback) );
-        /** set data object to pass to callback function */
-        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_READDATA, &reqData_temp) );
-      }
-      //    }
-      break;
-    case HTTP_GET:
-      //    if(method.compare("GET") == 0) {
-      assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_HTTPGET, 1l) );
-      //}
-      break;
-    case HTTP_DELETE:
-      //    if(method.compare("DELETE") == 0) {
-      assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE") );
-      //    }
-      break;
+        if (reqData.length > 0u) {
+         // Now set the read_call back function.
+          assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback) );
+          /** set data object to pass to callback function */
+          assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_READDATA, &reqData_temp) );
+        }
+        break;
+      case HTTP_GET:
+        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_HTTPGET, 1l) );
+        break;
+      case HTTP_DELETE:
+        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE") );
+        break;
+      case HTTP_HEAD:
+        assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_NOBODY, 1l) );
+        break;
+      default:
+        throw HttpRequestException("Unknown HttpMethod type");
     }
 
     // Set callback for receiving headers from the response
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, headers_callback) );
-    // "h_resp" is a member variable referencing HttpHeaders
-    assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &h_resp) );
+    // "respHeader" is a member variable referencing HttpHeaders
+    assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &respHeader) );
  
     // Set callback for recieving the response data
     /** set callback function */
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) );
-    /** "respData" is a member variable of HttpClientRequest */
+    /** "respData" is a member variable of HttpRequest */
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData) );   
     
     /* Perform the request, res will get the return code */ 
     assertLibCurlFunctions( curl_easy_perform(curl), "Error while performing curl request: curl_easy_perform");
 
-    long temp_respCode;
-    assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &temp_respCode) );
-    responseCode = static_cast<int>(temp_respCode);
+    assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode) );
 
     /* always cleanup */
     curl_easy_cleanup(curl);
@@ -213,38 +190,6 @@ void HttpClientRequest::send() {
   }
   else
   {
-    throw HttpClientRequestException("Unable to initialize object of type CURL");
+    throw HttpRequestException("Unable to initialize object of type CURL");
   }
-}
-
-HttpClientRequest HttpClientRequest::request(HttpMethod method,
-					     const std::string &url,
-					     const HttpHeaders &headers,
-					     const char *ptr,
-					     const size_t &bytes) {
-  HttpClientRequest req;
-  req.setMethod(method);
-  req.setUrl(url);
-  req.setHeaders(headers);
-  if ((ptr != NULL) && (bytes != 0))
-    req.setReqData(ptr, bytes);
-
-  req.send();
-  return req;
-}
-
-HttpClientRequest HttpClientRequest::post(const std::string &url,
-					  const HttpHeaders &headers,
-					  const char *ptr,
-					  const size_t &bytes) {
-  return HttpClientRequest();
-}
-
-HttpClientRequest HttpClientRequest::head(const std::string &url) {
-  return HttpClientRequest();
-}
-
-HttpClientRequest HttpClientRequest::get(const std::string &url,
-					 const HttpHeaders &headers) {
-  return HttpClientRequest();
 }
