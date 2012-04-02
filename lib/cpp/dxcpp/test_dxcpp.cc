@@ -71,7 +71,7 @@ string getBaseName(const string& filename) {
 
 string foofilename = "";
 
-class DXFileTest : public testing::Test {
+class DISABLED_DXFileTest : public testing::Test {
 public:
   static const string foostr;
   string tempfilename;
@@ -104,9 +104,9 @@ protected:
   }
 };
 
-const string DXFileTest::foostr = "foo\n";
+const string DISABLED_DXFileTest::foostr = "foo\n";
 
-TEST_F(DXFileTest, UploadDownloadFiles) {
+TEST_F(DISABLED_DXFileTest, UploadDownloadFiles) {
   dxfile = DXFile::uploadLocalFile(foofilename);
   dxfile.waitOnClose();
   ASSERT_FALSE(dxfile.is_open());
@@ -122,27 +122,27 @@ TEST_F(DXFileTest, UploadDownloadFiles) {
   ASSERT_EQ(foostr, stored);
 }
 
-TEST_F(DXFileTest, WriteReadFile) {
+TEST_F(DISABLED_DXFileTest, WriteReadFile) {
   // TODO
 
   dxfile = DXFile::newDXFile();
-  dxfile.write(DXFileTest::foostr.data(), DXFileTest::foostr.length());
+  dxfile.write(DISABLED_DXFileTest::foostr.data(), DISABLED_DXFileTest::foostr.length());
 
   DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
   same_dxfile.waitOnClose();
 
   char buf[10];
   same_dxfile.read(buf, foostr.length()+1);
-  ASSERT_EQ(buf, DXFileTest::foostr.c_str());
+  ASSERT_EQ(buf, DISABLED_DXFileTest::foostr.c_str());
   EXPECT_TRUE(same_dxfile.eof());
 
   same_dxfile.seek(1);
   EXPECT_FALSE(same_dxfile.eof());
   same_dxfile.read(buf, foostr.length());
-  ASSERT_EQ(buf, DXFileTest::foostr.substr(1).c_str());
+  ASSERT_EQ(buf, DISABLED_DXFileTest::foostr.substr(1).c_str());
 }
 
-TEST_F(DXFileTest, StreamingOperators) {
+TEST_F(DISABLED_DXFileTest, StreamingOperators) {
   dxfile = DXFile::newDXFile();
   stringstream samestr;
   dxfile  << "foo" << 1 << " " << 2.5 << endl;
