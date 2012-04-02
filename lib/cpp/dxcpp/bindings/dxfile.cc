@@ -39,8 +39,8 @@ void DXFile::read(char* s, int n) {
 
   // TODO: make sure all lower-case works.
   if (file_length_ < 0) {
-    HttpClientRequest get_length = HttpClientRequest::head(url);
-    file_length_ = boost::lexical_cast<int>(get_length.h_resp["content-length"]);
+    HttpRequest get_length = HttpRequest::request(HTTP_HEAD, url);
+    file_length_ = boost::lexical_cast<int>(get_length.respHeader["content-length"]);
   }
 
   if (pos_ >= file_length_) {
@@ -59,7 +59,7 @@ void DXFile::read(char* s, int n) {
   headers["Range"] = "bytes=" + boost::lexical_cast<string>(pos_) + "-" + boost::lexical_cast<string>(endbyte);
   pos_ = endbyte + 1;
 
-  HttpClientRequest resp = HttpClientRequest::get(url, headers);
+  HttpRequest resp = HttpRequest::request(HTTP_GET, url, headers);
   if (resp.responseCode != 200)
     throw DXFileError();
 }
@@ -116,9 +116,10 @@ void DXFile::uploadPart(const char *ptr, int n, const int index) {
   HttpHeaders req_headers;
   req_headers["Content-Length"] = n;
 
-  HttpClientRequest req = HttpClientRequest::post(resp["url"].get<string>(),
-						  req_headers,
-						  ptr, n);
+  HttpRequest req = HttpRequest::request(HTTP_POST,
+					 resp["url"].get<string>(),
+					 req_headers,
+					 ptr, n);
 
   if (req.responseCode != 200) {
     throw DXFileError();

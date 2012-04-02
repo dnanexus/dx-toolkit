@@ -55,7 +55,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   if (!content_type_set)
     req_headers["Content-Type"] = "application/json";    
 
-  HttpClientRequest req;
+  HttpRequest req;
 
   // Attempt a POST request
   req.setUrl(url);
