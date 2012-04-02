@@ -4,7 +4,7 @@ using namespace std;
 using namespace dx;
 
 void DXRecord::create(const JSON &to_store) {
-  JSON resp = jsonNew(to_store);
+  const JSON resp = jsonNew(to_store);
   setID(resp["id"].get<string>());
 }
 

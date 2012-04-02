@@ -4,11 +4,20 @@
 using namespace std;
 using namespace dx;
 
+void DXTable::setID(const std::string &dxid) {
+  if (row_buffer_.length() > 0)
+    flush();
+
+  part_index_ = 0;
+
+  DXClass::setID(dxid);
+}
+
 void DXTable::create(const JSON &columns) {
   JSON input_params(JSON_OBJECT);
   input_params["columns"] = columns;
 
-  JSON resp = tableNew(input_params);
+  const JSON resp = tableNew(input_params);
 
   setID(resp["id"].get<string>());
 }
@@ -21,7 +30,7 @@ void DXTable::create(const JSON &columns,
   input_params["columns"] = columns;
   input_params["index"] = chr_col + "." + lo_col + "." + hi_col;
 
-  JSON resp = tableNew(input_params);
+  const JSON resp = tableNew(input_params);
 
   setID(resp["id"].get<string>());
 }
@@ -30,7 +39,7 @@ DXTable DXTable::extend(const JSON &columns) const {
   JSON input_params(JSON_OBJECT);
   input_params["columns"] = columns;
 
-  JSON resp = tableExtend(dxid_, input_params);
+  const JSON resp = tableExtend(dxid_, input_params);
 
   return DXTable(resp["id"].get<string>());
 }
@@ -84,7 +93,7 @@ void DXTable::addRows(const JSON &data) {
 }
 
 int DXTable::getUnusedPartIndex() {
-  JSON desc = describe();
+  const JSON desc = describe();
   if (desc["parts"].length() == 250000)
     throw DXTableError();//"250000 part indices already used."
 
@@ -107,10 +116,6 @@ void DXTable::flush() {
   row_buffer_ = JSON(JSON_ARRAY);
 }
 
-/**
- * Attempts to close the remote table.
- * @param block if true, waits until the table has finished closing before returning
- */
 void DXTable::close(const bool block) {
   if (row_buffer_.length() > 0)
     flush();
@@ -120,9 +125,6 @@ void DXTable::close(const bool block) {
     waitOnState();
 }
 
-/**
- * Waits until the remote table has finished closing.
- */
 void DXTable::waitOnClose() const {
   waitOnState();
 }

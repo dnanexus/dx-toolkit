@@ -10,8 +10,8 @@ class DXFile: public DXClass {
 	     * file) from which future read() calls will begin.
 	     */
   int file_length_; /* For use when reading closed remote files;
-		     *  stores length of the file so that accurate
-		     *  byte ranges can be requested.
+		     * stores length of the file so that accurate byte
+		     * ranges can be requested.
 		     */
   std::string buffer_; /* For use when writing remote files; stores a
 		   * buffer of data that will be periodically flushed
@@ -25,7 +25,14 @@ class DXFile: public DXClass {
 	      * reading a remote file.
 	      */
 
+  void init_internals_();
+
+  static const int max_buf_size_;
+
  public:
+  DXFile() {}
+  DXFile(const std::string &dxid) { setID(dxid); }
+
   /** Describes the object.
    * @see DXClass::describe()
    */
@@ -38,16 +45,25 @@ class DXFile: public DXClass {
 
   // File-specific functions
 
+  /**
+   * Sets the remote object ID associated with the remote file
+   * handler.  If the handler had data stored in its internal buffer
+   * to be written to the remote file, that data will be flushed.
+   *
+   * @param dxid Remote object ID of the remote file to be accessed
+   */
   void setID(const std::string &dxid);
-  void create();
+  void create(const std::string &media_type="");
   void read(char* s, int n);
   bool eof() const;
   void seek(const int pos);
   void flush();
   void write(const char* s, int n);
-  void uploadPart();
+  void write(const std::string &data);
+  void uploadPart(const std::string &data, const int index=-1);
   bool is_open() const;
-  void close(const bool block=false) const;
+  bool is_closed() const;
+  void close(const bool block=false);
   void waitOnClose() const;
 
   // TODO: Provide streaming operators for all reasonable types
@@ -56,7 +72,7 @@ class DXFile: public DXClass {
 
   static DXFile openDXFile(const std::string &dxid);
 
-  static DXFile newDXFile(const std::string &mediaType="");
+  static DXFile newDXFile(const std::string &media_type="");
 
   static void downloadDXFile(const std::string &dxid, const std::string &filename, int chunksize=1048576);
 
