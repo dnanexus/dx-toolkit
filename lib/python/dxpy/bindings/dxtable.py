@@ -136,7 +136,7 @@ class DXTable(DXClass):
             get_rows_params["limit"] = limit
 
         try:
-            query = chr + "." + lo + "." + hi
+            query = [chr, lo, hi]
             get_rows_params['query'] = query
         except:
             pass
@@ -176,6 +176,8 @@ class DXTable(DXClass):
         '''
         :param data: List of rows to be added
         :type data: list of list
+        :param index: The part index to label the rows in data.
+        :type index: integer
         :raises: :exc:`dxpy.exceptions.DXTableError`
 
         Adds the rows listed in data to the current table.  If *index*
