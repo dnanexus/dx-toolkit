@@ -212,6 +212,7 @@ class DXFile: public DXClass {
   DXFile & operator<<(stdendline manipulator) {
     std::stringstream str_buf;
     str_buf << manipulator;
+    write(str_buf.str());
     return *this;
   }
 
