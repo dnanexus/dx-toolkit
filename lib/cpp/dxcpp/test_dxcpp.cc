@@ -71,7 +71,7 @@ string getBaseName(const string& filename) {
 
 string foofilename = "";
 
-class DISABLED_DXFileTest : public testing::Test {
+class DXFileTest : public testing::Test {
 public:
   static const string foostr;
   string tempfilename;
@@ -104,9 +104,9 @@ protected:
   }
 };
 
-const string DISABLED_DXFileTest::foostr = "foo\n";
+const string DXFileTest::foostr = "foo\n";
 
-TEST_F(DISABLED_DXFileTest, UploadDownloadFiles) {
+TEST_F(DXFileTest, UploadDownloadFiles) {
   dxfile = DXFile::uploadLocalFile(foofilename);
   dxfile.waitOnClose();
   ASSERT_FALSE(dxfile.is_open());
@@ -116,33 +116,35 @@ TEST_F(DISABLED_DXFileTest, UploadDownloadFiles) {
 
   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
 
-  string stored;
+  char stored[10];
   ifstream downloadedfile(tempfilename.c_str());
-  downloadedfile >> stored;
-  ASSERT_EQ(foostr, stored);
+  downloadedfile.read(stored, 10);
+  ASSERT_EQ(foostr.size(), downloadedfile.gcount());
+  ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
 }
 
-TEST_F(DISABLED_DXFileTest, WriteReadFile) {
+TEST_F(DXFileTest, WriteReadFile) {
   // TODO
 
   dxfile = DXFile::newDXFile();
-  dxfile.write(DISABLED_DXFileTest::foostr.data(), DISABLED_DXFileTest::foostr.length());
+  dxfile.write(foostr.data(), foostr.length());
+  dxfile.close();
 
   DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
   same_dxfile.waitOnClose();
 
-  char buf[10];
-  same_dxfile.read(buf, foostr.length()+1);
-  ASSERT_EQ(buf, DISABLED_DXFileTest::foostr.c_str());
+  char stored[10];
+  same_dxfile.read(stored, foostr.length());
+  ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
   EXPECT_TRUE(same_dxfile.eof());
 
   same_dxfile.seek(1);
   EXPECT_FALSE(same_dxfile.eof());
-  same_dxfile.read(buf, foostr.length());
-  ASSERT_EQ(buf, DISABLED_DXFileTest::foostr.substr(1).c_str());
+  same_dxfile.read(stored, foostr.length());
+  ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
 }
 
-TEST_F(DISABLED_DXFileTest, StreamingOperators) {
+TEST_F(DXFileTest, StreamingOperators) {
   dxfile = DXFile::newDXFile();
   stringstream samestr;
   dxfile  << "foo" << 1 << " " << 2.5 << endl;
@@ -151,11 +153,11 @@ TEST_F(DISABLED_DXFileTest, StreamingOperators) {
   samestr << "bar" << endl;
   dxfile.close(true);
   
-  string stored;
+  char stored[50];
   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
   ifstream downloadedfile(tempfilename.c_str());
-  downloadedfile >> stored;
-  ASSERT_EQ(samestr.str(), stored);
+  downloadedfile.read(stored, 50);
+  ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
 
   // TODO: Test >> if/when implemented
 }

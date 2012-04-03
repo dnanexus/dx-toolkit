@@ -1,3 +1,4 @@
+#include <vector>
 #include <boost/lexical_cast.hpp>
 #include "dxfile.h"
 #include "SimpleHttp.h"
@@ -33,14 +34,15 @@ void DXFile::create(const std::string &media_type) {
   setID(resp["id"].get<string>());
 }
 
-void DXFile::read(char* s, int n) {
+void DXFile::read(char* ptr, int n) {
+  gcount_ = 0;
   const JSON get_DL_url = fileDownload(dxid_);
-  string url = get_DL_url["url"].get<string>();
+  const string url = get_DL_url["url"].get<string>();
 
   // TODO: make sure all lower-case works.
   if (file_length_ < 0) {
     HttpRequest get_length = HttpRequest::request(HTTP_HEAD, url);
-    file_length_ = boost::lexical_cast<int>(get_length.respHeader["content-length"]);
+    file_length_ = boost::lexical_cast<int>(get_length.respHeader["Content-Length"]);
   }
 
   if (pos_ >= file_length_) {
@@ -53,15 +55,21 @@ void DXFile::read(char* s, int n) {
     endbyte = pos_ + n - 1;
   else
     eof_ = true;
-  gcount_ = endbyte - pos_ + 1;
 
   HttpHeaders headers;
   headers["Range"] = "bytes=" + boost::lexical_cast<string>(pos_) + "-" + boost::lexical_cast<string>(endbyte);
   pos_ = endbyte + 1;
 
   HttpRequest resp = HttpRequest::request(HTTP_GET, url, headers);
-  if (resp.responseCode != 200)
-    throw DXFileError();
+  if ((resp.responseCode < 200) ||
+      (resp.responseCode >= 300)) {
+    throw DXFileError("HTTP Response code: " +
+		      boost::lexical_cast<string>(resp.responseCode) +
+		      " when downloading.");
+  }
+
+  memcpy(ptr, resp.respData.data(), resp.respData.length());
+  gcount_ = resp.respData.length();
 }
 
 int DXFile::gcount() const {
@@ -88,14 +96,14 @@ void DXFile::flush() {
 
 // NOTE: If needed, optimize in the future to not have to copy to
 // append to buffer_ before uploading the next part.
-void DXFile::write(const char* s, int n) {
+void DXFile::write(const char* ptr, int n) {
   int remaining_buf_size = max_buf_size_ - buffer_.size();
   if (n < remaining_buf_size) {
-    buffer_.append(s, n);
+    buffer_.append(ptr, n);
   } else {
-    buffer_.append(s, remaining_buf_size);
+    buffer_.append(ptr, remaining_buf_size);
     flush();
-    write(s + remaining_buf_size, n - remaining_buf_size);
+    write(ptr + remaining_buf_size, n - remaining_buf_size);
   }
 }
 
@@ -109,12 +117,12 @@ void DXFile::uploadPart(const string &data, const int index) {
 
 void DXFile::uploadPart(const char *ptr, int n, const int index) {
   JSON input_params(JSON_OBJECT);
-  if (index >= 0)
+  if (index >= 1)
     input_params["index"] = index;
 
   const JSON resp = fileUpload(dxid_, input_params);
   HttpHeaders req_headers;
-  req_headers["Content-Length"] = n;
+  req_headers["Content-Length"] = boost::lexical_cast<string>(n);
 
   HttpRequest req = HttpRequest::request(HTTP_POST,
 					 resp["url"].get<string>(),
@@ -164,12 +172,17 @@ void DXFile::downloadDXFile(const string &dxid, const string &filename, int chun
   DXFile dxfile(dxid);
   ofstream localfile(filename.c_str());
   char chunkbuf[chunksize];
-  while (!dxfile.eof_) {
+  while (!dxfile.eof()) {
     dxfile.read(chunkbuf, chunksize);
     int num_bytes = dxfile.gcount();
     localfile.write(chunkbuf, num_bytes);
   }
   localfile.close();
+}
+
+static string getBaseName(const string& filename) {
+  size_t lastslash = filename.find_last_of("/\\");
+  return filename.substr(lastslash+1);
 }
 
 DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type) {
@@ -180,16 +193,20 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type)
     while (!localfile.eof()) {
       localfile.read(buf, DXFile::max_buf_size_);
       int num_bytes = localfile.gcount();
-      dxfile.uploadPart(buf, num_bytes);
+      dxfile.write(buf, num_bytes);
     }
-  } catch (int e) {
+  } catch (...) {
     // TODO: Make sure this captures all exceptions.
     delete [] buf;
     localfile.close();
-    throw e;
+    throw;
   }
   delete[] buf;
-  // TODO: Make sure I need to do this.
   localfile.close();
+
+  JSON name_prop(JSON_OBJECT);
+  name_prop["name"] = getBaseName(filename);
+  dxfile.setProperties(name_prop);
+  dxfile.close();
   return dxfile;
 }

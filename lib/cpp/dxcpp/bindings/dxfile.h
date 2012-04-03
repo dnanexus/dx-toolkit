@@ -62,7 +62,7 @@ class DXFile: public DXClass {
    * @see DXClass::describe()
    */
   dx::JSON describe() const { return fileDescribe(dxid_); }
-  dx::JSON getProperties(const dx::JSON &keys=dx::JSON(dx::JSON_ARRAY)) const { return fileGetProperties(dxid_, keys); }
+  dx::JSON getProperties(const dx::JSON &keys=dx::JSON(dx::JSON_OBJECT)) const { return fileGetProperties(dxid_, keys); }
   void setProperties(const dx::JSON &properties) const { fileSetProperties(dxid_, properties); }
   void addTypes(const dx::JSON &types) const { fileAddTypes(dxid_, types); }
   void removeTypes(const dx::JSON &types) const { fileRemoveTypes(dxid_, types); }
@@ -159,11 +159,8 @@ class DXFile: public DXClass {
 
   /**
    * Uploads the n bytes stored at ptr to the remote file and appends
-   * it to the existing content.  Note that if index is given as a
-   * negative number, the uploaded part will have an index assigned
-   * automatically to it.  The behavior is undefined if uploadPart is
-   * called with both negative values and nonnegative values for the
-   * same remote file object.
+   * it to the existing content.  If index is not given, it will not
+   * be passed to the API server.
    *
    * @param ptr Pointer to the location of data to be sent
    * @param n The number of bytes to send
