@@ -55,14 +55,12 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   if (!content_type_set)
     req_headers["Content-Type"] = "application/json";    
 
-  HttpRequest req;
-
   // Attempt a POST request
-  req.setUrl(url);
-  req.setReqData(data.data(), data.size());
-  req.setMethod(HTTP_POST);
-  req.setHeaders(req_headers);
-  req.send();
+  HttpRequest req = HttpRequest::request(HTTP_POST,
+					 url,
+					 req_headers,
+					 data.data(),
+					 data.size());
 
   if (req.responseCode != 200) {
     JSON respJSON = JSON::parse(req.respData);
