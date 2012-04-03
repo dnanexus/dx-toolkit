@@ -135,11 +135,9 @@ class DXTable(DXClass):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        try:
+        if chr is not None and lo is not None and hi is not None:
             query = [chr, lo, hi]
             get_rows_params['query'] = query
-        except:
-            pass
 
         return dxpy.api.tableGet(self._dxid, get_rows_params)
 
