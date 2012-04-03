@@ -672,7 +672,7 @@ namespace dx {
   template<>
   inline std::string JSON::get<std::string>() const {
     if (this->type() != JSON_STRING)
-      throw JSONException("You cannot use get<std::string>/ger<char*> for a non JSON_STRING value");
+      throw JSONException("You cannot use get<std::string>/get<char*> for a non JSON_STRING value");
     return ((String*)this->val)->val;
   }
   
