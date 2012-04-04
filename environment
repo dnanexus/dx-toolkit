@@ -1,0 +1,17 @@
+# Source this file in a bash shell to initialize DNAnexus environment variables:
+# $ source environment
+
+# Resolve the location of this file
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
+
+export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+export PATH="${DNANEXUS_HOME}/bin:$PATH"
+export PYTHONPATH="${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
+export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
+
+# Debug environment variables
+export APISERVER_HOST="nucleus-dev.dnanexus.com"
+export APISERVER_PORT=8124
+export SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
