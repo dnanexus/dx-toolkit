@@ -62,7 +62,7 @@ class DXTable(DXClass):
 
         table_params = {"columns": columns}
         try:
-            indexStr = chr_col + "." + lo_col + "." + hi_col
+            indexStr = chr_col + ":" + lo_col + ":" + hi_col
             table_params['index'] = indexStr
         except:
             pass
