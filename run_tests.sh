@@ -8,11 +8,11 @@ export NUCLEUS_ENV=integrationTest
 
 root=`dirname "$0"`
 
+source "$root/environment"
 export DB_PORT=`../bin/nuc-config mongod.port`
 export APISERVER_PORT=`../bin/nuc-config apiserver.port`
 export APISERVER_HOST=localhost
-export SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
-export PYTHONPATH="$root/lib/python:$root/../execserver/env/lib/python2.7/site-packages"
+export PYTHONPATH="$root/../execserver/env/lib/python2.7/site-packages:$PYTHONPATH"
 
 dbpath="$root/test_db"
 mkdir -p "$dbpath"
