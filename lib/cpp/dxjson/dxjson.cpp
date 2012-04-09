@@ -4,6 +4,14 @@ using namespace dx;
 
 extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
 
+// TODO: 
+// 1) Currently json strings are "escaped" only when using write() method, and stored as normal
+//    std::string. So if we use iterators like object_iterator for accessing all key in 
+//    a json object, we will read them as normal strings (as they are stored in memory),
+//    rather then their stringified() form. For ex, a key: "\n" (a single character - newline), 
+//    will be read as char arr[] = {10, 0} (as stored internally) by an object_iterator, 
+//    rather than arr[] = {'\','n', 0} (as would have been printed out by toString() ).
+//    Figure out what the "correct" convention should be, and if required fix it.
 
 namespace JSON_Utility 
 { 
@@ -113,9 +121,14 @@ namespace JSON_Utility
   }
  
   // This function is designed specifically for use from ReadNumberValue() only
-  // It assumes that string provided as input is of this form (regex): 
+  // It assumes that string provided as *input* to the function is already in this form (regex): 
   //  [0-9-]{1,1}[-0-9+eE.]*
-  // It will then perform extra assertions to make sure it corresponds to a valid JSON number
+  // It will then perform extra checks to find out if it corresponds to a valid JSON number or not
+  // Ref: http://www.json.org
+  //      http://jsonlint.com/
+  // Added later:
+  // Note: actually now this function does not assume input in any particular format
+  //       and finds out if any arbitrary json string is a valid number or not.
   bool isValidJsonNumber(const std::string &s) {
     unsigned len = s.length();
     bool dot = false;
@@ -163,13 +176,6 @@ namespace JSON_Utility
     return true;
   }
   Value* ReadNumberValue(std::istream &in) {
-    // TODO: Validate numbers more strictly.
-    // Currently we parse whatever we get as number (using standard iostream approach)
-    // so a 'number' "12--323" will be parsed as 12,
-    // or, 1+2 will be parsed as 1
-    // or, 012 will be treated as valid JSON number (when it is not: number cannot start with 0)
-    // Ideally. we should throw error on illegal input
-
     Value *toReturn = NULL;
     std::string toParse = "";
     int ch;
@@ -179,7 +185,8 @@ namespace JSON_Utility
       if (in.eof())
         break;
 
-      // Currently allow all ., -, +,digit,e,E, as valid characters
+      // For time being allow all ., -, +,digit,e,E, as valid characters
+      // Then use isValidJsonNumber() to test validity more strictly
       if (isdigit(ch) || ch == '+' || ch == '-') // All integer characters
         toParse += ch;
       else {

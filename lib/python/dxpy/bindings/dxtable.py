@@ -62,7 +62,7 @@ class DXTable(DXClass):
 
         table_params = {"columns": columns}
         try:
-            indexStr = chr_col + "." + lo_col + "." + hi_col
+            indexStr = chr_col + ":" + lo_col + ":" + hi_col
             table_params['index'] = indexStr
         except:
             pass
@@ -135,7 +135,9 @@ class DXTable(DXClass):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        if chr is not None and lo is not None and hi is not None:
+        if chr is not None or lo is not None or hi is not None:
+            if chr is None or lo is None or hi is None:
+                raise DXTableError("chr, lo, and hi must all be supplied")
             query = [chr, lo, hi]
             get_rows_params['query'] = query
 
