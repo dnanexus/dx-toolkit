@@ -48,7 +48,7 @@ API server may raise the exception :exc:`dxpy.exceptions.DXAPIError`
 
 """
 
-import time, re, requests, sys
+import time, re, requests, sys, json
 import dxpy.api
 from dxpy.exceptions import *
 
@@ -365,6 +365,29 @@ class DXClass(object):
 
             time.sleep(2)
             elapsed += 2
+
+
+class DXLink:
+    def __init__(self, object_id):
+        self.__dict__['$dnanexus_link'] = object_id
+
+    def __str__(self):
+        return json.dumps(self.__dict__)
+
+    @property
+    def dict(self):
+        return self.__dict__
+
+    @property
+    def target(self):
+        return self.__dict__['$dnanexus_link']
+
+    def target_exists(self):
+        raise NotImplementedError()
+
+    def target_state(self):
+        raise NotImplementedError()
+
 
 from dxusergroup import *
 from dxfile import *
