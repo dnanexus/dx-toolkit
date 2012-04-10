@@ -18,18 +18,16 @@ class DXTable(DXClass):
     _remove_types = staticmethod(dxpy.api.tableRemoveTypes)
     _destroy = staticmethod(dxpy.api.tableDestroy)
 
-    _keep_open = False
-
-    _row_buf = ""
     # Default maximum buffer size is 100MB
     _row_buf_maxsize = 1024*1024*100
-    _part_index = 0
 
     def __init__(self, dxid=None, keep_open=False, buffer_size=40000):
-        if dxid is not None:
-            self.set_id(dxid)
         self._keep_open = keep_open
         self._bufsize = buffer_size
+        self._row_buf = ""
+        self._part_index = 0
+        if dxid is not None:
+            self.set_id(dxid)
 
     def __enter__(self):
         return self
