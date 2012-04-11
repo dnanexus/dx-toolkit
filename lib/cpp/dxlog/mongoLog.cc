@@ -2,6 +2,8 @@
 #include "mongo/client/dbclient.h"
 
 bool DXLog::MongoWriter::connected = false;
+string DXLog::MongoWriter::server = "localhost";
+string DXLog::MongoWriter::db = "log";
 
 void DxLog::MongoWriter::initEnv() {
   server = "localhost"; db = "log";

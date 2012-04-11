@@ -79,7 +79,7 @@ bool DXLog::AppLog::initEnv() {
   data["userId"] = "testUser";
   data["appId"] = "testApp";
   socketPath[0] = "log3";
-  socketPath[1] = "log3";
+  socketPath[1] = "log4";
   msgCount[0] = 0;
   msgCount[1] = 0;
   return true;
@@ -107,7 +107,6 @@ bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
       return false;
   }
 
-  dx::JSON data(dx::JSON_OBJECT);
   data["timestamp"] = int64(time(NULL));
   data["msg"] = msg;
   data["level"] = level;
@@ -115,5 +114,9 @@ bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
 
   msgCount[index]++;
   return true;
+}
+
+bool DXLog::AppLog::done(string &errMsg) {
+  return (SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg) && SendMessage2UnixDGRAMSocket(socketPath[1], "Done", errMsg));
 }
 

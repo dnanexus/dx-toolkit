@@ -24,7 +24,14 @@ bool DXLog::SendMessage2UnixDGRAMSocket(const string &sockPath, const string &ms
   return ret_val;
 }
 
-bool DXLog::unixDGRAMReader(AppLogHandler *handler, const string &socketPath, string &errMsg) {
+DXLog::UnixDGRAMReader::UnixDGRAMReader(int bufSize_) {
+  bufSize = bufSize_;
+  buffer = new char[bufSize];
+}
+
+bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
+  bool active = true;
+
   int sock;
   struct sockaddr_un addr;
 
@@ -44,9 +51,9 @@ bool DXLog::unixDGRAMReader(AppLogHandler *handler, const string &socketPath, st
     ret_val = false;
   } else {
     while (true) {
-      bzero(handler->buffer, handler->bufferSize());
-      if (recv(sock, handler->buffer, handler->bufferSize(), 0) >= 0) {
-        if (handler->processMsg()) break;
+      bzero(buffer, bufSize);
+      if (recv(sock, buffer, bufSize, 0) >= 0) {
+        if (processMsg()) break;
       }
     }
   }

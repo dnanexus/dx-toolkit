@@ -47,6 +47,8 @@ namespace DXLog {
 	*  Otherwise returns false and errMsg contains some details of the error
 	*/
       static bool log(const string &msg, string &errMsg, int level = INFO);
+
+      static bool done(string &errMsg);
   };
 
 //  bool Log(int facility, int level, const string &tag, const string &msg, string &errMsg);

@@ -3,10 +3,9 @@
 #include <boost/lexical_cast.hpp>
 
 int main(void) {
-  fork();
   string errMsg, msg;
-  for(int i = 0; i < 1000; i++)
-    for(int j = 0; j < 1; j++) {
+  for(int i = 0; i < 10; i++)
+    for(int j = 0; j < 8; j++) {
       cout << i << j << endl;
       int k = i*8 + j;
       msg = "OK " + boost::lexical_cast<string>(k);
@@ -17,5 +16,10 @@ int main(void) {
       }
 //    sleep(1);
     }
+
+  if (! DXLog::AppLog::done(errMsg)) {
+    std::cout << errMsg << "\n";
+    exit(1);
+  }
   exit(0);
 }
