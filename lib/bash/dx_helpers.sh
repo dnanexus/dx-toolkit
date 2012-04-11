@@ -110,8 +110,10 @@ unpack() {
 	done
 	# Do not chmod '.' since it's probably ${WORKDIR} and PORTAGE_WORKDIR_MODE
 	# should be preserved.
-	find . -mindepth 1 -maxdepth 1 ! -type l -print0 | \
-		xargs -r -0 chmod -fR a+rX,u+w,g-w,o-w
+
+	# Disabling since this is not appropriate in the general case - AK
+	# find . -mindepth 1 -maxdepth 1 ! -type l -print0 | \
+	#	xargs -r -0 chmod -fR a+rX,u+w,g-w,o-w
 }
 
 die() {
