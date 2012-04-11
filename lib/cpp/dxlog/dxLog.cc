@@ -1,3 +1,5 @@
+#include "unixDGRAM.h"
+#include <boost/lexical_cast.hpp>
 #include "dxLog.h"
 
 bool DXLog::AppLog::initialized = false;
@@ -31,7 +33,7 @@ void DXLog::formMessageHead(int facility, int level, const string &tag, string &
   head = (tag.length() > 100) ? s + pri + ">" + tag.substr(0, 100) : s + pri + ">" + tag;
 }
 
-bool DXlog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
+bool DXLog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
   if (msg.size() <= msgSize) return false;
 
   // generate a random string to index the msg
@@ -50,18 +52,18 @@ bool DXlog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
   return true;
 }
 
-bool DxLog::SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, string &errMsg, int msgSize) {
+bool DXLog::SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, string &errMsg, int msgSize) {
   string head;
   formMessageHead(facility, level, tag, head);
   
-  if (msg.length() < msgSize) return SendMessage2UnixDGRAM("/dev/log", head + " " + msg, errMsg);
+  if (msg.length() < msgSize) return SendMessage2UnixDGRAMSocket("/dev/log", head + " " + msg, errMsg);
 
   vector<string> Msgs;
   splitMessage(msg, Msgs, msgSize);
   bool ret_val = true;
   string errmsg;
   for (int i = 0; i < Msgs.size(); i++) {
-    if (! SendMessage2UnixDGRAM("/dev/log", head + " " + Msgs[i], errmsg)) {
+    if (! SendMessage2UnixDGRAMSocket("/dev/log", head + " " + Msgs[i], errmsg)) {
       ret_val = false;
       errMsg = errmsg;
     }
@@ -76,8 +78,8 @@ bool DXLog::AppLog::initEnv() {
   data["jobId"] = "testJob";
   data["userId"] = "testUser";
   data["appId"] = "testApp";
-  socketPath[0] = "/dev/log1";
-  socketPath[1] = "/dev/log2";
+  socketPath[0] = "log3";
+  socketPath[1] = "log3";
   msgCount[0] = 0;
   msgCount[1] = 0;
   return true;
@@ -109,32 +111,9 @@ bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
   data["timestamp"] = int64(time(NULL));
   data["msg"] = msg;
   data["level"] = level;
-  if (! SendMessage2UnixDGRAM(socketPath[index], data.toString(), errMsg)) return false;
+  if (! SendMessage2UnixDGRAMSocket(socketPath[index], data.toString(), errMsg)) return false;
 
   msgCount[index]++;
   return true;
 }
 
-DXLog::AppLogHandler::AppLogHandler(int bufSize_) {
-  bufSize = bufSize_;
-  buffer = new char[bufSize];
-  msgCount = 0;
-}
-
-void DXLog::AppLogHandler::SendMessage() {
-  string msg = boost::lexical_cast<string>(data["timestamp"]) + " " + data["projectId"] + " -- " + data["appId"] + " -- " + data["jobId"] + " -- " + data["userId"] + " [msg] " + data["msg"];
-  string errMsg;
-  if (! SendMessage2Rsyslog(8, data["level"], "DNAnexusAPP", msg, errMsg, 2000))
-    cerr << errMsg << endl;
-  else msgCount += 1;
-}
-
-bool DXLog::AppLogHandler::processMsg() {
-  data = dx::JSON::Parse(buffer);
-  if (data.has["stop"]) {
-    if (data["stop"]) return true;
-  }
-
-  if (msgCount <= 1000) SendMessage();
-  return false;
-}

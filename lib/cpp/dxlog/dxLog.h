@@ -1,7 +1,9 @@
 #ifndef DXLOG_H
 #define DXLOG_H
 
-#include "unixDGRAM.h"
+#include <dxjson/dxjson.h>
+
+using namespace std;
 
 namespace DXLog {
   enum Level { EMERG, ALERT, CRIT, ERR, WARN, NOTICE, INFO, DEBUG };
@@ -12,8 +14,10 @@ namespace DXLog {
   // Form message header as <pri> tag. Note that pri is a combination of facility and level and only the first 100 characters of a tag are included
   void formMessageHead(int facility, int level, const string &tag, string &head);
 
-  void splitMessage(const string &msg, vector<string> &msgs);
+  bool splitMessage(const string &msg, vector<string> &msgs, int msgSize);
 
+  bool SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, string &errMsg, int msgSize);
+  
   // Wrapper for writing logs from an app
   class AppLog {
     private: 
@@ -45,23 +49,7 @@ namespace DXLog {
       static bool log(const string &msg, string &errMsg, int level = INFO);
   };
 
-  class AppLogHandler {
-    private:
-      int msgCount, bufSize;
-      dx::JSON data;
-      void SendMessage();
-
-    public:
-      char *buffer;
-
-      AppLogHandler(int bufSize_);
-      ~AppLogHandler() { delete [] buffer; }
-
-      int bufferSize() { return bufSize; }
-      bool processMsg();
-  };
-
-  bool Log(int facility, int level, const string &tag, const string &msg, string &errMsg);
+//  bool Log(int facility, int level, const string &tag, const string &msg, string &errMsg);
 };
 
 #endif
