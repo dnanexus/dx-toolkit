@@ -3,6 +3,7 @@ DXTable Handler
 ***************
 """
 
+import cStringIO as StringIO
 import json
 from dxpy.bindings import *
 
@@ -18,18 +19,16 @@ class DXTable(DXClass):
     _remove_types = staticmethod(dxpy.api.tableRemoveTypes)
     _destroy = staticmethod(dxpy.api.tableDestroy)
 
-    _keep_open = False
-
-    _row_buf = ""
     # Default maximum buffer size is 100MB
     _row_buf_maxsize = 1024*1024*100
-    _part_index = 0
 
     def __init__(self, dxid=None, keep_open=False, buffer_size=40000):
-        if dxid is not None:
-            self.set_id(dxid)
         self._keep_open = keep_open
         self._bufsize = buffer_size
+        self._row_buf = StringIO.StringIO()
+        self._part_index = 0
+        if dxid is not None:
+            self.set_id(dxid)
 
     def __enter__(self):
         return self
@@ -39,7 +38,7 @@ class DXTable(DXClass):
             self.close()
 
     def __del__(self):
-        if len(self._row_buf) > 0:
+        if self._row_buf.tell() > 0:
             self.flush()
 
     def new(self, columns, chr_col=None, lo_col=None, hi_col=None):
@@ -62,7 +61,7 @@ class DXTable(DXClass):
 
         table_params = {"columns": columns}
         try:
-            indexStr = chr_col + "." + lo_col + "." + hi_col
+            indexStr = chr_col + ":" + lo_col + ":" + hi_col
             table_params['index'] = indexStr
         except:
             pass
@@ -80,7 +79,7 @@ class DXTable(DXClass):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous table object if the buffer is nonempty.
         '''
-        if len(self._row_buf) > 0:
+        if self._row_buf.tell() > 0:
             self.flush()
 
         DXClass.set_id(self, dxid)
@@ -135,7 +134,9 @@ class DXTable(DXClass):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        if chr is not None and lo is not None and hi is not None:
+        if chr is not None or lo is not None or hi is not None:
+            if chr is None or lo is None or hi is None:
+                raise DXTableError("chr, lo, and hi must all be supplied")
             query = [chr, lo, hi]
             get_rows_params['query'] = query
 
@@ -192,13 +193,10 @@ class DXTable(DXClass):
         if index is None:
             for row in data:
                 rowjson = json.dumps(row)
-                if self._row_buf == "":
-                    self._row_buf = rowjson
-                else:
-                    self._row_buf += ", "
-                    self._row_buf += rowjson
-
-                if len(self._row_buf) >= self._row_buf_maxsize:
+                if self._row_buf.tell() > 0:
+                    self._row_buf.write(", ")
+                self._row_buf.write(rowjson)
+                if self._row_buf.tell() >= self._row_buf_maxsize:
                     self.flush()
         else:
             dxpy.api.tableAddRows(self._dxid, {"data": data, "index": index})
@@ -230,12 +228,12 @@ class DXTable(DXClass):
         Sends any rows in the internal buffer to the API server.  
         '''
         dxpy.api.tableAddRows(self._dxid,
-                              '{"data": [' + self._row_buf + '], "index":' + \
+                              '{"data": [' + self._row_buf.getvalue() + '], "index":' + \
                                   str(self.get_unused_part_index())+'}',
                               jsonify_data=False)
 
-        self._row_buf = []
-        self._row_buf_size = 0
+        self._row_buf.close()
+        self._row_buf = StringIO.StringIO()
 
     def close(self, block=False):
         '''
@@ -245,7 +243,7 @@ class DXTable(DXClass):
         Closes the table.
 
         '''
-        if len(self._row_buf) > 0:
+        if self._row_buf.tell() > 0:
             self.flush()
 
         dxpy.api.tableClose(self._dxid)
