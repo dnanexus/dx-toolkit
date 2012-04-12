@@ -1,5 +1,5 @@
 """
-DXTable Handler
+DXGTable Handler
 ***************
 """
 
@@ -7,17 +7,17 @@ import cStringIO as StringIO
 import json
 from dxpy.bindings import *
 
-class DXTable(DXClass):
-    '''Remote table object handler'''
+class DXGTable(DXClass):
+    '''Remote gtable object handler'''
 
-    _class = "table"
+    _class = "gtable"
 
-    _describe = staticmethod(dxpy.api.tableDescribe)
-    _get_properties = staticmethod(dxpy.api.tableGetProperties)
-    _set_properties = staticmethod(dxpy.api.tableSetProperties)
-    _add_types = staticmethod(dxpy.api.tableAddTypes)
-    _remove_types = staticmethod(dxpy.api.tableRemoveTypes)
-    _destroy = staticmethod(dxpy.api.tableDestroy)
+    _describe = staticmethod(dxpy.api.gtableDescribe)
+    _get_properties = staticmethod(dxpy.api.gtableGetProperties)
+    _set_properties = staticmethod(dxpy.api.gtableSetProperties)
+    _add_types = staticmethod(dxpy.api.gtableAddTypes)
+    _remove_types = staticmethod(dxpy.api.gtableRemoveTypes)
+    _destroy = staticmethod(dxpy.api.gtableDestroy)
 
     # Default maximum buffer size is 100MB
     _row_buf_maxsize = 1024*1024*100
@@ -52,9 +52,9 @@ class DXTable(DXClass):
         :param hi_col: Name of the column containing the high boundary of a genomic interval; must be a column of type int32
         :type hi_col: string
 
-        Creates a new table with the given column names in *columns*.
+        Creates a new gtable with the given column names in *columns*.
         If *chr_col*, *lo_col*, and *hi_col* are given, the rows of the
-        table will be indexed by a genomic range index when the table
+        gtable will be indexed by a genomic range index when the gtable
         is closed.
 
         '''
@@ -65,7 +65,7 @@ class DXTable(DXClass):
             table_params['index'] = indexStr
         except:
             pass
-        resp = dxpy.api.tableNew(table_params)
+        resp = dxpy.api.gtableNew(table_params)
         self.set_id(resp["id"])
 
 
@@ -77,7 +77,7 @@ class DXTable(DXClass):
 
         Discards the currently stored ID and associates the handler
         with *dxid*.  As a side effect, it also flushes the buffer for
-        the previous table object if the buffer is nonempty.
+        the previous gtable object if the buffer is nonempty.
         '''
         if self._row_buf.tell() > 0:
             self.flush()
@@ -103,12 +103,12 @@ class DXTable(DXClass):
         :type limit: integer
         :rtype: generator
         
-        Queries the table for rows using the given parameters.  If the
-        table has been built with a genomic range index, results will
+        Queries the gtable for rows using the given parameters.  If the
+        gtable has been built with a genomic range index, results will
         be rows that have an interval which overlaps with [*lo*, *hi*]
         on the chromosome *chr*.  If *columns* is not set, all columns
         will be included, and data is returned in the order in which
-        columns were specified for the table.  If *columns* is set,
+        columns were specified for the gtable.  If *columns* is set,
         the order of elements in the returned rows follows the
         ordering in *columns*.  The *starting* and *limit* options
         restrict the search further, but it should be noted that this
@@ -120,8 +120,8 @@ class DXTable(DXClass):
 
         Example::
 
-            dxtable = open_dxtable("table-xxxx")
-            for row in dxtable.get_rows(chr="chromosome18", 30, 2049):
+            dxgtable = open_dxgtable("gtable-xxxx")
+            for row in dxgtable.get_rows(chr="chromosome18", 30, 2049):
                 rowid = row[0]
                 first_col_data = row[1]
 
@@ -136,11 +136,11 @@ class DXTable(DXClass):
 
         if chr is not None or lo is not None or hi is not None:
             if chr is None or lo is None or hi is None:
-                raise DXTableError("chr, lo, and hi must all be supplied")
+                raise DXGTableError("chr, lo, and hi must all be supplied")
             query = [chr, lo, hi]
             get_rows_params['query'] = query
 
-        return dxpy.api.tableGet(self._dxid, get_rows_params)
+        return dxpy.api.gtableGet(self._dxid, get_rows_params)
 
     def iterate_rows(self, start=0, end=None):
         if end is None:
@@ -161,15 +161,15 @@ class DXTable(DXClass):
         '''
         :param columns: List of new column names
         :type columns: list of strings
-        :rtype: :class:`dxpy.bindings.DXTable`
+        :rtype: :class:`dxpy.bindings.DXGTable`
 
-        Extends the current table object with the column names in
-        *columns*, creating a new remote table as a result.  Returns
-        the handler for this new table.
+        Extends the current gtable object with the column names in
+        *columns*, creating a new remote gtable as a result.  Returns
+        the handler for this new gtable.
 
         '''
-        resp = dxpy.api.tableExtend(self._dxid, {"columns": columns})
-        return DXTable(resp["id"])
+        resp = dxpy.api.gtableExtend(self._dxid, {"columns": columns})
+        return DXGTable(resp["id"])
 
     def add_rows(self, data, index=None):
         '''
@@ -177,16 +177,16 @@ class DXTable(DXClass):
         :type data: list of list
         :param index: The part index to label the rows in data.
         :type index: integer
-        :raises: :exc:`dxpy.exceptions.DXTableError`
+        :raises: :exc:`dxpy.exceptions.DXGTableError`
 
-        Adds the rows listed in data to the current table.  If *index*
+        Adds the rows listed in data to the current gtable.  If *index*
         is not given, rows may be queued up for addition internally
         and will be flushed to the remote server periodically.
 
         Example::
 
-            with new_dxtable(["colname:string", "secondcolname:int32"]) as dxtable:
-                dxtable.add_rows([["foo", 23], ["bar", 7]])
+            with new_dxgtable(["colname:string", "secondcolname:int32"]) as dxgtable:
+                dxgtable.add_rows([["foo", 23], ["bar", 7]])
 
         '''
 
@@ -199,7 +199,7 @@ class DXTable(DXClass):
                 if self._row_buf.tell() >= self._row_buf_maxsize:
                     self.flush()
         else:
-            dxpy.api.tableAddRows(self._dxid, {"data": data, "index": index})
+            dxpy.api.gtableAddRows(self._dxid, {"data": data, "index": index})
 
     def get_unused_part_index(self):
         '''
@@ -207,27 +207,27 @@ class DXTable(DXClass):
         :rtype: integer
 
         Queries the API server for a part index that has not yet been
-        used to upload table rows.  Note that calling this function
+        used to upload gtable rows.  Note that calling this function
         will internally mark the returned part index as used, and so
         it should not be called if the value will not be used.
 
         '''
         desc = self.describe()
         if len(desc["parts"]) == 250000:
-            raise DXTableError("250000 part indices already used.")
+            raise DXGTableError("250000 part indices already used.")
 
         while self._part_index < 250000:
             self._part_index += 1
             if str(self._part_index) not in desc["parts"]:
                 return self._part_index
         
-        raise DXTableError("Usable part index not found.")
+        raise DXGTableError("Usable part index not found.")
 
     def flush(self):
         '''
         Sends any rows in the internal buffer to the API server.  
         '''
-        dxpy.api.tableAddRows(self._dxid,
+        dxpy.api.gtableAddRows(self._dxid,
                               '{"data": [' + self._row_buf.getvalue() + '], "index":' + \
                                   str(self.get_unused_part_index())+'}',
                               jsonify_data=False)
@@ -237,26 +237,26 @@ class DXTable(DXClass):
 
     def close(self, block=False):
         '''
-        :param block: Indicates whether this function should block until the remote table has closed or not.
+        :param block: Indicates whether this function should block until the remote gtable has closed or not.
         :type block: boolean
 
-        Closes the table.
+        Closes the gtable.
 
         '''
         if self._row_buf.tell() > 0:
             self.flush()
 
-        dxpy.api.tableClose(self._dxid)
+        dxpy.api.gtableClose(self._dxid)
         
         if block:
             self._wait_on_close()
 
     def wait_on_close(self, timeout=sys.maxint):
         '''
-        :param timeout: Max amount of time to wait until the table is closed.
+        :param timeout: Max amount of time to wait until the gtable is closed.
         :type timeout: integer
-        :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the remote table has been closed
+        :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the remote gtable has been closed
 
-        Wait until the remote table is closed.
+        Wait until the remote gtable is closed.
         '''
         self._wait_on_close(timeout)

@@ -5,6 +5,7 @@ DXFile Handler
 This remote file handler is a file-like object.
 '''
 
+import cStringIO as StringIO
 from dxpy.bindings import *
 
 class DXFile(DXClass):
@@ -26,10 +27,9 @@ class DXFile(DXClass):
     _remove_types = staticmethod(dxpy.api.fileRemoveTypes)
     _destroy = staticmethod(dxpy.api.fileDestroy)
 
-    _keep_open = False
-    _write_buf = ""
-
     def __init__(self, dxid=None, keep_open=False, buffer_size=1024*1024*100):
+        self._keep_open = keep_open
+        self._write_buf = StringIO.StringIO()
         if dxid is not None:
             self.set_id(dxid)
         self._keep_open = keep_open
@@ -60,7 +60,7 @@ class DXFile(DXClass):
             self.close()
 
     def __del__(self):
-        if self._write_buf != "":
+        if self._write_buf.tell() > 0:
             self.flush()
 
     def __iter__(self):
@@ -91,7 +91,7 @@ class DXFile(DXClass):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous file object if the buffer is nonempty.
         '''
-        if self._write_buf != "":
+        if self._write_buf.tell() > 0:
             self.flush()
 
         DXClass.set_id(self, dxid)
@@ -99,7 +99,6 @@ class DXFile(DXClass):
         # Reset state
         self._pos = 0
         self._file_length = None
-        self._write_buf = ""
         self._cur_part = 1
 
     def read(self, size=None):
@@ -154,8 +153,8 @@ class DXFile(DXClass):
         '''
         Flushes the internal buffer
         '''
-        self.upload_part(self._write_buf, self._cur_part)
-        self._write_buf = ""
+        self.upload_part(self._write_buf.getvalue(), self._cur_part)
+        self._write_buf = StringIO.StringIO()
         self._cur_part += 1
 
     def write(self, string):
@@ -173,9 +172,9 @@ class DXFile(DXClass):
 
         '''
 
-        remaining_space = (self._bufsize - len(self._write_buf))
-        self._write_buf += string[:remaining_space]
-        if len(self._write_buf) == self._bufsize:
+        remaining_space = (self._bufsize - self._write_buf.tell())
+        self._write_buf.write(string[:remaining_space])
+        if self._write_buf.tell() == self._bufsize:
             self.flush()
             self.write(string[remaining_space:])
 
@@ -201,7 +200,7 @@ class DXFile(DXClass):
         exception will be thrown in this case.
         '''
 
-        if self._write_buf != "":
+        if self._write_buf.tell() > 0:
             self.flush()
 
         dxpy.api.fileClose(self._dxid)

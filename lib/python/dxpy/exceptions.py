@@ -24,8 +24,8 @@ class DXFileError(DXError):
     '''Exception for :class:`dxpy.bindings.DXFile`'''
     pass
 
-class DXTableError(DXError):
-    '''Exception for :class:`dxpy.bindings.DXTable`'''
+class DXGTableError(DXError):
+    '''Exception for :class:`dxpy.bindings.DXGTable`'''
     pass
 
 class DXAppError(DXError):

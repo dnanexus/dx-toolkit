@@ -2,8 +2,11 @@
 import os, sys, unittest, json, tempfile, filecmp
 
 import dxpy.bindings as dxpy
-from dxpy.exceptions import * 
+from dxpy.exceptions import *
 
+proj_id = "project-000000000000000000000001"
+
+@unittest.skip("Skipping search; not implemented yet in 1.03")
 class TestSearch(unittest.TestCase):
 
     def test_search(self):
@@ -51,48 +54,11 @@ class TestSearch(unittest.TestCase):
         for json in jsons:
             json.destroy()
 
-class TestDXUser(unittest.TestCase):
-
-    def test_create_destroy_user(self):
-        user = dxpy.DXUser()
-        # Users cannot be created via the API
-        with self.assertRaises(NotImplementedError):
-            user.new()
-        id = 'user-2D90185abe279c639f84A389'
-        try:
-            user.set_id(id)
-        except Exception as error:
-            self.fail("Unexpected error when setting ID for user:" + str(error))
-        self.assertEqual(user.get_id(), id)
-
-        # Users cannot be destroyed via the API
-        with self.assertRaises(NotImplementedError):
-            user.destroy()
-
-    def test_set_id_user(self):
-        user = dxpy.DXUser()
-
-        # Invalid IDs should be rejected
-        invalid_id = 'json-2D90185abe279c639f84A389'
-        with self.assertRaises(DXError):
-            user.set_id(invalid_id)
-
-        invalid_id = 'user-2D90185abe279c639f84A0389'
-        with self.assertRaises(DXError):
-            user.set_id(invalid_id)
-
-        invalid_id = 'user-2D90185abe279c639fA0'
-        with self.assertRaises(DXError):
-            user.set_id(invalid_id)
-
-        invalid_id = 'user-2D90185age279c639f84A389'
-        with self.assertRaises(DXError):
-            user.set_id(invalid_id)
-
-@unittest.skip("Skipping groups; not implemented yet in 1.02")
+@unittest.skip("Skipping groups; not implemented yet in 1.03")
 class TestDXGroup(unittest.TestCase):
     pass
 
+@unittest.skip("Skipping files; not updated yet for 1.03")
 class TestDXFile(unittest.TestCase):
 
     '''
@@ -187,7 +153,8 @@ class TestDXFile(unittest.TestCase):
                 self.assertEqual(line, "Line " + str(lineno))
                 lineno += 1
 
-class TestDXTable(unittest.TestCase):
+@unittest.skip("Skipping gtables; not updated yet for 1.03")
+class TestDXGTable(unittest.TestCase):
     def setUp(self):
         self.dxtable = dxpy.DXTable()
 
@@ -289,131 +256,153 @@ class TestDXTable(unittest.TestCase):
             counter += 1
         self.assertEqual(counter, 64)
 
-class TestDXJSON(unittest.TestCase):
+class TestDXRecord(unittest.TestCase):
 
-    example_json = {"foo": "bar", "alpha": [1, 2, 3]}
-    another_example_json = ["foo", "bar", {"alpha": [1, 2.340, -10]}]
+    # TODO: Test destruction once implemented
 
-    def test_create_destroy_dxjson(self):
-        '''Create a fresh DXJSON object and check that its ID is
-        stored and that the JSON object has been stored.
+    def test_create_destroy_dxrecord(self):
+        '''Create a fresh DXRecord object and check that its ID is
+        stored and that the record object has been stored.
         '''
 
-        firstDXJSON = dxpy.new_dxjson(self.example_json)
-        # test if firstDXJSON.dxID has been set to a valid ID
+        firstDXRecord = dxpy.new_dxrecord(proj_id)
+        # test if firstDXRecord._dxid has been set to a valid ID
         try:
-            self.assertRegexpMatches(firstDXJSON.get_id(), "^json-[0-9A-Fa-f]{24}",
+            self.assertRegexpMatches(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
                                      'Object ID not of expected form: ' + \
-                                         firstDXJSON.get_id())
+                                         firstDXRecord.get_id())
         except AttributeError:
-            self.fail("dxID was not stored in DXJSON creation")
-        self.assertEqual(firstDXJSON.get(), self.example_json)
-        firstID = firstDXJSON.get_id()
+            self.fail("dxID was not stored in DXRecord creation")
+        # test if firstDXRecord._proj has been set to a valid ID
+        try:
+            self.assertRegexpMatches(firstDXRecord.get_proj_id(), "^project-[0-9A-Za-z]{24}",
+                                     'Project ID not of expected form: ' + \
+                                         firstDXRecord.get_proj_id())
+        except AttributeError:
+            self.fail("Project ID was not stored in DXRecord creation")
 
-        '''Create a second DXJSON object which should use the first
+        '''Create a second DXRecord object which should use the first
         object's ID.  Check that its ID is stored and that it can be
         accessed.
         '''
-        secondDXJSON = dxpy.DXJSON(firstDXJSON.get_id())
-        self.assertEqual(firstDXJSON.get_id(), secondDXJSON.get_id())
-        self.assertEqual(firstDXJSON.get(), secondDXJSON.get())
+        secondDXRecord = dxpy.DXRecord(firstDXRecord.get_id())
+        self.assertEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
 
-        '''Create a new DXJSON object which should generate a new ID
-        but still match the contents of the first.
+        '''Create a new DXRecord object which should generate a new ID
+        but in the same project as the first.
         '''
-        secondDXJSON.new(self.example_json)
-        self.assertNotEqual(firstDXJSON.get_id(), secondDXJSON.get_id())
-        self.assertEqual(firstDXJSON.get(), secondDXJSON.get())
+        secondDXRecord.new(proj_id)
+        self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
+        self.assertEqual(firstDXRecord.get_proj_id(), secondDXRecord.get_proj_id())
 
         '''
-        Destroy the JSONs
+        Remove the records
         '''
         try:
-            firstDXJSON.destroy()
+            firstDXRecord.remove()
         except DXError as error:
-            self.fail("Unexpected error when destroying JSON object: " +
+            self.fail("Unexpected error when removing record object: " +
                       str(error))
 
         with self.assertRaises(AttributeError):
-            firstDXJSON.get_id()
+            firstDXRecord.get_id()
 
         try:
-            secondDXJSON.destroy()
+            secondDXRecord.remove()
         except DXError as error:
-            self.fail("Unexpected error when destroying JSON object: " +
+            self.fail("Unexpected error when removing record object: " +
                       str(error))
 
         with self.assertRaises(AttributeError):
-            secondDXJSON.get_id()
+            secondDXRecord.get_id()
 
-        thirdJSON = dxpy.DXJSON(firstID)
+        # FIXME when implemented
+        # thirdJSON = dxpy.DXRecord(firstID)
 
-        with self.assertRaises(DXAPIError) as cm:
-            thirdJSON.describe()
-            self.assertEqual(cm.exception.name, "ResourceNotFound")
+        # with self.assertRaises(DXAPIError) as cm:
+        #     thirdJSON.describe()
+        #     self.assertEqual(cm.exception.name, "ResourceNotFound")
 
-    def test_describe_dxjson(self):
-        dxjson = dxpy.new_dxjson(self.example_json)
-        desc = dxjson.describe()
-        self.assertEqual(desc["id"], dxjson.get_id())
-        self.assertEqual(desc["class"], "json")
-        self.assertTrue("types" in desc)
-        self.assertTrue("createdAt" in desc)
-        dxjson.destroy()
+    def test_describe_dxrecord(self):
+        types = ["mapping", "foo"]
 
-    def test_properties_of_dxjson(self):
-        dxjson = dxpy.new_dxjson(self.example_json)
+        dxrecord = dxpy.new_dxrecord(proj_id, types=types)
+        desc = dxrecord.describe()
+        self.assertEqual(desc["project"], proj_id)
+        self.assertEqual(desc["id"], dxrecord.get_id())
+        self.assertEqual(desc["class"], "record")
+        self.assertEqual(desc["types"], types)
+        self.assertTrue("created" in desc)
+        self.assertEqual(desc["state"], "open")
+        self.assertEqual(desc["hidden"], False)
+        self.assertEqual(desc["links"], [])
+        self.assertEqual(desc["name"], dxrecord.get_id())
+        self.assertEqual(desc["folder"], "/")
+        self.assertEqual(desc["tags"], [])
+        self.assertTrue("modified" in desc)
+        self.assertFalse("properties" in desc)
+
+        desc = dxrecord.describe(incl_properties=True)
+        self.assertEqual(desc["properties"], {})
+
+        dxrecord.remove()
+
+    @unittest.skip("Skipping properties, FIXME soon")
+    def test_properties_of_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord(self.example_json)
         properties = {"project": "cancer project", "foo": "bar"}
-        dxjson.set_properties(properties)
-        self.assertEqual(dxjson.get_properties()["project"],
+        dxrecord.set_properties(properties)
+        self.assertEqual(dxrecord.get_properties()["project"],
                          properties["project"])
-        self.assertEqual(dxjson.get_properties()["foo"],
+        self.assertEqual(dxrecord.get_properties()["foo"],
                          properties["foo"])
-        self.assertEqual(dxjson.get_properties(["foo"])["foo"],
+        self.assertEqual(dxrecord.get_properties(["foo"])["foo"],
                          properties["foo"])
 
-        self.assertFalse("foo" in dxjson.get_properties(["project"]))
+        self.assertFalse("foo" in dxrecord.get_properties(["project"]))
 
-        dxjson.set_properties({"project": None})
-        self.assertIsNone(dxjson.get_properties(["project"])["project"])
+        dxrecord.set_properties({"project": None})
+        self.assertIsNone(dxrecord.get_properties(["project"])["project"])
 
         # Search for no keys
-        self.assertEqual(len(dxjson.get_properties( [] )), 0)
+        self.assertEqual(len(dxrecord.get_properties( [] )), 0)
 
-        dxjson.destroy()
+        dxrecord.destroy()
 
-    @unittest.skip("Skipping permissions; not implemented in 1.02")
-    def test_permissions_of_dxjson(self):
+    @unittest.skip("Skipping permissions; not implemented in 1.03")
+    def test_permissions_of_dxrecord(self):
         pass
 
-    def test_types_of_dxjson(self):
-        dxjson = dxpy.new_dxjson({"foo": "bar"})
+    @unittest.skip("Skipping types, FIXME soon")
+    def test_types_of_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord({"foo": "bar"})
         types = ["foo", "othertype"]
-        dxjson.add_types(types)
-        self.assertEqual(dxjson.get_types(), types)
+        dxrecord.add_types(types)
+        self.assertEqual(dxrecord.get_types(), types)
 
-        dxjson.remove_types(["foo"])
-        self.assertEqual(dxjson.get_types(), ["othertype"])
+        dxrecord.remove_types(["foo"])
+        self.assertEqual(dxrecord.get_types(), ["othertype"])
 
-        dxjson.destroy()
+        dxrecord.destroy()
 
-    def test_get_set_dxjson(self):
-        dxjson = dxpy.new_dxjson(self.example_json)
-        self.assertEqual(self.example_json, dxjson.get())
+    @unittest.skip("Skipping details and links, FIXME soon")
+    def test_get_set_details(self):
+        dxrecord = dxpy.new_dxrecord(self.example_json)
+        self.assertEqual(self.example_json, dxrecord.get())
 
-        dxjson.set(self.another_example_json)
-        self.assertEqual(self.another_example_json, dxjson.get())
+        dxrecord.set(self.another_example_json)
+        self.assertEqual(self.another_example_json, dxrecord.get())
 
-        dxjson.destroy()
+        dxrecord.destroy()
 
-@unittest.skip("Skipping collections; not yet implemented")
-class TestDXCollection(unittest.TestCase):
+@unittest.skip("Skipping tables; not yet implemented")
+class TestDXTable(unittest.TestCase):
     pass
 
 @unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
 class TestDXApp(unittest.TestCase):
     def test_create_dxapp(self):
-        test_json = dxpy.new_dxjson({"appsuccess": False})
+        test_json = dxpy.new_dxrecord({"appsuccess": False})
         dxapp = dxpy.new_dxapp(codefile='test_dxapp.py')
         dxappjob = dxapp.run({"json_dxid": test_json.get_id()})
         dxappjob.wait_on_done()
@@ -424,8 +413,8 @@ class TestDXApp(unittest.TestCase):
 @unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
 class TestDXJob(unittest.TestCase):
     def test_job_from_app(self):
-        test_json = dxpy.new_dxjson({"jobsuccess": False})
-        job_id_json = dxpy.new_dxjson({"jobid": None})
+        test_json = dxpy.new_dxrecord({"jobsuccess": False})
+        job_id_json = dxpy.new_dxrecord({"jobid": None})
         dxapp = dxpy.new_dxapp(codefile='test_dxjob.py')
         dxappjob = dxapp.run({"json_dxid": test_json.get_id(),
                               "job_id_json": job_id_json.get_id()})

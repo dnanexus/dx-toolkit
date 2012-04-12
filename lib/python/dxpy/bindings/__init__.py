@@ -2,17 +2,17 @@
 This module contains useful Python bindings for interacting with the
 Platform API.  The :func:`dxpy.bindings.search` function provides
 search functionality over all remote objects managed by the API
-server: users, groups, JSON objects, files, tables, collections, apps,
+server: users, groups, JSON objects, files, GenomicTables, collections, apps,
 and jobs.  Each of these remote objects can be represented locally by
 a handler that inherits from the abstract class
-:class:`dxpy.bindings.DXClass`.  This abstract base class supports
+:class:`dxpy.bindings.DXDataObjClass`.  This abstract base class supports
 functionality common to all of the remote object classes: getting and
 setting properties, permissions, and types, as well as remotely
 destroying the object permanently.
 
 To access a preexisting object, a remote handler for that class can be
 set up via two methods: the constructor or the
-:meth:`dxpy.bindings.DXClass.setID` method.  For example::
+:meth:`dxpy.bindings.DXDataObjClass.setID` method.  For example::
 
     dxFileHandle = DXFile("file-1234")
 
@@ -22,11 +22,11 @@ set up via two methods: the constructor or the
 Both these methods do not perform API calls and merely sets the state
 of the remote file handler.  The object ID stored in the handler can
 be overwritten with subsequent calls to
-:meth:`dxpy.bindings.DXClass.setID`.
+:meth:`dxpy.bindings.DXDataObjClass.setID`.
 
 Creation of a new object can be performed using the method
-:meth:`dxpy.bindings.DXClass.new` which usually has a different
-specification for each subclass of :class:`dxpy.bindings.DXClass`::
+:meth:`dxpy.bindings.DXDataObjClass.new` which usually has a different
+specification for each subclass of :class:`dxpy.bindings.DXDataObjClass`::
 
     newDXFileHandle = DXFile().new()
 
@@ -55,7 +55,7 @@ from dxpy.exceptions import *
 def search(classname=None, properties=None, typename=None, #permission=None,
            describe=False):
     """
-    :param classname: Class with which to restrict the search, i.e. one of {"user", "group", "json", "file", "table", "collection", "app", "job"}
+    :param classname: Class with which to restrict the search, i.e. one of {"user", "group", "record", "file", "gtable", "collection", "app", "program"} FIXME
     :type classname: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
@@ -73,14 +73,14 @@ def search(classname=None, properties=None, typename=None, #permission=None,
     restricted by any fields which are omitted and otherwise imposes
     the restrictions requested.
 
-    These two examples iterates through all tables with property
+    These two examples iterates through all gtables with property
     "project" set to "cancer project" and prints their object IDs::
 
-        for result in search(classname="table", properties={"project": "cancer project"}):
-            print "Found table with object id " + result
+        for result in search(classname="gtable", properties={"project": "cancer project"}):
+            print "Found gtable with object id " + result
 
-        for result in search(classname="table", properties={"project": "cancer project"}, describe=True):
-            print "Found table with object id " + result["id"]
+        for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
+            print "Found gtable with object id " + result["id"]
 
     """
     query = {}
@@ -106,10 +106,10 @@ def search(classname=None, properties=None, typename=None, #permission=None,
         else:
             raise StopIteration()
 
-class DXClass(object):
+class DXDataObjClass(object):
     """Abstract base class for all remote object handlers"""
 
-    def __init__(self, dxid=None):
+    def __init__(self, dxid=None, project=None):
         """Direct initialization of this class is not allowed.
 
         """
@@ -117,11 +117,11 @@ class DXClass(object):
             self._class
         except:
             raise NotImplementedError(
-                "DXClass is an abstract class; a subclass should" + \
+                "DXDataObjClass is an abstract class; a subclass should" + \
                     "be initialized instead.")
-        finally:
-            if dxid is not None:
-                self.set_id(dxid)
+
+        if dxid is not None:
+            self.set_id(dxid, project)
 
     def __str__(self):
         desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "
@@ -131,21 +131,82 @@ class DXClass(object):
             desc += "no ID stored"
         return desc
 
-    def set_id(self, dxid):
+    def new(self, project, **kwargs):
+        '''
+        :param project: Project ID in which to create the new remote object
+        :type project: string
+        :param name: Name for the object
+        :type name: string
+        :param tags: Tags to add for the object
+        :type tags: list of strings
+        :param types: Types to add to the object
+        :type types: list of strings
+        :param hidden: Whether the object is to be hidden or not
+        :type hidden: boolean
+        :param properties: Properties given as key-value pairs of strings
+        :type properties: dict
+        :param details: Details to set for the object
+        :type details: dict or list
+        :param folder: Full path to the destination folder
+        :type folder: string
+        :param parents: Whether to recursively create all parent folders if they are missing
+        :type parents: boolean
+
+        Creates the data object with the given fields.  Only *project*
+        is required; the rest are optional and have default behavior
+        as specified in the API documentation.
+
+        '''
+        try:
+            self._class
+        except:
+            raise NotImplementedError(
+                "DXDataObjClass is an abstract class; a subclass should" + \
+                    "be initialized instead.")
+
+        dx_hash = {}
+        dx_hash["project"] = project
+        if "name" in kwargs:
+            dx_hash["name"] = kwargs["name"]
+        if "tags" in kwargs:
+            dx_hash["tags"] = kwargs["tags"]
+        if "types" in kwargs:
+            dx_hash["types"] = kwargs["types"]
+        if "hidden" in kwargs:
+            dx_hash["hidden"] = kwargs["hidden"]
+        if "properties" in kwargs:
+            dx_hash["properties"] = kwargs["properties"]
+        if "details" in kwargs:
+            dx_hash["details"] = kwargs["details"]
+        if "folder" in kwargs:
+            dx_hash["folder"] = kwargs["folder"]
+        if "parents" in kwargs:
+            dx_hash["parents"] = kwargs["parents"]
+
+        self._new(dx_hash, **kwargs)
+
+    def set_id(self, dxid, project):
         '''
         :param dxid: Object ID
         :type dxid: string
+        :param project: Project ID
+        :type project: string
         :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
 
         Discards the currently stored ID and associates the handler
         with *dxid*.
 
         '''
-        if re.match(self._class + "-[0-9a-fA-F]{24}", dxid) is None or \
+        if re.match(self._class + "-[0-9a-zA-Z]{24}", dxid) is None or \
                 len(dxid) != len(self._class) + 25:
             raise DXError("Given object ID does not match expected format")
+        if project is not None and \
+                (re.match("project-[0-9a-zA-Z]{24}", project) is None or \
+                     len(project) != len('project') + 25):
+            raise DXError("Given project ID does not match expected format")
 
         self._dxid = dxid
+        self._proj = project
 
     def get_id(self):
         '''
@@ -159,20 +220,19 @@ class DXClass(object):
 
         return self._dxid
 
-    def new(self):
+    def get_proj_id(self):
         '''
-        :raises: NotImplementedError
+        :returns: Project ID of associated object
+        :rtype: string
 
-        This is a virtual method for creating a new object.  Most
-        subclasses will have specialized input for creating the object
-        that should be called instead.
+        Returns the project ID that the handler is currently associated
+        with if any.
 
         '''
 
-        raise NotImplementedError("This is a virtual method that should"+
-                                  " not be called.")
+        return self._proj
 
-    def describe(self):
+    def describe(self, incl_properties=False):
         """
         :returns: Description of the remote object
         :rtype: dict
@@ -183,124 +243,11 @@ class DXClass(object):
 
         """
 
-        return self._describe(self._dxid)
-
-    def get_properties(self, keys=None):
-        """
-        :param keys: List of keys to look up
-        :type keys: list
-        :returns: The requested properties, keyed by their respective keys
-        :rtype: dict
-
-        Returns the properties for the requested keys.  If no keys are
-        given, then all properties are reported.  If the property is
-        not found, the value for the key is :const:`None`
-
-        The following example queries the remote table represented by
-        *dxtable* for the properties with keys "name" and "project"::
-
-            results = dxtable.get_properties(["name", "project"])
-            print "Table name is " + results["name"]
-
-        """
-
-        input_ = {}
-        if keys is not None:
-            input_ = {"keys": keys}
-
-        return self._get_properties(self._dxid, input_)
-
-    def set_properties(self, properties):
-        """
-        :param properties: Properties given as key-value pairs; a value of :const:`None` indicates a property should be deleted
-        :type properties: dict
-
-        Given key-value pairs in *properties* for property names and
-        values, the properties are set on the object for the given
-        property names.  Note that existing properties not mentioned
-        in *properties* are not changed by this method.
-
-        The following example sets the properties for "name" and
-        "project" for a remote table::
-
-            dxtable.set_properties({"name": "George", "project": "cancer"})
-
-        The following line would delete the property "project"::
-
-            dxtable.set_properties({"project": None})
-
-        """
-
-        self._set_properties(self._dxid, properties)
-
-    def get_permissions(self):
-        """
-        :returns: List of permission pairs
-        :rtype: list of lists
-
-        Returns all permissions listed for the object.  Example::
-
-            >>> print dxtable.get_permissions()
-            [["user-xxxx", "OWN"], ["group-xxxx", "LIST"], ["group-xxxx", "READ"]]
-
-        """
-        raise NotImplementedError()
-
-    def grant_permission(self, subject_id, permission):
-        """
-        :param subject_id: Object ID of the entity to be granted some permission
-        :type subject_id: string
-        :param permission: Permission type from the set {LIST, EDIT, READ, WRITE, RUN, AUDIT, MANAGE, OWN}
-        :type permission: string
-
-        Grants the entity with object ID *subject_id* with with
-        permission type *permission*.  See the API for details on what
-        each permission type provides.
-
-        The following gives a group with ID "group-xxxx" permissions
-        to modify a particular json object::
-
-            dxjson.grant_permission("group-xxxx", "WRITE")
-
-        """
-        raise NotImplementedError()
-
-    def revoke_permission(self, subject_id, permission):
-        """
-        :param subject_id: Object ID of the entity to have its permission revoked
-        :type subject_id: string
-        :param permission: Permission type from the set {LIST, EDIT, READ, WRITE, RUN, AUDIT, MANAGE, OWN}
-        :type permission: string
-
-        Removes the permission type *permission* from the entity with
-        ID *subject_id*.  See the API for details on what each
-        permission type provides.
-
-        The following removes the permissions for a group with ID
-        "group-xxxx" to modify a particular json object::
-
-            dxjson.revoke_permission("group-xxxx", "WRITE")
-
-        """
-        raise NotImplementedError()
-
-    def get_types(self):
-        """
-        :returns: List of types
-        :rtype: list of strings
-
-        Returns a list of the types with which the object has been
-        labelled.
-
-        Note that this function is shorthand for:
-
-            desc = self.describe()
-            desc["types"]
-
-        """
-
-        desc = self.describe()
-        return desc["types"]
+        if self._proj is not None:
+            return self._describe(self._dxid, {"project": self._proj,
+                                               "properties": incl_properties})
+        else:
+            return self._describe(self._dxid, {"properties": incl_properties})
 
     def add_types(self, types):
         """
@@ -309,6 +256,9 @@ class DXClass(object):
 
         Adds the list of types to the remote object.  Takes no action
         for types that are already listed for the object.
+
+        This method can only be called if the object is in the "open"
+        state.
 
         """
 
@@ -322,18 +272,155 @@ class DXClass(object):
         Removes the list of types from the remote object.  Takes no
         action for types that the object does not currently have.
 
+        This method can only be called if the object is in the "open"
+        state.
+
         """
 
         self._remove_types(self._dxid, {"types": types})
 
-    def destroy(self):
-        '''Permanently destroy the associated remote object.
+    def get_details(self):
+        """
+        Returns the contents of the details of the object
+
+        """
+
+        return self._get_details(self._dxid)
+
+    def set_details(self, details):
+        """
+        :param details: Details to set for the object
+        :type details: dict or list
+
+        Sets the details for the remote object with the specified
+        value.  If the input contains the string "$dnanexus_link" as a
+        key in a hash, it must be the only key in the hash, and its
+        value must be a valid ID of an existing object.
+
+        This method can only be called if the object is in the "open"
+        state.
+
+        """
+
+        return self._set_details(self._dxid, details)
+
+    def set_visibility(self, hidden):
+        """
+        :param hidden: Whether the object is to be hidden or not
+        :type hidden: boolean
+
+        Sets the visibility of the remote object.
+
+        This method can only be called if the object is in the "open"
+        state.
+
+        """
+
+        return self._set_visibility(self._dxid, {"hidden": hidden})
+
+    def rename(self, name):
+        """
+        :param name: New name for the object
+        :type name: string
+
+        Renames the remote object.
+
+        """
+
+        return self._rename(self._dxid, {"project": self._proj,
+                                         "name": name})
+
+    def get_properties(self):
+        """
+        :returns: Properties given as key-value pairs of strings
+        :rtype: dict
+
+        Returns the properties of the object.
+
+        """
+        return self.describe(incl_properties=True)["properties"]
+
+    def set_properties(self, properties):
+        """
+        :param properties: Properties given as key-value pairs of strings; a value of :const:`None` indicates a property should be deleted
+        :type properties: dict
+
+        Given key-value pairs in *properties* for property names and
+        values, the properties are set on the object for the given
+        property names.  Note that existing properties not mentioned
+        in *properties* are not changed by this method.
+
+        The following example sets the properties for "name" and
+        "project" for a remote gtable::
+
+            dxgtable.set_properties({"name": "George", "project": "cancer"})
+
+        The following line would delete the property "project"::
+
+            dxgtable.set_properties({"project": None})
+
+        """
+
+        self._set_properties(self._dxid, {"project": self._proj,
+                                          "properties": properties})
+
+    def add_tags(self, tags):
+        """
+        :param tags: Tags to add to the object
+        :type tags: list of strings
+
+        Adds the list of tags to the remote object.  Takes no action
+        for tags that are already listed for the object.
+
+        """
+
+        self._add_tags(self._dxid, {"project": self._proj, "tags": tags})
+
+    def remove_tags(self, tags):
+        """
+        :param tags: Tags to remove from the object
+        :type tags: list of strings
+
+        Removes the list of tags from the remote object.  Takes no
+        action for tags that the object does not currently have.
+
+        """
+
+        self._remove_tags(self._dxid, {"project": self._proj, "tags": tags})
+
+    def close(self):
+        """
+        Closes the object for further modification to its types,
+        details, visibility, and contents.
+
+        """
+
+        return self._close(self._dxid)
+
+    def list_projects(self):
+        """
+        Returns a list of project IDs for the projects that contain
+        this object and are visible to the requesting user.
+
+        """
+
+        return self._list_projects(self._dxid)
+
+    def remove(self):
+        '''Permanently remove the associated remote object.
+
+        TODO: Consider renaming this to delete or destroy to make it
+        more obvious?
         '''
 
-        self._destroy(self._dxid)
+        if self._proj is None:
+            raise DXError("Remove called when a project ID was not associated with this object handler")
+
+        dxpy.api.projectRemoveObjects(self._proj, {"objects": [self._dxid]})
 
         # Reset internal state
         del self._dxid
+        del self._proj
 
     def _get_state(self):
         '''
@@ -389,10 +476,10 @@ class DXLink:
         raise NotImplementedError()
 
 
-from dxusergroup import *
-from dxfile import *
-from dxfile_functions import *
-from dxtable import *
-from dxtable_functions import *
-from dxjsoncollection import *
-from dxappjob import *
+# from dxfile import *
+# from dxfile_functions import *
+# from dxgtable import *
+# from dxgtable_functions import *
+from dxrecord import *
+#from dxappjob import *
+from dxproject import *
