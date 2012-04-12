@@ -6,318 +6,24 @@ use Exporter;
 use DNAnexus qw(DXHTTPRequest);
 
 
-sub systemSearch(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/system/search', $input_params, %kwargs);
-}
-
-
-sub userDescribe($;$%) {
+sub fileAddTags($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
 }
 
 
-sub userGetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
-}
-
-
-sub userSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub userGetPermissions($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
-}
-
-
-sub userRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub userGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
-}
-
-
-sub userAddTypes($;$%) {
+sub fileAddTypes($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
 }
 
 
-sub userRemoveTypes($;$%) {
+sub fileClose($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
-}
-
-
-sub groupNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/group/new', $input_params, %kwargs);
-}
-
-
-sub groupDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub groupDestroy($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
-}
-
-
-sub groupGetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
-}
-
-
-sub groupSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub groupGetPermissions($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
-}
-
-
-sub groupRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub groupGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
-}
-
-
-sub groupAddMembers($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addMembers', $input_params, %kwargs);
-}
-
-
-sub groupRemoveMembers($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeMembers', $input_params, %kwargs);
-}
-
-
-sub groupAddTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
-}
-
-
-sub groupRemoveTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
-}
-
-
-sub jsonNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/json/new', $input_params, %kwargs);
-}
-
-
-sub jsonDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub jsonDestroy($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
-}
-
-
-sub jsonGetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
-}
-
-
-sub jsonSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub jsonGetPermissions($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
-}
-
-
-sub jsonRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub jsonGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
-}
-
-
-sub jsonAddTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
-}
-
-
-sub jsonRemoveTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
-}
-
-
-sub jsonGet($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/get', $input_params, %kwargs);
-}
-
-
-sub jsonSet($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/set', $input_params, %kwargs);
-}
-
-
-sub collectionNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/collection/new', $input_params, %kwargs);
-}
-
-
-sub collectionDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub collectionDestroy($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
-}
-
-
-sub collectionGetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
-}
-
-
-sub collectionSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub collectionGetPermissions($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
-}
-
-
-sub collectionRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub collectionGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
-}
-
-
-sub collectionAddTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
-}
-
-
-sub collectionRemoveTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
-}
-
-
-sub collectionGet($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/get', $input_params, %kwargs);
-}
-
-
-sub fileNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/file/new', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
 }
 
 
@@ -335,45 +41,31 @@ sub fileDestroy($;$%) {
 }
 
 
-sub fileGetProperties($;$%) {
+sub fileDownload($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/download', $input_params, %kwargs);
 }
 
 
-sub fileSetProperties($;$%) {
+sub fileGetDetails($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
 }
 
 
-sub fileGetPermissions($;$%) {
+sub fileListProjects($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
 }
 
 
-sub fileRevokePermission($;$%) {
+sub fileRemoveTags($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub fileGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
-}
-
-
-sub fileAddTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
 }
 
 
@@ -384,6 +76,34 @@ sub fileRemoveTypes($;$%) {
 }
 
 
+sub fileRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub fileSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub fileSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub fileSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
 sub fileUpload($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -391,17 +111,129 @@ sub fileUpload($;$%) {
 }
 
 
-sub fileClose($;$%) {
+sub fileNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/file/new', $input_params, %kwargs);
+}
+
+
+sub gtableAddRows($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addRows', $input_params, %kwargs);
+}
+
+
+sub gtableAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub gtableAddTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
+}
+
+
+sub gtableClose($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
 }
 
 
-sub fileDownload($;$%) {
+sub gtableDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/download', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub gtableDestroy($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+}
+
+
+sub gtableExtend($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/extend', $input_params, %kwargs);
+}
+
+
+sub gtableGet($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/get', $input_params, %kwargs);
+}
+
+
+sub gtableGetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
+}
+
+
+sub gtableListProjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
+}
+
+
+sub gtableRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub gtableRemoveTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+}
+
+
+sub gtableRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub gtableSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub gtableSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub gtableSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
+sub gtableNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/gtable/new', $input_params, %kwargs);
 }
 
 
@@ -419,52 +251,10 @@ sub tableDescribe($;$%) {
 }
 
 
-sub tableExtend($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/extend', $input_params, %kwargs);
-}
-
-
-sub tableDestroy($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
-}
-
-
-sub tableGetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
-}
-
-
 sub tableSetProperties($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub tableGetPermissions($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
-}
-
-
-sub tableRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub tableGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
 }
 
 
@@ -482,6 +272,55 @@ sub tableRemoveTypes($;$%) {
 }
 
 
+sub tableAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub tableRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub tableListProjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
+}
+
+
+sub tableGetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
+}
+
+
+sub tableSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub tableSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
+sub tableRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
 sub tableAddRows($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -489,10 +328,38 @@ sub tableAddRows($;$%) {
 }
 
 
-sub tableClose($;$%) {
+sub tableRemoveRows($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/removeRows', $input_params, %kwargs);
+}
+
+
+sub tableAddColumns($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addColumns', $input_params, %kwargs);
+}
+
+
+sub tableRemoveColumns($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeColumns', $input_params, %kwargs);
+}
+
+
+sub tableAddIndices($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addIndices', $input_params, %kwargs);
+}
+
+
+sub tableRemoveIndices($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeIndices', $input_params, %kwargs);
 }
 
 
@@ -503,153 +370,279 @@ sub tableGet($;$%) {
 }
 
 
-sub appNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/app/new', $input_params, %kwargs);
-}
-
-
-sub appDescribe($;$%) {
+sub tableUpdate($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
 }
 
 
-sub appDestroy($;$%) {
+sub tableClose($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
 }
 
 
-sub appGetProperties($;$%) {
+sub programAddTags($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
 }
 
 
-sub appSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub appGetPermissions($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
-}
-
-
-sub appRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
-}
-
-
-sub appGrantPermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
-}
-
-
-sub appAddTypes($;$%) {
+sub programAddTypes($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
 }
 
 
-sub appRemoveTypes($;$%) {
+sub programClose($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
 }
 
 
-sub appRun($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/run', $input_params, %kwargs);
-}
-
-
-sub jobNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/job/new', $input_params, %kwargs);
-}
-
-
-sub jobDescribe($;$%) {
+sub programDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
 }
 
 
-sub jobDestroy($;$%) {
+sub programGetDetails($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
 }
 
 
-sub jobGetProperties($;$%) {
+sub programListProjects($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getProperties', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
 }
 
 
-sub jobSetProperties($;$%) {
+sub programRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub programRemoveTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+}
+
+
+sub programRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub programSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub programSetProperties($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
 }
 
 
-sub jobGetPermissions($;$%) {
+sub programSetVisibility($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getPermissions', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
 }
 
 
-sub jobRevokePermission($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+sub programNew(;$%) {
+    my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/revokePermission', $input_params, %kwargs);
+    return DXHTTPRequest('/program/new', $input_params, %kwargs);
 }
 
 
-sub jobGrantPermission($;$%) {
+sub projectClone($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/grantPermission', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/clone', $input_params, %kwargs);
 }
 
 
-sub jobAddTypes($;$%) {
+sub projectDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub projectDestroy($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+}
+
+
+sub projectListFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listFolder', $input_params, %kwargs);
+}
+
+
+sub projectMove($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/move', $input_params, %kwargs);
+}
+
+
+sub projectNewFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/newFolder', $input_params, %kwargs);
+}
+
+
+sub projectRemoveFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeFolder', $input_params, %kwargs);
+}
+
+
+sub projectRemoveObjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeObjects', $input_params, %kwargs);
+}
+
+
+sub projectUpdate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
+}
+
+
+sub projectNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/project/new', $input_params, %kwargs);
+}
+
+
+sub recordAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub recordAddTypes($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
 }
 
 
-sub jobRemoveTypes($;$%) {
+sub recordClose($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
+}
+
+
+sub recordDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub recordGetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
+}
+
+
+sub recordListProjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
+}
+
+
+sub recordRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub recordRemoveTypes($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+}
+
+
+sub recordRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub recordSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub recordSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub recordSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
+sub recordNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/record/new', $input_params, %kwargs);
+}
+
+
+sub systemSearch(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/search', $input_params, %kwargs);
 }
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(systemSearch userDescribe userGetProperties userSetProperties userGetPermissions userRevokePermission userGrantPermission userAddTypes userRemoveTypes groupNew groupDescribe groupDestroy groupGetProperties groupSetProperties groupGetPermissions groupRevokePermission groupGrantPermission groupAddMembers groupRemoveMembers groupAddTypes groupRemoveTypes jsonNew jsonDescribe jsonDestroy jsonGetProperties jsonSetProperties jsonGetPermissions jsonRevokePermission jsonGrantPermission jsonAddTypes jsonRemoveTypes jsonGet jsonSet collectionNew collectionDescribe collectionDestroy collectionGetProperties collectionSetProperties collectionGetPermissions collectionRevokePermission collectionGrantPermission collectionAddTypes collectionRemoveTypes collectionGet fileNew fileDescribe fileDestroy fileGetProperties fileSetProperties fileGetPermissions fileRevokePermission fileGrantPermission fileAddTypes fileRemoveTypes fileUpload fileClose fileDownload tableNew tableDescribe tableExtend tableDestroy tableGetProperties tableSetProperties tableGetPermissions tableRevokePermission tableGrantPermission tableAddTypes tableRemoveTypes tableAddRows tableClose tableGet appNew appDescribe appDestroy appGetProperties appSetProperties appGetPermissions appRevokePermission appGrantPermission appAddTypes appRemoveTypes appRun jobNew jobDescribe jobDestroy jobGetProperties jobSetProperties jobGetPermissions jobRevokePermission jobGrantPermission jobAddTypes jobRemoveTypes);
+our @EXPORT_OK = qw(fileAddTags fileAddTypes fileClose fileDescribe fileDestroy fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableDestroy gtableExtend gtableGet gtableGetDetails gtableListProjects gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew tableNew tableDescribe tableSetProperties tableAddTypes tableRemoveTypes tableAddTags tableRemoveTags tableListProjects tableGetDetails tableSetDetails tableSetVisibility tableRename tableAddRows tableRemoveRows tableAddColumns tableRemoveColumns tableAddIndices tableRemoveIndices tableGet tableUpdate tableClose programAddTags programAddTypes programClose programDescribe programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programSetDetails programSetProperties programSetVisibility programNew projectClone projectDescribe projectDestroy projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemSearch);
 

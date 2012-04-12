@@ -2,408 +2,30 @@
 #include "api.h"
 
 
-dx::JSON systemSearch(const std::string &input_params) {
-  return DXHTTPRequest("/system/search", input_params);
+dx::JSON fileAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
 }
 
-dx::JSON systemSearch(const dx::JSON &input_params) {
-  return systemSearch(input_params.toString());
-}
-
-
-dx::JSON userDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return userDescribe(object_id, input_params.toString());
+dx::JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return fileAddTags(object_id, input_params.toString());
 }
 
 
-dx::JSON userGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON userGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return userGetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON userSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
-}
-
-dx::JSON userSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return userSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON userGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON userGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return userGetPermissions(object_id, input_params.toString());
-}
-
-
-dx::JSON userRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON userRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return userRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON userGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON userGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return userGrantPermission(object_id, input_params.toString());
-}
-
-
-dx::JSON userAddTypes(const std::string &object_id, const std::string &input_params) {
+dx::JSON fileAddTypes(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
 }
 
-dx::JSON userAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return userAddTypes(object_id, input_params.toString());
+dx::JSON fileAddTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return fileAddTypes(object_id, input_params.toString());
 }
 
 
-dx::JSON userRemoveTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
+dx::JSON fileClose(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
 }
 
-dx::JSON userRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return userRemoveTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON groupNew(const std::string &input_params) {
-  return DXHTTPRequest("/group/new", input_params);
-}
-
-dx::JSON groupNew(const dx::JSON &input_params) {
-  return groupNew(input_params.toString());
-}
-
-
-dx::JSON groupDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON groupDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return groupDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON groupDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
-}
-
-dx::JSON groupDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return groupDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON groupGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON groupGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return groupGetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON groupSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
-}
-
-dx::JSON groupSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return groupSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON groupGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON groupGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return groupGetPermissions(object_id, input_params.toString());
-}
-
-
-dx::JSON groupRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON groupRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return groupRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON groupGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON groupGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return groupGrantPermission(object_id, input_params.toString());
-}
-
-
-dx::JSON groupAddMembers(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addMembers"), input_params);
-}
-
-dx::JSON groupAddMembers(const std::string &object_id, const dx::JSON &input_params) {
-  return groupAddMembers(object_id, input_params.toString());
-}
-
-
-dx::JSON groupRemoveMembers(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeMembers"), input_params);
-}
-
-dx::JSON groupRemoveMembers(const std::string &object_id, const dx::JSON &input_params) {
-  return groupRemoveMembers(object_id, input_params.toString());
-}
-
-
-dx::JSON groupAddTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
-}
-
-dx::JSON groupAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return groupAddTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON groupRemoveTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
-}
-
-dx::JSON groupRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return groupRemoveTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonNew(const std::string &input_params) {
-  return DXHTTPRequest("/json/new", input_params);
-}
-
-dx::JSON jsonNew(const dx::JSON &input_params) {
-  return jsonNew(input_params.toString());
-}
-
-
-dx::JSON jsonDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON jsonDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
-}
-
-dx::JSON jsonDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON jsonGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonGetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
-}
-
-dx::JSON jsonSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON jsonGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonGetPermissions(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON jsonRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON jsonGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonGrantPermission(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonAddTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
-}
-
-dx::JSON jsonAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonAddTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonRemoveTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
-}
-
-dx::JSON jsonRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonRemoveTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonGet(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/get"), input_params);
-}
-
-dx::JSON jsonGet(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonGet(object_id, input_params.toString());
-}
-
-
-dx::JSON jsonSet(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/set"), input_params);
-}
-
-dx::JSON jsonSet(const std::string &object_id, const dx::JSON &input_params) {
-  return jsonSet(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionNew(const std::string &input_params) {
-  return DXHTTPRequest("/collection/new", input_params);
-}
-
-dx::JSON collectionNew(const dx::JSON &input_params) {
-  return collectionNew(input_params.toString());
-}
-
-
-dx::JSON collectionDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON collectionDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
-}
-
-dx::JSON collectionDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON collectionGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionGetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
-}
-
-dx::JSON collectionSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON collectionGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionGetPermissions(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON collectionRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON collectionGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionGrantPermission(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionAddTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
-}
-
-dx::JSON collectionAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionAddTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionRemoveTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
-}
-
-dx::JSON collectionRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionRemoveTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON collectionGet(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/get"), input_params);
-}
-
-dx::JSON collectionGet(const std::string &object_id, const dx::JSON &input_params) {
-  return collectionGet(object_id, input_params.toString());
-}
-
-
-dx::JSON fileNew(const std::string &input_params) {
-  return DXHTTPRequest("/file/new", input_params);
-}
-
-dx::JSON fileNew(const dx::JSON &input_params) {
-  return fileNew(input_params.toString());
+dx::JSON fileClose(const std::string &object_id, const dx::JSON &input_params) {
+  return fileClose(object_id, input_params.toString());
 }
 
 
@@ -425,57 +47,39 @@ dx::JSON fileDestroy(const std::string &object_id, const dx::JSON &input_params)
 }
 
 
-dx::JSON fileGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
+dx::JSON fileDownload(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/download"), input_params);
 }
 
-dx::JSON fileGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return fileGetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON fileSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
-}
-
-dx::JSON fileSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return fileSetProperties(object_id, input_params.toString());
+dx::JSON fileDownload(const std::string &object_id, const dx::JSON &input_params) {
+  return fileDownload(object_id, input_params.toString());
 }
 
 
-dx::JSON fileGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
+dx::JSON fileGetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
 }
 
-dx::JSON fileGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return fileGetPermissions(object_id, input_params.toString());
-}
-
-
-dx::JSON fileRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON fileRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return fileRevokePermission(object_id, input_params.toString());
+dx::JSON fileGetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return fileGetDetails(object_id, input_params.toString());
 }
 
 
-dx::JSON fileGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
+dx::JSON fileListProjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
 }
 
-dx::JSON fileGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return fileGrantPermission(object_id, input_params.toString());
+dx::JSON fileListProjects(const std::string &object_id, const dx::JSON &input_params) {
+  return fileListProjects(object_id, input_params.toString());
 }
 
 
-dx::JSON fileAddTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
+dx::JSON fileRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
 }
 
-dx::JSON fileAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return fileAddTypes(object_id, input_params.toString());
+dx::JSON fileRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return fileRemoveTags(object_id, input_params.toString());
 }
 
 
@@ -488,6 +92,42 @@ dx::JSON fileRemoveTypes(const std::string &object_id, const dx::JSON &input_par
 }
 
 
+dx::JSON fileRename(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
+}
+
+dx::JSON fileRename(const std::string &object_id, const dx::JSON &input_params) {
+  return fileRename(object_id, input_params.toString());
+}
+
+
+dx::JSON fileSetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
+}
+
+dx::JSON fileSetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return fileSetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON fileSetProperties(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+}
+
+dx::JSON fileSetProperties(const std::string &object_id, const dx::JSON &input_params) {
+  return fileSetProperties(object_id, input_params.toString());
+}
+
+
+dx::JSON fileSetVisibility(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
+}
+
+dx::JSON fileSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
+  return fileSetVisibility(object_id, input_params.toString());
+}
+
+
 dx::JSON fileUpload(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/upload"), input_params);
 }
@@ -497,21 +137,165 @@ dx::JSON fileUpload(const std::string &object_id, const dx::JSON &input_params) 
 }
 
 
-dx::JSON fileClose(const std::string &object_id, const std::string &input_params) {
+dx::JSON fileNew(const std::string &input_params) {
+  return DXHTTPRequest("/file/new", input_params);
+}
+
+dx::JSON fileNew(const dx::JSON &input_params) {
+  return fileNew(input_params.toString());
+}
+
+
+dx::JSON gtableAddRows(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addRows"), input_params);
+}
+
+dx::JSON gtableAddRows(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableAddRows(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
+}
+
+dx::JSON gtableAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableAddTags(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableAddTypes(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
+}
+
+dx::JSON gtableAddTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableAddTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableClose(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
 }
 
-dx::JSON fileClose(const std::string &object_id, const dx::JSON &input_params) {
-  return fileClose(object_id, input_params.toString());
+dx::JSON gtableClose(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableClose(object_id, input_params.toString());
 }
 
 
-dx::JSON fileDownload(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/download"), input_params);
+dx::JSON gtableDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
 }
 
-dx::JSON fileDownload(const std::string &object_id, const dx::JSON &input_params) {
-  return fileDownload(object_id, input_params.toString());
+dx::JSON gtableDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableDestroy(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+}
+
+dx::JSON gtableDestroy(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableDestroy(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableExtend(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/extend"), input_params);
+}
+
+dx::JSON gtableExtend(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableExtend(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableGet(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/get"), input_params);
+}
+
+dx::JSON gtableGet(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableGet(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableGetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
+}
+
+dx::JSON gtableGetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableGetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableListProjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
+}
+
+dx::JSON gtableListProjects(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableListProjects(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
+}
+
+dx::JSON gtableRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableRemoveTags(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableRemoveTypes(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
+}
+
+dx::JSON gtableRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableRemoveTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableRename(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
+}
+
+dx::JSON gtableRename(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableRename(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableSetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
+}
+
+dx::JSON gtableSetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableSetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableSetProperties(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+}
+
+dx::JSON gtableSetProperties(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableSetProperties(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableSetVisibility(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
+}
+
+dx::JSON gtableSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableSetVisibility(object_id, input_params.toString());
+}
+
+
+dx::JSON gtableNew(const std::string &input_params) {
+  return DXHTTPRequest("/gtable/new", input_params);
+}
+
+dx::JSON gtableNew(const dx::JSON &input_params) {
+  return gtableNew(input_params.toString());
 }
 
 
@@ -533,66 +317,12 @@ dx::JSON tableDescribe(const std::string &object_id, const dx::JSON &input_param
 }
 
 
-dx::JSON tableExtend(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/extend"), input_params);
-}
-
-dx::JSON tableExtend(const std::string &object_id, const dx::JSON &input_params) {
-  return tableExtend(object_id, input_params.toString());
-}
-
-
-dx::JSON tableDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
-}
-
-dx::JSON tableDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return tableDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON tableGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON tableGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return tableGetProperties(object_id, input_params.toString());
-}
-
-
 dx::JSON tableSetProperties(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
 }
 
 dx::JSON tableSetProperties(const std::string &object_id, const dx::JSON &input_params) {
   return tableSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON tableGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON tableGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return tableGetPermissions(object_id, input_params.toString());
-}
-
-
-dx::JSON tableRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON tableRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return tableRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON tableGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON tableGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return tableGrantPermission(object_id, input_params.toString());
 }
 
 
@@ -614,6 +344,69 @@ dx::JSON tableRemoveTypes(const std::string &object_id, const dx::JSON &input_pa
 }
 
 
+dx::JSON tableAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
+}
+
+dx::JSON tableAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return tableAddTags(object_id, input_params.toString());
+}
+
+
+dx::JSON tableRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
+}
+
+dx::JSON tableRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return tableRemoveTags(object_id, input_params.toString());
+}
+
+
+dx::JSON tableListProjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
+}
+
+dx::JSON tableListProjects(const std::string &object_id, const dx::JSON &input_params) {
+  return tableListProjects(object_id, input_params.toString());
+}
+
+
+dx::JSON tableGetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
+}
+
+dx::JSON tableGetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return tableGetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON tableSetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
+}
+
+dx::JSON tableSetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return tableSetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON tableSetVisibility(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
+}
+
+dx::JSON tableSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
+  return tableSetVisibility(object_id, input_params.toString());
+}
+
+
+dx::JSON tableRename(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
+}
+
+dx::JSON tableRename(const std::string &object_id, const dx::JSON &input_params) {
+  return tableRename(object_id, input_params.toString());
+}
+
+
 dx::JSON tableAddRows(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/addRows"), input_params);
 }
@@ -623,12 +416,48 @@ dx::JSON tableAddRows(const std::string &object_id, const dx::JSON &input_params
 }
 
 
-dx::JSON tableClose(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
+dx::JSON tableRemoveRows(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeRows"), input_params);
 }
 
-dx::JSON tableClose(const std::string &object_id, const dx::JSON &input_params) {
-  return tableClose(object_id, input_params.toString());
+dx::JSON tableRemoveRows(const std::string &object_id, const dx::JSON &input_params) {
+  return tableRemoveRows(object_id, input_params.toString());
+}
+
+
+dx::JSON tableAddColumns(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addColumns"), input_params);
+}
+
+dx::JSON tableAddColumns(const std::string &object_id, const dx::JSON &input_params) {
+  return tableAddColumns(object_id, input_params.toString());
+}
+
+
+dx::JSON tableRemoveColumns(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeColumns"), input_params);
+}
+
+dx::JSON tableRemoveColumns(const std::string &object_id, const dx::JSON &input_params) {
+  return tableRemoveColumns(object_id, input_params.toString());
+}
+
+
+dx::JSON tableAddIndices(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addIndices"), input_params);
+}
+
+dx::JSON tableAddIndices(const std::string &object_id, const dx::JSON &input_params) {
+  return tableAddIndices(object_id, input_params.toString());
+}
+
+
+dx::JSON tableRemoveIndices(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeIndices"), input_params);
+}
+
+dx::JSON tableRemoveIndices(const std::string &object_id, const dx::JSON &input_params) {
+  return tableRemoveIndices(object_id, input_params.toString());
 }
 
 
@@ -641,191 +470,353 @@ dx::JSON tableGet(const std::string &object_id, const dx::JSON &input_params) {
 }
 
 
-dx::JSON appNew(const std::string &input_params) {
-  return DXHTTPRequest("/app/new", input_params);
+dx::JSON tableUpdate(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params);
 }
 
-dx::JSON appNew(const dx::JSON &input_params) {
-  return appNew(input_params.toString());
-}
-
-
-dx::JSON appDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON appDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return appDescribe(object_id, input_params.toString());
+dx::JSON tableUpdate(const std::string &object_id, const dx::JSON &input_params) {
+  return tableUpdate(object_id, input_params.toString());
 }
 
 
-dx::JSON appDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+dx::JSON tableClose(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
 }
 
-dx::JSON appDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return appDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON appGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON appGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return appGetProperties(object_id, input_params.toString());
+dx::JSON tableClose(const std::string &object_id, const dx::JSON &input_params) {
+  return tableClose(object_id, input_params.toString());
 }
 
 
-dx::JSON appSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+dx::JSON programAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
 }
 
-dx::JSON appSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return appSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON appGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON appGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return appGetPermissions(object_id, input_params.toString());
+dx::JSON programAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return programAddTags(object_id, input_params.toString());
 }
 
 
-dx::JSON appRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
-}
-
-dx::JSON appRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return appRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON appGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON appGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return appGrantPermission(object_id, input_params.toString());
-}
-
-
-dx::JSON appAddTypes(const std::string &object_id, const std::string &input_params) {
+dx::JSON programAddTypes(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
 }
 
-dx::JSON appAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return appAddTypes(object_id, input_params.toString());
+dx::JSON programAddTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return programAddTypes(object_id, input_params.toString());
 }
 
 
-dx::JSON appRemoveTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
+dx::JSON programClose(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
 }
 
-dx::JSON appRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return appRemoveTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON appRun(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params);
-}
-
-dx::JSON appRun(const std::string &object_id, const dx::JSON &input_params) {
-  return appRun(object_id, input_params.toString());
+dx::JSON programClose(const std::string &object_id, const dx::JSON &input_params) {
+  return programClose(object_id, input_params.toString());
 }
 
 
-dx::JSON jobNew(const std::string &input_params) {
-  return DXHTTPRequest("/job/new", input_params);
-}
-
-dx::JSON jobNew(const dx::JSON &input_params) {
-  return jobNew(input_params.toString());
-}
-
-
-dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params) {
+dx::JSON programDescribe(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
 }
 
-dx::JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return jobDescribe(object_id, input_params.toString());
+dx::JSON programDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return programDescribe(object_id, input_params.toString());
 }
 
 
-dx::JSON jobDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+dx::JSON programGetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
 }
 
-dx::JSON jobDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return jobDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON jobGetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getProperties"), input_params);
-}
-
-dx::JSON jobGetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return jobGetProperties(object_id, input_params.toString());
+dx::JSON programGetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return programGetDetails(object_id, input_params.toString());
 }
 
 
-dx::JSON jobSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+dx::JSON programListProjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
 }
 
-dx::JSON jobSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return jobSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON jobGetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getPermissions"), input_params);
-}
-
-dx::JSON jobGetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return jobGetPermissions(object_id, input_params.toString());
+dx::JSON programListProjects(const std::string &object_id, const dx::JSON &input_params) {
+  return programListProjects(object_id, input_params.toString());
 }
 
 
-dx::JSON jobRevokePermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/revokePermission"), input_params);
+dx::JSON programRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
 }
 
-dx::JSON jobRevokePermission(const std::string &object_id, const dx::JSON &input_params) {
-  return jobRevokePermission(object_id, input_params.toString());
-}
-
-
-dx::JSON jobGrantPermission(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/grantPermission"), input_params);
-}
-
-dx::JSON jobGrantPermission(const std::string &object_id, const dx::JSON &input_params) {
-  return jobGrantPermission(object_id, input_params.toString());
+dx::JSON programRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return programRemoveTags(object_id, input_params.toString());
 }
 
 
-dx::JSON jobAddTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
-}
-
-dx::JSON jobAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return jobAddTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON jobRemoveTypes(const std::string &object_id, const std::string &input_params) {
+dx::JSON programRemoveTypes(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
 }
 
-dx::JSON jobRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return jobRemoveTypes(object_id, input_params.toString());
+dx::JSON programRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return programRemoveTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON programRename(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
+}
+
+dx::JSON programRename(const std::string &object_id, const dx::JSON &input_params) {
+  return programRename(object_id, input_params.toString());
+}
+
+
+dx::JSON programSetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
+}
+
+dx::JSON programSetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return programSetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON programSetProperties(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+}
+
+dx::JSON programSetProperties(const std::string &object_id, const dx::JSON &input_params) {
+  return programSetProperties(object_id, input_params.toString());
+}
+
+
+dx::JSON programSetVisibility(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
+}
+
+dx::JSON programSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
+  return programSetVisibility(object_id, input_params.toString());
+}
+
+
+dx::JSON programNew(const std::string &input_params) {
+  return DXHTTPRequest("/program/new", input_params);
+}
+
+dx::JSON programNew(const dx::JSON &input_params) {
+  return programNew(input_params.toString());
+}
+
+
+dx::JSON projectClone(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params);
+}
+
+dx::JSON projectClone(const std::string &object_id, const dx::JSON &input_params) {
+  return projectClone(object_id, input_params.toString());
+}
+
+
+dx::JSON projectDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+}
+
+dx::JSON projectDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return projectDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON projectDestroy(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+}
+
+dx::JSON projectDestroy(const std::string &object_id, const dx::JSON &input_params) {
+  return projectDestroy(object_id, input_params.toString());
+}
+
+
+dx::JSON projectListFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listFolder"), input_params);
+}
+
+dx::JSON projectListFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return projectListFolder(object_id, input_params.toString());
+}
+
+
+dx::JSON projectMove(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/move"), input_params);
+}
+
+dx::JSON projectMove(const std::string &object_id, const dx::JSON &input_params) {
+  return projectMove(object_id, input_params.toString());
+}
+
+
+dx::JSON projectNewFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/newFolder"), input_params);
+}
+
+dx::JSON projectNewFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return projectNewFolder(object_id, input_params.toString());
+}
+
+
+dx::JSON projectRemoveFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeFolder"), input_params);
+}
+
+dx::JSON projectRemoveFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return projectRemoveFolder(object_id, input_params.toString());
+}
+
+
+dx::JSON projectRemoveObjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeObjects"), input_params);
+}
+
+dx::JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &input_params) {
+  return projectRemoveObjects(object_id, input_params.toString());
+}
+
+
+dx::JSON projectUpdate(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params);
+}
+
+dx::JSON projectUpdate(const std::string &object_id, const dx::JSON &input_params) {
+  return projectUpdate(object_id, input_params.toString());
+}
+
+
+dx::JSON projectNew(const std::string &input_params) {
+  return DXHTTPRequest("/project/new", input_params);
+}
+
+dx::JSON projectNew(const dx::JSON &input_params) {
+  return projectNew(input_params.toString());
+}
+
+
+dx::JSON recordAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
+}
+
+dx::JSON recordAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return recordAddTags(object_id, input_params.toString());
+}
+
+
+dx::JSON recordAddTypes(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
+}
+
+dx::JSON recordAddTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return recordAddTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON recordClose(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
+}
+
+dx::JSON recordClose(const std::string &object_id, const dx::JSON &input_params) {
+  return recordClose(object_id, input_params.toString());
+}
+
+
+dx::JSON recordDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+}
+
+dx::JSON recordDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return recordDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON recordGetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
+}
+
+dx::JSON recordGetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return recordGetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON recordListProjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
+}
+
+dx::JSON recordListProjects(const std::string &object_id, const dx::JSON &input_params) {
+  return recordListProjects(object_id, input_params.toString());
+}
+
+
+dx::JSON recordRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
+}
+
+dx::JSON recordRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return recordRemoveTags(object_id, input_params.toString());
+}
+
+
+dx::JSON recordRemoveTypes(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
+}
+
+dx::JSON recordRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return recordRemoveTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON recordRename(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
+}
+
+dx::JSON recordRename(const std::string &object_id, const dx::JSON &input_params) {
+  return recordRename(object_id, input_params.toString());
+}
+
+
+dx::JSON recordSetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
+}
+
+dx::JSON recordSetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return recordSetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON recordSetProperties(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+}
+
+dx::JSON recordSetProperties(const std::string &object_id, const dx::JSON &input_params) {
+  return recordSetProperties(object_id, input_params.toString());
+}
+
+
+dx::JSON recordSetVisibility(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
+}
+
+dx::JSON recordSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
+  return recordSetVisibility(object_id, input_params.toString());
+}
+
+
+dx::JSON recordNew(const std::string &input_params) {
+  return DXHTTPRequest("/record/new", input_params);
+}
+
+dx::JSON recordNew(const dx::JSON &input_params) {
+  return recordNew(input_params.toString());
+}
+
+
+dx::JSON systemSearch(const std::string &input_params) {
+  return DXHTTPRequest("/system/search", input_params);
+}
+
+dx::JSON systemSearch(const dx::JSON &input_params) {
+  return systemSearch(input_params.toString());
 }
 
