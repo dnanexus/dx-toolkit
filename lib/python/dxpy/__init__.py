@@ -17,7 +17,7 @@ from dxpy.exceptions import *
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_data=True, want_full_response=False, **kwargs):
     '''
-    :param resource: API server route, e.g. "/json/new"
+    :param resource: API server route, e.g. "/record/new"
     :type resource: string
     :param data: Contents for the request body
     :param jsonify_data: Indicates whether *data* should be converted from a Python list or dict to a JSON string
@@ -88,6 +88,42 @@ def set_security_context(security_context):
     SECURITY_CONTEXT = security_context
     AUTH_HELPER = DXHTTPOAuth2(security_context)
 
+def set_job_id(dxid):
+    """
+    :param id: ID of a job
+    :type id: string
+
+    Sets the ID of the running job.  TODO: Not clear yet that this is
+    necessary.
+
+    """
+    global JOB_ID
+    JOB_ID = dxid
+
+def set_workspace_id(dxid):
+    """
+    :param id: ID of a project or workspace
+    :type id: string
+
+    Sets the default project or workspace for object creation and
+    modification to *id*.
+    """
+
+    global WORKSPACE_ID
+    WORKSPACE_ID = dxid
+
+def set_project_context(dxid):
+    """
+    :param id: Project ID
+    :type id: string
+
+    Sets the project context for a running job.
+
+    """
+
+    global PROJECT_CONTEXT_ID
+    PROJECT_CONTEXT_ID = dxid
+
 if "APISERVER_HOST" in os.environ and "APISERVER_PORT" in os.environ:
     set_api_server_info(host=os.environ["APISERVER_HOST"],
                      port=os.environ["APISERVER_PORT"])
@@ -96,5 +132,15 @@ else:
 
 if "SECURITY_CONTEXT" in os.environ:
     set_security_context(json.loads(os.environ['SECURITY_CONTEXT']))
+
+if "JOB_ID" in os.environ:
+    set_job_id(os.environ["JOB_ID"])
+    if "WORKSPACE_ID" in os.environ:
+        set_workspace_id(os.environ["WORKSPACE_ID"])
+    if "PROJECT_ID" in os.environ:
+        set_project_context(os.environ["PROJECT_ID"])
+else:
+    if "PROJECT_ID" in os.environ:
+        set_workspace_id(os.environ["PROJECT_ID"])
 
 from dxpy.bindings import *

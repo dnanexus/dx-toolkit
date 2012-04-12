@@ -4,7 +4,9 @@ import os, sys, unittest, json, tempfile, filecmp
 import dxpy.bindings as dxpy
 from dxpy.exceptions import *
 
+# Store the following in PROJECT_ID to make some of the tests pass
 proj_id = "project-000000000000000000000001"
+second_proj_id = 'project-000000000000000000000002';
 
 @unittest.skip("Skipping search; not implemented yet in 1.03")
 class TestSearch(unittest.TestCase):
@@ -54,8 +56,8 @@ class TestSearch(unittest.TestCase):
         for json in jsons:
             json.destroy()
 
-@unittest.skip("Skipping groups; not implemented yet in 1.03")
-class TestDXGroup(unittest.TestCase):
+@unittest.skip("Skipping projects; no tests yet for 1.03")
+class TestDXProject(unittest.TestCase):
     pass
 
 @unittest.skip("Skipping files; not updated yet for 1.03")
@@ -153,39 +155,40 @@ class TestDXFile(unittest.TestCase):
                 self.assertEqual(line, "Line " + str(lineno))
                 lineno += 1
 
-@unittest.skip("Skipping gtables; not updated yet for 1.03")
+@unittest.skip("Skipping gtables; not yet implemented")
 class TestDXGTable(unittest.TestCase):
     def setUp(self):
-        self.dxtable = dxpy.DXTable()
+        self.dxtable = dxpy.DXTable(proj_id)
 
     def tearDown(self):
         try:
-            self.dxtable.destroy()
+            self.dxtable.remove()
         except:
             pass
 
     def test_create_table(self):
-        self.dxtable = dxpy.new_dxtable(['a:string', 'b:int32'])
+        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
         self.dxtable.close()
         desc = self.dxtable.describe()
         self.assertEqual(desc["columns"], ['a:string', 'b:int32'])
 
     def test_extend_table(self):
-        table_to_extend = dxpy.new_dxtable(['a:string', 'b:int32'])
+        table_to_extend = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
         try:
             table_to_extend.add_rows([["Row 1", 1], ["Row 2", 2]], 1)
             table_to_extend.close(block=True)
         except:
             self.fail("Error occurred when creating a table")
-            table_to_extend.destroy()
+            table_to_extend.remove()
 
         try:
             self.dxtable = dxpy.extend_dxtable(table_to_extend.get_id(),
+                                               proj_id,
                                                ['c:int32', 'd:string'])
         except:
             self.fail("Could not extend table");
         finally:
-            table_to_extend.destroy()
+            table_to_extend.remove()
 
         self.assertEqual(self.dxtable.describe()["columns"],
                          ['a:string', 'b:int32', 'c:int32', 'd:string'])
@@ -196,7 +199,7 @@ class TestDXGTable(unittest.TestCase):
             self.fail("Could not close table after table extension")
     
     def test_add_rows(self):
-        self.dxtable = dxpy.new_dxtable(['a:string', 'b:int32'])
+        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
         self.dxtable.add_rows(data=[], index=9999)
         with self.assertRaises(DXAPIError):
             self.dxtable.add_rows(data=[[]], index=9997)
@@ -209,7 +212,7 @@ class TestDXGTable(unittest.TestCase):
             self.dxtable.close()
 
     def test_add_rows_no_index(self):
-        self.dxtable = dxpy.new_dxtable(['a:string', 'b:int32'])
+        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
         for i in range(64):
             self.dxtable.add_rows(data=[["row"+str(i), i]])
 
@@ -223,16 +226,16 @@ class TestDXGTable(unittest.TestCase):
         self.assertEqual(desc["size"], 64)
 
     def test_table_context_manager(self):
-        with dxpy.new_dxtable(['a:string', 'b:int32']) as self.dxtable:
+        with dxpy.new_dxtable(proj_id, ['a:string', 'b:int32']) as self.dxtable:
             for i in range(64):
                 self.dxtable.add_rows(data=[["row"+str(i), i]], index=i+1)
 
     def test_create_table_with_invalid_spec(self):
         with self.assertRaises(DXAPIError):
-            dxpy.new_dxtable(['a:string', 'b:muffins'])
+            dxpy.new_dxtable(proj_id, ['a:string', 'b:muffins'])
 
     def test_get_rows(self):
-        self.dxtable = dxpy.new_dxtable(['a:string', 'b:int32'])
+        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
         for i in range(64):
             self.dxtable.add_rows(data=[["row"+str(i), i]], index=i+1)
         with self.assertRaises(DXAPIError):
@@ -265,7 +268,7 @@ class TestDXRecord(unittest.TestCase):
         stored and that the record object has been stored.
         '''
 
-        firstDXRecord = dxpy.new_dxrecord(proj_id)
+        firstDXRecord = dxpy.new_dxrecord(details=["foo"])
         # test if firstDXRecord._dxid has been set to a valid ID
         try:
             self.assertRegexpMatches(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
@@ -273,13 +276,10 @@ class TestDXRecord(unittest.TestCase):
                                          firstDXRecord.get_id())
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
-        # test if firstDXRecord._proj has been set to a valid ID
-        try:
-            self.assertRegexpMatches(firstDXRecord.get_proj_id(), "^project-[0-9A-Za-z]{24}",
-                                     'Project ID not of expected form: ' + \
-                                         firstDXRecord.get_proj_id())
-        except AttributeError:
-            self.fail("Project ID was not stored in DXRecord creation")
+        # test if firstDXRecord._proj has been set to proj_id
+        self.assertEqual(firstDXRecord.get_proj_id(), proj_id)
+        # test if details were set
+        self.assertEqual(firstDXRecord.get_details(), ["foo"])
 
         '''Create a second DXRecord object which should use the first
         object's ID.  Check that its ID is stored and that it can be
@@ -291,9 +291,19 @@ class TestDXRecord(unittest.TestCase):
         '''Create a new DXRecord object which should generate a new ID
         but in the same project as the first.
         '''
-        secondDXRecord.new(proj_id)
+        secondDXRecord.new(project=second_proj_id, details=["bar"])
         self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
-        self.assertEqual(firstDXRecord.get_proj_id(), secondDXRecord.get_proj_id())
+        # test if secondDXRecord._dxid has been set to a valid ID
+        try:
+            self.assertRegexpMatches(secondDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
+                                     'Object ID not of expected form: ' + \
+                                         secondDXRecord.get_id())
+        except AttributeError:
+            self.fail("dxID was not stored in DXRecord creation")
+        # test if secondDXRecord._proj has been set to second_proj_id
+        self.assertEqual(secondDXRecord.get_proj_id(), second_proj_id)
+        # test if details were set
+        self.assertEqual(secondDXRecord.get_details(), ["bar"])
 
         '''
         Remove the records
@@ -324,14 +334,12 @@ class TestDXRecord(unittest.TestCase):
         #     self.assertEqual(cm.exception.name, "ResourceNotFound")
 
     def test_describe_dxrecord(self):
-        types = ["mapping", "foo"]
-
-        dxrecord = dxpy.new_dxrecord(proj_id, types=types)
+        dxrecord = dxpy.new_dxrecord()
         desc = dxrecord.describe()
         self.assertEqual(desc["project"], proj_id)
         self.assertEqual(desc["id"], dxrecord.get_id())
         self.assertEqual(desc["class"], "record")
-        self.assertEqual(desc["types"], types)
+        self.assertEqual(desc["types"], [])
         self.assertTrue("created" in desc)
         self.assertEqual(desc["state"], "open")
         self.assertEqual(desc["hidden"], False)
@@ -345,55 +353,79 @@ class TestDXRecord(unittest.TestCase):
         desc = dxrecord.describe(incl_properties=True)
         self.assertEqual(desc["properties"], {})
 
-        dxrecord.remove()
+        types = ["mapping", "foo"]
+        tags = ["bar", "baz"]
+        properties = {"project": "cancer"}
+        hidden = True
+        details = {"$dnanexus_link": dxrecord.get_id()}
+        folder = "/a"
+        name = "Name"
 
-    @unittest.skip("Skipping properties, FIXME soon")
-    def test_properties_of_dxrecord(self):
-        dxrecord = dxpy.new_dxrecord(self.example_json)
+        second_dxrecord = dxpy.new_dxrecord(types=types,
+                                            properties=properties,
+                                            hidden=hidden,
+                                            details=details,
+                                            tags=tags,
+                                            folder=folder,
+                                            parents=True,
+                                            name=name)
+        desc = second_dxrecord.describe(True)
+        self.assertEqual(desc["project"], proj_id)
+        self.assertEqual(desc["id"], second_dxrecord.get_id())
+        self.assertEqual(desc["class"], "record")
+        self.assertEqual(desc["types"], types)
+        self.assertTrue("created" in desc)
+        self.assertEqual(desc["state"], "open")
+        self.assertEqual(desc["hidden"], hidden)
+        self.assertEqual(desc["links"], [dxrecord.get_id()])
+        self.assertEqual(desc["name"], name)
+        self.assertEqual(desc["folder"], "/a")
+        self.assertEqual(desc["tags"], tags)
+        self.assertTrue("modified" in desc)
+        self.assertEqual(desc["properties"], properties)
+
+        dxrecord.remove()
+        second_dxrecord.remove()
+
+    def test_set_properties_of_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord()
         properties = {"project": "cancer project", "foo": "bar"}
         dxrecord.set_properties(properties)
-        self.assertEqual(dxrecord.get_properties()["project"],
-                         properties["project"])
-        self.assertEqual(dxrecord.get_properties()["foo"],
-                         properties["foo"])
-        self.assertEqual(dxrecord.get_properties(["foo"])["foo"],
-                         properties["foo"])
-
-        self.assertFalse("foo" in dxrecord.get_properties(["project"]))
+        desc = dxrecord.describe(True)
+        self.assertEqual(desc["properties"], properties)
 
         dxrecord.set_properties({"project": None})
-        self.assertIsNone(dxrecord.get_properties(["project"])["project"])
+        self.assertEqual(dxrecord.describe(True)["properties"], {"foo": "bar"})
 
-        # Search for no keys
-        self.assertEqual(len(dxrecord.get_properties( [] )), 0)
+        dxrecord.remove()
 
-        dxrecord.destroy()
-
-    @unittest.skip("Skipping permissions; not implemented in 1.03")
-    def test_permissions_of_dxrecord(self):
-        pass
-
-    @unittest.skip("Skipping types, FIXME soon")
     def test_types_of_dxrecord(self):
-        dxrecord = dxpy.new_dxrecord({"foo": "bar"})
+        dxrecord = dxpy.new_dxrecord()
         types = ["foo", "othertype"]
         dxrecord.add_types(types)
-        self.assertEqual(dxrecord.get_types(), types)
+        self.assertEqual(dxrecord.describe()["types"], types)
 
         dxrecord.remove_types(["foo"])
-        self.assertEqual(dxrecord.get_types(), ["othertype"])
+        self.assertEqual(dxrecord.describe()["types"], ["othertype"])
 
-        dxrecord.destroy()
+        dxrecord.remove()
 
-    @unittest.skip("Skipping details and links, FIXME soon")
     def test_get_set_details(self):
-        dxrecord = dxpy.new_dxrecord(self.example_json)
-        self.assertEqual(self.example_json, dxrecord.get())
+        details_no_link = {"foo": "bar"}
 
-        dxrecord.set(self.another_example_json)
-        self.assertEqual(self.another_example_json, dxrecord.get())
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.set_details(details_no_link)
+        self.assertEqual(dxrecord.get_details(), details_no_link)
+        self.assertEqual(dxrecord.describe()["links"], [])
 
-        dxrecord.destroy()
+        details_two_links = [{"$dnanexus_link": dxrecord.get_id()},
+                             {"$dnanexus_link": dxrecord.get_id()}]
+
+        dxrecord.set_details(details_two_links)
+        self.assertEqual(dxrecord.get_details(), details_two_links)
+        self.assertEqual(dxrecord.describe()["links"], [dxrecord.get_id()])
+
+        dxrecord.remove()
 
 @unittest.skip("Skipping tables; not yet implemented")
 class TestDXTable(unittest.TestCase):

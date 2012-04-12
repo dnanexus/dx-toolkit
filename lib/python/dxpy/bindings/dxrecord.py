@@ -8,7 +8,7 @@ from dxpy.bindings import *
 # DXRecord #
 ############
 
-def new_dxrecord(project, **kwargs):
+def new_dxrecord(**kwargs):
     '''
     :param project: Project ID in which to create the new remote object
     :type project: string
@@ -24,7 +24,7 @@ def new_dxrecord(project, **kwargs):
 
     '''
     dxrecord = DXRecord()
-    dxrecord.new(project, **kwargs)
+    dxrecord.new(**kwargs)
     return dxrecord
 
 class DXRecord(DXDataObjClass):
@@ -54,4 +54,4 @@ class DXRecord(DXDataObjClass):
 
         """
         resp = dxpy.api.recordNew(dx_hash)
-        self.set_id(resp["id"], dx_hash["project"])
+        self.set_ids(resp["id"], dx_hash["project"])

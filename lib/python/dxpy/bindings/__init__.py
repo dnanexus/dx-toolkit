@@ -49,6 +49,7 @@ API server may raise the exception :exc:`dxpy.exceptions.DXAPIError`
 """
 
 import time, re, requests, sys, json
+from dxpy import *
 import dxpy.api
 from dxpy.exceptions import *
 
@@ -120,18 +121,21 @@ class DXDataObjClass(object):
                 "DXDataObjClass is an abstract class; a subclass should" + \
                     "be initialized instead.")
 
-        if dxid is not None:
-            self.set_id(dxid, project)
+        self.set_ids(dxid, project)
 
     def __str__(self):
         desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "
         try:
-            desc += self.get_id()
+            desc += self._dxid
+            try:
+                desc += ", in " + self._proj
+            except:
+                desc += ", no project ID stored"
         except:
             desc += "no ID stored"
         return desc
 
-    def new(self, project, **kwargs):
+    def new(self, **kwargs):
         '''
         :param project: Project ID in which to create the new remote object
         :type project: string
@@ -165,7 +169,11 @@ class DXDataObjClass(object):
                     "be initialized instead.")
 
         dx_hash = {}
-        dx_hash["project"] = project
+        if "project" in kwargs:
+            dx_hash["project"] = kwargs["project"]
+        else:
+            global WORKSPACE_ID
+            dx_hash["project"] = WORKSPACE_ID
         if "name" in kwargs:
             dx_hash["name"] = kwargs["name"]
         if "tags" in kwargs:
@@ -185,28 +193,25 @@ class DXDataObjClass(object):
 
         self._new(dx_hash, **kwargs)
 
-    def set_id(self, dxid, project):
+    def set_ids(self, dxid, project=None):
         '''
         :param dxid: Object ID
         :type dxid: string
         :param project: Project ID
         :type project: string
-        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
 
         Discards the currently stored ID and associates the handler
-        with *dxid*.
+        with *dxid*.  Associates the handler with the copy of the
+        object in *project*.  Uses the current workspace ID as the default
 
         '''
-        if re.match(self._class + "-[0-9a-zA-Z]{24}", dxid) is None or \
-                len(dxid) != len(self._class) + 25:
-            raise DXError("Given object ID does not match expected format")
-        if project is not None and \
-                (re.match("project-[0-9a-zA-Z]{24}", project) is None or \
-                     len(project) != len('project') + 25):
-            raise DXError("Given project ID does not match expected format")
 
         self._dxid = dxid
-        self._proj = project
+        if project is None:
+            global WORKSPACE_ID
+            self._proj = WORKSPACE_ID
+        else:
+            self._proj = project
 
     def get_id(self):
         '''
@@ -407,7 +412,8 @@ class DXDataObjClass(object):
         return self._list_projects(self._dxid)
 
     def remove(self):
-        '''Permanently remove the associated remote object.
+        '''Permanently remove the associated remote object from the
+        associated project.
 
         TODO: Consider renaming this to delete or destroy to make it
         more obvious?
