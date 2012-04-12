@@ -4,6 +4,9 @@
 
 int main(void) {
   string errMsg, msg;
+  dx::JSON conf = DXLog::readJSON("test_appLog_conf.js");
+  DXLog::AppLog::initEnv(conf);
+
   for(int i = 0; i < 10; i++)
     for(int j = 0; j < 8; j++) {
       cout << i << j << endl;

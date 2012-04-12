@@ -8,6 +8,9 @@ using namespace std;
 namespace DXLog {
   enum Level { EMERG, ALERT, CRIT, ERR, WARN, NOTICE, INFO, DEBUG };
 
+  // Read a json object from a file
+  dx::JSON readJSON(const string &filename);
+
   // Return a string representing the level
   string levelString(int level); 
 
@@ -26,22 +29,19 @@ namespace DXLog {
 	*  The other is for ERR, WARN, NOTICE, INFO, DEBUG messages
 	*  msgCoutn stores current number of messages being stored 
 	*/
-      static int msgCount[2]; // 
+      static int msgCount[2], msgSize, msgLimit; // 
 
       // Data associated with messages obtained from execution environment
       static string socketPath[2]; // appId maybe
-      static dx::JSON data;
-
-      // Set the above static variables based on execution environment
-      static bool initEnv();
-
-      // A boolean value indicated whether or not the above static variables are initialized
-      static bool initialized;  
+      static dx::JSON data; 
       
       // Determine which rsyslog socket to use for message with this level
       static int socketIndex(int level);
 
     public:
+      // Set the above static variables based on execution environment
+      static void initEnv(const dx::JSON &conf);
+
       /** The public log function for any app
 	*  Returns true if the message is successfully delivered to the log system;
 	*  Otherwise returns false and errMsg contains some details of the error

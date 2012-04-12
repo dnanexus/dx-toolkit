@@ -16,6 +16,7 @@ namespace DXLog {
       char *buffer;
       bool active;
 
+      void setBufSize(int bufSize_);
       virtual bool processMsg(){ return true; };
 
     public:

@@ -29,9 +29,15 @@ DXLog::UnixDGRAMReader::UnixDGRAMReader(int bufSize_) {
   buffer = new char[bufSize];
 }
 
-bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
-  bool active = true;
+void DXLog::UnixDGRAMReader::setBufSize(int bufSize_) {
+  if (bufSize_ == bufSize) return;
 
+  delete [] buffer;
+  bufSize = bufSize_;
+  buffer = new char[bufSize];
+}
+
+bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
   int sock;
   struct sockaddr_un addr;
 

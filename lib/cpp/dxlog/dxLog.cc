@@ -1,11 +1,22 @@
 #include "unixDGRAM.h"
 #include <boost/lexical_cast.hpp>
 #include "dxLog.h"
+#include <fstream>
 
-bool DXLog::AppLog::initialized = false;
 string DXLog::AppLog::socketPath[2];
-int DXLog::AppLog::msgCount[2];
+int DXLog::AppLog::msgCount[2] = {0, 0};
+int DXLog::AppLog::msgSize = 2000;
+int DXLog::AppLog::msgLimit = 1000;
+
 dx::JSON DXLog::AppLog::data(dx::JSON_OBJECT);
+
+dx::JSON DXLog::readJSON(const string &filename) {
+  dx::JSON ret_val;
+  ifstream in(filename.c_str());
+  ret_val.read(in);
+  in.close();
+  return ret_val;
+}
 
 string DXLog::levelString(int level) {
   switch(level) {
@@ -21,7 +32,7 @@ string DXLog::levelString(int level) {
 }
 
 void DXLog::formMessageHead(int facility, int level, const string &tag, string &head) {
-  char pri[5], tStr[30];
+  char pri[5];
 
   if ((level < 0) || (level > 7)) throw string("Invalid log level");
   int k = facility >> 3;
@@ -73,16 +84,15 @@ bool DXLog::SendMessage2Rsyslog(int facility, int level, const string &tag, cons
 }
 
 // need to be implemented once those values are available
-bool DXLog::AppLog::initEnv() {
-  data["projectId"] = "testProject";
-  data["jobId"] = "testJob";
-  data["userId"] = "testUser";
-  data["appId"] = "testApp";
-  socketPath[0] = "log3";
-  socketPath[1] = "log4";
-  msgCount[0] = 0;
-  msgCount[1] = 0;
-  return true;
+void DXLog::AppLog::initEnv(const dx::JSON &conf) {
+  data["projectId"] = conf["projectId"].get<string>();
+  data["jobId"] = conf["jobId"].get<string>();
+  data["userId"] = conf["userId"].get<string>();
+  data["appId"] = conf["appId"].get<string>();
+  socketPath[0] = conf["socketPath"][0].get<string>();
+  socketPath[1] = conf["socketPath"][1].get<string>();
+  msgSize = int(conf["maxMsgSize"]);
+  msgLimit = int(conf["maxMsgNumber"]);
 }
 
 int DXLog::AppLog::socketIndex(int level) {
@@ -90,20 +100,15 @@ int DXLog::AppLog::socketIndex(int level) {
 }
 
 bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
-  if (! initialized) {
-    initEnv();
-    initialized = true;
-  }
-
-  if (msg.size() > 2000) {
-    errMsg = "Message size bigger than 2K";
+  if (msg.size() > msgSize) {
+    errMsg = "Message size bigger than " + boost::lexical_cast<string>(msg);
     return false;
   }
 
   int index = socketIndex(level);
 
-  if (msgCount[index] >= 1000) {
-      errMsg = "Messages beyond rate limitation";
+  if (msgCount[index] >= msgLimit) {
+      errMsg = "Number of messages exceeds " + boost::lexical_cast<string>(msgLimit);
       return false;
   }
 
@@ -117,6 +122,7 @@ bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
 }
 
 bool DXLog::AppLog::done(string &errMsg) {
+  if (socketPath[0].compare(socketPath[1]) == 0) return SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg);
   return (SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg) && SendMessage2UnixDGRAMSocket(socketPath[1], "Done", errMsg));
 }
 
