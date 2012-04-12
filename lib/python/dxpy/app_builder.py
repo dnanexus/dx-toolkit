@@ -28,9 +28,10 @@ def upload_resources(app_src_dir):
         logging.debug("Uploading in " + app_src_dir)
 
         with tempfile.NamedTemporaryFile(suffix=".tar.xz") as tar_fh:
-            subprocess.check_call(['tar', '-cJf', tar_fh.name, resources_dir])
+            subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
             dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True)
-            return [{'name': 'bundled_depend1', 'uri': dx_resource_archive.get_id()}]
+            #return [{'name': 'resources.tar.xz', 'id': {'$dnanexus_link': dx_resource_archive.get_id()}}]
+            return [{'name': 'resources.tar.xz', 'id': dx_resource_archive.get_id()}]
     else:
         return None
 
