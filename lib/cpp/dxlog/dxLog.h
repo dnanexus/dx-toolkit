@@ -32,7 +32,7 @@ namespace DXLog {
       static int msgCount[2], msgSize, msgLimit; // 
 
       // Data associated with messages obtained from execution environment
-      static string socketPath[2]; // appId maybe
+      static string socketPath[2];
       static dx::JSON data; 
       
       // Determine which rsyslog socket to use for message with this level

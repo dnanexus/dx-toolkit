@@ -88,7 +88,7 @@ void DXLog::AppLog::initEnv(const dx::JSON &conf) {
   data["projectId"] = conf["projectId"].get<string>();
   data["jobId"] = conf["jobId"].get<string>();
   data["userId"] = conf["userId"].get<string>();
-  data["appId"] = conf["appId"].get<string>();
+  data["programId"] = conf["programId"].get<string>();
   socketPath[0] = conf["socketPath"][0].get<string>();
   socketPath[1] = conf["socketPath"][1].get<string>();
   msgSize = int(conf["maxMsgSize"]);
@@ -125,4 +125,3 @@ bool DXLog::AppLog::done(string &errMsg) {
   if (socketPath[0].compare(socketPath[1]) == 0) return SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg);
   return (SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg) && SendMessage2UnixDGRAMSocket(socketPath[1], "Done", errMsg));
 }
-

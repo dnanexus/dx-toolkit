@@ -14,14 +14,14 @@ namespace DXLog {
     if (! MongoDriver::ensureIndex(BSON("level" << 1), "app", errMsg)) return false;
     if (! MongoDriver::ensureIndex(BSON("timestamp" << 1), "app", errMsg)) return false;
     if (! MongoDriver::ensureIndex(BSON("projectId" << 1), "app", errMsg)) return false;
-    if (! MongoDriver::ensureIndex(BSON("appId" << 1), "app", errMsg)) return false;
+    if (! MongoDriver::ensureIndex(BSON("programId" << 1), "app", errMsg)) return false;
     if (! MongoDriver::ensureIndex(BSON("jobId" << 1), "app", errMsg)) return false;
     return MongoDriver::ensureIndex(BSON("userId" << 1), "app", errMsg);
   }
 
   struct appLogConfig {
     int msgSize, msgLimit;
-    string socketPath, projectId, jobId, userId, appId;
+    string socketPath, projectId, jobId, userId, programId;
   };
 
   class AppLogHandler : public UnixDGRAMReader {
@@ -30,13 +30,21 @@ namespace DXLog {
       int msgCount;
       bool active;
       deque<string> msgQueue[2];
+      char timeString[80];
       
+      string timeISOString(int64 utc) {
+	 time_t t = utc;
+	 struct tm *ptm = gmtime( &t);
+	 strftime(timeString, 80, "%Y-%m-%dT%H:%M:%SZ", ptm);
+        return string(timeString);
+      }
+
       bool SendMessage(const dx::JSON &data, string &errMsg, int index) {
 	 if (index == 0) {
- 	   string msg = boost::lexical_cast<string>(int64(data["timestamp"])) + " " + conf.projectId + " -- " + conf.appId + " -- " + conf.jobId + " -- " + conf.userId + " [msg] " + data["msg"].get<string>();
+ 	   string msg = "[" + timeISOString(int64(data["timestamp"])/1000) + "] " + conf.projectId + " -- " + conf.programId + " -- " + conf.jobId + " -- " + conf.userId + " [msg] " + data["msg"].get<string>();
 	   return SendMessage2Rsyslog(8, int(data["level"]), "DNAnexusAPP", msg, errMsg, msg.size() + 1);
 	 } else {
-  	   BSONObj entry = BSON("level" << levelString(int(data["level"])) << "timestamp" << int64(data["timestamp"]) << "projectId" << conf.projectId << "appId" << conf.appId << "jobId" << conf.jobId << "userId" << conf.userId << "msg" << data["msg"].get<string>());
+  	   BSONObj entry = BSON("level" << levelString(int(data["level"])) << "timestamp" << int64(data["timestamp"]) << "projectId" << conf.projectId << "programId" << conf.programId << "jobId" << conf.jobId << "userId" << conf.userId << "msg" << data["msg"].get<string>());
           return MongoDriver::insert(entry, "app", errMsg);
 	 }
       };
@@ -127,7 +135,7 @@ int main(int argc, char **argv) {
 
     appConf.msgSize = (conf.has("maxMsgSize")) ? int(conf["maxMsgSize"]) : 2000;
     appConf.msgLimit = (conf.has("maxMsgNumber")) ? int(conf["maxMsgNumber"]) : 1000;
-	 
+ 
     if (! conf.has("projectId")) throw ("projectId is not specified");
     appConf.projectId = conf["projectId"].get<string>();
 
@@ -137,12 +145,13 @@ int main(int argc, char **argv) {
     if (! conf.has("userId")) throw ("userId is not specified");
     appConf.userId = conf["userId"].get<string>();
 
-    if (! conf.has("appId")) throw ("appId is not specified");
-    appConf.appId = conf["appId"].get<string>();
+    if (! conf.has("programId")) throw ("programId is not specified");
+    appConf.programId = conf["programId"].get<string>();
 
     if (! conf.has("socketPath")) throw ("socketPath is not specified");
 
     if (conf.has("mongoServer")) DXLog::MongoDriver::setServer(conf["mongoServer"].get<string>());
+    if (conf.has("database")) DXLog::MongoDriver::setDB(conf["database"].get<string>());
     string errMsg;
     if (! DXLog::ensureIndex(errMsg)) throw("errMsg");
 
