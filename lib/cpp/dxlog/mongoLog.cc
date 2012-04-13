@@ -1,21 +1,23 @@
-#include <iostream>
-#include "mongo/client/dbclient.h"
+#include "mongoLog.h"
 
-bool DXLog::MongoWriter::connected = false;
+bool DXLog::MongoDriver::connected = false;
+string DXLog::MongoDriver::server = "localhost";
+string DXLog::MongoDriver::db = "log";
+DBClientConnection DXLog::MongoDriver::conn(true);
 
-void DxLog::MongoWriter::initEnv() {
-  server = "localhost"; db = "log";
-}
-
-bool DXLog::MongoWriter::write(const BSONObj &msg, const string &collection, string &errMsg) {
+bool DXLog::MongoDriver::oneOperation(int action, const BSONObj &bson, const string &collection, string &errMsg) {
   try{
     if (! connected) {
-      initEnv();
       conn.connect(server);
       connected = true;
     }
 
-    conn.insert(db + "." + collection);
+    string col = db + "." + collection;
+    if (action == 1) {
+      conn.insert(col, bson);
+    } else if (action == 2) {
+      conn.ensureIndex(col, bson);
+    }
     return true;
   } catch ( DBException &e ) {
     errMsg = e.what();

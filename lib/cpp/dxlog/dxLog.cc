@@ -1,9 +1,22 @@
+#include "unixDGRAM.h"
+#include <boost/lexical_cast.hpp>
 #include "dxLog.h"
+#include <fstream>
 
-bool DXLog::AppLog::initialized = false;
 string DXLog::AppLog::socketPath[2];
-int DXLog::AppLog::msgCount[2];
+int DXLog::AppLog::msgCount[2] = {0, 0};
+int DXLog::AppLog::msgSize = 2000;
+int DXLog::AppLog::msgLimit = 1000;
+
 dx::JSON DXLog::AppLog::data(dx::JSON_OBJECT);
+
+dx::JSON DXLog::readJSON(const string &filename) {
+  dx::JSON ret_val;
+  ifstream in(filename.c_str());
+  ret_val.read(in);
+  in.close();
+  return ret_val;
+}
 
 string DXLog::levelString(int level) {
   switch(level) {
@@ -19,7 +32,7 @@ string DXLog::levelString(int level) {
 }
 
 void DXLog::formMessageHead(int facility, int level, const string &tag, string &head) {
-  char pri[5], tStr[30];
+  char pri[5];
 
   if ((level < 0) || (level > 7)) throw string("Invalid log level");
   int k = facility >> 3;
@@ -31,7 +44,7 @@ void DXLog::formMessageHead(int facility, int level, const string &tag, string &
   head = (tag.length() > 100) ? s + pri + ">" + tag.substr(0, 100) : s + pri + ">" + tag;
 }
 
-bool DXlog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
+bool DXLog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
   if (msg.size() <= msgSize) return false;
 
   // generate a random string to index the msg
@@ -50,18 +63,18 @@ bool DXlog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
   return true;
 }
 
-bool DxLog::SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, string &errMsg, int msgSize) {
+bool DXLog::SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, string &errMsg, int msgSize) {
   string head;
   formMessageHead(facility, level, tag, head);
   
-  if (msg.length() < msgSize) return SendMessage2UnixDGRAM("/dev/log", head + " " + msg, errMsg);
+  if (msg.length() < msgSize) return SendMessage2UnixDGRAMSocket("/dev/log", head + " " + msg, errMsg);
 
   vector<string> Msgs;
   splitMessage(msg, Msgs, msgSize);
   bool ret_val = true;
   string errmsg;
   for (int i = 0; i < Msgs.size(); i++) {
-    if (! SendMessage2UnixDGRAM("/dev/log", head + " " + Msgs[i], errmsg)) {
+    if (! SendMessage2UnixDGRAMSocket("/dev/log", head + " " + Msgs[i], errmsg)) {
       ret_val = false;
       errMsg = errmsg;
     }
@@ -71,16 +84,15 @@ bool DxLog::SendMessage2Rsyslog(int facility, int level, const string &tag, cons
 }
 
 // need to be implemented once those values are available
-bool DXLog::AppLog::initEnv() {
-  data["projectId"] = "testProject";
-  data["jobId"] = "testJob";
-  data["userId"] = "testUser";
-  data["appId"] = "testApp";
-  socketPath[0] = "/dev/log1";
-  socketPath[1] = "/dev/log2";
-  msgCount[0] = 0;
-  msgCount[1] = 0;
-  return true;
+void DXLog::AppLog::initEnv(const dx::JSON &conf) {
+  data["projectId"] = conf["projectId"].get<string>();
+  data["jobId"] = conf["jobId"].get<string>();
+  data["userId"] = conf["userId"].get<string>();
+  data["programId"] = conf["programId"].get<string>();
+  socketPath[0] = conf["socketPath"][0].get<string>();
+  socketPath[1] = conf["socketPath"][1].get<string>();
+  msgSize = int(conf["maxMsgSize"]);
+  msgLimit = int(conf["maxMsgNumber"]);
 }
 
 int DXLog::AppLog::socketIndex(int level) {
@@ -88,53 +100,28 @@ int DXLog::AppLog::socketIndex(int level) {
 }
 
 bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
-  if (! initialized) {
-    initEnv();
-    initialized = true;
-  }
-
-  if (msg.size() > 2000) {
-    errMsg = "Message size bigger than 2K";
+  if (msg.size() > msgSize) {
+    errMsg = "Message size bigger than " + boost::lexical_cast<string>(msg);
     return false;
   }
 
   int index = socketIndex(level);
 
-  if (msgCount[index] >= 1000) {
-      errMsg = "Messages beyond rate limitation";
+  if (msgCount[index] >= msgLimit) {
+      errMsg = "Number of messages exceeds " + boost::lexical_cast<string>(msgLimit);
       return false;
   }
 
-  dx::JSON data(dx::JSON_OBJECT);
-  data["timestamp"] = int64(time(NULL));
+  data["timestamp"] = int64(time(NULL)*1000);
   data["msg"] = msg;
   data["level"] = level;
-  if (! SendMessage2UnixDGRAM(socketPath[index], data.toString(), errMsg)) return false;
+  if (! SendMessage2UnixDGRAMSocket(socketPath[index], data.toString(), errMsg)) return false;
 
   msgCount[index]++;
   return true;
 }
 
-DXLog::AppLogHandler::AppLogHandler(int bufSize_) {
-  bufSize = bufSize_;
-  buffer = new char[bufSize];
-  msgCount = 0;
-}
-
-void DXLog::AppLogHandler::SendMessage() {
-  string msg = boost::lexical_cast<string>(data["timestamp"]) + " " + data["projectId"] + " -- " + data["appId"] + " -- " + data["jobId"] + " -- " + data["userId"] + " [msg] " + data["msg"];
-  string errMsg;
-  if (! SendMessage2Rsyslog(8, data["level"], "DNAnexusAPP", msg, errMsg, 2000))
-    cerr << errMsg << endl;
-  else msgCount += 1;
-}
-
-bool DXLog::AppLogHandler::processMsg() {
-  data = dx::JSON::Parse(buffer);
-  if (data.has["stop"]) {
-    if (data["stop"]) return true;
-  }
-
-  if (msgCount <= 1000) SendMessage();
-  return false;
+bool DXLog::AppLog::done(string &errMsg) {
+  if (socketPath[0].compare(socketPath[1]) == 0) return SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg);
+  return (SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg) && SendMessage2UnixDGRAMSocket(socketPath[1], "Done", errMsg));
 }
