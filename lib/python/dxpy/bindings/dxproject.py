@@ -14,6 +14,9 @@ class DXProject():
     def __init__(self, dxid=None):
         if dxid is not None:
             self.set_id(dxid)
+        else:
+            global WORKSPACE_ID
+            self.set_id(WORKSPACE_ID)
 
     def __str__(self):
         desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "
@@ -142,6 +145,21 @@ class DXProject():
                                           "folders": folders,
                                           "destination": destination})
 
+    def move_folder(self, folder, destination):
+        """
+        :param folder: Full path to the folder to move
+        :type folder: string
+        :param destination: Full path to the destination folder that will contain *folder*
+        :type destination: string
+
+        Moves *folder* to reside in *destination* in the same project.
+        Note that all contained objects and subfolders are also moved.
+
+        """
+
+        dxpy.api.projectMove(self._dxid, {"folders": [folder],
+                                          "destination": destination})
+
     def remove_folder(self, folder):
         """
         :param folder: Full path to the folder to remove
@@ -197,7 +215,8 @@ class DXProject():
                                                   "folders": folders,
                                                   "project": project,
                                                   "folders": folders,
-                                                  "destination": destination})
+                                                  "destination": destination,
+                                                  "includeHiddenLinks": include_hidden_links})
 
     def destroy(self):
         """

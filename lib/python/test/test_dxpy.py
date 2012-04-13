@@ -8,57 +8,21 @@ from dxpy.exceptions import *
 proj_id = "project-000000000000000000000001"
 second_proj_id = 'project-000000000000000000000002';
 
-@unittest.skip("Skipping search; not implemented yet in 1.03")
-class TestSearch(unittest.TestCase):
-
-    def test_search(self):
-        json = dxpy.new_dxjson({"foo": "bar"})
-        properties = {"testing": "dxpy"}
-        json.set_properties(properties)
-
-        types = ["foo", "othertype"]
-        json.add_types(types)
-
-        self.assertTrue(json.get_id() in dxpy.search(classname="json"))
-        self.assertTrue(json.get_id() in dxpy.search(classname="json",
-                                                     properties=properties,
-                                                     typename="foo"))
-        self.assertFalse(json.get_id() in dxpy.search(classname="table",
-                                                      properties=properties,
-                                                      typename="foo"))
-        self.assertFalse(json.get_id() in dxpy.search(typename="bar"))
-        self.assertFalse(json.get_id() in
-                         dxpy.search(properties={"testing": "notjson"}))
-
-        json.destroy()
-
-        # Testing on >1000 expected results (uses more than one fetch)
-
-        jsons = []
-        json_ids = []
-        for i in range(1200):
-            a_json = dxpy.new_dxjson(["foo", "bar", 3])
-            a_json.set_properties(properties)
-            jsons.append(a_json)
-            json_ids.append(a_json.get_id())
-
-        count = 0
-        for result in dxpy.search(classname="json", properties=properties):
-            if result in json_ids:
-                json_ids.remove(result)
-                count += 1
-        # Make sure we found the correct number of objects
-        self.assertEqual(count, len(jsons))
-        # Make sure each JSON object was found
-        self.assertEqual(len(json_ids), 0)
-
-        # Cleanup
-        for json in jsons:
-            json.destroy()
+def remove_all(proj_id, folder="/"):
+    dxproject = dxpy.DXProject(proj_id)
+    listf = dxproject.list_folder(folder)
+    dxproject.remove_objects(listf["objects"])
+    for subfolder in listf["folders"]:
+        remove_all(proj_id, subfolder)
+        dxproject.remove_folder(subfolder)
 
 class TestDXProject(unittest.TestCase):
+    def tearDown(self):
+        remove_all(proj_id)
+        remove_all(second_proj_id)
+
     def test_update_describe(self):
-        dxproject = dxpy.DXProject(proj_id)
+        dxproject = dxpy.DXProject()
         dxproject.update(name="newprojname", protected=True, restricted=True, description="new description")
         desc = dxproject.describe()
         self.assertEqual(desc["id"], proj_id)
@@ -69,11 +33,95 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["description"], "new description")
         self.assertTrue("created" in desc)
 
-    def test_folders(self):
-        dxproject = dxpy.DXProject(proj_id)
+    def test_new_list_remove_folders(self):
+        dxproject = dxpy.DXProject()
         listf = dxproject.list_folder()
         self.assertEqual(listf["folders"], [])
         self.assertEqual(listf["objects"], [])
+
+        dxrecord = dxpy.new_dxrecord()
+        dxproject.new_folder("/a/b/c/d", parents=True)
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["folders"], ["/a"])
+        self.assertEqual(listf["objects"], [dxrecord.get_id()])
+        listf = dxproject.list_folder("/a")
+        self.assertEqual(listf["folders"], ["/a/b"])
+        self.assertEqual(listf["objects"], [])
+        listf = dxproject.list_folder("/a/b")
+        self.assertEqual(listf["folders"], ["/a/b/c"])
+        listf = dxproject.list_folder("/a/b/c")
+        self.assertEqual(listf["folders"], ["/a/b/c/d"])
+        listf = dxproject.list_folder("/a/b/c/d")
+        self.assertEqual(listf["folders"], [])
+
+        with self.assertRaises(DXAPIError):
+            dxproject.remove_folder("/a")
+        dxproject.remove_folder("/a/b/c/d")
+        dxproject.remove_folder("/a//b////c/")
+        dxproject.remove_folder("/a/b")
+        dxproject.remove_folder("/a")
+        dxrecord.remove()
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["objects"], [])
+
+    def test_move(self):
+        dxproject = dxpy.DXProject()
+        dxproject.new_folder("/a/b/c/d", parents=True)
+        dxrecords = []
+        for i in range(4):
+            dxrecords.append(dxpy.new_dxrecord(name=("record-%d" % i)))
+        dxproject.move(destination="/a",
+                       objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
+                       folders=["/a/b/c/d"])
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["objects"], [dxrecords[2].get_id(),
+                                            dxrecords[3].get_id()])
+        self.assertEqual(listf["folders"], ["/a"])
+
+        listf = dxproject.list_folder("/a")
+        self.assertEqual(listf["objects"], [dxrecords[0].get_id(),
+                                            dxrecords[1].get_id()])
+        self.assertEqual(listf["folders"], ["/a/b", "/a/d"])
+
+        desc = dxrecords[0].describe()
+        self.assertEqual(desc["folder"], "/a")
+
+    def test_clone(self):
+        dxproject = dxpy.DXProject()
+        dxproject.new_folder("/a/b/c/d", parents=True)
+        dxrecords = []
+        for i in range(4):
+            dxrecords.append(dxpy.new_dxrecord(name=("record-%d" % i)))
+
+        with self.assertRaises(DXAPIError):
+            dxproject.clone(second_proj_id,
+                            destination="/",
+                            objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
+                            folders=["/a/b/c/d"])
+
+        dxrecords[0].close()
+        dxrecords[1].close()
+        dxproject.clone(second_proj_id,
+                        destination="/",
+                        objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
+                        folders=["/a/b/c/d"])
+
+        second_proj = dxpy.DXProject(second_proj_id)
+        listf = second_proj.list_folder()
+        self.assertEqual(listf["objects"], [dxrecords[0].get_id(),
+                                            dxrecords[1].get_id()])
+        self.assertEqual(listf["folders"], ["/d"])
+
+    def test_remove_objects(self):
+        dxproject = dxpy.DXProject()
+        dxrecord = dxpy.new_dxrecord()
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["objects"], [dxrecord.get_id()])
+        dxproject.remove_objects([dxrecord.get_id()])
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["objects"], [])
+        with self.assertRaises(DXAPIError):
+            dxrecord.describe()
 
 @unittest.skip("Skipping files; not updated yet for 1.03")
 class TestDXFile(unittest.TestCase):
@@ -275,8 +323,14 @@ class TestDXGTable(unittest.TestCase):
         self.assertEqual(counter, 64)
 
 class TestDXRecord(unittest.TestCase):
+    """
+    Most of these tests really are testing DXDataObjClass methods
+    while using DXRecords as the most basic data object.
+    """
 
-    # TODO: Test destruction once implemented
+    def tearDown(self):
+        remove_all(proj_id)
+        remove_all(second_proj_id)
 
     def test_set_id(self):
         dxrecord = dxpy.new_dxrecord()
@@ -286,12 +340,13 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(second_dxrecord.get_proj_id(), proj_id)
         dxrecord.remove()
 
-    def test_create_destroy_dxrecord(self):
+    def test_create_remove_dxrecord(self):
         '''Create a fresh DXRecord object and check that its ID is
         stored and that the record object has been stored.
         '''
 
         firstDXRecord = dxpy.new_dxrecord(details=["foo"])
+        firstID = firstDXRecord.get_id()
         # test if firstDXRecord._dxid has been set to a valid ID
         try:
             self.assertRegexpMatches(firstDXRecord.get_id(), "^record-[0-9A-Za-z]{24}",
@@ -349,12 +404,11 @@ class TestDXRecord(unittest.TestCase):
         with self.assertRaises(AttributeError):
             secondDXRecord.get_id()
 
-        # FIXME when implemented
-        # thirdJSON = dxpy.DXRecord(firstID)
+        third_record = dxpy.DXRecord(firstID)
 
-        # with self.assertRaises(DXAPIError) as cm:
-        #     thirdJSON.describe()
-        #     self.assertEqual(cm.exception.name, "ResourceNotFound")
+        with self.assertRaises(DXAPIError) as cm:
+            third_record.describe()
+            self.assertEqual(cm.exception.name, "ResourceNotFound")
 
     def test_describe_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
@@ -407,12 +461,6 @@ class TestDXRecord(unittest.TestCase):
         self.assertTrue("modified" in desc)
         self.assertEqual(desc["properties"], properties)
 
-        dxproject = dxpy.DXProject(proj_id)
-        dxproject.move(objects=[desc["id"]], destination="/")
-        dxproject.remove_folder("/a")
-        dxrecord.remove()
-        second_dxrecord.remove()
-
     def test_set_properties_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         properties = {"project": "cancer project", "foo": "bar"}
@@ -423,8 +471,6 @@ class TestDXRecord(unittest.TestCase):
         dxrecord.set_properties({"project": None})
         self.assertEqual(dxrecord.describe(True)["properties"], {"foo": "bar"})
 
-        dxrecord.remove()
-
     def test_types_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         types = ["foo", "othertype"]
@@ -433,8 +479,6 @@ class TestDXRecord(unittest.TestCase):
 
         dxrecord.remove_types(["foo"])
         self.assertEqual(dxrecord.describe()["types"], ["othertype"])
-
-        dxrecord.remove()
 
     def test_tags_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
@@ -445,8 +489,6 @@ class TestDXRecord(unittest.TestCase):
         dxrecord.remove_tags(["foo"])
         self.assertEqual(dxrecord.describe()["tags"], ["othertag"])
 
-        dxrecord.remove()
-
     def test_visibility_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         dxrecord.set_visibility(hidden=True)
@@ -454,8 +496,6 @@ class TestDXRecord(unittest.TestCase):
 
         dxrecord.set_visibility(hidden=False)
         self.assertEqual(dxrecord.describe()["hidden"], False)
-
-        dxrecord.remove()
 
     def test_rename_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
@@ -465,14 +505,12 @@ class TestDXRecord(unittest.TestCase):
         dxrecord.rename("secondname")
         self.assertEqual(dxrecord.describe()["name"], "secondname")
 
-        dxrecord.remove()
-
-    # TODO: Test this more after cloning
     def test_list_projects_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        second_dxrecord = dxrecord.clone(second_proj_id)
         self.assertTrue(proj_id in dxrecord.list_projects())
-
-        dxrecord.remove()
+        self.assertTrue(second_proj_id in dxrecord.list_projects())
 
     def test_close_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
@@ -489,8 +527,6 @@ class TestDXRecord(unittest.TestCase):
         dxrecord.rename("secondname")
         self.assertEqual(dxrecord.describe()["name"], "secondname")
 
-        dxrecord.remove()
-
     def test_get_set_details(self):
         details_no_link = {"foo": "bar"}
 
@@ -506,7 +542,42 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(dxrecord.get_details(), details_two_links)
         self.assertEqual(dxrecord.describe()["links"], [dxrecord.get_id()])
 
-        dxrecord.remove()
+    def test_clone(self):
+        dxrecord = dxpy.new_dxrecord(name="firstname", tags=["tag"])
+
+        with self.assertRaises(DXAPIError):
+            second_dxrecord = dxrecord.clone(second_proj_id)
+        dxrecord.close()
+
+        second_dxrecord = dxrecord.clone(second_proj_id)
+        second_dxrecord.rename("newname")
+
+        first_desc = dxrecord.describe()
+        second_desc = second_dxrecord.describe()
+
+        self.assertEqual(first_desc["id"], dxrecord.get_id())
+        self.assertEqual(second_desc["id"], dxrecord.get_id())
+        self.assertEqual(first_desc["project"], proj_id)
+        self.assertEqual(second_desc["project"], second_proj_id)
+        self.assertEqual(first_desc["name"], "firstname")
+        self.assertEqual(second_desc["name"], "newname")
+        self.assertEqual(first_desc["tags"], ["tag"])
+        self.assertEqual(second_desc["tags"], ["tag"])
+        self.assertEqual(first_desc["created"], second_desc["created"])
+        self.assertEqual(first_desc["state"], "closed")
+        self.assertEqual(second_desc["state"], "closed")
+
+    def test_move(self):
+        dxproject = dxpy.DXProject()
+        dxproject.new_folder("/a/b/c/d", parents=True)
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.move("/a/b/c")
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["objects"], [])
+        listf = dxproject.list_folder("/a/b/c")
+        self.assertEqual(listf["objects"], [dxrecord.get_id()])
+        desc = dxrecord.describe()
+        self.assertEqual(desc["folder"], "/a/b/c")
 
 @unittest.skip("Skipping tables; not yet implemented")
 class TestDXTable(unittest.TestCase):

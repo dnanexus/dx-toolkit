@@ -52,6 +52,7 @@ import time, re, requests, sys, json
 from dxpy import *
 import dxpy.api
 from dxpy.exceptions import *
+import copy
 
 def search(classname=None, properties=None, typename=None, #permission=None,
            describe=False):
@@ -412,7 +413,10 @@ class DXDataObjClass(object):
         return self._list_projects(self._dxid)
 
     def remove(self):
-        '''Permanently remove the associated remote object from the
+        '''
+        :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
+
+        Permanently remove the associated remote object from the
         associated project.
 
         TODO: Consider renaming this to delete or destroy to make it
@@ -427,6 +431,49 @@ class DXDataObjClass(object):
         # Reset internal state
         del self._dxid
         del self._proj
+
+    def move(self, folder):
+        '''
+        :param folder: Folder route to which to move the object
+        :type folder: string
+        :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
+
+        Move the associated remote object to *folder*.
+
+        '''
+
+        if self._proj is None:
+            raise DXError("Move called when a project ID was not associated with this object handler")
+
+        dxpy.api.projectMove(self._proj, {"objects": [self._dxid],
+                                          "destination": folder})
+
+
+    def clone(self, project, folder="/", include_hidden_links=True):
+        '''
+        :param project: Destination project ID
+        :type project: string
+        :param folder: Folder route to which to move the object
+        :type folder: string
+        :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
+        :returns: An object handler for the new cloned object
+        :rtype: :class:`dxpy.bindings.DXDataObjClass`
+
+        Clones the associated remote object to *folder* in *project*
+        and returns an object handler for the new object.
+
+        '''
+
+        if self._proj is None:
+            raise DXError("Clone called when a project ID was not associated with this object handler")
+
+        dxpy.api.projectClone(self._proj, {"objects": [self._dxid],
+                                           "project": project,
+                                           "destination": folder,
+                                           "includeHiddenLinks": include_hidden_links})
+        cloned_copy = copy.copy(self)
+        cloned_copy.set_ids(cloned_copy.get_id(), project)
+        return cloned_copy
 
     def _get_state(self):
         '''

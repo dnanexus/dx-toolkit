@@ -20,7 +20,7 @@ def new_dxrecord(**kwargs):
     Note that this function is shorthand for::
 
         dxrecord = DXRecord()
-        dxrecord.new(project, **kwargs)
+        dxrecord.new(**kwargs)
 
     '''
     dxrecord = DXRecord()
