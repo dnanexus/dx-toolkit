@@ -11,8 +11,9 @@ from dxpy.bindings import *
 class DXProject():
     '''Remote project handler'''
 
-    def __init__(self, dxid):
-        self._dxid = dxid
+    def __init__(self, dxid=None):
+        if dxid is not None:
+            self.set_id(dxid)
 
     def __str__(self):
         desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "
@@ -117,7 +118,7 @@ class DXProject():
 
         """
 
-        dxpy.api.projectListFolder(self._dxid, {"folder": folder})
+        return dxpy.api.projectListFolder(self._dxid, {"folder": folder})
 
     def move(self, destination, objects=[], folders=[]):
         """
@@ -192,11 +193,11 @@ class DXProject():
 
         """
 
-        dxpy.api.projectClone(self._dxid, {"objects": objects,
-                                           "folders": folders,
-                                           "project": project,
-                                           "folders": folders,
-                                           "destination": destination})
+        return dxpy.api.projectClone(self._dxid, {"objects": objects,
+                                                  "folders": folders,
+                                                  "project": project,
+                                                  "folders": folders,
+                                                  "destination": destination})
 
     def destroy(self):
         """

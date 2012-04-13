@@ -17,7 +17,7 @@ set up via two methods: the constructor or the
     dxFileHandle = DXFile("file-1234")
 
     dxOtherFH = DXFile()
-    dxOtherFH.set_id("file-4321")
+    dxOtherFH.set_ids("file-4321")
 
 Both these methods do not perform API calls and merely sets the state
 of the remote file handler.  The object ID stored in the handler can

@@ -56,9 +56,24 @@ class TestSearch(unittest.TestCase):
         for json in jsons:
             json.destroy()
 
-@unittest.skip("Skipping projects; no tests yet for 1.03")
 class TestDXProject(unittest.TestCase):
-    pass
+    def test_update_describe(self):
+        dxproject = dxpy.DXProject(proj_id)
+        dxproject.update(name="newprojname", protected=True, restricted=True, description="new description")
+        desc = dxproject.describe()
+        self.assertEqual(desc["id"], proj_id)
+        self.assertEqual(desc["class"], "project")
+        self.assertEqual(desc["name"], "newprojname")
+        self.assertEqual(desc["protected"], True)
+        self.assertEqual(desc["restricted"], True)
+        self.assertEqual(desc["description"], "new description")
+        self.assertTrue("created" in desc)
+
+    def test_folders(self):
+        dxproject = dxpy.DXProject(proj_id)
+        listf = dxproject.list_folder()
+        self.assertEqual(listf["folders"], [])
+        self.assertEqual(listf["objects"], [])
 
 @unittest.skip("Skipping files; not updated yet for 1.03")
 class TestDXFile(unittest.TestCase):
@@ -263,6 +278,14 @@ class TestDXRecord(unittest.TestCase):
 
     # TODO: Test destruction once implemented
 
+    def test_set_id(self):
+        dxrecord = dxpy.new_dxrecord()
+        second_dxrecord = dxpy.DXRecord()
+        second_dxrecord.set_ids(dxrecord.get_id(), dxrecord.get_proj_id())
+        self.assertEqual(second_dxrecord.get_id(), dxrecord.get_id())
+        self.assertEqual(second_dxrecord.get_proj_id(), proj_id)
+        dxrecord.remove()
+
     def test_create_destroy_dxrecord(self):
         '''Create a fresh DXRecord object and check that its ID is
         stored and that the record object has been stored.
@@ -384,6 +407,9 @@ class TestDXRecord(unittest.TestCase):
         self.assertTrue("modified" in desc)
         self.assertEqual(desc["properties"], properties)
 
+        dxproject = dxpy.DXProject(proj_id)
+        dxproject.move(objects=[desc["id"]], destination="/")
+        dxproject.remove_folder("/a")
         dxrecord.remove()
         second_dxrecord.remove()
 
@@ -407,6 +433,61 @@ class TestDXRecord(unittest.TestCase):
 
         dxrecord.remove_types(["foo"])
         self.assertEqual(dxrecord.describe()["types"], ["othertype"])
+
+        dxrecord.remove()
+
+    def test_tags_of_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord()
+        tags = ["foo", "othertag"]
+        dxrecord.add_tags(tags)
+        self.assertEqual(dxrecord.describe()["tags"], tags)
+
+        dxrecord.remove_tags(["foo"])
+        self.assertEqual(dxrecord.describe()["tags"], ["othertag"])
+
+        dxrecord.remove()
+
+    def test_visibility_of_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.set_visibility(hidden=True)
+        self.assertEqual(dxrecord.describe()["hidden"], True)
+
+        dxrecord.set_visibility(hidden=False)
+        self.assertEqual(dxrecord.describe()["hidden"], False)
+
+        dxrecord.remove()
+
+    def test_rename_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.rename("newname")
+        self.assertEqual(dxrecord.describe()["name"], "newname")
+
+        dxrecord.rename("secondname")
+        self.assertEqual(dxrecord.describe()["name"], "secondname")
+
+        dxrecord.remove()
+
+    # TODO: Test this more after cloning
+    def test_list_projects_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord()
+        self.assertTrue(proj_id in dxrecord.list_projects())
+
+        dxrecord.remove()
+
+    def test_close_dxrecord(self):
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        with self.assertRaises(DXAPIError):
+            dxrecord.set_visibility(True)
+        with self.assertRaises(DXAPIError):
+            dxrecord.set_details(["foo"])
+
+        self.assertEqual(dxrecord.get_details(), {})
+        dxrecord.rename("newname")
+        self.assertEqual(dxrecord.describe()["name"], "newname")
+
+        dxrecord.rename("secondname")
+        self.assertEqual(dxrecord.describe()["name"], "secondname")
 
         dxrecord.remove()
 
