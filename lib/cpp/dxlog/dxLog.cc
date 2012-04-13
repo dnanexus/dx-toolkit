@@ -112,7 +112,7 @@ bool DXLog::AppLog::log(const string &msg, string &errMsg, int level) {
       return false;
   }
 
-  data["timestamp"] = int64(time(NULL));
+  data["timestamp"] = int64(time(NULL)*1000);
   data["msg"] = msg;
   data["level"] = level;
   if (! SendMessage2UnixDGRAMSocket(socketPath[index], data.toString(), errMsg)) return false;
