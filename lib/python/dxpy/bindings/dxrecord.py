@@ -27,8 +27,13 @@ def new_dxrecord(**kwargs):
     dxrecord.new(**kwargs)
     return dxrecord
 
-class DXRecord(DXDataObjClass):
-    '''Remote record object handler'''
+class DXRecord(DXDataObject):
+    '''
+    Remote record object handler
+
+    .. automethod:: _new
+
+    '''
 
     _class = "record"
 
@@ -47,8 +52,8 @@ class DXRecord(DXDataObjClass):
 
     def _new(self, dx_hash, **kwargs):
         """
-        :param project: Project ID in which to create the new remote object
-        :type project: string
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
+        :type dx_hash: dict
 
         Create a new remote record object.
 

@@ -132,6 +132,8 @@ else:
 
 if "SECURITY_CONTEXT" in os.environ:
     set_security_context(json.loads(os.environ['SECURITY_CONTEXT']))
+else:
+    print "Warning: no security context found in environment variables"
 
 if "JOB_ID" in os.environ:
     set_job_id(os.environ["JOB_ID"])

@@ -5,14 +5,14 @@ search functionality over all remote objects managed by the API
 server: users, groups, JSON objects, files, GenomicTables, collections, apps,
 and jobs.  Each of these remote objects can be represented locally by
 a handler that inherits from the abstract class
-:class:`dxpy.bindings.DXDataObjClass`.  This abstract base class supports
+:class:`dxpy.bindings.DXDataObject`.  This abstract base class supports
 functionality common to all of the remote object classes: getting and
 setting properties, permissions, and types, as well as remotely
 destroying the object permanently.
 
 To access a preexisting object, a remote handler for that class can be
 set up via two methods: the constructor or the
-:meth:`dxpy.bindings.DXDataObjClass.setID` method.  For example::
+:meth:`dxpy.bindings.DXDataObject.setID` method.  For example::
 
     dxFileHandle = DXFile("file-1234")
 
@@ -22,11 +22,11 @@ set up via two methods: the constructor or the
 Both these methods do not perform API calls and merely sets the state
 of the remote file handler.  The object ID stored in the handler can
 be overwritten with subsequent calls to
-:meth:`dxpy.bindings.DXDataObjClass.setID`.
+:meth:`dxpy.bindings.DXDataObject.setID`.
 
 Creation of a new object can be performed using the method
-:meth:`dxpy.bindings.DXDataObjClass.new` which usually has a different
-specification for each subclass of :class:`dxpy.bindings.DXDataObjClass`::
+:meth:`dxpy.bindings.DXDataObject.new` which usually has a different
+specification for each subclass of :class:`dxpy.bindings.DXDataObject`::
 
     newDXFileHandle = DXFile().new()
 
@@ -105,7 +105,7 @@ def search(classname=None, properties=None, typename=None, describe=False):
         else:
             raise StopIteration()
 
-class DXDataObjClass(object):
+class DXDataObject(object):
     """Abstract base class for all remote object handlers"""
 
     def __init__(self, dxid=None, project=None):
@@ -113,7 +113,7 @@ class DXDataObjClass(object):
             self._class
         except:
             raise NotImplementedError(
-                "DXDataObjClass is an abstract class; a subclass should" + \
+                "DXDataObject is an abstract class; a subclass should" + \
                     "be initialized instead.")
 
         self.set_ids(dxid, project)
@@ -129,6 +129,32 @@ class DXDataObjClass(object):
         except:
             desc += "no ID stored"
         return desc
+
+    @staticmethod
+    def _get_creation_params(**kwargs):
+        dx_hash = {}
+        if "project" in kwargs:
+            dx_hash["project"] = kwargs["project"]
+        else:
+            global WORKSPACE_ID
+            dx_hash["project"] = WORKSPACE_ID
+        if "name" in kwargs:
+            dx_hash["name"] = kwargs["name"]
+        if "tags" in kwargs:
+            dx_hash["tags"] = kwargs["tags"]
+        if "types" in kwargs:
+            dx_hash["types"] = kwargs["types"]
+        if "hidden" in kwargs:
+            dx_hash["hidden"] = kwargs["hidden"]
+        if "properties" in kwargs:
+            dx_hash["properties"] = kwargs["properties"]
+        if "details" in kwargs:
+            dx_hash["details"] = kwargs["details"]
+        if "folder" in kwargs:
+            dx_hash["folder"] = kwargs["folder"]
+        if "parents" in kwargs:
+            dx_hash["parents"] = kwargs["parents"]
+        return dx_hash
 
     def new(self, **kwargs):
         '''
@@ -160,32 +186,10 @@ class DXDataObjClass(object):
             self._class
         except:
             raise NotImplementedError(
-                "DXDataObjClass is an abstract class; a subclass should" + \
+                "DXDataObject is an abstract class; a subclass should" + \
                     "be initialized instead.")
 
-        dx_hash = {}
-        if "project" in kwargs:
-            dx_hash["project"] = kwargs["project"]
-        else:
-            global WORKSPACE_ID
-            dx_hash["project"] = WORKSPACE_ID
-        if "name" in kwargs:
-            dx_hash["name"] = kwargs["name"]
-        if "tags" in kwargs:
-            dx_hash["tags"] = kwargs["tags"]
-        if "types" in kwargs:
-            dx_hash["types"] = kwargs["types"]
-        if "hidden" in kwargs:
-            dx_hash["hidden"] = kwargs["hidden"]
-        if "properties" in kwargs:
-            dx_hash["properties"] = kwargs["properties"]
-        if "details" in kwargs:
-            dx_hash["details"] = kwargs["details"]
-        if "folder" in kwargs:
-            dx_hash["folder"] = kwargs["folder"]
-        if "parents" in kwargs:
-            dx_hash["parents"] = kwargs["parents"]
-
+        dx_hash = self._get_creation_params(**kwargs)
         self._new(dx_hash, **kwargs)
 
     def set_ids(self, dxid, project=None):
@@ -451,7 +455,7 @@ class DXDataObjClass(object):
         :type folder: string
         :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
         :returns: An object handler for the new cloned object
-        :rtype: :class:`dxpy.bindings.DXDataObjClass`
+        :rtype: :class:`dxpy.bindings.DXDataObject`
 
         Clones the associated remote object to *folder* in *project*
         and returns an object handler for the new object.
@@ -500,12 +504,6 @@ class DXDataObjClass(object):
             time.sleep(2)
             elapsed += 2
 
-def make_column_desc(name, type_, length=-1):
-    if length >= 0:
-        return {"name": name, "type": type_, "length": length}
-    else:
-        return {"name": name, "type": type_}
-
 class DXLink:
     def __init__(self, object_id):
         self.__dict__['$dnanexus_link'] = object_id
@@ -530,8 +528,9 @@ class DXLink:
 
 from dxfile import *
 from dxfile_functions import *
-#from dxgtable import *
-#from dxgtable_functions import *
+from dxgtable import *
+from dxgtable_functions import *
 from dxrecord import *
-#from dxappjob import *
 from dxproject import *
+#from dxjob import *
+#from dxprogram import *

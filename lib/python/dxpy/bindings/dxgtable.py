@@ -1,34 +1,45 @@
 """
 DXGTable Handler
-***************
+****************
 """
 
 import cStringIO as StringIO
 import json
 from dxpy.bindings import *
 
-class DXGTable(DXClass):
-    '''Remote gtable object handler'''
+class DXGTable(DXDataObject):
+    '''Remote gtable object handler
+
+    .. automethod:: _new
+    '''
 
     _class = "gtable"
 
+
     _describe = staticmethod(dxpy.api.gtableDescribe)
-    _get_properties = staticmethod(dxpy.api.gtableGetProperties)
-    _set_properties = staticmethod(dxpy.api.gtableSetProperties)
     _add_types = staticmethod(dxpy.api.gtableAddTypes)
     _remove_types = staticmethod(dxpy.api.gtableRemoveTypes)
-    _destroy = staticmethod(dxpy.api.gtableDestroy)
+    _get_details = staticmethod(dxpy.api.gtableGetDetails)
+    _set_details = staticmethod(dxpy.api.gtableSetDetails)
+    _set_visibility = staticmethod(dxpy.api.gtableSetVisibility)
+    _rename = staticmethod(dxpy.api.gtableRename)
+    _set_properties = staticmethod(dxpy.api.gtableSetProperties)
+    _add_tags = staticmethod(dxpy.api.gtableAddTags)
+    _remove_tags = staticmethod(dxpy.api.gtableRemoveTags)
+    _close = staticmethod(dxpy.api.gtableClose)
+    _list_projects = staticmethod(dxpy.api.gtableListProjects)
 
     # Default maximum buffer size is 100MB
     _row_buf_maxsize = 1024*1024*100
 
-    def __init__(self, dxid=None, keep_open=False, buffer_size=40000):
+    def __init__(self, dxid=None, project=None, keep_open=False,
+                 buffer_size=40000):
         self._keep_open = keep_open
         self._bufsize = buffer_size
         self._row_buf = StringIO.StringIO()
         self._part_index = 0
         if dxid is not None:
-            self.set_id(dxid)
+            self.set_ids(dxid, project)
 
     def __enter__(self):
         return self
@@ -41,39 +52,32 @@ class DXGTable(DXClass):
         if self._row_buf.tell() > 0:
             self.flush()
 
-    def new(self, columns, chr_col=None, lo_col=None, hi_col=None):
+    def _new(self, dx_hash, **kwargs):
         '''
-        :param columns: An ordered list containing strings of the form "confidence:double" to indicate a column called "confidence" containing doubles.
-        :type columns: list
-        :param chr_col: Name of the column containing chromosome names; must be a column of type string
-        :type chr_col: string
-        :param lo_col: Name of the column containing the low boundary of a genomic interval; must be a column of type int32
-        :type lo_col: string
-        :param hi_col: Name of the column containing the high boundary of a genomic interval; must be a column of type int32
-        :type hi_col: string
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
+        :type dx_hash: dict
+        :param columns: An ordered list containing column descriptors.  See :meth:`make_column_desc` (required)
+        :type columns: list of column descriptors
+        :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`. (optional)
+        :type indices: list of index descriptors
 
-        Creates a new gtable with the given column names in *columns*.
-        If *chr_col*, *lo_col*, and *hi_col* are given, the rows of the
-        gtable will be indexed by a genomic range index when the gtable
-        is closed.
+        Creates a new gtable with the given column names in *columns*
+        and the indices described in *indices*.
 
         '''
 
-        table_params = {"columns": columns}
-        try:
-            indexStr = chr_col + ":" + lo_col + ":" + hi_col
-            table_params['index'] = indexStr
-        except:
-            pass
-        resp = dxpy.api.gtableNew(table_params)
-        self.set_id(resp["id"])
+        dx_hash["columns"] = kwargs["columns"]
+        if "indices" in kwargs and kwargs["indices"] is not None:
+            dx_hash["indices"] = kwargs["indices"]
+        resp = dxpy.api.gtableNew(dx_hash)
+        self.set_ids(resp["id"], dx_hash["project"])
 
-
-    def set_id(self, dxid):
+    def set_ids(self, dxid, project=None):
         '''
         :param dxid: Object ID
         :type dxid: string
-        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
+        :param project: Project ID
+        :type project: string
 
         Discards the currently stored ID and associates the handler
         with *dxid*.  As a side effect, it also flushes the buffer for
@@ -82,38 +86,27 @@ class DXGTable(DXClass):
         if self._row_buf.tell() > 0:
             self.flush()
 
-        DXClass.set_id(self, dxid)
+        DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
         self._part_index = 0
 
-    def get_rows(self, chr=None, lo=None, hi=None, columns=None, starting=None, limit=None):
+    def get_rows(self, query=None, columns=None, starting=None, limit=None):
         '''
-        :param chr: Name of chromosome to be queried
-        :type chr: string
-        :param lo: Low boundary of query interval
-        :type lo: integer
-        :param hi: High boundary of query interval
-        :type hi: integer
+        :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
+        :type query: dict
         :param columns: List of columns to be included; all columns will be included if not set
         :type columns: list of strings
-        :param starting: Lowest row ID to be returned
+        :param starting: An optional offset indicating where the search should resume; this value only corresponds to a row ID if *query* is None, and it should otherwise either be set to 0 or to the value of "next" that was given in a previous call to :meth:`get_rows()`
         :type starting: integer
         :param limit: Max number of rows to be returned
         :type limit: integer
-        :rtype: generator
+        :returns: A hash with the key-value pairs "size": the number of rows returned, "next": a value to use as "starting" to get the next chunk of rows, and "data": a list of rows satisfying the query.
         
-        Queries the gtable for rows using the given parameters.  If the
-        gtable has been built with a genomic range index, results will
-        be rows that have an interval which overlaps with [*lo*, *hi*]
-        on the chromosome *chr*.  If *columns* is not set, all columns
-        will be included, and data is returned in the order in which
-        columns were specified for the gtable.  If *columns* is set,
-        the order of elements in the returned rows follows the
-        ordering in *columns*.  The *starting* and *limit* options
-        restrict the search further, but it should be noted that this
-        method returns a generator and will attempt to pre-fetch rows
-        in batches.
+        Queries the gtable for rows using the given parameters.  If
+        *columns* is set, the order of elements in the returned rows
+        follows the ordering in *columns*.  The *starting* and *limit*
+        options restrict the search further.
 
         Note that a row will be returned as a list containing the row
         id and the values for each of the columns.
@@ -127,6 +120,8 @@ class DXGTable(DXClass):
 
         '''
         get_rows_params = {}
+        if query is not None:
+            get_rows_params['query'] = query
         if columns is not None:
             get_rows_params["columns"] = columns
         if starting is not None:
@@ -134,15 +129,21 @@ class DXGTable(DXClass):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        if chr is not None or lo is not None or hi is not None:
-            if chr is None or lo is None or hi is None:
-                raise DXGTableError("chr, lo, and hi must all be supplied")
-            query = [chr, lo, hi]
-            get_rows_params['query'] = query
-
         return dxpy.api.gtableGet(self._dxid, get_rows_params)
 
     def iterate_rows(self, start=0, end=None):
+        """
+        :param start: The row ID of the first row to return
+        :type start: integer
+        :param end: The row ID of the last row to return (to the end if None)
+        :type end: integer or None
+        :rtype: generator
+
+        Returns a generator which will yield the rows with IDs in the
+        interval [*start*, *end*).
+
+        """
+
         if end is None:
             end = int(self.describe()['size'])
         cursor = start
@@ -154,22 +155,61 @@ class DXGTable(DXClass):
                 cursor += 1
                 if cursor >= end: break
 
+    def iterate_query_rows(self, query, columns=None):
+        """
+        :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
+        :type query: dict
+        :param columns: List of columns to be included; all columns will be included if not set
+        :type columns: list of strings
+        :rtype: generator
+
+        Returns a generator which iterates through the rows of the
+        table while using the given query parameters.  If *query* is
+        not given, all rows are returned in order of the row ID.
+
+        Example::
+
+            dxgtable = open_dxgtable(dxid)
+            for row in dxgtable.iterate_query_rows(genomic_range_query(chr, lo, hi), [colname1, colname2]):
+                print row
+
+        """
+        cursor = 0
+        while cursor is not None:
+            resp = self.get_rows(query=query, columns=columns,
+                                 starting=cursor,
+                                 limit=self._bufsize)
+            buffer = resp['data']
+            cursor = resp['next']
+            if len(buffer) < 1: break
+            for row in buffer:
+                yield row
+
     def __iter__(self):
         return self.iterate_rows()
 
-    def extend(self, columns):
+    def extend(self, columns, **kwargs):
         '''
         :param columns: List of new column names
         :type columns: list of strings
+        :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`.
+        :type indices: list of index descriptors
         :rtype: :class:`dxpy.bindings.DXGTable`
 
         Extends the current gtable object with the column names in
         *columns*, creating a new remote gtable as a result.  Returns
-        the handler for this new gtable.
+        the handler for this new gtable.  Note that any indices
+        created for the original table are not automatically carried
+        over to this new table, and any new indices for the new table
+        must be given at creation time.
 
         '''
-        resp = dxpy.api.gtableExtend(self._dxid, {"columns": columns})
-        return DXGTable(resp["id"])
+        dx_hash = DXDataObject._get_creation_params(**kwargs)
+        dx_hash["columns"] = columns
+        if "indices" in kwargs and kwargs["indices"] is not None:
+            dx_hash["indices"] = kwargs["indices"]
+        resp = dxpy.api.gtableExtend(self._dxid, dx_hash)
+        return DXGTable(resp["id"], dx_hash["project"])
 
     def add_rows(self, data, index=None):
         '''
@@ -260,3 +300,129 @@ class DXGTable(DXClass):
         Wait until the remote gtable is closed.
         '''
         self._wait_on_close(timeout)
+
+    @staticmethod
+    def make_column_desc(name, type_, length=None):
+        """
+        :param name: Column name
+        :type name: string
+        :param type_: Data type for the column (one of "boolean", "uint8", "int32", "int64", "float", "double", "string", "varstring")
+        :type type_: string
+        :param length: Length of string if the column type is "string"
+        :type length: integer
+
+        Returns a column descriptor with the given name, type, and
+        length, if applicable.
+
+        """
+
+        if length is not None:
+            return {"name": name, "type": type_, "length": length}
+        else:
+            return {"name": name, "type": type_}
+
+    @staticmethod
+    def genomic_range_index(chr, lo, hi, name="gri"):
+        """
+        :param chr: Name of the column containing chromosome names; must be a column of type string
+        :type chr: string
+        :param lo: Name of the column containing the low boundary of a genomic interval; must be a column of type int32
+        :type lo: string
+        :param hi: Name of the column containing the high boundary of a genomic interval; must be a column of type int32
+        :type hi: string
+        :param name: Name of the index
+        :type name: string
+
+        Creates a genomic range index descriptor for use with the new() call.
+
+        """
+        return {"name": name, "type": "genomic",
+                "chr": chr, "lo": lo, "hi": hi}
+
+    @staticmethod
+    def lexicographic_index(columns, name):
+        """
+        :param columns: Required parameter for a lexicographic index: Ordered list of lists of the form [<column name>, "ASC"|"DESC"]
+        :type columns: list of lists containing two strings each
+        :param name: Name of the index
+        :type name: string
+
+        Creates a lexicographic index descriptor for use with the new() call.
+
+        """
+
+        return {"name": name, "type": "lexicographic",
+                "columns": columns}
+
+    @staticmethod
+    def substring_index(column, name):
+        """
+        :param column: Column name to index by
+        :type column: string
+        :param name: Name of the index
+        :type name: string
+
+        Creates a substring index descriptor for use with the new() call.
+
+        """
+        return {"name": name, "type": "substring", "column": column}
+
+    @staticmethod
+    def genomic_range_query(chr, lo, hi, mode="overlap", index="gri"):
+        """
+        :param chr: Name of chromosome to be queried
+        :type chr: string
+        :param lo: Low boundary of query interval
+        :type lo: integer
+        :param hi: High boundary of query interval
+        :type hi: integer
+        :param mode: The type of query to perform ("overlap" or "enclose")
+        :type mode: string
+        :param index: Name of the genomic range index to use
+        :type index: string
+
+        Constructs a query for a genomic range index of the table.
+
+        """
+
+        return {"index": index, "parameters": {"mode": mode,
+                                               "coords": [chr, lo, hi] } }
+
+    @staticmethod
+    def lexicographic_query(query, index):
+        """
+        :param query: MongoDB-style query
+        :type query: dict
+        :param index: Name of the lexicographic index to use
+        :type index: string
+
+        Constructs a query for a lexicographic index of the table.
+
+        """
+
+        return {"index": index, "parameters": query}
+
+    @staticmethod
+    def substring_query(string, mode, index):
+        """
+        :param string: String to match
+        :type string: string
+        :param mode: Mode in which to match the string ("equal", "substring", or "prefix")
+        :type mode: string
+        :param index: Name of the substring index to use
+        :type index: string
+
+        Constructs a query for a substring index of the table.
+
+        """
+        query = {"index": index, "parameters": {} }
+        if mode == "equal":
+            query["parameters"]["$eq"] = string
+        elif mode == "substring":
+            query["parameters"]["$substr"] = string
+        elif mode == "prefix":
+            query["parameters"]["$prefix"] = string
+        else:
+            raise DXGTableError("Unrecognized substring index query mode: " + \
+                                str(mode))
+        return query

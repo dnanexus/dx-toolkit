@@ -8,7 +8,7 @@ This remote file handler is a file-like object.
 import cStringIO as StringIO
 from dxpy.bindings import *
 
-class DXFile(DXDataObjClass):
+class DXFile(DXDataObject):
     '''
     :param dxid: Object ID
     :type dxid: string
@@ -48,7 +48,7 @@ class DXFile(DXDataObjClass):
 
     def _new(self, dx_hash, **kwargs):
         """
-        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObjClass.new()`
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
         :type dx_hash: dict
         :param media_type: Internet Media Type (optional)
         :type media_type: string
@@ -106,7 +106,7 @@ class DXFile(DXDataObjClass):
         if self._write_buf.tell() > 0:
             self.flush()
 
-        DXDataObjClass.set_ids(self, dxid, project)
+        DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
         self._pos = 0

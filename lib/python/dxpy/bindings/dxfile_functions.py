@@ -48,7 +48,7 @@ def new_dxfile(**kwargs):
     Creates a new remote file object that is ready to be written to
     and returns a DXFile object which can be treated as a write-only
     file descriptor.  Other optional parameters available (see
-    :func:`dxpy.bindings.DXDataObjClass.new()`).
+    :func:`dxpy.bindings.DXDataObject.new()`).
 
     Example::
 

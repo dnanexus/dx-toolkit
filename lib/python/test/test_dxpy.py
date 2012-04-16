@@ -217,25 +217,41 @@ class TestDXFile(unittest.TestCase):
                 self.assertEqual(line, "Line " + str(lineno))
                 lineno += 1
 
-@unittest.skip("Skipping gtables; not yet implemented")
 class TestDXGTable(unittest.TestCase):
+    """
+    TODO: Test iterators, gri, and other queries
+    """
     def setUp(self):
-        self.dxtable = dxpy.DXTable(proj_id)
+        self.dxgtable = dxpy.DXGTable()
 
     def tearDown(self):
         try:
-            self.dxtable.remove()
+            self.dxgtable.remove()
         except:
             pass
 
+    def test_col_desc(self):
+        columns = [dxpy.DXGTable.make_column_desc("a", "string"),
+                   dxpy.DXGTable.make_column_desc("b", "int32")]
+        self.assertEqual(columns, [{"name": "a", "type": "string"},
+                                   {"name": "b", "type": "int32"}])
+        columns = [dxpy.DXGTable.make_column_desc("c", "int32"),
+                   dxpy.DXGTable.make_column_desc("d", "string")]
+
     def test_create_table(self):
-        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
-        self.dxtable.close()
-        desc = self.dxtable.describe()
-        self.assertEqual(desc["columns"], ['a:string', 'b:int32'])
+        self.dxgtable = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
+        self.dxgtable.close()
+        desc = self.dxgtable.describe()
+        self.assertEqual(desc["columns"],
+                         [dxpy.DXGTable.make_column_desc("a", "string"),
+                          dxpy.DXGTable.make_column_desc("b", "int32")])
 
     def test_extend_table(self):
-        table_to_extend = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
+        table_to_extend = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
         try:
             table_to_extend.add_rows([["Row 1", 1], ["Row 2", 2]], 1)
             table_to_extend.close(block=True)
@@ -244,86 +260,101 @@ class TestDXGTable(unittest.TestCase):
             table_to_extend.remove()
 
         try:
-            self.dxtable = dxpy.extend_dxtable(table_to_extend.get_id(),
-                                               proj_id,
-                                               ['c:int32', 'd:string'])
+            self.dxgtable = dxpy.extend_dxgtable(
+                table_to_extend.get_id(),
+                [dxpy.DXGTable.make_column_desc("c", "int32"),
+                 dxpy.DXGTable.make_column_desc("d", "string")])
         except:
             self.fail("Could not extend table");
         finally:
             table_to_extend.remove()
 
-        self.assertEqual(self.dxtable.describe()["columns"],
-                         ['a:string', 'b:int32', 'c:int32', 'd:string'])
-        self.dxtable.add_rows([[10, "End row 1"], [20, "End row 2"]])
+        self.assertEqual(self.dxgtable.describe()["columns"],
+                         [dxpy.DXGTable.make_column_desc("a", "string"),
+                          dxpy.DXGTable.make_column_desc("b", "int32"),
+                          dxpy.DXGTable.make_column_desc("c", "int32"),
+                          dxpy.DXGTable.make_column_desc("d", "string")])
+        self.dxgtable.add_rows([[10, "End row 1"], [20, "End row 2"]])
         try:
-            self.dxtable.close()
+            self.dxgtable.close()
         except DXAPIError:
             self.fail("Could not close table after table extension")
     
     def test_add_rows(self):
-        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
-        self.dxtable.add_rows(data=[], index=9999)
+        self.dxgtable = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
+        self.dxgtable.add_rows(data=[], index=9999)
         with self.assertRaises(DXAPIError):
-            self.dxtable.add_rows(data=[[]], index=9997)
+            self.dxgtable.add_rows(data=[[]], index=9997)
 
         for i in range(64):
-            self.dxtable.add_rows(data=[["row"+str(i), i]], index=i+1)
-        self.dxtable.close()
+            self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+        self.dxgtable.close()
 
         with self.assertRaises(DXAPIError):
-            self.dxtable.close()
+            self.dxgtable.close()
 
     def test_add_rows_no_index(self):
-        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
+        self.dxgtable = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
         for i in range(64):
-            self.dxtable.add_rows(data=[["row"+str(i), i]])
+            self.dxgtable.add_rows(data=[["row"+str(i), i]])
 
-        self.dxtable.flush()
-        desc = self.dxtable.describe()
+        self.dxgtable.flush()
+        desc = self.dxgtable.describe()
         self.assertEqual(len(desc["parts"]), 1)
 
-        self.dxtable.close(block=True)
+        self.dxgtable.close(block=True)
 
-        desc = self.dxtable.describe()
+        desc = self.dxgtable.describe()
         self.assertEqual(desc["size"], 64)
 
     def test_table_context_manager(self):
-        with dxpy.new_dxtable(proj_id, ['a:string', 'b:int32']) as self.dxtable:
+        with dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")]) as self.dxgtable:
             for i in range(64):
-                self.dxtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+                self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
 
     def test_create_table_with_invalid_spec(self):
         with self.assertRaises(DXAPIError):
-            dxpy.new_dxtable(proj_id, ['a:string', 'b:muffins'])
+            dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                              dxpy.DXGTable.make_column_desc("b", "muffins")])
 
     def test_get_rows(self):
-        self.dxtable = dxpy.new_dxtable(proj_id, ['a:string', 'b:int32'])
+        self.dxgtable = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
         for i in range(64):
-            self.dxtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+            self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
         with self.assertRaises(DXAPIError):
-            rows = self.dxtable.get_rows()
-        self.dxtable.close(block=True)
-        rows = self.dxtable.get_rows()['data']
+            rows = self.dxgtable.get_rows()
+        self.dxgtable.close(block=True)
+        rows = self.dxgtable.get_rows()['data']
         assert(len(rows) == 64)
         
         # TODO: test get_rows parameters, genomic range index when
         # implemented
 
     def test_iter_table(self):
-        self.dxtable = dxpy.new_dxtable(['a:string', 'b:int32'])
+        self.dxgtable = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
         for i in range(64):
-            self.dxtable.add_rows(data=[["row"+str(i), i]], index=i+1)
-        self.dxtable.close(block=True)
+            self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+        self.dxgtable.close(block=True)
 
         counter = 0
-        for row in self.dxtable:
+        for row in self.dxgtable:
             self.assertEqual(row[2], counter)
             counter += 1
         self.assertEqual(counter, 64)
 
 class TestDXRecord(unittest.TestCase):
     """
-    Most of these tests really are testing DXDataObjClass methods
+    Most of these tests really are testing DXDataObject methods
     while using DXRecords as the most basic data object.
     """
 

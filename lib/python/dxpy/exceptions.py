@@ -28,8 +28,8 @@ class DXGTableError(DXError):
     '''Exception for :class:`dxpy.bindings.DXGTable`'''
     pass
 
-class DXAppError(DXError):
-    '''Exception for :class:`dxpy.bindings.DXApp`'''
+class DXProgramError(DXError):
+    '''Exception for :class:`dxpy.bindings.DXProgram`'''
     pass
 
 class DXJobFailureError(DXError):
