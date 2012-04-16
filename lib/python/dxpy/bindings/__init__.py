@@ -54,17 +54,14 @@ import dxpy.api
 from dxpy.exceptions import *
 import copy
 
-def search(classname=None, properties=None, typename=None, #permission=None,
-           describe=False):
+def search(classname=None, properties=None, typename=None, describe=False):
     """
-    :param classname: Class with which to restrict the search, i.e. one of {"user", "group", "record", "file", "gtable", "collection", "app", "program"} FIXME
+    :param classname: Class with which to restrict the search, i.e. one of "user", "group", "record", "file", "gtable", "collection", "app", "program"
     :type classname: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
     :param typename: Type that each result must conform to
     :type typename: string
-..    :param permission: Permission pair of subject and permission type that each result must have
-..    :type permission: list of two str
     :param describe: Whether to return each item as the output of calling describe() on the object (if given True) or to return each item as its object ID (False)
     :type describe: boolean
     :rtype: generator
@@ -112,9 +109,6 @@ class DXDataObjClass(object):
     """Abstract base class for all remote object handlers"""
 
     def __init__(self, dxid=None, project=None):
-        """Direct initialization of this class is not allowed.
-
-        """
         try:
             self._class
         except:
@@ -506,6 +500,11 @@ class DXDataObjClass(object):
             time.sleep(2)
             elapsed += 2
 
+def make_column_desc(name, type_, length=-1):
+    if length >= 0:
+        return {"name": name, "type": type_, "length": length}
+    else:
+        return {"name": name, "type": type_}
 
 class DXLink:
     def __init__(self, object_id):
@@ -529,10 +528,10 @@ class DXLink:
         raise NotImplementedError()
 
 
-# from dxfile import *
-# from dxfile_functions import *
-# from dxgtable import *
-# from dxgtable_functions import *
+from dxfile import *
+from dxfile_functions import *
+#from dxgtable import *
+#from dxgtable_functions import *
 from dxrecord import *
 #from dxappjob import *
 from dxproject import *

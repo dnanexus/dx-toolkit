@@ -39,30 +39,31 @@ def open_dxfile(dxid, **kwargs):
 
     return DXFile(dxid, **kwargs)
 
-def new_dxfile(media_type=None):
+def new_dxfile(**kwargs):
     '''
-    :param media_type: Internet Media Type
+    :param media_type: Internet Media Type (optional)
     :type media_type: string
     :rtype: :class:`dxpy.bindings.DXFile`
 
     Creates a new remote file object that is ready to be written to
     and returns a DXFile object which can be treated as a write-only
-    file descriptor.
+    file descriptor.  Other optional parameters available (see
+    :func:`dxpy.bindings.DXDataObjClass.new()`).
 
     Example::
 
-        with new_dxfile(media_type) as fd:
+        with new_dxfile(media_type="application/json") as fd:
             fd.write("foo\\n")
 
     Note that this is shorthand for::
 
         dxFile = DXFile()
-        dxFile.new(media_type)
+        dxFile.new(**kwargs)
 
     '''
     
     dx_file = DXFile()
-    dx_file.new(media_type)
+    dx_file.new(**kwargs)
     return dx_file
 
 # TODO:
@@ -114,7 +115,7 @@ def upload_local_file(filename, media_type=None, wait_on_close=False):
 
     '''
 
-    dxfile = new_dxfile(media_type)
+    dxfile = new_dxfile(media_type=media_type)
 
     with open(filename, 'r') as fd:
         while True:
@@ -142,7 +143,7 @@ def upload_string(to_upload, media_type=None):
     
     """
 
-    dxfile = new_dxfile(media_type)
+    dxfile = new_dxfile(media_type=media_type)
     dxfile.write(to_upload)
     dxfile.close()
     return dxfile

@@ -8,7 +8,7 @@ This remote file handler is a file-like object.
 import cStringIO as StringIO
 from dxpy.bindings import *
 
-class DXFile(DXClass):
+class DXFile(DXDataObjClass):
     '''
     :param dxid: Object ID
     :type dxid: string
@@ -16,41 +16,52 @@ class DXFile(DXClass):
     :type keep_open: boolean
 
     Remote file object handler
+
+    .. automethod:: _new
+
     '''
 
     _class = "file"
 
     _describe = staticmethod(dxpy.api.fileDescribe)
-    _get_properties = staticmethod(dxpy.api.fileGetProperties)
-    _set_properties = staticmethod(dxpy.api.fileSetProperties)
     _add_types = staticmethod(dxpy.api.fileAddTypes)
     _remove_types = staticmethod(dxpy.api.fileRemoveTypes)
-    _destroy = staticmethod(dxpy.api.fileDestroy)
+    _get_details = staticmethod(dxpy.api.fileGetDetails)
+    _set_details = staticmethod(dxpy.api.fileSetDetails)
+    _set_visibility = staticmethod(dxpy.api.fileSetVisibility)
+    _rename = staticmethod(dxpy.api.fileRename)
+    _set_properties = staticmethod(dxpy.api.fileSetProperties)
+    _add_tags = staticmethod(dxpy.api.fileAddTags)
+    _remove_tags = staticmethod(dxpy.api.fileRemoveTags)
+    _close = staticmethod(dxpy.api.fileClose)
+    _list_projects = staticmethod(dxpy.api.fileListProjects)
 
-    def __init__(self, dxid=None, keep_open=False, buffer_size=1024*1024*100):
+    def __init__(self, dxid=None, project=None, keep_open=False,
+                 buffer_size=1024*1024*100):
         self._keep_open = keep_open
         self._write_buf = StringIO.StringIO()
         if dxid is not None:
-            self.set_id(dxid)
+            self.set_ids(dxid, project)
         self._keep_open = keep_open
         # Default maximum buffer size is 100MB
         self._bufsize = buffer_size
 
-    def new(self, media_type=None):
+    def _new(self, dx_hash, **kwargs):
         """
-        :param media_type: Internet Media Type
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObjClass.new()`
+        :type dx_hash: dict
+        :param media_type: Internet Media Type (optional)
         :type media_type: string
 
-        Creates a new remote file with media_type, if given.
+        Creates a new remote file with media type *media_type*, if given.
 
         """
 
-        req_input = {}
-        if media_type is not None:
-            req_input["media"] = media_type
+        if "media_type" in kwargs and kwargs["media_type"] is not None:
+            dx_hash["media"] = kwargs["media_type"]
 
-        resp = dxpy.api.fileNew(req_input)
-        self.set_id(resp["id"])
+        resp = dxpy.api.fileNew(dx_hash)
+        self.set_ids(resp["id"], dx_hash["project"])
 
     def __enter__(self):
         return self
@@ -81,11 +92,12 @@ class DXFile(DXClass):
         if buffer:
             yield buffer
 
-    def set_id(self, dxid):
+    def set_ids(self, dxid, project=None):
         '''
         :param dxid: Object ID
         :type dxid: string
-        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
+        :param project: Project ID
+        :type project: string
 
         Discards the currently stored ID and associates the handler
         with *dxid*.  As a side effect, it also flushes the buffer for
@@ -94,7 +106,7 @@ class DXFile(DXClass):
         if self._write_buf.tell() > 0:
             self.flush()
 
-        DXClass.set_id(self, dxid)
+        DXDataObjClass.set_ids(self, dxid, project)
 
         # Reset state
         self._pos = 0

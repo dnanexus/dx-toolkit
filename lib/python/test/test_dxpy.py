@@ -123,7 +123,6 @@ class TestDXProject(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxrecord.describe()
 
-@unittest.skip("Skipping files; not updated yet for 1.03")
 class TestDXFile(unittest.TestCase):
 
     '''
