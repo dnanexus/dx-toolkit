@@ -4,7 +4,7 @@ import os, sys, unittest, json, tempfile, filecmp
 import dxpy.bindings as dxpy
 from dxpy.exceptions import *
 
-# Store the following in PROJECT_ID to make some of the tests pass
+# Store the following in PROJECT_CONTEXT_ID to make some of the tests pass
 proj_id = "project-000000000000000000000001"
 second_proj_id = 'project-000000000000000000000002';
 

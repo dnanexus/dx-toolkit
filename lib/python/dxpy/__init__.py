@@ -139,10 +139,10 @@ if "JOB_ID" in os.environ:
     set_job_id(os.environ["JOB_ID"])
     if "WORKSPACE_ID" in os.environ:
         set_workspace_id(os.environ["WORKSPACE_ID"])
-    if "PROJECT_ID" in os.environ:
-        set_project_context(os.environ["PROJECT_ID"])
+    if "PROJECT_CONTEXT_ID" in os.environ:
+        set_project_context(os.environ["PROJECT_CONTEXT_ID"])
 else:
-    if "PROJECT_ID" in os.environ:
-        set_workspace_id(os.environ["PROJECT_ID"])
+    if "PROJECT_CONTEXT_ID" in os.environ:
+        set_workspace_id(os.environ["PROJECT_CONTEXT_ID"])
 
 from dxpy.bindings import *
