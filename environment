@@ -15,3 +15,4 @@ export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
 export APISERVER_HOST="nucleus-dev.dnanexus.com"
 export APISERVER_PORT=8124
 export SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
+export PROJECT_ID=project-000000000000000000000001
