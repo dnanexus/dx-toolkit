@@ -8,12 +8,32 @@ from dxpy.bindings import *
 # DXProgram #
 #############
 
-def new_dxprogram(code_file=None, code_string=None):
+def make_run_spec(interpreter,
+                  codefile=None, codelocalfile=None, codestring=None,
+                  bundled_depends=None, exec_depends=None):
     '''
-    :param codefile: filename containing code to be run
+    :param interpreter: name of the interpreter to use (e.g. "v8cgi", "python2.7")
+    :type interpreter: string
+    :param codefile: file object ID containing code to be run
     :type codefile: string
+    :param codelocalfile: local filename of the file containing code to be run
+    :type codelocalfile: string
     :param codestring: code to be run
     :type codestring: string
+    :param bundled_depends: list of assets the program requires
+    :type bundled_depends: list of dicts
+    :param exec_depends: list of package names and versions required
+    :type exec_depends: list of dicts
+
+    TODO: Flesh out stuff.  Would it be better if run_spec were a
+    class/struct?
+
+    '''
+    pass
+
+def new_dxprogram(run_spec, input_spec=None, output_spec=None, **kwargs):
+    '''
+
     :rtype: :class:`dxpy.bindings.DXProgram`
 
     Creates a new program with the given code.  See
@@ -52,8 +72,10 @@ class DXProgram(DXDataObject):
     _close = staticmethod(dxpy.api.programClose)
     _list_projects = staticmethod(dxpy.api.programListProjects)
 
-    def _new(self, code_file=None, code_string=None):
+    def _new(self, dx_hash, **kwargs):
         '''
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
+        :type dx_hash: dict
         :param codefile: filename containing code to be run
         :type codefile: string
         :param codestring: code to be run
@@ -77,6 +99,12 @@ class DXProgram(DXDataObject):
 
         resp = dxpy.api.programNew({"code": code_string})
         self.set_id(resp["id"])
+
+    def get(self):
+        """
+        Returns the contents of the program.
+        """
+        return dxpy.api.programGet(self._dxid)
 
     def run(self, program_input):
         '''

@@ -58,6 +58,40 @@ class DXJob(DXDataObject):
         resp = dxpy.api.jobNew(req_input)
         self.set_id(resp["id"])
 
+    def set_id(self, dxid):
+        '''
+        :param dxid: Object ID
+        :type dxid: string
+
+        Discards the currently stored ID and associates the handler
+        with *dxid*.
+        '''
+        self._dxid = dxid
+
+    def get_id(self):
+        '''
+        :returns: Job ID of associated job
+        :rtype: string
+
+        Returns the job ID that the handler is currently associated
+        with.
+
+        '''
+
+        return self._dxid
+
+    def describe(self):
+        """
+        :returns: Description of the job
+        :rtype: dict
+
+        Returns a hash which will include key-value pairs that include
+        information on its input and outputs, state, etc.  See the API
+        documentation for the full list.
+
+        """
+        return dxpy.api.jobDescribe(self._dxid)
+
     def wait_on_done(self, interval=2, timeout=sys.maxint):
         '''
         :param interval: Number of seconds between queries to the job's state
@@ -82,3 +116,9 @@ class DXJob(DXDataObject):
 
             time.sleep(interval)
             elapsed += interval
+
+    def terminate(self):
+        '''
+        Terminate the associated job.
+        '''
+        dxpy.api.jobTerminate(self._dxid)

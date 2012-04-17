@@ -242,7 +242,7 @@ class DXDataObject(object):
         :rtype: dict
 
         Returns a dictionary which will include the keys "id",
-        "class", "types", and "createdAt".  Other fields may also be
+        "class", "types", and "created".  Other fields may also be
         included, depending on the class.
 
         """
@@ -532,5 +532,5 @@ from dxgtable import *
 from dxgtable_functions import *
 from dxrecord import *
 from dxproject import *
-#from dxjob import *
+from dxjob import *
 #from dxprogram import *
