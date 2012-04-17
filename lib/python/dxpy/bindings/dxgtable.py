@@ -148,7 +148,10 @@ class DXGTable(DXDataObject):
             end = int(self.describe()['size'])
         cursor = start
         while cursor < end:
-            buffer = self.get_rows(starting=cursor, limit=self._bufsize)['data']
+            request_size = self._bufsize
+            if end is not None:
+                request_size = min(request_size, end - cursor)
+            buffer = self.get_rows(starting=cursor, limit=request_size)['data']
             if len(buffer) < 1: break
             for row in buffer:
                 yield row
