@@ -1,66 +1,73 @@
 '''
-DNAnexus App Builder Library
+DNAnexus Program Builder Library
 
-Contains methods used by the application builder to compile and deploy an app onto the platform.
+Contains methods used by the application builder to compile and deploy programs onto the platform.
 
 '''
 
 import os, sys, json, subprocess, tempfile, logging
 import dxpy
 
-class AppBuilderException(Exception):
+class ProgramBuilderException(Exception):
     pass
 
-def build(app_src_dir):
-    logging.debug("Building in " + app_src_dir)
+def build(src_dir):
+    logging.debug("Building in " + src_dir)
     # TODO: use Gentoo or deb buildsystem
-    config_script = os.path.join(app_src_dir, "configure")
+    config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
         subprocess.check_call([config_script])
-    if os.path.isfile(os.path.join(app_src_dir, "Makefile")) \
-        or os.path.isfile(os.path.join(app_src_dir, "makefile")) \
-        or os.path.isfile(os.path.join(app_src_dir, "GNUmakefile")):
-        subprocess.check_call(["make", "-C", app_src_dir, "-j8"])
+    if os.path.isfile(os.path.join(src_dir, "Makefile")) \
+        or os.path.isfile(os.path.join(src_dir, "makefile")) \
+        or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
+        subprocess.check_call(["make", "-C", src_dir, "-j8"])
 
-def upload_resources(app_src_dir):
-    resources_dir = os.path.join(app_src_dir, "resources")
+def upload_resources(src_dir):
+    resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
-        logging.debug("Uploading in " + app_src_dir)
+        logging.debug("Uploading in " + src_dir)
 
         with tempfile.NamedTemporaryFile(suffix=".tar.xz") as tar_fh:
             subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
             dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True)
-            #return [{'name': 'resources.tar.xz', 'id': {'$dnanexus_link': dx_resource_archive.get_id()}}]
-            return [{'name': 'resources.tar.xz', 'id': dx_resource_archive.get_id()}]
+            archive_link = dxpy.DXLink(dx_resource_archive.get_id())
+            return [{'name': 'resources.tar.xz', 'id': archive_link}]
     else:
         return None
 
-def upload_app(app_src_dir, uploaded_resources, check_name_collisions=True, overwrite=False):
-    with open(os.path.join(app_src_dir, "dxapp")) as fh:
-        app_spec = json.load(fh)
+def validateProgramSpec(program_spec):
+    if "name" not in program_spec:
+        raise ProgramBuilderException("Program specification does not contain a name")
 
-    if "name" not in app_spec:
-        raise AppBuilderException("App specification does not contain a name")
+def upload_program(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False):
+    with open(os.path.join(src_dir, "dxprogram")) as fh:
+        program_spec = json.load(fh)
+
+    validateProgramSpec(program_spec)
+
+    program_spec['project'] = dxpy.WORKSPACE_ID
 
     if check_name_collisions:
-        logging.debug("Searching for apps with name " + app_spec["name"])
-        for app_id in dxpy.search(classname="app", properties={"name": app_spec["name"]}):
+        logging.debug("Searching for programs with name " + program_spec["name"])
+        for program_id in dxpy.search(classname="program", properties={"name": program_spec["name"]}):
             if overwrite:
-                logging.info("Deleting app %s" % (app_id))
-                dxpy.api.appDestroy(app_id)
+                logging.info("Deleting program %s" % (program_id))
+                # TODO: test me
+                dxpy.DXProject().remove_objects([program_id])
             else:
-                raise AppBuilderException("An app with name %s already exists (id %s) and the overwrite option was not given" % (app_spec["name"], app_id))
+                raise ProgramBuilderException("An program with name %s already exists (id %s) and the overwrite option was not given" % (program_spec["name"], program_id))
 
-    if "run" in app_spec and "file" in app_spec["run"]:
-        code_filename = os.path.join(app_src_dir, app_spec["run"]["file"])
+    if "run" in program_spec and "file" in program_spec["run"]:
+        code_filename = os.path.join(src_dir, program_spec["run"]["file"])
         f = dxpy.upload_local_file(code_filename, wait_on_close=True)
-        app_spec["run"]["file"] = f.get_id()
+        program_spec["run"]["file"] = f.get_id()
 
     if uploaded_resources is not None:
-        app_spec["bundledDepends"] = uploaded_resources
+        program_spec["bundledDepends"] = uploaded_resources
 
-    app_id = dxpy.api.appNew(app_spec)["id"]
+    print program_spec
+    program_id = dxpy.api.programNew(program_spec)["id"]
 
-    dxpy.api.appSetProperties(app_id, {"name": app_spec["name"]})
+    dxpy.api.programSetProperties(program_id, {"name": program_spec["name"]})
 
-    return app_id
+    return program_id
