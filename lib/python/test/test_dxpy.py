@@ -123,6 +123,7 @@ class TestDXProject(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxrecord.describe()
 
+@unittest.skip("Skipping files; takes too long")
 class TestDXFile(unittest.TestCase):
 
     '''
@@ -351,6 +352,94 @@ class TestDXGTable(unittest.TestCase):
             self.assertEqual(row[2], counter)
             counter += 1
         self.assertEqual(counter, 64)
+
+    def test_gri(self):
+        data10 = [['chr2', 22, 28, 'j'],
+                  ['chr1',  0,  3, 'a'],
+                  ['chr1',  5,  8, 'b'],
+                  ['chr1', 25, 30, 'i'],
+                  ['chr1',  6, 10, 'c'],
+                  ['chr1', 19, 20, 'h'],
+                  ['chr1',  8,  9, 'd'],
+                  ['chr1', 17, 19, 'g'],
+                  ['chr1', 15, 23, 'e'],
+                  ['chr1', 16, 21, 'f']];
+        columns = [{ "name": 'foo', "type": 'string' },
+                   { "name": 'bar', "type": 'int32' },
+                   { "name": 'baz', "type": 'int32' },
+                   { "name": 'quux', "type": 'string' }];
+        genomic_index = dxpy.DXGTable.genomic_range_index('foo', 'bar', 'baz')
+        self.assertEqual(genomic_index, {"name": "gri", "type": "genomic",
+                                         "chr": "foo", "lo": "bar", "hi": "baz"})
+
+        dxgtable = dxpy.new_dxgtable(columns, indices=[genomic_index])
+        desc = dxgtable.describe()
+        self.assertEqual(desc["indices"], [genomic_index]);
+
+        dxgtable.add_rows(data10[:3], 1)
+        dxgtable.add_rows(data10[3:6], 10)
+        dxgtable.add_rows(data10[6:9], 100)
+        dxgtable.add_rows(data10[9:], 1000)
+
+        dxgtable.close(True)
+
+        desc = dxgtable.describe()
+        self.assertEqual(desc["size"], 10)
+
+        # Offset + limit queries
+        result = dxgtable.get_rows(starting=0, limit=1);
+        self.assertEqual(result["data"],
+                         [[0, 'chr1',  0,  3, 'a']]);
+        self.assertEqual(result["next"], 1);
+        self.assertEqual(result["size"], 1);
+
+        result = dxgtable.get_rows(starting=4, limit=3);
+        self.assertEqual(result["data"],
+                         [[4, 'chr1', 15, 23, 'e'],
+                          [5, 'chr1', 16, 21, 'f'],
+                          [6, 'chr1', 17, 19, 'g']]);
+        self.assertEqual(result["next"], 7);
+        self.assertEqual(result["size"], 3);
+
+        # Range query
+        genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 22, 25)
+        result = dxgtable.get_rows(query=genomic_query)
+        self.assertEqual(result["data"],
+                         [[4, 'chr1', 15, 23, 'e']]);
+        self.assertEqual(result["next"], None);
+        self.assertEqual(result["size"], 1);
+
+        # Range query with nonconsecutive rows in result
+        genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 20, 26)
+        result = dxgtable.get_rows(query=genomic_query)
+        self.assertEqual(result["data"],
+                   [[4, 'chr1', 15, 23, 'e'],
+                    [5, 'chr1', 16, 21, 'f'],
+                    [8, 'chr1', 25, 30, 'i']]);
+        self.assertEqual(result["next"], None);
+        self.assertEqual(result["size"], 3);
+
+        # Testing iterate_rows
+        row_num = 5
+        for row in dxgtable.iterate_rows(5, 8):
+            self.assertEqual(row_num, row[0])
+            row_num += 1
+        self.assertEqual(row_num, 8)
+
+        # Testing iterate_query_rows
+        genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 20, 26)
+        result_num = 0
+        for row in dxgtable.iterate_query_rows(genomic_query):
+            if result_num == 0:
+                self.assertEqual(4, row[0])
+            elif result_num == 1:
+                self.assertEqual(5, row[0])
+            elif result_num == 2:
+                self.assertEqual(8, row[0])
+            result_num += 1
+        self.assertEqual(3, result_num)
+
+    # TODO: Test with > 1 index
 
 class TestDXRecord(unittest.TestCase):
     """
