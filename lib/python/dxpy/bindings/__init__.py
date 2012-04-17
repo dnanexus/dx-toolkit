@@ -504,26 +504,8 @@ class DXDataObject(object):
             time.sleep(2)
             elapsed += 2
 
-class DXLink:
-    def __init__(self, object_id):
-        self.__dict__['$dnanexus_link'] = object_id
-
-    def __str__(self):
-        return json.dumps(self.__dict__)
-
-    @property
-    def dict(self):
-        return self.__dict__
-
-    @property
-    def target(self):
-        return self.__dict__['$dnanexus_link']
-
-    def target_exists(self):
-        raise NotImplementedError()
-
-    def target_state(self):
-        raise NotImplementedError()
+def dxlink(object_id):
+    return {'$dnanexus_link': object_id}
 
 
 from dxfile import *

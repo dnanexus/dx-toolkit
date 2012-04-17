@@ -30,7 +30,7 @@ def upload_resources(src_dir):
         with tempfile.NamedTemporaryFile(suffix=".tar.xz") as tar_fh:
             subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
             dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True)
-            archive_link = dxpy.DXLink(dx_resource_archive.get_id())
+            archive_link = dxpy.dxlink(dx_resource_archive.get_id())
             return [{'name': 'resources.tar.xz', 'id': archive_link}]
     else:
         return None
@@ -68,6 +68,6 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
     print program_spec
     program_id = dxpy.api.programNew(program_spec)["id"]
 
-    dxpy.api.programSetProperties(program_id, {"name": program_spec["name"]})
+    dxpy.api.programSetProperties(program_id, {"project": dxpy.WORKSPACE_ID, "properties": {"name": program_spec["name"]}})
 
     return program_id
