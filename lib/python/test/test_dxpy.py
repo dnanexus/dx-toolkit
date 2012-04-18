@@ -123,7 +123,6 @@ class TestDXProject(unittest.TestCase):
         with self.assertRaises(DXAPIError):
             dxrecord.describe()
 
-@unittest.skip("Skipping files; takes too long")
 class TestDXFile(unittest.TestCase):
 
     '''
@@ -702,36 +701,36 @@ class TestDXRecord(unittest.TestCase):
 class TestDXTable(unittest.TestCase):
     pass
 
-@unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
-class TestDXApp(unittest.TestCase):
-    def test_create_dxapp(self):
-        test_json = dxpy.new_dxrecord({"appsuccess": False})
-        dxapp = dxpy.new_dxapp(codefile='test_dxapp.py')
-        dxappjob = dxapp.run({"json_dxid": test_json.get_id()})
-        dxappjob.wait_on_done()
-        self.assertEqual(test_json.get(), {"appsuccess":True})
+@unittest.skip("Skipping jobs and programs; running Python programs not yet supported")
+class TestDXProgram(unittest.TestCase):
+    def test_create_dxprogram(self):
+        test_json = dxpy.new_dxrecord({"details": "appsuccess": False} })
+        dxprogram = dxpy.new_dxprogram(codefile='test_dxprogram.py')
+        dxprogramjob = dxprogram.run({"json_dxid": test_json.get_id()})
+        dxprogramjob.wait_on_done()
+        self.assertEqual(test_json.get_details(), {"appsuccess":True})
         test_json.destroy()
-        dxapp.destroy()
+        dxprogram.destroy()
 
 @unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
 class TestDXJob(unittest.TestCase):
     def test_job_from_app(self):
-        test_json = dxpy.new_dxrecord({"jobsuccess": False})
-        job_id_json = dxpy.new_dxrecord({"jobid": None})
-        dxapp = dxpy.new_dxapp(codefile='test_dxjob.py')
-        dxappjob = dxapp.run({"json_dxid": test_json.get_id(),
-                              "job_id_json": job_id_json.get_id()})
-        dxappjob.wait_on_done()
+        test_json = dxpy.new_dxrecord({"details": {"jobsuccess": False} })
+        job_id_json = dxpy.new_dxrecord({"details": {"jobid": None} })
+        dxprogram = dxpy.new_dxprogram(codefile='test_dxjob.py')
+        dxprogramjob = dxprogram.run({"json_dxid": test_json.get_id(),
+                                      "job_id_json": job_id_json.get_id()})
+        dxprogramjob.wait_on_done()
 
-        dxjob_id = job_id_json.get()["jobid"]
+        dxjob_id = job_id_json.get_details()["jobid"]
         self.assertIsNotNone(dxjob_id)
         dxjob = dxpy.DXJob(dxjob_id)
         dxjob.wait_on_done()
 
-        self.assertEqual(test_json.get(), {"jobsuccess":True})
+        self.assertEqual(test_json.get_details(), {"jobsuccess":True})
 
-        test_json.destroy()
-        dxapp.destroy()
+        test_json.remove()
+        dxprogram.remove()
 
 if __name__ == '__main__':
     unittest.main()

@@ -32,7 +32,7 @@ def new_dxjob(fn_input, fn_name):
     dxjob.new(fn_input, fn_name)
     return dxjob
 
-class DXJob(DXDataObject):
+class DXJob():
     '''Remote job object handler'''
 
     _class = "job"
