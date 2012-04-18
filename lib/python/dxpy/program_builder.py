@@ -49,7 +49,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])
-        for program_id in dxpy.search(classname="program", properties={"name": program_spec["name"]}):
+        for program_id in dxpy.search(classname="program", properties={"name": {"pattern": program_spec["name"]}}):
             if overwrite:
                 logging.info("Deleting program %s" % (program_id))
                 # TODO: test me
