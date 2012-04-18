@@ -1,28 +1,28 @@
-#include "dxtable.h"
+#include "dxgtable.h"
 #include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace dx;
 
-void DXTable::setID(const std::string &dxid) {
+void DXGTable::setID(const std::string &dxid) {
   if (row_buffer_.length() > 0)
     flush();
 
   part_index_ = 0;
 
-  DXClass::setID(dxid);
+  DXDataObject::setIDs(dxid);
 }
 
-void DXTable::create(const JSON &columns) {
+void DXGTable::create(const JSON &columns) {
   JSON input_params(JSON_OBJECT);
   input_params["columns"] = columns;
 
-  const JSON resp = tableNew(input_params);
+  const JSON resp = gtableNew(input_params);
 
   setID(resp["id"].get<string>());
 }
 
-void DXTable::create(const JSON &columns,
+void DXGTable::create(const JSON &columns,
 		     const string &chr_col,
 		     const string &lo_col,
 		     const string &hi_col) {
@@ -30,21 +30,21 @@ void DXTable::create(const JSON &columns,
   input_params["columns"] = columns;
   input_params["index"] = chr_col + "." + lo_col + "." + hi_col;
 
-  const JSON resp = tableNew(input_params);
+  const JSON resp = gtableNew(input_params);
 
   setID(resp["id"].get<string>());
 }
 
-DXTable DXTable::extend(const JSON &columns) const {
+DXGTable DXGTable::extend(const JSON &columns) const {
   JSON input_params(JSON_OBJECT);
   input_params["columns"] = columns;
 
-  const JSON resp = tableExtend(dxid_, input_params);
+  const JSON resp = gtableExtend(dxid_, input_params);
 
-  return DXTable(resp["id"].get<string>());
+  return DXGTable(resp["id"].get<string>());
 }
 
-JSON DXTable::getRows(const JSON &column_names, const int starting, const int limit) const {
+JSON DXGTable::getRows(const JSON &column_names, const int starting, const int limit) const {
   JSON input_params(JSON_OBJECT);
   if (column_names.type() == JSON_ARRAY)
     input_params["columns"] = column_names;
@@ -53,10 +53,10 @@ JSON DXTable::getRows(const JSON &column_names, const int starting, const int li
   if (limit >= 0)
     input_params["limit"] = limit;
 
-  return tableGet(dxid_, input_params);
+  return gtableGet(dxid_, input_params);
 }
 
-JSON DXTable::getRows(const string &chr, const int lo, const int hi,
+JSON DXGTable::getRows(const string &chr, const int lo, const int hi,
 		      const JSON &column_names, const int starting, const int limit) const {
   JSON input_params(JSON_OBJECT);
   if (column_names.type() == JSON_ARRAY)
@@ -70,18 +70,18 @@ JSON DXTable::getRows(const string &chr, const int lo, const int hi,
   input_params["query"].push_back(lo);
   input_params["query"].push_back(hi);
 
-  return tableGet(dxid_, input_params);
+  return gtableGet(dxid_, input_params);
 }
 
-void DXTable::addRows(const JSON &data, int index) {
+void DXGTable::addRows(const JSON &data, int index) {
   JSON input_params(JSON_OBJECT);
   input_params["data"] = data;
   input_params["index"] = index;
-  tableAddRows(dxid_, input_params);
+  gtableAddRows(dxid_, input_params);
 }
 
 // For automatic index generation
-void DXTable::addRows(const JSON &data) {
+void DXGTable::addRows(const JSON &data) {
   for (JSON::const_array_iterator iter = data.array_begin();
        iter != data.array_end();
        iter++) {
@@ -92,7 +92,7 @@ void DXTable::addRows(const JSON &data) {
   }
 }
 
-int DXTable::getUnusedPartIndex() {
+int DXGTable::getUnusedPartIndex() {
   const JSON desc = describe();
   if (desc["parts"].length() == 250000)
     throw DXGTableError();//"250000 part indices already used."
@@ -106,7 +106,7 @@ int DXTable::getUnusedPartIndex() {
   throw DXGTableError();//"Usable part index not found."
 }
 
-void DXTable::flush() {
+void DXGTable::flush() {
   JSON input_params(JSON_OBJECT);
   input_params["data"] = row_buffer_;
   input_params["index"] = getUnusedPartIndex();
@@ -116,7 +116,7 @@ void DXTable::flush() {
   row_buffer_ = JSON(JSON_ARRAY);
 }
 
-void DXTable::close(const bool block) {
+void DXGTable::close(const bool block) {
   if (row_buffer_.length() > 0)
     flush();
   tableClose(dxid_);
@@ -125,35 +125,35 @@ void DXTable::close(const bool block) {
     waitOnState();
 }
 
-void DXTable::waitOnClose() const {
+void DXGTable::waitOnClose() const {
   waitOnState();
 }
 
-DXTable DXTable::openDXTable(const string &dxid) {
-  return DXTable(dxid);
+DXGTable DXGTable::openDXGTable(const string &dxid) {
+  return DXGTable(dxid);
 }
 
-DXTable DXTable::newDXTable(const JSON &columns) {
-  DXTable table;
+DXGTable DXGTable::newDXGTable(const JSON &columns) {
+  DXGTable table;
   table.create(columns);
   return table;
 }
 
-DXTable DXTable::newDXTable(const JSON &columns,
+DXGTable DXGTable::newDXGTable(const JSON &columns,
 			    const string &chr_col,
 			    const string &lo_col,
 			    const string &hi_col) {
-  DXTable table;
+  DXGTable table;
   table.create(columns, chr_col, lo_col, hi_col);
   return table;
 }
 
-DXTable DXTable::extendDXTable(const string &dxid, const JSON &columns) {
-  DXTable table(dxid);
+DXGTable DXGTable::extendDXGTable(const string &dxid, const JSON &columns) {
+  DXGTable table(dxid);
   return table.extend(columns);
 }
 
-JSON DXTable::columnDesc(const string &name,
+JSON DXGTable::columnDesc(const string &name,
 		const string &type) {
   string col_desc = name + ":" + type;
   return JSON(col_desc);

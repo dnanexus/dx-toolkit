@@ -9,8 +9,45 @@
  * TODO: Talk about how "open" is only for writing, "closed" is only
  * for reading, and "closing" is a useless state.
  */
-class DXFile: public DXClass {
+class DXFile: public DXDataObject {
  private:
+  dx::JSON describe_(const std::string &input_params) const {
+    return fileDescribe(dxid_, input_params);
+  }
+  void addTypes_(const std::string &input_params) const {
+    fileAddTypes(dxid_, input_params);
+  }
+  void removeTypes_(const std::string &input_params) const {
+    fileRemoveTypes(dxid_, input_params);
+  }
+  dx::JSON getDetails_(const std::string &input_params) const {
+    return fileGetDetails(dxid_, input_params);
+  }
+  void setDetails_(const std::string &input_params) const {
+    fileSetDetails(dxid_, input_params);
+  }
+  void setVisibility_(const std::string &input_params) const {
+    fileSetVisibility(dxid_, input_params);
+  }
+  void rename_(const std::string &input_params) const {
+    fileRename(dxid_, input_params);
+  }
+  void setProperties_(const std::string &input_params) const {
+    fileSetProperties(dxid_, input_params);
+  }
+  void addTags_(const std::string &input_params) const {
+    fileAddTags(dxid_, input_params);
+  }
+  void removeTags_(const std::string &input_params) const {
+    fileRemoveTags(dxid_, input_params);
+  }
+  void close_(const std::string &input_params) const {
+    fileClose(dxid_, input_params);
+  }
+  dx::JSON listProjects_(const std::string &input_params) const {
+    return fileListProjects(dxid_, input_params);
+  }
+
   /**
    * For use when reading closed remote files; stores the current
    * position (in bytes from the beginning of the file) from which
@@ -55,18 +92,6 @@ class DXFile: public DXClass {
  public:
   DXFile() {}
   DXFile(const std::string &dxid) { setID(dxid); }
-
-  /** 
-   * Describes the object.
-   *
-   * @see DXClass::describe()
-   */
-  dx::JSON describe() const { return fileDescribe(dxid_); }
-  dx::JSON getProperties(const dx::JSON &keys=dx::JSON(dx::JSON_OBJECT)) const { return fileGetProperties(dxid_, keys); }
-  void setProperties(const dx::JSON &properties) const { fileSetProperties(dxid_, properties); }
-  void addTypes(const dx::JSON &types) const { fileAddTypes(dxid_, types); }
-  void removeTypes(const dx::JSON &types) const { fileRemoveTypes(dxid_, types); }
-  void destroy() { fileDestroy(dxid_); }
 
   // File-specific functions
 

@@ -22,7 +22,7 @@ void DXFile::setID(const string &dxid) {
 
   init_internals_();
 
-  DXClass::setID(dxid);
+  DXDataObject::setIDs(dxid);
 }
 
 void DXFile::create(const std::string &media_type) {

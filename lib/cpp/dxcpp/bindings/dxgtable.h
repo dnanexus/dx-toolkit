@@ -1,5 +1,5 @@
-#ifndef DXCPP_BINDINGS_DXTABLE_H
-#define DXCPP_BINDINGS_DXTABLE_H
+#ifndef DXCPP_BINDINGS_DXGTABLE_H
+#define DXCPP_BINDINGS_DXGTABLE_H
 
 #include "../bindings.h"
 #include "../api.h"
@@ -8,31 +8,58 @@
  * @brief Remote table handler
  *
  */
-class DXTable: public DXClass {
+class DXGTable: public DXDataObject {
  private:
+  dx::JSON describe_(const std::string &input_params) const {
+    return gtableDescribe(dxid_, input_params);
+  }
+  void addTypes_(const std::string &input_params) const {
+    gtableAddTypes(dxid_, input_params);
+  }
+  void removeTypes_(const std::string &input_params) const {
+    gtableRemoveTypes(dxid_, input_params);
+  }
+  dx::JSON getDetails_(const std::string &input_params) const {
+    return gtableGetDetails(dxid_, input_params);
+  }
+  void setDetails_(const std::string &input_params) const {
+    gtableSetDetails(dxid_, input_params);
+  }
+  void setVisibility_(const std::string &input_params) const {
+    gtableSetVisibility(dxid_, input_params);
+  }
+  void rename_(const std::string &input_params) const {
+    gtableRename(dxid_, input_params);
+  }
+  void setProperties_(const std::string &input_params) const {
+    gtableSetProperties(dxid_, input_params);
+  }
+  void addTags_(const std::string &input_params) const {
+    gtableAddTags(dxid_, input_params);
+  }
+  void removeTags_(const std::string &input_params) const {
+    gtableRemoveTags(dxid_, input_params);
+  }
+  void close_(const std::string &input_params) const {
+    gtableClose(dxid_, input_params);
+  }
+  dx::JSON listProjects_(const std::string &input_params) const {
+    return gtableListProjects(dxid_, input_params);
+  }
+
   dx::JSON row_buffer_;
   int row_buffer_maxsize_;
   int part_index_;
 
  public:
- DXTable() : DXClass(),
+ DXGTable() : DXDataObject(),
     row_buffer_(dx::JSON(dx::JSON_ARRAY)),
     row_buffer_maxsize_(104857600),
     part_index_(0) { }
- DXTable(const std::string & dxid) : DXClass(dxid),
+ DXGTable(const std::string & dxid) : DXDataObject(dxid),
     row_buffer_(dx::JSON(dx::JSON_ARRAY)),
     row_buffer_maxsize_(104857600),
     part_index_(0) { }
-
-  /** Describes the object.
-   * @see DXClass::describe()
-   */
-  dx::JSON describe() const { return tableDescribe(dxid_); }
-  dx::JSON getProperties(const dx::JSON &keys) const { return tableGetProperties(dxid_, keys); }
-  void setProperties(const dx::JSON &properties) const { tableSetProperties(dxid_, properties); }
-  void addTypes(const dx::JSON &types) const { tableAddTypes(dxid_, types); }
-  void removeTypes(const dx::JSON &types) const { tableRemoveTypes(dxid_, types); }
-  void destroy() { tableDestroy(dxid_); }
 
   // Table-specific functions
 
@@ -54,7 +81,7 @@ class DXTable: public DXClass {
 	      const std::string &lo_col,
 	      const std::string &hi_col);
 
-  DXTable extend(const dx::JSON &columns) const;
+  DXGTable extend(const dx::JSON &columns) const;
 
   /**
    * Retrieves the requested rows and columns.
@@ -129,16 +156,16 @@ class DXTable: public DXClass {
    */
   void waitOnClose() const;
 
-  static DXTable openDXTable(const std::string &dxid);
+  static DXGTable openDXGTable(const std::string &dxid);
 
-  static DXTable newDXTable(const dx::JSON &columns);
+  static DXGTable newDXGTable(const dx::JSON &columns);
 
-  static DXTable newDXTable(const dx::JSON &columns,
+  static DXGTable newDXGTable(const dx::JSON &columns,
 			    const std::string &chr_col,
 			    const std::string &lo_col,
 			    const std::string &hi_col);
 
-  static DXTable extendDXTable(const std::string &dxid, const dx::JSON &columns);
+  static DXGTable extendDXGTable(const std::string &dxid, const dx::JSON &columns);
 
   /**
    * Constructs a column descriptor from a column name and data type.

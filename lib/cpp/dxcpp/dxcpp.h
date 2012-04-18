@@ -7,12 +7,9 @@
 #include "dxjson/dxjson.h"
 #include "exceptions.h"
 
-// TODO: Put HTTP stuff here?
-
-// (resource, data, method='POST', headers={}, auth=None,
-//   jsonify_data=True, want_full_response=False, **kwargs):
 // Want to consider returning a string especially after a getRows call
-//
+
+extern std::string g_WORKSPACE_ID;
 
 dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
 		   const std::map<std::string, std::string> &headers=std::map<std::string, std::string>());

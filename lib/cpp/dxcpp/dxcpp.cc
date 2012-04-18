@@ -13,11 +13,14 @@ using namespace dx;
 
 bool g_APISERVER_SET = false;
 bool g_SECURITY_CONTEXT_SET = false;
+bool g_WORKSPACE_ID_SET = false;
 
 string g_APISERVER_HOST;
 string g_APISERVER_PORT;
 string g_APISERVER;
 JSON g_SECURITY_CONTEXT;
+string g_WORKSPACE_ID;
+string g_PROJECT_CONTEXT_ID;
 
 JSON DXHTTPRequest(const string &resource, const string &data,
 		   const map<string, string> &headers) {
@@ -90,6 +93,14 @@ void setSecurityContext(const JSON &security_context) {
   g_SECURITY_CONTEXT_SET = true;
 }
 
+void setWorkspaceID(const string &workspace_id) {
+  g_WORKSPACE_ID = workspace_id;
+}
+
+void setProjectContext(const string &project_id) {
+  g_PROJECT_CONTEXT_ID = project_id;
+}
+
 void loadFromEnvironment() {
   if (!g_APISERVER_SET &&
       (getenv("APISERVER_HOST") != NULL) &&
@@ -100,4 +111,15 @@ void loadFromEnvironment() {
   if (!g_SECURITY_CONTEXT_SET &&
       getenv("SECURITY_CONTEXT") != NULL)
     setSecurityContext(JSON::parse(getenv("SECURITY_CONTEXT")));
+
+  if (!g_WORKSPACE_ID_SET) {
+    if (getenv("JOB_ID") != NULL) {
+      if (getenv("WORKSPACE_ID") != NULL)
+	setWorkspaceID(getenv("WORKSPACE_ID"));
+      if (getenv("PROJECT_CONTEXT_ID") != NULL)
+	setProjectContext(getenv("PROJECT_CONTEXT_ID"));
+    } else if (getenv("PROJECT_CONTEXT_ID") != NULL) {
+      setWorkspaceID(getenv("PROJECT_CONTEXT_ID"));
+    }
+  }
 }
