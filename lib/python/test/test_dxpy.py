@@ -6,7 +6,7 @@ from dxpy.exceptions import *
 
 # Store the following in PROJECT_CONTEXT_ID to make some of the tests pass
 proj_id = "project-000000000000000000000001"
-second_proj_id = 'project-000000000000000000000002';
+second_proj_id = 'project-000000000000000000000002'
 
 def remove_all(proj_id, folder="/"):
     dxproject = dxpy.DXProject(proj_id)
@@ -704,7 +704,7 @@ class TestDXTable(unittest.TestCase):
 @unittest.skip("Skipping jobs and programs; running Python programs not yet supported")
 class TestDXProgram(unittest.TestCase):
     def test_create_dxprogram(self):
-        test_json = dxpy.new_dxrecord({"details": "appsuccess": False} })
+        test_json = dxpy.new_dxrecord({"details": {"appsuccess": False} })
         dxprogram = dxpy.new_dxprogram(codefile='test_dxprogram.py')
         dxprogramjob = dxprogram.run({"json_dxid": test_json.get_id()})
         dxprogramjob.wait_on_done()
