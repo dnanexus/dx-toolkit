@@ -214,7 +214,6 @@ class DXProject(object):
         return dxpy.api.projectClone(self._dxid, {"objects": objects,
                                                   "folders": folders,
                                                   "project": project,
-                                                  "folders": folders,
                                                   "destination": destination,
                                                   "includeHiddenLinks": include_hidden_links})
 
