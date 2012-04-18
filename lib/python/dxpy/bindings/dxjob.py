@@ -32,10 +32,14 @@ def new_dxjob(fn_input, fn_name):
     dxjob.new(fn_input, fn_name)
     return dxjob
 
-class DXJob():
+class DXJob(object):
     '''Remote job object handler'''
 
     _class = "job"
+
+    def __init__(self, dxid=None):
+        if dxid is not None:
+            self.set_id(dxid)
 
     def new(self, fn_input, fn_name):
         '''

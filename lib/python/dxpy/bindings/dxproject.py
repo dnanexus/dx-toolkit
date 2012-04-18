@@ -8,7 +8,7 @@ from dxpy.bindings import *
 # DXProject #
 #############
 
-class DXProject():
+class DXProject(object):
     '''Remote project handler'''
 
     def __init__(self, dxid=None):
