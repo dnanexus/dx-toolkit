@@ -11,42 +11,18 @@
  */
 class DXFile: public DXDataObject {
  private:
-  dx::JSON describe_(const std::string &input_params) const {
-    return fileDescribe(dxid_, input_params);
-  }
-  void addTypes_(const std::string &input_params) const {
-    fileAddTypes(dxid_, input_params);
-  }
-  void removeTypes_(const std::string &input_params) const {
-    fileRemoveTypes(dxid_, input_params);
-  }
-  dx::JSON getDetails_(const std::string &input_params) const {
-    return fileGetDetails(dxid_, input_params);
-  }
-  void setDetails_(const std::string &input_params) const {
-    fileSetDetails(dxid_, input_params);
-  }
-  void setVisibility_(const std::string &input_params) const {
-    fileSetVisibility(dxid_, input_params);
-  }
-  void rename_(const std::string &input_params) const {
-    fileRename(dxid_, input_params);
-  }
-  void setProperties_(const std::string &input_params) const {
-    fileSetProperties(dxid_, input_params);
-  }
-  void addTags_(const std::string &input_params) const {
-    fileAddTags(dxid_, input_params);
-  }
-  void removeTags_(const std::string &input_params) const {
-    fileRemoveTags(dxid_, input_params);
-  }
-  void close_(const std::string &input_params) const {
-    fileClose(dxid_, input_params);
-  }
-  dx::JSON listProjects_(const std::string &input_params) const {
-    return fileListProjects(dxid_, input_params);
-  }
+  dx::JSON describe_(const std::string &s)const{return fileDescribe(dxid_,s);}
+  void addTypes_(const std::string &s)const{fileAddTypes(dxid_,s);}
+  void removeTypes_(const std::string &s)const{fileRemoveTypes(dxid_,s);}
+  dx::JSON getDetails_(const std::string &s)const{return fileGetDetails(dxid_,s);}
+  void setDetails_(const std::string &s)const{fileSetDetails(dxid_,s);}
+  void setVisibility_(const std::string &s)const{fileSetVisibility(dxid_,s);}
+  void rename_(const std::string &s)const{fileRename(dxid_,s);}
+  void setProperties_(const std::string &s)const{fileSetProperties(dxid_,s);}
+  void addTags_(const std::string &s)const{fileAddTags(dxid_,s);}
+  void removeTags_(const std::string &s)const{fileRemoveTags(dxid_,s);}
+  void close_(const std::string &s)const{fileClose(dxid_,s);}
+  dx::JSON listProjects_(const std::string &s)const{return fileListProjects(dxid_,s);}
 
   /**
    * For use when reading closed remote files; stores the current
@@ -70,7 +46,7 @@ class DXFile: public DXDataObject {
    * For use when writing remote files; stores a buffer of data that
    * will be periodically flushed to the API server.
    */
-  std::string buffer_;
+  std::stringstream buffer_;
 
   /**
    * For use when writing remote files; stores the part index to be
@@ -91,7 +67,14 @@ class DXFile: public DXDataObject {
 
  public:
   DXFile() {}
-  DXFile(const std::string &dxid) { setID(dxid); }
+ DXFile(const DXFile& to_copy) { setIDs(to_copy.dxid_, to_copy.proj_); }
+ DXFile(const std::string &dxid) { setIDs(dxid); }
+  DXFile(const std::string &dxid,
+	 const std::string &proj) { setIDs(dxid, proj); }
+  DXFile& operator=(const DXFile& to_copy) {
+    this->setIDs(to_copy.dxid_, to_copy.proj_);
+    return *this;
+  }
 
   // File-specific functions
 
@@ -102,7 +85,7 @@ class DXFile: public DXDataObject {
    *
    * @param dxid Object ID of the remote file to be accessed
    */
-  void setID(const std::string &dxid);
+  void setIDs(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID);
 
   /**
    * Creates a new remote file object.  Sets the object ID for the
@@ -110,7 +93,8 @@ class DXFile: public DXDataObject {
    *
    * @param media_type String representing the media type of the file.
    */
-  void create(const std::string &media_type="");
+  void create(const std::string &media_type="",
+	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Reads the next n bytes in the remote file object (or however many
@@ -226,18 +210,18 @@ class DXFile: public DXDataObject {
    */
   template<typename T>
     DXFile & operator<<(const T& x) {
-    std::stringstream str_buf;
-    str_buf << x;
-    write(str_buf.str());
+    buffer_ << x;
+    if (buffer_.tellp() >= max_buf_size_)
+      flush();
     return *this;
   }
 
   typedef std::basic_ostream<char, std::char_traits<char> > couttype;
   typedef couttype& (*stdendline)(couttype&);
   DXFile & operator<<(stdendline manipulator) {
-    std::stringstream str_buf;
-    str_buf << manipulator;
-    write(str_buf.str());
+    buffer_ << manipulator;
+    if (buffer_.tellp() >= max_buf_size_)
+      flush();
     return *this;
   }
 

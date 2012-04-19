@@ -14,6 +14,17 @@ string second_proj_id = "project-000000000000000000000002";
 
 // TODO: Finish writing tests for other classes.
 
+void remove_all(const string &proj, const string &folder="/") {
+  DXProject dxproject(proj);
+  JSON listf = dxproject.listFolder(folder);
+  dxproject.removeObjects(listf["objects"]);
+  for (int i = 0; i < listf["folders"].size(); i++) {
+    string subfolder = listf["folders"][i].get<string>();
+    remove_all(proj, subfolder);
+    dxproject.removeFolder(subfolder);
+  }
+}
+
 //////////////
 // DXRecord //
 //////////////
@@ -57,7 +68,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   ASSERT_EQ(desc["class"], "record");
   ASSERT_EQ(desc["types"], JSON(JSON_ARRAY));
   ASSERT_EQ(desc["state"], "open");
-  ASSERT_FALSE(desc["hidden"]);
+  ASSERT_FALSE(desc["hidden"].get<bool>());
   ASSERT_EQ(desc["links"], JSON(JSON_ARRAY));
   ASSERT_EQ(desc["name"], dxrecord.getID());
   ASSERT_EQ(desc["folder"], "/");
@@ -68,109 +79,144 @@ TEST_F(DXRecordTest, DescribeTest) {
 
   desc = dxrecord.describe(true);
   ASSERT_EQ(desc["properties"], JSON(JSON_OBJECT));
+
+  JSON settings(JSON_OBJECT);
+  JSON types = JSON(JSON_ARRAY);
+  types.push_back("mapping");
+  types.push_back("foo");
+  JSON tags = JSON(JSON_ARRAY);
+  tags.push_back("bar");
+  tags.push_back("baz");
+  JSON properties = JSON(JSON_OBJECT);
+  properties["project"] = "cancer";
+  JSON details = JSON(JSON_OBJECT);
+  details["$dnanexus_link"] = dxrecord.getID();
+  JSON links_to_expect = JSON(JSON_ARRAY);
+  links_to_expect.push_back(dxrecord.getID());
+
+  settings["types"] = types;
+  settings["tags"] = tags;
+  settings["properties"] = properties;
+  settings["hidden"] = true;
+  settings["details"] = details;
+  settings["folder"] = "/a";
+  settings["parents"] = true;
+  settings["name"] = "Name";
+  DXRecord second_dxrecord = DXRecord::newDXRecord(settings);
+  desc = second_dxrecord.describe(true);
+  ASSERT_EQ(desc["project"], proj_id);
+  ASSERT_EQ(desc["id"], second_dxrecord.getID());
+  ASSERT_EQ(desc["class"], "record");
+  ASSERT_EQ(desc["types"], types);
+  ASSERT_EQ(desc["state"], "open");
+  ASSERT_TRUE(desc["hidden"].get<bool>());
+  ASSERT_EQ(desc["links"], links_to_expect);
+  ASSERT_EQ(desc["name"], "Name");
+  ASSERT_EQ(desc["folder"], "/a");
+  ASSERT_EQ(desc["tags"], tags);
+  ASSERT_TRUE(desc.has("created"));
+  ASSERT_TRUE(desc.has("modified"));
+  ASSERT_EQ(desc["properties"], properties);
 }
 
 // ////////////
 // // DXFile //
 // ////////////
 
-// string getBaseName(const string& filename) {
-//   size_t lastslash = filename.find_last_of("/\\");
-//   return filename.substr(lastslash+1);
-// }
+string getBaseName(const string& filename) {
+  size_t lastslash = filename.find_last_of("/\\");
+  return filename.substr(lastslash+1);
+}
 
 string foofilename = "";
 
-// class DXFileTest : public testing::Test {
-// public:
-//   static const string foostr;
-//   string tempfilename;
+class DXFileTest : public testing::Test {
+public:
+  static const string foostr;
+  string tempfilename;
 
-//   DXFile dxfile;
+  DXFile dxfile;
 
-// protected:
-//   virtual void SetUp() {
-//     char name [L_tmpnam];
-//     tmpnam(name);
-//     tempfilename = string(name);
+protected:
+  virtual void SetUp() {
+    char name [L_tmpnam];
+    tmpnam(name);
+    tempfilename = string(name);
 
-//     if (foofilename == "") {
-//       char fooname [L_tmpnam];
-//       tmpnam(fooname);
-//       foofilename = string(fooname);
-//       ofstream foofile(fooname);
-//       foofile << foostr;
-//       foofile.close();
-//     }
-//   }
+    if (foofilename == "") {
+      char fooname [L_tmpnam];
+      tmpnam(fooname);
+      foofilename = string(fooname);
+      ofstream foofile(fooname);
+      foofile << foostr;
+      foofile.close();
+    }
+  }
 
-//   virtual void TearDown() {
-//     remove(tempfilename.c_str());
+  virtual void TearDown() {
+    remove(tempfilename.c_str());
 
-//     try {
-//       dxfile.destroy();
-//     } catch (...) {
-//     }
-//   }
-// };
+    remove_all(proj_id);
+  }
+};
 
-// const string DXFileTest::foostr = "foo\n";
+const string DXFileTest::foostr = "foo\n";
 
-// TEST_F(DXFileTest, UploadDownloadFiles) {
-//   dxfile = DXFile::uploadLocalFile(foofilename);
-//   dxfile.waitOnClose();
-//   ASSERT_FALSE(dxfile.is_open());
+TEST_F(DXFileTest, UploadDownloadFiles) {
+  dxfile = DXFile::uploadLocalFile(foofilename);
+  dxfile.waitOnClose();
+  ASSERT_FALSE(dxfile.is_open());
 
-//   EXPECT_EQ(getBaseName(foofilename),
-//   	    dxfile.getProperties()["name"].get<string>());
+  EXPECT_EQ(getBaseName(foofilename),
+  	    dxfile.describe(true)["properties"]["name"].get<string>());
 
-//   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
 
-//   char stored[10];
-//   ifstream downloadedfile(tempfilename.c_str());
-//   downloadedfile.read(stored, 10);
-//   ASSERT_EQ(foostr.size(), downloadedfile.gcount());
-//   ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
-// }
+  char stored[10];
+  ifstream downloadedfile(tempfilename.c_str());
+  downloadedfile.read(stored, 10);
+  ASSERT_EQ(foostr.size(), downloadedfile.gcount());
+  ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
+}
 
-// TEST_F(DXFileTest, WriteReadFile) {
-//   // TODO
+TEST_F(DXFileTest, WriteReadFile) {
+  // TODO
 
-//   dxfile = DXFile::newDXFile();
-//   dxfile.write(foostr.data(), foostr.length());
-//   dxfile.close();
+  dxfile = DXFile::newDXFile();
+  dxfile.write(foostr.data(), foostr.length());
+  dxfile.close();
 
-//   DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
-//   same_dxfile.waitOnClose();
+  DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
+  same_dxfile.waitOnClose();
 
-//   char stored[10];
-//   same_dxfile.read(stored, foostr.length());
-//   ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
-//   EXPECT_TRUE(same_dxfile.eof());
+  char stored[10];
+  same_dxfile.read(stored, foostr.length());
+  ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
+  EXPECT_TRUE(same_dxfile.eof());
 
-//   same_dxfile.seek(1);
-//   EXPECT_FALSE(same_dxfile.eof());
-//   same_dxfile.read(stored, foostr.length());
-//   ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
-// }
+  same_dxfile.seek(1);
+  EXPECT_FALSE(same_dxfile.eof());
+  same_dxfile.read(stored, foostr.length());
+  ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
+}
 
-// TEST_F(DXFileTest, StreamingOperators) {
-//   dxfile = DXFile::newDXFile();
-//   stringstream samestr;
-//   dxfile  << "foo" << 1 << " " << 2.5 << endl;
-//   samestr << "foo" << 1 << " " << 2.5 << endl;
-//   dxfile  << "bar" << endl;
-//   samestr << "bar" << endl;
-//   dxfile.close(true);
+TEST_F(DXFileTest, StreamingOperators) {
+  dxfile = DXFile::newDXFile();
+  stringstream samestr;
+  dxfile  << "foo" << 1 << " " << 2.5 << endl;
+  samestr << "foo" << 1 << " " << 2.5 << endl;
+  dxfile  << "bar" << endl;
+  samestr << "bar" << endl;
+  dxfile.close(true);
   
-//   char stored[50];
-//   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
-//   ifstream downloadedfile(tempfilename.c_str());
-//   downloadedfile.read(stored, 50);
-//   ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
+  char stored[50];
+  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+  ifstream downloadedfile(tempfilename.c_str());
+  downloadedfile.read(stored, 50);
+  ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
 
-//   // TODO: Test >> if/when implemented
-// }
+  // TODO: Test >> if/when implemented
+}
 
 // /////////////
 // // DXTable //

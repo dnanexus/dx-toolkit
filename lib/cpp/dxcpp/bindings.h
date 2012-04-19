@@ -29,13 +29,18 @@ class DXDataObject {
 
  public:
   DXDataObject() { }
- DXDataObject(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID) :
-  dxid_(dxid), proj_(proj) { }
-
+  DXDataObject(const DXDataObject &to_copy) {
+    dxid_ = to_copy.dxid_;
+    proj_ = to_copy.proj_;
+  }
+  DXDataObject(const std::string &dxid) { setIDs(dxid); }
+  DXDataObject(const std::string &dxid, const std::string &proj) {
+    setIDs(dxid, proj); }
+ 
   std::string getID() const { return dxid_; }
   std::string getProjectID() const { return proj_; }
   virtual void setIDs(const std::string &dxid,
-		      const std::string &proj="default");
+		      const std::string &proj=g_WORKSPACE_ID);
 
   /** Returns a JSON object with, at minimum, the keys "id", "class",
    * "types", and "createdAt".  Other fields may also be included,
@@ -52,16 +57,17 @@ class DXDataObject {
   void setProperties(const dx::JSON &properties) const;
   void addTags(const dx::JSON &tags) const;
   void removeTags(const dx::JSON &tags) const;
-  void close() const;
+  virtual void close() const;
   dx::JSON listProjects() const;
   void remove();
 };
 
 #include "bindings/dxrecord.h"
-//#include "bindings/dxcollection.h"
+//#include "bindings/dxtable.h"
 #include "bindings/dxfile.h"
 #include "bindings/dxgtable.h"
-#include "bindings/dxprogram.h"
 #include "bindings/dxjob.h"
+#include "bindings/dxprogram.h"
+#include "bindings/dxproject.h"
 
 #endif

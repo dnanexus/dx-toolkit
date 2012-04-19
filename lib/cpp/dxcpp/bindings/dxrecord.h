@@ -5,63 +5,40 @@
 
 class DXRecord: public DXDataObject {
  private:
-  dx::JSON describe_(const std::string &input_params) const {
-    return recordDescribe(dxid_, input_params);
-  }
-  void addTypes_(const std::string &input_params) const {
-    recordAddTypes(dxid_, input_params);
-  }
-  void removeTypes_(const std::string &input_params) const {
-    recordRemoveTypes(dxid_, input_params);
-  }
-  dx::JSON getDetails_(const std::string &input_params) const {
-    return recordGetDetails(dxid_, input_params);
-  }
-  void setDetails_(const std::string &input_params) const {
-    recordSetDetails(dxid_, input_params);
-  }
-  void setVisibility_(const std::string &input_params) const {
-    recordSetVisibility(dxid_, input_params);
-  }
-  void rename_(const std::string &input_params) const {
-    recordRename(dxid_, input_params);
-  }
-  void setProperties_(const std::string &input_params) const {
-    recordSetProperties(dxid_, input_params);
-  }
-  void addTags_(const std::string &input_params) const {
-    recordAddTags(dxid_, input_params);
-  }
-  void removeTags_(const std::string &input_params) const {
-    recordRemoveTags(dxid_, input_params);
-  }
-  void close_(const std::string &input_params) const {
-    recordClose(dxid_, input_params);
-  }
-  dx::JSON listProjects_(const std::string &input_params) const {
-    return recordListProjects(dxid_, input_params);
-  }
+  dx::JSON describe_(const std::string &s)const{return recordDescribe(dxid_,s);}
+  void addTypes_(const std::string &s)const{recordAddTypes(dxid_,s);}
+  void removeTypes_(const std::string &s)const{recordRemoveTypes(dxid_,s);}
+  dx::JSON getDetails_(const std::string &s)const{return recordGetDetails(dxid_,s);}
+  void setDetails_(const std::string &s)const{recordSetDetails(dxid_,s);}
+  void setVisibility_(const std::string &s)const{recordSetVisibility(dxid_,s);}
+  void rename_(const std::string &s)const{recordRename(dxid_,s);}
+  void setProperties_(const std::string &s)const{recordSetProperties(dxid_,s);}
+  void addTags_(const std::string &s)const{recordAddTags(dxid_,s);}
+  void removeTags_(const std::string &s)const{recordRemoveTags(dxid_,s);}
+  void close_(const std::string &s)const{recordClose(dxid_,s);}
+  dx::JSON listProjects_(const std::string &s)const{return recordListProjects(dxid_,s);}
 
  public:
   // Record-specific functions
 
   DXRecord() { }
   DXRecord(const std::string &dxid,
-	   const std::string &proj="default") { setIDs(dxid, proj); }
+	   const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
   /**
    * Creates a new remote record object.  The handler is updated with
    * the object ID.
    *
    */
-  void create();
+  void create(const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Create a new remote record object.
    *
    * @return A DXRecord remote object handler.
    */
-  static DXRecord newDXRecord();
+  static DXRecord newDXRecord(const dx::JSON &data_obj_fields=
+			      dx::JSON(dx::JSON_OBJECT));
 };
 
 #endif

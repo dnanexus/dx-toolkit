@@ -11,27 +11,30 @@ const int DXFile::max_buf_size_ = 104857600;
 void DXFile::init_internals_() {
   pos_ = 0;
   file_length_ = -1;
-  buffer_ = "";
+  buffer_.str(string());
   cur_part_ = 1;
   eof_ = false;
 }
 
-void DXFile::setID(const string &dxid) {
-  if (buffer_.length() > 0)
+void DXFile::setIDs(const string &dxid, const string &proj) {
+  if (buffer_.tellp() > 0)
     flush();
 
   init_internals_();
 
-  DXDataObject::setIDs(dxid);
+  DXDataObject::setIDs(dxid, proj);
 }
 
-void DXFile::create(const std::string &media_type) {
-  JSON input_params(JSON_OBJECT);
+void DXFile::create(const std::string &media_type,
+		    const dx::JSON &data_obj_fields) {
+  JSON input_params = data_obj_fields;
+  if (!data_obj_fields.has("project"))
+    input_params["project"] = g_WORKSPACE_ID;
   if (media_type != "")
     input_params["media"] = media_type;
   const JSON resp = fileNew(input_params);
 
-  setID(resp["id"].get<string>());
+  setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
 void DXFile::read(char* ptr, int n) {
@@ -89,19 +92,19 @@ void DXFile::seek(const int pos) {
 }
 
 void DXFile::flush() {
-  uploadPart(buffer_, cur_part_);
-  buffer_ = "";
+  uploadPart(buffer_.str(), cur_part_);
+  buffer_.str(string());
   cur_part_++;
 }
 
 // NOTE: If needed, optimize in the future to not have to copy to
 // append to buffer_ before uploading the next part.
 void DXFile::write(const char* ptr, int n) {
-  int remaining_buf_size = max_buf_size_ - buffer_.size();
+  int remaining_buf_size = max_buf_size_ - buffer_.tellp();
   if (n < remaining_buf_size) {
-    buffer_.append(ptr, n);
+    buffer_.write(ptr, n);
   } else {
-    buffer_.append(ptr, remaining_buf_size);
+    buffer_.write(ptr, remaining_buf_size);
     flush();
     write(ptr + remaining_buf_size, n - remaining_buf_size);
   }
@@ -145,7 +148,7 @@ bool DXFile::is_closed() const {
 }
 
 void DXFile::close(const bool block) {
-  if (buffer_.size() > 0)
+  if (buffer_.tellp() > 0)
     flush();
 
   fileClose(dxid_);

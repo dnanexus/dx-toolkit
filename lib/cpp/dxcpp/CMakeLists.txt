@@ -14,7 +14,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wno-sign-
 add_library(simplehttp ../SimpleHttpLib/SimpleHttp.cpp ../SimpleHttpLib/Utility.cpp ../SimpleHttpLib/SimpleHttpHeaders.cpp)
 set_target_properties(simplehttp PROPERTIES COMPILE_FLAGS -fPIC)
 
-add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxprogram.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc)
+add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxprogram.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxproject.cc)
 set_target_properties(dxcpp PROPERTIES COMPILE_FLAGS -fPIC)
 target_link_libraries(dxcpp simplehttp curl)
 

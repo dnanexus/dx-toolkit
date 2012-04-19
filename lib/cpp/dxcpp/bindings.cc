@@ -14,7 +14,7 @@ void DXDataObject::setIDs(const std::string &dxid,
 }
 
 void DXDataObject::waitOnState(const string &state,
-			  const int timeout) const {
+                               const int timeout) const {
   int elapsed = 0;
   string cur_state;
   do {
@@ -63,36 +63,28 @@ void DXDataObject::setVisibility(bool hidden) const {
 
 void DXDataObject::rename(const std::string &name) const {
   stringstream input_hash;
-  input_hash << "{";
-  if (proj_ != "")
-    input_hash << "\"project\": \"" << proj_ << "\",";
+  input_hash << "{" << "\"project\": \"" << proj_ << "\",";
   input_hash << "\"name\": " << name << "}";
   rename_(input_hash.str());
 }
 
 void DXDataObject::setProperties(const dx::JSON &properties) const {
   stringstream input_hash;
-  input_hash << "{";
-  if (proj_ != "")
-    input_hash << "\"project\": \"" << proj_ << "\",";
+  input_hash << "{" << "\"project\": \"" << proj_ << "\",";
   input_hash << "\"properties\": " << properties.toString() << "}";
   setProperties_(input_hash.str());
 }
 
 void DXDataObject::addTags(const dx::JSON &tags) const {
   stringstream input_hash;
-  input_hash << "{";
-  if (proj_ != "")
-    input_hash << "\"project\": \"" << proj_ << "\",";
+  input_hash << "{" << "\"project\": \"" << proj_ << "\",";
   input_hash << "\"tags\": " << tags.toString() << "}";
   addTags_(input_hash.str());
 }
 
 void DXDataObject::removeTags(const dx::JSON &tags) const {
   stringstream input_hash;
-  input_hash << "{";
-  if (proj_ != "")
-    input_hash << "\"project\": \"" << proj_ << "\",";
+  input_hash << "{" << "\"project\": \"" << proj_ << "\",";
   input_hash << "\"tags\": " << tags.toString() << "}";
   removeTags_(input_hash.str());
 }
@@ -106,5 +98,5 @@ JSON DXDataObject::listProjects() const {
 }
 
 void DXDataObject::remove() {
-  projectRemoveObjects(proj_, "{\"objects\":[" + dxid_ + "]}");
+  projectRemoveObjects(proj_, "{\"objects\":[\"" + dxid_ + "\"]}");
 }

@@ -3,14 +3,16 @@
 using namespace std;
 using namespace dx;
 
-void DXRecord::create() {
-  string input_hash = "{\"project\":\"project-000000000000000000000001\"}";
-  const JSON resp = recordNew(input_hash);
-  setIDs(resp["id"].get<string>(), "default");
+void DXRecord::create(const JSON &data_obj_fields) {
+  JSON input_params = data_obj_fields;
+  if (!data_obj_fields.has("project"))
+    input_params["project"] = g_WORKSPACE_ID;
+  const JSON resp = recordNew(input_params);
+  setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
-DXRecord DXRecord::newDXRecord() {
+DXRecord DXRecord::newDXRecord(const JSON &data_obj_fields) {
   DXRecord dxrecord;
-  dxrecord.create();
+  dxrecord.create(data_obj_fields);
   return dxrecord;
 }
