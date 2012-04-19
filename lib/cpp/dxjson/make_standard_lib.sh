@@ -1,4 +1,9 @@
 #!/bin/bash
+
+root=`dirname "$0"`
+
+cd $root
+
 make clean
 cmake .
 make
