@@ -18,9 +18,11 @@ filename = args[0]
 
 fastq_fh = open(filename) if os.path.exists(filename) else dxpy.open_dxfile(filename)
 
-fastq_columns = ["id:string", "sequence:string", "quality:string"]
+fastq_columns = [{"name": "id", "type": "string"},
+                 {"name": "sequence", "type": "string"},
+                 {"name": "quality", "type": "string"}]
 
-with dxpy.new_dxtable(columns=fastq_columns) as dxtable:
+with dxpy.new_dxgtable(columns=fastq_columns) as dxtable:
     i = 0
     fq_line, table_rows = [], []
     for line in fastq_fh:
