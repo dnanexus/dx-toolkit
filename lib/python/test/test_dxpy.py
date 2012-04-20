@@ -74,8 +74,8 @@ class TestDXProject(unittest.TestCase):
                        objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
                        folders=["/a/b/c/d"])
         listf = dxproject.list_folder()
-        self.assertEqual(listf["objects"], [dxrecords[2].get_id(),
-                                            dxrecords[3].get_id()])
+        self.assertEqual(listf["objects"].sort(),
+                         [dxrecords[2].get_id(), dxrecords[3].get_id()].sort())
         self.assertEqual(listf["folders"], ["/a"])
 
         listf = dxproject.list_folder("/a")
@@ -108,8 +108,8 @@ class TestDXProject(unittest.TestCase):
 
         second_proj = dxpy.DXProject(second_proj_id)
         listf = second_proj.list_folder()
-        self.assertEqual(listf["objects"], [dxrecords[0].get_id(),
-                                            dxrecords[1].get_id()])
+        self.assertEqual(listf["objects"].sort(),
+                         [dxrecords[0].get_id(), dxrecords[1].get_id()].sort())
         self.assertEqual(listf["folders"], ["/d"])
 
     def test_remove_objects(self):
@@ -284,12 +284,12 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
-        self.dxgtable.add_rows(data=[], index=9999)
+        self.dxgtable.add_rows(data=[], part=9999)
         with self.assertRaises(DXAPIError):
-            self.dxgtable.add_rows(data=[[]], index=9997)
+            self.dxgtable.add_rows(data=[[]], part=9997)
 
         for i in range(64):
-            self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+            self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
         self.dxgtable.close()
 
         with self.assertRaises(DXAPIError):
@@ -316,7 +316,7 @@ class TestDXGTable(unittest.TestCase):
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")]) as self.dxgtable:
             for i in range(64):
-                self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+                self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
 
     def test_create_table_with_invalid_spec(self):
         with self.assertRaises(DXAPIError):
@@ -328,7 +328,7 @@ class TestDXGTable(unittest.TestCase):
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
         for i in range(64):
-            self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+            self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
         with self.assertRaises(DXAPIError):
             rows = self.dxgtable.get_rows()
         self.dxgtable.close(block=True)
@@ -343,7 +343,7 @@ class TestDXGTable(unittest.TestCase):
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
         for i in range(64):
-            self.dxgtable.add_rows(data=[["row"+str(i), i]], index=i+1)
+            self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
         self.dxgtable.close(block=True)
 
         counter = 0

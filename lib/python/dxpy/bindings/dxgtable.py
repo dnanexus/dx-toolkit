@@ -37,7 +37,7 @@ class DXGTable(DXDataObject):
         self._keep_open = keep_open
         self._bufsize = buffer_size
         self._row_buf = StringIO.StringIO()
-        self._part_index = 0
+        self._part_id = 0
         if dxid is not None:
             self.set_ids(dxid, project)
 
@@ -89,7 +89,7 @@ class DXGTable(DXDataObject):
         DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
-        self._part_index = 0
+        self._part_id = 0
 
     def get_rows(self, query=None, columns=None, starting=None, limit=None):
         '''
@@ -214,15 +214,15 @@ class DXGTable(DXDataObject):
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash)
         return DXGTable(resp["id"], dx_hash["project"])
 
-    def add_rows(self, data, index=None):
+    def add_rows(self, data, part=None):
         '''
         :param data: List of rows to be added
         :type data: list of list
-        :param index: The part index to label the rows in data.
-        :type index: integer
+        :param part: The part ID to label the rows in data.
+        :type part: integer
         :raises: :exc:`dxpy.exceptions.DXGTableError`
 
-        Adds the rows listed in data to the current gtable.  If *index*
+        Adds the rows listed in data to the current gtable.  If *part*
         is not given, rows may be queued up for addition internally
         and will be flushed to the remote server periodically.
 
@@ -233,7 +233,7 @@ class DXGTable(DXDataObject):
 
         '''
 
-        if index is None:
+        if part is None:
             for row in data:
                 rowjson = json.dumps(row)
                 if self._row_buf.tell() > 0:
@@ -242,37 +242,37 @@ class DXGTable(DXDataObject):
                 if self._row_buf.tell() >= self._row_buf_maxsize:
                     self.flush()
         else:
-            dxpy.api.gtableAddRows(self._dxid, {"data": data, "index": index})
+            dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part})
 
-    def get_unused_part_index(self):
+    def get_unused_part_id(self):
         '''
-        :returns: An unused part index
+        :returns: An unused part id
         :rtype: integer
 
-        Queries the API server for a part index that has not yet been
+        Queries the API server for a part ID that has not yet been
         used to upload gtable rows.  Note that calling this function
-        will internally mark the returned part index as used, and so
-        it should not be called if the value will not be used.
+        will internally mark the returned part ID as used, and so it
+        should not be called if the value will not be used.
 
         '''
         desc = self.describe()
         if len(desc["parts"]) == 250000:
             raise DXGTableError("250000 part indices already used.")
 
-        while self._part_index < 250000:
-            self._part_index += 1
-            if str(self._part_index) not in desc["parts"]:
-                return self._part_index
+        while self._part_id < 250000:
+            self._part_id += 1
+            if str(self._part_id) not in desc["parts"]:
+                return self._part_id
         
-        raise DXGTableError("Usable part index not found.")
+        raise DXGTableError("Usable part ID not found.")
 
     def flush(self):
         '''
         Sends any rows in the internal buffer to the API server.  
         '''
         dxpy.api.gtableAddRows(self._dxid,
-                              '{"data": [' + self._row_buf.getvalue() + '], "index":' + \
-                                  str(self.get_unused_part_index())+'}',
+                              '{"data": [' + self._row_buf.getvalue() + '], "part":' + \
+                                  str(self.get_unused_part_id())+'}',
                               jsonify_data=False)
 
         self._row_buf.close()
