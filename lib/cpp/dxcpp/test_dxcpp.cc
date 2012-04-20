@@ -130,91 +130,91 @@ string getBaseName(const string& filename) {
 
 string foofilename = "";
 
-// class DXFileTest : public testing::Test {
-// public:
-//   static const string foostr;
-//   string tempfilename;
+class DXFileTest : public testing::Test {
+public:
+  static const string foostr;
+  string tempfilename;
 
-//   DXFile dxfile;
+  DXFile dxfile;
 
-// protected:
-//   virtual void SetUp() {
-//     char name [L_tmpnam];
-//     tmpnam(name);
-//     tempfilename = string(name);
+protected:
+  virtual void SetUp() {
+    char name [L_tmpnam];
+    tmpnam(name);
+    tempfilename = string(name);
 
-//     if (foofilename == "") {
-//       char fooname [L_tmpnam];
-//       tmpnam(fooname);
-//       foofilename = string(fooname);
-//       ofstream foofile(fooname);
-//       foofile << foostr;
-//       foofile.close();
-//     }
-//   }
+    if (foofilename == "") {
+      char fooname [L_tmpnam];
+      tmpnam(fooname);
+      foofilename = string(fooname);
+      ofstream foofile(fooname);
+      foofile << foostr;
+      foofile.close();
+    }
+  }
 
-//   virtual void TearDown() {
-//     remove(tempfilename.c_str());
+  virtual void TearDown() {
+    remove(tempfilename.c_str());
 
-//     remove_all(proj_id);
-//   }
-// };
+    remove_all(proj_id);
+  }
+};
 
-// const string DXFileTest::foostr = "foo\n";
+const string DXFileTest::foostr = "foo\n";
 
-// TEST_F(DXFileTest, UploadDownloadFiles) {
-//   dxfile = DXFile::uploadLocalFile(foofilename);
-//   dxfile.waitOnClose();
-//   ASSERT_FALSE(dxfile.is_open());
+TEST_F(DXFileTest, UploadDownloadFiles) {
+  dxfile = DXFile::uploadLocalFile(foofilename);
+  dxfile.waitOnClose();
+  ASSERT_FALSE(dxfile.is_open());
 
-//   EXPECT_EQ(getBaseName(foofilename),
-//   	    dxfile.describe(true)["properties"]["name"].get<string>());
+  EXPECT_EQ(getBaseName(foofilename),
+  	    dxfile.describe(true)["properties"]["name"].get<string>());
 
-//   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
 
-//   char stored[10];
-//   ifstream downloadedfile(tempfilename.c_str());
-//   downloadedfile.read(stored, 10);
-//   ASSERT_EQ(foostr.size(), downloadedfile.gcount());
-//   ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
-// }
+  char stored[10];
+  ifstream downloadedfile(tempfilename.c_str());
+  downloadedfile.read(stored, 10);
+  ASSERT_EQ(foostr.size(), downloadedfile.gcount());
+  ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
+}
 
-// TEST_F(DXFileTest, WriteReadFile) {
-//   dxfile = DXFile::newDXFile();
-//   dxfile.write(foostr.data(), foostr.length());
-//   dxfile.close();
+TEST_F(DXFileTest, WriteReadFile) {
+  dxfile = DXFile::newDXFile();
+  dxfile.write(foostr.data(), foostr.length());
+  dxfile.close();
 
-//   DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
-//   same_dxfile.waitOnClose();
+  DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
+  same_dxfile.waitOnClose();
 
-//   char stored[10];
-//   same_dxfile.read(stored, foostr.length());
-//   ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
-//   EXPECT_TRUE(same_dxfile.eof());
+  char stored[10];
+  same_dxfile.read(stored, foostr.length());
+  ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
+  EXPECT_TRUE(same_dxfile.eof());
 
-//   same_dxfile.seek(1);
-//   EXPECT_FALSE(same_dxfile.eof());
-//   same_dxfile.read(stored, foostr.length());
-//   ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
-// }
+  same_dxfile.seek(1);
+  EXPECT_FALSE(same_dxfile.eof());
+  same_dxfile.read(stored, foostr.length());
+  ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
+}
 
-// TEST_F(DXFileTest, StreamingOperators) {
-//   dxfile = DXFile::newDXFile();
-//   stringstream samestr;
-//   dxfile  << "foo" << 1 << " " << 2.5 << endl;
-//   samestr << "foo" << 1 << " " << 2.5 << endl;
-//   dxfile  << "bar" << endl;
-//   samestr << "bar" << endl;
-//   dxfile.close(true);
+TEST_F(DXFileTest, StreamingOperators) {
+  dxfile = DXFile::newDXFile();
+  stringstream samestr;
+  dxfile  << "foo" << 1 << " " << 2.5 << endl;
+  samestr << "foo" << 1 << " " << 2.5 << endl;
+  dxfile  << "bar" << endl;
+  samestr << "bar" << endl;
+  dxfile.close(true);
   
-//   char stored[50];
-//   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
-//   ifstream downloadedfile(tempfilename.c_str());
-//   downloadedfile.read(stored, 50);
-//   ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
+  char stored[50];
+  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+  ifstream downloadedfile(tempfilename.c_str());
+  downloadedfile.read(stored, 50);
+  ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
 
-//   // TODO: Test >> if/when implemented
-// }
+  // TODO: Test >> if/when implemented
+}
 
 //////////////
 // DXGTable //
@@ -251,39 +251,39 @@ TEST_F(DXGTableTest, CreateDXGTableTest) {
   }
 }
 
-// TEST_F(DXGTableTest, ExtendDXGTableTest) {
-//   DXGTable table_to_extend = DXGTable::newDXGTable(DXGTableTest::columns);
-//   try {
-//     table_to_extend.addRows(JSON::parse("[[\"Row 1\", 1], [\"Row 2\", 2]]"));
-//     table_to_extend.close(true);
-//     EXPECT_EQ("closed", table_to_extend.describe()["state"].get<string>());
+TEST_F(DXGTableTest, ExtendDXGTableTest) {
+  DXGTable table_to_extend = DXGTable::newDXGTable(DXGTableTest::columns);
+  try {
+    table_to_extend.addRows(JSON::parse("[[\"Row 1\", 1], [\"Row 2\", 2]]"));
+    table_to_extend.close(true);
+    EXPECT_EQ("closed", table_to_extend.describe()["state"].get<string>());
     
 
-//     vector<JSON> more_cols;
-//     more_cols.push_back(DXGTable::columnDesc("c", "int32"));
-//     more_cols.push_back(DXGTable::columnDesc("d", "string"));
-//     dxgtable = DXGTable::extendDXGTable(table_to_extend.getID(),
-//                                         more_cols);
+    vector<JSON> more_cols;
+    more_cols.push_back(DXGTable::columnDesc("c", "int32"));
+    more_cols.push_back(DXGTable::columnDesc("d", "string"));
+    dxgtable = DXGTable::extendDXGTable(table_to_extend.getID(),
+                                        more_cols);
 
-//     JSON desc = dxgtable.describe();
-//     ASSERT_EQ(4, desc["columns"].size());
-//     for (int i = 2; i < 4; i++) {
-//       ASSERT_EQ(more_cols[i-2]["name"].get<string>(),
-//                 desc["columns"][i]["name"].get<string>());
-//       ASSERT_EQ(more_cols[i-2]["type"].get<string>(),
-//                 desc["columns"][i]["type"].get<string>());
-//     }
-//     dxgtable.addRows(JSON::parse("[[10, \"End row 1\"], [20, \"End row 2\"]]"));
+    JSON desc = dxgtable.describe();
+    ASSERT_EQ(4, desc["columns"].size());
+    for (int i = 2; i < 4; i++) {
+      ASSERT_EQ(more_cols[i-2]["name"].get<string>(),
+                desc["columns"][i]["name"].get<string>());
+      ASSERT_EQ(more_cols[i-2]["type"].get<string>(),
+                desc["columns"][i]["type"].get<string>());
+    }
+    dxgtable.addRows(JSON::parse("[[10, \"End row 1\"], [20, \"End row 2\"]]"));
 
-//     dxgtable.close(true);
-//   } catch (int e) {
-//     try {
-//       table_to_extend.remove();
-//     } catch (...) {
-//     }
-//     throw e;
-//   }
-// }
+    dxgtable.close(true);
+  } catch (int e) {
+    try {
+      table_to_extend.remove();
+    } catch (...) {
+    }
+    throw e;
+  }
+}
 
 TEST_F(DXGTableTest, AddRowsTest) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
