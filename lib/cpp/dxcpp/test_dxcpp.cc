@@ -119,9 +119,9 @@ TEST_F(DXRecordTest, DescribeTest) {
   ASSERT_EQ(desc["properties"], properties);
 }
 
-// ////////////
-// // DXFile //
-// ////////////
+////////////
+// DXFile //
+////////////
 
 string getBaseName(const string& filename) {
   size_t lastslash = filename.find_last_of("/\\");
@@ -130,211 +130,281 @@ string getBaseName(const string& filename) {
 
 string foofilename = "";
 
-class DXFileTest : public testing::Test {
-public:
-  static const string foostr;
-  string tempfilename;
-
-  DXFile dxfile;
-
-protected:
-  virtual void SetUp() {
-    char name [L_tmpnam];
-    tmpnam(name);
-    tempfilename = string(name);
-
-    if (foofilename == "") {
-      char fooname [L_tmpnam];
-      tmpnam(fooname);
-      foofilename = string(fooname);
-      ofstream foofile(fooname);
-      foofile << foostr;
-      foofile.close();
-    }
-  }
-
-  virtual void TearDown() {
-    remove(tempfilename.c_str());
-
-    remove_all(proj_id);
-  }
-};
-
-const string DXFileTest::foostr = "foo\n";
-
-TEST_F(DXFileTest, UploadDownloadFiles) {
-  dxfile = DXFile::uploadLocalFile(foofilename);
-  dxfile.waitOnClose();
-  ASSERT_FALSE(dxfile.is_open());
-
-  EXPECT_EQ(getBaseName(foofilename),
-  	    dxfile.describe(true)["properties"]["name"].get<string>());
-
-  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
-
-  char stored[10];
-  ifstream downloadedfile(tempfilename.c_str());
-  downloadedfile.read(stored, 10);
-  ASSERT_EQ(foostr.size(), downloadedfile.gcount());
-  ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
-}
-
-TEST_F(DXFileTest, WriteReadFile) {
-  // TODO
-
-  dxfile = DXFile::newDXFile();
-  dxfile.write(foostr.data(), foostr.length());
-  dxfile.close();
-
-  DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
-  same_dxfile.waitOnClose();
-
-  char stored[10];
-  same_dxfile.read(stored, foostr.length());
-  ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
-  EXPECT_TRUE(same_dxfile.eof());
-
-  same_dxfile.seek(1);
-  EXPECT_FALSE(same_dxfile.eof());
-  same_dxfile.read(stored, foostr.length());
-  ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
-}
-
-TEST_F(DXFileTest, StreamingOperators) {
-  dxfile = DXFile::newDXFile();
-  stringstream samestr;
-  dxfile  << "foo" << 1 << " " << 2.5 << endl;
-  samestr << "foo" << 1 << " " << 2.5 << endl;
-  dxfile  << "bar" << endl;
-  samestr << "bar" << endl;
-  dxfile.close(true);
-  
-  char stored[50];
-  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
-  ifstream downloadedfile(tempfilename.c_str());
-  downloadedfile.read(stored, 50);
-  ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
-
-  // TODO: Test >> if/when implemented
-}
-
-// /////////////
-// // DXTable //
-// /////////////
-
-// class DXTableTest : public testing::Test {
+// class DXFileTest : public testing::Test {
 // public:
-//   DXTable dxtable;
-//   static const JSON columns;
+//   static const string foostr;
+//   string tempfilename;
+
+//   DXFile dxfile;
 
 // protected:
-//   virtual void TearDown() {
-//     try {
-//       dxtable.destroy();
-//     } catch (...) {
+//   virtual void SetUp() {
+//     char name [L_tmpnam];
+//     tmpnam(name);
+//     tempfilename = string(name);
+
+//     if (foofilename == "") {
+//       char fooname [L_tmpnam];
+//       tmpnam(fooname);
+//       foofilename = string(fooname);
+//       ofstream foofile(fooname);
+//       foofile << foostr;
+//       foofile.close();
 //     }
+//   }
+
+//   virtual void TearDown() {
+//     remove(tempfilename.c_str());
+
+//     remove_all(proj_id);
 //   }
 // };
 
-// const JSON DXTableTest::columns = JSON::parse("[\"a:string\", \"b:int32\"]");
+// const string DXFileTest::foostr = "foo\n";
 
-// TEST_F(DXTableTest, ColumnDescTest) {
-//   JSON columns(JSON_ARRAY);
-//   columns.push_back(DXTable::columnDesc("a", "string"));
-//   columns.push_back(DXTable::columnDesc("b", "int32"));
-//   ASSERT_EQ(DXTableTest::columns, columns);
+// TEST_F(DXFileTest, UploadDownloadFiles) {
+//   dxfile = DXFile::uploadLocalFile(foofilename);
+//   dxfile.waitOnClose();
+//   ASSERT_FALSE(dxfile.is_open());
+
+//   EXPECT_EQ(getBaseName(foofilename),
+//   	    dxfile.describe(true)["properties"]["name"].get<string>());
+
+//   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+
+//   char stored[10];
+//   ifstream downloadedfile(tempfilename.c_str());
+//   downloadedfile.read(stored, 10);
+//   ASSERT_EQ(foostr.size(), downloadedfile.gcount());
+//   ASSERT_EQ(foostr, string(stored, downloadedfile.gcount()));
 // }
 
-// TEST_F(DXTableTest, CreateDXTableTest) {
-//   dxtable = DXTable::newDXTable(DXTableTest::columns);
-//   JSON desc = dxtable.describe();
-//   ASSERT_EQ(DXTableTest::columns, desc["columns"]);
+// TEST_F(DXFileTest, WriteReadFile) {
+//   dxfile = DXFile::newDXFile();
+//   dxfile.write(foostr.data(), foostr.length());
+//   dxfile.close();
+
+//   DXFile same_dxfile = DXFile::openDXFile(dxfile.getID());
+//   same_dxfile.waitOnClose();
+
+//   char stored[10];
+//   same_dxfile.read(stored, foostr.length());
+//   ASSERT_EQ(foostr, string(stored, same_dxfile.gcount()));
+//   EXPECT_TRUE(same_dxfile.eof());
+
+//   same_dxfile.seek(1);
+//   EXPECT_FALSE(same_dxfile.eof());
+//   same_dxfile.read(stored, foostr.length());
+//   ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
 // }
 
-// TEST_F(DXTableTest, ExtendDXTableTest) {
-//   DXTable table_to_extend = DXTable::newDXTable(DXTableTest::columns);
+// TEST_F(DXFileTest, StreamingOperators) {
+//   dxfile = DXFile::newDXFile();
+//   stringstream samestr;
+//   dxfile  << "foo" << 1 << " " << 2.5 << endl;
+//   samestr << "foo" << 1 << " " << 2.5 << endl;
+//   dxfile  << "bar" << endl;
+//   samestr << "bar" << endl;
+//   dxfile.close(true);
+  
+//   char stored[50];
+//   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
+//   ifstream downloadedfile(tempfilename.c_str());
+//   downloadedfile.read(stored, 50);
+//   ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
+
+//   // TODO: Test >> if/when implemented
+// }
+
+//////////////
+// DXGTable //
+//////////////
+
+class DXGTableTest : public testing::Test {
+public:
+  DXGTable dxgtable;
+  vector<JSON> columns;
+
+protected:
+  virtual void SetUp() {
+    columns = vector<JSON>();
+    columns.push_back(DXGTable::columnDesc("a", "string"));
+    columns.push_back(DXGTable::columnDesc("b", "int32"));
+  }
+  virtual void TearDown() {
+    try {
+      dxgtable.remove();
+    } catch (...) {
+    }
+  }
+};
+
+TEST_F(DXGTableTest, CreateDXGTableTest) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  JSON desc = dxgtable.describe();
+  ASSERT_EQ(DXGTableTest::columns.size(), desc["columns"].size());
+  for (int i = 0; i < DXGTableTest::columns.size(); i++) {
+    ASSERT_EQ(DXGTableTest::columns[i]["name"].get<string>(),
+              desc["columns"][i]["name"].get<string>());
+    ASSERT_EQ(DXGTableTest::columns[i]["type"].get<string>(),
+              desc["columns"][i]["type"].get<string>());
+  }
+}
+
+// TEST_F(DXGTableTest, ExtendDXGTableTest) {
+//   DXGTable table_to_extend = DXGTable::newDXGTable(DXGTableTest::columns);
 //   try {
 //     table_to_extend.addRows(JSON::parse("[[\"Row 1\", 1], [\"Row 2\", 2]]"));
 //     table_to_extend.close(true);
 //     EXPECT_EQ("closed", table_to_extend.describe()["state"].get<string>());
     
 
-//     JSON more_cols = JSON::parse("[\"c:int32\", \"d:string\"]");
-//     dxtable = DXTable::extendDXTable(table_to_extend.getID(),
-// 				  more_cols);
+//     vector<JSON> more_cols;
+//     more_cols.push_back(DXGTable::columnDesc("c", "int32"));
+//     more_cols.push_back(DXGTable::columnDesc("d", "string"));
+//     dxgtable = DXGTable::extendDXGTable(table_to_extend.getID(),
+//                                         more_cols);
 
-//     ASSERT_EQ(JSON::parse("[\"a:string\", \"b:int32\", \"c:int32\", \"d:string\"]"),
-// 	      dxtable.describe()["columns"]);
+//     JSON desc = dxgtable.describe();
+//     ASSERT_EQ(4, desc["columns"].size());
+//     for (int i = 2; i < 4; i++) {
+//       ASSERT_EQ(more_cols[i-2]["name"].get<string>(),
+//                 desc["columns"][i]["name"].get<string>());
+//       ASSERT_EQ(more_cols[i-2]["type"].get<string>(),
+//                 desc["columns"][i]["type"].get<string>());
+//     }
+//     dxgtable.addRows(JSON::parse("[[10, \"End row 1\"], [20, \"End row 2\"]]"));
 
-//     dxtable.addRows(JSON::parse("[[10, \"End row 1\"], [20, \"End row 2\"]]"));
-
-//     dxtable.close(true);
+//     dxgtable.close(true);
 //   } catch (int e) {
 //     try {
-//       table_to_extend.destroy();
+//       table_to_extend.remove();
 //     } catch (...) {
 //     }
 //     throw e;
 //   }
 // }
 
-// TEST_F(DXTableTest, AddRowsTest) {
-//   dxtable = DXTable::newDXTable(DXTableTest::columns);
-//   dxtable.addRows(JSON(JSON_ARRAY), 9999);
+TEST_F(DXGTableTest, AddRowsTest) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  dxgtable.addRows(JSON(JSON_ARRAY), 9999);
 
-//   JSON empty_row = JSON(JSON_ARRAY);
-//   empty_row.push_back(JSON(JSON_ARRAY));
-//   ASSERT_THROW(dxtable.addRows(empty_row, 9997), DXAPIError);
+  JSON empty_row = JSON(JSON_ARRAY);
+  empty_row.push_back(JSON(JSON_ARRAY));
+  ASSERT_THROW(dxgtable.addRows(empty_row, 9997), DXAPIError);
 
-//   for (int i = 0; i < 64; i++) {
-//     string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
-//       "\", " + boost::lexical_cast<string>(i) + "]]";
-//     dxtable.addRows(JSON::parse(rowstr), i+1);
-//   }
+  for (int i = 0; i < 64; i++) {
+    string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
+      "\", " + boost::lexical_cast<string>(i) + "]]";
+    dxgtable.addRows(JSON::parse(rowstr), i+1);
+  }
 
-//   dxtable.close();
+  dxgtable.close();
 
-//   ASSERT_THROW(dxtable.close(), DXAPIError);
-// }
+  ASSERT_THROW(dxgtable.close(), DXAPIError);
+}
 
-// TEST_F(DXTableTest, AddRowsNoIndexTest) {
-//   dxtable = DXTable::newDXTable(DXTableTest::columns);
+TEST_F(DXGTableTest, AddRowsNoIndexTest) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
 
-//   for (int i = 0; i < 64; i++) {
-//     string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
-//       "\", " + boost::lexical_cast<string>(i+1) + "]]";
-//     dxtable.addRows(JSON::parse(rowstr));
-//   }
-//   dxtable.flush();
-//   JSON desc = dxtable.describe();
-//   EXPECT_EQ(1, desc["parts"].size());
+  for (int i = 0; i < 64; i++) {
+    string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
+      "\", " + boost::lexical_cast<string>(i+1) + "]]";
+    dxgtable.addRows(JSON::parse(rowstr));
+  }
+  dxgtable.flush();
+  JSON desc = dxgtable.describe();
+  EXPECT_EQ(1, desc["parts"].size());
 
-//   dxtable.close(true);
+  dxgtable.close(true);
 
-//   desc = dxtable.describe();
-//   EXPECT_EQ(64, desc["size"].get<int>());
-// }
+  desc = dxgtable.describe();
+  EXPECT_EQ(64, desc["size"].get<int>());
+}
 
-// TEST_F(DXTableTest, InvalidSpecTest) {
-//   ASSERT_THROW(DXTable::newDXTable(JSON::parse("[\"a:string\", \"b:muffins\"]")),
-// 	       DXAPIError);
-// }
+TEST_F(DXGTableTest, InvalidSpecTest) {
+  vector<JSON> invalid_spec = columns;
+  invalid_spec[1]["type"] = "muffins";
+  ASSERT_THROW(DXGTable::newDXGTable(invalid_spec),
+	       DXAPIError);
+}
 
-// TEST_F(DXTableTest, GetRowsTest) {
-//   dxtable = DXTable::newDXTable(DXTableTest::columns);
+TEST_F(DXGTableTest, GetRowsTest) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
 
-//   for (int i = 0; i < 64; i++) {
-//     string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
-//       "\", " + boost::lexical_cast<string>(i+1) + "]]";
-//     dxtable.addRows(JSON::parse(rowstr), i+1);
-//   }
-//   dxtable.close(true);
+  for (int i = 0; i < 64; i++) {
+    string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
+      "\", " + boost::lexical_cast<string>(i+1) + "]]";
+    dxgtable.addRows(JSON::parse(rowstr), i+1);
+  }
+  dxgtable.close(true);
 
-//   JSON rows = dxtable.getRows();
-//   EXPECT_EQ(64, rows["size"].get<int>());
-//   EXPECT_EQ(JSON_NULL, rows["next"].type());
-//   EXPECT_EQ(64, rows["data"].size());
-// }
+  JSON rows = dxgtable.getRows();
+  EXPECT_EQ(64, rows["size"].get<int>());
+  EXPECT_EQ(JSON_NULL, rows["next"].type());
+  EXPECT_EQ(64, rows["data"].size());
+}
+
+TEST_F(DXGTableTest, GRITest) {
+  JSON rows1 = JSON::parse("[[\"chr2\", 22, 28, \"j\"], [\"chr1\",  0,  3, \"a\"], [\"chr1\",  5,  8, \"b\"]]");
+  JSON rows10 = JSON::parse("[[\"chr1\", 25, 30, \"i\"], [\"chr1\",  6, 10, \"c\"], [\"chr1\", 19, 20, \"h\"]]");
+  JSON rows100 = JSON::parse("[[\"chr1\",  8,  9, \"d\"], [\"chr1\", 17, 19, \"g\"], [\"chr1\", 15, 23, \"e\"]]");
+  JSON rows1000 = JSON::parse("[[\"chr1\", 16, 21, \"f\"]]");
+  vector<JSON> columns;
+  columns.push_back(JSON::parse("{ \"name\": \"foo\", \"type\": \"string\" }"));
+  columns.push_back(JSON::parse("{ \"name\": \"bar\", \"type\": \"int32\" }"));
+  columns.push_back(JSON::parse("{ \"name\": \"baz\", \"type\": \"int32\" }"));
+  columns.push_back(JSON::parse("{ \"name\": \"quux\", \"type\": \"string\" }"));
+  JSON genomic_index = DXGTable::genomicRangeIndex("foo", "bar", "baz");
+  ASSERT_EQ(genomic_index, JSON::parse("{\"name\": \"gri\", \"type\": \"genomic\", \"chr\": \"foo\", \"lo\": \"bar\", \"hi\": \"baz\"}"));
+  vector<JSON> indices;
+  indices.push_back(genomic_index);
+
+  dxgtable = DXGTable::newDXGTable(columns, indices);
+  JSON desc = dxgtable.describe();
+  ASSERT_EQ(desc["indices"][0], genomic_index);
+
+  dxgtable.addRows(rows1, 1);
+  dxgtable.addRows(rows10, 10);
+  dxgtable.addRows(rows100, 100);
+  dxgtable.addRows(rows1000, 1000);
+
+  dxgtable.close(true);
+
+  desc = dxgtable.describe();
+  ASSERT_EQ(desc["size"].get<int>(), 10);
+
+  //Offset + limit queries
+  JSON result = dxgtable.getRows(JSON(JSON_NULL), JSON(JSON_NULL), 0, 1);
+  ASSERT_EQ(result["data"],
+            JSON::parse("[[0, \"chr1\",  0,  3, \"a\"]]"));
+  ASSERT_EQ(result["next"].get<int>(), 1);
+  ASSERT_EQ(result["size"].get<int>(), 1);
+
+  result = dxgtable.getRows(JSON(JSON_NULL), JSON(JSON_NULL), 4, 3);
+  ASSERT_EQ(result["data"],
+            JSON::parse("[[4, \"chr1\", 15, 23, \"e\"], [5, \"chr1\", 16, 21, \"f\"], [6, \"chr1\", 17, 19, \"g\"]]"));
+  ASSERT_EQ(result["next"].get<int>(), 7);
+  ASSERT_EQ(result["size"].get<int>(), 3);
+
+  // Range query
+  JSON genomic_query = DXGTable::genomicRangeQuery("chr1", 22, 25);
+  result = dxgtable.getRows(genomic_query);
+  ASSERT_EQ(result["data"],
+            JSON::parse("[[4, \"chr1\", 15, 23, \"e\"]]"));
+  ASSERT_EQ(result["next"], JSON(JSON_NULL));
+  ASSERT_EQ(result["size"].get<int>(), 1);
+
+  // Range query with nonconsecutive rows in result
+  genomic_query = DXGTable::genomicRangeQuery("chr1", 20, 26);
+  result = dxgtable.getRows(genomic_query);
+  ASSERT_EQ(result["data"],
+            JSON::parse("[[4, \"chr1\", 15, 23, \"e\"], [5, \"chr1\", 16, 21, \"f\"], [8, \"chr1\", 25, 30, \"i\"]]"));
+  ASSERT_EQ(result["next"], JSON(JSON_NULL));
+  ASSERT_EQ(result["size"].get<int>(), 3);
+
+  // TODO: Test with > 1 index
+}
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);

@@ -25,6 +25,7 @@ class DXGTable: public DXDataObject {
   dx::JSON listProjects_(const std::string &s)const{return gtableListProjects(dxid_,s);}
 
   std::stringstream row_buffer_;
+
   int row_buffer_maxsize_;
   int part_id_;
 
@@ -33,18 +34,22 @@ class DXGTable: public DXDataObject {
  public:
  DXGTable() : DXDataObject(),
     row_buffer_maxsize_(104857600),
-    part_id_(0) { reset_buffer_(); }
- DXGTable(const DXGTable &to_copy) : DXDataObject(to_copy),
-    row_buffer_maxsize_(104857600),
-    part_id_(0) { reset_buffer_(); }
+    part_id_(0) { reset_buffer_();  }
+ DXGTable(const DXGTable &to_copy) :
+  row_buffer_maxsize_(104857600) {
+    reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_); }
  DXGTable(const std::string & dxid) :
-  DXDataObject(dxid),
-    row_buffer_maxsize_(104857600),
-    part_id_(0) { reset_buffer_();}
+  row_buffer_maxsize_(104857600)
+    { reset_buffer_(); setIDs(dxid); }
  DXGTable(const std::string & dxid, const std::string &proj) :
-  DXDataObject(dxid, proj),
-    row_buffer_maxsize_(104857600),
-    part_id_(0) { reset_buffer_();}
+  row_buffer_maxsize_(104857600)
+    { reset_buffer_(); setIDs(dxid, proj); }
+  DXGTable& operator=(const DXGTable& to_copy) {
+    this->row_buffer_maxsize_ = 104857600;
+    this->reset_buffer_();
+    this->setIDs(to_copy.dxid_, to_copy.proj_);
+    return *this;
+  }
 
   // Table-specific functions
 
@@ -91,13 +96,7 @@ class DXGTable: public DXDataObject {
    * rows to be returned.
    * @return A JSON object with keys "size", "next", and "data".
    */
-  dx::JSON getRows(const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
-                   const int starting=-1, const int limit=-1) const;
-
-  /**
-   * R
-   */
-  dx::JSON getRows(const std::string &chr, const int lo, const int hi,
+  dx::JSON getRows(const dx::JSON &query=dx::JSON(dx::JSON_NULL),
                    const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
                    const int starting=-1, const int limit=-1) const;
 
