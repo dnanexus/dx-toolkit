@@ -11,7 +11,7 @@ if len(args) != 3:
 
 sam_filename, table_id, chromosomes_id = args
 
-chromosomes = dxpy.DXJSON(chromosomes_id).get()['chromosomes']
+chromosomes = dxpy.DXRecord(chromosomes_id).get_details()['chromosomes']
 
 if chromosomes is None:
     raise Exception("Object %s has no chromosomes property" % chromosomes_id)
@@ -19,25 +19,25 @@ chrom_name2id = dict([(c[0], c[1]) for c in chromosomes])
 
 # See http://samtools.sourceforge.net/SAM1.pdf
 mappings_schema = [
-    "QNAME:string",
-    "FLAG:int32",
-    "chr:string", # RNAME
-    "start:int32", # POS
-    "MAPQ:int32",
-    "CIGAR:string",
-    "RNEXT:string",
-    "PNEXT:int32",
-    "TLEN:int32",
-    "SEQ:string",
-    "QUAL:string",
-    "OPT:string",
-    "stop:int32"
+    {"name": "QNAME", "type": "string"},
+    {"name": "FLAG", "type": "int32"},
+    {"name": "chr", "type": "string"}, # RNAME
+    {"name": "start", "type": "int32"}, # POS
+    {"name": "MAPQ", "type": "int32"},
+    {"name": "CIGAR", "type": "string"},
+    {"name": "RNEXT", "type": "string"},
+    {"name": "PNEXT", "type": "int32"},
+    {"name": "TLEN", "type": "int32"},
+    {"name": "SEQ", "type": "string"},
+    {"name": "QUAL", "type": "string"},
+    {"name": "OPT", "type": "string"},
+    {"name": "stop", "type": "int32"},
 ];
 
 if table_id == "0":
-    dxtable = dxpy.new_dxtable(mappings_schema, chr_col="chr", lo_col="start", hi_col="stop")
+    dxtable = dxpy.new_dxgtable(columns=mappings_schema) #, chr_col="chr", lo_col="start", hi_col="stop")
 else:
-    dxtable = dxpy.open_dxtable(table_id)
+    dxtable = dxpy.open_dxgtable(table_id)
 
 with open(sam_filename, 'r') as sam_file:
     i = 0; table_rows = []
