@@ -67,11 +67,13 @@ class DXFile: public DXDataObject {
 
  public:
   DXFile() {}
- DXFile(const DXFile& to_copy) { setIDs(to_copy.dxid_, to_copy.proj_); }
- DXFile(const std::string &dxid) { setIDs(dxid); }
+  DXFile(const DXFile& to_copy) { setIDs(to_copy.dxid_, to_copy.proj_); }
   DXFile(const std::string &dxid,
-	 const std::string &proj) { setIDs(dxid, proj); }
+        const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
   DXFile& operator=(const DXFile& to_copy) {
+    if (this == &to_copy)
+      return *this;
+
     this->setIDs(to_copy.dxid_, to_copy.proj_);
     return *this;
   }
@@ -258,12 +260,14 @@ class DXFile: public DXDataObject {
   /**
    * Shorthand for downloading a remote file to a local location.
    *
-   * @param dxid Object id of the file to download.
+   * @param dxfile Object handler or id of the file to download.
    * @param filename Local path for writing the downloaded data.
    * @param chunksize Size of the chunks with which to divide up the
    * download (in bytes).
    */
-  static void downloadDXFile(const std::string &dxid, const std::string &filename, int chunksize=1048576);
+  static void downloadDXFile(const std::string &dxid,
+                             const std::string &filename,
+                             int chunksize=1048576);
 
   /**
    * Shorthand for uploading a local file and closing it when done.
@@ -275,6 +279,19 @@ class DXFile: public DXDataObject {
    * @return DXFile remote file handler for the newly uploaded file.
    */
   static DXFile uploadLocalFile(const std::string &filename, const std::string &media_type="");
+
+  /**
+   * Clones the associated object into the specified project and folder.
+   *
+   * @param dest_proj_id ID of the project to which the object should
+   * be cloned
+   * @param dest_folder Folder route in which to put it in the
+   * destination project.
+   * @return New object handler with the associated project set to
+   * dest_proj_id.
+   */
+  DXFile clone(const std::string &dest_proj_id,
+               const std::string &dest_folder="/") const;
 
   /**
    * TODO: Consider writing a uploadString or uploadCharBuffer which

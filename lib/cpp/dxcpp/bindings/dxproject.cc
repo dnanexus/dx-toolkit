@@ -3,8 +3,11 @@
 using namespace std;
 using namespace dx;
 
-JSON DXProject::describe() const {
-  return projectDescribe(dxid_);
+JSON DXProject::describe(bool folders) const {
+  if (folders)
+    return projectDescribe(dxid_, string("{\"folders\": true}"));
+  else
+    return projectDescribe(dxid_);
 }
 
 void DXProject::update(const JSON &to_update) const {

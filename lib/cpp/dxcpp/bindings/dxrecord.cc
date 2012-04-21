@@ -16,3 +16,9 @@ DXRecord DXRecord::newDXRecord(const JSON &data_obj_fields) {
   dxrecord.create(data_obj_fields);
   return dxrecord;
 }
+
+DXRecord DXRecord::clone(const string &dest_proj_id,
+                         const string &dest_folder) const {
+  clone_(dest_proj_id, dest_folder);
+  return DXRecord(dxid_, dest_proj_id);
+}

@@ -134,12 +134,11 @@ DXGTable DXGTable::newDXGTable(const vector<JSON> &columns,
   return gtable;
 }
 
-DXGTable DXGTable::extendDXGTable(const string &dxid,
+DXGTable DXGTable::extendDXGTable(const DXGTable &dxgtable,
                                   const vector<JSON> &columns,
                                   const vector<JSON> &indices,
                                   const JSON &data_obj_fields) {
-  DXGTable gtable(dxid);
-  return gtable.extend(columns, indices, data_obj_fields);
+  return dxgtable.extend(columns, indices, data_obj_fields);
 }
 
 JSON DXGTable::columnDesc(const string &name,
@@ -222,4 +221,10 @@ JSON DXGTable::substringQuery(const string &match,
   else
     throw DXGTableError("Unrecognized substring index query mode: " + mode);
   return query;
+}
+
+DXGTable DXGTable::clone(const string &dest_proj_id,
+                         const string &dest_folder) const {
+  clone_(dest_proj_id, dest_folder);
+  return DXGTable(dxid_, dest_proj_id);
 }

@@ -38,13 +38,13 @@ class DXGTable: public DXDataObject {
  DXGTable(const DXGTable &to_copy) :
   row_buffer_maxsize_(104857600) {
     reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_); }
- DXGTable(const std::string & dxid) :
-  row_buffer_maxsize_(104857600)
-    { reset_buffer_(); setIDs(dxid); }
- DXGTable(const std::string & dxid, const std::string &proj) :
+ DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID) :
   row_buffer_maxsize_(104857600)
     { reset_buffer_(); setIDs(dxid, proj); }
   DXGTable& operator=(const DXGTable& to_copy) {
+    if (this == &to_copy)
+      return *this;
+
     this->row_buffer_maxsize_ = 104857600;
     this->reset_buffer_();
     this->setIDs(to_copy.dxid_, to_copy.proj_);
@@ -151,6 +151,19 @@ class DXGTable: public DXDataObject {
    */
   void waitOnClose() const;
 
+  /**
+   * Clones the associated object into the specified project and folder.
+   *
+   * @param dest_proj_id ID of the project to which the object should
+   * be cloned
+   * @param dest_folder Folder route in which to put it in the
+   * destination project.
+   * @return New object handler with the associated project set to
+   * dest_proj_id.
+   */
+  DXGTable clone(const std::string &dest_proj_id,
+                 const std::string &dest_folder="/") const;
+
   static DXGTable openDXGTable(const std::string &dxid);
 
   static DXGTable newDXGTable(const std::vector<dx::JSON> &columns,
@@ -164,17 +177,17 @@ class DXGTable: public DXDataObject {
     return newDXGTable(columns, std::vector<dx::JSON>(), data_obj_fields);
   }
 
-  static DXGTable extendDXGTable(const std::string &dxid,
+  static DXGTable extendDXGTable(const DXGTable &dxgtable,
                                  const std::vector<dx::JSON> &columns,
                                  const std::vector<dx::JSON> &indices,
                                  const dx::JSON &data_obj_fields=
                                  dx::JSON(dx::JSON_OBJECT));
 
-  static DXGTable extendDXGTable(const std::string &dxid,
+  static DXGTable extendDXGTable(const DXGTable &dxgtable,
                                  const std::vector<dx::JSON> &columns,
                                  const dx::JSON &data_obj_fields=
                                  dx::JSON(dx::JSON_OBJECT)) {
-    return extendDXGTable(dxid, columns, std::vector<dx::JSON>(),
+    return extendDXGTable(dxgtable, columns, std::vector<dx::JSON>(),
                           data_obj_fields);
   }
 
@@ -264,7 +277,6 @@ class DXGTable: public DXDataObject {
   static dx::JSON substringQuery(const std::string &match,
                                  const std::string &mode,
                                  const std::string &index);
-
 };
 
 #endif

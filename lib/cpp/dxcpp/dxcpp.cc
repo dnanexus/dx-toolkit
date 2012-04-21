@@ -11,6 +11,8 @@
 using namespace std;
 using namespace dx;
 
+const string g_API_VERSION = "1.0.0";
+
 bool g_APISERVER_SET = false;
 bool g_SECURITY_CONTEXT_SET = false;
 bool g_WORKSPACE_ID_SET = false;
@@ -38,6 +40,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   JSON secContext = g_SECURITY_CONTEXT;
   req_headers["Authorization"] = secContext["auth_token_type"].get<string>() +
     " " + secContext["auth_token"].get<string>();
+  req_headers["DNAnexus-API"] = g_API_VERSION;
 
   string headername;
 

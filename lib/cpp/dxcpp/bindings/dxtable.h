@@ -22,10 +22,24 @@ class DXTable: public DXDataObject {
   // Table-specific functions
 
   DXTable() {}
-  DXTable(const std::string &dxid) { setIDs(dxid); }
-  void create(const dx::JSON &to_store);
+  DXTable(const std::string &dxid,
+          const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+  void create();
 
-  static DXTable newDXTable(const dx::JSON &to_store);
+  static DXTable newDXTable();
+
+  /**
+   * Clones the associated object into the specified project and folder.
+   *
+   * @param dest_proj_id ID of the project to which the object should
+   * be cloned
+   * @param dest_folder Folder route in which to put it in the
+   * destination project.
+   * @return New object handler with the associated project set to
+   * dest_proj_id.
+   */
+  DXTable clone(const std::string &dest_proj_id,
+                const std::string &dest_folder="/") const;
 };
 
 #endif

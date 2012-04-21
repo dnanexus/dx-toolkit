@@ -27,6 +27,17 @@ class DXDataObject {
   virtual void close_(const std::string &input_params) const = 0;
   virtual dx::JSON listProjects_(const std::string &input_params) const = 0;
 
+  /**
+   * Clones the associated object into the specified project and folder.
+   *
+   * @param dest_proj_id ID of the project to which the object should
+   * be cloned
+   * @param dest_folder Folder route in which to put it in the
+   * destination project.
+   */
+  void clone_(const std::string &dest_proj_id,
+              const std::string &dest_folder) const;
+
  public:
   DXDataObject() { }
   DXDataObject(const DXDataObject &to_copy) {
@@ -38,6 +49,7 @@ class DXDataObject {
     setIDs(dxid, proj); }
  
   std::string getID() const { return dxid_; }
+  operator std::string() { return dxid_;}
   std::string getProjectID() const { return proj_; }
   virtual void setIDs(const std::string &dxid,
 		      const std::string &proj=g_WORKSPACE_ID);
@@ -48,17 +60,100 @@ class DXDataObject {
    * @return JSON description
    */
   dx::JSON describe(bool incl_properties=false) const;
+
+  /**
+   * Adds the specified types.
+   *
+   * @param types JSON array of strings to add as types
+   */
   void addTypes(const dx::JSON &types) const;
+
+  /**
+   * Removes the specified types.
+   *
+   * @param types JSON array of strings to remove as types
+   */
   void removeTypes(const dx::JSON &types) const;
+
+  /**
+   * Retrieves the details stored in the object.
+   *
+   * @return JSON containing the remote object's details
+   */
   dx::JSON getDetails() const;
+
+  /**
+   * Stores the given JSON in the details of the remote object.
+   *
+   * @param details Arbitrary JSON to store as details
+   */
   void setDetails(const dx::JSON &details) const;
-  void setVisibility(bool hidden) const;
+
+  /**
+   * Ensures the remote object is hidden.
+   */
+  void hide() const;
+
+  /**
+   * Ensures the remote object is visible.
+   */
+  void unhide() const;
+
+  /**
+   * Renames the object.
+   *
+   * @param name New name for the object
+   */
   void rename(const std::string &name) const;
+
+  /**
+   * Sets the specified properties.
+   *
+   * @param properties JSON OBJECT mapping strings to strings to store
+   * as properties
+   */
   void setProperties(const dx::JSON &properties) const;
+
+  /**
+   * Adds the specified tags.
+   *
+   * @param tags JSON array of strings to add as tags
+   */
   void addTags(const dx::JSON &tags) const;
+
+  /**
+   * Removes the specified tags.
+   *
+   * @param tags JSON array of strings to remove as tags
+   */
   void removeTags(const dx::JSON &tags) const;
+
+  /**
+   * Closes the object.
+   */
   virtual void close() const;
+
+  /**
+   * Lists all projects which contain a copy of the object.
+   *
+   * @return JSON array of project IDs (strings) which contain a copy
+   * of the object
+   */
   dx::JSON listProjects() const;
+
+  /**
+   * Moves the associated object into the specified folder in the same
+   * project.
+   *
+   * @param dest_folder Folder route in which to put the object
+   */
+  void move(const std::string &dest_folder) const;
+
+  /**
+   * Removes the copy of the object from the associated project (see
+   * getProjectID()).  Does not affect copies of the object in other
+   * projects.
+   */
   void remove();
 };
 

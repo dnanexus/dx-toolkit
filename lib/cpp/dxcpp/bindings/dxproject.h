@@ -12,7 +12,7 @@ class DXProject {
   void setID(const std::string &dxid) { dxid_ = dxid; }
   std::string getID() const { return dxid_; }
 
-  dx::JSON describe() const;
+  dx::JSON describe(bool folders=false) const;
   void update(const dx::JSON &to_update) const;
   void destroy() const;
 
@@ -23,11 +23,11 @@ class DXProject {
   void clone(const dx::JSON &objects,
              const dx::JSON &folders,
              const std::string &dest_proj,
-             const std::string &dest_folder) const;
+             const std::string &dest_folder="/") const;
 
   // Folder-specific
-  void newFolder(const std::string &folder, bool parents) const;
-  dx::JSON listFolder(const std::string &folder) const;
+  void newFolder(const std::string &folder, bool parents=false) const;
+  dx::JSON listFolder(const std::string &folder="/") const;
   void moveFolder(const std::string &folder,
                   const std::string &dest_folder) const;
   void removeFolder(const std::string &folder) const;
@@ -35,13 +35,13 @@ class DXProject {
   // Objects-specific
   void moveObjects(const dx::JSON &objects,
                    const std::string &dest_folder) const {
-    move(objects, dx::JSON(), dest_folder);
+    move(objects, dx::JSON(dx::JSON_ARRAY), dest_folder);
   }
   void removeObjects(const dx::JSON &objects) const;
   void cloneObjects(const dx::JSON &objects,
                     const std::string &dest_proj,
                     const std::string &dest_folder) const {
-    clone(objects, dx::JSON(), dest_proj, dest_folder);
+    clone(objects, dx::JSON(dx::JSON_ARRAY), dest_proj, dest_folder);
   }
 };
 

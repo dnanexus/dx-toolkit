@@ -25,40 +25,234 @@ void remove_all(const string &proj, const string &folder="/") {
   }
 }
 
+///////////////
+// DXProject //
+///////////////
+
+class DXProjectTest : public testing::Test {
+  virtual void TearDown() {
+    remove_all(proj_id);
+    remove_all(second_proj_id);
+  }
+};
+
+TEST_F(DXProjectTest, UpdateDescribeTest) {
+  DXProject dxproject;
+  JSON to_update(JSON_OBJECT);
+  to_update["name"] = "newprojname";
+  to_update["protected"] = true;
+  to_update["restricted"] = true;
+  to_update["description"] = "new description";
+  dxproject.update(to_update);
+  JSON desc = dxproject.describe();
+  ASSERT_EQ(desc["id"].get<string>(), proj_id);
+  ASSERT_EQ(desc["class"].get<string>(), "project");
+  ASSERT_EQ(desc["name"].get<string>(), "newprojname");
+  ASSERT_EQ(desc["protected"].get<bool>(), true);
+  ASSERT_EQ(desc["restricted"].get<bool>(), true);
+  ASSERT_EQ(desc["description"].get<string>(), "new description");
+  ASSERT_TRUE(desc.has("created"));
+  ASSERT_FALSE(desc.has("folders"));
+  desc = dxproject.describe(true);
+  ASSERT_EQ(desc["folders"].size(), 1);
+  ASSERT_EQ(desc["folders"][0].get<string>(), "/");
+}
+
+TEST_F(DXProjectTest, NewListRemoveFoldersTest) {
+  DXProject dxproject;
+  JSON listf = dxproject.listFolder();
+  ASSERT_EQ(listf["folders"], JSON(JSON_ARRAY));
+  ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
+
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxproject.newFolder("/a/b/c/d", true);
+  listf = dxproject.listFolder();
+  JSON expected(JSON_ARRAY);
+  expected.push_back("/a");
+  ASSERT_EQ(listf["folders"], expected);
+  expected[0] = dxrecord.getID();
+  ASSERT_EQ(listf["objects"], expected);
+  listf = dxproject.listFolder("/a");
+  expected[0] = "/a/b";
+  ASSERT_EQ(listf["folders"], expected);
+  ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
+  listf = dxproject.listFolder("/a/b");
+  expected[0] = "/a/b/c";
+  ASSERT_EQ(listf["folders"], expected);
+  listf = dxproject.listFolder("/a/b/c");
+  expected[0] = "/a/b/c/d";
+  ASSERT_EQ(listf["folders"], expected);
+  listf = dxproject.listFolder("/a/b/c/d");
+  ASSERT_EQ(listf["folders"], JSON(JSON_ARRAY));
+
+  ASSERT_THROW(dxproject.removeFolder("/a"), DXAPIError);
+  dxproject.removeFolder("/a/b/c/d");
+  dxproject.removeFolder("/a//b////c/");
+  dxproject.removeFolder("/a/b");
+  dxproject.removeFolder("/a");
+  dxrecord.remove();
+  listf = dxproject.listFolder();
+  ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
+  ASSERT_EQ(listf["folders"], JSON(JSON_ARRAY));
+}
+
+TEST_F(DXProjectTest, MoveTest) {
+  DXProject dxproject;
+  dxproject.newFolder("/a/b/c/d", true);
+  vector<DXRecord> dxrecords;
+  JSON options(JSON_OBJECT);
+  for (int i = 0; i < 4; i++) {
+    options["name"] = "record-" + boost::lexical_cast<string>(i);
+    dxrecords.push_back(DXRecord::newDXRecord(options));
+  }
+  JSON objects_to_move(JSON_ARRAY);
+  objects_to_move.push_back(dxrecords[0].getID());
+  objects_to_move.push_back(dxrecords[1].getID());
+  JSON folders_to_move(JSON_ARRAY);
+  folders_to_move.push_back("/a/b/c/d");
+  dxproject.move(objects_to_move,
+                 folders_to_move,
+                 "/a");
+  JSON listf = dxproject.listFolder();
+  JSON expected(JSON_ARRAY);
+  expected.push_back(dxrecords[2].getID());
+  expected.push_back(dxrecords[3].getID());
+  ASSERT_EQ(listf["objects"].size(), expected.size());
+  ASSERT_TRUE(listf["objects"][0] == expected[0] ||
+              listf["objects"][1] == expected[0]);
+  ASSERT_TRUE(listf["objects"][0] == expected[1] ||
+              listf["objects"][1] == expected[1]);
+  expected = JSON(JSON_ARRAY);
+  expected.push_back("/a");
+  ASSERT_EQ(listf["folders"], expected);
+
+  listf = dxproject.listFolder("/a");
+  expected = JSON(JSON_ARRAY);
+  expected.push_back(dxrecords[0].getID());
+  expected.push_back(dxrecords[1].getID());
+  ASSERT_EQ(listf["objects"].size(), expected.size());
+  ASSERT_TRUE(listf["objects"][0] == expected[0] ||
+              listf["objects"][1] == expected[0]);
+  ASSERT_TRUE(listf["objects"][0] == expected[1] ||
+              listf["objects"][1] == expected[1]);
+  expected = JSON(JSON_ARRAY);
+  expected.push_back("/a/b");
+  expected.push_back("/a/d");
+  ASSERT_EQ(listf["folders"].size(), expected.size());
+  ASSERT_TRUE(listf["folders"][0] == expected[0] ||
+              listf["folders"][1] == expected[0]);
+  ASSERT_TRUE(listf["folders"][0] == expected[1] ||
+              listf["folders"][1] == expected[1]);
+
+  JSON desc = dxrecords[0].describe();
+  ASSERT_EQ(desc["folder"].get<string>(), "/a");
+}
+
+TEST_F(DXProjectTest, CloneTest) {
+  DXProject dxproject;
+  dxproject.newFolder("/a/b/c/d", true);
+  vector<DXRecord> dxrecords;
+  JSON options(JSON_OBJECT);
+  for (int i = 0; i < 4; i++) {
+    options["name"] = "record-" + boost::lexical_cast<string>(i);
+    dxrecords.push_back(DXRecord::newDXRecord(options));
+  }
+  JSON objects_to_clone(JSON_ARRAY);
+  objects_to_clone.push_back(dxrecords[0].getID());
+  objects_to_clone.push_back(dxrecords[1].getID());
+  JSON folders_to_clone(JSON_ARRAY);
+  folders_to_clone.push_back("/a/b/c/d");
+  ASSERT_THROW(dxproject.clone(objects_to_clone, folders_to_clone,
+                               second_proj_id), DXAPIError);
+
+  dxrecords[0].close();
+  dxrecords[1].close();
+  dxproject.clone(objects_to_clone, folders_to_clone, second_proj_id);
+
+  DXProject second_proj(second_proj_id);
+  JSON listf = second_proj.listFolder();
+  JSON expected(JSON_ARRAY);
+  expected.push_back(dxrecords[0].getID());
+  expected.push_back(dxrecords[1].getID());
+  ASSERT_EQ(listf["objects"].size(), expected.size());
+  ASSERT_TRUE(listf["objects"][0] == expected[0] ||
+              listf["objects"][1] == expected[0]);
+  ASSERT_TRUE(listf["objects"][0] == expected[1] ||
+              listf["objects"][1] == expected[1]);
+  expected = JSON(JSON_ARRAY);
+  expected.push_back("/d");
+  ASSERT_EQ(listf["folders"], expected);
+}
+
+TEST_F(DXProjectTest, CloneRemoveObjectsTest) {
+  DXProject dxproject;
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.close();
+
+  JSON listf = dxproject.listFolder();
+  JSON id(JSON_ARRAY);
+  id.push_back(dxrecord.getID());
+  ASSERT_EQ(listf["objects"], id);
+
+  DXProject second_project(second_proj_id);
+  second_project.newFolder("/a");
+  dxproject.cloneObjects(id, second_proj_id, "/a");
+  listf = second_project.listFolder("/a");
+  ASSERT_EQ(listf["objects"], id);
+
+  dxproject.removeObjects(id);
+  listf = dxproject.listFolder();
+  ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
+  JSON desc = dxrecord.describe();
+  ASSERT_EQ(desc["folder"], "/a");
+}
+
 //////////////
 // DXRecord //
 //////////////
 
 class DXRecordTest : public testing::Test {
+  virtual void TearDown() {
+    remove_all(proj_id);
+    remove_all(second_proj_id);
+  }
+public:
+  static const JSON example_JSON;
 };
 
-// const JSON DXRecordTest::example_JSON =
-//   JSON::parse("{\"foo\": \"bar\", \"alpha\": [1, 2, 3]}");
-// const JSON DXRecordTest::another_example_JSON =
-//   JSON::parse("[\"foo\", \"bar\", {\"alpha\": [1, 2.340, -10]}]");
+const JSON DXRecordTest::example_JSON =
+  JSON::parse("{\"foo\": \"bar\", \"alpha\": [1, 2, 3]}");
 
-// TEST_F(DXRecordTest, CreateDestroyJSONTest) {
-//   DXRecord first_record = DXRecord::newDXRecord(DXRecordTest::example_JSON);
-//   ASSERT_EQ(DXRecordTest::example_JSON,
-// 	    first_record.get());
-//   string firstID = first_record.getID();
+TEST_F(DXRecordTest, CreateRemoveTest) {
+  JSON options(JSON_OBJECT);
+  options["details"] = DXRecordTest::example_JSON;
+  DXRecord first_record = DXRecord::newDXRecord(options);
+  ASSERT_EQ(DXRecordTest::example_JSON,
+	    first_record.getDetails());
+  ASSERT_EQ(first_record.getProjectID(), proj_id);
+  string firstID = first_record.getID();
 
-//   DXRecord second_record = DXRecord(first_record.getID());
-//   ASSERT_EQ(first_record.getID(), second_record.getID());
-//   ASSERT_EQ(first_record.get(), second_record.get());
+  DXRecord second_record(firstID);
+  ASSERT_EQ(first_record.getID(), second_record.getID());
+  ASSERT_EQ(first_record.getDetails(), second_record.getDetails());
+  ASSERT_EQ(second_record.getProjectID(), proj_id);
 
-//   second_record.create(DXRecordTest::example_JSON);
-//   ASSERT_NE(first_record.getID(), second_record.getID());
-//   ASSERT_EQ(first_record.get(), second_record.get());
+  options["project"] = second_proj_id;
+  second_record.create(options);
+  ASSERT_NE(first_record.getID(), second_record.getID());
+  ASSERT_EQ(second_record.getProjectID(), second_proj_id);
+  ASSERT_EQ(first_record.getDetails(), second_record.getDetails());
 
-//   ASSERT_NO_THROW(first_record.describe());
+  ASSERT_NO_THROW(first_record.describe());
 
-//   first_record.destroy();
-//   ASSERT_NO_THROW(first_record.getID());
-//   ASSERT_THROW(first_record.describe(), DXAPIError);
-//   second_record.destroy();
-//   ASSERT_THROW(second_record.describe(), DXAPIError);
-// }
+  first_record.remove();
+  ASSERT_THROW(first_record.describe(), DXAPIError);
+  second_record.remove();
+  ASSERT_THROW(second_record.describe(), DXAPIError);
+
+  DXRecord third_record(firstID);
+  ASSERT_THROW(third_record.describe(), DXAPIError);
+}
 
 TEST_F(DXRecordTest, DescribeTest) {
   DXRecord dxrecord = DXRecord::newDXRecord();
@@ -119,6 +313,152 @@ TEST_F(DXRecordTest, DescribeTest) {
   ASSERT_EQ(desc["properties"], properties);
 }
 
+TEST_F(DXRecordTest, TypesTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  vector<string> types;
+  types.push_back("foo");
+  types.push_back("othertype");
+  dxrecord.addTypes(types);
+  ASSERT_EQ(dxrecord.describe()["types"], JSON(types));
+
+  types.pop_back();
+  dxrecord.removeTypes(types);
+  ASSERT_EQ("othertype", dxrecord.describe()["types"][0].get<string>());
+}
+
+TEST_F(DXRecordTest, DetailsTest) {
+  JSON details_no_link(JSON_OBJECT);
+  details_no_link["foo"] = "bar";
+
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.setDetails(details_no_link);
+  ASSERT_EQ(dxrecord.getDetails(), details_no_link);
+  ASSERT_EQ(dxrecord.describe()["links"], JSON(JSON_ARRAY));
+
+  JSON details_two_links(JSON_ARRAY);
+  details_two_links.push_back(JSON(JSON_OBJECT));
+  details_two_links[0]["$dnanexus_link"] = dxrecord.getID();
+  details_two_links.push_back(JSON(JSON_OBJECT));
+  details_two_links[1]["$dnanexus_link"] = dxrecord.getID();
+
+  dxrecord.setDetails(details_two_links);
+  ASSERT_EQ(dxrecord.getDetails(), details_two_links);
+  JSON links = dxrecord.describe()["links"];
+  ASSERT_EQ(links.size(), 1);
+  ASSERT_EQ(links[0].get<string>(), dxrecord.getID());
+}
+
+TEST_F(DXRecordTest, VisibilityTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.hide();
+  ASSERT_EQ(dxrecord.describe()["hidden"].get<bool>(), true);
+
+  dxrecord.unhide();
+  ASSERT_EQ(dxrecord.describe()["hidden"].get<bool>(), false);
+}
+
+TEST_F(DXRecordTest, RenameTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.rename("newname");
+  ASSERT_EQ(dxrecord.describe()["name"].get<string>(), "newname");
+
+  dxrecord.rename("secondname");
+  ASSERT_EQ(dxrecord.describe()["name"].get<string>(), "secondname");
+}
+
+TEST_F(DXRecordTest, SetPropertiesTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  JSON properties(JSON_OBJECT);
+  properties["project"] = "cancer project";
+  properties["foo"] = "bar";
+  dxrecord.setProperties(properties);
+  JSON desc = dxrecord.describe(true);
+  ASSERT_EQ(desc["properties"], properties);
+
+  JSON unset_property(JSON_OBJECT);
+  unset_property["project"] = JSON(JSON_NULL);
+  dxrecord.setProperties(unset_property);
+  properties.erase("project");
+  ASSERT_EQ(dxrecord.describe(true)["properties"], properties);
+}
+
+TEST_F(DXRecordTest, TagsTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  vector<string> tags;
+  tags.push_back("foo");
+  tags.push_back("othertag");
+  dxrecord.addTags(tags);
+  ASSERT_EQ(dxrecord.describe()["tags"], JSON(tags));
+
+  tags.pop_back();
+  dxrecord.removeTags(tags);
+  ASSERT_EQ("othertag", dxrecord.describe()["tags"][0].get<string>());
+}
+
+TEST_F(DXRecordTest, ListProjectsTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.close();
+  dxrecord.clone(second_proj_id);
+  JSON projects = dxrecord.listProjects();
+  ASSERT_TRUE(projects.has(proj_id));
+  ASSERT_TRUE(projects.has(second_proj_id));
+}
+
+TEST_F(DXRecordTest, CloseTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.close();
+  ASSERT_THROW(dxrecord.hide(), DXAPIError);
+  ASSERT_THROW(dxrecord.setDetails(JSON(JSON_ARRAY)), DXAPIError);
+
+  ASSERT_EQ(dxrecord.getDetails(), JSON(JSON_OBJECT));
+  dxrecord.rename("newname");
+  ASSERT_EQ(dxrecord.describe()["name"].get<string>(), "newname");
+
+  dxrecord.rename("secondname");
+  ASSERT_EQ(dxrecord.describe()["name"].get<string>(), "secondname");
+}
+
+TEST_F(DXRecordTest, CloneTest) {
+  JSON options(JSON_OBJECT);
+  options["name"] = "firstname";
+  options["tags"] = JSON(JSON_ARRAY);
+  options["tags"].push_back("tag");
+  DXRecord dxrecord = DXRecord::newDXRecord(options);
+
+  ASSERT_THROW(dxrecord.clone(second_proj_id), DXAPIError);
+  dxrecord.close();
+
+  DXRecord second_dxrecord = dxrecord.clone(second_proj_id);
+  second_dxrecord.rename("newname");
+
+  JSON first_desc = dxrecord.describe();
+  JSON second_desc = second_dxrecord.describe();
+
+  ASSERT_EQ(first_desc["id"].get<string>(), dxrecord.getID());
+  ASSERT_EQ(second_desc["id"].get<string>(), dxrecord.getID());
+  ASSERT_EQ(first_desc["project"].get<string>(), proj_id);
+  ASSERT_EQ(second_desc["project"].get<string>(), second_proj_id);
+  ASSERT_EQ(first_desc["name"].get<string>(), "firstname");
+  ASSERT_EQ(second_desc["name"].get<string>(), "newname");
+  ASSERT_EQ(first_desc["tags"], second_desc["tags"]);
+  ASSERT_EQ(first_desc["created"], second_desc["created"]);
+  ASSERT_EQ(first_desc["state"].get<string>(), "closed");
+  ASSERT_EQ(second_desc["state"].get<string>(), "closed");
+}
+
+TEST_F(DXRecordTest, MoveTest) {
+  DXProject dxproject = DXProject();
+  dxproject.newFolder("/a/b/c/d", true);
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  dxrecord.move("/a/b/c");
+  JSON listf = dxproject.listFolder();
+  ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
+  listf = dxproject.listFolder("/a/b/c");
+  ASSERT_EQ(listf["objects"][0].get<string>(), dxrecord.getID());
+  JSON desc = dxrecord.describe();
+  ASSERT_EQ(desc["folder"].get<string>(), "/a/b/c");
+}
+
 ////////////
 // DXFile //
 ////////////
@@ -157,10 +497,21 @@ protected:
     remove(tempfilename.c_str());
 
     remove_all(proj_id);
+    remove_all(second_proj_id);
   }
 };
 
 const string DXFileTest::foostr = "foo\n";
+
+TEST_F(DXFileTest, SimpleCloneTest) {
+  DXFile dxfile = DXFile::newDXFile();
+  dxfile.write("foo");
+  dxfile.close(true);
+  dxfile.clone(second_proj_id);
+  JSON projects = dxfile.listProjects();
+  ASSERT_TRUE(projects.has(proj_id));
+  ASSERT_TRUE(projects.has(second_proj_id));
+}
 
 TEST_F(DXFileTest, UploadDownloadFiles) {
   dxfile = DXFile::uploadLocalFile(foofilename);
@@ -232,12 +583,20 @@ protected:
     columns.push_back(DXGTable::columnDesc("b", "int32"));
   }
   virtual void TearDown() {
-    try {
-      dxgtable.remove();
-    } catch (...) {
-    }
+    remove_all(proj_id);
+    remove_all(second_proj_id);
   }
 };
+
+TEST_F(DXGTableTest, SimpleCloneTest) {
+  DXGTable dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  dxgtable.addRows(JSON::parse("[[\"foo\", 1], [\"foo\", 2]]"));
+  dxgtable.close(true);
+  dxgtable.clone(second_proj_id);
+  JSON projects = dxgtable.listProjects();
+  ASSERT_TRUE(projects.has(proj_id));
+  ASSERT_TRUE(projects.has(second_proj_id));
+}
 
 TEST_F(DXGTableTest, CreateDXGTableTest) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);

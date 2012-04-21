@@ -19,3 +19,9 @@ DXJob DXProgram::run(const JSON &program_input,
   const JSON resp = programRun(dxid_, input_params);
   return DXJob(resp["id"].get<string>());
 }
+
+DXProgram DXProgram::clone(const string &dest_proj_id,
+                         const string &dest_folder) const {
+  clone_(dest_proj_id, dest_folder);
+  return DXProgram(dxid_, dest_proj_id);
+}

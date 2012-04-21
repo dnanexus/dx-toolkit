@@ -171,7 +171,8 @@ DXFile DXFile::newDXFile(const string &media_type) {
   return dxfile;
 }
 
-void DXFile::downloadDXFile(const string &dxid, const string &filename, int chunksize) {
+void DXFile::downloadDXFile(const string &dxid, const string &filename,
+                            int chunksize) {
   DXFile dxfile(dxid);
   ofstream localfile(filename.c_str());
   char chunkbuf[chunksize];
@@ -212,4 +213,10 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type)
   dxfile.setProperties(name_prop);
   dxfile.close();
   return dxfile;
+}
+
+DXFile DXFile::clone(const string &dest_proj_id,
+                     const string &dest_folder) const {
+  clone_(dest_proj_id, dest_folder);
+  return DXFile(dxid_, dest_proj_id);
 }

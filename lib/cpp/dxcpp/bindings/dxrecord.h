@@ -39,6 +39,19 @@ class DXRecord: public DXDataObject {
    */
   static DXRecord newDXRecord(const dx::JSON &data_obj_fields=
 			      dx::JSON(dx::JSON_OBJECT));
+
+  /**
+   * Clones the associated object into the specified project and folder.
+   *
+   * @param dest_proj_id ID of the project to which the object should
+   * be cloned
+   * @param dest_folder Folder route in which to put it in the
+   * destination project.
+   * @return New object handler with the associated project set to
+   * dest_proj_id.
+   */
+  DXRecord clone(const std::string &dest_proj_id,
+                 const std::string &dest_folder="/") const;
 };
 
 #endif
