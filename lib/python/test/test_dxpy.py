@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os, sys, unittest, json, tempfile, filecmp
 
-import dxpy.bindings as dxpy
+import dxpy
 from dxpy.exceptions import *
 
 # Store the following in PROJECT_CONTEXT_ID to make some of the tests pass
@@ -79,8 +79,8 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(listf["folders"], ["/a"])
 
         listf = dxproject.list_folder("/a")
-        self.assertEqual(listf["objects"], [dxrecords[0].get_id(),
-                                            dxrecords[1].get_id()])
+        self.assertEqual(listf["objects"].sort(),
+                         [dxrecords[0].get_id(), dxrecords[1].get_id()].sort())
         self.assertEqual(listf["folders"], ["/a/b", "/a/d"])
 
         desc = dxrecords[0].describe()
@@ -485,7 +485,7 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
 
         '''Create a new DXRecord object which should generate a new ID
-        but in the same project as the first.
+        and in a different project.
         '''
         secondDXRecord.new(project=second_proj_id, details=["bar"])
         self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
@@ -609,10 +609,10 @@ class TestDXRecord(unittest.TestCase):
 
     def test_visibility_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
-        dxrecord.set_visibility(hidden=True)
+        dxrecord.hide()
         self.assertEqual(dxrecord.describe()["hidden"], True)
 
-        dxrecord.set_visibility(hidden=False)
+        dxrecord.unhide()
         self.assertEqual(dxrecord.describe()["hidden"], False)
 
     def test_rename_dxrecord(self):
@@ -634,7 +634,7 @@ class TestDXRecord(unittest.TestCase):
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
         with self.assertRaises(DXAPIError):
-            dxrecord.set_visibility(True)
+            dxrecord.hide()
         with self.assertRaises(DXAPIError):
             dxrecord.set_details(["foo"])
 
@@ -731,6 +731,21 @@ class TestDXJob(unittest.TestCase):
 
         test_json.remove()
         dxprogram.remove()
+
+class TestDXSearch(unittest.TestCase):
+    def find_data_objs(self):
+        dxrecord = dxpy.new_dxrecord()
+        results = list(dxpy.search.find_data_objects(state="open"))
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {"projectId": proj_id,
+                                      "objectId": dxrecord.get_id()})
+        results = list(dxpy.search.find_data_objects(state="closed"))
+        self.assertEqual(len(results), 0)
+        dxrecord.close()
+        results = list(dxpy.search.find_data_objects(state="open"))
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], {"projectId": proj_id,
+                                      "objectId": dxrecord.get_id()})
 
 if __name__ == '__main__':
     unittest.main()

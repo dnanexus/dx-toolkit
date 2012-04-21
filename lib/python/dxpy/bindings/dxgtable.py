@@ -8,7 +8,7 @@ import json
 from dxpy.bindings import *
 
 class DXGTable(DXDataObject):
-    '''Remote gtable object handler
+    '''Remote GenomicTable object handler
 
     .. automethod:: _new
     '''
@@ -198,6 +198,9 @@ class DXGTable(DXDataObject):
         :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`.
         :type indices: list of index descriptors
         :rtype: :class:`dxpy.bindings.DXGTable`
+
+        Additional optional parameters not listed: all those under
+        :func:`dxpy.bindings.DXDataObject.new`.
 
         Extends the current gtable object with the column names in
         *columns*, creating a new remote gtable as a result.  Returns

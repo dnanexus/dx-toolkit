@@ -14,7 +14,7 @@ def open_dxgtable(dxid, **kwargs):
     '''
     :param dxid: table ID
     :type dxid: string
-    :rtype: :class:`dxpy.bindings.DXGTable`
+    :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
 
     Given the object ID of an existing table, this function returns a
     DXGTable object on which get_rows() can be called.
@@ -40,7 +40,10 @@ def new_dxgtable(columns, **kwargs):
     :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.make_index_desc`
     :type indices: list of index descriptors
     :returns: Remote table handler for the created table
-    :rtype: :class:`dxpy.bindings.DXGTable`
+    :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
+
+    Additional optional parameters not listed: all those under
+    :func:`dxpy.bindings.DXDataObject.new`.
 
     Creates a new remote table with the given column names in
     *columns*.  If *chr_col*, *lo_col*, and *hi_col* are given, the rows
@@ -71,7 +74,12 @@ def extend_dxgtable(dxid, columns, **kwargs):
     :type dxid: string
     :param columns: An ordered list containing strings of the form "confidence:double" to indicate a new column called "confidence" containing doubles.
     :type columns: list
-    :rtype: :class:`dxpy.bindings.DXGTable`
+    :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable.extend` for more details. (optional)
+    :type indices: list of index descriptors
+    :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
+
+    Additional optional parameters not listed: all those under
+    :func:`dxpy.bindings.DXDataObject.new`.
 
     Given the object ID of an existing table and a list of new columns
     with which to extend the table, this function creates a new remote

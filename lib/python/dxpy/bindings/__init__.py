@@ -1,50 +1,56 @@
 """
 This module contains useful Python bindings for interacting with the
-Platform API.  The :func:`dxpy.bindings.search` function provides
-search functionality over all remote objects managed by the API
-server: users, groups, JSON objects, files, GenomicTables, collections, apps,
-and jobs.  Each of these remote objects can be represented locally by
-a handler that inherits from the abstract class
-:class:`dxpy.bindings.DXDataObject`.  This abstract base class supports
-functionality common to all of the remote object classes: getting and
-setting properties, permissions, and types, as well as remotely
-destroying the object permanently.
+Platform API. Data objects (such as records, files, GenomicTables,
+tables, and programs) can be represented locally by a handler that
+inherits from the abstract class :class:`DXDataObject`.  This abstract
+base class supports functionality common to all of the data object
+classes--for example, setting properties and types, as well as
+removing the object from a project, moving it to a different folder in
+the project, or cloning it to a different project.
 
-To access a preexisting object, a remote handler for that class can be
-set up via two methods: the constructor or the
-:meth:`dxpy.bindings.DXDataObject.setID` method.  For example::
+A remote handler for a data object always has two IDs associated with
+it: one ID representing the underlying data, and a project ID to
+indicate which project's copy it refers to.  The ID of a data object
+remains the same regardless of whether it is moved within a project or
+cloned to another project.  To access a preexisting object, a remote
+handler for that class can be set up via two methods: the constructor
+or the :meth:`DXDataObject.set_ids` method.  For
+example::
 
     dxFileHandle = DXFile("file-1234")
 
     dxOtherFH = DXFile()
     dxOtherFH.set_ids("file-4321")
 
-Both these methods do not perform API calls and merely sets the state
-of the remote file handler.  The object ID stored in the handler can
-be overwritten with subsequent calls to
-:meth:`dxpy.bindings.DXDataObject.setID`.
+Both these methods do not perform API calls and merely set the state
+of the remote file handler.  The object ID and project ID stored in
+the handler can be overwritten with subsequent calls to
+:meth:`DXDataObject.set_ids`.
 
 Creation of a new object can be performed using the method
-:meth:`dxpy.bindings.DXDataObject.new` which usually has a different
-specification for each subclass of :class:`dxpy.bindings.DXDataObject`::
+:meth:`DXDataObject.new` which usually has a different
+specification for each subclass of :class:`DXDataObject`
+that can take in class-specific arguments::
 
-    newDXFileHandle = DXFile().new()
+    newDXFileHandle = DXFile()
+    newDXFileHandle.new(media_type="application/json")
 
 Additional functions that are shorthand for some of these common use
 cases are provided for some of the classes.  For instance, there is a
 function for opening a preexisting remote file
-(:func:`dxpy.bindings.open_dxfile`), and one for opening a new file to
-be modified (:func:`dxpy.bindings.new_dxfile`), both of which
+(:func:`dxpy.bindings.dxfile_functions.open_dxfile`), and one for opening a new file to
+be modified (:func:`dxpy.bindings.dxfile_functions.new_dxfile`), both of which
 return a remote object handler on which the other methods can be
 called.
 
 In addition, class-specific handlers such as
-:class:`dxpy.bindings.DXFile` provide extra functionality for the
+:class:`dxpy.bindings.dxfile.DXFile` provide extra functionality for the
 respective class.  For example, in the case of files, reading,
 writing, downloading, and uploading files are all supported.  
 
-Though not yet documented as such, all methods which interact with the
-API server may raise the exception :exc:`dxpy.exceptions.DXAPIError`
+Though not explicitly documented in each method as such, all methods
+which interact with the API server may raise the exception
+:exc:`dxpy.exceptions.DXAPIError`.
 
 """
 
@@ -53,57 +59,6 @@ from dxpy import *
 import dxpy.api
 from dxpy.exceptions import *
 import copy
-
-def search(classname=None, properties=None, typename=None, describe=False):
-    """
-    :param classname: Class with which to restrict the search, i.e. one of "user", "group", "record", "file", "gtable", "collection", "app", "program"
-    :type classname: string
-    :param properties: Properties (key-value pairs) that each result must have
-    :type properties: dict
-    :param typename: Type that each result must conform to
-    :type typename: string
-    :param describe: Whether to return each item as the output of calling describe() on the object (if given True) or to return each item as its object ID (False)
-    :type describe: boolean
-    :rtype: generator
-    :raises: :exc:`dxpy.exceptions.DXAPIError`
-
-    This is a generator function which returns the search results and
-    handles fetching of future chunks if necessary.  The search is not
-    restricted by any fields which are omitted and otherwise imposes
-    the restrictions requested.
-
-    These two examples iterates through all gtables with property
-    "project" set to "cancer project" and prints their object IDs::
-
-        for result in search(classname="gtable", properties={"project": "cancer project"}):
-            print "Found gtable with object id " + result
-
-        for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
-            print "Found gtable with object id " + result["id"]
-
-    """
-    query = {}
-    if classname is not None:
-        query["class"] = classname
-    if properties is not None:
-        query["properties"] = properties
-    if typename is not None:
-        query["type"] = typename
-    # if permission is not None:
-    #     query["permission"] = permission
-    query["describe"] = describe
-
-    while True:
-        resp = dxpy.api.systemSearch(query)
-        
-        for i in resp["results"]:
-            yield i
-
-        # set up next query
-        if resp["next"] is not None:
-            query["starting"] = resp["next"]
-        else:
-            raise StopIteration()
 
 class DXDataObject(object):
     """Abstract base class for all remote object handlers"""
@@ -308,19 +263,27 @@ class DXDataObject(object):
 
         return self._set_details(self._dxid, details)
 
-    def set_visibility(self, hidden):
+    def hide(self):
         """
-        :param hidden: Whether the object is to be hidden or not
-        :type hidden: boolean
-
-        Sets the visibility of the remote object.
+        Hides the remote object.
 
         This method can only be called if the object is in the "open"
         state.
 
         """
 
-        return self._set_visibility(self._dxid, {"hidden": hidden})
+        return self._set_visibility(self._dxid, {"hidden": True})
+
+    def unhide(self):
+        """
+        Makes the remote object visible.
+
+        This method can only be called if the object is in the "open"
+        state.
+
+        """
+
+        return self._set_visibility(self._dxid, {"hidden": False})
 
     def rename(self, name):
         """
@@ -417,8 +380,6 @@ class DXDataObject(object):
         Permanently remove the associated remote object from the
         associated project.
 
-        TODO: Consider renaming this to delete or destroy to make it
-        more obvious?
         '''
 
         if self._proj is None:
@@ -455,7 +416,7 @@ class DXDataObject(object):
         :type folder: string
         :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
         :returns: An object handler for the new cloned object
-        :rtype: :class:`dxpy.bindings.DXDataObject`
+        :rtype: :class:`DXDataObject`
 
         Clones the associated remote object to *folder* in *project*
         and returns an object handler for the new object.

@@ -1,11 +1,15 @@
 '''
 Importing this package will set the security context appropriately for
 use with the :func:`dxpy.DXHTTPRequest` function, which will then set
-the headers appropriately when communicating with the API server.
+the headers appropriately when communicating with the API server.  In
+addition, it will set the default workspace according to WORKSPACE_ID
+(if running inside an Execution Environment) or PROJECT_CONTEXT_ID
+(otherwise).  This workspace will be used by default for any object
+handler methods that require a project ID.
 
-If using the :mod:`dxpy.bindings` submodule, the methods for setting
-the security context and class do not need to be used directly so long
-as the appropriate environment variables APISERVER_HOST,
+When importing the :mod:`dxpy.bindings` submodule, the methods for
+setting the security context etc. do not need to be used directly so
+long as the appropriate environment variables APISERVER_HOST,
 APISERVER_PORT, and SECURITY_CONTEXT have been properly set.
 
 '''
@@ -14,6 +18,8 @@ import os, json, requests
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
 from dxpy.exceptions import *
+
+API_VERSION = '1.0.0'
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_data=True, want_full_response=False, **kwargs):
     '''
@@ -38,6 +44,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_
         headers['Content-Type'] = 'application/json'
     if jsonify_data:
         data = json.dumps(data)
+
+    headers['DNAnexus-API'] = API_VERSION
 
     response = requests.request(method, url, data=data, headers=headers,
                                 auth=auth, **kwargs)

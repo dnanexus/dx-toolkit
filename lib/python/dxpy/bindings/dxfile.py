@@ -12,6 +12,8 @@ class DXFile(DXDataObject):
     '''
     :param dxid: Object ID
     :type dxid: string
+    :param project: Project ID
+    :type project: string
     :param keep_open: Indicates whether the remote file should be kept open when exiting the context manager or when the destructor is called on the file handler
     :type keep_open: boolean
 
@@ -178,9 +180,7 @@ class DXFile(DXDataObject):
 
         .. note::
 
-            Writing to remote files is append-only.  Using **seek()** will not affect where the next **write** will occur.
-
-        TODO: Provide input for setting _cur_part here or elsewhere
+            Writing to remote files is append-only.  Using :meth:`seek` will not affect where the next :meth:`write` will occur.
 
         '''
 
@@ -222,7 +222,7 @@ class DXFile(DXDataObject):
 
     def wait_on_close(self, timeout=sys.maxint):
         '''
-        :param timeout: Max amount of time to wait until the file is closed.
+        :param timeout: Max amount of time to wait (in seconds) until the file is closed.
         :type timeout: integer
         :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the remote file has been closed
 

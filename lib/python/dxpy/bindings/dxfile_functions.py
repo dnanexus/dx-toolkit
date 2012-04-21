@@ -19,7 +19,7 @@ def open_dxfile(dxid, **kwargs):
     '''
     :param dxid: file ID
     :type dxid: string
-    :rtype: :class:`dxpy.bindings.DXFile`
+    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
 
     Given the object ID of an uploaded file, this function returns a
     remote file handler which can be treated as a read-only file
@@ -43,7 +43,10 @@ def new_dxfile(**kwargs):
     '''
     :param media_type: Internet Media Type (optional)
     :type media_type: string
-    :rtype: :class:`dxpy.bindings.DXFile`
+    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+
+    Additional optional parameters not listed: all those under
+    :func:`dxpy.bindings.DXDataObject.new`.
 
     Creates a new remote file object that is ready to be written to
     and returns a DXFile object which can be treated as a write-only
@@ -96,14 +99,17 @@ def download_dxfile(dxid, filename, chunksize=1024*1024):
         with open(filename, 'w') as fd:
             fd.write(file_content)
 
-def upload_local_file(filename, media_type=None, wait_on_close=False):
+def upload_local_file(filename, media_type=None, wait_on_close=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
     :param media_type: Internet Media Type
     :type media_type: string
     :returns: Remote file handler
-    :rtype: :class:`dxpy.bindings.DXFile`
+    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+
+    Additional optional parameters not listed: all those under
+    :func:`dxpy.bindings.DXDataObject.new`.
 
     Uploads *filename* into a new file object (with media type
     *media_type* if given) and returns the associated remote file
@@ -115,7 +121,7 @@ def upload_local_file(filename, media_type=None, wait_on_close=False):
 
     '''
 
-    dxfile = new_dxfile(media_type=media_type)
+    dxfile = new_dxfile(media_type=media_type, **kwargs)
 
     with open(filename, 'r') as fd:
         while True:
@@ -128,14 +134,17 @@ def upload_local_file(filename, media_type=None, wait_on_close=False):
     dxfile.set_properties({"name": os.path.basename(filename)})
     return dxfile
 
-def upload_string(to_upload, media_type=None):
+def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
     """
     :param to_upload: String to upload into a file
     :type to_upload: string
     :param media_type: Internet Media Type
     :type media_type: string
     :returns: Remote file handler
-    :rtype: :class:`dxpy.bindings.DXFile`
+    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+
+    Additional optional parameters not listed: all those under
+    :func:`dxpy.bindings.DXDataObject.new`.
 
     Uploads the given string *to_upload* into a new file object (with
     media type *media_type* if given) and returns the associated
@@ -143,7 +152,7 @@ def upload_string(to_upload, media_type=None):
     
     """
 
-    dxfile = new_dxfile(media_type=media_type)
+    dxfile = new_dxfile(media_type=media_type, **kwargs)
     dxfile.write(to_upload)
-    dxfile.close()
+    dxfile.close(block=wait_on_close)
     return dxfile

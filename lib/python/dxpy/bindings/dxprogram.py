@@ -1,5 +1,10 @@
 """
-TODO: Write something here.
+DXProgram Handler
++++++++++++++++++
+
+Programs are data objects which store an executable and specifications
+for input, output, and execution.  They can be run by calling the :func:`DXProgram.run` method.
+
 """
 
 from dxpy.bindings import *
@@ -68,6 +73,10 @@ class DXProgram(DXDataObject):
         '''
         :param program_input: Hash of the program's input arguments
         :type program_input: dict
+        :param project: Project ID of the project context
+        :type project: string
+        :param folder: Folder in which program's outputs will be placed in *project*
+        :type folder: string
         :returns: Object handler of the created job now running the program
         :rtype: :class:`dxpy.bindings.DXJob`
 
