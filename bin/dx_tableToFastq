@@ -20,5 +20,5 @@ if opts.end_row is not None and opts.end_row <= opts.start_row:
 
 dxtable_id = args[0]
 
-for row in dxpy.open_dxtable(dxtable_id).iterate_rows(start=opts.start_row, end=opts.end_row):
+for row in dxpy.open_dxgtable(dxtable_id).iterate_rows(start=opts.start_row, end=opts.end_row):
     print "\n".join([row[1], row[2], "+", row[3]])
