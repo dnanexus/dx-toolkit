@@ -659,12 +659,21 @@ dx::JSON systemGetLog(const dx::JSON &input_params) {
 }
 
 
-dx::JSON systemSearch(const std::string &input_params) {
-  return DXHTTPRequest("/system/search", input_params);
+dx::JSON systemFindDataObjects(const std::string &input_params) {
+  return DXHTTPRequest("/system/findDataObjects", input_params);
 }
 
-dx::JSON systemSearch(const dx::JSON &input_params) {
-  return systemSearch(input_params.toString());
+dx::JSON systemFindDataObjects(const dx::JSON &input_params) {
+  return systemFindDataObjects(input_params.toString());
+}
+
+
+dx::JSON systemFindJobs(const std::string &input_params) {
+  return DXHTTPRequest("/system/findJobs", input_params);
+}
+
+dx::JSON systemFindJobs(const dx::JSON &input_params) {
+  return systemFindJobs(input_params.toString());
 }
 
 

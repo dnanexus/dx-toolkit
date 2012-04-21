@@ -517,10 +517,17 @@ sub systemGetLog(;$%) {
 }
 
 
-sub systemSearch(;$%) {
+sub systemFindDataObjects(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/system/search', $input_params, %kwargs);
+    return DXHTTPRequest('/system/findDataObjects', $input_params, %kwargs);
+}
+
+
+sub systemFindJobs(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findJobs', $input_params, %kwargs);
 }
 
 
@@ -672,5 +679,5 @@ sub tableUpdate($;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(fileNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload gtableNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility jobNew jobDescribe jobTerminate programNew programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility projectNew projectClone projectDescribe projectDestroy projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectUpdate recordNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility systemGetLog systemSearch tableNew tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate);
+our @EXPORT_OK = qw(fileNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload gtableNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility jobNew jobDescribe jobTerminate programNew programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility projectNew projectClone projectDescribe projectDestroy projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectUpdate recordNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility systemGetLog systemFindDataObjects systemFindJobs tableNew tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate);
 

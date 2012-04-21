@@ -296,8 +296,12 @@ dx::JSON systemGetLog(const std::string &input_params="{}");
 dx::JSON systemGetLog(const dx::JSON &input_params);
 
 
-dx::JSON systemSearch(const std::string &input_params="{}");
-dx::JSON systemSearch(const dx::JSON &input_params);
+dx::JSON systemFindDataObjects(const std::string &input_params="{}");
+dx::JSON systemFindDataObjects(const dx::JSON &input_params);
+
+
+dx::JSON systemFindJobs(const std::string &input_params="{}");
+dx::JSON systemFindJobs(const dx::JSON &input_params);
 
 
 dx::JSON tableNew(const std::string &input_params="{}");

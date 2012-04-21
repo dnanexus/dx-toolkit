@@ -294,8 +294,12 @@ def systemGetLog(input_params={}, **kwargs):
     return DXHTTPRequest('/system/getLog', input_params, **kwargs)
 
 
-def systemSearch(input_params={}, **kwargs):
-    return DXHTTPRequest('/system/search', input_params, **kwargs)
+def systemFindDataObjects(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findDataObjects', input_params, **kwargs)
+
+
+def systemFindJobs(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findJobs', input_params, **kwargs)
 
 
 def tableNew(input_params={}, **kwargs):
