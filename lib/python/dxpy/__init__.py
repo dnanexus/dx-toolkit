@@ -132,25 +132,25 @@ def set_project_context(dxid):
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
 
-if "APISERVER_HOST" in os.environ and "APISERVER_PORT" in os.environ:
-    set_api_server_info(host=os.environ["APISERVER_HOST"],
-                     port=os.environ["APISERVER_PORT"])
+if "DX_APISERVER_HOST" in os.environ and "DX_APISERVER_PORT" in os.environ:
+    set_api_server_info(host=os.environ["DX_APISERVER_HOST"],
+                     port=os.environ["DX_APISERVER_PORT"])
 else:
     set_api_server_info()
 
-if "SECURITY_CONTEXT" in os.environ:
-    set_security_context(json.loads(os.environ['SECURITY_CONTEXT']))
+if "DX_SECURITY_CONTEXT" in os.environ:
+    set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
 else:
     print "Warning: no security context found in environment variables"
 
-if "JOB_ID" in os.environ:
-    set_job_id(os.environ["JOB_ID"])
-    if "WORKSPACE_ID" in os.environ:
-        set_workspace_id(os.environ["WORKSPACE_ID"])
-    if "PROJECT_CONTEXT_ID" in os.environ:
-        set_project_context(os.environ["PROJECT_CONTEXT_ID"])
+if "DX_JOB_ID" in os.environ:
+    set_job_id(os.environ["DX_JOB_ID"])
+    if "DX_WORKSPACE_ID" in os.environ:
+        set_workspace_id(os.environ["DX_WORKSPACE_ID"])
+    if "DX_PROJECT_CONTEXT_ID" in os.environ:
+        set_project_context(os.environ["DX_PROJECT_CONTEXT_ID"])
 else:
-    if "PROJECT_CONTEXT_ID" in os.environ:
-        set_workspace_id(os.environ["PROJECT_CONTEXT_ID"])
+    if "DX_PROJECT_CONTEXT_ID" in os.environ:
+        set_workspace_id(os.environ["DX_PROJECT_CONTEXT_ID"])
 
 from dxpy.bindings import *

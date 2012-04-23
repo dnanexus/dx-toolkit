@@ -4,9 +4,9 @@
 
 // Example environment variables
 //
-// APISERVER_PORT=8124
-// APISERVER_HOST=localhost
-// SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
+// DX_APISERVER_PORT=8124
+// DX_APISERVER_HOST=localhost
+// DX_SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
 
 using namespace std;
 using namespace dx;
@@ -30,7 +30,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
     loadFromEnvironment();
   }
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
-    std::cerr << "Error: API server information and/or security context not set." << std::endl;
+    std::cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set." << std::endl;
     throw;
   }
 
@@ -106,23 +106,23 @@ void setProjectContext(const string &project_id) {
 
 void loadFromEnvironment() {
   if (!g_APISERVER_SET &&
-      (getenv("APISERVER_HOST") != NULL) &&
-      (getenv("APISERVER_PORT") != NULL))
-    setAPIServerInfo(getenv("APISERVER_HOST"),
-		     atoi(getenv("APISERVER_PORT")));
+      (getenv("DX_APISERVER_HOST") != NULL) &&
+      (getenv("DX_APISERVER_PORT") != NULL))
+    setAPIServerInfo(getenv("DX_APISERVER_HOST"),
+		     atoi(getenv("DX_APISERVER_PORT")));
 
   if (!g_SECURITY_CONTEXT_SET &&
-      getenv("SECURITY_CONTEXT") != NULL)
-    setSecurityContext(JSON::parse(getenv("SECURITY_CONTEXT")));
+      getenv("DX_SECURITY_CONTEXT") != NULL)
+    setSecurityContext(JSON::parse(getenv("DX_SECURITY_CONTEXT")));
 
   if (!g_WORKSPACE_ID_SET) {
-    if (getenv("JOB_ID") != NULL) {
-      if (getenv("WORKSPACE_ID") != NULL)
-	setWorkspaceID(getenv("WORKSPACE_ID"));
-      if (getenv("PROJECT_CONTEXT_ID") != NULL)
-	setProjectContext(getenv("PROJECT_CONTEXT_ID"));
-    } else if (getenv("PROJECT_CONTEXT_ID") != NULL) {
-      setWorkspaceID(getenv("PROJECT_CONTEXT_ID"));
+    if (getenv("DX_JOB_ID") != NULL) {
+      if (getenv("DX_WORKSPACE_ID") != NULL)
+	setWorkspaceID(getenv("DX_WORKSPACE_ID"));
+      if (getenv("DX_PROJECT_CONTEXT_ID") != NULL)
+	setProjectContext(getenv("DX_PROJECT_CONTEXT_ID"));
+    } else if (getenv("DX_PROJECT_CONTEXT_ID") != NULL) {
+      setWorkspaceID(getenv("DX_PROJECT_CONTEXT_ID"));
     }
   }
 }
