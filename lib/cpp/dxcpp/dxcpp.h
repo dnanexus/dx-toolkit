@@ -7,19 +7,72 @@
 #include "dxjson/dxjson.h"
 #include "exceptions.h"
 
-// Want to consider returning a string especially after a getRows call
-
+/**
+ * Default project or workspace ID to access.
+ */
 extern std::string g_WORKSPACE_ID;
 
-dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
-		   const std::map<std::string, std::string> &headers=std::map<std::string, std::string>());
+/**
+ * Project ID of the project context.  Applicable only for execution
+ * as a job run from a particular project.
+ */
+extern std::string g_PROJECT_CONTEXT_ID;
 
+/**
+ * This is a low-level function for making an HTTP request to the API
+ * server using the information that has been set by
+ * setAPIServerInfo() and setSecurityContext().
+ *
+ * @param resource API server route to access, e.g. "/file/new"
+ * @param data Data to send in the request
+ * @param headers Additional HTTP headers to include in the request
+ * @return The response from the API server, parsed as a JSON
+ */
+dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
+                       const std::map<std::string, std::string> &headers=
+                       std::map<std::string, std::string>());
+
+/**
+ * Sets the information used to contact the API server for use by
+ * DXHTTPRequest().
+ *
+ * @param host API server hostname
+ * @param port Port number
+ * @param protocol Protocol to use, e.g. "http"
+ */
 void setAPIServerInfo(const std::string &host="localhost",
 		      int port=8124,
 		      const std::string &protocol="http");
 
+/**
+ * Sets the security context for constructing the necessary headers in
+ * DXHTTPRequest().
+ *
+ * @param security_context A JSON object with keys "auth_token_type"
+ * and "auth_token"
+ */
 void setSecurityContext(const dx::JSON &security_context);
 
+/**
+ * Sets the default project or workspace ID to use when creating
+ * object or project handlers.
+ *
+ * @param workspace_id Project or workspace ID
+ */
+void setWorkspaceID(const std::string &workspace_id);
+
+/**
+ * Sets the project context ID
+ *
+ * @param project_id Project ID
+ */
+void setProjectContext(const std::string &project_id);
+
+/**
+ * Loads the data from environment variables and calls
+ * setAPIServerInfo(), setSecurityContext(), setWorkspaceID(), and
+ * setProjectContext() as appropriate.
+ */
 void loadFromEnvironment();
 
 #include "api.h"

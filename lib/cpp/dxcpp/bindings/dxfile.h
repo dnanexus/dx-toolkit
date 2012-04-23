@@ -94,6 +94,9 @@ class DXFile: public DXDataObject {
    * DXFile instance which can then be used for writing only.
    *
    * @param media_type String representing the media type of the file.
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
    */
   void create(const std::string &media_type="",
 	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
@@ -253,9 +256,14 @@ class DXFile: public DXDataObject {
    * empty remote file ready for writing.
    *
    * @param media_type String representing the media type of the file.
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
    * @return DXFile remote file handler for a new remote file
    */
-  static DXFile newDXFile(const std::string &media_type="");
+  static DXFile newDXFile(const std::string &media_type="",
+                          const dx::JSON &data_obj_fields=
+                          dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Shorthand for downloading a remote file to a local location.
@@ -276,9 +284,15 @@ class DXFile: public DXDataObject {
    *
    * @param filename Local path for the file to upload.
    * @param media_type String representing the media type of the file.
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
    * @return DXFile remote file handler for the newly uploaded file.
    */
-  static DXFile uploadLocalFile(const std::string &filename, const std::string &media_type="");
+  static DXFile uploadLocalFile(const std::string &filename,
+                                const std::string &media_type="",
+                                const dx::JSON &data_obj_fields=
+                                dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Clones the associated object into the specified project and folder.

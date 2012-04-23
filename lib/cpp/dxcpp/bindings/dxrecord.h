@@ -29,12 +29,18 @@ class DXRecord: public DXDataObject {
    * Creates a new remote record object.  The handler is updated with
    * the object ID.
    *
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
    */
   void create(const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Create a new remote record object.
    *
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
    * @return A DXRecord remote object handler.
    */
   static DXRecord newDXRecord(const dx::JSON &data_obj_fields=

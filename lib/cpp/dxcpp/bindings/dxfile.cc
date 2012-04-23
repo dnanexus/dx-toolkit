@@ -165,9 +165,10 @@ DXFile DXFile::openDXFile(const string &dxid) {
   return DXFile(dxid);
 }
 
-DXFile DXFile::newDXFile(const string &media_type) {
+DXFile DXFile::newDXFile(const string &media_type,
+                         const JSON &data_obj_fields) {
   DXFile dxfile;
-  dxfile.create(media_type);
+  dxfile.create(media_type, data_obj_fields);
   return dxfile;
 }
 
@@ -189,8 +190,9 @@ static string getBaseName(const string& filename) {
   return filename.substr(lastslash+1);
 }
 
-DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type) {
-  DXFile dxfile = newDXFile(media_type);
+DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type,
+                               const JSON &data_obj_fields) {
+  DXFile dxfile = newDXFile(media_type, data_obj_fields);
   ifstream localfile(filename.c_str());
   char * buf = new char [DXFile::max_buf_size_];
   try {

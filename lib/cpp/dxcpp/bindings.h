@@ -7,6 +7,18 @@
 
 extern std::string g_WORKSPACE_ID;
 
+/**
+ * The DXDataObject class is the abstract base class for all data
+ * object remote handlers.  It contains the common methods to all
+ * handlers, such as creation, describing, setting of properties,
+ * tags, types, visibility, details, etc.  Each DXDataObject instance
+ * has two IDs associated with it: a data object ID assigned to the
+ * data object it is accessing, and a project ID to indicate which
+ * project's copy of the data the handler will be accessing.  Note
+ * that it is possible to have two handlers with the same data object
+ * ID but different project IDs.  Both will access the same underlying
+ * data but can separately modify the name, properties, and tags.
+ */
 class DXDataObject {
  protected:
   std::string dxid_;
@@ -48,13 +60,39 @@ class DXDataObject {
   DXDataObject(const std::string &dxid, const std::string &proj) {
     setIDs(dxid, proj); }
  
+  /**
+   * @return ID of the associated data object
+   */
   std::string getID() const { return dxid_; }
+
+  /**
+   * Default conversion to string is to its object ID so a handler can
+   * always be passed in place of a string argument that expects an
+   * object ID.
+   */
   operator std::string() { return dxid_;}
+
+  /**
+   * @return ID of the project to which this data object handler is
+   * accessing.
+   */
   std::string getProjectID() const { return proj_; }
+
+  /**
+   * Sets the object and project IDs as specified.  The default value
+   * for the project ID will be set according to the default
+   * workspace.  See setWorkspaceID() and loadFromEnvironment() for
+   * more information.
+   *
+   * @param dxid ID of the associated data object
+   * @param proj ID of the project whose copy of the data object
+   * should be accessed
+   */
   virtual void setIDs(const std::string &dxid,
 		      const std::string &proj=g_WORKSPACE_ID);
 
-  /** Returns a JSON object with, at minimum, the keys "id", "class",
+  /**
+   * Returns a JSON object with, at minimum, the keys "id", "class",
    * "types", and "createdAt".  Other fields may also be included,
    * depending on the class.
    * @return JSON description

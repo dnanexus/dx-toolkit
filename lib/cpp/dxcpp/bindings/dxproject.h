@@ -10,7 +10,16 @@ class DXProject {
  DXProject(const std::string &dxid=g_WORKSPACE_ID) : dxid_(dxid) { }
 
   void setID(const std::string &dxid) { dxid_ = dxid; }
+  /**
+   * @return ID of the associated data object
+   */
   std::string getID() const { return dxid_; }
+  /**
+   * Default conversion to string is to its project ID so a handler
+   * can always be passed in place of a string argument that expects
+   * a project ID.
+   */
+  operator std::string() { return dxid_;}
 
   dx::JSON describe(bool folders=false) const;
   void update(const dx::JSON &to_update) const;

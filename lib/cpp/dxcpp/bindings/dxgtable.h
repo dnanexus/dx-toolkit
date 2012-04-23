@@ -65,6 +65,9 @@ class DXGTable: public DXDataObject {
 
   /**
    * 
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
    */
   void create(const std::vector<dx::JSON> &columns,
               const std::vector<dx::JSON> &indices,
