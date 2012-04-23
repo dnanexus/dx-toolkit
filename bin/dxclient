@@ -1,0 +1,188 @@
+#!/usr/bin/env python
+
+import sys, os
+
+def print_help():
+    print "DNAnexus Command-Line Client, API v1.0.0"
+    print "Usage: dxclient <command> <arguments>"
+    print ""
+    print "Available commands: "
+    for key in commands:
+        print "   " + key + command_desc[key]
+    print ""
+    print "See 'dxclient help <command>' for help with that command"
+
+def print_api_help():
+    print "Usage: dxclient api <resource> <method> <JSON input>"
+    print "   <resource> is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\""
+    print "   <method> is a valid method for the resource as documented by the API document"
+    print "   <JSON input> is the input for the method as documented by the API document (if not given, \"{}\" is used)"
+    print "Description: Makes an API call to the API server with the appropriate route and specified input."
+
+def print_ls_help():
+    print "Usage: dxclient ls <folder>"
+    print "ls help"
+
+def print_cd_help():
+    print "Usage: dxclient cd <folder>"
+    print "Description: Changes the directory and throws an error if the directory does not exist.  Use of \"..\" is also supported to change to the parent directory."
+
+def print_mv_help():
+    print "mv help"
+
+def print_describe_help():
+    print "Usage: dxclient describe <objectid> [<projectid>]"
+    print "Description: Prints the metadata associated with the object with ID <objectid> in the current default project.  If specified, the project with ID <projectid> will be queried instead."
+
+def print_file_help():
+    print "Usage: dxclient file [cat|get|put] <arg> [name]"
+    print "   cat\tPrints the file to stdout"
+    print "   get\tDownloads the file to the filename in <arg>"
+    print "   put\tUploads the local file in <arg> optionally with name <name>"
+    print " TODO: Allow more modifications to the file object before closing to all modifications (e.g. to details and types as well)?"
+
+def print_gtable_help():
+    print "gtable help"
+
+def print_login_help():
+    print "Usage: dxclient login"
+    print "Description: You will be prompted for a username and password to get your security tokens."
+
+def print_set_help():
+    print "Usage: dxclient set <var> <value>"
+    print "Description: Sets an appropriate environment variable to the given value."
+    print ""
+    print "Available variables to set:"
+    print "   project\tDefault project ID for object creation, etc."
+    print "   host\t\tHostname of API server" # TODO: Should these have default values?
+    print "   port\t\tPort number of API server"
+
+commands = ["help", "login", "api", "file", "gtable", "ls", "cd", "mv", "describe", "set"]
+command_help = {"api": print_api_help, "ls": print_ls_help,
+                "cd": print_cd_help, "login": print_login_help,
+                "file": print_file_help, "gtable": print_gtable_help,
+                "mv": print_mv_help, "describe": print_describe_help,
+                "help": print_help, "set": print_set_help}
+command_desc = {"login": "\tSet security credentials by logging in",
+                "api": "\t\tMake a direct API call",
+                "ls": "\t\tList the contents of a folder",
+                "cd": "\t\tChange the default directory (default \"/\")",
+                "file": "\t\tDownload and upload files",
+                "gtable": "\tDownload and upload GenomicTables",
+                "mv": "\t\tMove an object to a different folder",
+                "describe": "\tDescribe an object",
+                "help": "\t\tProvide documentation on a command",
+                "set": "\t\tSet default values"}
+
+def print_error(cmd):
+    print "ERROR: Unexpected command or arguments\n"
+    command_help[cmd]()
+    sys.exit()
+
+def write_env_var(var, value):
+    with open(os.path.expanduser('~/.dnanexus/' + var), 'w+') as fd:
+        fd.write(value)
+
+def load_env():
+    for filename in os.listdir(os.path.expanduser('~/.dnanexus')):
+        with open(os.path.expanduser('~/.dnanexus/'+filename), 'r') as fd:
+            value = fd.read()
+            # TODO: Find out how bad the line below is for Mac OS X.
+            os.environ[filename] = value
+
+# Loading environment
+
+load_env()
+
+debug = False
+
+if debug:
+    print "Descriptions:", len(command_desc)
+    print "Help docs:", len(command_help)
+    print "Commands:", len(commands)
+
+# Execution starts here
+
+if len(sys.argv) == 1:
+    print_error("help")
+elif sys.argv[1] == "help":
+    if len(sys.argv) > 2:
+        if sys.argv[2] in command_help:
+            command_help[sys.argv[2]]()
+        else:
+            print_error("help")
+    else:
+        print_help()
+
+elif sys.argv[1] == "login":
+    # TODO: Remove this and replace with actual logic when implemented
+    write_env_var('DX_SECURITY_CONTEXT',
+                  '{"auth_token":"outside","auth_token_type":"Bearer"}')
+
+elif sys.argv[1] == "set":
+    if len(sys.argv) != 4:
+        print_error("set")
+    if sys.argv[2] == "project":
+        write_env_var("DX_PROJECT_CONTEXT_ID", sys.argv[3])
+    elif sys.argv[2] == "host":
+        write_env_var("DX_APISERVER_HOST", sys.argv[3])
+    elif sys.argv[2] == "port":
+        write_env_var("DX_APISERVER_PORT", sys.argv[3])
+    elif sys.argv[2] == "":
+        write_env_var("DX_APISERVER_PORT", sys.argv[3])
+    else:
+        print_error("set")
+
+elif sys.argv[1] in commands:
+    
+
+    import dxpy
+    import json
+
+    if sys.argv[1] == "api":
+        json_input = {}
+        try:
+            if len(sys.argv) > 4:
+                if sys.argv[4] == "--input":
+                    with open(sys.argv[5], 'r') as fd:
+                        json_input = json.loads(fd.read())
+                else:
+                    json_input = json.loads(sys.argv[4])
+        except:
+            print_error("api")
+        print dxpy.DXHTTPRequest('/' + sys.argv[2] + '/' + sys.argv[3],
+                                 json_input)
+
+    elif sys.argv[1] == "ls":
+        raise NotImplementedError()
+
+    elif sys.argv[1] == "mv":
+        raise NotImplementedError()
+
+    elif sys.argv[1] == "file":
+        if sys.argv[2] == "cat":
+            raise NotImplementedError()
+        elif sys.argv[2] == "get":
+            if len(sys.argv) != 5:
+                print_error("file")
+            dxpy.download_dxfile(sys.argv[3], sys.argv[4])
+        elif sys.argv[2] == "put":
+            if len(sys.argv) < 4:
+                print_error("file")
+            print dxpy.upload_local_file(sys.argv[3]).get_id()
+        else:
+            print_error("file")
+
+    elif sys.argv[1] == "gtable":
+        raise NotImplementedError()
+
+    elif sys.argv[1] == "describe":
+        if len(sys.argv) < 3 or len(sys.argv) > 4:
+            print_error("describe")
+        json_input = {}
+        if len(sys.argv) == 4:
+            json_input["project"] = sys.argv[3]
+        print dxpy.DXHTTPRequest('/' + sys.argv[2] + '/describe', json_input)
+
+else:
+    print_error("help")
