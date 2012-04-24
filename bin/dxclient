@@ -2,6 +2,8 @@
 
 import sys, os
 
+# TODO: Stuff these help docs into another file?
+
 def print_help():
     print "DNAnexus Command-Line Client, API v1.0.0"
     print "Usage: dxclient <command> <arguments>"
@@ -80,7 +82,7 @@ def print_error(cmd):
     sys.exit()
 
 def write_env_var(var, value):
-    with open(os.path.expanduser('~/.dnanexus/' + var), 'w+') as fd:
+    with open(os.path.expanduser('~/.dnanexus/' + var), 'w') as fd:
         fd.write(value)
 
 def load_env():
@@ -154,9 +156,14 @@ elif sys.argv[1] in commands:
                                  json_input)
 
     elif sys.argv[1] == "ls":
+        dxpy.DXHTTPRequest('/' +  + '/' + sys.argv[3],
+                           json_input)
         raise NotImplementedError()
 
     elif sys.argv[1] == "mv":
+        raise NotImplementedError()
+
+    elif sys.argv[1] == "cd":
         raise NotImplementedError()
 
     elif sys.argv[1] == "file":
