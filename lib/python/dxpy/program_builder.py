@@ -63,7 +63,8 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
         program_spec["run"]["file"] = f.get_id()
 
     if uploaded_resources is not None:
-        program_spec["bundledDepends"] = uploaded_resources
+        program_spec["run"].setdefault("bundledDepends", [])
+        program_spec["run"]["bundledDepends"].extend(uploaded_resources)
 
     print program_spec
     program_id = dxpy.api.programNew(program_spec)["id"]
