@@ -32,7 +32,7 @@ mappings_schema = [
     {"name": "QUAL", "type": "string"},
     {"name": "OPT", "type": "string"},
     {"name": "stop", "type": "int32"},
-];
+]
 
 if table_id == "0":
     dxtable = dxpy.new_dxgtable(columns=mappings_schema) #, chr_col="chr", lo_col="start", hi_col="stop")

@@ -159,8 +159,11 @@ class DXDataObject(object):
         object in *project*.  Uses the current workspace ID as the default
 
         '''
+        if is_dxlink(dxid):
+            self._dxid = dxid["$dnanexus_link"]
+        else:
+            self._dxid = dxid
 
-        self._dxid = dxid
         if project is None:
             global WORKSPACE_ID
             self._proj = WORKSPACE_ID
@@ -470,6 +473,9 @@ def dxlink(object_id, project_id=None):
         return {'$dnanexus_link': object_id}
     else:
         return {'$dnanexus_link': {'project': project_id, 'id': object_id}}
+
+def is_dxlink(thing):
+    return isinstance(thing, dict) and '$dnanexus_link' in thing
 
 
 from dxfile import *

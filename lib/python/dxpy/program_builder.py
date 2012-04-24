@@ -49,13 +49,13 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])
-        for program_id in dxpy.search(classname="program", properties={"name": {"pattern": program_spec["name"]}}):
+        for result in dxpy.find_data_objects(classname="program", properties={"name": program_spec["name"]}, project=program_spec['project']):
             if overwrite:
-                logging.info("Deleting program %s" % (program_id))
+                logging.info("Deleting program %s" % (result['objectId']))
                 # TODO: test me
-                dxpy.DXProject().remove_objects([program_id])
+                dxpy.DXProject(program_spec['project']).remove_objects([result['objectId']])
             else:
-                raise ProgramBuilderException("An program with name %s already exists (id %s) and the overwrite option was not given" % (program_spec["name"], program_id))
+                raise ProgramBuilderException("A program with name %s already exists (id %s) and the overwrite option was not given" % (program_spec["name"], result['objectId']))
 
     if "run" in program_spec and "file" in program_spec["run"]:
         code_filename = os.path.join(src_dir, program_spec["run"]["file"])
