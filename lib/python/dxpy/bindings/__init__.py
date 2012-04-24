@@ -477,4 +477,4 @@ from dxrecord import *
 from dxproject import *
 from dxjob import *
 from dxprogram import *
-#from search import *
+from search import *
