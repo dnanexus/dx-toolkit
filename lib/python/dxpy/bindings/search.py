@@ -6,6 +6,8 @@ managed by the API server.  All jobs (running, failed, or done) can be
 found using :func:`dxpy.bindings.search.find_jobs`.
 '''
 
+from dxpy.bindings import *
+
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, properties=None, type_=None, tag=None,
                       link=None, project=None, folder=None, recurse=None,
@@ -79,7 +81,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if link is not None:
         query["link"] = link
     if project is not None:
-        query["scope"]["project"] = project
+        query["scope"] = {"project": project}
         if folder is not None:
             query["scope"]["folder"] = folder
         if recurse is not None:

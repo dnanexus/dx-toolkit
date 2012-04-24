@@ -465,8 +465,11 @@ class DXDataObject(object):
             time.sleep(2)
             elapsed += 2
 
-def dxlink(object_id):
-    return {'$dnanexus_link': object_id}
+def dxlink(object_id, project_id=None):
+    if project_id is None:
+        return {'$dnanexus_link': object_id}
+    else:
+        return {'$dnanexus_link': {'project': project_id, 'id': object_id}}
 
 
 from dxfile import *
