@@ -73,14 +73,14 @@ sub set_security_context($) {
     $SECURITY_CONTEXT = $sc;
 }
 
-if (exists $ENV{APISERVER_HOST} and exists $ENV{APISERVER_PORT}) {
-    set_api_server_info($ENV{APISERVER_HOST}, $ENV{APISERVER_PORT});
+if (exists $ENV{DX_APISERVER_HOST} and exists $ENV{DX_APISERVER_PORT}) {
+    set_api_server_info($ENV{DX_APISERVER_HOST}, $ENV{DX_APISERVER_PORT});
 } else {
     set_api_server_info();
 }
 
-if (exists $ENV{SECURITY_CONTEXT}) {
-    set_security_context(decode_json($ENV{SECURITY_CONTEXT}));
+if (exists $ENV{DX_SECURITY_CONTEXT}) {
+    set_security_context(decode_json($ENV{DX_SECURITY_CONTEXT}));
 }
 
 1;
