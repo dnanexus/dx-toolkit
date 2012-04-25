@@ -32,6 +32,9 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["restricted"], True)
         self.assertEqual(desc["description"], "new description")
         self.assertTrue("created" in desc)
+        dxproject.update(restricted=False)
+        desc = dxproject.describe()
+        self.assertEqual(desc["restricted"], False)
 
     def test_new_list_remove_folders(self):
         dxproject = dxpy.DXProject()
