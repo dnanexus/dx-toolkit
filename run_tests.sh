@@ -22,8 +22,8 @@ echo "Starting MongoDB in path '$dbpath' and port '$DB_PORT'"
 mongod --dbpath "$dbpath" --port $DB_PORT --nojournal --noprealloc >> "$root/mongod.log" &
 mongod_pid=$!
 
-echo -n "Starting API server on port $APISERVER_PORT..."
-"$root"/../apiserver/server.js --port $APISERVER_PORT > apiserver.log 2>&1 &
+echo -n "Starting API server on port $DX_APISERVER_PORT..."
+"$root"/../apiserver/server.js --port $DX_APISERVER_PORT > apiserver.log 2>&1 &
 api_server_pid=$!
 echo " (PID $api_server_pid)"
 
