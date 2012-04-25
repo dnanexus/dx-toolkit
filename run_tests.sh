@@ -9,8 +9,8 @@ export NUCLEUS_ENV=integrationTest
 root=`dirname "$0"`
 
 source "$root/environment"
-export DB_PORT=`../bin/nuc-config mongod.port`
-export DX_APISERVER_PORT=`../bin/nuc-config apiserver.port`
+export DB_PORT=`$root/../bin/nuc-config mongod.port`
+export DX_APISERVER_PORT=`$root/../bin/nuc-config apiserver.port`
 export DX_APISERVER_HOST=localhost
 export PYTHONPATH="$root/../execserver/env/lib/python2.7/site-packages:$PYTHONPATH"
 
