@@ -12,6 +12,13 @@ setting the security context etc. do not need to be used directly so
 long as the appropriate environment variables APISERVER_HOST,
 APISERVER_PORT, and SECURITY_CONTEXT have been properly set.
 
+If an HTTP/HTTPS proxy is to be used, set the environment variables
+beforehand as applicable while using the format 'hostname:port'
+(e.g. '10.10.1.10:3128'):
+
+* **HTTP_PROXY**: 'hostname:port' for the HTTP proxy
+* **HTTPS_PROXY**: 'hostname:port' for the HTTPS proxy
+
 '''
 
 import os, json, requests

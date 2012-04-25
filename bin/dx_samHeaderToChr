@@ -15,8 +15,9 @@ for line in fileinput.input():
     chromosomes.append([seqname, i, int(seqlen)])
     i += 1
 
-j = dxpy.new_dxjson({"name": "some_genome", "chromosomes": chromosomes})
+j = dxpy.new_dxrecord(details={"name": "some_genome", "chromosomes": chromosomes})
 
 properties = j.describe()
 properties.update(j.get_properties())
+properties.update(j.get_details())
 print json.dumps(properties)

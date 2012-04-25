@@ -26,6 +26,6 @@ if not os.path.exists(os.path.join(src_dir, "dxprogram")):
 dxpy.program_builder.build(src_dir)
 bundled_resources = dxpy.program_builder.upload_resources(src_dir)
 
-program_id = dxpy.program_builder.upload_program(src_dir, bundled_resources, overwrite=opts.overwrite, check_name_collisions=False)
+program_id = dxpy.program_builder.upload_program(src_dir, bundled_resources, overwrite=opts.overwrite)
 
 print "Created program:", json.dumps(dxpy.api.programDescribe(program_id))

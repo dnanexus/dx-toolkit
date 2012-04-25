@@ -158,7 +158,7 @@ class DXGTable(DXDataObject):
                 cursor += 1
                 if cursor >= end: break
 
-    def iterate_query_rows(self, query, columns=None):
+    def iterate_query_rows(self, query=None, columns=None):
         """
         :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
         :type query: dict
