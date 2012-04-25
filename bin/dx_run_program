@@ -26,10 +26,13 @@ else:
     program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}, project=dxpy.WORKSPACE_ID).next()['objectId']
     print program_id
 
-program_input = dict([x.split("=") for x in opts.input])
-
-for name, value in program_input.iteritems():
-    program_input[name] = dxpy.dxlink(program_input[name])
+program_input = {}
+for i in opts.input:
+    name, value = i.split("=")
+    try:
+        program_input[name] = json.loads(value)
+    except ValueError:
+        program_input[name] = value
 
 job = dxpy.DXProgram(program_id).run(program_input)
 
