@@ -5,11 +5,11 @@ logging.basicConfig(level=logging.DEBUG)
 
 import os, sys, json
 from optparse import OptionParser
-import dxpy, dxpy.app_builder
+import dxpy
 from dxpy.exceptions import DXJobFailureError
 
-parser = OptionParser(usage="%prog app_name [options]", description="Run a DNAnexus app. Example: %prog my_app -iparam1=value1 -iparam2=value2")
-parser.add_option("-i", "--input", help="App input parameter", action='append')
+parser = OptionParser(usage="%prog program_name [options]", description="Run a DNAnexus program. Example: %prog my_program -iparam1=value1 -iparam2=value2")
+parser.add_option("-i", "--input", help="Program input parameter", action='append')
 parser.add_option("-w", "--wait", help="Wait for the launched job to complete, exit with code 1 if job fails", action='store_true')
 (opts, args) = parser.parse_args()
 
@@ -17,16 +17,21 @@ if len(args) != 1:
     parser.print_help()
     parser.error("Incorrect number of arguments")
 
-app_name = args[0]
+program_name = args[0]
 
-if app_name[:4] == 'app-':
-    app_id = app_name
+if program_name[:4] == 'program-':
+    program_id = program_name
 else:
-    app_id = dxpy.search(classname="app", properties={"name": app_name}).next()
+    # TODO: this only works in the default debug project
+    program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}, project=dxpy.WORKSPACE_ID).next()['objectId']
+    print program_id
 
-app_input = dict([x.split("=") for x in opts.input])
+program_input = dict([x.split("=") for x in opts.input])
 
-job = dxpy.DXApp(app_id).run(app_input)
+for name, value in program_input.iteritems():
+    program_input[name] = dxpy.dxlink(program_input[name])
+
+job = dxpy.DXProgram(program_id).run(program_input)
 
 logging.info("Launched job "+job.get_id())
 
