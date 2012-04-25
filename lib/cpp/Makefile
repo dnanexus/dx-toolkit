@@ -1,4 +1,5 @@
 simplehttplib = ./SimpleHttpLib
+
 all:
 	(cd dxcpp; mkdir build; cd build; cmake ..; make)
 	(cd SimpleHttpLib; mkdir build; cd build; cmake ..; make)
