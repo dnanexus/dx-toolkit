@@ -56,6 +56,9 @@ TEST_F(DXProjectTest, UpdateDescribeTest) {
   desc = dxproject.describe(true);
   ASSERT_EQ(desc["folders"].size(), 1);
   ASSERT_EQ(desc["folders"][0].get<string>(), "/");
+
+  to_update["restricted"] = false;
+  dxproject.update(to_update);
 }
 
 TEST_F(DXProjectTest, NewListRemoveFoldersTest) {
