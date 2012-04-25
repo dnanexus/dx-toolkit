@@ -9,9 +9,9 @@ export NUCLEUS_ENV=integrationTest
 root=`dirname "$0"`
 
 source "$root/environment"
-export DB_PORT=`../bin/nuc-config mongod.port`
-export APISERVER_PORT=`../bin/nuc-config apiserver.port`
-export APISERVER_HOST=localhost
+export DB_PORT=`$root/../bin/nuc-config mongod.port`
+export DX_APISERVER_PORT=`$root/../bin/nuc-config apiserver.port`
+export DX_APISERVER_HOST=localhost
 export PYTHONPATH="$root/../execserver/env/lib/python2.7/site-packages:$PYTHONPATH"
 
 dbpath="$root/test_db"
@@ -22,8 +22,8 @@ echo "Starting MongoDB in path '$dbpath' and port '$DB_PORT'"
 mongod --dbpath "$dbpath" --port $DB_PORT --nojournal --noprealloc >> "$root/mongod.log" &
 mongod_pid=$!
 
-echo -n "Starting API server on port $APISERVER_PORT..."
-"$root"/../apiserver/server.js --port $APISERVER_PORT > apiserver.log 2>&1 &
+echo -n "Starting API server on port $DX_APISERVER_PORT..."
+"$root"/../apiserver/server.js --port $DX_APISERVER_PORT > apiserver.log 2>&1 &
 api_server_pid=$!
 echo " (PID $api_server_pid)"
 
