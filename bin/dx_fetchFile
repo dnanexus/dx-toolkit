@@ -17,7 +17,7 @@ if opts.output:
     dest_filename = opts.output
 else:
     try:
-        dest_filename = os.path.basename(dxpy.api.fileGetProperties(file_id)['name'])
+        dest_filename = os.path.basename(dxpy.api.fileDescribe(file_id)['name'])
     except KeyError:
         dest_filename = file_id
 
