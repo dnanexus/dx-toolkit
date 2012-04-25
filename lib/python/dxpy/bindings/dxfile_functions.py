@@ -125,7 +125,7 @@ def upload_local_file(filename, media_type=None, wait_on_close=False, **kwargs):
             dxfile.write(buf)
 
     dxfile.close(block=wait_on_close)
-    dxfile.set_properties({"name": os.path.basename(filename)})
+    dxfile.rename(os.path.basename(filename))
     return dxfile
 
 def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
