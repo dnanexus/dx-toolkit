@@ -2,6 +2,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include "unixDGRAM.h"
+#include <sys/stat.h>
 
 bool DXLog::SendMessage2UnixDGRAMSocket(const string &sockPath, const string &msg, string &errMsg) {
   int sock;
@@ -56,6 +57,7 @@ bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
     errMsg = "Socket error: " + string(strerror(errno));
     ret_val = false;
   } else {
+    chmod(socketPath.c_str(), 0666);
     while (true) {
       bzero(buffer, bufSize);
       if (recv(sock, buffer, bufSize, 0) >= 0) {
