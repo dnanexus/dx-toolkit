@@ -57,7 +57,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     "project" set to "cancer project" and prints their object IDs::
 
         for result in find_data_objects(classname="gtable", properties={"project": "cancer project"}):
-            print "Found gtable with object id " + result["objectId"]
+            print "Found gtable with object id " + result["id"]
 
         for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
             print "Found gtable with name " + result["describe"]["name"]
@@ -147,7 +147,7 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
         two_days_ago = time.time()
         for result in find_jobs(state="done", project=proj_id,
                                 modified_after=time.time()-}):
-            print "Found gtable with object id " + result["objectId"]
+            print "Found gtable with object id " + result["id"]
 
         for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
             print "Found gtable with name " + result["describe"]["name"]
