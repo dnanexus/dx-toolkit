@@ -748,15 +748,15 @@ class TestDXSearch(unittest.TestCase):
         dxrecord = dxpy.new_dxrecord()
         results = list(dxpy.search.find_data_objects(state="open"))
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"projectId": proj_id,
-                                      "objectId": dxrecord.get_id()})
+        self.assertEqual(results[0], {"project": proj_id,
+                                      "id": dxrecord.get_id()})
         results = list(dxpy.search.find_data_objects(state="closed"))
         self.assertEqual(len(results), 0)
         dxrecord.close()
         results = list(dxpy.search.find_data_objects(state="open"))
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"projectId": proj_id,
-                                      "objectId": dxrecord.get_id()})
+        self.assertEqual(results[0], {"project": proj_id,
+                                      "id": dxrecord.get_id()})
 
 if __name__ == '__main__':
     unittest.main()
