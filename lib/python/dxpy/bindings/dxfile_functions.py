@@ -8,8 +8,6 @@ Both return a remote file handler that can be treated as a file
 descriptor.  These two functions are essentially useful aliases for
 executing simple download and upload operations between the local and
 the remote file systems.
-
-TODO: Rewrite docstrings!
 '''
 
 import os
@@ -88,10 +86,6 @@ def download_dxfile(dxid, filename, chunksize=1024*1024):
 
         download_dxfile("file-xxxx", "localfilename.fastq")
 
-    Note that this is shorthand for::
-
-        DXFile(dxid).download_to(filename)
-
     '''
 
     with DXFile(dxid) as dxfile:
@@ -131,7 +125,7 @@ def upload_local_file(filename, media_type=None, wait_on_close=False, **kwargs):
             dxfile.write(buf)
 
     dxfile.close(block=wait_on_close)
-    dxfile.set_properties({"name": os.path.basename(filename)})
+    dxfile.rename(os.path.basename(filename))
     return dxfile
 
 def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):

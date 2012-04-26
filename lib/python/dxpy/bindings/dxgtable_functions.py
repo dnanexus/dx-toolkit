@@ -35,9 +35,9 @@ def open_dxgtable(dxid, **kwargs):
 
 def new_dxgtable(columns, **kwargs):
     '''
-    :param columns: An ordered list containing strings of the form "confidence:double" to indicate a column called "confidence" containing doubles.
-    :type columns: list
-    :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.make_index_desc`
+    :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
+    :type columns: list of column descriptors
+    :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable._new` for more details. (optional)
     :type indices: list of index descriptors
     :returns: Remote table handler for the created table
     :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
@@ -45,22 +45,27 @@ def new_dxgtable(columns, **kwargs):
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Creates a new remote table with the given column names in
-    *columns*.  If *chr_col*, *lo_col*, and *hi_col* are given, the rows
-    of the table will be indexed by a genomic range index when the
-    table is closed.
+    Creates a new remote table with the given columns.  If indices are
+    given, the GenomicTable will be indexed by the requested indices
+    when closed.
 
-    Example::
+    Example (after importing dxpy)::
 
-        with new_dxgtable(["colname:string", "secondcolname:int32"]) as dxgtable:
+        col_descs = [dxpy.DXGTable.make_column_desc("a", "string"),
+                     dxpy.DXGTable.make_column_desc("b", "int32")]
+        with new_dxgtable(columns=col_descs) as dxgtable:
             dxgtable.add_rows([["foo", 23], ["bar", 7]])
 
-        indexedTable = new_dxgtable(["chr:string", "lo:int32", "hi:int32"], "chr", "lo", "hi")
+        gri_cols = [dxpy.DXGTable.make_column_desc("chr", "string"),
+                    dxpy.DXGTable.make_column_desc("lo", "int32"),
+                    dxpy.DXGTable.make_column_desc("hi", "int32")]
+        gri_index = genomic_range_index("chr", "lo", "hi")
+        indexedTable = new_dxgtable(columns=gri_cols, indices=[gri_index])
 
     Note that this function is shorthand for the following::
 
         dxgtable = DXGTable()
-        dxgtable.new(columns, chr_col, lo_col, hi_col)
+        dxgtable.new(columns, **kwargs)
 
     '''
     
@@ -72,8 +77,8 @@ def extend_dxgtable(dxid, columns, **kwargs):
     '''
     :param dxid: Object ID of table to extend
     :type dxid: string
-    :param columns: An ordered list containing strings of the form "confidence:double" to indicate a new column called "confidence" containing doubles.
-    :type columns: list
+    :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
+    :type columns: list of column descriptors
     :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable.extend` for more details. (optional)
     :type indices: list of index descriptors
     :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
@@ -87,12 +92,14 @@ def extend_dxgtable(dxid, columns, **kwargs):
 
     Example::
 
-        with extend_dxgtable("table-xxxx", ["newcol:double", "anothernewcol:int32"]) as dxgtable:
+        new_cols = [dxpy.DXGTable.make_column_desc("newcol", "double"),
+                    dxpy.DXGTable.make_column_desc("anothercol", "int32")]
+        with extend_dxgtable(old_dxgtable.get_id(), columns=new_cols, name="extended") as dxgtable:
             dxgtable.add_rows([[2.5498, 93]])
 
     Note that this function is shorthand for the following::
 
-        DXGTable(dxid).extend(columns)
+        DXGTable(dxid).extend(columns, **kwargs)
 
     '''
 

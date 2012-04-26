@@ -114,7 +114,8 @@ class DXGTable(DXDataObject):
         Example::
 
             dxgtable = open_dxgtable("gtable-xxxx")
-            for row in dxgtable.get_rows(chr="chromosome18", 30, 2049):
+            query = genomic_range_query(chr="chromosome18", lo=30, hi=2049)
+            for row in dxgtable.get_rows(query=query, limit=500):
                 rowid = row[0]
                 first_col_data = row[1]
 

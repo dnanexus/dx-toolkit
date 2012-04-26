@@ -168,7 +168,7 @@ class TestDXFile(unittest.TestCase):
         self.dxfile.wait_on_close()
         self.assertTrue(self.dxfile.closed())
 
-        self.assertEqual(self.dxfile.get_properties()["name"],
+        self.assertEqual(self.dxfile.describe()["name"],
                          os.path.basename(self.foo_file.name))
 
         dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
