@@ -140,8 +140,7 @@ def set_project_context(dxid):
     PROJECT_CONTEXT_ID = dxid
 
 if "DX_APISERVER_HOST" in os.environ and "DX_APISERVER_PORT" in os.environ:
-    set_api_server_info(host=os.environ["DX_APISERVER_HOST"],
-                     port=os.environ["DX_APISERVER_PORT"])
+    set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=os.environ["DX_APISERVER_PORT"])
 else:
     set_api_server_info()
 
