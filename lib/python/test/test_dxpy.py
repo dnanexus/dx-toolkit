@@ -168,7 +168,7 @@ class TestDXFile(unittest.TestCase):
         self.dxfile.wait_on_close()
         self.assertTrue(self.dxfile.closed())
 
-        self.assertEqual(self.dxfile.get_properties()["name"],
+        self.assertEqual(self.dxfile.describe()["name"],
                          os.path.basename(self.foo_file.name))
 
         dxpy.download_dxfile(self.dxfile.get_id(), self.new_file.name)
@@ -282,6 +282,14 @@ class TestDXGTable(unittest.TestCase):
             self.dxgtable.close()
         except DXAPIError:
             self.fail("Could not close table after table extension")
+
+    def get_col_names(self):
+        self.dxgtable = dxpy.new_dxgtable(
+            [dxpy.DXGTable.make_column_desc("a", "string"),
+             dxpy.DXGTable.make_column_desc("b", "int32")])
+        self.dxgtable.close()
+        col_names = self.dxgtable.get_col_names()
+        self.assertEqual(col_names, ["__id__", "a", "b"])
     
     def test_add_rows(self):
         self.dxgtable = dxpy.new_dxgtable(

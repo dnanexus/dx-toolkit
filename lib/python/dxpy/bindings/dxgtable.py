@@ -114,7 +114,8 @@ class DXGTable(DXDataObject):
         Example::
 
             dxgtable = open_dxgtable("gtable-xxxx")
-            for row in dxgtable.get_rows(chr="chromosome18", 30, 2049):
+            query = genomic_range_query(chr="chromosome18", lo=30, hi=2049)
+            for row in dxgtable.get_rows(query=query, limit=500):
                 rowid = row[0]
                 first_col_data = row[1]
 
@@ -130,6 +131,20 @@ class DXGTable(DXDataObject):
             get_rows_params["limit"] = limit
 
         return dxpy.api.gtableGet(self._dxid, get_rows_params)
+
+    def get_col_names(self):
+        '''
+        :returns: A list of column names
+        :rtype: list of strings
+
+        Queries the gtable for its columns and returns a list of all
+        column names.
+        '''
+        desc = self.describe()
+        col_names = []
+        for col_desc in desc["columns"]:
+            col_names.append(col_desc["name"])
+        return col_names
 
     def iterate_rows(self, start=0, end=None):
         """

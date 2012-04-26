@@ -4,8 +4,10 @@ root=`dirname "$0"`
 
 cd $root
 
+mkdir build
+cd build
 make clean
-cmake .
+cmake ..
 make
 (ls /usr/local/lib >/dev/null 2>/dev/null) || sudo mkdir /usr/local/lib
 sudo cp libdxjson.a /usr/local/lib/

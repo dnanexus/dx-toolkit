@@ -2,15 +2,15 @@
 Importing this package will set the security context appropriately for
 use with the :func:`dxpy.DXHTTPRequest` function, which will then set
 the headers appropriately when communicating with the API server.  In
-addition, it will set the default workspace according to WORKSPACE_ID
-(if running inside an Execution Environment) or PROJECT_CONTEXT_ID
-(otherwise).  This workspace will be used by default for any object
-handler methods that require a project ID.
+addition, it will set the default workspace according to
+DX_WORKSPACE_ID (if running inside an Execution Environment) or
+DX_PROJECT_CONTEXT_ID (otherwise).  This workspace will be used by
+default for any object handler methods that require a project ID.
 
 When importing the :mod:`dxpy.bindings` submodule, the methods for
 setting the security context etc. do not need to be used directly so
-long as the appropriate environment variables APISERVER_HOST,
-APISERVER_PORT, and SECURITY_CONTEXT have been properly set.
+long as the appropriate environment variables DX_APISERVER_HOST,
+DX_APISERVER_PORT, and DX_SECURITY_CONTEXT have been properly set.
 
 If an HTTP/HTTPS proxy is to be used, set the environment variables
 beforehand as applicable while using the format 'hostname:port'
