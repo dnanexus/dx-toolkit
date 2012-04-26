@@ -20,6 +20,8 @@ dx::JSON DXLog::readJSON(const string &filename) {
 bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &errMsg) {
   // validate message
   try {
+    if (! message.type() == dx::JSON_OBJECT) throwString("log input is not a hash");
+
     if (! message.has("timestamp")) message["timestamp"] = int64(time(NULL)*1000);
 
     if (! message.has("source")) throwString("Missing source of the log");
@@ -40,7 +42,7 @@ bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &e
     bool dbStore = (message.has("dbStore")) ? bool(message["dbStore"]) : false;
     if (dbStore) {
       int maxMsgSize = (tConfig["mongodb"].has("maxMsgSize")) ? int(tConfig["mongodb"]["maxMsgSize"]) : 2000;
-      if (! message["msg"].get<string>().size() > maxMsgSize) throw("Log message too log");
+      if (! message["msg"].get<string>().size() > maxMsgSize) throwString("Log message too log");
     }
 
     return true;
@@ -86,6 +88,7 @@ bool DXLog::logger::isReady(string &msg) {
 bool DXLog::logger::Log(dx::JSON &message, string &eMsg) {
   if (! isReady(eMsg)) return false;
   if (! ValidateLogData(schema, message, eMsg)) return false;
+  if (! message.has("hostname")) message["hostname"] = hostname;
 
   dx::JSON tConfig = schema[message["source"].get<string>()]["text"];
   
@@ -107,6 +110,7 @@ bool DXLog::AppLog::initEnv(const dx::JSON &conf, const dx::JSON &schema_, strin
     socketPath[0] = conf["socketPath"][0].get<string>();
     socketPath[1] = conf["socketPath"][1].get<string>();
     schema = schema_;
+    cout << "OK\n";
     ValidateLogSchema(schema);
     return true;
   } catch (const string &msg) {
