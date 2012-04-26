@@ -22,19 +22,19 @@ program_name = args[0]
 if program_name[:4] == 'program-':
     program_id = program_name
 else:
-    # TODO: this only works in the default debug project
     try:
         program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}, project=dxpy.WORKSPACE_ID).next()['id']
     except StopIteration:
         sys.exit("Unable to find program "+program_name)
 
 program_input = {}
-for i in opts.input:
-    name, value = i.split("=")
-    try:
-        program_input[name] = json.loads(value)
-    except ValueError:
-        program_input[name] = value
+if opts.input:
+    for i in opts.input:
+        name, value = i.split("=")
+        try:
+            program_input[name] = json.loads(value)
+        except ValueError:
+            program_input[name] = value
 
 job = dxpy.DXProgram(program_id).run(program_input)
 
