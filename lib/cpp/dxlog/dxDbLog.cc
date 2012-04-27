@@ -16,7 +16,7 @@ namespace DXLog {
       dx::JSON schema;
       deque<string> que;
       int maxQueueSize;
-      string socketPath;
+      string socketPath, messagePath, hostname;
       bool active;
 
       // ensure log mongodb indexes based on log schema
@@ -46,6 +46,7 @@ namespace DXLog {
       // send message to mongodb
       bool sendMessage(dx::JSON &data, string &errMsg) {
 	 if (! ValidateLogData(schema, data, errMsg)) return false;
+	 if (! data.has("hostname")) data["hostname"] = hostname;
 
 	 dx::JSON columns = schema[data["source"].get<string>()]["mongodb"]["columns"];
 	 BSONObjBuilder b;
@@ -74,18 +75,24 @@ namespace DXLog {
         string errMsg;
 	 while (true) {
 	   if (que.size() > 0) {
+	     bool succeed = false;
 	     try {
 		dx::JSON data = dx::JSON::parse(que.front());
 		for (int i = 0; i < 10; i++) {
-		  if (! sendMessage(data, errMsg)) {
-  		    rsysLog(3, errMsg + " Msg: " + que.front());
-		    sleep(5);
-		  } else break;
+		  if ((succeed = sendMessage(data, errMsg))) break;
+	
+		  if (i == 0) rsysLog(3, errMsg + " Msg: " + que.front());
+		  sleep(5);
 		}
 	     } catch (std::exception &e) {
 		rsysLog(3, string(e.what()) + " Msg: " + que.front());
 	     }
 	
+ 	     if (! succeed){
+              #pragma omp critical
+		StoreMsgLocal(messagePath, que.front());
+	     }
+	       
             #pragma omp critical
 	     que.pop_front();
 	   } else {
@@ -96,11 +103,14 @@ namespace DXLog {
       };
 
       bool processMsg() {
-	 if (que.size() < maxQueueSize) {
-          #pragma omp critical
-	   que.push_back(string(buffer));
-	 } else {
-	   rsysLog(3, "Msg Queue Full, drop message " + string(buffer));
+        {
+	   if (que.size() < maxQueueSize) {
+	     que.push_back(string(buffer));
+	   } else {
+            #pragma omp critical
+	     StoreMsgLocal(messagePath, string(buffer));
+	     rsysLog(3, "Msg Queue Full, drop message " + string(buffer));
+	   }
 	 }
 
 	 return false;
@@ -113,9 +123,12 @@ namespace DXLog {
 
 	 socketPath = conf["socketPath"].get<string>();
 	 maxQueueSize = (conf.has("maxQueueSize")) ? int(conf["maxQueueSize"]): 10000;
+	 messagePath = (conf.has("messagePath")) ? conf["messagePath"].get<string>() : "/var/log/dnanexusLocal/DB";
 
 	 if (conf.has("mongoServer")) DXLog::MongoDriver::setServer(conf["mongoServer"].get<string>());
 	 if (conf.has("database")) DXLog::MongoDriver::setDB(conf["database"].get<string>());
+
+	 hostname = getHostname();
       };
 
       void process() {
@@ -126,7 +139,7 @@ namespace DXLog {
 
 	 if (! ensureIndex(errMsg)) {
 	   rsysLog(3, errMsg);
-	   return;
+	 //  return;
 	 }
 
 	 getHostname();

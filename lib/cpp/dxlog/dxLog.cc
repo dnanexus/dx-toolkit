@@ -67,7 +67,7 @@ void DXLog::logger::formMessage(const dx::JSON &message, string &msg) {
   }
 }
 
-DXLog::logger::logger(dx::JSON &schema_) {
+DXLog::logger::logger(dx::JSON &schema_, const string &txtFile, const string &dbFile) : txtMsgFile(txtFile), dbMsgFile(dbFile) {
   try {
     schema = schema_;
     ValidateLogSchema(schema);
@@ -98,9 +98,13 @@ bool DXLog::logger::Log(dx::JSON &message, string &eMsg) {
   formMessage(message, msg);
 
   bool ret_val = SendMessage2Rsyslog(int(message["facility"]), int(message["level"]), tConfig["tag"].get<string>(), msg, maxMsgSize, eMsg);
+  if (! ret_val) StoreMsgLocal(txtMsgFile, message.toString());
 
   bool dbStore = (message.has("dbStore")) ? bool(message["dbStore"]) : false;
-  if (ret_val && dbStore) return SendMessage2UnixDGRAMSocket("/dev/dblog", message.toString(), eMsg);
+  if (ret_val && dbStore) {
+    ret_val = SendMessage2UnixDGRAMSocket("/dev/dblog", message.toString(), eMsg);
+    if (! ret_val) StoreMsgLocal(dbMsgFile, message.toString());
+  }
   return ret_val;
 }
 
@@ -110,7 +114,6 @@ bool DXLog::AppLog::initEnv(const dx::JSON &conf, const dx::JSON &schema_, strin
     socketPath[0] = conf["socketPath"][0].get<string>();
     socketPath[1] = conf["socketPath"][1].get<string>();
     schema = schema_;
-    cout << "OK\n";
     ValidateLogSchema(schema);
     return true;
   } catch (const string &msg) {

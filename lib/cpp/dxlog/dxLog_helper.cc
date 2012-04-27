@@ -194,3 +194,16 @@ bool DXLog::SendMessage2Rsyslog(int facility, int level, const string &tag, cons
 
   return true;
 }
+
+void DXLog::StoreMsgLocal(const string &filename, const string &msg) {
+  time_t rawtime;
+  time(&rawtime);
+  struct tm *ptm = localtime(&rawtime);
+  char timeString[20];
+  strftime(timeString, 20, "%Y%m%d%H", ptm);
+
+  cout << filename + timeString + ".log" << endl;
+  ofstream messageFile((filename + timeString + ".log").c_str(), ios::app);
+  messageFile << msg << endl;
+  messageFile.close();
+}

@@ -21,13 +21,13 @@ namespace DXLog {
   class logger {
     private:
       dx::JSON schema;  // schema of log data
-      string hostname, errmsg;  // hostname of local machine
+      string hostname, errmsg, txtMsgFile, dbMsgFile;  // hostname of local machine
       bool ready; // whether or not schema is valid
 
       void formMessage(const dx::JSON &message, string &msg);
 
     public:
-      logger(dx::JSON &schema);
+      logger(dx::JSON &schema, const string &txtFile = "/var/log/dnanexusLocal/Cppsyslog", const string &dbFile = "/var/log/dnanexusLocal/CppDBSocket");
 
       bool isReady(string &errMsg);
 
