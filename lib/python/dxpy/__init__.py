@@ -27,6 +27,8 @@ from requests.auth import AuthBase
 from dxpy.exceptions import *
 
 API_VERSION = '1.0.0'
+AUTH_HELPER = None
+JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_data=True, want_full_response=False, **kwargs):
     '''
@@ -38,13 +40,16 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_
     :param want_full_response: Indicates whether the function should return the full :class:`requests.Response` object or just the content of the response
     :type want_full_response: boolean
     :returns: Response from API server in the requested format.  Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the contents of the response will **always** be converted from JSON to Python before it is returned, and it will therefore be of type list or dict.
-    :raises: :exc:`requests.exceptions.HTTPError` if response code was not 200, :exc:`ValueError` if the response from the API server cannot be decoded
+    :raises: :exc:`requests.exceptions.HTTPError` if response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
 
     Wrapper around requests.request(). Inserts authentication and
     converts *data* to JSON.
     '''
     url = APISERVER + resource
 
+    if auth is None and AUTH_HELPER is None:
+        # TODO: support for unauthenticated requests to unprivileged routes
+        raise DXError("Unable to send request without authentication")
     if auth is None:
         auth = AUTH_HELPER
     if 'Content-Type' not in headers:
@@ -57,10 +62,10 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_
     response = requests.request(method, url, data=data, headers=headers,
                                 auth=auth, **kwargs)
 
-    # If HTTP code that is not 200 is received and the content is
+    # If HTTP code that is not 200 (OK) is received and the content is
     # JSON, parse it and throw the appropriate error.  Otherwise,
     # raise the usual exception.
-    if response.status_code != 200:
+    if response.status_code != requests.codes.ok:
         for header in response.headers:
             if header.lower() == 'content-type' and \
                     response.headers[header].startswith('application/json'):
