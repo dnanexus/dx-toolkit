@@ -9,7 +9,7 @@ class DXError(Exception):
 class DXAPIError(DXError):
     '''
     Exception for when the API server responds with a code that is
-    not 200.
+    not 200 (OK).
 
     '''
     def __init__(self, name, msg, code):
