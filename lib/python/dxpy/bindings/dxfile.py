@@ -48,7 +48,7 @@ class DXFile(DXDataObject):
         # Default maximum buffer size is 100MB
         self._bufsize = buffer_size
 
-    def _new(self, dx_hash, **kwargs):
+    def _new(self, dx_hash, media_type=None, **kwargs):
         """
         :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
         :type dx_hash: dict
@@ -59,10 +59,10 @@ class DXFile(DXDataObject):
 
         """
 
-        if "media_type" in kwargs and kwargs["media_type"] is not None:
-            dx_hash["media"] = kwargs["media_type"]
+        if media_type is not None:
+            dx_hash["media"] = media_type
 
-        resp = dxpy.api.fileNew(dx_hash)
+        resp = dxpy.api.fileNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
 
     def __enter__(self):
@@ -202,7 +202,7 @@ class DXFile(DXDataObject):
 
         return self.describe()["state"] == "closed"
 
-    def close(self, block=False):
+    def close(self, block=False, **kwargs):
         '''
         :param block: Indicates whether this function should block until the remote file has closed or not.
         :type block: boolean

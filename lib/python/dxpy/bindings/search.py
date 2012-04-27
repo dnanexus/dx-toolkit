@@ -86,6 +86,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
             query["scope"]["folder"] = folder
         if recurse is not None:
             query["scope"]["recurse"] = recurse
+    else:
+        query["scope"] = {}
+        query["scope"]["project"] = dxpy.WORKSPACE_ID
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:

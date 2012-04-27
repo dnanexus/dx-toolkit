@@ -21,6 +21,7 @@ string g_APISERVER_HOST;
 string g_APISERVER_PORT;
 string g_APISERVER;
 JSON g_SECURITY_CONTEXT;
+string g_JOB_ID;
 string g_WORKSPACE_ID;
 string g_PROJECT_CONTEXT_ID;
 
@@ -96,6 +97,10 @@ void setSecurityContext(const JSON &security_context) {
   g_SECURITY_CONTEXT_SET = true;
 }
 
+void setJobID(const string &job_id) {
+  g_JOB_ID = job_id;
+}
+
 void setWorkspaceID(const string &workspace_id) {
   g_WORKSPACE_ID = workspace_id;
 }
@@ -117,6 +122,7 @@ void loadFromEnvironment() {
 
   if (!g_WORKSPACE_ID_SET) {
     if (getenv("DX_JOB_ID") != NULL) {
+      setJobID(getenv("DX_JOB_ID"));
       if (getenv("DX_WORKSPACE_ID") != NULL)
 	setWorkspaceID(getenv("DX_WORKSPACE_ID"));
       if (getenv("DX_PROJECT_CONTEXT_ID") != NULL)
