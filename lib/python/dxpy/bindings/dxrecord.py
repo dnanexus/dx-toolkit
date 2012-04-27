@@ -58,5 +58,5 @@ class DXRecord(DXDataObject):
         Create a new remote record object.
 
         """
-        resp = dxpy.api.recordNew(dx_hash)
+        resp = dxpy.api.recordNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
