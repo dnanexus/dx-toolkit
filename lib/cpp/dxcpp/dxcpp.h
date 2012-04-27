@@ -13,6 +13,11 @@
 extern std::string g_WORKSPACE_ID;
 
 /**
+ * Job ID if running in an execution environment.
+ */
+extern std::string g_JOB_ID;
+
+/**
  * Project ID of the project context.  Applicable only for execution
  * as a job run from a particular project.
  */
@@ -60,6 +65,13 @@ void setSecurityContext(const dx::JSON &security_context);
  * @param workspace_id Project or workspace ID
  */
 void setWorkspaceID(const std::string &workspace_id);
+
+/**
+ * Sets the job ID.
+ *
+ * @param job_id Job ID
+ */
+void setJobID(const std::string &job_id);
 
 /**
  * Sets the project context ID
