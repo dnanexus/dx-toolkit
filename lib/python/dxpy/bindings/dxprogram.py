@@ -84,7 +84,7 @@ class DXProgram(DXDataObject):
         with the given input *program_input*.
 
         '''
-        if project is None:
+        if project is None and "DX_JOB_ID" not in os.environ:
             project = self._proj
 
         return DXJob(dxpy.api.programRun(self._dxid, {"input": program_input,

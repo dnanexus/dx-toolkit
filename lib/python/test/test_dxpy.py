@@ -714,6 +714,11 @@ class TestDXRecord(unittest.TestCase):
         desc = dxrecord.describe()
         self.assertEqual(desc["folder"], "/a/b/c")
 
+    def test_passhtrough_args(self):
+        dxrecord = dxpy.new_dxrecord(auth=dxpy.AUTH_HELPER)
+        with self.assertRaises(TypeError):
+            dxrecord = dxpy.new_dxrecord(foo=1)
+
 @unittest.skip("Skipping tables; not yet implemented")
 class TestDXTable(unittest.TestCase):
     pass
@@ -764,5 +769,6 @@ class TestDXSearch(unittest.TestCase):
         self.assertEqual(results[0], {"project": proj_id,
                                       "id": dxrecord.get_id()})
 
+    
 if __name__ == '__main__':
     unittest.main()
