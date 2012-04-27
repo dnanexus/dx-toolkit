@@ -89,9 +89,12 @@ def download_dxfile(dxid, filename, chunksize=1024*1024):
     '''
 
     with DXFile(dxid) as dxfile:
-        file_content = dxfile.read(chunksize)
         with open(filename, 'w') as fd:
-            fd.write(file_content)
+            while True:
+                file_content = dxfile.read(chunksize)
+                if len(file_content) == 0:
+                    break
+                fd.write(file_content)
 
 def upload_local_file(filename, media_type=None, wait_on_close=False, **kwargs):
     '''
