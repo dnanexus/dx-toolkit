@@ -251,7 +251,7 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
-        self.dxgtable.close()
+        self.dxgtable.close(block=True)
         desc = self.dxgtable.describe()
         self.assertEqual(desc["columns"],
                          [dxpy.DXGTable.make_column_desc("a", "string"),
@@ -285,7 +285,7 @@ class TestDXGTable(unittest.TestCase):
                           dxpy.DXGTable.make_column_desc("d", "string")])
         self.dxgtable.add_rows([[10, "End row 1"], [20, "End row 2"]])
         try:
-            self.dxgtable.close()
+            self.dxgtable.close(block=True)
         except DXAPIError:
             self.fail("Could not close table after table extension")
 
@@ -293,7 +293,7 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
-        self.dxgtable.close()
+        self.dxgtable.close(block=True)
         col_names = self.dxgtable.get_col_names()
         self.assertEqual(col_names, ["__id__", "a", "b"])
     
@@ -307,10 +307,10 @@ class TestDXGTable(unittest.TestCase):
 
         for i in range(64):
             self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
-        self.dxgtable.close()
+        self.dxgtable.close(block=True)
 
         with self.assertRaises(DXAPIError):
-            self.dxgtable.close()
+            self.dxgtable.close(block=True)
 
     def test_add_rows_no_index(self):
         self.dxgtable = dxpy.new_dxgtable(
