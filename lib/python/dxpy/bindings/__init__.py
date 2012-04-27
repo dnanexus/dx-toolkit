@@ -87,29 +87,16 @@ class DXDataObject(object):
 
     @staticmethod
     def _get_creation_params(**kwargs):
-        dx_hash = {}
-        if "project" in kwargs:
-            dx_hash["project"] = kwargs["project"]
-        else:
+        common_creation_params = set(["project", "name", "tags", "types", "hidden", "properties", "details", "folder", "parents"])
+
+        dx_hash = {p: kwargs[p] for p in kwargs if p in common_creation_params}
+        remaining_kwargs = {p: kwargs[p] for p in kwargs if p not in common_creation_params}
+
+        if "project" not in dx_hash:
             global WORKSPACE_ID
             dx_hash["project"] = WORKSPACE_ID
-        if "name" in kwargs:
-            dx_hash["name"] = kwargs["name"]
-        if "tags" in kwargs:
-            dx_hash["tags"] = kwargs["tags"]
-        if "types" in kwargs:
-            dx_hash["types"] = kwargs["types"]
-        if "hidden" in kwargs:
-            dx_hash["hidden"] = kwargs["hidden"]
-        if "properties" in kwargs:
-            dx_hash["properties"] = kwargs["properties"]
-        if "details" in kwargs:
-            dx_hash["details"] = kwargs["details"]
-        if "folder" in kwargs:
-            dx_hash["folder"] = kwargs["folder"]
-        if "parents" in kwargs:
-            dx_hash["parents"] = kwargs["parents"]
-        return dx_hash
+
+        return dx_hash, remaining_kwargs
 
     def new(self, **kwargs):
         '''
@@ -144,8 +131,8 @@ class DXDataObject(object):
                 "DXDataObject is an abstract class; a subclass should" + \
                     "be initialized instead.")
 
-        dx_hash = self._get_creation_params(**kwargs)
-        self._new(dx_hash, **kwargs)
+        dx_hash, remaining_kwargs = self._get_creation_params(**kwargs)
+        self._new(dx_hash, **remaining_kwargs)
 
     def set_ids(self, dxid, project=None):
         '''

@@ -67,9 +67,13 @@ class DXGTable(DXDataObject):
         '''
 
         dx_hash["columns"] = kwargs["columns"]
+        del kwargs["columns"]
+
         if "indices" in kwargs and kwargs["indices"] is not None:
             dx_hash["indices"] = kwargs["indices"]
-        resp = dxpy.api.gtableNew(dx_hash)
+            del kwargs["indices"]
+
+        resp = dxpy.api.gtableNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
 
     def set_ids(self, dxid, project=None):
@@ -91,7 +95,7 @@ class DXGTable(DXDataObject):
         # Reset state
         self._part_id = 0
 
-    def get_rows(self, query=None, columns=None, starting=None, limit=None):
+    def get_rows(self, query=None, columns=None, starting=None, limit=None, **kwargs):
         '''
         :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
         :type query: dict
@@ -130,7 +134,7 @@ class DXGTable(DXDataObject):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        return dxpy.api.gtableGet(self._dxid, get_rows_params)
+        return dxpy.api.gtableGet(self._dxid, get_rows_params, **kwargs)
 
     def get_col_names(self):
         '''
@@ -225,14 +229,15 @@ class DXGTable(DXDataObject):
         must be given at creation time.
 
         '''
-        dx_hash = DXDataObject._get_creation_params(**kwargs)
+        dx_hash, remaining_kwargs = DXDataObject._get_creation_params(**kwargs)
         dx_hash["columns"] = columns
-        if "indices" in kwargs and kwargs["indices"] is not None:
-            dx_hash["indices"] = kwargs["indices"]
-        resp = dxpy.api.gtableExtend(self._dxid, dx_hash)
+        if "indices" in remaining_kwargs and remaining_kwargs["indices"] is not None:
+            dx_hash["indices"] = remaining_kwargs["indices"]
+            del remaining_kwargs["indices"]
+        resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
         return DXGTable(resp["id"], dx_hash["project"])
 
-    def add_rows(self, data, part=None):
+    def add_rows(self, data, part=None, **kwargs):
         '''
         :param data: List of rows to be added
         :type data: list of list
@@ -260,7 +265,7 @@ class DXGTable(DXDataObject):
                 if self._row_buf.tell() >= self._row_buf_maxsize:
                     self.flush()
         else:
-            dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part})
+            dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
 
     def get_unused_part_id(self):
         '''
