@@ -8,10 +8,16 @@ from dxpy.exceptions import *
 proj_id = "project-000000000000000000000001"
 second_proj_id = 'project-000000000000000000000002'
 
+def get_objects_from_listf(listf):
+    objects = []
+    for result in listf["objects"]:
+        objects.append(result["id"])
+    return objects
+
 def remove_all(proj_id, folder="/"):
     dxproject = dxpy.DXProject(proj_id)
     listf = dxproject.list_folder(folder)
-    dxproject.remove_objects(listf["objects"])
+    dxproject.remove_objects(get_objects_from_listf(listf))
     for subfolder in listf["folders"]:
         remove_all(proj_id, subfolder)
         dxproject.remove_folder(subfolder)
@@ -46,7 +52,7 @@ class TestDXProject(unittest.TestCase):
         dxproject.new_folder("/a/b/c/d", parents=True)
         listf = dxproject.list_folder()
         self.assertEqual(listf["folders"], ["/a"])
-        self.assertEqual(listf["objects"], [dxrecord.get_id()])
+        self.assertEqual(listf["objects"], [{"id": dxrecord.get_id()}])
         listf = dxproject.list_folder("/a")
         self.assertEqual(listf["folders"], ["/a/b"])
         self.assertEqual(listf["objects"], [])
@@ -77,12 +83,12 @@ class TestDXProject(unittest.TestCase):
                        objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
                        folders=["/a/b/c/d"])
         listf = dxproject.list_folder()
-        self.assertEqual(listf["objects"].sort(),
+        self.assertEqual(get_objects_from_listf(listf).sort(),
                          [dxrecords[2].get_id(), dxrecords[3].get_id()].sort())
         self.assertEqual(listf["folders"], ["/a"])
 
         listf = dxproject.list_folder("/a")
-        self.assertEqual(listf["objects"].sort(),
+        self.assertEqual(get_objects_from_listf(listf).sort(),
                          [dxrecords[0].get_id(), dxrecords[1].get_id()].sort())
         self.assertEqual(listf["folders"], ["/a/b", "/a/d"])
 
@@ -111,7 +117,7 @@ class TestDXProject(unittest.TestCase):
 
         second_proj = dxpy.DXProject(second_proj_id)
         listf = second_proj.list_folder()
-        self.assertEqual(listf["objects"].sort(),
+        self.assertEqual(get_objects_from_listf(listf).sort(),
                          [dxrecords[0].get_id(), dxrecords[1].get_id()].sort())
         self.assertEqual(listf["folders"], ["/d"])
 
@@ -119,7 +125,7 @@ class TestDXProject(unittest.TestCase):
         dxproject = dxpy.DXProject()
         dxrecord = dxpy.new_dxrecord()
         listf = dxproject.list_folder()
-        self.assertEqual(listf["objects"], [dxrecord.get_id()])
+        self.assertEqual(get_objects_from_listf(listf), [dxrecord.get_id()])
         dxproject.remove_objects([dxrecord.get_id()])
         listf = dxproject.list_folder()
         self.assertEqual(listf["objects"], [])
@@ -704,7 +710,7 @@ class TestDXRecord(unittest.TestCase):
         listf = dxproject.list_folder()
         self.assertEqual(listf["objects"], [])
         listf = dxproject.list_folder("/a/b/c")
-        self.assertEqual(listf["objects"], [dxrecord.get_id()])
+        self.assertEqual(get_objects_from_listf(listf), [dxrecord.get_id()])
         desc = dxrecord.describe()
         self.assertEqual(desc["folder"], "/a/b/c")
 

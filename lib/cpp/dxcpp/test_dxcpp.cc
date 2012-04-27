@@ -14,10 +14,18 @@ string second_proj_id = "project-000000000000000000000002";
 
 // TODO: Finish writing tests for other classes.
 
+JSON getObjFromListf(JSON &listf) {
+  JSON objects(JSON_ARRAY);
+  for (int i = 0; i < listf["objects"].size(); i++) {
+    objects.push_back(listf["objects"][i]["id"].get<string>());
+  }
+  return objects;
+}
+
 void remove_all(const string &proj, const string &folder="/") {
   DXProject dxproject(proj);
   JSON listf = dxproject.listFolder(folder);
-  dxproject.removeObjects(listf["objects"]);
+  dxproject.removeObjects(getObjFromListf(listf));
   for (int i = 0; i < listf["folders"].size(); i++) {
     string subfolder = listf["folders"][i].get<string>();
     remove_all(proj, subfolder);
@@ -74,7 +82,8 @@ TEST_F(DXProjectTest, NewListRemoveFoldersTest) {
   expected.push_back("/a");
   ASSERT_EQ(listf["folders"], expected);
   expected[0] = dxrecord.getID();
-  ASSERT_EQ(listf["objects"], expected);
+  ASSERT_EQ(listf["objects"].size(), 1);
+  ASSERT_EQ(listf["objects"][0]["id"], expected[0]);
   listf = dxproject.listFolder("/a");
   expected[0] = "/a/b";
   ASSERT_EQ(listf["folders"], expected);
@@ -121,10 +130,10 @@ TEST_F(DXProjectTest, MoveTest) {
   expected.push_back(dxrecords[2].getID());
   expected.push_back(dxrecords[3].getID());
   ASSERT_EQ(listf["objects"].size(), expected.size());
-  ASSERT_TRUE(listf["objects"][0] == expected[0] ||
-              listf["objects"][1] == expected[0]);
-  ASSERT_TRUE(listf["objects"][0] == expected[1] ||
-              listf["objects"][1] == expected[1]);
+  ASSERT_TRUE(listf["objects"][0]["id"] == expected[0] ||
+              listf["objects"][1]["id"] == expected[0]);
+  ASSERT_TRUE(listf["objects"][0]["id"] == expected[1] ||
+              listf["objects"][1]["id"] == expected[1]);
   expected = JSON(JSON_ARRAY);
   expected.push_back("/a");
   ASSERT_EQ(listf["folders"], expected);
@@ -134,10 +143,10 @@ TEST_F(DXProjectTest, MoveTest) {
   expected.push_back(dxrecords[0].getID());
   expected.push_back(dxrecords[1].getID());
   ASSERT_EQ(listf["objects"].size(), expected.size());
-  ASSERT_TRUE(listf["objects"][0] == expected[0] ||
-              listf["objects"][1] == expected[0]);
-  ASSERT_TRUE(listf["objects"][0] == expected[1] ||
-              listf["objects"][1] == expected[1]);
+  ASSERT_TRUE(listf["objects"][0]["id"] == expected[0] ||
+              listf["objects"][1]["id"] == expected[0]);
+  ASSERT_TRUE(listf["objects"][0]["id"] == expected[1] ||
+              listf["objects"][1]["id"] == expected[1]);
   expected = JSON(JSON_ARRAY);
   expected.push_back("/a/b");
   expected.push_back("/a/d");
@@ -178,10 +187,10 @@ TEST_F(DXProjectTest, CloneTest) {
   expected.push_back(dxrecords[0].getID());
   expected.push_back(dxrecords[1].getID());
   ASSERT_EQ(listf["objects"].size(), expected.size());
-  ASSERT_TRUE(listf["objects"][0] == expected[0] ||
-              listf["objects"][1] == expected[0]);
-  ASSERT_TRUE(listf["objects"][0] == expected[1] ||
-              listf["objects"][1] == expected[1]);
+  ASSERT_TRUE(listf["objects"][0]["id"] == expected[0] ||
+              listf["objects"][1]["id"] == expected[0]);
+  ASSERT_TRUE(listf["objects"][0]["id"] == expected[1] ||
+              listf["objects"][1]["id"] == expected[1]);
   expected = JSON(JSON_ARRAY);
   expected.push_back("/d");
   ASSERT_EQ(listf["folders"], expected);
@@ -195,13 +204,15 @@ TEST_F(DXProjectTest, CloneRemoveObjectsTest) {
   JSON listf = dxproject.listFolder();
   JSON id(JSON_ARRAY);
   id.push_back(dxrecord.getID());
-  ASSERT_EQ(listf["objects"], id);
+  ASSERT_EQ(listf["objects"].size(), 1);
+  ASSERT_EQ(listf["objects"][0]["id"].get<string>(), dxrecord.getID());
 
   DXProject second_project(second_proj_id);
   second_project.newFolder("/a");
   dxproject.cloneObjects(id, second_proj_id, "/a");
   listf = second_project.listFolder("/a");
-  ASSERT_EQ(listf["objects"], id);
+  ASSERT_EQ(listf["objects"].size(), 1);
+  ASSERT_EQ(listf["objects"][0]["id"].get<string>(), dxrecord.getID());
 
   dxproject.removeObjects(id);
   listf = dxproject.listFolder();
@@ -302,7 +313,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   DXRecord second_dxrecord = DXRecord::newDXRecord(settings);
   desc = second_dxrecord.describe(true);
   ASSERT_EQ(desc["project"], proj_id);
-  ASSERT_EQ(desc["id"], second_dxrecord.getID());
+  ASSERT_EQ(desc["id"].get<string>(), second_dxrecord.getID());
   ASSERT_EQ(desc["class"], "record");
   ASSERT_EQ(desc["types"], types);
   ASSERT_EQ(desc["state"], "open");
@@ -457,7 +468,7 @@ TEST_F(DXRecordTest, MoveTest) {
   JSON listf = dxproject.listFolder();
   ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
   listf = dxproject.listFolder("/a/b/c");
-  ASSERT_EQ(listf["objects"][0].get<string>(), dxrecord.getID());
+  ASSERT_EQ(listf["objects"][0]["id"].get<string>(), dxrecord.getID());
   JSON desc = dxrecord.describe();
   ASSERT_EQ(desc["folder"].get<string>(), "/a/b/c");
 }

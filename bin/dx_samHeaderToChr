@@ -16,6 +16,7 @@ for line in fileinput.input():
     i += 1
 
 j = dxpy.new_dxrecord(details={"name": "some_genome", "chromosomes": chromosomes})
+j.close()
 
 properties = j.describe()
 properties.update(j.get_properties())
