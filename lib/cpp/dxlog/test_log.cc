@@ -4,7 +4,7 @@
 
 void testDirectLog() {
   string errMsg;
-  dx::JSON schema = DXLog::readJSON("schema.js");
+  dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
   DXLog::logger a(schema);
 
   dx::JSON data(dx::JSON_OBJECT);

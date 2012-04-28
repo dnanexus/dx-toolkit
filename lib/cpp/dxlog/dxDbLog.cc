@@ -133,6 +133,7 @@ namespace DXLog {
 
 	 if (! ensureIndex(errMsg)) {
 	   rsysLog(3, errMsg);
+	   cerr << errMsg << endl;
 	 //  return;
 	 }
 
@@ -144,6 +145,7 @@ namespace DXLog {
 	   unlink(socketPath.c_str());
 	   run(socketPath, errMsg);
           rsysLog(3, errMsg);
+	   cerr << errMsg << endl;
 	   active = false;
 
 	   #pragma omp section
