@@ -11,7 +11,7 @@ void testDirectLog() {
   
   for(int j = 0; j < 8; j++) {
     data["level"] = j;
-    data["msg"] = "Test Direct Log\nNew Line " + boost::lexical_cast<string>(j);
+    data["msg"] = "近期活動 €þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\nNew Line " + boost::lexical_cast<string>(j);
     data["source"] = "app";
     data["jobId"] = "testJob";
     data["dbStore"] = true;
