@@ -1,7 +1,7 @@
 #ifndef DXLOG_HELPER_H
 #define DXLOG_HELPER_H
 
-#include <dxjson/dxjson.h>
+#include "dxjson.h"
 
 using namespace std;
 

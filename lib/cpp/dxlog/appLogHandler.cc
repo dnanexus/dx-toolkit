@@ -1,11 +1,5 @@
-#include <dxjson/dxjson.h>
-#include "unixDGRAM.h"
 #include "dxLog.h"
 #include "dxLog_helper.h"
-#include "mongoLog.h"
-#include <boost/lexical_cast.hpp>
-#include <deque>
-#include <omp.h>
 
 using namespace std;
 

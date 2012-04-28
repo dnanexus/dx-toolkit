@@ -1,5 +1,10 @@
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wno-sign-compare -Werror=return-type -Wno-deprecated -fopenmp")
 
+include_directories(. ../dxjson)
+
+add_library(dxjson ../dxjson/dxjson.cpp)
+set_target_properties(dxjson PROPERTIES COMPILE_FLAGS -fPIC)
+
 add_library(DXLog mongoLog.cc unixDGRAM.cc dxLog.cc dxLog_helper.cc)
 
 add_executable(verify_logschema verify_logschema.cc)

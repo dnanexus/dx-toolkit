@@ -1,7 +1,7 @@
 #ifndef DXLOG_H
 #define DXLOG_H
 
-#include <dxjson/dxjson.h>
+#include "dxjson.h"
 #include "unixDGRAM.h"
 
 using namespace std;
