@@ -251,7 +251,8 @@ class DXGTable(DXDataObject):
 
         Example::
 
-            with new_dxgtable(["colname:string", "secondcolname:int32"]) as dxgtable:
+            with new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                               dxpy.DXGTable.make_column_desc("b", "int32")]) as dxgtable:
                 dxgtable.add_rows([["foo", 23], ["bar", 7]])
 
         '''
