@@ -1,5 +1,8 @@
 #include "dxLog.h"
 #include "dxLog_helper.h"
+#include <boost/lexical_cast.hpp>
+#include "unistd.h"
+#include <fstream>
 
 void DXLog::throwString(const string &msg) {
   throw(msg);
@@ -203,7 +206,7 @@ void DXLog::StoreMsgLocal(const string &filename, const string &msg) {
   strftime(timeString, 20, "%Y%m%d%H", ptm);
 
   cout << filename + timeString + ".log" << endl;
-  ofstream messageFile((filename + timeString + ".log").c_str(), ios::app);
+  ofstream messageFile((filename + timeString + "_" + boost::lexical_cast<string>(getpid()) + ".log").c_str(), ios::app);
   messageFile << msg << endl;
   messageFile.close();
 }

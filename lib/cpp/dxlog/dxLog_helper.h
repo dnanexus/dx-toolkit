@@ -1,9 +1,9 @@
 #ifndef DXLOG_HELPER_H
 #define DXLOG_HELPER_H
 
-#include <boost/lexical_cast.hpp>
-#include "dxLog.h"
-#include <fstream>
+#include <dxjson/dxjson.h>
+
+using namespace std;
 
 namespace DXLog {
   void throwString(const string &msg);
