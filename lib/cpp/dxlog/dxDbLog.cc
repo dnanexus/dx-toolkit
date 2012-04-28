@@ -168,6 +168,7 @@ int main(int argc, char **argv) {
     if (! conf.has("socketPath")) DXLog::throwString("socketPath is not specified");
 
     DXLog::MongoDbLog a(conf);
+    cout << "listen to socket " + conf["socketPath"].get<string>() << endl;
     a.process();   
   } catch (const string &msg) {
     cout << msg << endl;
