@@ -37,6 +37,7 @@ namespace DXLog {
       bool processMsg() {
 	 string errMsg;
 	 if (! active) return true;
+	 if (strcmp(buffer, "Test") == 0) return false;
 	 if (strcmp(buffer, "Done") == 0) return true;
 
 	 if (msgCount < msgLimit) {
@@ -62,11 +63,15 @@ namespace DXLog {
 
       bool process(string &errMsg) {
 	 if (! active) return true;
-	 unlink(socketPath.c_str());
+	 //unlink(socketPath.c_str());
 	 return run(socketPath, errMsg);
       }
 
-      void stopProcess() { active = false; }
+      void stopProcess() {
+	 string errMsg;
+	 active = false;
+	 SendMessage2UnixDGRAMSocket(socketPath, "Done", errMsg);
+      }
   };
 };
 
@@ -98,7 +103,7 @@ int main(int argc, char **argv) {
         cerr << errMsg << endl;
         for (j = 0; j < conf["socketPath"].size(); j++) {
           #pragma omp critical
-          h[i]->stopProcess();
+	   h[j]->stopProcess();
         }
       }
     }

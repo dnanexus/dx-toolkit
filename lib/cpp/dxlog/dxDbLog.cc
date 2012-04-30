@@ -13,23 +13,6 @@ namespace DXLog {
       string socketPath, messagePath, hostname;
       bool active;
 
-      // ensure log mongodb indexes based on log schema
-      bool ensureIndex(string &errMsg) {
-        for (dx::JSON::object_iterator it = schema.object_begin(); it != schema.object_end(); ++it) {
-	   string key = it->first;
-	   dx::JSON index = it->second["mongodb"]["indexes"];
-
-	   for (int i = 0; i < index.size(); i++) {
-	     BSONObjBuilder b;
-	     for(dx::JSON::object_iterator it2 = index[i].object_begin(); it2 != index[i].object_end(); ++it2)
-		b.append(it2->first, int(it2->second));
-
-            if (! MongoDriver::ensureIndex(b.obj(), key, errMsg)) return false;
-	   }
-	 }
-	 return true;
-      }
-
       // write own log message to rsyslog
       void rsysLog(int level, const string &msg) {
 	 string eMsg;
@@ -125,32 +108,25 @@ namespace DXLog {
 	 hostname = getHostname();
       };
 
-      void process() {
+      bool process(string &errMsg) {
+	 bool ret_val;
 	 que.clear();
 	 
 	 active = true;
-	 string errMsg;
-
-	 if (! ensureIndex(errMsg)) {
-	   rsysLog(3, errMsg);
-	   cerr << errMsg << endl;
-	 //  return;
-	 }
-
 	 getHostname();
 
         #pragma omp parallel sections
 	 {
-	   string errMsg;
 	   unlink(socketPath.c_str());
-	   run(socketPath, errMsg);
+	   ret_val = run(socketPath, errMsg);
           rsysLog(3, errMsg);
-	   cerr << errMsg << endl;
 	   active = false;
 
 	   #pragma omp section
 	   processQueue();
 	 }
+
+	 return ret_val;
       };
   };
 };
@@ -162,6 +138,7 @@ int main(int argc, char **argv) {
   }
 
   try {
+    string errMsg;
     dx::JSON conf = DXLog::readJSON(argv[1]);
     if (! conf.has("maxMsgSize")) conf["maxMsgSize"] = 2000;
     if (! conf.has("schema")) DXLog::throwString("log schema is not specified");
@@ -169,12 +146,15 @@ int main(int argc, char **argv) {
 
     DXLog::MongoDbLog a(conf);
     cout << "listen to socket " + conf["socketPath"].get<string>() << endl;
-    a.process();   
+    if (! a.process(errMsg)) {
+      cerr << errMsg << endl;
+      exit(1);
+    }
   } catch (const string &msg) {
-    cout << msg << endl;
+    cerr << msg << endl;
     exit(1);
   } catch (std::exception &e) {
-    cout << string("JSONException: ") + e.what() << endl;
+    cerr << string("JSONException: ") + e.what() << endl;
     exit(1);
   }
   exit(0);

@@ -28,7 +28,7 @@ bool test(const char *cmd, const string &desired_output) {
   if (desired_output.compare(output) != 0) {
     cerr << "cmd: " << cmd << endl;
     cerr << "desired output: " << desired_output << endl;
-    cerr << "actual output: " << output << endl;
+    cerr << "actual output: " << output << endl << endl;
     return false;
   }
 
@@ -97,6 +97,10 @@ int main(void) {
   count[test("./appLogHandler test/appLog/no_logschema.js 2>&1", "Log schema is not specified")]++; 
   count[test("./appLogHandler test/appLog/no_logschema_file.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
   count[test("./appLogHandler test/appLog/invalid_logschema.js 2>&1", "api missing 'format' in 'text'")]++; 
+  unlink("./test/testlog1");
+  count[test("./appLogHandler test/appLog/invalid_socket.js 2>&1", "Socket error: No such file or directory")]++;
+  unlink("./test/testlog1");
+  count[test("./appLogHandler test/appLog/invalid_socket2.js 2>&1", "Socket error: Address already in use")]++; 
   
   count[test("./verify_logschema test/logschema/invalid_schema.js 2>&1", "Log schema is not a hash")]++; 
   count[test("./verify_logschema test/logschema/invalid_logfacility.js 2>&1", "app Log facility is not an integer")]++; 
@@ -123,9 +127,11 @@ int main(void) {
   count[test("./verify_logschema test/logschema/invalid_mongodb_indexes4.js 2>&1", "api index value of timestamp is neither 1 nor -1")]++;
   count[test("./verify_logschema test/logschema/invalid_mongodb_indexes5.js 2>&1", "app index value of timestamp is neither 1 nor -1")]++;
   
+  count[test("./dxDbLog test/dBLog/missing_schema.js 2>&1", "log schema is not specified")]++;
+  count[test("./dxDbLog test/dBLog/invalid_schema.js 2>&1", "api missing 'format' in 'text'")]++;
+  count[test("./dxDbLog test/dBLog/missing_socketPath.js 2>&1", "socketPath is not specified")]++;
+  count[test("./dxDbLog test/dBLog/invalid_socketPath.js 2>&1", "listen to socket /dev2/dblog\nSocket error: No such file or directory")]++;
   
-  //count[test("./appLogHandler test/test_appLog_invalid_socket.js 2>&1", "api missing 'format' in 'text'")]++; 
-
   cout << count[0] + count[1] << " tests, " << count[0] << " failed\n"; 
   return (0);
 }
