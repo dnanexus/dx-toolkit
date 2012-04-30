@@ -8,47 +8,34 @@ namespace DXLog {
     private:
       bool active;
       int msgCount, msgLimit;
-      string socketPath, projectId, jobId, userId, programId, errMsg;
+      string socketPath, projectId, jobId, userId, programId;
       logger *a;
 
       void validateInput(const dx::JSON &input) {
         msgLimit = (input.has("maxMsgNumber")) ? int(input["maxMsgNumber"]) : 1000;
 	 
-	 if (! input.has("projectId")) {
-          #pragma omp critical
-	   cerr << "projectId is not specified" << endl;
-	 }
+	 if (! input.has("projectId")) throwString("projectId is not specified");
 	 projectId = input["projectId"].get<string>();
 	 
-	 if (! input.has("jobId")) {
-          #pragma omp critical
-	   cerr << "jobId is not specified" << endl;
-	 }
+	 if (! input.has("jobId")) throwString("jobId is not specified");
 	 jobId = input["jobId"].get<string>();
 	 
-	 if (! input.has("userId")) {
-          #pragma omp critical
-	   cerr << "userId is not specified" << endl;
-	 }
+	 if (! input.has("userId")) throwString("userId is not specified");
 	 userId = input["userId"].get<string>();
 	 
-	 if (! input.has("programId")) {
-          #pragma omp critical
-	   cerr << "programId is not specified" << endl;
-	 }
+	 if (! input.has("programId")) throwString("programId is not specified");
 	 programId = input["programId"].get<string>();
 	 
-	 if (! input.has("schema")) {
-          #pragma omp critical
-	   cerr << "Log schema is not specified" << endl;
-	 }
+	 if (! input.has("schema")) throwString("Log schema is not specified");
 
         dx::JSON schema = readJSON(input["schema"].get<string>());
 	 ValidateLogSchema(schema);
 	 a = new logger(schema);
+	 active = true;
       }
 
       bool processMsg() {
+	 string errMsg;
 	 if (! active) return true;
 	 if (strcmp(buffer, "Done") == 0) return true;
 
@@ -60,26 +47,26 @@ namespace DXLog {
 	   data["programId"] = programId; data["userId"] = userId;
 	   data["dbStore"] = true;
 
-	   a->Log(data, errMsg);
+	   if (! a->Log(data, errMsg)) cerr << errMsg << endl;
 	   return false;
 	 } else return true;
       };
 
     public:
       AppLogHandler(dx::JSON &input, const string &socketPath_, int msgSize) : UnixDGRAMReader(msgSize + 1000), msgCount(0), socketPath(socketPath_) {
-        validateInput(input);
+        active = false;
+	 validateInput(input);
       };
 
       ~AppLogHandler() { if (a != NULL) delete a; }
 
-      void process() {
-	 active = true;
+      bool process(string &errMsg) {
+	 if (! active) return true;
 	 unlink(socketPath.c_str());
-	 if (! run(socketPath, errMsg)) {
-	   cerr << errMsg << endl;
-	   active = false;
-	 }
+	 return run(socketPath, errMsg);
       }
+
+      void stopProcess() { active = false; }
   };
 };
 
@@ -89,23 +76,39 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  int i, j, k = 0;
+
   try {
     dx::JSON conf = DXLog::readJSON(argv[1]);
     int msgSize = (conf.has("maxMsgSize")) ? int(conf["maxMsgSize"]) : 2000;
 
-    if (! conf.has("socketPath")) cerr << "socketPath is not specified" << endl;
+    if (! conf.has("socketPath")) DXLog::throwString("socketPath is not specified");
+    if (conf["socketPath"].size() == 0) DXLog::throwString("socketPath is empty");
+
+    DXLog::AppLogHandler **h = new DXLog::AppLogHandler*[conf["socketPath"].size()];
+    for (i = 0; i < conf["socketPath"].size(); i++)
+      h[i] = new DXLog::AppLogHandler(conf, conf["socketPath"][i].get<string>(), msgSize);
 
     #pragma omp parallel for
-    for (int i = 0; i < conf["socketPath"].size(); i++) {
-      DXLog::AppLogHandler a(conf, conf["socketPath"][i].get<string>(), msgSize);
-      a.process();
+    for (i = 0; i < conf["socketPath"].size(); i++) {
+      string errMsg; 
+      if (! h[i]->process(errMsg)) {
+        k = 1;
+        #pragma omp critical
+        cerr << errMsg << endl;
+        for (j = 0; j < conf["socketPath"].size(); j++) {
+          #pragma omp critical
+          h[i]->stopProcess();
+        }
+      }
     }
-  } catch (const string &msg) {
-    cerr << msg << endl;
+  } catch (const string &err) {
+    cerr << err << endl;
     exit(1);
   } catch (std::exception &e) {
-    cerr << string("JSONException: ") + e.what() << endl;
+    cerr << e.what() << endl;
     exit(1);
   }
-  exit(0);
+
+  exit(k);
 }

@@ -19,5 +19,5 @@ target_link_libraries(dxDbLog DXLog dxjson mongoclient boost_thread boost_filesy
 add_executable(appLogHandler appLogHandler.cc)
 target_link_libraries(appLogHandler DXLog dxjson mongoclient boost_thread boost_filesystem boost_program_options boost_system)
 
-add_executable(test test_log.cc)
-target_link_libraries(test DXLog dxjson)
+add_executable(test_log test_log.cc)
+target_link_libraries(test_log DXLog dxjson)

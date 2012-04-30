@@ -62,7 +62,7 @@ void DXLog::ValidateLogMsgSize(const dx::JSON &msgSize) {
   if (msgSize.type() != dx::JSON_INTEGER) throwString("'maxMsgSize' is not an integer");
 
   int s = int(msgSize);
-  if ((s<100) && (s> 100000)) throwString("Invalid max message size " + boost::lexical_cast<string>(s));
+  if ((s<100) || (s> 100000)) throwString("Invalid max message size " + boost::lexical_cast<string>(s));
 }
 
 void DXLog::ValidateLogText(const dx::JSON &text) {
