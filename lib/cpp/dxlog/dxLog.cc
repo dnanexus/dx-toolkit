@@ -20,8 +20,6 @@ dx::JSON DXLog::readJSON(const string &filename) {
 bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &errMsg) {
   // validate message
   try {
-    if (! message.type() == dx::JSON_OBJECT) throwString("log input is not a hash");
-
     if (! message.has("timestamp")) message["timestamp"] = int64(time(NULL)*1000);
 
     if (! message.has("source")) throwString("Missing source of the log");
@@ -42,7 +40,7 @@ bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &e
     bool dbStore = (message.has("dbStore")) ? bool(message["dbStore"]) : false;
     if (dbStore) {
       int maxMsgSize = (tConfig["mongodb"].has("maxMsgSize")) ? int(tConfig["mongodb"]["maxMsgSize"]) : 2000;
-      if (! message["msg"].get<string>().size() > maxMsgSize) throwString("Log message too log");
+      if (! message["msg"].get<string>().size() > maxMsgSize) throw("Log message too log");
     }
 
     return true;
@@ -67,7 +65,7 @@ void DXLog::logger::formMessage(const dx::JSON &message, string &msg) {
   }
 }
 
-DXLog::logger::logger(dx::JSON &schema_, const string &txtFile, const string &dbFile) : txtMsgFile(txtFile), dbMsgFile(dbFile) {
+DXLog::logger::logger(dx::JSON &schema_) {
   try {
     schema = schema_;
     ValidateLogSchema(schema);
@@ -88,7 +86,6 @@ bool DXLog::logger::isReady(string &msg) {
 bool DXLog::logger::Log(dx::JSON &message, string &eMsg) {
   if (! isReady(eMsg)) return false;
   if (! ValidateLogData(schema, message, eMsg)) return false;
-  if (! message.has("hostname")) message["hostname"] = hostname;
 
   dx::JSON tConfig = schema[message["source"].get<string>()]["text"];
   
@@ -98,13 +95,9 @@ bool DXLog::logger::Log(dx::JSON &message, string &eMsg) {
   formMessage(message, msg);
 
   bool ret_val = SendMessage2Rsyslog(int(message["facility"]), int(message["level"]), tConfig["tag"].get<string>(), msg, maxMsgSize, eMsg);
-  if (! ret_val) StoreMsgLocal(txtMsgFile, message.toString());
 
   bool dbStore = (message.has("dbStore")) ? bool(message["dbStore"]) : false;
-  if (ret_val && dbStore) {
-    ret_val = SendMessage2UnixDGRAMSocket("/dev/dblog", message.toString(), eMsg);
-    if (! ret_val) StoreMsgLocal(dbMsgFile, message.toString());
-  }
+  if (ret_val && dbStore) return SendMessage2UnixDGRAMSocket("/dev/dblog", message.toString(), eMsg);
   return ret_val;
 }
 

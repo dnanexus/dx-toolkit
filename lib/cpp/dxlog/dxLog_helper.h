@@ -1,9 +1,9 @@
 #ifndef DXLOG_HELPER_H
 #define DXLOG_HELPER_H
 
-#include "dxjson.h"
-
-using namespace std;
+#include <boost/lexical_cast.hpp>
+#include "dxLog.h"
+#include <fstream>
 
 namespace DXLog {
   void throwString(const string &msg);
@@ -39,8 +39,5 @@ namespace DXLog {
    *  Return true if succeeded; otherwise errMsg contains the detaialed information of error
    */  
   bool SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, int maxMsgSize, string &errMsg);
-
-  // store message to a local file (when it is not delivered
-  void StoreMsgLocal(const string &filename, const string &msg);
 };
 #endif
