@@ -228,12 +228,11 @@ TEST(JSONTest, ResizeArray) {
   ASSERT_EQ(lastval, int(j3[len-1]));
 }
 
-TEST(JSONTest, UnicodeAndEscapeSequences) {
-  
-  // TODO: Add more unicode tests
+TEST(JSONTest, UnicodeAndEscapeSequences) { 
   JSON j1 = "\u6e05\u534e\u5927\u5b66";
   ASSERT_EQ(j1, "清华大学");
-
+  
+  ASSERT_EQ(j1, "\\u6e05\\u534e\\u5927\\u5b66");
   ASSERT_EQ(JSON::parse("\"15\\u00f8C\"").get<string>(), "15øC");
 
   JSON j2 = '\n';
