@@ -50,7 +50,6 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])
         for result in dxpy.find_data_objects(classname="program", properties={"name": program_spec["name"]}, project=program_spec['project']):
-            print result
             if overwrite:
                 logging.info("Deleting program %s" % (result['id']))
                 # TODO: test me
@@ -72,7 +71,6 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
         program_spec["run"].setdefault("bundledDepends", [])
         program_spec["run"]["bundledDepends"].extend(uploaded_resources)
 
-    print program_spec
     program_id = dxpy.api.programNew(program_spec)["id"]
 
     dxpy.api.programSetProperties(program_id, {"project": dxpy.WORKSPACE_ID, "properties": {"name": program_spec["name"]}})
