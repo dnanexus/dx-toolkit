@@ -42,13 +42,18 @@ namespace DXLog {
 
 	 if (msgCount < msgLimit) {
 	   msgCount ++;
-	   dx::JSON data = dx::JSON::parse(string(buffer));
+	   try {
+	     dx::JSON data = dx::JSON::parse(string(buffer));
 
-	   data["projectId"] = projectId; data["jobId"] = jobId;
-	   data["programId"] = programId; data["userId"] = userId;
-	   data["dbStore"] = true;
+	     data["projectId"] = projectId; data["jobId"] = jobId;
+	     data["programId"] = programId; data["userId"] = userId;
+	     data["dbStore"] = true;
 
-	   if (! a->Log(data, errMsg)) cerr << errMsg << endl;
+	     if (! a->Log(data, errMsg)) cerr << errMsg << endl;
+	   } catch (std::exception &e) {
+	     cerr << errMsg << endl;
+	     cerr << string(buffer) << endl;
+	   }
 	   return false;
 	 } else return true;
       };
