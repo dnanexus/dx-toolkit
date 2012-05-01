@@ -47,7 +47,7 @@ class DXGTable(DXDataObject):
     def __exit__(self, type, value, traceback):
         if not self._keep_open:
             self.close()
-        else:
+        if self._row_buf.tell() > 0:
             self.flush()
 
     def __del__(self):
