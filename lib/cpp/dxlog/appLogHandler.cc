@@ -39,17 +39,25 @@ namespace DXLog {
       }
 
       bool processMsg() {
+	 string errMsg;
+	 if (! active) return true;
+	 if (strcmp(buffer, "Test") == 0) return false;
 	 if (strcmp(buffer, "Done") == 0) return true;
 
 	 if (msgCount < msgLimit) {
 	   msgCount ++;
-	   dx::JSON data = dx::JSON::parse(string(buffer));
+	   try {
+	     dx::JSON data = dx::JSON::parse(string(buffer));
 
-	   data["projectId"] = projectId; data["jobId"] = jobId;
-	   data["programId"] = programId; data["userId"] = userId;
-	   data["dbStore"] = true;
+	     data["projectId"] = projectId; data["jobId"] = jobId;
+	     data["programId"] = programId; data["userId"] = userId;
+	     data["dbStore"] = true;
 
-	   a->Log(data, errMsg);
+	     if (! a->Log(data, errMsg)) cerr << errMsg << endl;
+	   } catch (std::exception &e) {
+	     cerr << errMsg << endl;
+	     cerr << string(buffer) << endl;
+	   }
 	   return false;
 	 } else return true;
       };
@@ -61,9 +69,17 @@ namespace DXLog {
 
       ~AppLogHandler() { if(a != NULL) delete a; }
 
-      void process() {
-	 if (! run(socketPath, errMsg)) throwString(errMsg);
-      };
+      bool process(string &errMsg) {
+	 if (! active) return true;
+	 //unlink(socketPath.c_str());
+	 return run(socketPath, errMsg);
+      }
+
+      void stopProcess() {
+	 string errMsg;
+	 active = false;
+	 SendMessage2UnixDGRAMSocket(socketPath, "Done", errMsg);
+      }
   };
 };
 
@@ -80,9 +96,17 @@ int main(int argc, char **argv) {
     if (! conf.has("socketPath")) DXLog::throwString("socketPath is not specified");
 
     #pragma omp parallel for
-    for (int i = 0; i < conf["socketPath"].size(); i++) {
-      DXLog::AppLogHandler a(conf, conf["socketPath"][i].get<string>(), msgSize);
-      a.process();
+    for (i = 0; i < conf["socketPath"].size(); i++) {
+      string errMsg; 
+      if (! h[i]->process(errMsg)) {
+        k = 1;
+        #pragma omp critical
+        cerr << errMsg << endl;
+        for (j = 0; j < conf["socketPath"].size(); j++) {
+          #pragma omp critical
+	   h[j]->stopProcess();
+        }
+      }
     }
   } catch (const string e) {
     cerr << e << endl;

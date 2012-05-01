@@ -19,31 +19,8 @@ namespace DXLog {
       string socketPath, hostname;
       bool active;
 
-      void getHostname() {
-	 char buf[1001];
-	 gethostname(buf, 1000);
-        hostname = string(buf);
-	 cout << hostname << endl;
-      }
-
-      bool ensureIndex(string &errMsg) {
-        for (dx::JSON::object_iterator it = scheme.object_begin(); it != scheme.object_end(); ++it) {
-	   string key = it->first;
-	   dx::JSON index = it->second["mongodb"]["indexes"];
-	   cout << index.toString() << endl;
-
-	   for (int i = 0; i < index.size(); i++) {
-	     BSONObjBuilder b;
-	     for(dx::JSON::object_iterator it2 = index[i].object_begin(); it2 != index[i].object_end(); ++it2)
-		b.append(it2->first, int(it2->second));
-
-            if (! MongoDriver::ensureIndex(b.obj(), key, errMsg)) return false;
-	   }
-	 }
-	 return true;
-      }
-
-      void selfLog(int level, const string &msg) {
+      // write own log message to rsyslog
+      void rsysLog(int level, const string &msg) {
 	 string eMsg;
         #pragma omp critical
 	 SendMessage2Rsyslog(8, level, "DNAnexusLog", msg, msg.size() + 1, eMsg);
@@ -122,30 +99,25 @@ namespace DXLog {
 	 if (conf.has("database")) DXLog::MongoDriver::setDB(conf["database"].get<string>());
       };
 
-      void process() {
+      bool process(string &errMsg) {
+	 bool ret_val;
 	 que.clear();
 	 
 	 active = true;
-	 string errMsg;
-
-	 if (! ensureIndex(errMsg)) {
-	   selfLog(3, errMsg);
-	   return;
-	 }
-
 	 getHostname();
 
         #pragma omp parallel sections
 	 {
-	   string errMsg;
 	   unlink(socketPath.c_str());
-	   run(socketPath, errMsg);
-          selfLog(3, errMsg);
+	   ret_val = run(socketPath, errMsg);
+          rsysLog(3, errMsg);
 	   active = false;
 
 	   #pragma omp section
 	   processQueue();
 	 }
+
+	 return ret_val;
       };
   };
 };
@@ -157,16 +129,23 @@ int main(int argc, char **argv) {
   }
 
   try {
+    string errMsg;
     dx::JSON conf = DXLog::readJSON(argv[1]);
     if (! conf.has("maxMsgSize")) conf["maxMsgSize"] = 2000;
     if (! conf.has("scheme")) throw ("log scheme is not specified");
     if (! conf.has("socketPath")) throw ("socketPath is not specified");
 
     DXLog::MongoDbLog a(conf);
-    a.process();
-   
-  } catch (char *e) {
-    cout << e << endl;
+    cout << "listen to socket " + conf["socketPath"].get<string>() << endl;
+    if (! a.process(errMsg)) {
+      cerr << errMsg << endl;
+      exit(1);
+    }
+  } catch (const string &msg) {
+    cerr << msg << endl;
+    exit(1);
+  } catch (std::exception &e) {
+    cerr << string("JSONException: ") + e.what() << endl;
     exit(1);
   }
   exit(0);
