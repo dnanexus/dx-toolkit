@@ -1,7 +1,6 @@
 #ifndef DXLOGMONGO_H
 #define DXLOGMONGO_H
 
-#include <iostream>
 #include "mongo/client/dbclient.h"
 
 using namespace mongo;

@@ -1,22 +1,16 @@
-#include <dxjson/dxjson.h>
-#include "unixDGRAM.h"
 #include "dxLog.h"
 #include "dxLog_helper.h"
 #include "mongoLog.h"
-#include <boost/lexical_cast.hpp>
-#include <deque>
-#include <omp.h>
-#include <unistd.h>
 
 using namespace std;
 
 namespace DXLog {
   class MongoDbLog : public UnixDGRAMReader {
     private:
-      dx::JSON scheme;
+      dx::JSON schema;
       deque<string> que;
       int maxQueueSize;
-      string socketPath, hostname;
+      string socketPath, messagePath, hostname;
       bool active;
 
       // write own log message to rsyslog
@@ -26,11 +20,12 @@ namespace DXLog {
 	 SendMessage2Rsyslog(8, level, "DNAnexusLog", msg, msg.size() + 1, eMsg);
       }
 
+      // send message to mongodb
       bool sendMessage(dx::JSON &data, string &errMsg) {
-	 if (! ValidateLogData(scheme, data, errMsg)) return false;
-	 data["hostname"] = hostname;
+	 if (! ValidateLogData(schema, data, errMsg)) return false;
+	 if (! data.has("hostname")) data["hostname"] = hostname;
 
-	 dx::JSON columns = scheme[data["source"].get<string>()]["mongodb"]["columns"];
+	 dx::JSON columns = schema[data["source"].get<string>()]["mongodb"]["columns"];
 	 BSONObjBuilder b;
 
 	 for(dx::JSON::object_iterator it = columns.object_begin(); it != columns.object_end(); ++it) {
@@ -57,18 +52,24 @@ namespace DXLog {
         string errMsg;
 	 while (true) {
 	   if (que.size() > 0) {
+	     bool succeed = false;
 	     try {
 		dx::JSON data = dx::JSON::parse(que.front());
 		for (int i = 0; i < 10; i++) {
-		  if (! sendMessage(data, errMsg)) {
-  		    selfLog(3, errMsg + " Msg: " + que.front());
-		    sleep(5);
-		  } else break;
+		  if ((succeed = sendMessage(data, errMsg))) break;
+	
+		  if (i == 0) rsysLog(3, errMsg + " Msg: " + que.front());
+		  sleep(5);
 		}
 	     } catch (std::exception &e) {
-		selfLog(3, string(e.what()) + " Msg: " + que.front());
+		rsysLog(3, string(e.what()) + " Msg: " + que.front());
 	     }
 	
+ 	     if (! succeed){
+              #pragma omp critical
+		StoreMsgLocal(messagePath, que.front());
+	     }
+	       
             #pragma omp critical
 	     que.pop_front();
 	   } else {
@@ -79,11 +80,14 @@ namespace DXLog {
       };
 
       bool processMsg() {
-	 if (que.size() < maxQueueSize) {
-          #pragma omp critical
-	   que.push_back(string(buffer));
-	 } else {
-	   selfLog(3, "Msg Queue Full, drop message " + string(buffer));
+        {
+	   if (que.size() < maxQueueSize) {
+	     que.push_back(string(buffer));
+	   } else {
+            #pragma omp critical
+	     StoreMsgLocal(messagePath, string(buffer));
+	     rsysLog(3, "Msg Queue Full, drop message " + string(buffer));
+	   }
 	 }
 
 	 return false;
@@ -91,12 +95,17 @@ namespace DXLog {
 
     public:
       MongoDbLog(const dx::JSON &conf) : UnixDGRAMReader(1000 + int(conf["maxMsgSize"])) {
-	 scheme = readJSON(conf["scheme"].get<string>());
+	 schema = readJSON(conf["schema"].get<string>());
+	 ValidateLogSchema(schema);
+
 	 socketPath = conf["socketPath"].get<string>();
 	 maxQueueSize = (conf.has("maxQueueSize")) ? int(conf["maxQueueSize"]): 10000;
+	 messagePath = (conf.has("messagePath")) ? conf["messagePath"].get<string>() : "/var/log/dnanexusLocal/DB";
 
 	 if (conf.has("mongoServer")) DXLog::MongoDriver::setServer(conf["mongoServer"].get<string>());
 	 if (conf.has("database")) DXLog::MongoDriver::setDB(conf["database"].get<string>());
+
+	 hostname = getHostname();
       };
 
       bool process(string &errMsg) {
@@ -132,8 +141,8 @@ int main(int argc, char **argv) {
     string errMsg;
     dx::JSON conf = DXLog::readJSON(argv[1]);
     if (! conf.has("maxMsgSize")) conf["maxMsgSize"] = 2000;
-    if (! conf.has("scheme")) throw ("log scheme is not specified");
-    if (! conf.has("socketPath")) throw ("socketPath is not specified");
+    if (! conf.has("schema")) DXLog::throwString("log schema is not specified");
+    if (! conf.has("socketPath")) DXLog::throwString("socketPath is not specified");
 
     DXLog::MongoDbLog a(conf);
     cout << "listen to socket " + conf["socketPath"].get<string>() << endl;

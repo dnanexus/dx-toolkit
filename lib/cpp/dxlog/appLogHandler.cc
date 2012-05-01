@@ -1,20 +1,15 @@
-#include <dxjson/dxjson.h>
-#include "unixDGRAM.h"
 #include "dxLog.h"
 #include "dxLog_helper.h"
-#include "mongoLog.h"
-#include <boost/lexical_cast.hpp>
-#include <deque>
-#include <omp.h>
 
 using namespace std;
 
 namespace DXLog {
   class AppLogHandler : public UnixDGRAMReader {
     private:
-      logger *a;
+      bool active;
       int msgCount, msgLimit;
-      string socketPath, projectId, jobId, userId, programId, errMsg;
+      string socketPath, projectId, jobId, userId, programId;
+      logger *a;
 
       void validateInput(const dx::JSON &input) {
         msgLimit = (input.has("maxMsgNumber")) ? int(input["maxMsgNumber"]) : 1000;
@@ -36,6 +31,7 @@ namespace DXLog {
         dx::JSON schema = readJSON(input["schema"].get<string>());
 	 ValidateLogSchema(schema);
 	 a = new logger(schema);
+	 active = true;
       }
 
       bool processMsg() {
@@ -63,11 +59,12 @@ namespace DXLog {
       };
 
     public:
-      AppLogHandler(dx::JSON &input, const string &socketPath_, int msgSize) : UnixDGRAMReader(msgSize + 1000), socketPath(socketPath_), msgCount(0) {
-        validateInput(input);
+      AppLogHandler(dx::JSON &input, const string &socketPath_, int msgSize) : UnixDGRAMReader(msgSize + 1000), msgCount(0), socketPath(socketPath_) {
+        active = false;
+	 validateInput(input);
       };
 
-      ~AppLogHandler() { if(a != NULL) delete a; }
+      ~AppLogHandler() { if (a != NULL) delete a; }
 
       bool process(string &errMsg) {
 	 if (! active) return true;
@@ -89,11 +86,18 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  int i, j, k = 0;
+
   try {
     dx::JSON conf = DXLog::readJSON(argv[1]);
     int msgSize = (conf.has("maxMsgSize")) ? int(conf["maxMsgSize"]) : 2000;
 
     if (! conf.has("socketPath")) DXLog::throwString("socketPath is not specified");
+    if (conf["socketPath"].size() == 0) DXLog::throwString("socketPath is empty");
+
+    DXLog::AppLogHandler **h = new DXLog::AppLogHandler*[conf["socketPath"].size()];
+    for (i = 0; i < conf["socketPath"].size(); i++)
+      h[i] = new DXLog::AppLogHandler(conf, conf["socketPath"][i].get<string>(), msgSize);
 
     #pragma omp parallel for
     for (i = 0; i < conf["socketPath"].size(); i++) {
@@ -108,11 +112,13 @@ int main(int argc, char **argv) {
         }
       }
     }
-  } catch (const string e) {
-    cerr << e << endl;
+  } catch (const string &err) {
+    cerr << err << endl;
     exit(1);
   } catch (std::exception &e) {
-    cerr << string("JSONException: ") + e.what() << endl;
+    cerr << e.what() << endl;
+    exit(1);
   }
-  exit(0);
+
+  exit(k);
 }
