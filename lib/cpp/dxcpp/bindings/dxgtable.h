@@ -202,8 +202,7 @@ class DXGTable: public DXDataObject {
    * @return A JSON object containing the column descriptor
    */
   static dx::JSON columnDesc(const std::string &name,
-                             const std::string &type,
-                             const int &length=0);
+                             const std::string &type);
 
   /**
    * Creates a genomic range index descriptor for use with the new()
