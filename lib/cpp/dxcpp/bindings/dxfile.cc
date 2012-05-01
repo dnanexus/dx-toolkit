@@ -44,8 +44,8 @@ void DXFile::read(char* ptr, int n) {
 
   // TODO: make sure all lower-case works.
   if (file_length_ < 0) {
-    HttpRequest get_length = HttpRequest::request(HTTP_HEAD, url);
-    file_length_ = boost::lexical_cast<int>(get_length.respHeader["Content-Length"]);
+    JSON desc = describe();
+    file_length_ = desc["size"].get<int>();
   }
 
   if (pos_ >= file_length_) {

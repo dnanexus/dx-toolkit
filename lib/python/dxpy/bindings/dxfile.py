@@ -132,8 +132,8 @@ class DXFile(DXDataObject):
         headers = {}
 
         if self._file_length is None:
-            resp = requests.head(url)
-            self._file_length = int(resp.headers['content-length'])
+            desc = self.describe()
+            self._file_length = int(desc["size"])
 
         if self._pos == self._file_length:
             return ""
