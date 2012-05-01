@@ -456,6 +456,8 @@ class DXDataObject(object):
             elapsed += 2
 
 def dxlink(object_id, project_id=None):
+    if isinstance(object_id, DXDataObject):
+        object_id = object_id.get_id()
     if project_id is None:
         return {'$dnanexus_link': object_id}
     else:
