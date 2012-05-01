@@ -142,13 +142,10 @@ DXGTable DXGTable::extendDXGTable(const DXGTable &dxgtable,
 }
 
 JSON DXGTable::columnDesc(const string &name,
-                          const string &type,
-                          const int &length) {
+                          const string &type) {
   JSON col_desc(JSON_OBJECT);
   col_desc["name"] = name;
   col_desc["type"] = type;
-  if (type == "string")
-    col_desc["length"] = length;
   return col_desc;
 }
 

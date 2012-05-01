@@ -119,3 +119,9 @@ void DXDataObject::remove() {
   projectRemoveObjects(proj_, "{\"objects\":[\"" + dxid_ + "\"]}");
   setIDs("");
 }
+
+JSON DXLink(const std::string &dxid) {
+  JSON link(JSON_OBJECT);
+  link["$dnanexus_link"] = dxid;
+  return link;
+}
