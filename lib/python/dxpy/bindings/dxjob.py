@@ -126,3 +126,18 @@ class DXJob(object):
         Terminate the associated job.
         '''
         dxpy.api.jobTerminate(self._dxid)
+
+    def _get_state(self):
+        '''
+        :returns: State of the remote object
+        :rtype: string
+
+        Queries the API server for the job's state.
+
+        Note that this function is shorthand for:
+
+            dxjob.describe()["state"]
+
+        '''
+
+        return self.describe()["state"]

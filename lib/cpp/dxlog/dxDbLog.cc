@@ -46,7 +46,7 @@ namespace DXLog {
       void selfLog(int level, const string &msg) {
 	 string eMsg;
         #pragma omp critical
-	 SendMessage2Rsyslog(8, level, "DNAnexusLog", msg, eMsg, msg.size() + 1);
+	 SendMessage2Rsyslog(8, level, "DNAnexusLog", msg, msg.size() + 1, eMsg);
       }
 
       bool sendMessage(dx::JSON &data, string &errMsg) {
