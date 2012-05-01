@@ -1,5 +1,8 @@
 #include "dxLog.h"
 #include "dxLog_helper.h"
+#include <boost/lexical_cast.hpp>
+#include "unistd.h"
+#include <fstream>
 
 void DXLog::throwString(const string &msg) {
   throw(msg);
@@ -59,7 +62,7 @@ void DXLog::ValidateLogMsgSize(const dx::JSON &msgSize) {
   if (msgSize.type() != dx::JSON_INTEGER) throwString("'maxMsgSize' is not an integer");
 
   int s = int(msgSize);
-  if ((s<100) && (s> 100000)) throwString("Invalid max message size " + boost::lexical_cast<string>(s));
+  if ((s<100) || (s> 100000)) throwString("Invalid max message size " + boost::lexical_cast<string>(s));
 }
 
 void DXLog::ValidateLogText(const dx::JSON &text) {
@@ -193,4 +196,17 @@ bool DXLog::SendMessage2Rsyslog(int facility, int level, const string &tag, cons
   }
 
   return true;
+}
+
+void DXLog::StoreMsgLocal(const string &filename, const string &msg) {
+  time_t rawtime;
+  time(&rawtime);
+  struct tm *ptm = localtime(&rawtime);
+  char timeString[20];
+  strftime(timeString, 20, "%Y%m%d%H", ptm);
+
+  cout << filename + timeString + ".log" << endl;
+  ofstream messageFile((filename + timeString + "_" + boost::lexical_cast<string>(getpid()) + ".log").c_str(), ios::app);
+  messageFile << msg << endl;
+  messageFile.close();
 }

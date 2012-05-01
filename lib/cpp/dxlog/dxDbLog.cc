@@ -1,59 +1,31 @@
-#include <dxjson/dxjson.h>
-#include "unixDGRAM.h"
 #include "dxLog.h"
 #include "dxLog_helper.h"
 #include "mongoLog.h"
-#include <boost/lexical_cast.hpp>
-#include <deque>
-#include <omp.h>
-#include <unistd.h>
 
 using namespace std;
 
 namespace DXLog {
   class MongoDbLog : public UnixDGRAMReader {
     private:
-      dx::JSON scheme;
+      dx::JSON schema;
       deque<string> que;
       int maxQueueSize;
-      string socketPath, hostname;
+      string socketPath, messagePath, hostname;
       bool active;
 
-      void getHostname() {
-	 char buf[1001];
-	 gethostname(buf, 1000);
-        hostname = string(buf);
-	 cout << hostname << endl;
-      }
-
-      bool ensureIndex(string &errMsg) {
-        for (dx::JSON::object_iterator it = scheme.object_begin(); it != scheme.object_end(); ++it) {
-	   string key = it->first;
-	   dx::JSON index = it->second["mongodb"]["indexes"];
-	   cout << index.toString() << endl;
-
-	   for (int i = 0; i < index.size(); i++) {
-	     BSONObjBuilder b;
-	     for(dx::JSON::object_iterator it2 = index[i].object_begin(); it2 != index[i].object_end(); ++it2)
-		b.append(it2->first, int(it2->second));
-
-            if (! MongoDriver::ensureIndex(b.obj(), key, errMsg)) return false;
-	   }
-	 }
-	 return true;
-      }
-
-      void selfLog(int level, const string &msg) {
+      // write own log message to rsyslog
+      void rsysLog(int level, const string &msg) {
 	 string eMsg;
         #pragma omp critical
 	 SendMessage2Rsyslog(8, level, "DNAnexusLog", msg, msg.size() + 1, eMsg);
       }
 
+      // send message to mongodb
       bool sendMessage(dx::JSON &data, string &errMsg) {
-	 if (! ValidateLogData(scheme, data, errMsg)) return false;
-	 data["hostname"] = hostname;
+	 if (! ValidateLogData(schema, data, errMsg)) return false;
+	 if (! data.has("hostname")) data["hostname"] = hostname;
 
-	 dx::JSON columns = scheme[data["source"].get<string>()]["mongodb"]["columns"];
+	 dx::JSON columns = schema[data["source"].get<string>()]["mongodb"]["columns"];
 	 BSONObjBuilder b;
 
 	 for(dx::JSON::object_iterator it = columns.object_begin(); it != columns.object_end(); ++it) {
@@ -80,18 +52,24 @@ namespace DXLog {
         string errMsg;
 	 while (true) {
 	   if (que.size() > 0) {
+	     bool succeed = false;
 	     try {
 		dx::JSON data = dx::JSON::parse(que.front());
 		for (int i = 0; i < 10; i++) {
-		  if (! sendMessage(data, errMsg)) {
-  		    selfLog(3, errMsg + " Msg: " + que.front());
-		    sleep(5);
-		  } else break;
+		  if ((succeed = sendMessage(data, errMsg))) break;
+	
+		  if (i == 0) rsysLog(3, errMsg + " Msg: " + que.front());
+		  sleep(5);
 		}
 	     } catch (std::exception &e) {
-		selfLog(3, string(e.what()) + " Msg: " + que.front());
+		rsysLog(3, string(e.what()) + " Msg: " + que.front());
 	     }
 	
+ 	     if (! succeed){
+              #pragma omp critical
+		StoreMsgLocal(messagePath, que.front());
+	     }
+	       
             #pragma omp critical
 	     que.pop_front();
 	   } else {
@@ -102,11 +80,14 @@ namespace DXLog {
       };
 
       bool processMsg() {
-	 if (que.size() < maxQueueSize) {
-          #pragma omp critical
-	   que.push_back(string(buffer));
-	 } else {
-	   selfLog(3, "Msg Queue Full, drop message " + string(buffer));
+        {
+	   if (que.size() < maxQueueSize) {
+	     que.push_back(string(buffer));
+	   } else {
+            #pragma omp critical
+	     StoreMsgLocal(messagePath, string(buffer));
+	     rsysLog(3, "Msg Queue Full, drop message " + string(buffer));
+	   }
 	 }
 
 	 return false;
@@ -114,38 +95,38 @@ namespace DXLog {
 
     public:
       MongoDbLog(const dx::JSON &conf) : UnixDGRAMReader(1000 + int(conf["maxMsgSize"])) {
-	 scheme = readJSON(conf["scheme"].get<string>());
+	 schema = readJSON(conf["schema"].get<string>());
+	 ValidateLogSchema(schema);
+
 	 socketPath = conf["socketPath"].get<string>();
 	 maxQueueSize = (conf.has("maxQueueSize")) ? int(conf["maxQueueSize"]): 10000;
+	 messagePath = (conf.has("messagePath")) ? conf["messagePath"].get<string>() : "/var/log/dnanexusLocal/DB";
 
 	 if (conf.has("mongoServer")) DXLog::MongoDriver::setServer(conf["mongoServer"].get<string>());
 	 if (conf.has("database")) DXLog::MongoDriver::setDB(conf["database"].get<string>());
+
+	 hostname = getHostname();
       };
 
-      void process() {
+      bool process(string &errMsg) {
+	 bool ret_val;
 	 que.clear();
 	 
 	 active = true;
-	 string errMsg;
-
-	 if (! ensureIndex(errMsg)) {
-	   selfLog(3, errMsg);
-	   return;
-	 }
-
 	 getHostname();
 
         #pragma omp parallel sections
 	 {
-	   string errMsg;
 	   unlink(socketPath.c_str());
-	   run(socketPath, errMsg);
-          selfLog(3, errMsg);
+	   ret_val = run(socketPath, errMsg);
+          rsysLog(3, errMsg);
 	   active = false;
 
 	   #pragma omp section
 	   processQueue();
 	 }
+
+	 return ret_val;
       };
   };
 };
@@ -157,16 +138,23 @@ int main(int argc, char **argv) {
   }
 
   try {
+    string errMsg;
     dx::JSON conf = DXLog::readJSON(argv[1]);
     if (! conf.has("maxMsgSize")) conf["maxMsgSize"] = 2000;
-    if (! conf.has("scheme")) throw ("log scheme is not specified");
-    if (! conf.has("socketPath")) throw ("socketPath is not specified");
+    if (! conf.has("schema")) DXLog::throwString("log schema is not specified");
+    if (! conf.has("socketPath")) DXLog::throwString("socketPath is not specified");
 
     DXLog::MongoDbLog a(conf);
-    a.process();
-   
-  } catch (char *e) {
-    cout << e << endl;
+    cout << "listen to socket " + conf["socketPath"].get<string>() << endl;
+    if (! a.process(errMsg)) {
+      cerr << errMsg << endl;
+      exit(1);
+    }
+  } catch (const string &msg) {
+    cerr << msg << endl;
+    exit(1);
+  } catch (std::exception &e) {
+    cerr << string("JSONException: ") + e.what() << endl;
     exit(1);
   }
   exit(0);

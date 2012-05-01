@@ -3,6 +3,7 @@
 #include <sys/un.h>
 #include "unixDGRAM.h"
 #include <sys/stat.h>
+#include <iostream>
 
 bool DXLog::SendMessage2UnixDGRAMSocket(const string &sockPath, const string &msg, string &errMsg) {
   int sock;
@@ -56,6 +57,7 @@ bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
   if (bind(sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     errMsg = "Socket error: " + string(strerror(errno));
     ret_val = false;
+    close(sock);
   } else {
     chmod(socketPath.c_str(), 0666);
     while (true) {
@@ -64,9 +66,9 @@ bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
         if (processMsg()) break;
       }
     }
+    close(sock);
+    unlink(socketPath.c_str());
   }
 
-  close(sock);
-  unlink(socketPath.c_str());
   return ret_val;
 }
