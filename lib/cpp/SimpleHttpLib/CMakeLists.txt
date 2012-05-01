@@ -13,5 +13,5 @@ add_library(dxhttp SimpleHttp.cpp Utility.cpp SimpleHttpHeaders.cpp)
 set_target_properties(dxhttp PROPERTIES COMPILE_FLAGS -fPIC)
 
 #test
-add_executable(test gtest_http.cpp SimpleHttp.cpp Utility.cpp SimpleHttpHeaders.cpp ${GTEST_DIR}/src/gtest-all.cc)
-target_link_libraries(test pthread curl dxhttp)
+add_executable(test_simple_http gtest_http.cpp SimpleHttp.cpp Utility.cpp SimpleHttpHeaders.cpp ${GTEST_DIR}/src/gtest-all.cc)
+target_link_libraries(test_simple_http pthread curl dxhttp)

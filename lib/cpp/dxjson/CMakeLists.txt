@@ -14,5 +14,5 @@ set_target_properties(dxjson PROPERTIES COMPILE_FLAGS -fPIC)
 
 # test
 
-add_executable(test gtest_json.cpp ${GTEST_DIR}/src/gtest-all.cc)
-target_link_libraries(test pthread dxjson)
+add_executable(test_json gtest_json.cpp ${GTEST_DIR}/src/gtest-all.cc)
+target_link_libraries(test_json pthread dxjson)
