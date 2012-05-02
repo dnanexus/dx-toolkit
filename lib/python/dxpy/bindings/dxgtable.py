@@ -29,8 +29,8 @@ class DXGTable(DXDataObject):
     _close = staticmethod(dxpy.api.gtableClose)
     _list_projects = staticmethod(dxpy.api.gtableListProjects)
 
-    # Default maximum buffer size is 100MB
-    _row_buf_maxsize = 1024*1024*100
+    # Default maximum buffer size is 20MB
+    _row_buf_maxsize = 1024*1024*20
 
     def __init__(self, dxid=None, project=None, keep_open=False,
                  buffer_size=40000):

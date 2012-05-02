@@ -72,7 +72,7 @@ def new_dxfile(**kwargs):
 # chunk sizing options
 # waitonclose
 
-def download_dxfile(dxid, filename, chunksize=1024*1024):
+def download_dxfile(dxid, filename, chunksize=1024*1024*100):
     '''
     :param dxid: Object ID of a file
     :type dxid: string

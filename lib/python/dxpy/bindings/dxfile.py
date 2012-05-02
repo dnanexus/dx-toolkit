@@ -150,9 +150,17 @@ class DXFile(DXDataObject):
         else:
             self._pos = self._file_length
 
-        resp = requests.get(url, headers=headers)
-        resp.raise_for_status()
-        return resp.content
+        # TODO: fix performance issue with requests
+
+        #resp = requests.get(url, headers=headers)
+        #resp.raise_for_status()
+        #return resp.content
+
+        # Temporary workaround via urllib2
+        import urllib2
+        req = urllib2.Request(url, headers=headers)
+        response = urllib2.urlopen(req)
+        return response.read()
 
     def seek(self, offset):
         '''
