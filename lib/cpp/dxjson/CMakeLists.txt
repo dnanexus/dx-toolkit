@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 cmake_policy(VERSION 2.6)
 
 project (dxjson)
-set (CMAKE_BUILD_TYPE, Debug)
+set (CMAKE_BUILD_TYPE, Release)
 
 set(GTEST_DIR /opt/chef-gtest-1.6.0)
 include_directories( ./ ${GTEST_DIR} ${GTEST_DIR}/include )
