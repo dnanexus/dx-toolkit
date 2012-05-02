@@ -40,6 +40,9 @@ def validateProgramSpec(program_spec):
         raise ProgramBuilderException("Program specification does not contain a name")
 
 def upload_program(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False):
+    program_spec_file = os.path.join(src_dir, "dxprogram")
+    if not os.path.exists(program_spec_file):
+        program_spec_file = os.path.join(src_dir, "dxprogram.json")
     with open(os.path.join(src_dir, "dxprogram")) as fh:
         program_spec = json.load(fh)
 
