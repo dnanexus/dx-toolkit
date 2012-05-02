@@ -674,6 +674,6 @@ namespace dx {
     return ((String*)this->val)->val;
   }
 
-};
+}
 
 #endif

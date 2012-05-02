@@ -547,6 +547,7 @@ JSON& JSON::operator =(const bool &x) {
 }
 
 JSON& JSON::operator =(const Null &x) {
+  // x is intended to be unused in this function. Since null has exactly one value.
   clear();
   val = new Null();
   return *this;
@@ -598,7 +599,7 @@ bool JSON::has(const size_t &indx) const {
   if(this->type() != JSON_ARRAY)
     throw JSONException("Illegal call to has(size_t) for non JSON_ARRAY object");
   size_t size = ((Array*)(this->val))->val.size();
-  return (indx >= 0u && indx < size);
+  return (indx < size);
 }
 
 bool JSON::has(const std::string &key) const {
