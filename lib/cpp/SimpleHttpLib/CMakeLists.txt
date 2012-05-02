@@ -7,7 +7,7 @@ set (CMAKE_BUILD_TYPE, Debug)
 set(GTEST_DIR /opt/chef-gtest-1.6.0)
 include_directories( ./ ${GTEST_DIR} ${GTEST_DIR}/include )
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wno-sign-compare -Werror=return-type -Wno-deprecated -lcurl")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated -lcurl")
 
 add_library(dxhttp SimpleHttp.cpp Utility.cpp SimpleHttpHeaders.cpp)
 set_target_properties(dxhttp PROPERTIES COMPILE_FLAGS -fPIC)
