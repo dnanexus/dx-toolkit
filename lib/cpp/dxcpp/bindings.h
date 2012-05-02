@@ -58,8 +58,9 @@ class DXDataObject {
   }
   DXDataObject(const std::string &dxid) { setIDs(dxid); }
   DXDataObject(const std::string &dxid, const std::string &proj) {
-    setIDs(dxid, proj); }
- 
+    setIDs(dxid, proj);
+  }
+
   /**
    * @return ID of the associated data object
    */
@@ -70,7 +71,7 @@ class DXDataObject {
    * always be passed in place of a string argument that expects an
    * object ID.
    */
-  operator std::string() { return dxid_;}
+  operator std::string() { return dxid_; }
 
   /**
    * @return ID of the project to which this data object handler is

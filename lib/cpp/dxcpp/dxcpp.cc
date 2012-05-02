@@ -36,7 +36,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   }
 
   string url = g_APISERVER + resource;
-  
+
   HttpHeaders req_headers;
   JSON secContext = g_SECURITY_CONTEXT;
   req_headers["Authorization"] = secContext["auth_token_type"].get<string>() +
@@ -60,7 +60,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   }
 
   if (!content_type_set)
-    req_headers["Content-Type"] = "application/json";    
+    req_headers["Content-Type"] = "application/json";
 
   // Attempt a POST request
   HttpRequest req = HttpRequest::request(HTTP_POST,

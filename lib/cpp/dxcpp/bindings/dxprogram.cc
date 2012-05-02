@@ -3,11 +3,11 @@
 using namespace std;
 using namespace dx;
 
-void DXProgram::createFromFile(const string &codefile) const {
-}
+// void DXProgram::createFromFile(const string &codefile) const {
+// }
 
-void DXProgram::createFromString(const string &codestring) const {
-}
+// void DXProgram::createFromString(const string &codestring) const {
+// }
 
 DXJob DXProgram::run(const JSON &program_input,
                      const string &project_context,

@@ -55,7 +55,7 @@ class DXFileError: public DXError {
 
 /**
  * Exception thrown for errors relating to the DXGTable class.
- */ 
+ */
 class DXGTableError: public DXError {
  public:
   DXGTableError(): DXError("Unknown error occured while using DXGTable class.") { }
