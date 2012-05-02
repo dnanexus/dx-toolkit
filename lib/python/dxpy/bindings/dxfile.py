@@ -230,7 +230,7 @@ class DXFile(DXDataObject):
         '''
         self._wait_on_close(timeout)
 
-    def upload_part(self, data, index=None):
+    def upload_part(self, data, index=None, display_progress=False):
         """
         :param data: Data to be uploaded in this part
         :type data: string
@@ -258,3 +258,6 @@ class DXFile(DXDataObject):
         resp.raise_for_status()
 
         # TODO: Consider retrying depending on the status
+        
+        if display_progress:
+            print >> sys.stderr, "."
