@@ -4,7 +4,7 @@
 int main() {
   using namespace dx;
   using namespace std;
-  try 
+  try
   {
     JSON j1(JSON_OBJECT);
 
@@ -31,33 +31,33 @@ int main() {
     std::cout<<"\nj3 = "<<j3.toString();
     std::cout<<"\nj3[blah] = "<<j3["blah"].toString();
     std::cout<<"\nj3[blah][2] = "<<j3["blah"][2].toString()<<"\n";
-   
+
     j3["blah"].erase(2);
     std::cout<<"\nBlah after erasing indx = 2\n"<<j3["blah"].toString()<<"\n";
 
     JSON j4;
     std::string str = "{\"清华大学\": [\"this should look like second element\", \"\\u6e05\\u534e\\u5927\\u5b66\", \"\\n\\b\\t\\\"\"]    }";
     j4 = JSON::parse(str);
-    
+
     std::cout<<"j4 = "<<j4.toString()<<"\n";
 
     JSON j5(JSON_BOOLEAN);
     j5 = true;
     std::cout<<"\nj5 = "<<j5.toString()<<"\n";
-    
+
     // Equality tests
     std::cout<<"\nj4 == j5: "<<((j4==j5)?"true":"false");
 
     JSON j5_copy = j5;
     std::cout<<"\nj5_copy == j5: "<<((j5_copy==j5) ? "true" : "false")<<"\n";
-    
+
     JSON j6 = 12.21;
     JSON j7 = 12.22;
     assert(j6 != j7);
     JSON::setEpsilon(.2);
     assert(j6 == j7);
     JSON::setEpsilon(1e-12);
-    
+
     JSON j8(JSON_ARRAY);
     j8.push_back(12.21);
     j8.push_back("hello");
@@ -68,7 +68,7 @@ int main() {
     j9.erase(2);
     assert(j9 != j8);
     assert(JSON(JSON_NULL) == JSON(JSON_NULL));
- 
+
     // JSON_UNDEFINED != JSON_UNDEFINED
     assert(JSON() != JSON());
 
@@ -86,29 +86,29 @@ int main() {
     for(JSON::array_iterator it = j8.array_begin();it != j8.array_end(); ++it, ++i) {
       assert(j8[i] == *(it));
     }
-    
+
     for(JSON::object_iterator it = j10.object_begin();it != j10.object_end(); ++it) {
       assert(j10[it->first] == it->second);
       std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
-    } 
-    std::cout<<"\nChecking reverse now ...\n"; 
+    }
+    std::cout<<"\nChecking reverse now ...\n";
     i = j8.size() - 1;
     for(JSON::array_reverse_iterator it = j8.array_rbegin();it != j8.array_rend(); ++it, --i) {
       assert(j8[i] == *(it));
     }
-    
+
     for(JSON::object_reverse_iterator it = j10.object_rbegin();it != j10.object_rend(); ++it) {
       assert(j10[it->first] == it->second);
       std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
-    } 
- 
-    // 
+    }
+
+    //
     //typedef std::map<std::string, JSON> ObjectIterator
     //ObjectIterator it = j4.ObjectBegin();
     // JSON Iterators (different class);
 
     //for (; it != j4.end(); ++it) {
-      
+
   //  }
 
      // Check implicit cast operators
@@ -123,7 +123,7 @@ int main() {
 
      assert(j11["5"][0.9] == 0);
      assert(j11["5"][j11["1"]] == 0);
-    
+
      assert(j11.has("1"));
      assert(!j11.has("random"));
      assert(j11["5"].has(0));
@@ -137,13 +137,13 @@ int main() {
      assert(j11["4.1"].toString() == "\"blahh\"");
      assert(long(j11["4"]) == 212l);
      assert(double(j11["1"]) < double(j11["2"]));
-      
+
      const JSON j12(j11);
-   
+
      assert(j12["5"][0.9] == 0);
      assert(j12["5"][j11["1"]] == 0);
 
- 
+
      assert(j12["5"][j11["1"]] == 0);
      assert(double(j12["1"]) == 1);
      assert(double(j12["2"]) == 12.33);
@@ -151,7 +151,7 @@ int main() {
      assert(j12["4.1"].toString() == "\"blahh\"");
      assert(long(j12["4"]) == 212l);
      assert(double(j12["1"]) < double(j11["2"]));
-     
+
      JSON j13(JSON_OBJECT);
      j13["foo"] = "blah";
      j13["foo2"] = 12;
@@ -161,18 +161,16 @@ int main() {
      assert(j13["foo2"].get<int>() == 12);
      assert(j13["foo3"].get<double>() == 12.32);
      assert(j13["foo3"].get<bool>() == true);
-     
+
      JSON j14(JSON_NULL);
      assert(j14 == JSON_NULL);
-      
+
      std::cout<<"\nAll assertions performed succesfully\n";
   }
-  catch (exception &e) 
+  catch (exception &e)
   {
     std::cout<<"\nErrror occured: \n"<<e.what()<<"\n";
   }
 
   return 0;
 }
-
-

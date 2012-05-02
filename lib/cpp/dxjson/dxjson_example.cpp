@@ -31,31 +31,31 @@ void testCreation() {
 
   // Method 1: Read the JSON from it's stringified represntation
   JSON j1 = JSON::parse("{\"arr\": [1,2,3], \"str\": \"hello world\", \"int\": 10, \"real\": 10.01, \"bool\": true, \"null\": null}");
-  
+
   // Method 2: Create a blank JSON_OBJECT and add required values manually
   JSON j2(JSON_OBJECT); // JSON_OBJECT, tells the compiler to make a JSON hash
   j2["arr"] = JSON(JSON_ARRAY); // JSON_ARRAY tells the compiler to make a JSON array
   j2["arr"].push_back(1); // 1 is automatically detected as a JSON_INTEGER
-  j2["arr"].push_back(2); 
+  j2["arr"].push_back(2);
   j2["arr"].push_back(3);
-  
+
   j2["str"] = "hello world"; // j2["str"] is automatically detcted as a JSON_STRING
   j2["int"] = 10; // Integer
   j2["real"] = 10.01; // Automatically detected as JSON_REAL
   j2["bool"] = true; // Automatically detected as JSON_BOOLEAN
   j2["null"] = JSON(JSON_NULL); // Create a JSON_NULL explicitly
-  
+
   // NOTE: Equality is checked "deeply" (recursively).
   // Also JSON_INTEGER is always != JSON_REAL
   // So JSON(10.0) != JSON(10);
-  assert(j1 == j2); 
+  assert(j1 == j2);
 }
 
 void accessValuesAndStringify() {
   // Create following JSON: {"n1": 10, "n2": 20, "n1 + n2": 30}
   JSON j1 = JSON::parse("{\"n1\": 10, \"n2\": 20}");
   j1["n1 + n2"] = j1["n1"].get<int>() + j1["n2"].get<int>();
-  
+
   // Print the serialized json to  stdout
   std::cout<<j1.toString()<<endl;
 }
@@ -64,14 +64,14 @@ void iterateArraysAndObjects() {
   // Creates a json array of 10 values (each being 0)
   // Assigning a vector, automatically makes it recognize it as JSON_ARRAY
   JSON j1 = vector<int>(10, 0);
-  
+
   // Length of JSON array can be found out using size() method
   assert(j1.length() == 10u);
   for (unsigned i = 0; i < j1.size(); i++) {
     assert(j1[i] == 0);
     j1[i] = i; // Update value in j[i]
   }
-  
+
   // Erase 2nd element of array
   j1.erase(1);
   assert(j1.length() == 9);
@@ -100,9 +100,9 @@ void iterateArraysAndObjects() {
 
 int main() {
   testCreation();
-  accessValuesAndStringify(); 
+  accessValuesAndStringify();
   iterateArraysAndObjects();
   std::cout<<"All assertions passed! Yay!";
-  
+
   return 0;
 }

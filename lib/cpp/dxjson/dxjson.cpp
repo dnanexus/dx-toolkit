@@ -4,18 +4,18 @@ using namespace dx;
 
 extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
 
-// TODO: 
+// TODO:
 // 1) Currently json strings are "escaped" only when using write() method, and stored as normal
-//    std::string. So if we use iterators like object_iterator for accessing all key in 
+//    std::string. So if we use iterators like object_iterator for accessing all key in
 //    a json object, we will read them as normal strings (as they are stored in memory),
-//    rather then their stringified() form. For ex, a key: "\n" (a single character - newline), 
-//    will be read as char arr[] = {10, 0} (as stored internally) by an object_iterator, 
+//    rather then their stringified() form. For ex, a key: "\n" (a single character - newline),
+//    will be read as char arr[] = {10, 0} (as stored internally) by an object_iterator,
 //    rather than arr[] = {'\','n', 0} (as would have been printed out by toString() ).
 //    Figure out what the "correct" convention should be, and if required fix it.
 
-namespace JSON_Utility 
-{ 
- 
+namespace JSON_Utility
+{
+
   std::string getValidatedUTF8String(const std::string &src) {
     std::string out;
     utf8::replace_invalid(src.begin(), src.end(), back_inserter(out));
@@ -39,37 +39,37 @@ namespace JSON_Utility
     if (c >= 0)
       in.unget();
   }
-  
+
   // Does not enclose strings in quotes while writing
   void WriteEscapedString(const std::string &s, std::ostream &out, bool enclosingQuotes = true)
-  { 
+  {
     if (enclosingQuotes)
       out<<'"';
 
-    for (unsigned i = 0; i < s.length(); ++i) 
-    { 
+    for (unsigned i = 0; i < s.length(); ++i)
+    {
       if(s[i] >= 0x0000 && s[i] <= 0x001f)
       {
         // Control character case, should be escaped
         // http://stackoverflow.com/questions/4901133/json-and-escaping-characters
         char temphex[5] = {0};
         switch(s[i]) {
-          case '\b': 
-            out<<"\\b"; 
-            break; 
-          case '\f': 
-            out<<"\\f"; 
-            break; 
-          case '\n': 
-            out<<"\\n"; 
-            break; 
-          case '\r': 
-            out<<"\\r"; 
-            break; 
-          case '\t': 
-            out<<"\\t"; 
+          case '\b':
+            out<<"\\b";
             break;
-          default: 
+          case '\f':
+            out<<"\\f";
+            break;
+          case '\n':
+            out<<"\\n";
+            break;
+          case '\r':
+            out<<"\\r";
+            break;
+          case '\t':
+            out<<"\\t";
+            break;
+          default:
             out<<"\\u";
             sprintf(temphex, "%04x", s[i]);
             out<<std::string(temphex);
@@ -78,15 +78,15 @@ namespace JSON_Utility
       }
       else {
         switch(s[i]) {
-          case '"': 
-            out<<"\\\""; 
-            break; 
-          case '\\': 
-            out<<"\\\\"; 
-            break; 
-          default: 
-            out<<s[i]; 
-        } 
+          case '"':
+            out<<"\\\"";
+            break;
+          case '\\':
+            out<<"\\\\";
+            break;
+          default:
+            out<<s[i];
+        }
       }
     }
     if (enclosingQuotes)
@@ -111,7 +111,7 @@ namespace JSON_Utility
   bool isBooleanStart(int ch) {
     return (ch == 't' || ch == 'f');
   }
-  
+
   bool isArrayStart(int ch) {
     return (ch == '[');
   }
@@ -119,9 +119,9 @@ namespace JSON_Utility
   bool isObjectStart(int ch) {
     return (ch == '{');
   }
- 
+
   // This function is designed specifically for use from ReadNumberValue() only
-  // It assumes that string provided as *input* to the function is already in this form (regex): 
+  // It assumes that string provided as *input* to the function is already in this form (regex):
   //  [0-9-]{1,1}[-0-9+eE.]*
   // It will then perform extra checks to find out if it corresponds to a valid JSON number or not
   // Ref: http://www.json.org
@@ -135,26 +135,26 @@ namespace JSON_Utility
     bool e = false;
     if (len == 0)
       return false;
-    
+
     unsigned start = (s[0] == '-') ? 1 : 0;
     if (!isdigit(s[start]))
       return false;
 
     if (start + 1 == len)
       return true;
-    
+
     if (s[start] == '0' && isdigit(s[start + 1]))
       return false;
-    
+
     for (unsigned i = start + 1; i < len; ++i) {
       switch (s[i]) {
-        case '.': 
+        case '.':
           if (e || dot)
             return false;
           dot = true;
           break;
         case 'e': // Desired fall through to next case statement ('E')
-        case 'E': 
+        case 'E':
           if (e)
             return false;
           e = true;
@@ -168,7 +168,7 @@ namespace JSON_Utility
             }
           }
           break;
-        default: 
+        default:
           if (!isdigit(s[i]))
             return false;
       }
@@ -207,7 +207,7 @@ namespace JSON_Utility
     //       above do-while loop itself. : Slight optimization.
     if (!isValidJsonNumber(toParse))
       throw JSONException("Invalid JSON number: \"" + toParse + "\". Unable to parse");
-  
+
     std::stringstream stream(toParse);
     if (isDouble) {
       Real *r = new Real();
@@ -229,28 +229,28 @@ namespace JSON_Utility
 
     if (in.eof())
       throw JSONException("Unexpected EOF");
-    
+
     int ch = in.get();
     in.unget();
     if (isObjectStart(ch))
       j.val = new Object();
-    
+
     if (isArrayStart(ch))
       j.val = new Array();
-    
+
     // If it's not an object or array, throw error if it was supposed to be a top-level object
     if (topLevel && j.val == NULL)
       throw JSONException("JSON::read() - Expected top level JSON to be an Object OR Array");
 
     if (isStringStart(ch))
       j.val = new String();
-    
+
     if (isBooleanStart(ch))
       j.val = new Boolean();
-    
+
     if (isNullStart(ch))
       j.val = new Null();
-    
+
     if (j.val != NULL)
       j.val->read(in);
     else {
@@ -271,7 +271,7 @@ namespace JSON_Utility
   }*/
   // See this function in utf8 namespace to fix invalid utf8 characters
   // void fix_utf8_string(std::string& str);
-  
+
   inline int32_t hexdigit_to_num(char ch) {
     if (ch >= '0' && ch <= '9')
       return uint32_t(ch - '0');
@@ -285,20 +285,20 @@ namespace JSON_Utility
     // We assume that str is always exactly 4 character long
     return ( (hexdigit_to_num(str[0]) << 12) +
              (hexdigit_to_num(str[1]) << 8)  +
-             (hexdigit_to_num(str[2]) << 4) + 
+             (hexdigit_to_num(str[2]) << 4) +
              (hexdigit_to_num(str[3])) );
   }
-  
+
   // This function converts a json string (utf8) to a C++ string
   // All escaped sequences are resolved and it is made sure that no invalid
-  // UTF-8 character is present in string after parsing (any invalid character 
+  // UTF-8 character is present in string after parsing (any invalid character
   // is replaced with the replacement character: U+FFFFD)
   // Care must be taken to not call it two times for a string inside an operation
   // (for example, while using [] operator)
 
   std::string parseUtf8JsonString(const std::string &inp) {
     std::string out = "";
-    
+
     std::string temp;
     size_t inplength = inp.length();
 
@@ -322,18 +322,18 @@ namespace JSON_Utility
           case 'n':  out += '\n';  break;
           case 'r':  out += '\r';  break;
           case 't':  out += '\t';  break;
-          
+
           case 'u':
             if (i + 4 >= inplength)
               throw JSONException("Expected exactly 4 hex digits after \\u");
             copy(inp.begin() + i + 1, inp.begin() + i + 1 + 5, hex);
             i += 4;
-            first16bit = string4_to_hex(hex); 
+            first16bit = string4_to_hex(hex);
             codepoint = first16bit;
             if(0xD800 <= first16bit && first16bit <= 0xDBFF) {
               // Surrogate pair case
               // Must have next 6 characters of the form: \uxxxx as well
-              
+
               if( (i + 6) >= inplength || inp[i + 1] != '\\' || inp[i + 2] != 'u')
                 throw JSONException("Missing surrogate pair in unicode sequence");
               i += 2;
@@ -352,14 +352,14 @@ namespace JSON_Utility
             }
             try {
               utf8::append(codepoint, back_inserter(out));
-            } 
+            }
             catch(utf8::invalid_code_point &e) {
                 throw JSONException("Invalid UTF-8 code point found in text. Value = " + itos(codepoint) + ". Location = " + inp + "\nInternal message = " + e.what());
-            } 
+            }
             break;
           default:
             throw JSONException("Illegal escape sequence: \\" + inp[i]);
-        } 
+        }
       }
     }
     return getValidatedUTF8String(out);
@@ -399,7 +399,7 @@ void Object::write(std::ostream &out) const {
     out<<":";
     (*it).second.write(out);
   }
-  out<<"}"; 
+  out<<"}";
 }
 
 void Array::write(std::ostream &out) const {
@@ -458,8 +458,8 @@ void JSON::readFromString(const std::string &jstr) {
 const JSON& JSON::operator[](const std::string &s) const {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot use string to index value of a non-JSON_OBJECT using [] operator");
-  
-  // No need for dynamic_cast (since I already checked for JSON_OBJECT case), and 
+
+  // No need for dynamic_cast (since I already checked for JSON_OBJECT case), and
   // dynamic_cast is expensive
   Object *o = static_cast<Object*>(val);
   return o->jsonAtKey(s);
@@ -485,7 +485,7 @@ const JSON& JSON::operator[](const JSON &j) const {
       throw JSONException("Cannot use a non-string value to index JSON_OBJECT using []");
 
     String *ptr = static_cast<String*>(j.val);
-    return (*this)[ptr->val]; 
+    return (*this)[ptr->val];
   }
   throw JSONException("Only JSON_OBJECT and JSON_ARRAY can be indexed using []");
 }
@@ -508,7 +508,7 @@ JSON::JSON(const JSONValue &rhs) {
     default: throw JSONException("Illegal JSONValue value for JSON initialization");
   }
 }
-    
+
 JSON::JSON(const JSON &rhs) {
   if(rhs.type() != JSON_UNDEFINED)
     val = rhs.val->returnMyNewCopy();
@@ -519,14 +519,14 @@ JSON::JSON(const JSON &rhs) {
 JSON& JSON::operator =(const JSON &rhs) {
   if (this == &rhs) // Self-assignment check
     return *this;
-  
+
   clear();
 
   if (rhs.type() != JSON_UNDEFINED)
     val = rhs.val->returnMyNewCopy();
   else
     val = NULL;
-  
+
   return *this;
 }
 
@@ -612,16 +612,16 @@ bool JSON::has(const char *x) const {
 }
 
 bool JSON::has(const JSON &j) const {
-  
+
   switch(this->type()) {
     case JSON_ARRAY: return has((const size_t)j);
-    case JSON_OBJECT: 
+    case JSON_OBJECT:
       if (j.type() != JSON_STRING)
         throw JSONException("For a JSON_OBJECT, has(JSON &j) requires j to be JSON_STRING");
       return has( ((String*)(j.val))->val);
-  
+
     default: throw JSONException("Illegal json object as input to has(const JSON &j)");
-  }  
+  }
 }
 
 void JSON::read(std::istream &in) {
@@ -645,8 +645,8 @@ void String::read(std::istream &in) {
 }
 
 void Boolean::read(std::istream &in) {
-  
-  // To store output of read() - maximum = "false", artificially adding "\0" at end 
+
+  // To store output of read() - maximum = "false", artificially adding "\0" at end
   // since read() does not.
   char str[6] = {0};
 
@@ -685,19 +685,19 @@ void Object::read(std::istream &in) {
   JSON_Utility::SkipWhiteSpace(in);
   ch = in.get();
   assert(ch == '{'); // Must be a valid object for Object::read to be called
-  
+
   bool firstKey = true;
   do {
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
     if(in.eof() || in.fail())
       throw JSONException("Unexpected EOF while parsing object. ch = " + std::string(1,ch));
-      
+
     // End of parsing for this JSON object
     if (ch == '}')
       break;
-    
-    // Keys:value pairs must be separated by , inside JSON object 
+
+    // Keys:value pairs must be separated by , inside JSON object
     if (!firstKey && ch != ',')
       throw JSONException("Expected , while parsing object. Got : " + std::string(1,char(ch)));
 
@@ -711,7 +711,7 @@ void Object::read(std::istream &in) {
 
     // Push back the quote (") in stream again, and parse the key value (string)
     in.unget();
-    
+
     std::string key = JSON_Utility::ReadString(in);
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
@@ -729,21 +729,21 @@ void Array::read(std::istream &in) {
   JSON_Utility::SkipWhiteSpace(in);
   ch = in.get();
   assert(ch == '['); // Must be a valid array for Array::read to be called
-  
+
   bool firstKey = true;
   do {
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
     if(in.eof() || in.fail())
       throw JSONException("Unexpected EOF while parsing array");
-    
+
     // End of parsing this array
     if (ch == ']')
       break;
 
     if (!firstKey && ch != ',')
       throw JSONException("Expected ,(comma) GOT: " + std::string(1, ch));
-    
+
     if (!firstKey) {
       JSON_Utility::SkipWhiteSpace(in);
     }
