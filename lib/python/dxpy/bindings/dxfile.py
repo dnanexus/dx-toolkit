@@ -71,6 +71,8 @@ class DXFile(DXDataObject):
     def __exit__(self, type, value, traceback):
         if (not self._keep_open) and self._get_state() == "open":
             self.close()
+        if self._write_buf.tell() > 0:
+            self.flush()
 
     def __del__(self):
         if self._write_buf.tell() > 0:
@@ -230,7 +232,7 @@ class DXFile(DXDataObject):
         '''
         self._wait_on_close(timeout)
 
-    def upload_part(self, data, index=None):
+    def upload_part(self, data, index=None, display_progress=False):
         """
         :param data: Data to be uploaded in this part
         :type data: string
@@ -258,3 +260,6 @@ class DXFile(DXDataObject):
         resp.raise_for_status()
 
         # TODO: Consider retrying depending on the status
+        
+        if display_progress:
+            print >> sys.stderr, "."

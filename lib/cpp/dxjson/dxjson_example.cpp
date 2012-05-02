@@ -54,7 +54,11 @@ void testCreation() {
 void accessValuesAndStringify() {
   // Create following JSON: {"n1": 10, "n2": 20, "n1 + n2": 30}
   JSON j1 = JSON::parse("{\"n1\": 10, \"n2\": 20}");
-  j1["n1 + n2"] = j1["n1"].get<int>() + j1["n2"].get<int>();
+  j1["n1 + n2"] = j1["n1"].get<int>() + j1["n2"].get<int>(); // One way to cast into integer
+  
+  // casting json into integer using explicit cast
+  int x = int(j1["n1"]) + int(j1["n2"]);
+  assert(x == int(j1["n1 + n2"]));
 
   // Print the serialized json to  stdout
   std::cout<<j1.toString()<<endl;
