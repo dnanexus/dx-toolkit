@@ -71,6 +71,8 @@ class DXFile(DXDataObject):
     def __exit__(self, type, value, traceback):
         if (not self._keep_open) and self._get_state() == "open":
             self.close()
+        if self._write_buf.tell() > 0:
+            self.flush()
 
     def __del__(self):
         if self._write_buf.tell() > 0:

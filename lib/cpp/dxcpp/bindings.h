@@ -195,6 +195,14 @@ class DXDataObject {
   void remove();
 };
 
+/**
+ * Creates a JSON object that is a special DNAnexus link to an
+ * existing data object ID.
+ *
+ * @param dxid Data object ID to link to
+ */
+dx::JSON DXLink(const std::string &dxid);
+
 #include "bindings/dxrecord.h"
 //#include "bindings/dxtable.h"
 #include "bindings/dxfile.h"
