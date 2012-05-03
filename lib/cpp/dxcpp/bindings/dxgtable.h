@@ -67,7 +67,7 @@ public:
    *
    * @returns Buffer size
    */
-  void getMaxBufferSize() const {
+  int getMaxBufferSize() const {
     return row_buffer_maxsize_;
   }
 
