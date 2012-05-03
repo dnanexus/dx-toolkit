@@ -22,7 +22,7 @@
 
 #include "utf8/utf8.h"
 
-typedef long long int64;
+typedef int64_t int64;
 
 // NOTE:
 // 1) UTF-8 validity is checked while reading JSON from a string;

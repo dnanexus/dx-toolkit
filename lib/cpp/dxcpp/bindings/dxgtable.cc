@@ -51,7 +51,7 @@ DXGTable DXGTable::extend(const vector<JSON> &columns,
 }
 
 JSON DXGTable::getRows(const JSON &query, const JSON &column_names,
-                       const int starting, const int limit) const {
+                       const int64_t starting, const int64_t limit) const {
   JSON input_params(JSON_OBJECT);
   if (query.type() != JSON_NULL)
     input_params["query"] = query;
@@ -99,7 +99,7 @@ int DXGTable::getUnusedPartID() {
 }
 
 void DXGTable::flush() {
-  int pos = row_buffer_.tellp();
+  int64_t pos = row_buffer_.tellp();
   if (pos > 10) {
     row_buffer_.seekp(pos - 1); // Erase the trailing comma
     row_buffer_ << "], \"part\": " << getUnusedPartID() << "}";

@@ -29,18 +29,18 @@ class DXFile: public DXDataObject {
    * position (in bytes from the beginning of the file) from which
    * future read() calls will begin.
    */
-  int pos_;
+  int64_t pos_;
 
   /**
    * Stores the number of bytes read in the last call to read().
    */
-  int gcount_;
+  int64_t gcount_;
 
   /**
    * For use when reading closed remote files; stores length of the
    * file so that accurate byte ranges can be requested.
    */
-  int file_length_;
+  int64_t file_length_;
 
   /**
    * For use when writing remote files; stores a buffer of data that
@@ -63,7 +63,7 @@ class DXFile: public DXDataObject {
   void init_internals_();
 
   // TODO: Determine if this should be user-defined.
-  static const int max_buf_size_;
+  static const int64_t max_buf_size_;
 
  public:
 
@@ -118,12 +118,12 @@ class DXFile: public DXDataObject {
    * @param ptr Location to which data should be written
    * @param n The maximum number of bytes to retrieve
    */
-  void read(char* ptr, int n);
+  void read(char* ptr, int64_t n);
 
   /**
    * @return The number of bytes read by the last call to read().
    */
-  int gcount() const;
+  int64_t gcount() const;
 
   /**
    * When reading a remote file, returns whether the end of the file
@@ -143,7 +143,7 @@ class DXFile: public DXDataObject {
    *
    * @param pos New byte position of the read cursor
    */
-  void seek(const int pos);
+  void seek(const int64_t pos);
 
   /**
    * Appends the contents of the internal buffer to the remote file.
@@ -157,7 +157,7 @@ class DXFile: public DXDataObject {
    * @param ptr Location of data to be written
    * @param n Number of bytes to write
    */
-  void write(const char* ptr, int n);
+  void write(const char* ptr, int64_t n);
 
   /**
    * Appends data to the file.
@@ -189,7 +189,7 @@ class DXFile: public DXDataObject {
    * be uploaded.  This will be automatically generated if the given
    * value is negative.
    */
-  void uploadPart(const char* ptr, int n, const int index=-1);
+  void uploadPart(const char* ptr, int64_t n, const int index=-1);
 
   /**
    * @return Boolean: true if the remote file is in the "open" state.
@@ -282,7 +282,7 @@ class DXFile: public DXDataObject {
    */
   static void downloadDXFile(const std::string &dxid,
                              const std::string &filename,
-                             int chunksize=1048576);
+                             int64_t chunksize=1048576);
 
   /**
    * Shorthand for uploading a local file and closing it when done.

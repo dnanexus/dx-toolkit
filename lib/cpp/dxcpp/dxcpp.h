@@ -2,6 +2,7 @@
 #define DXCPP_H
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <map>
 #include <string>
 #include "dxjson/dxjson.h"
