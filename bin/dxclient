@@ -55,6 +55,7 @@ def api(args):
     print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                         json_input))
 
+# TODO: add -l functionality
 def ls(args):
     dxproj = dxpy.DXProject()
     if not args.folder.startswith('/'):
@@ -180,7 +181,14 @@ def file_put(args):
     print dxpy.upload_local_file(args.filename).get_id()
 
 def find_jobs(args):
-    raise NotImplementedError()
+    results = dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
+                             state=args.state, origin_job=args.origin, parent_job=args.parent,
+                             describe=args.nodesc)
+    for result in results:
+        if not args.nodesc:
+            print result["id"]
+        else:
+            print result["id"] + "\t" + result["describe"]["state"]
 
 parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAnexus Command-Line Client, API v1.0.0')
 subparsers = parser.add_subparsers()
@@ -201,6 +209,7 @@ parser_api.set_defaults(func=api)
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
                                   description='List folders and/or objects in a folder')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
+parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
 parser_ls.add_argument('--name', help='show names instead of object IDs', action='store_true')
 parser_ls.add_argument('--both', help='show both names and object IDs', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
@@ -271,7 +280,7 @@ parser_find_jobs.add_argument('--project', help='Project context ID (output proj
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job')
-parser_find_jobs.add_argument('--describe', help='Return description of job with result', action='store_true')
+parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
 
 parser_find_jobs.set_defaults(func=find_jobs)
 
