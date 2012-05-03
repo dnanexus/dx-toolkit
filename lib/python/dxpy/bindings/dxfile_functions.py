@@ -72,12 +72,14 @@ def new_dxfile(**kwargs):
 # chunk sizing options
 # waitonclose
 
-def download_dxfile(dxid, filename, chunksize=1024*1024*100):
+def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False):
     '''
     :param dxid: Object ID of a file
     :type dxid: string
     :param filename: Local filename
     :type filename: string
+    :param append: Set to true if the local filename is to be appended to
+    :type append: boolean
 
     Downloads the remote file with object ID *dxid* and saves it to
     *filename*.
@@ -88,8 +90,9 @@ def download_dxfile(dxid, filename, chunksize=1024*1024*100):
 
     '''
 
+    mode = 'a' if append else 'w'
     with DXFile(dxid) as dxfile:
-        with open(filename, 'w') as fd:
+        with open(filename, mode) as fd:
             while True:
                 file_content = dxfile.read(chunksize)
                 if len(file_content) == 0:
