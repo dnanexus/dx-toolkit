@@ -176,11 +176,11 @@ void DXFile::downloadDXFile(const string &dxid, const string &filename,
                             int chunksize) {
   DXFile dxfile(dxid);
   ofstream localfile(filename.c_str());
-  char chunkbuf[chunksize];
+  vector<char> chunkbuf(chunksize);
   while (!dxfile.eof()) {
-    dxfile.read(chunkbuf, chunksize);
+    dxfile.read(&(chunkbuf[0]), chunksize);
     int num_bytes = dxfile.gcount();
-    localfile.write(chunkbuf, num_bytes);
+    localfile.write(&(chunkbuf[0]), num_bytes);
   }
   localfile.close();
 }
