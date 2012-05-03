@@ -107,10 +107,12 @@ class DXProject(object):
         dxpy.api.projectNewFolder(self._dxid, {"folder": folder,
                                                "parents": parents})
 
-    def list_folder(self, folder="/"):
+    def list_folder(self, folder="/", describe=False):
         """
         :param folder: Full path to the folder to list
         :type folder: string
+        :param describe: Either false or the input to /describe to be called on each object
+        :type describe: bool or dict
         :returns: A hash with key "objects" for the list of object IDs and key "folders" for the list of folder routes
         :rtype: dict
 
@@ -121,7 +123,8 @@ class DXProject(object):
 
         """
 
-        return dxpy.api.projectListFolder(self._dxid, {"folder": folder})
+        return dxpy.api.projectListFolder(self._dxid, {"folder": folder,
+                                                       "describe": describe})
 
     def move(self, destination, objects=[], folders=[]):
         """

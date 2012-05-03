@@ -152,7 +152,7 @@ class DXGTable(DXDataObject):
             col_names.append(col_desc["name"])
         return col_names
 
-    def iterate_rows(self, start=0, end=None):
+    def iterate_rows(self, start=0, end=None, **kwargs):
         """
         :param start: The row ID of the first row to return
         :type start: integer
@@ -172,7 +172,7 @@ class DXGTable(DXDataObject):
             request_size = self._bufsize
             if end is not None:
                 request_size = min(request_size, end - cursor)
-            buffer = self.get_rows(starting=cursor, limit=request_size)['data']
+            buffer = self.get_rows(starting=cursor, limit=request_size, **kwargs)['data']
             if len(buffer) < 1: break
             for row in buffer:
                 yield row
