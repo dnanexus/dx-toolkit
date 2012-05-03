@@ -9,6 +9,7 @@ parser.add_option("--no_header", help="Do not print a header in the CSV file", a
 (opts, args) = parser.parse_args()
 
 if len(args) != 1:
+    parser.print_help()
     parser.error("Incorrect number of arguments")
 
 table_id = args[0]
