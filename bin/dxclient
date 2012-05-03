@@ -57,10 +57,12 @@ def api(args):
 
 def ls(args):
     dxproj = dxpy.DXProject()
+    if not args.folder.startswith('/'):
+        args.folder = '/' + args.folder
     resp = dxproj.list_folder(folder=args.folder, describe={})
     if not args.obj:
         for folder in resp["folders"]:
-            print os.path.basename(folder) + '/'
+            print folder
     if not args.folders:
         for obj in resp["objects"]:
             if not args.all and obj['describe']['hidden']:
@@ -74,6 +76,8 @@ def ls(args):
 
 def mkdir(args):
     dxproj = dxpy.DXProject()
+    if not args.folder.startswith('/'):
+        args.folder = '/' + args.folder
     if args.parents:
         try:
             dxproj.new_folder(folder=args.folder, parents=True)
@@ -85,6 +89,8 @@ def mkdir(args):
 
 def rmdir(args):
     dxproj = dxpy.DXProject()
+    if not args.folder.startswith('/'):
+        args.folder = '/' + args.folder
     dxproj.remove_folder(folder=args.folder)
 
 def rm(args):
@@ -94,14 +100,37 @@ def rm(args):
 def describe(args):
     if args.dxid.startswith('job'):
         desc = dxpy.DXJob(args.dxid).describe()
-        print json.dumps(desc)
+        if args.json:
+            print json.dumps(desc)
         if not args.json:
-            raise NotImplementedError()
+            print "ID\t\t" + desc["id"]
+            print "Class\t\t" + desc["class"]
+            print "Project context\t" + desc["project"]
+            print "Workspace\t" + desc["workspace"]
+            print "Program\t\t" + desc["program"]
+            print "State\t\t" + desc["state"]
+            print "Parent job\t" + desc["parentJob"]
+            print "Origin job\t" + desc["originJob"]
+            print "Function\t\t" + desc["function"]
+            print "Original Input\t" + json.dumps(desc["originalInput"])
+            print "Input\t\t" + json.dumps(desc["input"])
+            print "Output\t\t" + json.dumps(desc["output"])
+            print "Launched by\t" + desc["launchedBy"]
+            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+#            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     elif args.dxid.startswith('project'):
-        desc = dxpy.DXProject(args.dxid).describe(oesirj) # get args!
-        print json.dumps(desc)
-        if not args.json:
-            raise NotImplementedError()
+        desc = dxpy.DXProject(args.dxid).describe() # TODO get args!
+        if args.json:
+            print json.dumps(desc)
+        else: # TODO: Finish adding flags, etc.
+            print "ID\t\t" + desc["id"]
+            print "Class\t\t" + desc["class"]
+            print "Name\t\t" + desc["name"]
+            print "Description\t" + desc["description"]
+            print "Protected\t" + json.dumps(desc["protected"])
+            print "Restricted\t" + json.dumps(desc["restricted"])
+            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()            
     else:
         json_input = {}
         if args.project is not None:
@@ -153,7 +182,7 @@ def file_put(args):
 def find_jobs(args):
     raise NotImplementedError()
 
-parser = argparse.ArgumentParser(description='DNAnexus Command-Line Client, API v1.0.0')
+parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAnexus Command-Line Client, API v1.0.0')
 subparsers = parser.add_subparsers()
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
