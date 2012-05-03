@@ -61,6 +61,26 @@ public:
     return *this;
   }
 
+  /**
+   * Returns the buffer size (in bytes of the stringified rows) that
+   * must be reached before rows are automatically flushed.
+   *
+   * @returns Buffer size
+   */
+  void getMaxBufferSize() const {
+    return row_buffer_maxsize_;
+  }
+
+  /**
+   * Sets the buffer size (in bytes of the stringified rows) that must
+   * be reached before rows are flushed.
+   *
+   * @param buf_size New buffer size to use
+   */
+  void setMaxBufferSize(const int buf_size) {
+    row_buffer_maxsize_ = buf_size;
+  }
+
   // Table-specific functions
 
   /**
