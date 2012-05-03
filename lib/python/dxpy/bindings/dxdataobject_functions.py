@@ -61,3 +61,15 @@ def describe(link):
     '''
     handler = get_handler(link)
     return handler.describe()
+
+def get_details(link):
+    '''
+    :param link: String containing an object ID or dict containing a DXLink
+    Given an object ID, recognizes the class and calls getDetails on it.
+
+    Example::
+    
+        get_details("file-1234")
+    '''
+    handler = get_handler(link)
+    return handler.get_details()
