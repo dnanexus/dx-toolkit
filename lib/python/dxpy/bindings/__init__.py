@@ -455,18 +455,6 @@ class DXDataObject(object):
             time.sleep(2)
             elapsed += 2
 
-def dxlink(object_id, project_id=None):
-    if isinstance(object_id, DXDataObject):
-        object_id = object_id.get_id()
-    if project_id is None:
-        return {'$dnanexus_link': object_id}
-    else:
-        return {'$dnanexus_link': {'project': project_id, 'id': object_id}}
-
-def is_dxlink(thing):
-    return isinstance(thing, dict) and '$dnanexus_link' in thing
-
-
 from dxfile import *
 from dxfile_functions import *
 from dxgtable import *
@@ -476,3 +464,4 @@ from dxproject import *
 from dxjob import *
 from dxprogram import *
 from search import *
+from dxdataobject_functions import *

@@ -582,7 +582,7 @@ TEST_F(DXFileTest, StreamingOperators) {
   dxfile  << "bar" << endl;
   samestr << "bar" << endl;
   dxfile.close(true);
-  
+
   char stored[50];
   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
   ifstream downloadedfile(tempfilename.c_str());
@@ -641,7 +641,6 @@ TEST_F(DXGTableTest, ExtendDXGTableTest) {
     table_to_extend.addRows(JSON::parse("[[\"Row 1\", 1], [\"Row 2\", 2]]"));
     table_to_extend.close(true);
     EXPECT_EQ("closed", table_to_extend.describe()["state"].get<string>());
-    
 
     vector<JSON> more_cols;
     more_cols.push_back(DXGTable::columnDesc("c", "int32"));

@@ -72,7 +72,7 @@ def new_dxfile(**kwargs):
 # chunk sizing options
 # waitonclose
 
-def download_dxfile(dxid, filename, chunksize=1024*1024):
+def download_dxfile(dxid, filename, chunksize=1024*1024*100):
     '''
     :param dxid: Object ID of a file
     :type dxid: string
@@ -96,7 +96,7 @@ def download_dxfile(dxid, filename, chunksize=1024*1024):
                     break
                 fd.write(file_content)
 
-def upload_local_file(filename, media_type=None, wait_on_close=False, **kwargs):
+def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -127,7 +127,8 @@ def upload_local_file(filename, media_type=None, wait_on_close=False, **kwargs):
                 break
             dxfile.write(buf)
 
-    dxfile.close(block=wait_on_close)
+    if not keep_open:
+        dxfile.close(block=wait_on_close)
     dxfile.rename(os.path.basename(filename))
     return dxfile
 

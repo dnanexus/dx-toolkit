@@ -10,7 +10,7 @@
  *
  */
 class DXGTable: public DXDataObject {
- private:
+private:
   dx::JSON describe_(const std::string &s)const{return gtableDescribe(dxid_,s);}
   void addTypes_(const std::string &s)const{gtableAddTypes(dxid_,s);}
   void removeTypes_(const std::string &s)const{gtableRemoveTypes(dxid_,s);}
@@ -31,16 +31,26 @@ class DXGTable: public DXDataObject {
 
   void reset_buffer_();
 
- public:
- DXGTable() : DXDataObject(),
-    row_buffer_maxsize_(104857600),
-    part_id_(0) { reset_buffer_();  }
- DXGTable(const DXGTable &to_copy) :
-  row_buffer_maxsize_(104857600) {
-    reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_); }
- DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID) :
-  row_buffer_maxsize_(104857600)
-    { reset_buffer_(); setIDs(dxid, proj); }
+public:
+
+  DXGTable()
+    : DXDataObject(), row_buffer_maxsize_(104857600), part_id_(0)
+  {
+    reset_buffer_();
+  }
+
+  DXGTable(const DXGTable &to_copy)
+    : DXDataObject(to_copy), row_buffer_maxsize_(104857600)
+  {
+    reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_);
+  }
+
+  DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID)
+    : row_buffer_maxsize_(104857600)
+  {
+    reset_buffer_(); setIDs(dxid, proj);
+  }
+
   DXGTable& operator=(const DXGTable& to_copy) {
     if (this == &to_copy)
       return *this;
@@ -49,6 +59,26 @@ class DXGTable: public DXDataObject {
     this->reset_buffer_();
     this->setIDs(to_copy.dxid_, to_copy.proj_);
     return *this;
+  }
+
+  /**
+   * Returns the buffer size (in bytes of the stringified rows) that
+   * must be reached before rows are automatically flushed.
+   *
+   * @returns Buffer size
+   */
+  void getMaxBufferSize() const {
+    return row_buffer_maxsize_;
+  }
+
+  /**
+   * Sets the buffer size (in bytes of the stringified rows) that must
+   * be reached before rows are flushed.
+   *
+   * @param buf_size New buffer size to use
+   */
+  void setMaxBufferSize(const int buf_size) {
+    row_buffer_maxsize_ = buf_size;
   }
 
   // Table-specific functions
@@ -64,7 +94,7 @@ class DXGTable: public DXDataObject {
   void setIDs(const std::string &dxid, const std::string &proj="default");
 
   /**
-   * 
+   *
    * @param data_obj_fields JSON containing the optional fields with
    * which to create the object ("project", "types", "details",
    * "hidden", "name", "properties", "tags")
@@ -241,7 +271,7 @@ class DXGTable: public DXDataObject {
    */
   static dx::JSON substringIndex(const std::string &column,
                                  const std::string &name);
-  
+
   /**
    * Constructs a query for a genomic range index of the table.
    *

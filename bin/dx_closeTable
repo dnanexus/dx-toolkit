@@ -9,6 +9,7 @@ parser.add_option("--no_block", help="Do not wait for the table to close", actio
 (opts, args) = parser.parse_args()
 
 if len(args) != 1:
+    parser.print_help()
     parser.error("Incorrect number of arguments")
 
 table_id = args[0]

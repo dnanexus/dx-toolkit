@@ -59,7 +59,7 @@ def new_dxgtable(columns, **kwargs):
         gri_cols = [dxpy.DXGTable.make_column_desc("chr", "string"),
                     dxpy.DXGTable.make_column_desc("lo", "int32"),
                     dxpy.DXGTable.make_column_desc("hi", "int32")]
-        gri_index = genomic_range_index("chr", "lo", "hi")
+        gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
         indexedTable = new_dxgtable(columns=gri_cols, indices=[gri_index])
 
     Note that this function is shorthand for the following::

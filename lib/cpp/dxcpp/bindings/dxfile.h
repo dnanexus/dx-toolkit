@@ -66,10 +66,17 @@ class DXFile: public DXDataObject {
   static const int max_buf_size_;
 
  public:
+
   DXFile() {}
-  DXFile(const DXFile& to_copy) { setIDs(to_copy.dxid_, to_copy.proj_); }
-  DXFile(const std::string &dxid,
-        const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+
+  DXFile(const DXFile& to_copy) : DXDataObject(to_copy) {
+    setIDs(to_copy.dxid_, to_copy.proj_);
+  }
+
+  DXFile(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID) {
+    setIDs(dxid, proj);
+  }
+
   DXFile& operator=(const DXFile& to_copy) {
     if (this == &to_copy)
       return *this;

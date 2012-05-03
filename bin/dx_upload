@@ -6,9 +6,11 @@ import dxpy
 
 parser = OptionParser(usage="%prog [options] filename", description="Upload a local file to DNAnexus by name")
 parser.add_option("--id_only", help="Print ID of the file object instead of full description JSON", action='store_true', default=False)
+parser.add_option("-p", "--progress", help="Display progress when uploading", action='store_true', default=False)
 (opts, args) = parser.parse_args()
 
 if len(args) != 1:
+    parser.print_help()
     parser.error("Incorrect number of arguments")
 
 filename = args[0]

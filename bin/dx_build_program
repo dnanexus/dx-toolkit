@@ -20,7 +20,7 @@ src_dir = args[0]
 if not os.path.isdir(src_dir):
     parser.error("%s is not a directory" % src_dir)
 
-if not os.path.exists(os.path.join(src_dir, "dxprogram")):
+if not (os.path.exists(os.path.join(src_dir, "dxprogram")) or os.path.exists(os.path.join(src_dir, "dxprogram.json"))):
     parser.error("Directory %s does not contain dxprogram: not a valid DNAnexus program source directory" % src_dir)
 
 dxpy.program_builder.build(src_dir)

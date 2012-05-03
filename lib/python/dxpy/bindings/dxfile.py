@@ -150,9 +150,17 @@ class DXFile(DXDataObject):
         else:
             self._pos = self._file_length
 
-        resp = requests.get(url, headers=headers)
-        resp.raise_for_status()
-        return resp.content
+        # TODO: fix performance issue with requests
+
+        #resp = requests.get(url, headers=headers)
+        #resp.raise_for_status()
+        #return resp.content
+
+        # Temporary workaround via urllib2
+        import urllib2
+        req = urllib2.Request(url, headers=headers)
+        response = urllib2.urlopen(req)
+        return response.read()
 
     def seek(self, offset):
         '''
@@ -232,7 +240,7 @@ class DXFile(DXDataObject):
         '''
         self._wait_on_close(timeout)
 
-    def upload_part(self, data, index=None):
+    def upload_part(self, data, index=None, display_progress=False):
         """
         :param data: Data to be uploaded in this part
         :type data: string
@@ -260,3 +268,6 @@ class DXFile(DXDataObject):
         resp.raise_for_status()
 
         # TODO: Consider retrying depending on the status
+        
+        if display_progress:
+            print >> sys.stderr, "."

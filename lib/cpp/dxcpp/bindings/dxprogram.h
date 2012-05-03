@@ -4,7 +4,7 @@
 #include "../bindings.h"
 
 class DXProgram: public DXDataObject {
- private:
+private:
   dx::JSON describe_(const std::string &s)const{return programDescribe(dxid_,s);}
   void addTypes_(const std::string &s)const{programAddTypes(dxid_,s);}
   void removeTypes_(const std::string &s)const{programRemoveTypes(dxid_,s);}
@@ -18,14 +18,15 @@ class DXProgram: public DXDataObject {
   void close_(const std::string &s)const{programClose(dxid_,s);}
   dx::JSON listProjects_(const std::string &s)const{return programListProjects(dxid_,s);}
 
- public:
+public:
   // Program-specific functions
   DXProgram() { }
   DXProgram(const std::string &dxid,
             const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
-  void createFromFile(const std::string &codefile) const;
-  void createFromString(const std::string &codestring) const;
+  /* void createFromFile(const std::string &codefile) const; */
+  /* void createFromString(const std::string &codestring) const; */
+
   DXJob run(const dx::JSON &program_input,
             const std::string &project_context=g_WORKSPACE_ID,
             const std::string &output_folder="/") const;
