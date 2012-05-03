@@ -30,13 +30,15 @@ public:
   HttpMethod method;
   std::string url;
   long responseCode;
+
   // User must provide size and number of bytes in request data,
   // So that we do not terminate string by "\0"
   struct reqData_struct {
     char *data;
     size_t length; // number of bytes
     reqData_struct(): data(NULL), length(0) {};
-  }reqData;
+  } reqData;
+
   // We are using std::string for storing a binary buffer.
   // It might feel more natural to use vector<char> for binary buffer instead 
   // but it doesn't change performance in any way.
@@ -48,7 +50,7 @@ public:
   // implementation store it as contiguous storage, so no performance loss there.
   std::string respData;
 
-  HttpRequest():curl(NULL), method(HTTP_POST), responseCode(-1) {}
+  HttpRequest() : curl(NULL), method(HTTP_POST), responseCode(-1) {}
   
   void setHeaders(const HttpHeaders& _reqHeader) { reqHeader = _reqHeader; }
   void setUrl(const std::string& _url) { url = _url; }
