@@ -29,11 +29,8 @@ void process(const char * contigset_id, const char * fasta_filename) {
   cerr << details.toString() << endl;
 
   string flatfile_id = details["flat_sequence_file"]["$dnanexus_link"].get<string>();
+  DXFile flatfile(flatfile_id);
 
-  cerr << "- Downloading flatfile " << flatfile_id << endl;
-  DXFile::downloadDXFile(flatfile_id, "flatfile", 100 * 1024 * 1024);
-
-  ifstream in("flatfile", ifstream::in);
   ofstream out(fasta_filename, ofstream::out | ofstream::trunc);
 
   JSON &contig_names = details["contigs"]["names"];
@@ -46,15 +43,16 @@ void process(const char * contigset_id, const char * fasta_filename) {
     int64_t length = contig_sizes[i].get<int64_t>();
     int64_t offset = contig_offsets[i].get<int64_t>();
 
-    in.seekg(offset);
+    cerr << "- Downloading sequence for chromosome " << name << " (offset = " << offset << ", length = " << length << ")..." << endl;
+    flatfile.seek(offset);
     vector<char> buf(length);
-    in.read(&(buf[0]), length);
+    flatfile.read(&(buf[0]), length);
 
+    cerr << "  - writing FASTA..." << endl;
     format_FASTA(name, buf, out);
   }
 
   out.close();
-  in.close();
 }
 
 int main(int argc, char * argv[]) {
