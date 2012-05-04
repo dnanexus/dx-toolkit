@@ -45,7 +45,7 @@ void DXFile::read(char* ptr, int64_t n) {
   // TODO: make sure all lower-case works.
   if (file_length_ < 0) {
     JSON desc = describe();
-    file_length_ = desc["size"].get<int>();
+    file_length_ = desc["size"].get<int64_t>();
   }
 
   if (pos_ >= file_length_) {
