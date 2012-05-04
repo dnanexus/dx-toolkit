@@ -56,20 +56,23 @@ class DXProgram(DXDataObject):
         '''
         if "inputs" in kwargs:
             dx_hash["inputs"] = kwargs["inputs"]
+            del kwargs["inputs"]
         if "outputs" in kwargs:
             dx_hash["outputs"] = kwargs["outputs"]
-        if "run" in kwargs:
-            dx_hash["run"] = kwargs["run"]
-        resp = dxpy.api.programNew(dx_hash)
+            del kwargs["outputs"]
+        dx_hash["run"] = kwargs["run"]
+        del kwargs["run"]
+
+        resp = dxpy.api.programNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
 
-    def get(self):
+    def get(self, **kwargs):
         """
         Returns the contents of the program.
         """
-        return dxpy.api.programGet(self._dxid)
+        return dxpy.api.programGet(self._dxid, **kwargs)
 
-    def run(self, program_input, project=None, folder="/"):
+    def run(self, program_input, project=None, folder="/", **kwargs):
         '''
         :param program_input: Hash of the program's input arguments
         :type program_input: dict
@@ -89,4 +92,5 @@ class DXProgram(DXDataObject):
 
         return DXJob(dxpy.api.programRun(self._dxid, {"input": program_input,
                                                       "project": project,
-                                                      "folder": folder})["id"])
+                                                      "folder": folder},
+                                         **kwargs)["id"])

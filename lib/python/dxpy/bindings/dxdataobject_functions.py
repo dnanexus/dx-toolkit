@@ -24,6 +24,12 @@ def dxlink(object_id, project_id=None):
 def is_dxlink(x):
     return isinstance(x, dict) and '$dnanexus_link' in x
 
+def get_dxlink_ids(link):
+    if isinstance(link['$dnanexus_link'], dict):
+        return link['$dnanexus_link']['id'], link['$dnanexus_link']['project']
+    else:
+        return link['$dnanexus_link'], None
+
 def _guess_link_target_type(link):
     if is_dxlink(link):
         print "Is link"
@@ -50,7 +56,7 @@ def get_handler(link):
     except Exception as e:
         raise DXError("Could not parse link "+str(link))
 
-def describe(link):
+def describe(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
     Given an object ID, recognizes the class and calls describe on it.
@@ -60,9 +66,9 @@ def describe(link):
         describe("file-1234")
     '''
     handler = get_handler(link)
-    return handler.describe()
+    return handler.describe(**kwargs)
 
-def get_details(link):
+def get_details(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
     Given an object ID, recognizes the class and calls getDetails on it.
@@ -72,4 +78,4 @@ def get_details(link):
         get_details("file-1234")
     '''
     handler = get_handler(link)
-    return handler.get_details()
+    return handler.get_details(**kwargs)

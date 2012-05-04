@@ -117,7 +117,7 @@ class DXFile(DXDataObject):
         self._file_length = None
         self._cur_part = 1
 
-    def read(self, size=None):
+    def read(self, size=None, **kwargs):
         '''
         :param size: Maximum number of bytes to be read
         :type size: integer
@@ -129,7 +129,7 @@ class DXFile(DXDataObject):
 
         '''
 
-        resp = dxpy.api.fileDownload(self._dxid)
+        resp = dxpy.api.fileDownload(self._dxid, **kwargs)
         url = resp["url"]
         headers = {}
 
@@ -173,15 +173,15 @@ class DXFile(DXDataObject):
         '''
         self._pos = offset
 
-    def flush(self):
+    def flush(self, **kwargs):
         '''
         Flushes the internal buffer
         '''
-        self.upload_part(self._write_buf.getvalue(), self._cur_part)
+        self.upload_part(self._write_buf.getvalue(), self._cur_part, **kwargs)
         self._write_buf = StringIO.StringIO()
         self._cur_part += 1
 
-    def write(self, string):
+    def write(self, string, **kwargs):
         '''
         :param str: String to be written
         :type str: string
@@ -197,10 +197,10 @@ class DXFile(DXDataObject):
         remaining_space = (self._bufsize - self._write_buf.tell())
         self._write_buf.write(string[:remaining_space])
         if self._write_buf.tell() == self._bufsize:
-            self.flush()
+            self.flush(**kwargs)
             self.write(string[remaining_space:])
 
-    def closed(self):
+    def closed(self, **kwargs):
         '''
         :returns: Whether the remote file is closed
         :rtype: boolean
@@ -210,7 +210,7 @@ class DXFile(DXDataObject):
         can be in either the "open" and "closing" states.
         '''
 
-        return self.describe()["state"] == "closed"
+        return self.describe(**kwargs)["state"] == "closed"
 
     def close(self, block=False, **kwargs):
         '''
@@ -223,14 +223,14 @@ class DXFile(DXDataObject):
         '''
 
         if self._write_buf.tell() > 0:
-            self.flush()
+            self.flush(**kwargs)
 
-        dxpy.api.fileClose(self._dxid)
+        dxpy.api.fileClose(self._dxid, **kwargs)
 
         if block:
             self._wait_on_close()
 
-    def wait_on_close(self, timeout=sys.maxint):
+    def wait_on_close(self, timeout=sys.maxint, **kwargs):
         '''
         :param timeout: Max amount of time to wait (in seconds) until the file is closed.
         :type timeout: integer
@@ -238,9 +238,9 @@ class DXFile(DXDataObject):
 
         Wait until the remote file is closed.
         '''
-        self._wait_on_close(timeout)
+        self._wait_on_close(timeout, **kwargs)
 
-    def upload_part(self, data, index=None, display_progress=False):
+    def upload_part(self, data, index=None, display_progress=False, **kwargs):
         """
         :param data: Data to be uploaded in this part
         :type data: string
@@ -259,7 +259,7 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        resp = dxpy.api.fileUpload(self._dxid, req_input)
+        resp = dxpy.api.fileUpload(self._dxid, req_input, **kwargs)
         url = resp["url"]
         headers = {}
         headers['Content-Length'] = str(len(data))

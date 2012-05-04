@@ -545,6 +545,17 @@ class TestDXRecord(unittest.TestCase):
             third_record.describe()
             self.assertEqual(cm.exception.name, "ResourceNotFound")
 
+    def test_init_from(self):
+        dxrecord = dxpy.new_dxrecord(details={"foo": "bar"}, types=["footype"],
+                                     tags=["footag"])
+        second_record = dxpy.new_dxrecord(init_from=dxrecord, types=["bartype"])
+        first_desc = dxrecord.describe(incl_details=True)
+        second_desc = second_record.describe(incl_details=True)
+        self.assertEqual(first_desc["details"], second_desc["details"])
+        self.assertEqual(first_desc["name"], second_desc["name"])
+        self.assertEqual(first_desc["tags"], second_desc["tags"])
+        self.assertFalse(first_desc["types"] == second_desc["types"])
+
     def test_describe_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         desc = dxrecord.describe()
@@ -561,9 +572,13 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(desc["tags"], [])
         self.assertTrue("modified" in desc)
         self.assertFalse("properties" in desc)
+        self.assertFalse("details" in desc)
 
         desc = dxrecord.describe(incl_properties=True)
         self.assertEqual(desc["properties"], {})
+
+        desc = dxrecord.describe(incl_details=True)
+        self.assertEqual(desc["details"], {})
 
         types = ["mapping", "foo"]
         tags = ["bar", "baz"]
@@ -581,7 +596,7 @@ class TestDXRecord(unittest.TestCase):
                                             folder=folder,
                                             parents=True,
                                             name=name)
-        desc = second_dxrecord.describe(True)
+        desc = second_dxrecord.describe(True, True)
         self.assertEqual(desc["project"], proj_id)
         self.assertEqual(desc["id"], second_dxrecord.get_id())
         self.assertEqual(desc["class"], "record")
@@ -595,6 +610,7 @@ class TestDXRecord(unittest.TestCase):
         self.assertEqual(desc["tags"], tags)
         self.assertTrue("modified" in desc)
         self.assertEqual(desc["properties"], properties)
+        self.assertEqual(desc["details"], details)
 
     def test_set_properties_of_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
@@ -723,16 +739,36 @@ class TestDXRecord(unittest.TestCase):
 class TestDXTable(unittest.TestCase):
     pass
 
-@unittest.skip("Skipping jobs and programs; running Python programs not yet supported")
-class TestDXProgram(unittest.TestCase):
-    def test_create_dxprogram(self):
-        test_json = dxpy.new_dxrecord({"details": {"appsuccess": False} })
-        dxprogram = dxpy.new_dxprogram(codefile='test_dxprogram.py')
-        dxprogramjob = dxprogram.run({"json_dxid": test_json.get_id()})
-        dxprogramjob.wait_on_done()
-        self.assertEqual(test_json.get_details(), {"appsuccess":True})
-        test_json.destroy()
-        dxprogram.destroy()
+class TestDXProgramJob(unittest.TestCase):
+    def test_run_dxprogram(self):
+        dxprogram = dxpy.DXProgram()
+        dxprogram.new(name="test_program",
+                      inputs=[{"name": "chromosomes", "class": "record"},
+                              {"name": "rowFetchChunk", "class": "int"}
+                              ],
+                      outputs=[{"name": "mappings", "class": "record"}],
+                      run={"code": "def main(): pass",
+                           "interpreter": "python2.7",
+                           "execDepends": [{"name": "python-numpy"}]})
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
+                      "rowFetchChunk": 100}
+        dxjob = dxprogram.run(program_input=prog_input)
+        jobdesc = dxjob.describe()
+        self.assertEqual(jobdesc["class"], "job")
+        self.assertEqual(jobdesc["function"], "main")
+        self.assertEqual(jobdesc["originalInput"], prog_input)
+        self.assertEqual(jobdesc["originJob"], jobdesc["id"])
+        self.assertEqual(jobdesc["parentJob"], None)
+        self.assertEqual(jobdesc["program"], dxprogram.get_id())
+        self.assertEqual(jobdesc["project"], dxprogram.get_proj_id())
+        self.assertTrue("state" in jobdesc)
+        self.assertTrue("created" in jobdesc)
+        self.assertTrue("modified" in jobdesc)
+        self.assertTrue("launchedBy" in jobdesc)
+        self.assertTrue("output" in jobdesc)
+        dxjob.terminate()
 
 @unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
 class TestDXJob(unittest.TestCase):
@@ -764,11 +800,65 @@ class TestDXSearch(unittest.TestCase):
         results = list(dxpy.search.find_data_objects(state="closed"))
         self.assertEqual(len(results), 0)
         dxrecord.close()
-        results = list(dxpy.search.find_data_objects(state="open"))
+        results = list(dxpy.search.find_data_objects(state="closed"))
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {"project": proj_id,
                                       "id": dxrecord.get_id()})
 
+    def find_projects(self):
+        dxproject = dxpy.DXProject()
+        results = list(dxpy.find_projects())
+        found_proj = False;
+        for result in results:
+            if result["id"] == dxproject.get_id():
+                self.assertEqual(result["level"], 'ADMINISTER')
+                found_proj = True
+            self.assertFalse('describe' in result)
+        self.assertTrue(found_proj)
+
+        results = list(dxpy.find_projects(level='VIEW', describe=True))
+        found_proj = False;
+        for result in results:
+            if result["id"] == 'project-0000000000000000000000pb':
+                self.assertEqual(result["level"], 'ADMINISTER')
+                found_proj = True
+            self.assertTrue('describe' in result)
+            self.assertEqual(result['describe']['name'], 'public-test-project')
+        self.assertTrue(found_proj)
+
+    def find_jobs(self):
+        dxprogram = dxpy.DXProgram()
+        dxprogram.new(name="test_program",
+                      inputs=[{"name": "chromosomes", "class": "record"},
+                              {"name": "rowFetchChunk", "class": "int"}
+                              ],
+                      outputs=[{"name": "mappings", "class": "record"}],
+                      run={"code": "def main(): pass",
+                           "interpreter": "python2.7",
+                           "execDepends": [{"name": "python-numpy"}]})
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
+                      "rowFetchChunk": 100}
+        dxjob = dxprogram.run(program_input=prog_input)
+        results = list(dxpy.find_jobs(launched_by='user-000000000000000000000000',
+                                      program=dxprogram,
+                                      project=dxprogram.get_proj_id(),
+                                      origin_job=dxjob.get_id(),
+                                      parent_job=None,
+                                      modified_after=0,
+                                      describe=True))
+        self.assertEqual(len(results), 1)
+        result = results[0]
+        self.assertEqual(result["id"], dxjob.get_id())
+        self.assertTrue("describe" in result)
+        self.assertEqual(result["describe"]["id"], dxjob.get_id())
+        self.assertEqual(result["describe"]["class"], "job")
+        self.assertEqual(result["describe"]["program"], dxprogram.get_id())
+        self.assertEqual(result["describe"]["project"], dxprogram.get_proj_id())
+        self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
+        self.assertEqual(result["describe"]["parentJob"], None)
     
 if __name__ == '__main__':
+    print "NOTE: This test requires environment variables to be set for DX_APISERVER_*, DX_SECURITY_CONTEXT, and a DX_PROJECT_CONTEXT_ID with which the security context has ADMINISTER access.  It should be run against a running API server and with a Mongo DB initialized with test entities such as the public test project project-0000000000000000000000pb."
     unittest.main()
