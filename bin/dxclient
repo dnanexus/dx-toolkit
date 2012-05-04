@@ -286,7 +286,7 @@ parser_find = subparsers.add_parser('find', help='Search functionality over data
                                     description='Search functionality over data objects, projects, and jobs')
 subparsers_find = parser_find.add_subparsers()
 
-parser_find_jobs = subparsers_find.add_parser('host', help='Finds jobs')
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--program', help='Program ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -296,9 +296,6 @@ parser_find_jobs.add_argument('--parent', help='Job ID of the parent job')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
 
 parser_find_jobs.set_defaults(func=find_jobs)
-
-import optcomplete
-optcomplete.autocomplete(parser)
 
 args = parser.parse_args(sys.argv[1:])
 args.func(args)
