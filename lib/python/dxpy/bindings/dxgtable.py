@@ -33,8 +33,7 @@ class DXGTable(DXDataObject):
     _row_buf_maxsize = 1024*1024*20
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=40000, part_id_min=0, part_id_max=250000,
-                 dxlink=None):
+                 buffer_size=40000, part_id_min=0, part_id_max=250000):
         self._keep_open = keep_open
         self._bufsize = buffer_size
         self._row_buf = StringIO.StringIO()

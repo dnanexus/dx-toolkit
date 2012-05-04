@@ -10,7 +10,8 @@ methods return a remote table handler.
 
 from dxpy.bindings import *
 
-def open_dxgtable(dxid, **kwargs):
+def open_dxgtable(dxid, project=None, buffer_size=40000, part_id_min=0,
+                  part_id_max=250000):
     '''
     :param dxid: table ID
     :type dxid: string
@@ -31,7 +32,8 @@ def open_dxgtable(dxid, **kwargs):
 
     '''
 
-    return DXGTable(dxid, **kwargs)
+    return DXGTable(dxid, project=project, buffer_size=buffer_size,
+                    part_id_min=part_id_min, part_id_max=part_id_max)
 
 def new_dxgtable(columns, indices=None, keep_open=False,
                  buffer_size=40000, part_id_min=0, part_id_max=250000,

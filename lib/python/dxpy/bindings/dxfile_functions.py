@@ -13,7 +13,7 @@ the remote file systems.
 import os
 from dxpy.bindings import *
 
-def open_dxfile(dxid, **kwargs):
+def open_dxfile(dxid, project=None, buffer_size=1024*1024*100):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -34,10 +34,9 @@ def open_dxfile(dxid, **kwargs):
         DXFile(dxid)
 
     '''
+    return DXFile(dxid, project=project, buffer_size=buffer_size)
 
-    return DXFile(dxid, **kwargs)
-
-def new_dxfile(**kwargs):
+def new_dxfile(keep_open=False, buffer_size=1024*1024*100, **kwargs):
     '''
     :param media_type: Internet Media Type (optional)
     :type media_type: string
@@ -63,14 +62,9 @@ def new_dxfile(**kwargs):
 
     '''
     
-    dx_file = DXFile()
+    dx_file = DXFile(keep_open=keep_open, buffer_size=buffer_size)
     dx_file.new(**kwargs)
     return dx_file
-
-# TODO:
-# read seeking
-# chunk sizing options
-# waitonclose
 
 def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
                     **kwargs):
@@ -98,9 +92,10 @@ def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
                 file_content = dxfile.read(chunksize, **kwargs)
                 if len(file_content) == 0:
                     break
-                fd.write(file_content, **kwargs)
+                fd.write(file_content)
 
-def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
+def upload_local_file(filename, media_type=None, keep_open=False,
+                      buffer_size=1024*1024*100, wait_on_close=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -122,7 +117,7 @@ def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=
 
     '''
 
-    dxfile = new_dxfile(media_type=media_type, **kwargs)
+    dxfile = new_dxfile(keep_open=keep_open, buffer_size=buffer_size, media_type=media_type, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
@@ -131,14 +126,15 @@ def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=
             buf = fd.read(dxfile._bufsize)
             if len(buf) == 0:
                 break
-            dxfile.write(buf, **kwargs)
+            dxfile.write(buf, **remaining_kwargs)
 
     if not keep_open:
         dxfile.close(block=wait_on_close, **remaining_kwargs)
     dxfile.rename(os.path.basename(filename), **remaining_kwargs)
     return dxfile
 
-def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
+def upload_string(to_upload, media_type=None, keep_open=False,
+                  buffer_size=1024*1024*100, wait_on_close=False, **kwargs):
     """
     :param to_upload: String to upload into a file
     :type to_upload: string
@@ -156,7 +152,11 @@ def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
     
     """
 
-    dxfile = new_dxfile(media_type=media_type, **kwargs)
-    dxfile.write(to_upload, **kwargs)
-    dxfile.close(block=wait_on_close, **kwargs)
+    dxfile = new_dxfile(media_type=media_type, keep_open=keep_open,
+                        buffer_size=buffer_size, **kwargs)
+
+    creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+
+    dxfile.write(to_upload, **remaining_kwargs)
+    dxfile.close(block=wait_on_close, **remaining_kwargs)
     return dxfile
