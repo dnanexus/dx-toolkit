@@ -6,7 +6,7 @@
 using namespace std;
 using namespace dx;
 
-const int DXFile::max_buf_size_ = 104857600;
+const int64_t DXFile::max_buf_size_ = 104857600;
 
 void DXFile::init_internals_() {
   pos_ = 0;
@@ -37,7 +37,7 @@ void DXFile::create(const std::string &media_type,
   setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
-void DXFile::read(char* ptr, int n) {
+void DXFile::read(char* ptr, int64_t n) {
   gcount_ = 0;
   const JSON get_DL_url = fileDownload(dxid_);
   const string url = get_DL_url["url"].get<string>();
@@ -45,7 +45,7 @@ void DXFile::read(char* ptr, int n) {
   // TODO: make sure all lower-case works.
   if (file_length_ < 0) {
     JSON desc = describe();
-    file_length_ = desc["size"].get<int>();
+    file_length_ = desc["size"].get<int64_t>();
   }
 
   if (pos_ >= file_length_) {
@@ -53,7 +53,7 @@ void DXFile::read(char* ptr, int n) {
     return;
   }
 
-  int endbyte = file_length_ - 1;
+  int64_t endbyte = file_length_ - 1;
   if (pos_ + n - 1 < endbyte)
     endbyte = pos_ + n - 1;
   else
@@ -75,7 +75,7 @@ void DXFile::read(char* ptr, int n) {
   gcount_ = resp.respData.length();
 }
 
-int DXFile::gcount() const {
+int64_t DXFile::gcount() const {
   return gcount_;
 }
 
@@ -85,7 +85,7 @@ bool DXFile::eof() const {
 
 // TODO: Make this fail when writing and use the pos_ to figure out
 // how far along in the buffer we are?
-void DXFile::seek(const int pos) {
+void DXFile::seek(const int64_t pos) {
   pos_ = pos;
   if (pos_ < file_length_)
     eof_ = false;
@@ -99,8 +99,8 @@ void DXFile::flush() {
 
 // NOTE: If needed, optimize in the future to not have to copy to
 // append to buffer_ before uploading the next part.
-void DXFile::write(const char* ptr, int n) {
-  int remaining_buf_size = max_buf_size_ - buffer_.tellp();
+void DXFile::write(const char* ptr, int64_t n) {
+  int64_t remaining_buf_size = max_buf_size_ - buffer_.tellp();
   if (n < remaining_buf_size) {
     buffer_.write(ptr, n);
   } else {
@@ -118,7 +118,7 @@ void DXFile::uploadPart(const string &data, const int index) {
   uploadPart(data.data(), data.size(), index);
 }
 
-void DXFile::uploadPart(const char *ptr, int n, const int index) {
+void DXFile::uploadPart(const char *ptr, int64_t n, const int index) {
   JSON input_params(JSON_OBJECT);
   if (index >= 1)
     input_params["index"] = index;
@@ -173,13 +173,13 @@ DXFile DXFile::newDXFile(const string &media_type,
 }
 
 void DXFile::downloadDXFile(const string &dxid, const string &filename,
-                            int chunksize) {
+                            int64_t chunksize) {
   DXFile dxfile(dxid);
   ofstream localfile(filename.c_str());
   vector<char> chunkbuf(chunksize);
   while (!dxfile.eof()) {
     dxfile.read(&(chunkbuf[0]), chunksize);
-    int num_bytes = dxfile.gcount();
+    int64_t num_bytes = dxfile.gcount();
     localfile.write(&(chunkbuf[0]), num_bytes);
   }
   localfile.close();
@@ -198,7 +198,7 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type,
   try {
     while (!localfile.eof()) {
       localfile.read(buf, DXFile::max_buf_size_);
-      int num_bytes = localfile.gcount();
+      int64_t num_bytes = localfile.gcount();
       dxfile.write(buf, num_bytes);
     }
   } catch (...) {

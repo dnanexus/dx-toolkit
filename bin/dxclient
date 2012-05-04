@@ -1,195 +1,301 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys, os, datetime
+import argparse
 
-# TODO: Stuff these help docs into another file?
-
-def print_help():
-    print "DNAnexus Command-Line Client, API v1.0.0"
-    print "Usage: dxclient <command> <arguments>"
-    print ""
-    print "Available commands: "
-    for key in commands:
-        print "   " + key + command_desc[key]
-    print ""
-    print "See 'dxclient help <command>' for help with that command"
-
-def print_api_help():
-    print "Usage: dxclient api <resource> <method> <JSON input>"
-    print "   <resource> is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\""
-    print "   <method> is a valid method for the resource as documented by the API document"
-    print "   <JSON input> is the input for the method as documented by the API document (if not given, \"{}\" is used)"
-    print "Description: Makes an API call to the API server with the appropriate route and specified input."
-
-def print_ls_help():
-    print "Usage: dxclient ls <folder>"
-    print "ls help"
-
-def print_cd_help():
-    print "Usage: dxclient cd <folder>"
-    print "Description: Changes the directory and throws an error if the directory does not exist.  Use of \"..\" is also supported to change to the parent directory."
-
-def print_mv_help():
-    print "mv help"
-
-def print_describe_help():
-    print "Usage: dxclient describe <objectid> [<projectid>]"
-    print "Description: Prints the metadata associated with the object with ID <objectid> in the current default project.  If specified, the project with ID <projectid> will be queried instead."
-
-def print_file_help():
-    print "Usage: dxclient file [cat|get|put] <arg> [name]"
-    print "   cat\tPrints the file to stdout"
-    print "   get\tDownloads the file to the filename in <arg>"
-    print "   put\tUploads the local file in <arg> optionally with name <name>"
-    print " TODO: Allow more modifications to the file object before closing to all modifications (e.g. to details and types as well)?"
-
-def print_gtable_help():
-    print "gtable help"
-
-def print_login_help():
-    print "Usage: dxclient login"
-    print "Description: You will be prompted for a username and password to get your security tokens."
-
-def print_set_help():
-    print "Usage: dxclient set <var> <value>"
-    print "Description: Sets an appropriate environment variable to the given value."
-    print ""
-    print "Available variables to set:"
-    print "   project\tDefault project ID for object creation, etc."
-    print "   host\t\tHostname of API server" # TODO: Should these have default values?
-    print "   port\t\tPort number of API server"
-
-commands = ["help", "login", "api", "file", "gtable", "ls", "cd", "mv", "describe", "set"]
-command_help = {"api": print_api_help, "ls": print_ls_help,
-                "cd": print_cd_help, "login": print_login_help,
-                "file": print_file_help, "gtable": print_gtable_help,
-                "mv": print_mv_help, "describe": print_describe_help,
-                "help": print_help, "set": print_set_help}
-command_desc = {"login": "\tSet security credentials by logging in",
-                "api": "\t\tMake a direct API call",
-                "ls": "\t\tList the contents of a folder",
-                "cd": "\t\tChange the default directory (default \"/\")",
-                "file": "\t\tDownload and upload files",
-                "gtable": "\tDownload and upload GenomicTables",
-                "mv": "\t\tMove an object to a different folder",
-                "describe": "\tDescribe an object",
-                "help": "\t\tProvide documentation on a command",
-                "set": "\t\tSet default values"}
-
-def print_error(cmd):
-    print "ERROR: Unexpected command or arguments\n"
-    command_help[cmd]()
-    sys.exit()
+import dxpy
+import json
 
 def write_env_var(var, value):
-    with open(os.path.expanduser('~/.dnanexus/' + var), 'w') as fd:
+    try:
+        os.mkdir(os.path.expanduser('~/.dnanexus-env/'))
+    except:
+        pass
+    with open(os.path.expanduser('~/.dnanexus-env/' + var), 'w') as fd:
         fd.write(value)
 
 def load_env():
-    for filename in os.listdir(os.path.expanduser('~/.dnanexus')):
-        with open(os.path.expanduser('~/.dnanexus/'+filename), 'r') as fd:
-            value = fd.read()
-            # TODO: Find out how bad the line below is for Mac OS X.
-            os.environ[filename] = value
+    try:
+        for filename in os.listdir(os.path.expanduser('~/.dnanexus-env')):
+            with open(os.path.expanduser('~/.dnanexus-env/'+filename), 'r') as fd:
+                value = fd.read()
+                # TODO: Find out how bad the line below is for Mac OS X.
+                os.environ[filename] = value
+    except:
+        pass
 
 # Loading environment
 
 load_env()
 
-debug = False
-
-if debug:
-    print "Descriptions:", len(command_desc)
-    print "Help docs:", len(command_help)
-    print "Commands:", len(commands)
-
-# Execution starts here
-
-if len(sys.argv) == 1:
-    print_error("help")
-elif sys.argv[1] == "help":
-    if len(sys.argv) > 2:
-        if sys.argv[2] in command_help:
-            command_help[sys.argv[2]]()
-        else:
-            print_error("help")
-    else:
-        print_help()
-
-elif sys.argv[1] == "login":
-    # TODO: Remove this and replace with actual logic when implemented
+def login(args):
+    # TODO: Remove this and replace with actual logic and interaction
+    # when implemented
     write_env_var('DX_SECURITY_CONTEXT',
                   '{"auth_token":"outside","auth_token_type":"Bearer"}')
 
-elif sys.argv[1] == "set":
-    if len(sys.argv) != 4:
-        print_error("set")
-    if sys.argv[2] == "project":
-        write_env_var("DX_PROJECT_CONTEXT_ID", sys.argv[3])
-    elif sys.argv[2] == "host":
-        write_env_var("DX_APISERVER_HOST", sys.argv[3])
-    elif sys.argv[2] == "port":
-        write_env_var("DX_APISERVER_PORT", sys.argv[3])
-    elif sys.argv[2] == "":
-        write_env_var("DX_APISERVER_PORT", sys.argv[3])
-    else:
-        print_error("set")
+def logout(args):
+    write_env_var('DX_SECURITY_CONTEXT', '')
 
-elif sys.argv[1] in commands:
-    
+def set_host(args):
+    write_env_var("DX_APISERVER_HOST", args.host)
 
-    import dxpy
-    import json
+def set_port(args):
+    write_env_var("DX_APISERVER_PORT", args.port)
 
-    if sys.argv[1] == "api":
-        json_input = {}
+def set_project(args):
+    write_env_var("DX_PROJECT_CONTEXT_ID", args.project)
+
+def api(args):
+    json_input = json.loads(args.json)
+    if args.input is not None:
+        with open(args.input, 'r') as fd:
+            data = fd.read()
+            json_input = json.loads(data)
+    print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
+                                        json_input))
+
+# TODO: add -l functionality
+def ls(args):
+    dxproj = dxpy.DXProject()
+    if not args.folder.startswith('/'):
+        args.folder = '/' + args.folder
+    resp = dxproj.list_folder(folder=args.folder, describe={})
+    if not args.obj:
+        for folder in resp["folders"]:
+            print folder
+    if not args.folders:
+        for obj in resp["objects"]:
+            if not args.all and obj['describe']['hidden']:
+                continue
+            if not args.name and not args.both:
+                print obj['id']
+            elif args.name and not args.both:
+                print obj['describe']['name']
+            else:
+                print obj['id'] + '\t' + obj['describe']['name']
+
+def mkdir(args):
+    dxproj = dxpy.DXProject()
+    if not args.folder.startswith('/'):
+        args.folder = '/' + args.folder
+    if args.parents:
         try:
-            if len(sys.argv) > 4:
-                if sys.argv[4] == "--input":
-                    with open(sys.argv[5], 'r') as fd:
-                        json_input = json.loads(fd.read())
-                else:
-                    json_input = json.loads(sys.argv[4])
-        except:
-            print_error("api")
-        print dxpy.DXHTTPRequest('/' + sys.argv[2] + '/' + sys.argv[3],
-                                 json_input)
+            dxproj.new_folder(folder=args.folder, parents=True)
+        except dxpy.DXAPIError as inst:
+            if inst.name != 'InvalidState':
+                raise inst
+    else:
+        dxproj.new_folder(folder=args.folder)
 
-    elif sys.argv[1] == "ls":
-        dxpy.DXHTTPRequest('/' +  + '/' + sys.argv[3],
-                           json_input)
-        raise NotImplementedError()
+def rmdir(args):
+    dxproj = dxpy.DXProject()
+    if not args.folder.startswith('/'):
+        args.folder = '/' + args.folder
+    dxproj.remove_folder(folder=args.folder)
 
-    elif sys.argv[1] == "mv":
-        raise NotImplementedError()
+def rm(args):
+    dxproj = dxpy.DXProject()
+    dxproj.remove_objects(args.objects)
 
-    elif sys.argv[1] == "cd":
-        raise NotImplementedError()
-
-    elif sys.argv[1] == "file":
-        if sys.argv[2] == "cat":
-            raise NotImplementedError()
-        elif sys.argv[2] == "get":
-            if len(sys.argv) != 5:
-                print_error("file")
-            dxpy.download_dxfile(sys.argv[3], sys.argv[4])
-        elif sys.argv[2] == "put":
-            if len(sys.argv) < 4:
-                print_error("file")
-            print dxpy.upload_local_file(sys.argv[3]).get_id()
-        else:
-            print_error("file")
-
-    elif sys.argv[1] == "gtable":
-        raise NotImplementedError()
-
-    elif sys.argv[1] == "describe":
-        if len(sys.argv) < 3 or len(sys.argv) > 4:
-            print_error("describe")
+def describe(args):
+    if args.dxid.startswith('job'):
+        desc = dxpy.DXJob(args.dxid).describe()
+        if args.json:
+            print json.dumps(desc)
+        if not args.json:
+            print "ID\t\t" + desc["id"]
+            print "Class\t\t" + desc["class"]
+            print "Project context\t" + desc["project"]
+            print "Workspace\t" + desc["workspace"]
+            print "Program\t\t" + desc["program"]
+            print "State\t\t" + desc["state"]
+            if desc["parentJob"] is None:
+                print "Parent job\tNone"
+            else:
+                print "Parent job\t" + json.dumps(desc["parentJob"])
+            print "Origin job\t" + desc["originJob"]
+            print "Function\t" + desc["function"]
+            print "Original Input\t" + json.dumps(desc["originalInput"])
+            print "Input\t\t" + json.dumps(desc["input"])
+            print "Output\t\t" + json.dumps(desc["output"])
+            print "Launched by\t" + desc["launchedBy"]
+            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    elif args.dxid.startswith('project'):
+        desc = dxpy.DXProject(args.dxid).describe() # TODO get args!
+        if args.json:
+            print json.dumps(desc)
+        else: # TODO: Finish adding flags, etc.
+            print "ID\t\t" + desc["id"]
+            print "Class\t\t" + desc["class"]
+            print "Name\t\t" + desc["name"]
+            print "Description\t" + desc["description"]
+            print "Protected\t" + json.dumps(desc["protected"])
+            print "Restricted\t" + json.dumps(desc["restricted"])
+            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()            
+    else:
         json_input = {}
-        if len(sys.argv) == 4:
-            json_input["project"] = sys.argv[3]
-        print dxpy.DXHTTPRequest('/' + sys.argv[2] + '/describe', json_input)
+        if args.project is not None:
+            json_input["project"] = args.project
+        else:
+            json_input["project"] = os.environ["DX_PROJECT_CONTEXT_ID"]
+        if args.properties:
+            json_input["properties"] = True
+        if args.details:
+            json_input["details"] = True
 
-else:
-    print_error("help")
+        desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+        if args.json:
+            print json.dumps(desc)
+        else:
+            # Must be a data object
+            common_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types',
+                             'hidden', 'details', 'links', 'created', 'modified', 'state']
+            print "ID\t\t" + desc["id"]
+            print "Class\t\t" + desc["class"]
+            folder_prefix = desc["folder"]
+            if folder_prefix != "/":
+                folder_prefix += "/"
+            print "Location\t" + desc["project"] + ":" + folder_prefix + desc["name"]
+            print "State\t\t" + desc["state"]
+            print "Hidden\t\t" + json.dumps(desc["hidden"])
+            print "Types\t\t" + json.dumps(desc["types"])
+            if 'properties' in desc:
+                print "Properties\t" + json.dumps(desc["properties"])
+            print "Tags\t\t" + json.dumps(desc["tags"])
+            if 'details' in desc:
+                print "Details\t\t" + json.dumps(desc["details"])
+            print "Outgoing links\t" + json.dumps(desc["links"])
+            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+            for field in desc:
+                if field in common_fields:
+                    continue
+                else:
+                    if field == "media":
+                        print "Media type\t" + desc['media']
+                    elif field == "size":
+                        print "Size (bytes)\t" + str(desc['size'])
+                    else: # Unhandled prettifying
+                        print field + "\t\t" + json.dumps(desc[field])
+
+def file_get(args):
+    filename = args.output
+    if filename is None:
+        try:
+            filename = os.path.basename(dxpy.api.fileDescribe(args.dxid)['name'])
+        except KeyError:
+            filename = args.dxid
+    dxpy.download_dxfile(args.dxid, filename)
+
+def file_put(args):
+    print dxpy.upload_local_file(args.filename).get_id()
+
+def find_jobs(args):
+    results = dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
+                             state=args.state, origin_job=args.origin, parent_job=args.parent,
+                             describe=args.nodesc)
+    for result in results:
+        if not args.nodesc:
+            print result["id"]
+        else:
+            print result["id"] + "\t" + result["describe"]["state"]
+
+parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAnexus Command-Line Client, API v1.0.0')
+subparsers = parser.add_subparsers()
+
+parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
+parser_login.set_defaults(func=login)
+
+parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
+parser_logout.set_defaults(func=logout)
+
+parser_api = subparsers.add_parser('api', help='Make an API call')
+parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
+parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
+parser_api.add_argument('json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
+parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
+parser_api.set_defaults(func=api)
+
+parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
+                                  description='List folders and/or objects in a folder')
+parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
+parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
+parser_ls.add_argument('--name', help='show names instead of object IDs', action='store_true')
+parser_ls.add_argument('--both', help='show both names and object IDs', action='store_true')
+parser_ls.add_argument('--obj', help='show only objects', action='store_true')
+parser_ls.add_argument('--folders', help='show only folders', action='store_true')
+parser_ls.add_argument('folder', help='folder to list, default is \"/\"', nargs='?', default='/')
+parser_ls.set_defaults(func=ls)
+
+parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
+                                     description='Create a new folder')
+parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
+parser_mkdir.add_argument('folder', help='folder to create; full path is required')
+parser_mkdir.set_defaults(func=mkdir)
+
+parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
+                                     description='Remove a folder')
+parser_rmdir.add_argument('folder', help='folder to remove; full path is required')
+parser_rmdir.set_defaults(func=rmdir)
+
+parser_rm = subparsers.add_parser('rm', help='Remove objects',
+                                  description='Remove objects')
+parser_rm.add_argument('objects', help='object IDs to remove', nargs='+')
+parser_rm.set_defaults(func=rm)
+
+parser_file = subparsers.add_parser('file', help='Interact with remote files')
+subparsers_file = parser_file.add_subparsers()
+
+parser_file_get = subparsers_file.add_parser('get', help='Download a file')
+parser_file_get.add_argument('dxid', help='file ID to download')
+parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
+parser_file_get.set_defaults(func=file_get)
+
+parser_file_put = subparsers_file.add_parser('put', help='Upload a file')
+parser_file_put.add_argument('filename', help='local filename to upload')
+parser_file_put.set_defaults(func=file_put)
+
+parser_set = subparsers.add_parser('set', help='Sets default values for communication with the API server',
+                                   description='Sets default values for communication with the API server')
+subparsers_set = parser_set.add_subparsers()
+
+parser_set_host = subparsers_set.add_parser('host', help='Sets the API server hostname')
+parser_set_host.add_argument('host', help='API server hostname')
+parser_set_host.set_defaults(func=set_host)
+
+parser_set_port = subparsers_set.add_parser('port', help='Sets the API server port number')
+parser_set_port.add_argument('port', help='API server port number')
+parser_set_port.set_defaults(func=set_port)
+
+parser_set_project = subparsers_set.add_parser('project', help='Sets the default project ID')
+parser_set_project.add_argument('project', help='Project ID')
+parser_set_project.set_defaults(func=set_project)
+
+parser_describe = subparsers.add_parser('describe', help='Describe a remote object', description='Describe a remote object')
+parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
+parser_describe.add_argument('--properties', help='Include properties', action='store_true')
+parser_describe.add_argument('--details', help='Include details if available', action='store_true')
+parser_describe.add_argument('--json', help='Display return value in JSON', action='store_true')
+parser_describe.add_argument('dxid', help='Object ID to describe')
+parser_describe.set_defaults(func=describe)
+
+parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
+                                    description='Search functionality over data objects, projects, and jobs')
+subparsers_find = parser_find.add_subparsers()
+
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs')
+parser_find_jobs.add_argument('--user', help='User ID who launched the job')
+parser_find_jobs.add_argument('--program', help='Program ID that job is running')
+parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
+parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
+parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
+parser_find_jobs.add_argument('--parent', help='Job ID of the parent job')
+parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
+
+parser_find_jobs.set_defaults(func=find_jobs)
+
+args = parser.parse_args(sys.argv[1:])
+args.func(args)

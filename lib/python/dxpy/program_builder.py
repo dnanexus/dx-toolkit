@@ -11,6 +11,22 @@ import dxpy
 class ProgramBuilderException(Exception):
     pass
 
+def validate_program_spec(program_spec):
+    if "name" not in program_spec:
+        raise ProgramBuilderException("Program specification does not contain a name")
+
+def get_program_spec(src_dir):
+    program_spec_file = os.path.join(src_dir, "dxprogram")
+    if not os.path.exists(program_spec_file):
+        program_spec_file = os.path.join(src_dir, "dxprogram.json")
+    with open(os.path.join(src_dir, "dxprogram")) as fh:
+        program_spec = json.load(fh)
+
+    validate_program_spec(program_spec)
+    if 'project' not in program_spec:
+        program_spec['project'] = dxpy.WORKSPACE_ID
+    return program_spec
+
 def build(src_dir):
     logging.debug("Building in " + src_dir)
     # TODO: use Gentoo or deb buildsystem
@@ -23,32 +39,27 @@ def build(src_dir):
         subprocess.check_call(["make", "-C", src_dir, "-j8"])
 
 def upload_resources(src_dir):
+    program_spec = get_program_spec(src_dir)
     resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         logging.debug("Uploading in " + src_dir)
 
         with tempfile.NamedTemporaryFile(suffix=".tar.xz") as tar_fh:
             subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
-            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True)
+            if 'folder' in program_spec:
+                try:
+                    dxpy.DXProject(program_spec['project']).new_folder(program_spec['folder'])
+                except dxpy.exceptions.DXAPIError:
+                    pass # TODO: make this better
+            target_folder = program_spec['folder'] if 'folder' in program_spec else '/'
+            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True, folder=target_folder)
             archive_link = dxpy.dxlink(dx_resource_archive.get_id())
             return [{'name': 'resources.tar.xz', 'id': archive_link}]
     else:
         return None
 
-def validateProgramSpec(program_spec):
-    if "name" not in program_spec:
-        raise ProgramBuilderException("Program specification does not contain a name")
-
 def upload_program(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False):
-    program_spec_file = os.path.join(src_dir, "dxprogram")
-    if not os.path.exists(program_spec_file):
-        program_spec_file = os.path.join(src_dir, "dxprogram.json")
-    with open(os.path.join(src_dir, "dxprogram")) as fh:
-        program_spec = json.load(fh)
-
-    validateProgramSpec(program_spec)
-
-    program_spec['project'] = dxpy.WORKSPACE_ID
+    program_spec = get_program_spec(src_dir)
 
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])

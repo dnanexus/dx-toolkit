@@ -26,7 +26,7 @@ private:
 
   std::stringstream row_buffer_;
 
-  int row_buffer_maxsize_;
+  int64_t row_buffer_maxsize_;
   int part_id_;
 
   void reset_buffer_();
@@ -67,7 +67,7 @@ public:
    *
    * @returns Buffer size
    */
-  void getMaxBufferSize() const {
+  int64_t getMaxBufferSize() const {
     return row_buffer_maxsize_;
   }
 
@@ -77,7 +77,7 @@ public:
    *
    * @param buf_size New buffer size to use
    */
-  void setMaxBufferSize(const int buf_size) {
+  void setMaxBufferSize(const int64_t buf_size) {
     row_buffer_maxsize_ = buf_size;
   }
 
@@ -131,7 +131,7 @@ public:
    */
   dx::JSON getRows(const dx::JSON &query=dx::JSON(dx::JSON_NULL),
                    const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
-                   const int starting=-1, const int limit=-1) const;
+                   const int64_t starting=-1, const int64_t limit=-1) const;
 
   /**
    * Adds the rows listed in data to the current table using the given
@@ -272,6 +272,9 @@ public:
   static dx::JSON substringIndex(const std::string &column,
                                  const std::string &name);
 
+  // TODO: lo and hi are currently constrained by the API spec to be
+  // columns of type int32, but if we ever change this, we should
+  // change the data type as well.
   /**
    * Constructs a query for a genomic range index of the table.
    *

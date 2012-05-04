@@ -677,6 +677,15 @@ dx::JSON systemFindJobs(const dx::JSON &input_params) {
 }
 
 
+dx::JSON systemFindProjects(const std::string &input_params) {
+  return DXHTTPRequest("/system/findProjects", input_params);
+}
+
+dx::JSON systemFindProjects(const dx::JSON &input_params) {
+  return systemFindProjects(input_params.toString());
+}
+
+
 dx::JSON tableNew(const std::string &input_params) {
   return DXHTTPRequest("/table/new", input_params);
 }

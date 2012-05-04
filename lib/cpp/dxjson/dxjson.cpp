@@ -546,7 +546,7 @@ JSON& JSON::operator =(const bool &x) {
   return *this;
 }
 
-JSON& JSON::operator =(const Null &x) {
+JSON& JSON::operator =(const Null &x __attribute__ ((unused)) ) {
   // x is intended to be unused in this function. Since null has exactly one value.
   clear();
   val = new Null();
