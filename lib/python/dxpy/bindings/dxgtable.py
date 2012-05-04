@@ -33,11 +33,14 @@ class DXGTable(DXDataObject):
     _row_buf_maxsize = 1024*1024*20
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=40000):
+                 buffer_size=40000, part_id_min=0, part_id_max=250000,
+                 dxlink=None):
         self._keep_open = keep_open
         self._bufsize = buffer_size
         self._row_buf = StringIO.StringIO()
-        self._part_id = 0
+        self._part_id_min = part_id_min
+        self._part_id_max = part_id_max
+        self._part_id = self._part_id_min
         if dxid is not None:
             self.set_ids(dxid, project)
 
@@ -71,8 +74,9 @@ class DXGTable(DXDataObject):
         dx_hash["columns"] = kwargs["columns"]
         del kwargs["columns"]
 
-        if "indices" in kwargs and kwargs["indices"] is not None:
-            dx_hash["indices"] = kwargs["indices"]
+        if "indices" in kwargs:
+            if kwargs["indices"] is not None:
+                dx_hash["indices"] = kwargs["indices"]
             del kwargs["indices"]
 
         resp = dxpy.api.gtableNew(dx_hash, **kwargs)
@@ -95,7 +99,7 @@ class DXGTable(DXDataObject):
         DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
-        self._part_id = 0
+        self._part_id = self._part_id_min
 
     def get_rows(self, query=None, columns=None, starting=None, limit=None, **kwargs):
         '''
@@ -138,7 +142,7 @@ class DXGTable(DXDataObject):
 
         return dxpy.api.gtableGet(self._dxid, get_rows_params, **kwargs)
 
-    def get_col_names(self):
+    def get_col_names(self, **kwargs):
         '''
         :returns: A list of column names
         :rtype: list of strings
@@ -146,7 +150,7 @@ class DXGTable(DXDataObject):
         Queries the gtable for its columns and returns a list of all
         column names.
         '''
-        desc = self.describe()
+        desc = self.describe(**kwargs)
         col_names = []
         for col_desc in desc["columns"]:
             col_names.append(col_desc["name"])
@@ -166,7 +170,7 @@ class DXGTable(DXDataObject):
         """
 
         if end is None:
-            end = int(self.describe()['size'])
+            end = int(self.describe(**kwargs)['size'])
         cursor = start
         while cursor < end:
             request_size = self._bufsize
@@ -179,7 +183,7 @@ class DXGTable(DXDataObject):
                 cursor += 1
                 if cursor >= end: break
 
-    def iterate_query_rows(self, query=None, columns=None):
+    def iterate_query_rows(self, query=None, columns=None, **kwargs):
         """
         :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
         :type query: dict
@@ -209,10 +213,12 @@ class DXGTable(DXDataObject):
             for row in buffer:
                 yield row
 
-    def __iter__(self):
-        return self.iterate_rows()
+    def __iter__(self, **kwargs):
+        return self.iterate_rows(**kwargs)
 
-    def extend(self, columns, **kwargs):
+    def extend(self, columns, indices=None, keep_open=False,
+               buffer_size=40000, part_id_min=0, part_id_max=250000,
+               **kwargs):
         '''
         :param columns: List of new column names
         :type columns: list of strings
@@ -233,11 +239,11 @@ class DXGTable(DXDataObject):
         '''
         dx_hash, remaining_kwargs = DXDataObject._get_creation_params(**kwargs)
         dx_hash["columns"] = columns
-        if "indices" in remaining_kwargs and remaining_kwargs["indices"] is not None:
-            dx_hash["indices"] = remaining_kwargs["indices"]
-            del remaining_kwargs["indices"]
+        if indices is not None:
+            dx_hash["indices"] = indices
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
-        return DXGTable(resp["id"], dx_hash["project"])
+        return DXGTable(resp["id"], dx_hash["project"],
+                        keep_open, buffer_size, part_id_min, part_id_max)
 
     def add_rows(self, data, part=None, **kwargs):
         '''
@@ -270,7 +276,7 @@ class DXGTable(DXDataObject):
         else:
             dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
 
-    def get_unused_part_id(self):
+    def get_unused_part_id(self, **kwargs):
         '''
         :returns: An unused part id
         :rtype: integer
@@ -281,30 +287,30 @@ class DXGTable(DXDataObject):
         should not be called if the value will not be used.
 
         '''
-        desc = self.describe()
-        if len(desc["parts"]) == 250000:
-            raise DXGTableError("250000 part indices already used.")
+        desc = self.describe(**kwargs)
+        if len(desc["parts"]) > self._part_id_max:
+            raise DXGTableError("All available part indices already used.")
 
-        while self._part_id < 250000:
+        while self._part_id <= self._part_id_max:
             self._part_id += 1
             if str(self._part_id) not in desc["parts"]:
                 return self._part_id
         
         raise DXGTableError("Usable part ID not found.")
 
-    def flush(self):
+    def flush(self, **kwargs):
         '''
         Sends any rows in the internal buffer to the API server.  
         '''
         dxpy.api.gtableAddRows(self._dxid,
                               '{"data": [' + self._row_buf.getvalue() + '], "part":' + \
                                   str(self.get_unused_part_id())+'}',
-                              jsonify_data=False)
+                              jsonify_data=False, **kwargs)
 
         self._row_buf.close()
         self._row_buf = StringIO.StringIO()
 
-    def close(self, block=False):
+    def close(self, block=False, **kwargs):
         '''
         :param block: Indicates whether this function should block until the remote gtable has closed or not.
         :type block: boolean
@@ -313,14 +319,14 @@ class DXGTable(DXDataObject):
 
         '''
         if self._row_buf.tell() > 0:
-            self.flush()
+            self.flush(**kwargs)
 
-        dxpy.api.gtableClose(self._dxid)
+        dxpy.api.gtableClose(self._dxid, **kwargs)
         
         if block:
-            self._wait_on_close()
+            self._wait_on_close(**kwargs)
 
-    def wait_on_close(self, timeout=sys.maxint):
+    def wait_on_close(self, timeout=sys.maxint, **kwargs):
         '''
         :param timeout: Max amount of time to wait until the gtable is closed.
         :type timeout: integer
@@ -328,7 +334,7 @@ class DXGTable(DXDataObject):
 
         Wait until the remote gtable is closed.
         '''
-        self._wait_on_close(timeout)
+        self._wait_on_close(timeout, **kwargs)
 
     @staticmethod
     def make_column_desc(name, type_):

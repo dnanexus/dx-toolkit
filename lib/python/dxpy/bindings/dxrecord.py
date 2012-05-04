@@ -54,9 +54,19 @@ class DXRecord(DXDataObject):
         """
         :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
         :type dx_hash: dict
+        :param init_from: Record from which to initialize the metadata
+        :type init_from: :class:`DXRecord`
 
         Create a new remote record object.
 
         """
+
+        if "init_from" in kwargs and kwargs["init_from"] is not None:
+            if not isinstance(kwargs["init_from"], DXRecord):
+                raise DXError("Expected instance of DXRecord to init_from")
+            dx_hash["initializeFrom"] = \
+                {"id": kwargs["init_from"].get_id(),
+                 "project": kwargs["init_from"].get_proj_id()}
+            del kwargs["init_from"]
         resp = dxpy.api.recordNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])

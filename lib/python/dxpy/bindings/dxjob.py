@@ -8,7 +8,7 @@ from dxpy.bindings import *
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name):
+def new_dxjob(fn_input, fn_name, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -29,7 +29,7 @@ def new_dxjob(fn_input, fn_name):
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name)
+    dxjob.new(fn_input, fn_name, **kwargs)
     return dxjob
 
 class DXJob(object):
@@ -41,7 +41,7 @@ class DXJob(object):
         if dxid is not None:
             self.set_id(dxid)
 
-    def new(self, fn_input, fn_name):
+    def new(self, fn_input, fn_name, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -59,7 +59,7 @@ class DXJob(object):
         req_input = {}
         req_input["input"] = fn_input
         req_input["function"] = fn_name
-        resp = dxpy.api.jobNew(req_input)
+        resp = dxpy.api.jobNew(req_input, **kwargs)
         self.set_id(resp["id"])
 
     def set_id(self, dxid):
@@ -84,7 +84,7 @@ class DXJob(object):
 
         return self._dxid
 
-    def describe(self):
+    def describe(self, **kwargs):
         """
         :returns: Description of the job
         :rtype: dict
@@ -94,9 +94,9 @@ class DXJob(object):
         documentation for the full list.
 
         """
-        return dxpy.api.jobDescribe(self._dxid)
+        return dxpy.api.jobDescribe(self._dxid, **kwargs)
 
-    def wait_on_done(self, interval=2, timeout=sys.maxint):
+    def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
         '''
         :param interval: Number of seconds between queries to the job's state
         :type interval: integer
@@ -109,7 +109,7 @@ class DXJob(object):
 
         elapsed = 0
         while True:
-            state = self._get_state()
+            state = self._get_state(**kwargs)
             if state == "done":
                 break
             if state == "failed":
@@ -121,13 +121,13 @@ class DXJob(object):
             time.sleep(interval)
             elapsed += interval
 
-    def terminate(self):
+    def terminate(self, **kwargs):
         '''
         Terminate the associated job.
         '''
-        dxpy.api.jobTerminate(self._dxid)
+        dxpy.api.jobTerminate(self._dxid, **kwargs)
 
-    def _get_state(self):
+    def _get_state(self, **kwargs):
         '''
         :returns: State of the remote object
         :rtype: string
@@ -140,4 +140,4 @@ class DXJob(object):
 
         '''
 
-        return self.describe()["state"]
+        return self.describe(**kwargs)["state"]

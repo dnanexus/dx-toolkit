@@ -55,7 +55,7 @@ class DXProject(object):
 
         return self._dxid
 
-    def describe(self):
+    def describe(self, **kwargs):
         """
         :returns: A hash containing attributes of the project.
         :rtype: dict
@@ -65,9 +65,10 @@ class DXProject(object):
         "created".
 
         """
-        return dxpy.api.projectDescribe(self._dxid)
+        return dxpy.api.projectDescribe(self._dxid, **kwargs)
 
-    def update(self, name=None, description=None, protected=None, restricted=None):
+    def update(self, name=None, description=None, protected=None,
+               restricted=None, **kwargs):
         """
         :param name: New project name
         :type name: string
@@ -91,9 +92,9 @@ class DXProject(object):
             update_hash["protected"] = protected
         if restricted is not None:
             update_hash["restricted"] = restricted
-        dxpy.api.projectUpdate(self._dxid, update_hash)
+        dxpy.api.projectUpdate(self._dxid, update_hash, **kwargs)
 
-    def new_folder(self, folder, parents=False):
+    def new_folder(self, folder, parents=False, **kwargs):
         """
         :param folder: Full path to the new folder to create
         :type folder: string
@@ -105,9 +106,10 @@ class DXProject(object):
         """
 
         dxpy.api.projectNewFolder(self._dxid, {"folder": folder,
-                                               "parents": parents})
+                                               "parents": parents},
+                                  **kwargs)
 
-    def list_folder(self, folder="/", describe=False):
+    def list_folder(self, folder="/", describe=False, **kwargs):
         """
         :param folder: Full path to the folder to list
         :type folder: string
@@ -124,9 +126,10 @@ class DXProject(object):
         """
 
         return dxpy.api.projectListFolder(self._dxid, {"folder": folder,
-                                                       "describe": describe})
+                                                       "describe": describe},
+                                          **kwargs)
 
-    def move(self, destination, objects=[], folders=[]):
+    def move(self, destination, objects=[], folders=[], **kwargs):
         """
         :param objects: List of object IDs to move
         :type objects: list of strings
@@ -146,9 +149,10 @@ class DXProject(object):
 
         dxpy.api.projectMove(self._dxid, {"objects": objects,
                                           "folders": folders,
-                                          "destination": destination})
+                                          "destination": destination},
+                             **kwargs)
 
-    def move_folder(self, folder, destination):
+    def move_folder(self, folder, destination, **kwargs):
         """
         :param folder: Full path to the folder to move
         :type folder: string
@@ -161,9 +165,10 @@ class DXProject(object):
         """
 
         dxpy.api.projectMove(self._dxid, {"folders": [folder],
-                                          "destination": destination})
+                                          "destination": destination},
+                             **kwargs)
 
-    def remove_folder(self, folder):
+    def remove_folder(self, folder, **kwargs):
         """
         :param folder: Full path to the folder to remove
         :type folder: string
@@ -173,9 +178,10 @@ class DXProject(object):
 
         """
 
-        dxpy.api.projectRemoveFolder(self._dxid, {"folder": folder})
+        dxpy.api.projectRemoveFolder(self._dxid, {"folder": folder},
+                                     **kwargs)
 
-    def remove_objects(self, objects):
+    def remove_objects(self, objects, **kwargs):
         """
         :param objects: List of object IDs to remove from the project
         :type objects: list of strings
@@ -186,10 +192,11 @@ class DXProject(object):
 
         """
 
-        dxpy.api.projectRemoveObjects(self._dxid, {"objects": objects})
+        dxpy.api.projectRemoveObjects(self._dxid, {"objects": objects},
+                                      **kwargs)
 
     def clone(self, project, destination="/", objects=[], folders=[],
-              include_hidden_links=True):
+              include_hidden_links=True, **kwargs):
         """
         :param objects: List of object IDs to move
         :type objects: list of strings
@@ -214,15 +221,17 @@ class DXProject(object):
 
         """
 
-        return dxpy.api.projectClone(self._dxid, {"objects": objects,
-                                                  "folders": folders,
-                                                  "project": project,
-                                                  "destination": destination,
-                                                  "includeHiddenLinks": include_hidden_links})
+        return dxpy.api.projectClone(self._dxid,
+                                     {"objects": objects,
+                                      "folders": folders,
+                                      "project": project,
+                                      "destination": destination,
+                                      "includeHiddenLinks": include_hidden_links},
+                                     **kwargs)
 
-    def destroy(self):
+    def destroy(self, **kwargs):
         """
         Destroys the project.
         """
 
-        dxpy.api.projectDestroy(self._dxid)
+        dxpy.api.projectDestroy(self._dxid, **kwargs)

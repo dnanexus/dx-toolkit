@@ -146,12 +146,13 @@ class DXDataObject(object):
         object in *project*.  Uses the current workspace ID as the default
 
         '''
+        self._proj = None
         if is_dxlink(dxid):
-            self._dxid = dxid["$dnanexus_link"]
+            self._dxid, self._proj = get_dxlink_ids(dxid)
         else:
             self._dxid = dxid
 
-        if project is None:
+        if self._proj is None and project is None:
             global WORKSPACE_ID
             self._proj = WORKSPACE_ID
         else:
@@ -181,8 +182,12 @@ class DXDataObject(object):
 
         return self._proj
 
-    def describe(self, incl_properties=False):
+    def describe(self, incl_properties=False, incl_details=False, **kwargs):
         """
+        :param incl_properties: Whether to also include the properties of the object
+        :type incl_properties: boolean
+        :param incl_details: Whether to also include the details of the object
+        :type incl_details: boolean
         :returns: Description of the remote object
         :rtype: dict
 
@@ -194,11 +199,15 @@ class DXDataObject(object):
 
         if self._proj is not None:
             return self._describe(self._dxid, {"project": self._proj,
-                                               "properties": incl_properties})
+                                               "properties": incl_properties,
+                                               "details": incl_details},
+                                  **kwargs)
         else:
-            return self._describe(self._dxid, {"properties": incl_properties})
+            return self._describe(self._dxid, {"properties": incl_properties,
+                                               "details": incl_details},
+                                  **kwargs)
 
-    def add_types(self, types):
+    def add_types(self, types, **kwargs):
         """
         :param types: Types to add to the object
         :type types: list of strings
@@ -211,9 +220,9 @@ class DXDataObject(object):
 
         """
 
-        self._add_types(self._dxid, {"types": types})
+        self._add_types(self._dxid, {"types": types}, **kwargs)
 
-    def remove_types(self, types):
+    def remove_types(self, types, **kwargs):
         """
         :param types: Types to remove from the object
         :type types: list of strings
@@ -226,17 +235,17 @@ class DXDataObject(object):
 
         """
 
-        self._remove_types(self._dxid, {"types": types})
+        self._remove_types(self._dxid, {"types": types}, **kwargs)
 
-    def get_details(self):
+    def get_details(self, **kwargs):
         """
         Returns the contents of the details of the object
 
         """
 
-        return self._get_details(self._dxid)
+        return self._get_details(self._dxid, **kwargs)
 
-    def set_details(self, details):
+    def set_details(self, details, **kwargs):
         """
         :param details: Details to set for the object
         :type details: dict or list
@@ -251,9 +260,9 @@ class DXDataObject(object):
 
         """
 
-        return self._set_details(self._dxid, details)
+        return self._set_details(self._dxid, details, **kwargs)
 
-    def hide(self):
+    def hide(self, **kwargs):
         """
         Hides the remote object.
 
@@ -262,9 +271,9 @@ class DXDataObject(object):
 
         """
 
-        return self._set_visibility(self._dxid, {"hidden": True})
+        return self._set_visibility(self._dxid, {"hidden": True}, **kwargs)
 
-    def unhide(self):
+    def unhide(self, **kwargs):
         """
         Makes the remote object visible.
 
@@ -273,9 +282,9 @@ class DXDataObject(object):
 
         """
 
-        return self._set_visibility(self._dxid, {"hidden": False})
+        return self._set_visibility(self._dxid, {"hidden": False}, **kwargs)
 
-    def rename(self, name):
+    def rename(self, name, **kwargs):
         """
         :param name: New name for the object
         :type name: string
@@ -285,9 +294,9 @@ class DXDataObject(object):
         """
 
         return self._rename(self._dxid, {"project": self._proj,
-                                         "name": name})
+                                         "name": name}, **kwargs)
 
-    def get_properties(self):
+    def get_properties(self, **kwargs):
         """
         :returns: Properties given as key-value pairs of strings
         :rtype: dict
@@ -295,9 +304,9 @@ class DXDataObject(object):
         Returns the properties of the object.
 
         """
-        return self.describe(incl_properties=True)["properties"]
+        return self.describe(incl_properties=True, **kwargs)["properties"]
 
-    def set_properties(self, properties):
+    def set_properties(self, properties, **kwargs):
         """
         :param properties: Properties given as key-value pairs of strings; a value of :const:`None` indicates a property should be deleted
         :type properties: dict
@@ -319,9 +328,10 @@ class DXDataObject(object):
         """
 
         self._set_properties(self._dxid, {"project": self._proj,
-                                          "properties": properties})
+                                          "properties": properties},
+                             **kwargs)
 
-    def add_tags(self, tags):
+    def add_tags(self, tags, **kwargs):
         """
         :param tags: Tags to add to the object
         :type tags: list of strings
@@ -331,9 +341,10 @@ class DXDataObject(object):
 
         """
 
-        self._add_tags(self._dxid, {"project": self._proj, "tags": tags})
+        self._add_tags(self._dxid, {"project": self._proj, "tags": tags},
+                       **kwargs)
 
-    def remove_tags(self, tags):
+    def remove_tags(self, tags, **kwargs):
         """
         :param tags: Tags to remove from the object
         :type tags: list of strings
@@ -343,27 +354,28 @@ class DXDataObject(object):
 
         """
 
-        self._remove_tags(self._dxid, {"project": self._proj, "tags": tags})
+        self._remove_tags(self._dxid, {"project": self._proj, "tags": tags},
+                          **kwargs)
 
-    def close(self):
+    def close(self, **kwargs):
         """
         Closes the object for further modification to its types,
         details, visibility, and contents.
 
         """
 
-        return self._close(self._dxid)
+        return self._close(self._dxid, **kwargs)
 
-    def list_projects(self):
+    def list_projects(self, **kwargs):
         """
         Returns a list of project IDs for the projects that contain
         this object and are visible to the requesting user.
 
         """
 
-        return self._list_projects(self._dxid)
+        return self._list_projects(self._dxid, **kwargs)
 
-    def remove(self):
+    def remove(self, **kwargs):
         '''
         :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
 
@@ -375,13 +387,14 @@ class DXDataObject(object):
         if self._proj is None:
             raise DXError("Remove called when a project ID was not associated with this object handler")
 
-        dxpy.api.projectRemoveObjects(self._proj, {"objects": [self._dxid]})
+        dxpy.api.projectRemoveObjects(self._proj, {"objects": [self._dxid]},
+                                      **kwargs)
 
         # Reset internal state
         del self._dxid
         del self._proj
 
-    def move(self, folder):
+    def move(self, folder, **kwargs):
         '''
         :param folder: Folder route to which to move the object
         :type folder: string
@@ -395,10 +408,12 @@ class DXDataObject(object):
             raise DXError("Move called when a project ID was not associated with this object handler")
 
         dxpy.api.projectMove(self._proj, {"objects": [self._dxid],
-                                          "destination": folder})
+                                          "destination": folder},
+                             **kwargs)
 
 
-    def clone(self, project, folder="/", include_hidden_links=True):
+    def clone(self, project, folder="/", include_hidden_links=True,
+              **kwargs):
         '''
         :param project: Destination project ID
         :type project: string
@@ -416,15 +431,17 @@ class DXDataObject(object):
         if self._proj is None:
             raise DXError("Clone called when a project ID was not associated with this object handler")
 
-        dxpy.api.projectClone(self._proj, {"objects": [self._dxid],
-                                           "project": project,
-                                           "destination": folder,
-                                           "includeHiddenLinks": include_hidden_links})
+        dxpy.api.projectClone(self._proj,
+                              {"objects": [self._dxid],
+                               "project": project,
+                               "destination": folder,
+                               "includeHiddenLinks": include_hidden_links},
+                              **kwargs)
         cloned_copy = copy.copy(self)
         cloned_copy.set_ids(cloned_copy.get_id(), project)
         return cloned_copy
 
-    def _get_state(self):
+    def _get_state(self, **kwargs):
         '''
         :returns: State of the remote object
         :rtype: string
@@ -438,12 +455,12 @@ class DXDataObject(object):
 
         '''
 
-        return self.describe()["state"]
+        return self.describe(**kwargs)["state"]
 
-    def _wait_on_close(self, timeout=sys.maxint):
+    def _wait_on_close(self, timeout=sys.maxint, **kwargs):
         elapsed = 0
         while True:
-            state = self._get_state()
+            state = self._get_state(**kwargs)
             if state == "closed":
                 break
             if state != "closing":

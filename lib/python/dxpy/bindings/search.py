@@ -13,7 +13,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
-                      describe=False):
+                      describe=False, **kwargs):
     """
     :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "program"
     :type classname: string
@@ -104,7 +104,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     query["describe"] = describe
 
     while True:
-        resp = dxpy.api.systemFindDataObjects(query)
+        resp = dxpy.api.systemFindDataObjects(query, **kwargs)
         
         for i in resp["results"]:
             yield i
@@ -116,8 +116,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
             raise StopIteration()
 
 def find_jobs(launched_by=None, program=None, project=None, state=None,
-              origin_job=None, parent_job=None,
-              modified_after=None, modified_before=None, describe=False):
+              origin_job=None, parent_job=-1,
+              modified_after=None, modified_before=None, describe=False,
+              **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
     :type launched_by: string
@@ -129,8 +130,8 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     :type state: string
     :param origin_job: ID of the original job initiated by a user running a program which eventually spawned this job
     :type origin_job: string
-    :param parent_job: ID of the parent job
-    :type parent_job: string
+    :param parent_job: ID of the parent job, None indicates it is an origin job
+    :type parent_job: None or string
     :param modified_after: Timestamp after which each result was last modified
     :type modified_after: integer
     :param modified_before: Timestamp before which each result was last modified
@@ -161,14 +162,17 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     if launched_by is not None:
         query["launchedBy"] = launched_by
     if program is not None:
-        query["program"] = program
+        if isinstance(program, DXProgram):
+            query["program"] = program.get_id()
+        else:
+            query["program"] = program
     if project is not None:
         query["project"] = project
     if state is not None:
         query["state"] = state
     if origin_job is not None:
         query["originJob"] = origin_job
-    if parent_job is not None:
+    if parent_job !=-1:
         query["parentJob"] = parent_job
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
@@ -179,7 +183,7 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     query["describe"] = describe
 
     while True:
-        resp = dxpy.api.systemFindJobs(query)
+        resp = dxpy.api.systemFindJobs(query, **kwargs)
         
         for i in resp["results"]:
             yield i
@@ -189,3 +193,22 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
             query["starting"] = resp["next"]
         else:
             raise StopIteration()
+
+def find_projects(level='CONTRIBUTE', describe=False, **kwargs):
+    """
+    :param level: Minimum permissions level of returned project IDs
+    :type level: string
+    :param describe: Either false or the input to the describe call for the project
+    :type describe: boolean or dict
+    :rtype: generator
+
+    Queries for the user's accessible projects with the specified
+    minimum permissions level.
+
+    """
+    query = {"level": level, "describe": describe}
+
+    resp = dxpy.api.systemFindProjects(query, **kwargs)
+
+    for i in resp["results"]:
+        yield i

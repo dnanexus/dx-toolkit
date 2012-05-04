@@ -72,7 +72,8 @@ def new_dxfile(**kwargs):
 # chunk sizing options
 # waitonclose
 
-def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False):
+def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
+                    **kwargs):
     '''
     :param dxid: Object ID of a file
     :type dxid: string
@@ -90,14 +91,14 @@ def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False):
 
     '''
 
-    mode = 'a' if append else 'w'
+    mode = 'ab' if append else 'wb'
     with DXFile(dxid) as dxfile:
         with open(filename, mode) as fd:
             while True:
-                file_content = dxfile.read(chunksize)
+                file_content = dxfile.read(chunksize, **kwargs)
                 if len(file_content) == 0:
                     break
-                fd.write(file_content)
+                fd.write(file_content, **kwargs)
 
 def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
     '''
@@ -123,16 +124,16 @@ def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=
 
     dxfile = new_dxfile(media_type=media_type, **kwargs)
 
-    with open(filename, 'r') as fd:
+    with open(filename, 'rb') as fd:
         while True:
             buf = fd.read(dxfile._bufsize)
             if len(buf) == 0:
                 break
-            dxfile.write(buf)
+            dxfile.write(buf, **kwargs)
 
     if not keep_open:
-        dxfile.close(block=wait_on_close)
-    dxfile.rename(os.path.basename(filename))
+        dxfile.close(block=wait_on_close, **kwargs)
+    dxfile.rename(os.path.basename(filename), **kwargs)
     return dxfile
 
 def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
@@ -154,6 +155,6 @@ def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
     """
 
     dxfile = new_dxfile(media_type=media_type, **kwargs)
-    dxfile.write(to_upload)
-    dxfile.close(block=wait_on_close)
+    dxfile.write(to_upload, **kwargs)
+    dxfile.close(block=wait_on_close, **kwargs)
     return dxfile
