@@ -2,7 +2,7 @@
 #include <cstdio>
 using namespace dx;
 
-extern double JSON::epsilon = std::numeric_limits<double>::epsilon();
+double JSON::epsilon = std::numeric_limits<double>::epsilon();
 
 // TODO:
 // 1) Currently json strings are "escaped" only when using write() method, and stored as normal

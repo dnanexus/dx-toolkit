@@ -1,0 +1,324 @@
+#!/usr/bin/env python
+
+
+# TODO  add hi2 for paired reads!
+
+import os, sys, json, re
+from optparse import OptionParser
+import dxpy
+
+parser = OptionParser("Usage: %prog sam_filename mappings_id reads_id reads_offset reads_end part_num")
+(opts, args) = parser.parse_args()
+if len(args) < 5:
+    #parser.print_help()
+    parser.error("Incorrect number of arguments")
+
+reads_end = -1
+
+if len(args) == 7:
+    sam_filename, mappings_id, reads_id, reads_offset, reads_end, part_num_start, part_num_end = args
+elif len(args) == 6:
+    sam_filename, mappings_id, reads_id, reads_offset, part_num_start, part_num_end = args
+
+reads_offset = int(reads_offset)
+reads_end = int(reads_end)
+part_num = int(part_num)
+
+isPaired = False
+
+######################OPEN tables and records##############################
+
+reads_table = dxpy.DXGTable(reads_id)
+reads_cols = reads_table.get_col_names()
+# generate way to 
+for i in reads_cols:
+    read_col_lookup[reads_cols[i]] = i + 1  #account for ID column
+
+read_col_lookup['id'] = 0
+
+if 'sequence2' in reads_cols:
+    isPaired = True
+
+####
+
+if mappings_id == "0":
+    raise Exception("table ID invalid!")
+else:
+    mappings_table = dxpy.open_dxgtable(mappings_id)
+    
+
+###########################################################################
+
+
+
+#############SETUP schema ###########################
+
+map_cols = mappings_table.get_col_names()
+
+print map_cols
+
+for i in map_cols:
+    map_col_lookup[map_cols[i]] = i  #account for ID column
+
+
+
+'''
+# See http://samtools.sourceforge.net/SAM1.pdf
+'''
+
+sam_lookup = { "QNAME" : 0,
+               "FLAG" : 1,
+               "RNAME" : 2,
+               "POS" : 3,
+               "MAPQ" : 4,
+               "CIGAR" : 5,
+               "RNEXT" : 6,
+               "PNEXT" : 7,
+               "TLEN" : 8,
+               "SEQ" : 9,
+               "QUAL" : 10 }
+
+print sam_schema_index
+
+##################################################
+
+
+
+#############LOOP reads file over proper interval#################
+
+sam_file = open(sam_filename, 'r')
+i = 0; sam_by_read_rows = []
+
+map_row = [0 for i in range( len(map_cols) )]
+    
+
+sam_record = pull_sam_line( sam_file )
+for field in 1, 3, 4, 7, 8:
+    sam_record[field] = int(sam_record[field])
+        
+
+# get the index of the mapped read from name.  If paired \1 will refer to 'left' read, \2 to 'right'
+mapped_read = sam_record[sam_schema_index['QNAME'].split('\\')]
+
+for read in reads_table.iterate_rows(start=reads_offset,end=num_reads):
+    sam_by_read_rows = []
+    while int(mapped_read[0]) == read[read_col_lookup['id']]:
+
+        map_row = [0 for i in range( len(map_cols) )]
+
+        #####SANITY CHECK###################
+
+        if len(sam_record) < 11:
+            raise Exception("Unexpected number of entries in file %s, line %d" % (sam_filename, i))
+
+        ####################################
+         
+        #Take \n off the end#############
+        sam_record[-1] = sam_record[-1].rstrip()
+        #################################
+
+        # Initialize OPT field, if empty
+        if len(sam_record) == 11: sam_record.append('')
+        #################################
+
+        parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_lookup )
+
+        ################################################################
+
+        sam_by_read_rows.append(map_row)    
+
+        # pull new sam line
+        sam_record = pull_sam_line( sam_file )
+        # get the index of the mapped read from name.  If paired \1 will refer to 'left' read, \2 to 'right'
+        mapped_read = sam_record[sam_schema_index['QNAME']].split('\\')
+    
+        for field in 1, 3, 4, 7, 8:
+            sam_record[field] = int(sam_record[field])
+
+    ###### sort and reconcile hi2 #######
+
+    mappings_table.add_rows(sam_by_read_rows)
+    sam_by_read_rows = []
+      
+    print json.dumps({'table_id': dxtable.get_id()})
+
+
+##### for DEBUG!!!!
+mappings_table.close(block = True)
+
+
+
+                           
+def pull_sam_line( sam_file ):
+
+    ####### get sam line ##########
+    sam_line = sam_file.readline()
+
+    while sam_line[0] == '@':
+        sam_line = sam_file.readline()
+
+        if sam_line == '':
+            print "reached end of sam file!"
+
+    return sam_line.split("\t", 11)
+    
+    ##############################
+
+                                 
+def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_lookup ):
+                                     
+     #### PARSE input sam file into mappings table schema ###########
+        
+    '''
+    Field	How to calculate from SAM
+
+    name	QNAME
+    sequence	SEQ
+    quality	QUAL
+    status	0x4 ? UNMAPPED : 0x100 ? SECONDARY : PRIMARY
+    chr	RNAME
+    lo	POS (off-by-one in SAM)
+    hi	lo + count of M/D/N/=/X in CIGAR
+    negative_strand	0x10
+    error_probability	MAPQ
+    qc	0x200 and/or 0x400 -- TBD
+    cigar	CIGAR
+    template_id	From a unique enumeration of QNAME (OUCH!)
+    mate_id	0x1 ? (0x40 ? 0 : (0x80 ? 1 : FAIL)) : -1
+    status2	0x8 ? UNMAPPED : PRIMARY
+    chr2	RNEXT
+    lo2	PNEXT
+    hi2	From "hi" of the matching record (OUCH!)
+    negative_strand2	0x20
+    proper_pair	0x2
+    '''
+                                 
+    ######### name #########
+    if 'name' in readCols:
+        map_row[map_col_lookup['name']] = read[read_col_lookup['name']]
+                                 
+
+    ######### sequence #########
+
+    if isPaired == False or mapped_read[1] == '1':
+        map_row[map_col_lookup['sequence']] = read[read_col_lookup['sequence']]
+    elif mapped_read[1] == '2':
+        map_row[map_col_lookup['sequence']] = read[read_col_lookup['sequence2']]
+
+    ######## quality #########
+
+    if isPaired == False or mapped_read[1] == '1':
+        map_row[map_col_lookup['quality']] = read[read_col_lookup['quality']]
+    elif mapped_read[1] == '2':
+        map_row[map_col_lookup['quality']] = read[read_col_lookup['quality2']]
+
+    ######## status ##########
+
+    if sam_record[sam_lookup['FLAG']] & 0x4:
+        map_row[map_col_lookup['status']] = 'UNMAPPED'
+    elif sam_record[sam_lookup['FLAG']] & 0x100:
+        map_row[map_col_lookup['status']] = 'SECONDARY'
+    else:
+        map_row[map_col_lookup['status']] = 'PRIMARY'
+
+
+    ######## chr ############
+
+    map_row[map_col_lookup['chr']] = sam_record[sam_lookup['RNAME']]
+
+    ######## lo	POS (off-by-one in SAM) #########
+
+    map_row[map_col_lookup['lo']] = sam_record[sam_lookup['POS']] - 1
+
+    ######## hi      lo + count of M/D/N/=/X in CIGAR #########
+
+               #####  PROCESS cigar string to see how long the alignment is in reference space######
+    al_len = 0
+    cigar = re.split('(\d+)', sam_record[sam_lookup['CIGAR']])
+    for p in range(len(cigar)):
+        c = cigar[p]
+        if c == 'M' or c == 'D' or c == 'N' or c == 'X' or c == 'P' or c == '=':
+            al_len += int(cigar[p-1])
+
+    map_row[map_col_lookup['hi']] = map_row[map_col_lookup['lo']] + al_len
+                                 
+
+    ##########negative_strand	0x10########
+
+    if sam_record['FLAG'] & 0x10 == 0 or map_row[map_col_lookup['status']] == "UNMAPPED":
+        map_row[map_col_lookup['negative_strand']] = False
+    else:
+        map_row[map_col_lookup['negative_strand']] = True
+
+    ##########error_probability	MAPQ###########
+
+    map_row[map_col_lookup['error_probability']] = sam_record[sam_lookup['MAPQ']]
+
+    ##########qc	0x200 and/or 0x400 -- TBD############
+
+    if sam_record['FLAG'] & 0x200 == 1:
+        map_row[map_col_lookup['qc']] = "not passing quality controls"
+
+    elif sam_record['FLAG'] & 0x400 == 1:
+        map_row[map_col_lookup['qc']] = "PCR or optical duplicate"
+
+    ##########cigar	CIGAR###########
+
+    map_row[map_col_lookup['cigar']] = sam_record[sam_lookup['CIGAR']]
+
+    ##########template_id	From a unique enumeration of QNAME (OUCH!)#######
+
+    map_row[map_col_lookup['template_id']] = read[read_col_lookup['id']]
+
+    if isPaired == True:
+
+     ##########mate_id	0x1 ? (0x40 ? 0 : (0x80 ? 1 : FAIL)) : -1########
+
+        mate_id = 404
+        if sam_record['FLAG'] & 0x1 == 1:
+            if sam_record['FLAG'] & 0x40 == 1:
+                mate_id = 0
+            elif sam_record['FLAG'] & 0x80 == 1:
+                mate_id = 1
+            else:
+                mate_id = -1
+
+        if mate_id == 404:
+            print "error setting mate_id flag"
+        else:
+            map_row[map_col_lookup['mate_id']] = mate_id
+
+     ##########status2	0x8 ? UNMAPPED : PRIMARY##########
+
+        if sam_record['FLAG'] & 0x8 == 1:
+            map_row[map_col_lookup['status2']] = "UNMAPPED"
+        else:
+            map_row[map_col_lookup['status2']] = "PRIMARY"
+
+     ##########chr2	RNEXT#############
+
+        map_row[map_col_lookup['chr2']] = sam_record[sam_lookup['RNEXT']]
+
+     ##########lo2	PNEXT#############
+
+        map_row[map_col_lookup['lo2']] = sam_record[sam_lookup['PNEXT']]
+
+     ##########hi2	From "hi" of the matching record (OUCH!)##########
+
+        ######ADD THIS!!!!!!!!!!!!!!
+
+     ##########negative_strand2	0x20############
+
+        if sam_record['FLAG'] & 0x20 == 1:
+            map_row[map_col_lookup['negative_strand2']] = True
+        else:
+            map_row[map_col_lookup['negative_strand2']] = False
+
+     ##########proper_pair      0x2############
+
+        if sam_record['FLAG'] & 0x2 == 1:
+            map_row[map_col_lookup['proper_pair']] = True
+        else:
+            map_row[map_col_lookup['proper_pair']] = False
+
+                                 

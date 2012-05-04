@@ -20,5 +20,24 @@ if opts.end_row is not None and opts.end_row <= opts.start_row:
 
 dxtable_id = args[0]
 
-for row in dxpy.open_dxgtable(dxtable_id).iterate_rows(start=opts.start_row, end=opts.end_row):
-    print "\n".join([row[1], row[2], "+", row[3]])
+try:
+    table = dxpy.open_dxgtable(dxtable_id)
+except:
+    print "failed to open table!\n"
+    sys.exit(1)
+
+existCols = table.get_col_names()
+
+col = [ "sequence", "quality" ]
+
+if "name" in existCols:
+    hasName = True
+    col.append("name")
+    
+for row in table.iterate_query_rows(columns=col):
+    if hasName == True:
+        print "\n".join([row[2], row[0], "+", row[1]])
+    else:
+        print "\n".join(["@", row[0], "+", row[1]])
+
+
