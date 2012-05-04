@@ -287,7 +287,7 @@ class DXGTable(DXDataObject):
 
         '''
         desc = self.describe(**kwargs)
-        if len(desc["parts"]) > self._part_id_max:
+        if self._part_id > self._part_id_max:
             raise DXGTableError("All available part indices already used.")
 
         while self._part_id <= self._part_id_max:
