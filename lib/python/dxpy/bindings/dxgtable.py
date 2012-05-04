@@ -237,7 +237,7 @@ class DXGTable(DXDataObject):
         must be given at creation time.
 
         '''
-        dx_hash, remaining_kwargs = DXDataObject._get_creation_params(**kwargs)
+        dx_hash, remaining_kwargs = DXDataObject._get_creation_params(kwargs)
         dx_hash["columns"] = columns
         if indices is not None:
             dx_hash["indices"] = indices

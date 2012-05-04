@@ -86,7 +86,7 @@ class DXDataObject(object):
         return desc
 
     @staticmethod
-    def _get_creation_params(**kwargs):
+    def _get_creation_params(kwargs):
         common_creation_params = set(["project", "name", "tags", "types", "hidden", "properties", "details", "folder", "parents"])
 
         dx_hash = {p: kwargs[p] for p in kwargs if p in common_creation_params}
@@ -131,7 +131,7 @@ class DXDataObject(object):
                 "DXDataObject is an abstract class; a subclass should" + \
                     "be initialized instead.")
 
-        dx_hash, remaining_kwargs = self._get_creation_params(**kwargs)
+        dx_hash, remaining_kwargs = self._get_creation_params(kwargs)
         self._new(dx_hash, **remaining_kwargs)
 
     def set_ids(self, dxid, project=None):

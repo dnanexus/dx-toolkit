@@ -124,6 +124,8 @@ def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=
 
     dxfile = new_dxfile(media_type=media_type, **kwargs)
 
+    creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+
     with open(filename, 'rb') as fd:
         while True:
             buf = fd.read(dxfile._bufsize)
@@ -132,8 +134,8 @@ def upload_local_file(filename, media_type=None, keep_open=False, wait_on_close=
             dxfile.write(buf, **kwargs)
 
     if not keep_open:
-        dxfile.close(block=wait_on_close, **kwargs)
-    dxfile.rename(os.path.basename(filename), **kwargs)
+        dxfile.close(block=wait_on_close, **remaining_kwargs)
+    dxfile.rename(os.path.basename(filename), **remaining_kwargs)
     return dxfile
 
 def upload_string(to_upload, media_type=None, wait_on_close=False, **kwargs):
