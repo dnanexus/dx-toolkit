@@ -304,6 +304,10 @@ dx::JSON systemFindJobs(const std::string &input_params="{}");
 dx::JSON systemFindJobs(const dx::JSON &input_params);
 
 
+dx::JSON systemFindProjects(const std::string &input_params="{}");
+dx::JSON systemFindProjects(const dx::JSON &input_params);
+
+
 dx::JSON tableNew(const std::string &input_params="{}");
 dx::JSON tableNew(const dx::JSON &input_params);
 

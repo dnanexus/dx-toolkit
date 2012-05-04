@@ -302,6 +302,10 @@ def systemFindJobs(input_params={}, **kwargs):
     return DXHTTPRequest('/system/findJobs', input_params, **kwargs)
 
 
+def systemFindProjects(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findProjects', input_params, **kwargs)
+
+
 def tableNew(input_params={}, **kwargs):
     return DXHTTPRequest('/table/new', input_params, **kwargs)
 
