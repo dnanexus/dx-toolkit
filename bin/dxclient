@@ -110,15 +110,18 @@ def describe(args):
             print "Workspace\t" + desc["workspace"]
             print "Program\t\t" + desc["program"]
             print "State\t\t" + desc["state"]
-            print "Parent job\t" + desc["parentJob"]
+            if desc["parentJob"] is None:
+                print "Parent job\tNone"
+            else:
+                print "Parent job\t" + json.dumps(desc["parentJob"])
             print "Origin job\t" + desc["originJob"]
-            print "Function\t\t" + desc["function"]
+            print "Function\t" + desc["function"]
             print "Original Input\t" + json.dumps(desc["originalInput"])
             print "Input\t\t" + json.dumps(desc["input"])
             print "Output\t\t" + json.dumps(desc["output"])
             print "Launched by\t" + desc["launchedBy"]
             print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-#            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     elif args.dxid.startswith('project'):
         desc = dxpy.DXProject(args.dxid).describe() # TODO get args!
         if args.json:
@@ -167,6 +170,16 @@ def describe(args):
             print "Outgoing links\t" + json.dumps(desc["links"])
             print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
             print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+            for field in desc:
+                if field in common_fields:
+                    continue
+                else:
+                    if field == "media":
+                        print "Media type\t" + desc['media']
+                    elif field == "size":
+                        print "Size (bytes)\t" + str(desc['size'])
+                    else: # Unhandled prettifying
+                        print field + "\t\t" + json.dumps(desc[field])
 
 def file_get(args):
     filename = args.output
@@ -283,6 +296,9 @@ parser_find_jobs.add_argument('--parent', help='Job ID of the parent job')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
 
 parser_find_jobs.set_defaults(func=find_jobs)
+
+import optcomplete
+optcomplete.autocomplete(parser)
 
 args = parser.parse_args(sys.argv[1:])
 args.func(args)
