@@ -178,6 +178,8 @@ namespace dx {
     /** Returns the stringified representation of JSON object.
       * @param onlyTopLevel If set to true, then only JSON objects of type JSON_OBJECT
       *                     or JSON_ARRAY can call this function.
+      * @note If called on a JSON_STRING object directly, 
+      *       the string would be enclosed in quotes.
       * @return A string reprentation of current JSON object.
       * @see write()
       * @see readFromString()

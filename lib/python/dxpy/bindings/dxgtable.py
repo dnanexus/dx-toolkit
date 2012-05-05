@@ -33,13 +33,13 @@ class DXGTable(DXDataObject):
     _row_buf_maxsize = 1024*1024*20
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=40000, part_id_min=0, part_id_max=250000):
+                 buffer_size=40000, part_id_min=1, part_id_max=250000):
         self._keep_open = keep_open
         self._bufsize = buffer_size
         self._row_buf = StringIO.StringIO()
         self._part_id_min = part_id_min
         self._part_id_max = part_id_max
-        self._part_id = self._part_id_min
+        self._part_id = self._part_id_min - 1
         if dxid is not None:
             self.set_ids(dxid, project)
 
@@ -98,7 +98,7 @@ class DXGTable(DXDataObject):
         DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
-        self._part_id = self._part_id_min
+        self._part_id = self._part_id_min - 1
 
     def get_rows(self, query=None, columns=None, starting=None, limit=None, **kwargs):
         '''
@@ -216,7 +216,7 @@ class DXGTable(DXDataObject):
         return self.iterate_rows(**kwargs)
 
     def extend(self, columns, indices=None, keep_open=False,
-               buffer_size=40000, part_id_min=0, part_id_max=250000,
+               buffer_size=40000, part_id_min=1, part_id_max=250000,
                **kwargs):
         '''
         :param columns: List of new column names
@@ -287,7 +287,7 @@ class DXGTable(DXDataObject):
 
         '''
         desc = self.describe(**kwargs)
-        if len(desc["parts"]) > self._part_id_max:
+        if self._part_id > self._part_id_max:
             raise DXGTableError("All available part indices already used.")
 
         while self._part_id <= self._part_id_max:

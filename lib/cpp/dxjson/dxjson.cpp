@@ -40,7 +40,6 @@ namespace JSON_Utility
       in.unget();
   }
 
-  // Does not enclose strings in quotes while writing
   void WriteEscapedString(const std::string &s, std::ostream &out, bool enclosingQuotes = true)
   {
     if (enclosingQuotes)
