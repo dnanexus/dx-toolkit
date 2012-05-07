@@ -21,9 +21,6 @@
 #include <stdint.h>
 
 #include "utf8/utf8.h"
-
-typedef int64_t int64;
-
 // NOTE:
 // 1) UTF-8 validity is checked while reading JSON from a string;
 // 2) UTF-8
@@ -480,10 +477,10 @@ namespace dx {
 
   class Integer: public Value {
   public:
-    int64 val;
+    int64_t val;
 
     Integer() {}
-    Integer(const int64 &v):val(v) {}
+    Integer(const int64_t &v):val(v) {}
     void write(std::ostream &out) const { out<<val; }
     JSONValue type() const { return JSON_INTEGER; }
     size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
@@ -631,7 +628,7 @@ namespace dx {
 
     clear();
     if(std::numeric_limits<T>::is_integer)
-      this->val = new Integer(static_cast<int64>(x));
+      this->val = new Integer(static_cast<int64_t>(x));
     else
       this->val = new Real(static_cast<double>(x));
     return *this;
