@@ -12,7 +12,7 @@ export PYTHONPATH="${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
 export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
 
 # Debug environment variables
-export DX_APISERVER_HOST="nucleus-dev.dnanexus.com"
+export DX_APISERVER_HOST="localhost"
 export DX_APISERVER_PORT=8124
 export DX_SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
 export DX_PROJECT_CONTEXT_ID=project-000000000000000000000001

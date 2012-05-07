@@ -41,10 +41,10 @@ def main():
     start_part = int(opts.start_part)
     end_part = int(opts.end_part)
 
-    print sam_filename
-    print mappings_id
-    print reads_id
-    print reads_offset
+    print "sam file : %s" % sam_filename
+    print "mappings table : %s" % mappings_id
+    print "reads table : %s" % reads_id
+    print "reads offset : %d" % reads_offset
 
         ##### add partnum start and end here to avoid race condition with other converters!
 
@@ -87,7 +87,7 @@ def main():
     map_cols = mappings_table.get_col_names()
     map_col_lookup = {}
 
-    print map_cols
+    print json.dumps({map_cols})
 
     for i in range(len(map_cols)):
         map_col_lookup[map_cols[i]] = i  #account for ID column
@@ -129,7 +129,7 @@ def main():
     for field in 1, 3, 4, 7, 8:
         sam_record[field] = int(sam_record[field])
 
-    print sam_record
+    #print sam_record
 
     # get the index of the mapped read from name.  If paired \1 will refer to 'left' read, \2 to 'right'
     mapped_read = sam_record[sam_lookup['QNAME']].split('\\')
@@ -174,10 +174,39 @@ def main():
             for field in 1, 3, 4, 7, 8:
                 sam_record[field] = int(sam_record[field])
 
-        ###### sort and reconcile hi2 #######
-
         if sam_record == '':
             break
+
+        
+        ###### sort and reconcile hi2 #######
+
+        left_reads = []
+        right_reads = []
+
+        for i in range( len( sam_by_read_rows ) ):
+            #if paired:
+            if sam_by_read_rows[i][map_col_lookup['mate_id']] == 0:
+                left_reads.append( sam_by_read_rows[i] )
+            
+            if sam_by_read_rows[i][map_col_lookup['mate_id']] == 1:
+                right_reads.append( sam_by_read_rows[i] )
+
+        #print left_reads
+        #print right_reads
+
+        # find matching mate
+        for i in range( len( left_reads ) ):
+            for j in range( len ( left_reads ) ):
+                # if they're mates (as determined by starting at what they say there mate's location is
+                # then copy over each other's 'hi' value into your mate's 'hi' value, 'hi2'
+                if left_reads[i][map_col_lookup['lo2']] == right_reads[j][map_col_lookup['lo']] and left_reads[i][map_col_lookup['lo']] == right_reads[j][map_col_lookup['lo2']]:
+                    left_reads[i][map_col_lookup['hi2']] = right_reads[j][map_col_lookup['hi']]
+                    right_reads[j][map_col_lookup['hi2']] = left_reads[i][map_col_lookup['hi']]
+                    #print "$$$$$$$$$$$$$$$$$$$$$$"
+                    #print left_reads[i]
+                    #print right_reads[j]
+        
+        #####################################
 
         mappings_table.add_rows(sam_by_read_rows)
         sam_by_read_rows = []

@@ -18,7 +18,7 @@ filename = args[0]
 
 fastq_fh = open(filename) if os.path.exists(filename) else dxpy.open_dxfile(filename)
 
-fastq_columns = [{"name": "id", "type": "string"},
+fastq_columns = [{"name": "name", "type": "string"},
                  {"name": "sequence", "type": "string"},
                  {"name": "quality", "type": "string"}]
 
