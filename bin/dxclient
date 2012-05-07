@@ -177,7 +177,12 @@ def describe(args):
                     if field == "media":
                         print "Media type\t" + desc['media']
                     elif field == "size":
-                        print "Size (bytes)\t" + str(desc['size'])
+                        if desc["class"] == "file":
+                            print "Size (bytes)\t" + str(desc['size'])
+                        elif desc["class"] == "gtable":
+                            print "Size (rows)\t" + str(desc['size'])
+                        else:
+                            print "Size\t\t" + str(desc['size'])
                     else: # Unhandled prettifying
                         print field + "\t\t" + json.dumps(desc[field])
 
