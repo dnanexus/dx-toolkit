@@ -37,7 +37,7 @@ namespace DXLog {
 	   } else if (typ.compare("int") == 0) {
 	     b.append(key, int(data[key]));
 	   } else if (typ.compare("int64") == 0) {
-	     b.append(key, int64(data[key]));
+	     b.append(key, (long long int)data[key]);
 	   } else if (typ.compare("boolean") == 0) {
 	     b.append(key, bool(data[key]));
 	   } else if (typ.compare("double") == 0) {
@@ -45,7 +45,8 @@ namespace DXLog {
 	   }
 	 }
         
-	 return MongoDriver::insert(b.obj(), data["source"].get<string>(), errMsg);
+	 b.append("_shardKey", randomString(24));
+	 return MongoDriver::insert(b.obj(), schema[data["source"].get<string>()]["mongodb"]["collection"].get<string>(), errMsg);
       };
 
       void processQueue() {

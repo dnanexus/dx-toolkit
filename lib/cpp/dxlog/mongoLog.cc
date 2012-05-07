@@ -15,6 +15,12 @@ bool DXLog::MongoDriver::oneOperation(int action, const BSONObj &bson, const str
     string col = db + "." + collection;
     if (action == 1) {
       conn.insert(col, bson);
+      string e = conn.getLastError();
+      if ( !e.empty()) {
+	 errMsg = "Insert failed";
+	 return false;
+      }
+      return true;
     } else if (action == 2) {
       conn.ensureIndex(col, bson);
     }

@@ -167,12 +167,18 @@ bool DXLog::formMessageHead(int facility, int level, const string &tag, string &
   return true;
 }
 
+string DXLog::randomString(int n) {
+  char *s = new char[n+1];
+  static const char list[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+  for(int i = 0; i < n; i ++)
+    s[i] = list[rand() * 35];
+
+  return string(s);
+}
+
 void DXLog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
   // generate a random string to index the msg
-  char s[21];
-  static const char list[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-  for(int i = 0; i < 20; i ++)
-    s[i] = list[rand() * 35];
+  string s = randomString(20);
 
   int offset = 0, index = 0;
   Msgs.clear();
