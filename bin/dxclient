@@ -24,6 +24,10 @@ def load_env():
     except:
         pass
 
+def get_json_from_stdin():
+    user_json_str = raw_input('Type JSON here> ')
+    return json.loads(user_json_str)
+
 # Loading environment
 
 load_env()
@@ -52,6 +56,8 @@ def api(args):
         with open(args.input, 'r') as fd:
             data = fd.read()
             json_input = json.loads(data)
+    elif args.stdin:
+        json_input = get_json_from_stdin()
     print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                         json_input))
 
@@ -222,6 +228,7 @@ parser_api.add_argument('resource', help='is one of \"system\", a class name (e.
 parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
 parser_api.add_argument('json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
 parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
+parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
 parser_api.set_defaults(func=api)
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
