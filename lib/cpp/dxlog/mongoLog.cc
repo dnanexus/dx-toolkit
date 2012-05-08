@@ -2,7 +2,7 @@
 
 bool DXLog::MongoDriver::connected = false;
 string DXLog::MongoDriver::server = "localhost";
-string DXLog::MongoDriver::db = "log";
+string DXLog::MongoDriver::db = "dxlog";
 DBClientConnection DXLog::MongoDriver::conn(true);
 
 bool DXLog::MongoDriver::oneOperation(int action, const BSONObj &bson, const string &collection, string &errMsg) {

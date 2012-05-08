@@ -34,30 +34,48 @@ bool test(const char *cmd, const string &desired_output) {
 
   return true;
 }
-/*
-void testDirectLog() {
+
+bool test2(const string &filename) {
   string errMsg;
   dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
   DXLog::logger a(schema);
 
-  dx::JSON data(dx::JSON_OBJECT);
-  
-  for(int j = 0; j < 8; j++) {
-    data["level"] = j;
-    data["msg"] = "近期活動 €þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\nNew Line " + boost::lexical_cast<string>(j);
-    data["source"] = "app";
-    data["jobId"] = "testJob";
-    data["dbStore"] = true;
-    
-    if (a.Log(data, errMsg)) {
-      std::cout << data.toString() + "\n";
-    } else {
-      std::cout << data.toString() + ":" + errMsg << "\n";
+  dx::JSON data = DXLog::readJSON("./" + filename);
+  for (int i = 0; i< data.size(); i++) { 
+    if (! a.Log(data[i], errMsg)) {
+      cerr << data[i].toString() + ":" + errMsg << "\n";
+      return false;
     }
   }
+
+  return true;
 }
 
-void testAppLog() {
+bool test3(const string &filename) {
+  string errMsg;
+  dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
+  DXLog::logger a(schema);
+
+  dx::JSON data = DXLog::readJSON("./" + filename);
+  for (dx::JSON::object_iterator it = data.object_begin(); it != data.object_end(); it++) {
+    string desired_output = it->first; 
+    bool ret_val = a.Log(it->second, errMsg);
+    if (ret_val) {
+      cerr << desired_output << endl;
+      return false;
+    }
+
+    if (desired_output.compare(errMsg.substr(0, desired_output.length())) != 0) {
+      cerr << "desired error msg: " << desired_output << endl;
+      cerr << "actual error msg: " << errMsg << endl << endl;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/*void testAppLog() {
   string errMsg;
   dx::JSON conf = DXLog::readJSON("test_appLog_conf.js");
   dx::JSON schema = DXLog::readJSON("schema.js");
@@ -131,7 +149,15 @@ int main(void) {
   count[test("./dxDbLog test/dBLog/invalid_schema.js 2>&1", "api missing 'format' in 'text'")]++;
   count[test("./dxDbLog test/dBLog/missing_socketPath.js 2>&1", "socketPath is not specified")]++;
   count[test("./dxDbLog test/dBLog/invalid_socketPath.js 2>&1", "listen to socket /dev2/dblog\nSocket error: No such file or directory")]++;
-  
+ 
+  count[test2("test/messages/api.js")] ++;
+  count[test2("test/messages/app.js")] ++;
+  count[test2("test/messages/cloudmanager.js")] ++;
+  count[test2("test/messages/jobserver.js")] ++;
+  count[test2("test/messages/execserver.js")] ++;
+  count[test2("test/messages/audit.js")] ++;
+  count[test3("test/messages/malformatted.js")] ++;
+
   cout << count[0] + count[1] << " tests, " << count[0] << " failed\n"; 
   return (0);
 }

@@ -170,10 +170,14 @@ bool DXLog::formMessageHead(int facility, int level, const string &tag, string &
 string DXLog::randomString(int n) {
   char *s = new char[n+1];
   static const char list[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-  for(int i = 0; i < n; i ++)
-    s[i] = list[rand() * 35];
+  for(int i = 0; i < n; i ++) {
+    s[i] = list[int(double(rand())/double(RAND_MAX) * 35)];
+  }
+  s[n] = '\0';
 
-  return string(s);
+  string ret_val = string(s);
+  delete [] s;
+  return ret_val;
 }
 
 void DXLog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {

@@ -44,7 +44,7 @@ namespace DXLog {
 	     b.append(key, double(data[key]));
 	   }
 	 }
-        
+       
 	 b.append("_shardKey", randomString(24));
 	 return MongoDriver::insert(b.obj(), schema[data["source"].get<string>()]["mongodb"]["collection"].get<string>(), errMsg);
       };
@@ -62,7 +62,7 @@ namespace DXLog {
 		  if (i == 0) rsysLog(3, errMsg + " Msg: " + que.front());
 		  sleep(5);
 		}
-	     } catch (std::exception &e) {
+	    } catch (std::exception &e) {
 		rsysLog(3, string(e.what()) + " Msg: " + que.front());
 	     }
 	
