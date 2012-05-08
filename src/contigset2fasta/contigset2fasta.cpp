@@ -15,7 +15,7 @@ using namespace dx;
 void format_FASTA(string &name, vector<char> &buf, ofstream &out, int line_len = 60) {
   out << ">" << name << endl;
   int64_t length = buf.size();
-  for (int64 j = 0; j < length; j += line_len) {
+  for (int64_t j = 0; j < length; j += line_len) {
     out.write((const char *) (&(buf[j])), min<int64_t>(line_len, length - j));
     out << endl;
   }
