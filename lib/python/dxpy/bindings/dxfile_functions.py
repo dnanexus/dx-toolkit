@@ -147,7 +147,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         dxfile.rename(os.path.basename(filename), **remaining_kwargs)
     else:
         try:
-            dxfile.rename(file.name, **remaining_kwargs)
+            dxfile.rename(os.path.basename(file.name), **remaining_kwargs)
         except AttributeError:
             pass
 
