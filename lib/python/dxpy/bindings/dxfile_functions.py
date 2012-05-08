@@ -34,6 +34,7 @@ def open_dxfile(dxid, project=None, buffer_size=1024*1024*100):
         DXFile(dxid)
 
     '''
+    # TODO: support streaming of compressed files: spawn a subprocess and use Popen.communicate() if appropriate data type is detected
     return DXFile(dxid, project=project, buffer_size=buffer_size)
 
 def new_dxfile(keep_open=False, buffer_size=1024*1024*100, **kwargs):
@@ -94,11 +95,13 @@ def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
                     break
                 fd.write(file_content)
 
-def upload_local_file(filename, media_type=None, keep_open=False,
+def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       buffer_size=1024*1024*100, wait_on_close=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
+    :param file: File-like object
+    :type file: File-like object
     :param media_type: Internet Media Type
     :type media_type: string
     :returns: Remote file handler
@@ -107,30 +110,47 @@ def upload_local_file(filename, media_type=None, keep_open=False,
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Uploads *filename* into a new file object (with media type
+    Uploads *filename* or reads from *file* into a new file object (with media type
     *media_type* if given) and returns the associated remote file
     handler.  In addition, it will set the "name" property of the
-    remote file to *filename*.
+    remote file to *filename* or to *file.name* (if it exists).
+
+    Examples:
+        dxpy.upload_local_file("/home/ubuntu/reads.fastq.gz")
+
+        with open("reads.fastq") as fh:
+            dxpy.upload_local_file(file=fh)
 
     TODO: Do I want an optional argument to indicate in what size
     chunks the file should be uploaded or in how many pieces?
 
     '''
+    fd = file if filename is None else open(filename, 'rb')
 
     dxfile = new_dxfile(keep_open=keep_open, buffer_size=buffer_size, media_type=media_type, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
-    with open(filename, 'rb') as fd:
-        while True:
-            buf = fd.read(dxfile._bufsize)
-            if len(buf) == 0:
-                break
-            dxfile.write(buf, **remaining_kwargs)
+    while True:
+        buf = fd.read(dxfile._bufsize)
+        if len(buf) == 0:
+            break
+        dxfile.write(buf, **remaining_kwargs)
+
+    if filename is not None:
+        fd.close()
 
     if not keep_open:
         dxfile.close(block=wait_on_close, **remaining_kwargs)
-    dxfile.rename(os.path.basename(filename), **remaining_kwargs)
+
+    if filename is not None:
+        dxfile.rename(os.path.basename(filename), **remaining_kwargs)
+    else:
+        try:
+            dxfile.rename(file.name, **remaining_kwargs)
+        except AttributeError:
+            pass
+
     return dxfile
 
 def upload_string(to_upload, media_type=None, keep_open=False,
