@@ -22,7 +22,7 @@ bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &e
   try {
     if (! message.type() == dx::JSON_OBJECT) throwString("log input is not a hash");
 
-    if (! message.has("timestamp")) message["timestamp"] = int64(time(NULL)*1000);
+    if (! message.has("timestamp")) message["timestamp"] = (long long int)(time(NULL)*1000);
 
     if (! message.has("source")) throwString("Missing source of the log");
     string source = message["source"].get<string>();

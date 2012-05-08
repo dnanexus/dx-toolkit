@@ -27,7 +27,7 @@ string DXLog::getHostname() {
   return string(buf);
 }
 
-string DXLog::timeISOString(int64 utc) {
+string DXLog::timeISOString(long long int utc) {
   time_t t = utc/1000;
   struct tm *ptm = gmtime( &t);
   char timeString[80];

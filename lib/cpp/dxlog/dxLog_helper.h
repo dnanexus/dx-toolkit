@@ -12,7 +12,7 @@ namespace DXLog {
   
   string getHostname();
 
-  string timeISOString(int64 utc);
+  string timeISOString(long long int utc);
 
   // throw a const string with detailed information if there is an error
   void ValidateLogLevel(const dx::JSON &level);
