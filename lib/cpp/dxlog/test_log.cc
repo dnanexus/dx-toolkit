@@ -75,36 +75,42 @@ bool test3(const string &filename) {
   return true;
 }
 
-/*void testAppLog() {
+bool testAppLog() {
+  bool ret_val = true;
   string errMsg;
-  dx::JSON conf = DXLog::readJSON("test_appLog_conf.js");
-  dx::JSON schema = DXLog::readJSON("schema.js");
-  if (! DXLog::AppLog::initEnv(conf, schema, errMsg)) {
-    cout << errMsg << endl;
-    return;
+  dx::JSON startJSON = DXLog::readJSON("test/start_joblog.js");
+  string cmd = "/var/log/bin/startJobLog '" + startJSON.toString() + "'";
+  system(cmd.c_str());
+
+  dx::JSON stopJSON = DXLog::readJSON("test/stop_joblog.js");
+  dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
+  if (! DXLog::AppLog::initEnv(stopJSON, schema, errMsg)) {
+    cerr << errMsg << endl;
+    return false;
   }
 
   dx::JSON data(dx::JSON_OBJECT);
-  for(int j = 0; j < 40; j++) {
+  for(int j = 0; j < 10; j++) {
     data["level"] = j%8;
     data["msg"] = "Test App Log " + boost::lexical_cast<string>(j);
-    data["source"] = "app";
     data["jobId"] = "testJob";
     
-    if (DXLog::AppLog::log(data, errMsg)) {
-      std::cout << data.toString() + "\n";
-    } else {
-      std::cout << data.toString() + ":" + errMsg << "\n";
+    if (! DXLog::AppLog::log(data, errMsg)) {
+      cerr << data.toString() + ":" + errMsg << "\n";
+      ret_val = false;
+      break;
     }
   }
 
-  if (! DXLog::AppLog::done(errMsg)) std::cout << errMsg << endl;
+  cmd = "/var/log/bin/stopJobLog '" + stopJSON.toString() + "'";
+  system(cmd.c_str());
+  return ret_val;
 }
-*/
+
 int main(void) {
   int count[2];
   count[0] = count[1] = 0;
-  count[test("./appLogHandler 2>&1", "Usage: appLogHandler configFile")]++; 
+  /*count[test("./appLogHandler 2>&1", "Usage: appLogHandler configFile")]++; 
   count[test("./appLogHandler test/appLog/non_exist.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
   count[test("./appLogHandler test/appLog/no_socketPath.js 2>&1", "socketPath is not specified")]++; 
   count[test("./appLogHandler test/appLog/empty_socketPath.js 2>&1", "socketPath is empty")]++; 
@@ -156,8 +162,9 @@ int main(void) {
   count[test2("test/messages/jobserver.js")] ++;
   count[test2("test/messages/execserver.js")] ++;
   count[test2("test/messages/audit.js")] ++;
-  count[test3("test/messages/malformatted.js")] ++;
+  count[test3("test/messages/malformatted.js")] ++;*/
 
+  count[testAppLog()] ++;
   cout << count[0] + count[1] << " tests, " << count[0] << " failed\n"; 
   return (0);
 }

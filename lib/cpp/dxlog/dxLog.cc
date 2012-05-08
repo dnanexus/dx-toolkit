@@ -133,6 +133,7 @@ int DXLog::AppLog::socketIndex(int level) {
 
 bool DXLog::AppLog::log(dx::JSON &message, string &errMsg) {
   try {
+    message["source"] = "app";
     if (! ValidateLogData(schema, message, errMsg)) return false;
 
     int index = socketIndex(int(message["level"]));
