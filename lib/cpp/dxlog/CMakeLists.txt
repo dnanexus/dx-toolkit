@@ -13,11 +13,11 @@ add_library(DXLog mongoLog.cc unixDGRAM.cc dxLog.cc dxLog_helper.cc)
 add_executable(verify_logschema verify_logschema.cc)
 target_link_libraries(verify_logschema DXLog dxjson boost_thread boost_filesystem boost_program_options boost_system)
 
-add_executable(dxDbLog dxDbLog.cc)
-target_link_libraries(dxDbLog DXLog dxjson mongoclient boost_thread boost_filesystem boost_program_options boost_system)
+add_executable(dx_dbLog dxDbLog.cc)
+target_link_libraries(dx_dbLog DXLog dxjson mongoclient boost_thread boost_filesystem boost_program_options boost_system)
 
-add_executable(appLogHandler appLogHandler.cc)
-target_link_libraries(appLogHandler DXLog dxjson mongoclient boost_thread boost_filesystem boost_program_options boost_system)
+add_executable(dx_appLogHandler appLogHandler.cc)
+target_link_libraries(dx_appLogHandler DXLog dxjson mongoclient boost_thread boost_filesystem boost_program_options boost_system)
 
 add_executable(test_log test_log.cc)
 target_link_libraries(test_log DXLog dxjson)
