@@ -34,10 +34,12 @@ string exec(const char* cmd) {
 bool test(const string cmd, const string &desired_output) {
   int n = desired_output.length();
   string output = exec(cmd.c_str()).substr(0, n);
+  cout << cmd << endl;
   if (desired_output.compare(output) != 0) {
     cerr << "cmd: " << cmd << endl;
     cerr << "desired output: " << desired_output << endl;
     cerr << "actual output: " << output << endl << endl;
+    throw("OK");
     return false;
   }
 
@@ -93,7 +95,7 @@ bool testAppLog() {
   system(cmd.c_str());
 
   dx::JSON stopJSON = DXLog::readJSON(myPath() + "/test/stop_joblog.js");
-  dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
+  dx::JSON schema = DXLog::readJSON("/etc/dxlog/schema.js");
   if (! DXLog::AppLog::initEnv(stopJSON, schema, errMsg)) {
     cerr << errMsg << endl;
     return false;
