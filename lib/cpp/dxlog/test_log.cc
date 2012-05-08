@@ -110,7 +110,7 @@ bool testAppLog() {
 int main(void) {
   int count[2];
   count[0] = count[1] = 0;
-  /*count[test("./appLogHandler 2>&1", "Usage: appLogHandler configFile")]++; 
+  count[test("./appLogHandler 2>&1", "Usage: appLogHandler configFile")]++; 
   count[test("./appLogHandler test/appLog/non_exist.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
   count[test("./appLogHandler test/appLog/no_socketPath.js 2>&1", "socketPath is not specified")]++; 
   count[test("./appLogHandler test/appLog/empty_socketPath.js 2>&1", "socketPath is empty")]++; 
@@ -162,7 +162,7 @@ int main(void) {
   count[test2("test/messages/jobserver.js")] ++;
   count[test2("test/messages/execserver.js")] ++;
   count[test2("test/messages/audit.js")] ++;
-  count[test3("test/messages/malformatted.js")] ++;*/
+  count[test3("test/messages/malformatted.js")] ++;
 
   count[testAppLog()] ++;
   cout << count[0] + count[1] << " tests, " << count[0] << " failed\n"; 
