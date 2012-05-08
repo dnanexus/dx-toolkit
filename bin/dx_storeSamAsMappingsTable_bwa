@@ -322,7 +322,7 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
  
     ######### name #########
     if 'name' in read_col_lookup:
-        map_row[map_col_lookup['names']] = read[read_col_lookup['name']]
+        map_row[map_col_lookup['name']] = read[read_col_lookup['name']]
                                  
 
     ######### sequence #########
