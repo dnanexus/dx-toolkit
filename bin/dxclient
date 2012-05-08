@@ -58,6 +58,7 @@ def api(args):
             json_input = json.loads(data)
     elif args.stdin:
         json_input = get_json_from_stdin()
+    print json.dumps(json_input)
     print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                         json_input))
 
@@ -189,6 +190,11 @@ def describe(args):
                             print "Size (rows)\t" + str(desc['size'])
                         else:
                             print "Size\t\t" + str(desc['size'])
+                    elif field == "columns":
+                        coldescs = ""
+                        for column in desc["columns"]:
+                            coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
+                        print "Columns" + coldescs[:-1]
                     else: # Unhandled prettifying
                         print field + "\t\t" + json.dumps(desc[field])
 
@@ -204,6 +210,26 @@ def file_get(args):
 def file_put(args):
     print dxpy.upload_local_file(args.filename).get_id()
 
+def gtable_get(args):
+    gri_query = None
+    if args.gri is not None:
+        gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
+                                                      int(args.gri[1]),
+                                                      int(args.gri[2]),
+                                                      args.gri_mode,
+                                                      args.gri_name)
+    if args.starting is not None:
+        args.starting = int(args.starting)
+    if args.limit is not None:
+        args.limit = int(args.limit)
+    result = dxpy.DXGTable(args.dxid).get_rows(query=gri_query, starting=args.starting,
+                                               limit=args.limit)
+    if result["next"] is not None:
+        print "Use as STARTING to continue query: " + str(result["next"])
+    print "# retrieved rows: " + str(result["size"])
+    for row in result["data"]:
+        print json.dumps(row)
+
 def find_jobs(args):
     results = dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
                              state=args.state, origin_job=args.origin, parent_job=args.parent,
@@ -214,22 +240,35 @@ def find_jobs(args):
         else:
             print result["id"] + "\t" + result["describe"]["state"]
 
+def close(args):
+    json_input = {}
+    dxpy.DXHTTPRequest('/' + args.dxid + '/close',
+                       json_input)
+
 parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAnexus Command-Line Client, API v1.0.0')
 subparsers = parser.add_subparsers()
+
+parser_set = subparsers.add_parser('set', help='Sets default values for communication with the API server',
+                                   description='Sets default values for communication with the API server')
+subparsers_set = parser_set.add_subparsers()
+
+parser_set_host = subparsers_set.add_parser('host', help='Sets the API server hostname')
+parser_set_host.add_argument('host', help='API server hostname')
+parser_set_host.set_defaults(func=set_host)
+
+parser_set_port = subparsers_set.add_parser('port', help='Sets the API server port number')
+parser_set_port.add_argument('port', help='API server port number')
+parser_set_port.set_defaults(func=set_port)
+
+parser_set_project = subparsers_set.add_parser('project', help='Sets the default project ID')
+parser_set_project.add_argument('project', help='Project ID')
+parser_set_project.set_defaults(func=set_project)
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
 parser_login.set_defaults(func=login)
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
 parser_logout.set_defaults(func=logout)
-
-parser_api = subparsers.add_parser('api', help='Make an API call')
-parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
-parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
-parser_api.add_argument('json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
-parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
-parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
-parser_api.set_defaults(func=api)
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
                                   description='List folders and/or objects in a folder')
@@ -270,21 +309,17 @@ parser_file_put = subparsers_file.add_parser('put', help='Upload a file')
 parser_file_put.add_argument('filename', help='local filename to upload')
 parser_file_put.set_defaults(func=file_put)
 
-parser_set = subparsers.add_parser('set', help='Sets default values for communication with the API server',
-                                   description='Sets default values for communication with the API server')
-subparsers_set = parser_set.add_subparsers()
+parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
+subparsers_gtable = parser_gtable.add_subparsers()
 
-parser_set_host = subparsers_set.add_parser('host', help='Sets the API server hostname')
-parser_set_host.add_argument('host', help='API server hostname')
-parser_set_host.set_defaults(func=set_host)
-
-parser_set_port = subparsers_set.add_parser('port', help='Sets the API server port number')
-parser_set_port.add_argument('port', help='API server port number')
-parser_set_port.set_defaults(func=set_port)
-
-parser_set_project = subparsers_set.add_parser('project', help='Sets the default project ID')
-parser_set_project.add_argument('project', help='Project ID')
-parser_set_project.set_defaults(func=set_project)
+parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable')
+parser_gtable_get.add_argument('--starting', help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
+parser_gtable_get.add_argument('--limit', help='Specify a limit to the number of rows returned')
+parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
+parser_gtable_get.add_argument('--gri_mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
+parser_gtable_get.add_argument('--gri_name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
+parser_gtable_get.add_argument('dxid', help='GTable ID from which to fetch rows')
+parser_gtable_get.set_defaults(func=gtable_get)
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object', description='Describe a remote object')
 parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
@@ -293,6 +328,10 @@ parser_describe.add_argument('--details', help='Include details if available', a
 parser_describe.add_argument('--json', help='Display return value in JSON', action='store_true')
 parser_describe.add_argument('dxid', help='Object ID to describe')
 parser_describe.set_defaults(func=describe)
+
+parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object')
+parser_close.add_argument('dxid', help='Object ID to close')
+parser_close.set_defaults(func=close)
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
                                     description='Search functionality over data objects, projects, and jobs')
@@ -308,6 +347,14 @@ parser_find_jobs.add_argument('--parent', help='Job ID of the parent job')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
 
 parser_find_jobs.set_defaults(func=find_jobs)
+
+parser_api = subparsers.add_parser('api', help='Make an API call')
+parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
+parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
+parser_api.add_argument('json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
+parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
+parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
+parser_api.set_defaults(func=api)
 
 args = parser.parse_args(sys.argv[1:])
 args.func(args)
