@@ -32,6 +32,9 @@ namespace DXLog {
    */
   bool formMessageHead(int facility, int level, const string &tag, string &head, string &errMsg);
 
+  // generate a random string of size n
+  string randomString(int n);
+
   // Split a single long string into a vector of strings that are shorter than maxMsgSize
   void splitMessage(const string &msg, vector<string> &Msgs, int maxMsgSize);
 

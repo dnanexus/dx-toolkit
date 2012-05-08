@@ -30,7 +30,7 @@ bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &e
 
     dx::JSON tConfig = config[source];
     for (int i = 0; i < tConfig["required"].size(); i++) {
-      if (! message.has(tConfig["required"][i].get<string>())) throwString("Missing " + tConfig["required"].get<string>());
+      if (! message.has(tConfig["required"][i].get<string>())) throwString("Missing " + tConfig["required"][i].get<string>());
     }
 
     if (tConfig.has("facility")) message["facility"] = int(tConfig["facility"]);
@@ -40,6 +40,7 @@ bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &e
     ValidateLogLevel(message["level"]);
    
     bool dbStore = (message.has("dbStore")) ? bool(message["dbStore"]) : false;
+    if (int(message["level"]) < 3) dbStore = true;
     if (dbStore) {
       int maxMsgSize = (tConfig["mongodb"].has("maxMsgSize")) ? int(tConfig["mongodb"]["maxMsgSize"]) : 2000;
       if (! message["msg"].get<string>().size() > maxMsgSize) throwString("Log message too log");
@@ -101,6 +102,7 @@ bool DXLog::logger::Log(dx::JSON &message, string &eMsg) {
   if (! ret_val) StoreMsgLocal(txtMsgFile, message.toString());
 
   bool dbStore = (message.has("dbStore")) ? bool(message["dbStore"]) : false;
+  if (int(message["level"]) < 3) dbStore = true;
   if (ret_val && dbStore) {
     ret_val = SendMessage2UnixDGRAMSocket("/dev/dblog", message.toString(), eMsg);
     if (! ret_val) StoreMsgLocal(dbMsgFile, message.toString());
@@ -131,6 +133,7 @@ int DXLog::AppLog::socketIndex(int level) {
 
 bool DXLog::AppLog::log(dx::JSON &message, string &errMsg) {
   try {
+    message["source"] = "app";
     if (! ValidateLogData(schema, message, errMsg)) return false;
 
     int index = socketIndex(int(message["level"]));
