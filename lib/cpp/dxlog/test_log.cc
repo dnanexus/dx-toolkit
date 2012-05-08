@@ -88,7 +88,8 @@ bool testAppLog() {
   bool ret_val = true;
   string errMsg;
   dx::JSON startJSON = DXLog::readJSON(myPath() + "/test/start_joblog.js");
-  string cmd = "startJobLog '" + startJSON.toString() + "'";
+  string cmd = "dx_startJobLog '" + startJSON.toString() + "'";
+  cout << cmd << endl;
   system(cmd.c_str());
 
   dx::JSON stopJSON = DXLog::readJSON(myPath() + "/test/stop_joblog.js");
@@ -111,7 +112,7 @@ bool testAppLog() {
     }
   }
 
-  cmd = "stopJobLog '" + stopJSON.toString() + "'";
+  cmd = "dx_stopJobLog '" + stopJSON.toString() + "'";
   system(cmd.c_str());
   return ret_val;
 }
@@ -120,50 +121,50 @@ int main(void) {
   int count[2];
   count[0] = count[1] = 0;
   count[test(myPath() + "/dx_appLogHandler 2>&1", "Usage: appLogHandler configFile")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/non_exist.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/no_socketPath.js 2>&1", "socketPath is not specified")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/empty_socketPath.js 2>&1", "socketPath is empty")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/no_projectId.js 2>&1", "projectId is not specified")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/no_jobId.js 2>&1", "jobId is not specified")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/no_userId.js 2>&1", "userId is not specified")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + " test/appLog/no_programId.js 2>&1", "programId is not specified")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + "  test/appLog/no_logschema.js 2>&1", "Log schema is not specified")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + "  test/appLog/no_logschema_file.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + "  test/appLog/invalid_logschema.js 2>&1", "api missing 'format' in 'text'")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/non_exist.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_socketPath.js 2>&1", "socketPath is not specified")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/empty_socketPath.js 2>&1", "socketPath is empty")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_projectId.js 2>&1", "projectId is not specified")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_jobId.js 2>&1", "jobId is not specified")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_userId.js 2>&1", "userId is not specified")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_programId.js 2>&1", "programId is not specified")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_logschema.js 2>&1", "Log schema is not specified")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/no_logschema_file.js 2>&1", "Illegal JSON value. Cannot start with :")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/invalid_logschema.js 2>&1", "api missing 'format' in 'text'")]++; 
   unlink("./test/testlog1");
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + "  test/appLog/invalid_socket.js 2>&1", "Socket error: No such file or directory")]++;
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/invalid_socket.js 2>&1", "Socket error: No such file or directory")]++;
   unlink("./test/testlog1");
-  count[test(myPath() + "/dx_appLogHandler " + myPath() + "  test/appLog/invalid_socket2.js 2>&1", "Socket error: Address already in use")]++; 
+  count[test(myPath() + "/dx_appLogHandler " + myPath() + "/test/appLog/invalid_socket2.js 2>&1", "Socket error: Address already in use")]++; 
   
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_schema.js 2>&1", "Log schema is not a hash")]++; 
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_logfacility.js 2>&1", "app Log facility is not an integer")]++; 
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_logfacility2.js 2>&1", "api Invalid log facility")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_required.js 2>&1", "cloudManager 'required' is not an array of string")]++; 
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_required2.js 2>&1", "api 'required' is not an array of string")]++; 
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_maxMsgSize.js 2>&1", "app 'maxMsgSize' is not an integer")]++; 
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_maxMsgSize2.js 2>&1", "cloudManager Invalid max message size")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_text.js 2>&1", "api 'text' is not a hash")]++; 
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/missing_text.js 2>&1", "app missing schema of 'text'")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/text_missing_format.js 2>&1", "cloudManager missing 'format' in 'text'")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_text_format.js 2>&1", "api 'format' in 'text' is not a string")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/text_missing_tag.js 2>&1", "app missing 'tag' in 'text'")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_text_tag.js 2>&1", "cloudManager 'tag' in 'text' is not a string")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/missing_mongodb.js 2>&1", "api missing schema of 'mongodb'")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb.js 2>&1", "app 'mongodb' is not a hash")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_columns.js 2>&1", "cloudManager 'columns' in 'mongodb' is not a hash")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/mongodb_missing_columns.js 2>&1", "api missing 'columns' in 'mongodb'")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_column_type.js 2>&1", "app column type of mongodb is not a string")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_column_type2.js 2>&1", "cloudManager invalid column type int32 of mongodb")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_indexes.js 2>&1", "api 'indexes' in 'mongodb' is not an array of hash")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_indexes2.js 2>&1", "app 'indexes' in 'mongodb' is not an array of hash")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_indexes3.js 2>&1", "cloudManager column hostname2 in 'indexes' does not match those in 'columns'")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_indexes4.js 2>&1", "api index value of timestamp is neither 1 nor -1")]++;
-  count[test(myPath() + "/verify_logschema " + myPath() + "  test/logschema/invalid_mongodb_indexes5.js 2>&1", "app index value of timestamp is neither 1 nor -1")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_schema.js 2>&1", "Log schema is not a hash")]++; 
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_logfacility.js 2>&1", "app Log facility is not an integer")]++; 
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_logfacility2.js 2>&1", "api Invalid log facility")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_required.js 2>&1", "cloudManager 'required' is not an array of string")]++; 
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_required2.js 2>&1", "api 'required' is not an array of string")]++; 
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_maxMsgSize.js 2>&1", "app 'maxMsgSize' is not an integer")]++; 
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_maxMsgSize2.js 2>&1", "cloudManager Invalid max message size")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_text.js 2>&1", "api 'text' is not a hash")]++; 
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/missing_text.js 2>&1", "app missing schema of 'text'")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/text_missing_format.js 2>&1", "cloudManager missing 'format' in 'text'")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_text_format.js 2>&1", "api 'format' in 'text' is not a string")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/text_missing_tag.js 2>&1", "app missing 'tag' in 'text'")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_text_tag.js 2>&1", "cloudManager 'tag' in 'text' is not a string")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/missing_mongodb.js 2>&1", "api missing schema of 'mongodb'")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb.js 2>&1", "app 'mongodb' is not a hash")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_columns.js 2>&1", "cloudManager 'columns' in 'mongodb' is not a hash")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/mongodb_missing_columns.js 2>&1", "api missing 'columns' in 'mongodb'")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_column_type.js 2>&1", "app column type of mongodb is not a string")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_column_type2.js 2>&1", "cloudManager invalid column type int32 of mongodb")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_indexes.js 2>&1", "api 'indexes' in 'mongodb' is not an array of hash")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_indexes2.js 2>&1", "app 'indexes' in 'mongodb' is not an array of hash")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_indexes3.js 2>&1", "cloudManager column hostname2 in 'indexes' does not match those in 'columns'")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_indexes4.js 2>&1", "api index value of timestamp is neither 1 nor -1")]++;
+  count[test(myPath() + "/verify_logschema " + myPath() + "/test/logschema/invalid_mongodb_indexes5.js 2>&1", "app index value of timestamp is neither 1 nor -1")]++;
   
-  count[test(myPath() + "/dx_dbLog " + myPath() + " test/dBLog/missing_schema.js 2>&1", "log schema is not specified")]++;
-  count[test(myPath() + "/dx_dbLog " + myPath() + " test/dBLog/invalid_schema.js 2>&1", "api missing 'format' in 'text'")]++;
-  count[test(myPath() + "/dx_dbLog " + myPath() + " test/dBLog/missing_socketPath.js 2>&1", "socketPath is not specified")]++;
-  count[test(myPath() + "/dx_dbLog " + myPath() + " test/dBLog/invalid_socketPath.js 2>&1", "listen to socket /dev2/dblog\nSocket error: No such file or directory")]++;
+  count[test(myPath() + "/dx_dbLog " + myPath() + "/test/dBLog/missing_schema.js 2>&1", "log schema is not specified")]++;
+  count[test(myPath() + "/dx_dbLog " + myPath() + "/test/dBLog/invalid_schema.js 2>&1", "api missing 'format' in 'text'")]++;
+  count[test(myPath() + "/dx_dbLog " + myPath() + "/test/dBLog/missing_socketPath.js 2>&1", "socketPath is not specified")]++;
+  count[test(myPath() + "/dx_dbLog " + myPath() + "/test/dBLog/invalid_socketPath.js 2>&1", "listen to socket /dev2/dblog\nSocket error: No such file or directory")]++;
  
   count[test2("test/messages/api.js")] ++;
   count[test2("test/messages/app.js")] ++;
