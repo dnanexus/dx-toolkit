@@ -34,55 +34,79 @@ bool test(const char *cmd, const string &desired_output) {
 
   return true;
 }
-/*
-void testDirectLog() {
+
+bool test2(const string &filename) {
   string errMsg;
   dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
   DXLog::logger a(schema);
 
-  dx::JSON data(dx::JSON_OBJECT);
-  
-  for(int j = 0; j < 8; j++) {
-    data["level"] = j;
-    data["msg"] = "近期活動 €þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\nNew Line " + boost::lexical_cast<string>(j);
-    data["source"] = "app";
-    data["jobId"] = "testJob";
-    data["dbStore"] = true;
-    
-    if (a.Log(data, errMsg)) {
-      std::cout << data.toString() + "\n";
-    } else {
-      std::cout << data.toString() + ":" + errMsg << "\n";
+  dx::JSON data = DXLog::readJSON("./" + filename);
+  for (int i = 0; i< data.size(); i++) { 
+    if (! a.Log(data[i], errMsg)) {
+      cerr << data[i].toString() + ":" + errMsg << "\n";
+      return false;
     }
   }
+
+  return true;
 }
 
-void testAppLog() {
+bool test3(const string &filename) {
   string errMsg;
-  dx::JSON conf = DXLog::readJSON("test_appLog_conf.js");
-  dx::JSON schema = DXLog::readJSON("schema.js");
-  if (! DXLog::AppLog::initEnv(conf, schema, errMsg)) {
-    cout << errMsg << endl;
-    return;
+  dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
+  DXLog::logger a(schema);
+
+  dx::JSON data = DXLog::readJSON("./" + filename);
+  for (dx::JSON::object_iterator it = data.object_begin(); it != data.object_end(); it++) {
+    string desired_output = it->first; 
+    bool ret_val = a.Log(it->second, errMsg);
+    if (ret_val) {
+      cerr << desired_output << endl;
+      return false;
+    }
+
+    if (desired_output.compare(errMsg.substr(0, desired_output.length())) != 0) {
+      cerr << "desired error msg: " << desired_output << endl;
+      cerr << "actual error msg: " << errMsg << endl << endl;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool testAppLog() {
+  bool ret_val = true;
+  string errMsg;
+  dx::JSON startJSON = DXLog::readJSON("test/start_joblog.js");
+  string cmd = "/var/log/bin/startJobLog '" + startJSON.toString() + "'";
+  system(cmd.c_str());
+
+  dx::JSON stopJSON = DXLog::readJSON("test/stop_joblog.js");
+  dx::JSON schema = DXLog::readJSON("../../../../logserver/config/schema.js");
+  if (! DXLog::AppLog::initEnv(stopJSON, schema, errMsg)) {
+    cerr << errMsg << endl;
+    return false;
   }
 
   dx::JSON data(dx::JSON_OBJECT);
-  for(int j = 0; j < 40; j++) {
+  for(int j = 0; j < 10; j++) {
     data["level"] = j%8;
     data["msg"] = "Test App Log " + boost::lexical_cast<string>(j);
-    data["source"] = "app";
     data["jobId"] = "testJob";
     
-    if (DXLog::AppLog::log(data, errMsg)) {
-      std::cout << data.toString() + "\n";
-    } else {
-      std::cout << data.toString() + ":" + errMsg << "\n";
+    if (! DXLog::AppLog::log(data, errMsg)) {
+      cerr << data.toString() + ":" + errMsg << "\n";
+      ret_val = false;
+      break;
     }
   }
 
-  if (! DXLog::AppLog::done(errMsg)) std::cout << errMsg << endl;
+  cmd = "/var/log/bin/stopJobLog '" + stopJSON.toString() + "'";
+  system(cmd.c_str());
+  return ret_val;
 }
-*/
+
 int main(void) {
   int count[2];
   count[0] = count[1] = 0;
@@ -131,7 +155,16 @@ int main(void) {
   count[test("./dxDbLog test/dBLog/invalid_schema.js 2>&1", "api missing 'format' in 'text'")]++;
   count[test("./dxDbLog test/dBLog/missing_socketPath.js 2>&1", "socketPath is not specified")]++;
   count[test("./dxDbLog test/dBLog/invalid_socketPath.js 2>&1", "listen to socket /dev2/dblog\nSocket error: No such file or directory")]++;
-  
+ 
+  count[test2("test/messages/api.js")] ++;
+  count[test2("test/messages/app.js")] ++;
+  count[test2("test/messages/cloudmanager.js")] ++;
+  count[test2("test/messages/jobserver.js")] ++;
+  count[test2("test/messages/execserver.js")] ++;
+  count[test2("test/messages/audit.js")] ++;
+  count[test3("test/messages/malformatted.js")] ++;
+
+  count[testAppLog()] ++;
   cout << count[0] + count[1] << " tests, " << count[0] << " failed\n"; 
   return (0);
 }
