@@ -87,7 +87,7 @@ def main():
     map_cols = mappings_table.get_col_names()
     map_col_lookup = {}
 
-    print json.dumps({map_cols})
+    print json.dumps(map_cols)
 
     for i in range(len(map_cols)):
         map_col_lookup[map_cols[i]] = i  #account for ID column
@@ -298,7 +298,8 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
 
      ##########lo2	PNEXT#############
 
-        map_row[map_col_lookup['lo2']] = sam_record[sam_lookup['PNEXT']]
+        # subtract 1 to convert from 1 based to 0 based coordinates
+        map_row[map_col_lookup['lo2']] = sam_record[sam_lookup['PNEXT']] - 1
 
      ##########hi2	From "hi" of the matching record (OUCH!)##########
 
