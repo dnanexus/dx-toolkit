@@ -384,11 +384,15 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
 
     ##########qc	0x200 and/or 0x400 -- TBD############
 
-    if sam_record[sam_lookup['FLAG']] & 0x200 == 1:
+    if (sam_record[sam_lookup['FLAG']] & 0x200 == 1 and sam_record[sam_lookup['FLAG']] & 0x400 == 1):
+        map_row[map_col_lookup['qc']] = "both not qc and PCR or optical duplicate"
+
+    elif sam_record[sam_lookup['FLAG']] & 0x200 == 1:
         map_row[map_col_lookup['qc']] = "not passing quality controls"
 
     elif sam_record[sam_lookup['FLAG']] & 0x400 == 1:
         map_row[map_col_lookup['qc']] = "PCR or optical duplicate"
+    
 
     else:
         map_row[map_col_lookup['qc']] = ""
