@@ -87,6 +87,14 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     program_id = dxpy.api.programNew(program_spec)["id"]
 
-    dxpy.api.programSetProperties(program_id, {"project": dxpy.WORKSPACE_ID, "properties": {"name": program_spec["name"]}})
+    properties = {"name": program_spec["name"]}
+    if "short_description" in program_spec:
+        properties["short_description"] = program_spec["short_description"]
+    if "description" in program_spec:
+        properties["description"] = program_spec["description"]
+    if "category" in program_spec:
+        properties["category"] = program_spec["category"]
+
+    dxpy.api.programSetProperties(program_id, {"project": dxpy.WORKSPACE_ID, "properties": properties})
 
     return program_id
