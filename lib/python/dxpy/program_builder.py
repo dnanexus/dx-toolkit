@@ -19,7 +19,7 @@ def get_program_spec(src_dir):
     program_spec_file = os.path.join(src_dir, "dxprogram")
     if not os.path.exists(program_spec_file):
         program_spec_file = os.path.join(src_dir, "dxprogram.json")
-    with open(os.path.join(src_dir, "dxprogram")) as fh:
+    with open(program_spec_file) as fh:
         program_spec = json.load(fh)
 
     validate_program_spec(program_spec)
