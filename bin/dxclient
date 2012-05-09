@@ -347,7 +347,7 @@ parser_find_jobs.add_argument('--program', help='Program ID that job is running'
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
-parser_find_jobs.add_argument('--parent', help='Job ID of the parent job')
+parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
 
 parser_find_jobs.set_defaults(func=find_jobs)

@@ -116,7 +116,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
             raise StopIteration()
 
 def find_jobs(launched_by=None, program=None, project=None, state=None,
-              origin_job=None, parent_job=-1,
+              origin_job=None, parent_job=None,
               modified_after=None, modified_before=None, describe=False,
               **kwargs):
     '''
@@ -130,8 +130,8 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     :type state: string
     :param origin_job: ID of the original job initiated by a user running a program which eventually spawned this job
     :type origin_job: string
-    :param parent_job: ID of the parent job, None indicates it is an origin job
-    :type parent_job: None or string
+    :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
+    :type parent_job: string
     :param modified_after: Timestamp after which each result was last modified
     :type modified_after: integer
     :param modified_before: Timestamp before which each result was last modified
@@ -172,8 +172,11 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
         query["state"] = state
     if origin_job is not None:
         query["originJob"] = origin_job
-    if parent_job !=-1:
-        query["parentJob"] = parent_job
+    if parent_job is not None:
+        if parent_job == "none":
+            query["parentJob"] = None
+        else:
+            query["parentJob"] = parent_job
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
