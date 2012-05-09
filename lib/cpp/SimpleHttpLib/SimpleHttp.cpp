@@ -105,6 +105,9 @@ void HttpRequest::send() {
 
   if(curl != NULL) {
     respData = "";
+    // Set time out to infinite
+    assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
+
     /* Set the user agent - optional */
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_USERAGENT, "DNAnexus: libcurl-C++ wrapper"));
 
