@@ -751,7 +751,8 @@ void Array::read(std::istream &in) {
       in.unget();
 
     JSON_Utility::SkipWhiteSpace(in);
-    val.push_back(*(new JSON())); // Append a blank json object. We will fill it soon
+    JSON tmpValue;
+    val.push_back(tmpValue); // Append a blank json object. We will fill it soon
     JSON_Utility::ReadJSONValue(in, val[val.size() - 1u], false);
     firstKey = false;
   }while(true);
