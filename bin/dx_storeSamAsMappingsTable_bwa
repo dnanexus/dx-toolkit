@@ -31,7 +31,13 @@ def main():
     #print args
 
     sam_filename = opts.sam_filename
-
+    
+    samFile = open(sam_filename)
+    count = 0
+    while count < 50:
+        print samFile.readline()
+        count += 1
+    
     mappings_id = opts.mappings_id
 
     reads_id = opts.reads_id
