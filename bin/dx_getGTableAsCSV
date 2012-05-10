@@ -4,7 +4,7 @@ import os, sys, json, fileinput, re, csv
 from optparse import OptionParser
 import dxpy
 
-parser = OptionParser(usage="%prog [options] table_id", description="Download a table and save it to CSV.")
+parser = OptionParser(usage="%prog [options] gtable_id", description="Download a GTable and save it to CSV.")
 parser.add_option("--no_header", help="Do not print a header in the CSV file", action='store_true', default=False)
 (opts, args) = parser.parse_args()
 
@@ -12,14 +12,14 @@ if len(args) != 1:
     parser.print_help()
     parser.error("Incorrect number of arguments")
 
-table_id = args[0]
+gtable_id = args[0]
 
 writer = csv.writer(sys.stdout)
 
-dxtable = dxpy.open_dxtable(table_id)
+dxgtable = dxpy.open_dxgtable(gtable_id)
 
 if not opts.no_header:
-    writer.writerow([col.split(":")[0] for col in dxtable.describe()["columns"]])
+    writer.writerow([col['name'] for col in dxgtable.describe()['columns']])
 
-for row in dxtable:
+for row in dxgtable:
     writer.writerow(row)
