@@ -50,7 +50,7 @@ def main():
         pos = str(x[col["lo"]]-1)
         ref = str(x[col["ref"]])
         if (x[col["type"]]) == "Ins" or (x[col["type"]]) == "Del" or (x[col["type"]]) == "Complex" or (x[col["type"]]) == "Mixed":
-            ref = contigSequence[int(pos)-1]+ref
+            ref = contigSequence[chromosomeOffsets[chr]+int(pos)-1]+ref
         altOptions = x[col["alt"]].split("/")
         qual = str(x[col["qual"]])
         filter = "."
@@ -60,3 +60,6 @@ def main():
             filter = "q"+str(opts.filter)
             
         outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter+"\t"+vcfAdditional+"\n")
+        
+        
+main()
