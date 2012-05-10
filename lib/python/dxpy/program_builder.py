@@ -48,7 +48,7 @@ def upload_resources(src_dir):
             subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
             if 'folder' in program_spec:
                 try:
-                    dxpy.DXProject(program_spec['project']).new_folder(program_spec['folder'])
+                    dxpy.DXProject(program_spec['project']).new_folder(program_spec['folder'], parents=True)
                 except dxpy.exceptions.DXAPIError:
                     pass # TODO: make this better
             target_folder = program_spec['folder'] if 'folder' in program_spec else '/'
