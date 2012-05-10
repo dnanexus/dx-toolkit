@@ -61,5 +61,3 @@ def main():
             
         outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter+"\t"+vcfAdditional+"\n")
         
-        
-main()
