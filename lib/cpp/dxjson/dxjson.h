@@ -61,6 +61,7 @@ namespace dx {
     virtual Value* returnMyNewCopy() const = 0;
     virtual void read(std::istream &in) = 0;
     virtual bool isEqual(const Value* other) const = 0;
+    virtual ~Value() { }
   };
 
   // Forward declarations
