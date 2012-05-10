@@ -13,69 +13,67 @@ namespace DXLog {
 
       void validateInput(const dx::JSON &input) {
         msgLimit = (input.has("maxMsgNumber")) ? int(input["maxMsgNumber"]) : 1000;
-	 
-	 if (! input.has("projectId")) throwString("projectId is not specified");
-	 projectId = input["projectId"].get<string>();
-	 
-	 if (! input.has("jobId")) throwString("jobId is not specified");
-	 jobId = input["jobId"].get<string>();
-	 
-	 if (! input.has("userId")) throwString("userId is not specified");
-	 userId = input["userId"].get<string>();
-	 
-	 if (! input.has("programId")) throwString("programId is not specified");
-	 programId = input["programId"].get<string>();
-	 
-	 if (! input.has("schema")) throwString("Log schema is not specified");
+        
+        if (! input.has("projectId")) throwString("projectId is not specified");
+        projectId = input["projectId"].get<string>();
+        
+        if (! input.has("jobId")) throwString("jobId is not specified");
+        jobId = input["jobId"].get<string>();
+        
+        if (! input.has("userId")) throwString("userId is not specified");
+        userId = input["userId"].get<string>();
+        
+        if (! input.has("programId")) throwString("programId is not specified");
+        programId = input["programId"].get<string>();
 
-        dx::JSON schema = readJSON(input["schema"].get<string>());
-	 ValidateLogSchema(schema);
-	 a = new logger(schema);
-	 active = true;
+        a = new logger();
+        active = true;
       }
 
       bool processMsg() {
-	 string errMsg;
-	 if (! active) return true;
-	 if (strcmp(buffer, "Test") == 0) return false;
-	 if (strcmp(buffer, "Done") == 0) return true;
+        string errMsg;
+        if (! active) return true;
+        if (strcmp(buffer, "Test") == 0) return false;
+        if (strcmp(buffer, "Done") == 0) return true;
+        
+        if (msgCount < msgLimit) {
+          msgCount ++;
+          try {
+            dx::JSON data = dx::JSON::parse(string(buffer));
 
-	 if (msgCount < msgLimit) {
-	   msgCount ++;
-	   try {
-	     dx::JSON data = dx::JSON::parse(string(buffer));
-
-	     data["projectId"] = projectId; data["jobId"] = jobId;
-	     data["programId"] = programId; data["userId"] = userId;
-	     data["dbStore"] = true;
-
-	     if (! a->Log(data, errMsg)) cerr << errMsg << endl;
-	   } catch (std::exception &e) {
-	     cerr << errMsg << endl;
-	     cerr << string(buffer) << endl;
-	   }
-	   return false;
-	 } else return true;
+            data["projectId"] = projectId; data["jobId"] = jobId;
+            data["programId"] = programId; data["userId"] = userId;
+            data["dbStore"] = true;
+            
+            if (! a->Log(data, errMsg)) cerr << errMsg << endl;
+          } catch (std::exception &e) {
+            cerr << errMsg << endl;
+            cerr << string(buffer) << endl;
+          }
+          
+          return false;
+        } else return true;
       };
 
     public:
       AppLogHandler(dx::JSON &input, const string &socketPath_, int msgSize) : UnixDGRAMReader(msgSize + 1000), msgCount(0), socketPath(socketPath_) {
         active = false;
-	 validateInput(input);
+        validateInput(input);
       };
 
       ~AppLogHandler() { if (a != NULL) delete a; }
 
       bool process(string &errMsg) {
-	 if (! active) return true;
-	 //unlink(socketPath.c_str());
-	 return run(socketPath, errMsg);
+        if (! active) return true;
+        
+        //unlink(socketPath.c_str());
+        return run(socketPath, errMsg);
       }
 
       void stopProcess() {
-	 string errMsg;
-	 active = false;
-	 SendMessage2UnixDGRAMSocket(socketPath, "Done", errMsg);
+        string errMsg;
+        active = false;
+        SendMessage2UnixDGRAMSocket(socketPath, "Done", errMsg);
       }
   };
 };
@@ -108,7 +106,7 @@ int main(int argc, char **argv) {
         cerr << errMsg << endl;
         for (j = 0; j < conf["socketPath"].size(); j++) {
           #pragma omp critical
-	   h[j]->stopProcess();
+          h[j]->stopProcess();
         }
       }
     }

@@ -1,6 +1,7 @@
 #ifndef DXLOG_HELPER_H
 #define DXLOG_HELPER_H
 
+#include "dxLog.h"
 #include "dxjson.h"
 
 using namespace std;
@@ -13,6 +14,9 @@ namespace DXLog {
   string getHostname();
 
   string timeISOString(long long int utc);
+
+  dx::JSON defaultConf();
+  dx::JSON defaultSchema();
 
   // throw a const string with detailed information if there is an error
   void ValidateLogLevel(const dx::JSON &level);

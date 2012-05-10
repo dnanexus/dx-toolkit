@@ -35,6 +35,15 @@ string DXLog::timeISOString(long long int utc) {
   return string(timeString);
 }
 
+dx::JSON DXLog::defaultConf() { 
+  return readJSON("/etc/dxlog.conf");
+}
+
+dx::JSON DXLog::defaultSchema() {
+  dx::JSON dConf = defaultConf();
+  return readJSON(dConf["logserver"]["configDir"].get<string>() + "/schema.js");
+}
+
 void DXLog::ValidateLogLevel(const dx::JSON &data) {
   if (data.type() != dx::JSON_INTEGER) throwString("Log level is not an integer");
 

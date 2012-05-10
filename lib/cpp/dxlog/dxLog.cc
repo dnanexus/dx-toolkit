@@ -68,10 +68,13 @@ void DXLog::logger::formMessage(const dx::JSON &message, string &msg) {
   }
 }
 
-DXLog::logger::logger(dx::JSON &schema_, const string &txtFile, const string &dbFile) : txtMsgFile(txtFile), dbMsgFile(dbFile) {
+DXLog::logger::logger(){
   try {
-    schema = schema_;
+    dx::JSON dConf = defaultConf();
+    schema = defaultSchema();
     ValidateLogSchema(schema);
+    txtMsgFile = dConf["logserver"]["logDir"].get<string>() + "/local/Cppsyslog";
+    dbMsgFile = dConf["logserver"]["logDir"].get<string>() + "/local/CppDBSocket";
     hostname = getHostname();
     ready = true;
   } catch (const string &msg) {
@@ -111,11 +114,11 @@ bool DXLog::logger::Log(dx::JSON &message, string &eMsg) {
 }
 
 // need to be implemented once those values are available
-bool DXLog::AppLog::initEnv(const dx::JSON &conf, const dx::JSON &schema_, string &errMsg) {
+bool DXLog::AppLog::initEnv(const dx::JSON &conf, string &errMsg) {
   try {
     socketPath[0] = conf["socketPath"][0].get<string>();
     socketPath[1] = conf["socketPath"][1].get<string>();
-    schema = schema_;
+    schema = defaultSchema();
     ValidateLogSchema(schema);
     return true;
   } catch (const string &msg) {
