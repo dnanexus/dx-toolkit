@@ -202,7 +202,12 @@ def main():
 
         # find matching mate
         for i in range( len( left_reads ) ):
-            for j in range( len ( left_reads ) ):
+            if left_reads[i][map_col_lookup['status']] == 'UNMAPPED':
+                continue
+            for j in range( len ( right_reads ) ):
+                if right_reads[j][map_col_lookup['status']] == 'UNMAPPED':
+                    continue
+
                 # if they're mates (as determined by starting at what they say there mate's location is
                 # then copy over each other's 'hi' value into your mate's 'hi' value, 'hi2'
                 if left_reads[i][map_col_lookup['lo2']] == right_reads[j][map_col_lookup['lo']] and left_reads[i][map_col_lookup['lo']] == right_reads[j][map_col_lookup['lo2']]:
@@ -277,7 +282,7 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
 
      ##########mate_id	0x1 ? (0x40 ? 0 : (0x80 ? 1 : FAIL)) : -1########
 
-        mate_id = 404
+        mate_id = 10
         if sam_record[sam_lookup['FLAG']] & 0x1:
             if sam_record[sam_lookup['FLAG']] & 0x40:
                 mate_id = 0
@@ -286,10 +291,10 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
             else:
                 mate_id = -1
 
-        if mate_id == 404:
+        if mate_id == 10:
             print "error setting mate_id flag"
-        else:
-            map_row[map_col_lookup['mate_id']] = mate_id
+        
+        map_row[map_col_lookup['mate_id']] = mate_id
 
      ##########status2	0x8 ? UNMAPPED : PRIMARY##########
 
@@ -298,18 +303,20 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
         else:
             map_row[map_col_lookup['status2']] = "PRIMARY"
 
-     ##########chr2	RNEXT#############
-
-        map_row[map_col_lookup['chr2']] = sam_record[sam_lookup['RNEXT']]
-
      ##########lo2	PNEXT#############
 
         # subtract 1 to convert from 1 based to 0 based coordinates
-        map_row[map_col_lookup['lo2']] = sam_record[sam_lookup['PNEXT']] - 1
+        if map_row[map_col_lookup['status2']] == 'UNMAPPED':
+            map_row[map_col_lookup['lo2']] = 0
+        else:
+            map_row[map_col_lookup['lo2']] = sam_record[sam_lookup['PNEXT']] - 1
 
      ##########hi2	From "hi" of the matching record (OUCH!)##########
+        
+        # placeholder (assumes mate unmatched).  Will be reset in main loop if has mapped mate
+        map_row[map_col_lookup['hi2']] = 0
 
-        ######ADD THIS!!!!!!!!!!!!!!
+        ######done in main loop above as it relies on looking across SAM rows
 
      ##########negative_strand2	0x20############
 
@@ -331,7 +338,7 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
     if 'name' in read_col_lookup:
         map_row[map_col_lookup['name']] = read[read_col_lookup['name']] 
                                  
-
+ 
     ######### sequence #########
 
     if isPaired == False or map_row[map_col_lookup['mate_id']] == 0:
@@ -341,10 +348,11 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
 
     ######## quality #########
 
-    if isPaired == False or map_row[map_col_lookup['mate_id']] == 0:
-        map_row[map_col_lookup['quality']] = read[read_col_lookup['quality']]
-    elif map_row[map_col_lookup['mate_id']] == 1:
-        map_row[map_col_lookup['quality']] = read[read_col_lookup['quality2']]
+    if 'quality' in map_col_lookup and 'quality' in read_col_lookup:
+        if isPaired == False or map_row[map_col_lookup['mate_id']] == 0:
+            map_row[map_col_lookup['quality']] = read[read_col_lookup['quality']]
+        elif map_row[map_col_lookup['mate_id']] == 1 and 'quality2' in read_col_lookup:
+            map_row[map_col_lookup['quality']] = read[read_col_lookup['quality2']]
 
     ######## status ##########
 
@@ -358,15 +366,34 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
 
     ######## chr ############
 
-    map_row[map_col_lookup['chr']] = sam_record[sam_lookup['RNAME']]
+    if map_row[map_col_lookup['status']] == 'UNMAPPED':
+        map_row[map_col_lookup['chr']] = ''
+    else:
+        map_row[map_col_lookup['chr']] = sam_record[sam_lookup['RNAME']]
+
+    ##########chr2	RNEXT#############
+
+    if isPaired == True:
+        if sam_record[sam_lookup['RNEXT']] == '=':
+            map_row[map_col_lookup['chr2']] = map_row[map_col_lookup['chr']]
+
+        elif map_row[map_col_lookup['status2']] == 'UNMAPPED':
+            map_row[map_col_lookup['chr2']] = ''
+
+        else:
+            map_row[map_col_lookup['chr2']] = sam_record[sam_lookup['RNEXT']]
+
+
 
     ######## lo	POS (off-by-one in SAM) #########
 
-    map_row[map_col_lookup['lo']] = sam_record[sam_lookup['POS']] - 1
+    if map_row[map_col_lookup['status']] == 'UNMAPPED':
+        map_row[map_col_lookup['lo']] = 0
+    else:
+        map_row[map_col_lookup['lo']] = sam_record[sam_lookup['POS']] - 1
 
-    ######## hi      lo + count of M/D/N/=/X in CIGAR #########
 
-               #####  PROCESS cigar string to see how long the alignment is in reference space######
+    #####  PROCESS cigar string to see how long the alignment is in reference space######
     al_len = 0
     cigar = re.split('(\d+)', sam_record[sam_lookup['CIGAR']])
     for p in range(len(cigar)):
@@ -374,7 +401,13 @@ def parse_sam( map_row, sam_record, read, map_col_lookup, sam_lookup, read_col_l
         if c == 'M' or c == 'D' or c == 'N' or c == 'X' or c == 'P' or c == '=':
             al_len += int(cigar[p-1])
 
-    map_row[map_col_lookup['hi']] = map_row[map_col_lookup['lo']] + al_len
+
+    ######## hi      lo + count of M/D/N/=/X in CIGAR #########
+
+    if map_row[map_col_lookup['status']] == 'UNMAPPED':
+        map_row[map_col_lookup['hi']] = 0
+    else:
+        map_row[map_col_lookup['hi']] = map_row[map_col_lookup['lo']] + al_len
                                  
 
     ##########negative_strand	0x10########
