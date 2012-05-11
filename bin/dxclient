@@ -216,13 +216,16 @@ def new_record(args):
     details = None
     if args.details is not None:
         details = json.loads(args.details)
+    init_from = None
+    if args.init is not None:
+        init_from = dxpy.DXRecord(args.init)
 
     dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
                                  tags=args.tags, types=args.types, 
                                  hidden=hidden, properties=properties,
                                  details=details,
                                  folder=args.folder,
-                                 parents=args.parents, init_from=args.init)
+                                 parents=args.parents, init_from=init_from)
     print dxrecord.get_id()
 
 def set_visibility(args):
