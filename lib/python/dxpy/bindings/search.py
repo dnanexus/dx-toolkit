@@ -7,6 +7,10 @@ found using :func:`dxpy.bindings.search.find_jobs`.
 '''
 
 from dxpy.bindings import *
+import time
+
+def now():
+    return int(time.time()*1000)
 
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, properties=None, type_=None, tag=None,
@@ -132,9 +136,9 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     :type origin_job: string
     :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
     :type parent_job: string
-    :param modified_after: Timestamp after which each result was last modified
+    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
     :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified
+    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
     :type modified_before: integer
     :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False)
     :type describe: boolean
@@ -180,10 +184,18 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
-            query["modified"]["after"] = modified_after
+            if modified_after >= 0:
+                query["modified"]["after"] = modified_after
+            else:
+                query["modified"]["after"] = now() + modified_after
         if modified_before is not None:
-            query["modified"]["before"] = modified_before
+            if modified_before >= 0:
+                query["modified"]["before"] = modified_before
+            else:
+                query["modified"]["before"] = now() + modified_before
     query["describe"] = describe
+
+    print query
 
     while True:
         resp = dxpy.api.systemFindJobs(query, **kwargs)
