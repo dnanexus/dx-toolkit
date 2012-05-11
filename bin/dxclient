@@ -215,7 +215,7 @@ def new_record(args):
     properties = get_properties_from_args(args.properties)
     details = None
     if args.details is not None:
-        details = json.loads(arg.details)
+        details = json.loads(args.details)
 
     dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
                                  tags=args.tags, types=args.types, 
