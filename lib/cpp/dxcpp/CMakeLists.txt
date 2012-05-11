@@ -9,7 +9,7 @@ include_directories( ./ ../ ${GTEST_DIR} ${GTEST_DIR}/include ../SimpleHttpLib )
 
 add_custom_target(setup)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated")
 
 add_subdirectory(../dxjson dxjson)
 add_subdirectory(../SimpleHttpLib SimpleHttpLib)
