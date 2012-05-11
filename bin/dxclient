@@ -51,14 +51,13 @@ def set_project(args):
     write_env_var("DX_PROJECT_CONTEXT_ID", args.project)
 
 def api(args):
-    json_input = json.loads(args.json)
+    json_input = json.loads(args.input_json)
     if args.input is not None:
         with open(args.input, 'r') as fd:
             data = fd.read()
             json_input = json.loads(data)
     elif args.stdin:
         json_input = get_json_from_stdin()
-    print json.dumps(json_input)
     print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                         json_input))
 
@@ -68,6 +67,10 @@ def ls(args):
     if not args.folder.startswith('/'):
         args.folder = '/' + args.folder
     resp = dxproj.list_folder(folder=args.folder, describe={})
+    if args.json:
+        print json.dumps(resp)
+        return
+
     if not args.obj:
         for folder in resp["folders"]:
             print folder
@@ -162,10 +165,9 @@ def describe(args):
                              'hidden', 'details', 'links', 'created', 'modified', 'state']
             print "ID\t\t" + desc["id"]
             print "Class\t\t" + desc["class"]
-            folder_prefix = desc["folder"]
-            if folder_prefix != "/":
-                folder_prefix += "/"
-            print "Location\t" + desc["project"] + ":" + folder_prefix + desc["name"]
+            print "Project\t\t" + desc["project"]
+            print "Folder\t\t" + desc["folder"]
+            print "Name\t\t" + desc["name"]
             print "State\t\t" + desc["state"]
             print "Hidden\t\t" + json.dumps(desc["hidden"])
             print "Types\t\t" + json.dumps(desc["types"])
@@ -197,6 +199,59 @@ def describe(args):
                         print "Columns" + coldescs[:-1]
                     else: # Unhandled prettifying
                         print field + "\t\t" + json.dumps(desc[field])
+
+def get_properties_from_args(args_properties):
+    properties = None
+    if args_properties is not None:
+        if len(args_properties) % 2 != 0:
+            raise SyntaxError('Even number of key/value strings expected for --properties')
+        properties = {}
+        for i in range(len(args_properties)/2):
+            properties[ args_properties[2*i] ] = args_properties[2*i+1]
+    return properties
+
+def new_record(args):
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(arg.properties)
+
+    dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
+                                 tags=args.tags, types=args.types, 
+                                 hidden=hidden, properties=properties,
+                                 details=json.loads(args.details),
+                                 folder=args.folder,
+                                 parents=args.parents, init_from=args.init)
+    print dxrecord.get_id()
+
+def set_details(args):
+    dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
+                       json.loads(args.details))
+
+def add_types(args):
+    dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
+                       {"types": args.types})
+
+def remove_types(args):
+    dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
+                       {"types": args.types})
+
+def add_tags(args):
+    dxpy.get_handler(args.dxid).add_tags(args.tags)
+
+def remove_tags(args):
+    dxpy.get_handler(args.dxid).remove_tags(args.tags)
+
+def rename(args):
+    dxpy.get_handler(args.dxid).rename(args.name)
+
+def set_properties(args):
+    properties = get_properties_from_args(args.properties)
+    dxpy.get_handler(args.dxid).set_properties(properties)
+
+def unset_properties(args):
+    properties = {}
+    for prop in args.properties:
+        properties[prop] = None
+    dxpy.get_handler(args.dxid).set_properties(properties)
 
 def file_get(args):
     filename = args.output
@@ -234,6 +289,9 @@ def find_jobs(args):
                                   state=args.state, origin_job=args.origin, parent_job=args.parent,
                                   describe=args.nodesc,
                                   modified_after=args.mod_after, modified_before=args.mod_before))
+    if args.json:
+        print json.dumps(results)
+        return
     if not args.nodesc:
         for result in results:
             print result["id"]
@@ -266,12 +324,33 @@ def find_jobs(args):
             orig_id = results[origin_job]["id"]
             print_children(orig_id, 0)
 
+def find_data(args):
+    properties = get_properties_from_args(arg.properties)
+    results = list(dxpy.find_data_objects(classname=args.classname, state=args.state,
+                                          visibility=args.visibility, properties=properties,
+                                          name=args.name,
+                                          type_=args.type, tag=args.tag, link=args.link,
+                                          project=args.project, folder=args.folder,
+                                          recurse=args.recurse,
+                                          modified_after=args.mod_after, modified_before=args.mod_before,
+                                          created_after=args.created_after, created_before=args.created_before,
+                                          describe=args.describe))
+    if args.json:
+        print json.dumps(results)
+        return
+    for result in results:
+        print result["id"]
+
 def close(args):
     json_input = {}
     dxpy.DXHTTPRequest('/' + args.dxid + '/close',
                        json_input)
 
+global_args = argparse.ArgumentParser(add_help=False)
+global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
+
 parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAnexus Command-Line Client, API v1.0.0')
+
 subparsers = parser.add_subparsers()
 
 parser_set = subparsers.add_parser('set', help='Sets default values for communication with the API server',
@@ -297,7 +376,8 @@ parser_logout = subparsers.add_parser('logout', help='Log out and remove credent
 parser_logout.set_defaults(func=logout)
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
-                                  description='List folders and/or objects in a folder')
+                                  description='List folders and/or objects in a folder',
+                                  parents=[global_args])
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
 parser_ls.add_argument('--name', help='show names instead of object IDs', action='store_true')
@@ -338,21 +418,21 @@ parser_file_put.set_defaults(func=file_put)
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
 subparsers_gtable = parser_gtable.add_subparsers()
 
-parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable')
+parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable',
+                                                 parents=[global_args])
 parser_gtable_get.add_argument('--starting', type=int, help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
 parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the number of rows returned')
 parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
 parser_gtable_get.add_argument('--gri_mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
 parser_gtable_get.add_argument('--gri_name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
-parser_gtable_get.add_argument('--json', help='Display return value in JSON', action='store_true')
 parser_gtable_get.add_argument('dxid', help='GTable ID from which to fetch rows')
 parser_gtable_get.set_defaults(func=gtable_get)
 
-parser_describe = subparsers.add_parser('describe', help='Describe a remote object', description='Describe a remote object')
+parser_describe = subparsers.add_parser('describe', help='Describe a remote object', description='Describe a remote object',
+                                        parents=[global_args])
 parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
 parser_describe.add_argument('--properties', help='Include properties', action='store_true')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
-parser_describe.add_argument('--json', help='Display return value in JSON', action='store_true')
 parser_describe.add_argument('dxid', help='Object ID to describe')
 parser_describe.set_defaults(func=describe)
 
@@ -364,7 +444,7 @@ parser_find = subparsers.add_parser('find', help='Search functionality over data
                                     description='Search functionality over data objects, projects, and jobs')
 subparsers_find = parser_find.add_subparsers()
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs')
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', parents=[global_args])
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--program', help='Program ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -376,10 +456,88 @@ parser_find_jobs.add_argument('--mod_after', type=int, help='Timestamp after whi
 parser_find_jobs.add_argument('--mod_before', type=int, help='Timestamp before which the job was last modified (negative number means ms in the past)')
 parser_find_jobs.set_defaults(func=find_jobs)
 
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args])
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'program', 'table'], help='Data object class')
+parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
+parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
+parser_find_data.add_argument('--name', help='Name of the object')
+parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_find_data.add_argument('--type', help='Type of the data object')
+parser_find_data.add_argument('--tag', help='Tag of the data object')
+parser_find_data.add_argument('--link', help='Object ID that the data object links to')
+parser_find_data.add_argument('--project', help='Project with which to restrict the results')
+parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
+parser_find_data.add_argument('--mod_after', type=int, help='Timestamp after which the object was last modified (negative number means ms in the past)')
+parser_find_data.add_argument('--mod_before', type=int, help='Timestamp before which the object was last modified (negative number means ms in the past)')
+parser_find_data.add_argument('--created_after', type=int, help='Timestamp after which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--created_before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
+parser_find_data.set_defaults(func=find_data)
+
+parser_dataobject_args = argparse.ArgumentParser(add_help=False)
+parser_dataobject_args.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
+parser_dataobject_args.add_argument('--name', help='Name of the object')
+parser_dataobject_args.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_dataobject_args.add_argument('--types', nargs='+', help='Types of the data object')
+parser_dataobject_args.add_argument('--tags', nargs='+', help='Tags of the data object')
+parser_dataobject_args.add_argument('--project', help='Project (if not using the default project)')
+parser_dataobject_args.add_argument('--details', help='JSON to store as details')
+parser_dataobject_args.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
+parser_dataobject_args.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+
+parser_new = subparsers.add_parser('new', help='Create a new data object')
+subparsers_new = parser_new.add_subparsers()
+
+parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
+                                              parents=[parser_dataobject_args])
+parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
+parser_new_record.set_defaults(func=new_record)
+
+parser_set_details = subparsers.add_parser('set_details', help='Set details on an object')
+parser_set_details.add_argument('dxid', help='Data object to modify')
+parser_set_details.add_argument('details', help='JSON to store as details')
+parser_set_details.set_defaults(func=set_details)
+
+parser_add_types = subparsers.add_parser('add_types', help='Add types to an object')
+parser_add_types.add_argument('dxid', help='Data object to modify')
+parser_add_types.add_argument('types', nargs='+', help='Types to add')
+parser_add_types.set_defaults(func=add_types)
+
+parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object')
+parser_remove_types.add_argument('dxid', help='Data object to modify')
+parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
+parser_remove_types.set_defaults(func=remove_types)
+
+parser_add_tags = subparsers.add_parser('add_tags', help='Add tags to an object')
+parser_add_tags.add_argument('dxid', help='Data object to modify')
+parser_add_tags.add_argument('tags', nargs='+', help='Tags to add')
+parser_add_tags.set_defaults(func=add_tags)
+
+parser_remove_tags = subparsers.add_parser('remove_tags', help='Remove tags from an object')
+parser_remove_tags.add_argument('dxid', help='Data object to modify')
+parser_remove_tags.add_argument('tags', nargs='+', help='Tags to remove')
+parser_remove_tags.set_defaults(func=remove_tags)
+
+parser_rename = subparsers.add_parser('rename', help='Rename an object')
+parser_rename.add_argument('dxid', help='Data object to modify')
+parser_rename.add_argument('name', help='New name')
+parser_rename.set_defaults(func=rename)
+
+parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object')
+parser_set_properties.add_argument('dxid', help='Data object to modify')
+parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_set_properties.set_defaults(func=set_properties)
+
+parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object')
+parser_unset_properties.add_argument('dxid', help='Data object to modify')
+parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
+parser_unset_properties.set_defaults(func=unset_properties)
+
 parser_api = subparsers.add_parser('api', help='Make an API call')
 parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
 parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
-parser_api.add_argument('json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
+parser_api.add_argument('input_json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
 parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
 parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
 parser_api.set_defaults(func=api)
