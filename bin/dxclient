@@ -212,12 +212,15 @@ def get_properties_from_args(args_properties):
 
 def new_record(args):
     hidden = (args.visibility == 'hidden')
-    properties = get_properties_from_args(arg.properties)
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        details = json.loads(arg.details)
 
     dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
                                  tags=args.tags, types=args.types, 
                                  hidden=hidden, properties=properties,
-                                 details=json.loads(args.details),
+                                 details=details,
                                  folder=args.folder,
                                  parents=args.parents, init_from=args.init)
     print dxrecord.get_id()
@@ -325,7 +328,7 @@ def find_jobs(args):
             print_children(orig_id, 0)
 
 def find_data(args):
-    properties = get_properties_from_args(arg.properties)
+    properties = get_properties_from_args(args.properties)
     results = list(dxpy.find_data_objects(classname=args.classname, state=args.state,
                                           visibility=args.visibility, properties=properties,
                                           name=args.name,
