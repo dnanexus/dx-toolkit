@@ -357,7 +357,7 @@ namespace JSON_Utility
             }
             break;
           default:
-            throw JSONException("Illegal escape sequence: \\" + inp[i]);
+            throw JSONException("Illegal escape sequence:" + inp[i]);
         }
       }
     }
@@ -426,16 +426,14 @@ JSON& Array::jsonAtIndex(size_t i) {
 
 // STL map's [] operator cannot be used on constant objects
 const JSON& Object::jsonAtKey(const std::string &s) const {
-  std::string cstr = JSON_Utility::parseUtf8JsonString(s);
-  std::map<std::string, JSON>::const_iterator it = this->val.find(cstr);
+  std::map<std::string, JSON>::const_iterator it = this->val.find(s);
   if (it == val.end())
     throw JSONException("Cannot add new key to a constant JSON_OBJECT");
   return it->second;
 }
 
 JSON& Object::jsonAtKey(const std::string &s) {
-  std::string cstr = JSON_Utility::parseUtf8JsonString(s);
-  return val[cstr];
+  return val[s];
 }
 
 void JSON::write(std::ostream &out) const {
@@ -452,8 +450,6 @@ void JSON::readFromString(const std::string &jstr) {
   this->read(inp);
 }
 
-// TODO: Dynamic casts can be turned into static casts for efficiency reasons
-// TODO: Create const version for each of them
 const JSON& JSON::operator[](const std::string &s) const {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot use string to index value of a non-JSON_OBJECT using [] operator");
@@ -531,7 +527,7 @@ JSON& JSON::operator =(const JSON &rhs) {
 
 JSON& JSON::operator =(const std::string &s) {
   clear();
-  val = new String(JSON_Utility::parseUtf8JsonString(s));
+  val = new String(s);
   return *this;
 }
 
@@ -604,7 +600,7 @@ bool JSON::has(const size_t &indx) const {
 bool JSON::has(const std::string &key) const {
   if(this->type() != JSON_OBJECT)
     throw JSONException("Illegal call to has(size_t) for non JSON_OBJECT object");
-  return (((Object*)(this->val))->val.count(JSON_Utility::parseUtf8JsonString(key)) > 0u);
+  return (((Object*)(this->val))->val.count(key) > 0u);
 }
 
 bool JSON::has(const char *x) const {
@@ -759,7 +755,7 @@ void Array::read(std::istream &in) {
 }
 
 void Object::erase(const std::string &key) {
-  if(val.erase(JSON_Utility::parseUtf8JsonString(key)) == 0)
+  if(val.erase(key) == 0)
     throw JSONException("Cannot erase non-existent key from a JSON_OBJECT. Key supplied = " + key);
 }
 
