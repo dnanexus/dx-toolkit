@@ -3,6 +3,7 @@
 using namespace dx;
 
 double JSON::epsilon = std::numeric_limits<double>::epsilon();
+std::mutex JSON::epsilonMutex;
 
 // TODO:
 // 1) Currently json strings are "escaped" only when using write() method, and stored as normal

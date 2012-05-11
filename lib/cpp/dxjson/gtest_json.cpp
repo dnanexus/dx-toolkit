@@ -623,6 +623,16 @@ TEST(JSONTest, FloatingPointPrecision) {
   JSON::setEpsilon(.1);
   ASSERT_TRUE(j1 == j2);
   ASSERT_EQ(JSON::getEpsilon(), .1);
+  
+  JSON::setEpsilon(2);
+  j1 = 6.2;
+  j2 = 7.1;
+  ASSERT_EQ(JSON::getEpsilon(), 2.0);
+  ASSERT_TRUE(j1 == j2);
+
+  JSON::setEpsilon(1e-12);
+  ASSERT_NE(j1, j2);
+  ASSERT_EQ(JSON::getEpsilon(), 1e-12);
 }
 
 int main(int argc, char **argv) {
