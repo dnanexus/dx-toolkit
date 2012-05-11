@@ -19,6 +19,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdint.h>
+#include <mutex>
 
 #include "utf8/utf8.h"
 // NOTE:
@@ -50,7 +51,7 @@ namespace dx {
     JSON_BOOLEAN = 6,
     JSON_NULL = 7
   };
-
+  
   /** An abstract base class to allow making a heterogenous container
    *  Classes for all possible JSON values are derived from this base class.
    */
@@ -98,20 +99,29 @@ namespace dx {
       * (|f1-f2|<=epsilon) : if true, then f1==f2, else not.
       */
     static double epsilon;
-
+    
+    /** This mutex is used to lock operations on static variable: epsilon
+     */
+    static std::mutex epsilonMutex;
+    
     /** Set the "epsilon" parameter to provided value
       * @param eps_val epsilon for comparing floating point will be set to this value.
       * @see getEpsilon()
       * @see epsilon
       */
-    static void setEpsilon(double eps_val) { epsilon = eps_val; }
+    static void setEpsilon(double eps_val) { 
+      std::lock_guard<std::mutex> lock(JSON::epsilonMutex); 
+      epsilon = eps_val; 
+    }
 
-    /** Returns the current "epislon" paramerer value.
-      * @return The currrent value of "epilon" parameter
+    /** Returns the current "epsilon" paramerer value.
+      * @return The currrent value of "epsilon" parameter
       * @see setEpsilon()
       * @see epsilon
       */
-    static double getEpsilon() { return epsilon;}
+    static double getEpsilon() { 
+      return epsilon;
+    }
 
     /** Creates a new JSON object from a stringified (serialized) represntation.
       * @param str The serialized json object.
