@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, json
+import os, sys, json, pprint
 from optparse import OptionParser
 import dxpy
 
@@ -17,12 +17,12 @@ if len(args) != 1:
 if opts.output is None:
     opts.output = pipeline_json+"_dxprogram"
 
-pipeline = json.load(open(pipeline_json))['details'] if os.path.exists(pipeline_json) else dxpy.DXRecord(pipeline_json).get_details()
+pipeline = json.load(open(pipeline_json)) if os.path.exists(pipeline_json) else dxpy.DXRecord(pipeline_json).get_details()['details']
 
-program_spec = {'name': 'Compiled from '+pipeline['name'],
-                'dxapi': '1.03rc',
-                'run': {'file': 'compiled_pipeline.py',
-                        'interpreter': 'python2.7'}}
+#program_spec = {'name': 'Compiled from '+pipeline['name'],
+#                'dxapi': '1.03rc',
+#                'run': {'file': 'compiled_pipeline.py',
+#                        'interpreter': 'python2.7'}}
 
 code_fh = sys.stdout
 
@@ -39,7 +39,7 @@ class dictWithLiterals:
     def __init__(self, input):
         self.input = input
 
-    def __repr__(self):                                                                                                                                                                                                                     
+    def __repr__(self):
         if isinstance(self.input, dict) and 'job' in self.input:
             strrep = "{"
             for key, value in self.input.iteritems():
@@ -51,50 +51,17 @@ class dictWithLiterals:
             return strrep
         return str(self.input)
 
-for stage in pipeline['details']['stages']:
+pp = pprint.PrettyPrinter(depth=9, indent=4)
+
+for stage in pipeline['stages']:
     inputs = stage['inputs']
     for input, value in list(inputs.iteritems()):
         if isinstance(value, dict) and '$pipeline_link' in value:
             link = value['$pipeline_link']
-            #inputs[input] = "{{'job': jobs['{stage_id}'], 'field': '{field}'}}".format(stage_id=link['stage'], field=link['output'])
             inputs[input] = dictWithLiterals({'job': "jobs['%s']" % link['stage'], 'field': link['output']})
-            #inputs[input] = {'job': 'x', 'field': 'y'}
-#    print stage
     print >>code_fh, "programs['{stage_id}'] = dxpy.DXProgram({program})".format(stage_id=stage['id'], program=stage['program'])
-    print >>code_fh, "jobs['{stage_id}'] = programs['{stage_id}'].run({inputs})".format(stage_id=stage['id'], inputs=inputs)
-
-#print pipeline['details']['stages'][0]
-
-
-sys.exit(1)
-program_name = args[0]
-
-if program_name[:4] == 'program-':
-    program_id = program_name
-else:
-    try:
-        program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}, project=dxpy.WORKSPACE_ID).next()['id']
-    except StopIteration:
-        sys.exit("Unable to find program "+program_name)
-
-program_input = {}
-if opts.input:
-    for i in opts.input:
-        name, value = i.split("=")
-        try:
-            program_input[name] = json.loads(value)
-        except ValueError:
-            program_input[name] = value
-
-job = dxpy.DXProgram(program_id).run(program_input)
-
-logging.info("Launched job "+job.get_id())
-
-if opts.wait:
-    logging.info("Waiting for job to complete...")
-    try:
-        job.wait_on_done()
-        print json.dumps(job.describe()["output"])
-    except DXJobFailureError as e:
-        logging.error("Job did not complete successfully: %s" % e.message)
-        sys.exit(1)
+    print >>code_fh, ""
+    print >>code_fh, "inputs = "+pp.pformat(inputs)
+    print >>code_fh, ""    
+    print >>code_fh, "jobs['{stage_id}'] = programs['{stage_id}'].run(inputs)".format(stage_id=stage['id'])
+    print >>code_fh, ""
