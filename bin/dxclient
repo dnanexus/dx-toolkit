@@ -225,6 +225,10 @@ def new_record(args):
                                  parents=args.parents, init_from=args.init)
     print dxrecord.get_id()
 
+def set_visibility(args):
+    dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
+                       {"hidden": (args.visibility == 'hidden')})
+
 def set_details(args):
     dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
                        json.loads(args.details))
@@ -501,6 +505,11 @@ parser_set_details = subparsers.add_parser('set_details', help='Set details on a
 parser_set_details.add_argument('dxid', help='Data object to modify')
 parser_set_details.add_argument('details', help='JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
+
+parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object')
+parser_set_visibility.add_argument('dxid', help='Data object to modify')
+parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
+parser_set_visibility.set_defaults(func=set_visibility)
 
 parser_add_types = subparsers.add_parser('add_types', help='Add types to an object')
 parser_add_types.add_argument('dxid', help='Data object to modify')
