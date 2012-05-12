@@ -1,9 +1,29 @@
 #include "dxjson.h"
 #include <cstdio>
+#include <mutex>
+
 using namespace dx;
 
-double JSON::epsilon = std::numeric_limits<double>::epsilon();
-std::mutex JSON::epsilonMutex;
+/**
+ * Determine the "slack" when comparing two floating point values. Two
+ * floating point values f1 and f2 are compared as follows: (|f1 - f2| <=
+ * epsilon): if true, then f1 == f2, else f1 != f2.
+ */
+static double json_epsilon = std::numeric_limits<double>::epsilon();
+
+/**
+ * This mutex is used to lock operations on static variable: json_epsilon.
+ */
+static std::mutex json_epsilonMutex;
+
+void JSON::setEpsilon(double eps_val) {
+  std::lock_guard<std::mutex> lock(json_epsilonMutex);
+  json_epsilon = eps_val;
+}
+
+double JSON::getEpsilon() {
+  return json_epsilon;
+}
 
 // TODO:
 // 1) Currently json strings are "escaped" only when using write() method, and stored as normal
