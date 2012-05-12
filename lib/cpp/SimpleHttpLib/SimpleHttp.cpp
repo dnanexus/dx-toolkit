@@ -95,7 +95,7 @@ static void assertLibCurlFunctions(CURLcode retVal, const std::string &msg = "")
 void HttpRequest::send() {
   // TODO: Not call curl_easy_cleanup() always at end of send()
   //       Instead allow to reuse the same curl handle for subsequent requests
-  //       Much faster this way
+  //       curl will reuse the existing connection this way - should be much faster
 
   // This function should never be called while "curl" member variable is in use
   if (curl != NULL)

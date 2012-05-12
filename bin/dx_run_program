@@ -2,6 +2,7 @@
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json
 from optparse import OptionParser
@@ -19,12 +20,13 @@ if len(args) != 1:
 
 program_name = args[0]
 
-if program_name[:4] == 'program-':
-    program_id = program_name
-else:
+try:
+    program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}).next()['id']
+except StopIteration:
     try:
-        program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}, project=dxpy.WORKSPACE_ID).next()['id']
-    except StopIteration:
+        dxpy.describe(program_name)
+        program_id = program_name
+    except dxpy.exceptions.DXError:
         sys.exit("Unable to find program "+program_name)
 
 program_input = {}

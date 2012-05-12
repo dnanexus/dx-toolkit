@@ -49,6 +49,6 @@ def main():
         outputFile.write(str(x[col["lo2"]]+1) + "\t" + str(int(math.fabs(x[col["hi"]] - x[col["lo"]]))) + "\t" + x[col["sequence"]] + "\t")
         outputFile.write(str(x[col["quality"]] + "\n"))
         
-main()
 
+main()
         

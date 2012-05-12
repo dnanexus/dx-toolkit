@@ -7,6 +7,10 @@ found using :func:`dxpy.bindings.search.find_jobs`.
 '''
 
 from dxpy.bindings import *
+import time
+
+def now():
+    return int(time.time()*1000)
 
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, properties=None, type_=None, tag=None,
@@ -19,6 +23,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type classname: string
     :param state: State of the object ("open", "closing", "closed", "any")
     :type state: string
+    :param visibility: Visibility of the object ("hidden", "visible", "either")
+    :type visibility: string
     :param name: Name of the object
     :type name: string
     :param properties: Properties (key-value pairs) that each result must have
@@ -35,13 +41,13 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type folder: string
     :param recurse: If *project* is given, whether to look in subfolders as well
     :type recurse: boolean
-    :param modified_after: Timestamp after which each result was last modified
+    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
     :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified
+    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
     :type modified_before: integer
-    :param created_after: Timestamp after which each result was last created
+    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
     :type created_after: integer
-    :param created_before: Timestamp before which each result was last created
+    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
     :type created_before: integer
     :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
     :type describe: boolean
@@ -92,15 +98,27 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
-            query["modified"]["after"] = modified_after
+            if modified_after >= 0:
+                query["modified"]["after"] = modified_after
+            else:
+                query["modified"]["after"] = now() + modified_after
         if modified_before is not None:
-            query["modified"]["before"] = modified_before
+            if modified_before >= 0:
+                query["modified"]["before"] = modified_before
+            else:
+                query["modified"]["before"] = now() + modified_before
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
-            query["created"]["after"] = created_after
+            if created_after >= 0:
+                query["created"]["after"] = created_after
+            else:
+                query["created"]["after"] = now() + created_after
         if created_before is not None:
-            query["created"]["before"] = created_before
+            if created_before >= 0:
+                query["created"]["before"] = created_before
+            else:
+                query["created"]["before"] = now() + created_before
     query["describe"] = describe
 
     while True:
@@ -132,9 +150,9 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     :type origin_job: string
     :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
     :type parent_job: string
-    :param modified_after: Timestamp after which each result was last modified
+    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
     :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified
+    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
     :type modified_before: integer
     :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False)
     :type describe: boolean
@@ -180,10 +198,18 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
-            query["modified"]["after"] = modified_after
+            if modified_after >= 0:
+                query["modified"]["after"] = modified_after
+            else:
+                query["modified"]["after"] = now() + modified_after
         if modified_before is not None:
-            query["modified"]["before"] = modified_before
+            if modified_before >= 0:
+                query["modified"]["before"] = modified_before
+            else:
+                query["modified"]["before"] = now() + modified_before
     query["describe"] = describe
+
+    print query
 
     while True:
         resp = dxpy.api.systemFindJobs(query, **kwargs)

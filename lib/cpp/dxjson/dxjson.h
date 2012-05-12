@@ -93,25 +93,17 @@ namespace dx {
       */
     Value *val;
 
-    /** Determine the "slack" while comparing two floating point values.
-      * Two floating point values: f1, f2 are compares using this method:
-      * (|f1-f2|<=epsilon) : if true, then f1==f2, else not.
-      */
-    static double epsilon;
-
     /** Set the "epsilon" parameter to provided value
       * @param eps_val epsilon for comparing floating point will be set to this value.
       * @see getEpsilon()
-      * @see epsilon
       */
-    static void setEpsilon(double eps_val) { epsilon = eps_val; }
+    static void setEpsilon(double eps_val);
 
-    /** Returns the current "epislon" paramerer value.
-      * @return The currrent value of "epilon" parameter
+    /** Returns the current "epsilon" paramerer value.
+      * @return The currrent value of "epsilon" parameter
       * @see setEpsilon()
-      * @see epsilon
       */
-    static double getEpsilon() { return epsilon;}
+    static double getEpsilon();
 
     /** Creates a new JSON object from a stringified (serialized) represntation.
       * @param str The serialized json object.
@@ -176,7 +168,7 @@ namespace dx {
     /** Returns the stringified representation of JSON object.
       * @param onlyTopLevel If set to true, then only JSON objects of type JSON_OBJECT
       *                     or JSON_ARRAY can call this function.
-      * @note If called on a JSON_STRING object directly, 
+      * @note If called on a JSON_STRING object directly,
       *       the string would be enclosed in quotes.
       * @return A string reprentation of current JSON object.
       * @see write()

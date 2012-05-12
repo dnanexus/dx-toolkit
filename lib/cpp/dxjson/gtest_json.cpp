@@ -232,7 +232,7 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   JSON j1 = "\u6e05\u534e\u5927\u5b66";
   ASSERT_EQ(j1, "清华大学");
 
-  ASSERT_EQ(j1, "\\u6e05\\u534e\\u5927\\u5b66");
+  ASSERT_EQ(j1, JSON::parse("\"\\u6e05\\u534e\\u5927\\u5b66\""));
   ASSERT_EQ(JSON::parse("\"15\\u00f8C\"").get<string>(), "15øC");
 
   JSON j2 = '\n';
@@ -284,19 +284,18 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   JSON j4(JSON_OBJECT);
   j4[temp] = "blah";
   ASSERT_EQ(j4["\ufffd"].get<std::string>(), "blah");
-
   j4["\u0021"] = "foo";
   ASSERT_EQ(j4["!"].get<std::string>(), "foo");
-  ASSERT_EQ(j4["\u0021"], j4["!"]); // Should be true since in c++, "\u0021" == "!"
-  ASSERT_EQ(j4["\\u0021"], j4["!"]);
+  ASSERT_EQ(j4["\u0021"], j4["!"]); // Should be trivially true since in c++, "\u0021" == "!"
+  ASSERT_FALSE(j4.has("\\u0021")); 
   ASSERT_TRUE(j4.has("\u0021"));
   ASSERT_TRUE(j4.toString().find("!") != string::npos);
 
-  ASSERT_FALSE(j4.toString().find("\\u0000") != string::npos);
+  ASSERT_TRUE(j4.toString().find("\\u0000") == string::npos);
   const JSON j4_const(j4);
   ASSERT_EQ(j4_const["!"].get<std::string>(), "foo");
   ASSERT_EQ(j4_const["\u0021"], j4_const["!"]); // Should be true since in c++, "\u0021" == "!"
-  ASSERT_EQ(j4_const["\\u0021"], j4_const["!"]);
+  ASSERT_FALSE(j4_const.has("\\u0021"));
   ASSERT_TRUE(j4_const.has("\u0021"));
   ASSERT_TRUE(j4_const.toString().find("!") != string::npos);
   ASSERT_FALSE(j4_const.toString().find("\\u0000") != string::npos);
@@ -305,9 +304,9 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   ASSERT_TRUE(j4.toString().find("\\u0000") != string::npos);
   ASSERT_TRUE(j4.has("!"));
   ASSERT_TRUE(j4.has("\u0021"));
-  ASSERT_TRUE(j4.has("\\u0000"));
+  ASSERT_FALSE(j4.has("\\u0000"));
   ASSERT_TRUE(j4["\u0021"] == j4["!"]);
-  ASSERT_EQ(j4["\\u0000"], j4[std::string(1, 0)]);
+  ASSERT_EQ(j4[std::string(1, 0)].get<std::string>()[0], 'f');
 
   // Weird that string "\u0000" in C++ actually becomes "\u0001";
   // These two lines below are not exactly JSON parser test.
@@ -316,33 +315,56 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   ASSERT_NE("\u0000", "\u0002");
   //////////////////////////////////////////////////////////////
 
-  JSON j5 = "\\u0000";
-  ASSERT_TRUE(j5.get<std::string>().find("\\u0000") == string::npos);
-  ASSERT_TRUE(j5.get<std::string>().find(char(0)) != string::npos);
+  JSON j5 = "\\u0000"; // Will be treated as a normal string ("\u0000") and not json serilization
+  ASSERT_TRUE(j5.get<std::string>().find("\\u0000") != string::npos);
+  ASSERT_TRUE(j5.get<std::string>().find(char(0)) == string::npos);
   ASSERT_TRUE(j5.toString().find(char(0)) == string::npos);
   ASSERT_TRUE(j5.toString().find("\\u0000") != string::npos);
+  
+  JSON j5_2 = JSON::parse("\"\\u0000\""); 
+  ASSERT_TRUE(j5_2.get<std::string>().find("\\u0000") == string::npos);
+  ASSERT_TRUE(j5_2.get<std::string>().find(char(0)) != string::npos);
+  ASSERT_TRUE(j5_2.toString().find(char(0)) == string::npos);
+  ASSERT_TRUE(j5_2.toString().find("\\u0000") != string::npos);
+
 
   JSON j6 = "\\u000a";
-  ASSERT_TRUE(j6.get<std::string>().find("\\u000a") == string::npos);
-  ASSERT_TRUE(j6.get<std::string>().find(char(10)) != string::npos);
+  ASSERT_TRUE(j6.get<std::string>().find("\\u000a") != string::npos);
+  ASSERT_TRUE(j6.get<std::string>().find(char(10)) == string::npos);
   ASSERT_TRUE(j6.toString().find(char(10)) == string::npos);
-  ASSERT_TRUE(j6.toString().find("\\u000a") == string::npos);
-  ASSERT_TRUE(j6.toString().find("\\n") != string::npos);
-
+  ASSERT_TRUE(j6.toString().find("\\u000a") != string::npos);
+  ASSERT_TRUE(j6.toString().find("\\n") == string::npos);
+  
+  JSON j6_2 = JSON::parse("\"\\u000a\"");
+  ASSERT_TRUE(j6_2.get<std::string>().find("\\u000a") == string::npos);
+  ASSERT_TRUE(j6_2.get<std::string>().find(char(10)) != string::npos);
+  ASSERT_TRUE(j6_2.toString().find(char(10)) == string::npos);
+  ASSERT_TRUE(j6_2.toString().find("\\u000a") == string::npos);
+  ASSERT_TRUE(j6_2.toString().find("\\n") != string::npos);
+ 
   JSON j7 = JSON::parse("{\"\\u000a\": 12}");
   JSON j7_1;
   JSON j7_2 = JSON::parse("{\"\\n\": 12}");
   j7_1 = j7;
   ASSERT_TRUE(j7 == j7_1 && j7_2 == j7);
   ASSERT_TRUE(j7.has("\u000a"));
-  ASSERT_TRUE(j7.has("\\n"));
-  ASSERT_TRUE(j7.has("\\u000a"));
-  j7.erase("\\n");
-  ASSERT_FALSE(j7.has("\\u000A"));
-  j7_1.erase("\\u000a");
+  ASSERT_FALSE(j7.has("\\n"));
+  ASSERT_TRUE(j7.has("\u000a"));
+  ASSERT_FALSE(j7.has("\\u000a"));
+  
+  j7.erase("\n");
+  ASSERT_FALSE(j7.has("\u000A"));
+
+  ASSERT_JSONEXCEPTION(j7_1.erase("\\u000a"));
+  ASSERT_JSONEXCEPTION(j7_1.erase("\\n"));
+  
+  ASSERT_TRUE(j7_1.has("\u000a"));
+  j7_1.erase(std::string(1,10));
   ASSERT_FALSE(j7_1.has("\u000a"));
+  
+  ASSERT_TRUE(j7_2.has("\n"));
   j7_2.erase("\u000a");
-  ASSERT_FALSE(j7_2.has("\\u000A"));
+  ASSERT_FALSE(j7_2.has("\n"));
 
   temp = JSON::parse("\"a\x80\xe0\xa0\xc0\xaf\xed\xa0\x80z\"").get<std::string>();
   ASSERT_EQ(temp, "a\ufffd\ufffd\ufffd\ufffdz");
@@ -354,12 +376,50 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\\ug123\""));
   ASSERT_JSONEXCEPTION(JSON::parse("\"\\ud800\\udc0\""));
   ASSERT_JSONEXCEPTION(JSON::parse("\"\\uå\""));
+  ASSERT_JSONEXCEPTION(JSON::parse("\"\\\n"));
 
   JSON j8 = JSON::parse("{\"\\\\a\": 12}");
-  ASSERT_JSONEXCEPTION(j8["\\a"] = "");
-  j8["\\n"] = "";
-  ASSERT_EQ(j8["\\\\a"], 12);
+  ASSERT_EQ(j8["\\a"], 12);
+  j8["\\b"] = 15;
+  ASSERT_EQ(j8["\\b"], 15);
+  ASSERT_FALSE(j8.has("\\\\a"));
+
+  JSON j9 = JSON::parse("{}");
+  j9["\\n"] = 12;
+  ASSERT_FALSE(j9.has(std::string(1,'\n')));
+  j9["\n"] = 13;
+  ASSERT_TRUE(j9.has("\n"));
+  ASSERT_EQ(j9["\n"], 13);
+  j9.erase("\\n");
+  ASSERT_EQ(j9["\n"], 13);
+  ASSERT_FALSE(j9.has("\\n"));
+  
+  const JSON j10 = JSON::parse("{\"\\\\r\": 0, \"\n\": 10}");
+  ASSERT_TRUE(j10.has("\\r"));
+  ASSERT_FALSE(j10.has("\r"));
+  ASSERT_TRUE(j10.has("\n"));
+  ASSERT_FALSE(j10.has("\\n"));
+  ASSERT_EQ(j10["\\r"], 0);
+  ASSERT_EQ(j10["\n"], 10);
+
+  const JSON j11 = "\n";
+  ASSERT_TRUE(j11.toString().find("\\n") != string::npos);
+  ASSERT_TRUE(j11.toString().find("\n") == string::npos);
+  ASSERT_TRUE(j11.get<std::string>().find("\n") != string::npos);
+
+  const JSON j12 = "\\n";
+  ASSERT_TRUE(j12.toString().find("\\\\n") != string::npos);
+  ASSERT_TRUE(j12.get<std::string>().find("\n") == string::npos);
+
+  JSON j13 = JSON::parse("{\"\\\\r\": 0, \"\n\": 10}");
+  JSON j13_keys = JSON::parse("[\"\\\\r\", \"\n\"]");
+  JSON j13_Invalidkeys = JSON::parse("[\"\\r\", \"\\\\n\"]");
+  ASSERT_TRUE(j13.has(j13_keys[0]));
+  ASSERT_TRUE(j13.has(j13_keys[1]));
+  ASSERT_FALSE(j13.has(j13_Invalidkeys[0]));
+  ASSERT_FALSE(j13.has(j13_Invalidkeys[1]));
 }
+
 
 TEST(JSONTest, getAndConversionOperator) {
   JSON j1 = JSON::parse("{}");
@@ -383,7 +443,7 @@ TEST(JSONTest, getAndConversionOperator) {
   ASSERT_EQ(j1["1"].get<float>(), (float)j1["1"]);
 
   ASSERT_JSONEXCEPTION(j1["4"].get<int>());
-  ASSERT_JSONEXCEPTION(j1["1"].get<std::string>());
+  ASSERT_JSONEXCEPTION(j1["1"].get<std::string>()); 
 }
 
 TEST(JSONTest, HasAndErase) {
@@ -563,6 +623,16 @@ TEST(JSONTest, FloatingPointPrecision) {
   JSON::setEpsilon(.1);
   ASSERT_TRUE(j1 == j2);
   ASSERT_EQ(JSON::getEpsilon(), .1);
+  
+  JSON::setEpsilon(2);
+  j1 = 6.2;
+  j2 = 7.1;
+  ASSERT_EQ(JSON::getEpsilon(), 2.0);
+  ASSERT_TRUE(j1 == j2);
+
+  JSON::setEpsilon(1e-12);
+  ASSERT_NE(j1, j2);
+  ASSERT_EQ(JSON::getEpsilon(), 1e-12);
 }
 
 int main(int argc, char **argv) {
