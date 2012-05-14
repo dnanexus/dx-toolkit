@@ -14,7 +14,7 @@ if len(args) != 1:
 
 table_id = args[0]
 
-table = dxpy.open_dxtable(table_id)
+table = dxpy.open_dxgtable(table_id)
 
 if table.describe()['state'] == 'closed':
     print "Table %s is already closed" % table_id
