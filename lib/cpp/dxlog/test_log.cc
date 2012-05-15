@@ -100,14 +100,34 @@ bool testAppLog() {
     return false;
   }
 
-  dx::JSON data(dx::JSON_OBJECT);
-  for(int j = 0; j < 10; j++) {
-    data["level"] = j%8;
-    data["msg"] = "Test App Log " + boost::lexical_cast<string>(j);
-    data["jobId"] = "testJob";
+  string msg = "Test App Log - Emerg";
+  if (! DXLog::AppLog::emerg(msg)) ret_val = false;
+  
+  msg = "Test App Log - Alert";
+  if (! DXLog::AppLog::alert(msg)) ret_val = false;
     
-    if (! DXLog::AppLog::log(data, errMsg)) {
-      cerr << data.toString() + ":" + errMsg << "\n";
+  msg = "Test App Log - Critical";
+  if (! DXLog::AppLog::crit(msg)) ret_val = false;
+    
+  msg = "Test App Log - Error";
+  if (! DXLog::AppLog::error(msg)) ret_val = false;
+    
+  msg = "Test App Log - Warning";
+  if (! DXLog::AppLog::warn(msg)) ret_val = false;
+    
+  msg = "Test App Log - Notice";
+  if (! DXLog::AppLog::notice(msg)) ret_val = false;
+    
+  msg = "Test App Log - Info";
+  if (! DXLog::AppLog::info(msg)) ret_val = false;
+    
+  msg = "Test App Log - Debug";
+  if (! DXLog::AppLog::debug(msg)) ret_val = false;
+    
+  for(int j = 0; j < 7; j++) {
+    msg = "Test App Log " + boost::lexical_cast<string>(j);
+    
+    if (! DXLog::AppLog::log(msg, j)) {
       ret_val = false;
       break;
     }

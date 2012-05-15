@@ -68,7 +68,15 @@ namespace DXLog {
       *  Returns true if the message is successfully delivered to the log system;
       *  Otherwise returns false and errMsg contains some details of the error
       */
-      static bool log(dx::JSON &msg, string &errMsg);
+      static bool log(const string &message, int level = 6);
+      static bool emerg(const string &message) { return log(message, 0); }
+      static bool alert(const string &message) { return log(message, 1); }
+      static bool crit(const string &message) { return log(message, 2); }
+      static bool error(const string &message) { return log(message, 3); }
+      static bool warn(const string &message) { return log(message, 4); }
+      static bool notice(const string &message) { return log(message, 5); }
+      static bool info(const string &message) { return log(message, 6); }
+      static bool debug(const string &message) { return log(message, 7); }
 
       static bool done(string &errMsg);
   };

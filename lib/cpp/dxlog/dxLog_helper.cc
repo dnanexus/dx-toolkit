@@ -4,6 +4,11 @@
 #include "unistd.h"
 #include <fstream>
 
+using namespace std;
+using boost::gregorian::date;
+using boost::posix_time::ptime;
+using boost::posix_time::microsec_clock;
+
 void DXLog::throwString(const string &msg) {
   throw(msg);
 }
@@ -33,6 +38,11 @@ string DXLog::timeISOString(long long int utc) {
   char timeString[80];
   strftime(timeString, 80, "%Y-%m-%dT%H:%M:%SZ", ptm);
   return string(timeString);
+}
+
+long long int DXLog::utcMS(){
+  static ptime const epoch(date(1970, 1, 1));
+  return (microsec_clock::universal_time() - epoch).total_milliseconds();
 }
 
 dx::JSON DXLog::defaultConf() { 

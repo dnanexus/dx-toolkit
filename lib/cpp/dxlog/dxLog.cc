@@ -24,7 +24,7 @@ bool DXLog::ValidateLogData(const dx::JSON &config, dx::JSON &message, string &e
   try {
     if (! message.type() == dx::JSON_OBJECT) throwString("log input is not a hash");
 
-    if (! message.has("timestamp")) message["timestamp"] = (long long int)(time(NULL)*1000);
+    if (! message.has("timestamp")) message["timestamp"] = utcMS();
 
     if (! message.has("source")) throwString("Missing source of the log");
     string source = message["source"].get<string>();
@@ -136,37 +136,49 @@ int DXLog::AppLog::socketIndex(int level) {
   return (level < 3) ? 0 : 1;
 }
 
-bool DXLog::AppLog::log(dx::JSON &message, string &errMsg) {
+bool DXLog::AppLog::log(const string &msg, int level) {
+  string errMsg;
+  dx::JSON message(dx::JSON_OBJECT);
   try {
+    usleep(1100);
     if (! initialized) {
       dx::JSON input = dx::JSON(dx::JSON_OBJECT);
       input["socketPath"] = dx::JSON(dx::JSON_ARRAY);
       input["socketPath"].push_back(defaultPrioritySocket);
       input["socketPath"].push_back(defaultBulkSocket);
-      if (! initEnv(input, errMsg)) return false;
+      if (! initEnv(input, errMsg)) {
+        cerr << errMsg << endl;
+        return false;
+      }
     }
     message["source"] = "app";
+    message["msg"] = msg;
+    message["level"] = level;
+    message["timestamp"] = utcMS();
 
-    int index = socketIndex(int(message["level"]));
+    int index = socketIndex(level);
     if (msgCount[index] >= msgLimit) {
-      errMsg = "Number of messages exceeds " + boost::lexical_cast<string>(msgLimit);
+      cerr << "Number of messages exceeds " + boost::lexical_cast<string>(msgLimit) << endl;
       return false;
     }
 
     if (! boost::filesystem::exists(socketPath[index])) {
-      errMsg = "Socket " + socketPath[index] + " does not exist!";
+      cerr<< "Socket " + socketPath[index] + " does not exist!" << endl;
       return false;
     }
 
-    if (! SendMessage2UnixDGRAMSocket(socketPath[index], message.toString(), errMsg)) return false;
+    if (! SendMessage2UnixDGRAMSocket(socketPath[index], message.toString(), errMsg)) {
+      cerr << errMsg << endl;
+      return false;
+    }
 
     msgCount[index]++;
     return true;
-  } catch (const string &msg) {
-    errMsg = msg;
+  } catch (const string &eMsg) {
+    cerr << eMsg << endl;
     return false;
   } catch (std::exception &e) {
-    errMsg = e.what();
+    cerr << e.what() << endl;
     return false;
   }
 }
