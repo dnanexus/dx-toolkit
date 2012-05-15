@@ -21,6 +21,8 @@ def main():
     parser.add_option("--start_row", dest="reads_offset", help="starting row in reads table, used for parallelizing")
     parser.add_option("--start_part", dest="start_part", help="starting part id for upload")
     parser.add_option("--end_part", dest="end_part", help="ending part id for upload")
+    parser.add_option("--end_part", dest="end_part", help="ending part id for upload")
+    parser.add_option("--discard_unmapped_rows", help="Discard unmapped rows", action='store_true', default=False)
     (opts, args) = parser.parse_args()
     #if len(args) < 8:
         #parser.print_help()
