@@ -3,32 +3,32 @@
 import dxpy
 import math
 from optparse import OptionParser
-
+import re
 
 #Usage: sample input: dx_Simplevar2Vcf
 def main():
 
     parser = OptionParser("Usage: %prog table_id output quality_filter")
-    parser.add_option("--table_id", dest="simplevar_id", help="Simplevar table id to read from")
+    parser.add_option("--table_id", dest="simple_var_id", help="Simplevar table id to read from")
     parser.add_option("--output", dest="file_name", help="Name of file to write VCF to")
     parser.add_option("--quality_filter", dest="filter", default=0, help="What quality score filter to apply")
-    #parser.add_option("--include_ref", dest="include_ref", help="Write reference call rows to VCF")
-    #parser.add_option("--include_no_call", dest="include_no_call", help="Write no-call rows to VCF")
+    parser.add_option("--region", "-L", dest="region", action="append", help="Regions to pull mappings from in the format chr:lo-hi, useful for parallelization")
+    parser.add_option("--region_index_offset", dest="index_offset", type="int", default=0, help="For region arguments, shift the index by this amount (useful for converting from one-indexed to zero-indexed lists)")
     
     (opts, args) = parser.parse_args()
     outputFile = open(opts.file_name, 'w')
     
-    simplevarTable = dxpy.open_dxgtable(opts.simplevar_id)
+    simpleVarTable = dxpy.open_dxgtable(opts.simple_var_id)
     
     try:
-        originalContigSet = simplevarTable.get_details()['originalContigSet']
+        originalContigSet = simpleVarTable.get_details()['originalContigSet']
     except:
         raise Exception("The original reference genome must be attached as a detail")
         
     contigDetails = dxpy.DXRecord(originalContigSet).get_details()
     dxpy.download_dxfile(contigDetails['flat_sequence_file']['$dnanexus_link'], 'ref.txt')
     
-    header = simplevarTable.get_details()['header']
+    header = simpleVarTable.get_details()['header']
     outputFile.write(header)
     
     chromosomeOffsets = {}
@@ -38,25 +38,49 @@ def main():
     contigSequence = open("ref.txt",'r').read()
     
     col = {}
-    names = simplevarTable.get_col_names()   
+    names = simpleVarTable.get_col_names()   
     for i in range(len(names)):
         col[names[i]] = i+1
     
     #refAppearsCompressed = False
     #noCallAppearsCompressed = False
     
-    for x in simplevarTable.iterate_rows():
-        chr = str(x[col["chr"]])
-        pos = str(x[col["lo"]]-1)
-        ref = str(x[col["ref"]])
-        if (x[col["type"]]) == "Ins" or (x[col["type"]]) == "Del" or (x[col["type"]]) == "Complex" or (x[col["type"]]) == "Mixed":
-            ref = contigSequence[chromosomeOffsets[chr]+int(pos)-1]+ref
-        altOptions = x[col["alt"]].split("/")
-        qual = str(x[col["qual"]])
-        filter = "."
-        vcfAlt = x[col["vcf_alt"]]
-        vcfAdditional = x[col["vcf_additional_data"]]
-        if x[3] != "Ref" and x[3] != "No-call" and qual < int(opts.filter):
-            filter = "q"+str(opts.filter)
-            
-        outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter+"\t"+vcfAdditional+"\n")
+    filter = int(opts.filter)
+    
+    if opts.region != None:
+        regions = parseRegions(opts.region)
+        for x in regions:
+            query = simpleVarTable.genomic_range_query(chr=x[0][0],lo=int(x[0][1])+opts.index_offset,hi=int(x[0][2])+opts.index_offset,mode='overlap',index='gri')
+            for row in simpleVarTable.iterate_query_rows(query=query):
+                writeRow(row, col, filter, outputFile)
+    else:
+        for row in simpleVarTable.iterate_rows():
+            writeRow(row, col, filter, outputFile)
+
+
+def parseRegions(input):
+    result = []
+    for x in input:
+        result.append(re.findall("(\w+):(\d+)-(\d+)", x))
+    return result
+
+def writeRow(row, col, filter, outputFile):
+    chr = str(row[col["chr"]])
+    pos = str(row[col["lo"]]-1)
+    ref = str(row[col["ref"]])
+    if (row[col["type"]]) == "Ins" or (row[col["type"]]) == "Del" or (row[col["type"]]) == "Complex" or (row[col["type"]]) == "Mixed":
+        ref = contigSequence[chromosomeOffsets[chr]+int(pos)-1]+ref
+    altOptions = row[col["alt"]].split("/")
+    qual = str(row[col["qual"]])
+    filter = "."
+    vcfAlt = row[col["vcf_alt"]]
+    vcfAdditional = row[col["vcf_additional_data"]]
+    if row[3] != "Ref" and row[3] != "No-call" and qual < filter:
+        filter = "q"+str(filter)
+    else:
+        filter = "PASS"
+        
+    outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter+"\t"+vcfAdditional+"\n")
+    
+    
+main()
