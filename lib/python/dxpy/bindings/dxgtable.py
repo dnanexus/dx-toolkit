@@ -159,7 +159,7 @@ class DXGTable(DXDataObject):
         """
         :param start: The row ID of the first row to return
         :type start: integer
-        :param end: The row ID of the last row to return (to the end if None)
+        :param end: Return all rows before this row (return all rows until the end if None)
         :type end: integer or None
         :rtype: generator
 
