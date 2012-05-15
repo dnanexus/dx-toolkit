@@ -10,8 +10,7 @@ methods return a remote table handler.
 
 from dxpy.bindings import *
 
-def open_dxgtable(dxid, project=None, buffer_size=40000, part_id_min=1,
-                  part_id_max=250000):
+def open_dxgtable(dxid, project=None, buffer_size=40000):
     '''
     :param dxid: table ID
     :type dxid: string
@@ -32,12 +31,10 @@ def open_dxgtable(dxid, project=None, buffer_size=40000, part_id_min=1,
 
     '''
 
-    return DXGTable(dxid, project=project, buffer_size=buffer_size,
-                    part_id_min=part_id_min, part_id_max=part_id_max)
+    return DXGTable(dxid, project=project, buffer_size=buffer_size)
 
 def new_dxgtable(columns, indices=None, keep_open=False,
-                 buffer_size=40000, part_id_min=1, part_id_max=250000,
-                 **kwargs):
+                 buffer_size=40000, **kwargs):
     '''
     :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
     :type columns: list of column descriptors
@@ -73,14 +70,12 @@ def new_dxgtable(columns, indices=None, keep_open=False,
 
     '''
     
-    dxgtable = DXGTable(keep_open=keep_open, buffer_size=buffer_size,
-                        part_id_min=part_id_min, part_id_max=part_id_max)
+    dxgtable = DXGTable(keep_open=keep_open, buffer_size=buffer_size)
     dxgtable.new(columns=columns, indices=indices, **kwargs)
     return dxgtable
 
 def extend_dxgtable(dxid, columns, indices=None, keep_open=False,
-                    buffer_size=40000, part_id_min=1, part_id_max=250000,
-                    **kwargs):
+                    buffer_size=40000, **kwargs):
     '''
     :param dxid: Object ID of table to extend
     :type dxid: string
@@ -111,5 +106,4 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=False,
     '''
 
     return DXGTable(dxid).extend(columns, indices,
-                                 keep_open, buffer_size, part_id_min,
-                                 part_id_max, **kwargs)
+                                 keep_open, buffer_size, **kwargs)
