@@ -1,4 +1,5 @@
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 #include "dxLog.h"
 #include "dxLog_helper.h"
 #include <fstream>
@@ -6,8 +7,9 @@
 string DXLog::AppLog::socketPath[2];
 int DXLog::AppLog::msgCount[2] = {0, 0};
 int DXLog::AppLog::msgLimit = 1000;
+bool DXLog::AppLog::initialized = false;
 
-dx::JSON DXLog::AppLog::schema(dx::JSON_OBJECT);
+//dx::JSON DXLog::AppLog::schema(dx::JSON_OBJECT);
 
 dx::JSON DXLog::readJSON(const string &filename) {
   dx::JSON ret_val;
@@ -118,8 +120,8 @@ bool DXLog::AppLog::initEnv(const dx::JSON &conf, string &errMsg) {
   try {
     socketPath[0] = conf["socketPath"][0].get<string>();
     socketPath[1] = conf["socketPath"][1].get<string>();
-    schema = defaultSchema();
-    ValidateLogSchema(schema);
+
+    initialized = true;
     return true;
   } catch (const string &msg) {
     errMsg = msg;
@@ -136,12 +138,23 @@ int DXLog::AppLog::socketIndex(int level) {
 
 bool DXLog::AppLog::log(dx::JSON &message, string &errMsg) {
   try {
+    if (! initialized) {
+      dx::JSON input = dx::JSON(dx::JSON_OBJECT);
+      input["socketPath"] = dx::JSON(dx::JSON_ARRAY);
+      input["socketPath"].push_back(defaultPrioritySocket);
+      input["socketPath"].push_back(defaultBulkSocket);
+      if (! initEnv(input, errMsg)) return false;
+    }
     message["source"] = "app";
-    if (! ValidateLogData(schema, message, errMsg)) return false;
 
     int index = socketIndex(int(message["level"]));
     if (msgCount[index] >= msgLimit) {
       errMsg = "Number of messages exceeds " + boost::lexical_cast<string>(msgLimit);
+      return false;
+    }
+
+    if (! boost::filesystem::exists(socketPath[index])) {
+      errMsg = "Socket " + socketPath[index] + " does not exist!";
       return false;
     }
 

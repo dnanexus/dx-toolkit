@@ -1,7 +1,10 @@
 #ifndef DXLOG_H
 #define DXLOG_H
 
-#include "dxjson.h"
+#define defaultPrioritySocket "/opt/dnanexus/log/priority"
+#define defaultBulkSocket "/opt/dnanexus/log/bulk"
+
+#include "dxjson/dxjson.h"
 #include "unixDGRAM.h"
 
 using namespace std;
@@ -47,11 +50,12 @@ namespace DXLog {
       *  The other is for ERR, WARN, NOTICE, INFO, DEBUG messages
       *  msgCoutn stores current number of messages being stored 
       */
-      static int msgCount[2], msgLimit; // 
+      static int msgCount[2], msgLimit; //
+      static bool initialized;
 
       // Data associated with messages obtained from execution environment
       static string socketPath[2];
-      static dx::JSON schema;
+      //static dx::JSON schema;
       
       // Determine which rsyslog socket to use for message with this level
       static int socketIndex(int level);
