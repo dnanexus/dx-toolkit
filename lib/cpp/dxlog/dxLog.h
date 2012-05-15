@@ -1,7 +1,10 @@
 #ifndef DXLOG_H
 #define DXLOG_H
 
-#include "dxjson.h"
+#define defaultPrioritySocket "/opt/dnanexus/log/priority"
+#define defaultBulkSocket "/opt/dnanexus/log/bulk"
+
+#include "dxjson/dxjson.h"
 #include "unixDGRAM.h"
 
 using namespace std;
@@ -47,11 +50,12 @@ namespace DXLog {
       *  The other is for ERR, WARN, NOTICE, INFO, DEBUG messages
       *  msgCoutn stores current number of messages being stored 
       */
-      static int msgCount[2], msgLimit; // 
+      static int msgCount[2], msgLimit; //
+      static bool initialized;
 
       // Data associated with messages obtained from execution environment
       static string socketPath[2];
-      static dx::JSON schema;
+      //static dx::JSON schema;
       
       // Determine which rsyslog socket to use for message with this level
       static int socketIndex(int level);
@@ -64,7 +68,15 @@ namespace DXLog {
       *  Returns true if the message is successfully delivered to the log system;
       *  Otherwise returns false and errMsg contains some details of the error
       */
-      static bool log(dx::JSON &msg, string &errMsg);
+      static bool log(const string &message, int level = 6);
+      static bool emerg(const string &message) { return log(message, 0); }
+      static bool alert(const string &message) { return log(message, 1); }
+      static bool crit(const string &message) { return log(message, 2); }
+      static bool error(const string &message) { return log(message, 3); }
+      static bool warn(const string &message) { return log(message, 4); }
+      static bool notice(const string &message) { return log(message, 5); }
+      static bool info(const string &message) { return log(message, 6); }
+      static bool debug(const string &message) { return log(message, 7); }
 
       static bool done(string &errMsg);
   };

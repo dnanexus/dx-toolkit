@@ -102,6 +102,10 @@ def gtableListProjects(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, **kwargs)
 
 
+def gtableNextPart(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/nextPart' % object_id, input_params, **kwargs)
+
+
 def gtableRemoveTags(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/removeTags' % object_id, input_params, **kwargs)
 

@@ -227,6 +227,15 @@ dx::JSON gtableListProjects(const std::string &object_id, const dx::JSON &input_
 }
 
 
+dx::JSON gtableNextPart(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/nextPart"), input_params);
+}
+
+dx::JSON gtableNextPart(const std::string &object_id, const dx::JSON &input_params) {
+  return gtableNextPart(object_id, input_params.toString());
+}
+
+
 dx::JSON gtableRemoveTags(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
 }

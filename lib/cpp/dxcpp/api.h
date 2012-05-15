@@ -104,6 +104,10 @@ dx::JSON gtableListProjects(const std::string &object_id, const std::string &inp
 dx::JSON gtableListProjects(const std::string &object_id, const dx::JSON &input_params);
 
 
+dx::JSON gtableNextPart(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON gtableNextPart(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON gtableRemoveTags(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON gtableRemoveTags(const std::string &object_id, const dx::JSON &input_params);
 

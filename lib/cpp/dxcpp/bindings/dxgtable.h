@@ -27,14 +27,13 @@ private:
   std::stringstream row_buffer_;
 
   int64_t row_buffer_maxsize_;
-  int part_id_;
 
   void reset_buffer_();
 
 public:
 
   DXGTable()
-    : DXDataObject(), row_buffer_maxsize_(104857600), part_id_(0)
+    : DXDataObject(), row_buffer_maxsize_(104857600)
   {
     reset_buffer_();
   }
@@ -155,11 +154,9 @@ public:
   void addRows(const dx::JSON &data); // For automatic part ID generation
 
   /**
-   * Queries the remote table and finds a valid unused number (part
-   * ID) which can then be used to add rows to the remote table.
-   * Regardless of the state of the remote table, the method will not
-   * return the same part ID more than once, i.e. requesting an unused
-   * part ID automatically increments the next search.
+   * Queries an open remote table and finds a valid unused number
+   * (part ID) which can then be used to add rows to the remote table.
+   * The method will not return the same part ID more than once.
    *
    * @return An integer that has not yet been used to upload
    * rows to the remote table object
@@ -286,8 +283,8 @@ public:
    * @return A JSON object containing the query for use with getRows()
    */
   static dx::JSON genomicRangeQuery(const std::string &chr,
-                                    const int lo,
-                                    const int hi,
+                                    const int64_t lo,
+                                    const int64_t hi,
                                     const std::string &mode="overlap",
                                     const std::string &index="gri");
 

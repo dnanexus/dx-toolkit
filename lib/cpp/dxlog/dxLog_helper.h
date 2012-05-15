@@ -2,9 +2,8 @@
 #define DXLOG_HELPER_H
 
 #include "dxLog.h"
-#include "dxjson.h"
-
-using namespace std;
+#include "dxjson/dxjson.h"
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 namespace DXLog {
   void throwString(const string &msg);
@@ -14,6 +13,8 @@ namespace DXLog {
   string getHostname();
 
   string timeISOString(long long int utc);
+
+  long long int utcMS();
 
   dx::JSON defaultConf();
   dx::JSON defaultSchema();
