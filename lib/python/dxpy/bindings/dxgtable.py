@@ -33,13 +33,10 @@ class DXGTable(DXDataObject):
     _row_buf_maxsize = 1024*1024*20
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=40000, part_id_min=1, part_id_max=250000):
+                 buffer_size=40000):
         self._keep_open = keep_open
         self._bufsize = buffer_size
         self._row_buf = StringIO.StringIO()
-        self._part_id_min = part_id_min
-        self._part_id_max = part_id_max
-        self._part_id = self._part_id_min - 1
         if dxid is not None:
             self.set_ids(dxid, project)
 
@@ -96,9 +93,6 @@ class DXGTable(DXDataObject):
             self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
-
-        # Reset state
-        self._part_id = self._part_id_min - 1
 
     def get_rows(self, query=None, columns=None, starting=None, limit=None, **kwargs):
         '''
@@ -216,8 +210,7 @@ class DXGTable(DXDataObject):
         return self.iterate_rows(**kwargs)
 
     def extend(self, columns, indices=None, keep_open=False,
-               buffer_size=40000, part_id_min=1, part_id_max=250000,
-               **kwargs):
+               buffer_size=40000, **kwargs):
         '''
         :param columns: List of new column names
         :type columns: list of strings
@@ -242,7 +235,7 @@ class DXGTable(DXDataObject):
             dx_hash["indices"] = indices
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
         return DXGTable(resp["id"], dx_hash["project"],
-                        keep_open, buffer_size, part_id_min, part_id_max)
+                        keep_open, buffer_size)
 
     def add_rows(self, data, part=None, **kwargs):
         '''
@@ -280,22 +273,11 @@ class DXGTable(DXDataObject):
         :returns: An unused part id
         :rtype: integer
 
-        Queries the API server for a part ID that has not yet been
-        used to upload gtable rows.  Note that calling this function
-        will internally mark the returned part ID as used, and so it
-        should not be called if the value will not be used.
+        Queries the API server for an unused part ID.  The same part
+        ID will not be returned more than once by this method.
 
         '''
-        desc = self.describe(**kwargs)
-        if self._part_id > self._part_id_max:
-            raise DXGTableError("All available part indices already used.")
-
-        while self._part_id <= self._part_id_max:
-            self._part_id += 1
-            if str(self._part_id) not in desc["parts"]:
-                return self._part_id
-        
-        raise DXGTableError("Usable part ID not found.")
+        return dxpy.api.gtableNextPart(self._dxid, **kwargs)['part']
 
     def flush(self, **kwargs):
         '''

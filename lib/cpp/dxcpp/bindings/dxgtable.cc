@@ -13,8 +13,6 @@ void DXGTable::setIDs(const std::string &dxid,
 		      const std::string &proj) {
   flush();
 
-  part_id_ = 0;
-
   DXDataObject::setIDs(dxid, proj);
 }
 
@@ -85,17 +83,8 @@ void DXGTable::addRows(const JSON &data) {
 }
 
 int DXGTable::getUnusedPartID() {
-  const JSON desc = describe();
-  if (desc["parts"].length() == 250000)
-    throw DXGTableError();//"250000 part indices already used."
-
-  do {
-    part_id_++;
-    if (!desc["parts"].has(boost::lexical_cast<string>(part_id_)))
-      return part_id_;
-  } while (part_id_ < 250000);
-
-  throw DXGTableError();//"Usable part index not found."
+  const JSON resp = gtableNextPart(dxid_);
+  return resp["part"].get<int>();
 }
 
 void DXGTable::flush() {
@@ -180,8 +169,8 @@ JSON DXGTable::substringIndex(const string &column, const string &name) {
 }
 
 JSON DXGTable::genomicRangeQuery(const std::string &chr,
-                                 const int lo,
-                                 const int hi,
+                                 const int64_t lo,
+                                 const int64_t hi,
                                  const std::string &mode,
                                  const std::string &index) {
   JSON query(JSON_OBJECT);
