@@ -49,9 +49,6 @@ def main():
         for region in opts.region:
             includeDictionary = {}
             intervalMatch = re.findall("(\w+):(\d+)-(\d+)", region)
-            print intervalMatch[0][0]
-            print intervalMatch[0][1]
-            print intervalMatch[0][2]
             query = mappingsTable.genomic_range_query(intervalMatch[0][0],int(intervalMatch[0][1])+opts.region_index_offset,int(intervalMatch[0][2])+opts.region_index_offset,mode='overlap',index='gri')
             for row in mappingsTable.iterate_query_rows(query=query):
                 writeRow(row, col, outputFile)
@@ -68,3 +65,5 @@ def writeRow(row, col, outputFile):
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + row[col["chr2"]] + "\t")
     outputFile.write(str(row[col["lo2"]]+1) + "\t" + str(int(math.fabs(row[col["hi"]] - row[col["lo"]]))) + "\t" + row[col["sequence"]] + "\t")
     outputFile.write(str(row[col["quality"]] + "\n"))
+    
+main()
