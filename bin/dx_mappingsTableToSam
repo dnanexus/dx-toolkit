@@ -19,7 +19,7 @@ def main():
     mappingsTable = dxpy.open_dxgtable(opts.mappings_id)
     
     try:
-        originalContig = mappingsTable.get_details()['originalContigSet']
+        originalContig = mappingsTable.get_details()['original_contigset']
     except:
         raise Exception("The original reference genome must be attached as a detail")
     
