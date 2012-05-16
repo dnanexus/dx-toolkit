@@ -559,8 +559,10 @@ namespace dx {
 
     template<typename T>
     Array(const std::vector<T> &vec) {
-      for (unsigned i = 0;i < vec.size(); i++)
-        val.push_back(*(new JSON(vec[i])));
+      for (unsigned i = 0;i < vec.size(); i++) {
+        JSON tmp(vec[i]);
+        val.push_back(tmp);
+      }
     }
 
     JSON& jsonAtIndex(size_t i);
