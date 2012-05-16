@@ -9,7 +9,8 @@ Logging handler for DNAnexus application level logging.
 Code adapted from logging.handlers.SysLogHandler.
 
 This handler is automatically enabled in the job template when running Python code in the execution environment.
-It sends log messages to the DNAnexus log service, so that they can be examined through the log query API.
+It forwards all log messages sent through the :mod:`logging` module to the DNAnexus log service,
+so that they can be examined through the log query API.
 To enable the handler in a Python subprocess in the execution environment, use:
 
     import logging

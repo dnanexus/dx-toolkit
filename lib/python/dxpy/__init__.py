@@ -165,3 +165,4 @@ else:
         set_workspace_id(os.environ["DX_PROJECT_CONTEXT_ID"])
 
 from dxpy.bindings import *
+from dxpy.dxlog import *
