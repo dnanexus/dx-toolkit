@@ -1,59 +1,70 @@
-import socket, json, time, os, sys
+import socket, json, time, os, sys, logging
 
+from logging.handlers import SysLogHandler
 
-#
-# Static class for AppLog.logging. E.g. DXLog.warning("my warning")
-# when DXLog.verbose() is called all warning messages are
-# also written to stderr in additon to being captured in sysAppLog.log
-#
-class AppLog:
-    @staticmethod
-    def log(message, level = 6): 
-      socketFile = "/opt/dnanexus/log/bulk"
-      if (level < 3):  
-        socketFile = "/opt/dnanexus/log/priority"
+from dxpy.exceptions import DXError
 
-      if (not os.path.exists(socketFile)): 
-        print >> sys.stderr, "Socket " + socketFile + " does not exist"
-        return False
+'''
+Logging handler for DNAnexus application level logging.
+Code adapted from logging.handlers.SysLogHandler.
 
-      s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-      s.connect(socketFile)
+This handler is automatically enabled in the job template when running Python code in the execution environment.
+It sends log messages to the DNAnexus log service, so that they can be examined through the log query API.
+To enable the handler in a Python subprocess in the execution environment, use:
 
-      data = {"source": "app", "timestamp": int(round(time.time() *1000)), "level": level, "msg": message}
-      s.send(json.dumps(data))
-      s.close()
-      time.sleep(0.0011)
-      return True
-            
-    @staticmethod
-    def emerg(message):
-      return AppLog.log(message, 0)
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
+    from dxpy.dxlog import DXLogHandler
+    logging.getLogger().addHandler(DXLogHandler())
 
-    @staticmethod
-    def alert(message):
-      return AppLog.log(message, 1)
+'''
+class DXLogHandler(SysLogHandler):
+    def __init__(self, priority_log_address="/opt/dnanexus/log/priority",
+                 bulk_log_address="/opt/dnanexus/log/bulk"):
 
-    @staticmethod
-    def crit(message):
-      return AppLog.log(message, 2)
+        if not os.path.exists(priority_log_address):
+            raise DXError("The path %s does not exist, but is required for application logging" % (priority_log_address))
+        if not os.path.exists(bulk_log_address):
+            raise DXError("The path %s does not exist, but is required for application logging" % (bulk_log_address))
 
-    @staticmethod
-    def error(message):
-      return AppLog.log(message, 3)
+        logging.Handler.__init__(self)
 
-    @staticmethod
-    def warn(message):
-      return AppLog.log(message, 4)
+        self.priority_log_address = priority_log_address
+        self.priority_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.priority_log_socket.connect(priority_log_address)
 
-    @staticmethod
-    def notice(message):
-      return AppLog.log(message, 5)
+        self.bulk_log_address = bulk_log_address
+        self.bulk_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.bulk_log_socket.connect(bulk_log_address)
 
-    @staticmethod
-    def info(message):
-      return AppLog.log(message, 6)
+    def close(self):
+        self.priority_log_socket.close()
+        self.bulk_log_socket.close()
+        logging.Handler.close(self)
 
-    @staticmethod
-    def debug(message):
-      return AppLog.log(message, 7)
+    def encodePriority(self, record):
+        # See logging.handlers.SysLogHandler for an explanation of this.
+        return self.priority_names[self.priority_map.get(record.levelname, "warning")]
+
+    def emit(self, record):
+        level = self.encodePriority(record)
+        data = json.dumps({"source": "app", "timestamp": int(round(time.time() * 1000)),
+                           "level": level, "msg": record.message})
+
+        if int(record.levelno) < 3:
+            # Critical, alert or emerg
+            cur_socket = self.priority_log_socket
+            cur_socket_address = self.priority_log_address
+        else:
+            cur_socket = self.bulk_log_socket
+            cur_socket_address = self.bulk_log_address
+
+        try:
+            cur_socket.send(data)
+        except socket.error:
+            cur_socket.connect(cur_socket_address)
+            cur_socket.send(data)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
