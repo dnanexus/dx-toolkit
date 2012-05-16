@@ -50,7 +50,7 @@ class DXLogHandler(SysLogHandler):
     def emit(self, record):
         level = self.encodePriority(record)
         data = json.dumps({"source": "app", "timestamp": int(round(time.time() * 1000)),
-                           "level": level, "msg": record.message})
+                           "level": level, "msg": record.getMessage()})
 
         if int(record.levelno) < 3:
             # Critical, alert or emerg
