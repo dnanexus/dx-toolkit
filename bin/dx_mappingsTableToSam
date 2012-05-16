@@ -68,5 +68,3 @@ def writeRow(row, col, outputFile):
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + row[col["chr2"]] + "\t")
     outputFile.write(str(row[col["lo2"]]+1) + "\t" + str(int(math.fabs(row[col["hi"]] - row[col["lo"]]))) + "\t" + row[col["sequence"]] + "\t")
     outputFile.write(str(row[col["quality"]] + "\n"))
-
-main()
