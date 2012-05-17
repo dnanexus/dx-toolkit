@@ -62,7 +62,7 @@ def describe(link, **kwargs):
     Given an object ID, recognizes the class and calls describe on it.
 
     Example::
-    
+
         describe("file-1234")
     '''
     handler = get_handler(link)
@@ -74,8 +74,20 @@ def get_details(link, **kwargs):
     Given an object ID, recognizes the class and calls getDetails on it.
 
     Example::
-    
+
         get_details("file-1234")
     '''
     handler = get_handler(link)
     return handler.get_details(**kwargs)
+
+def remove(link, **kwargs):
+    '''
+    :param link: String containing an object ID or dict containing a DXLink
+    Given an object ID, recognizes the class and calls remove on it.
+
+    Example::
+
+        remove("file-1234")
+    '''
+    handler = get_handler(link)
+    return handler.remove(**kwargs)
