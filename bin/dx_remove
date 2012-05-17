@@ -13,4 +13,4 @@ if len(args) != 1:
 
 id = args[0]
 
-print json.dumps(dxpy.dx_remove(id))
+print json.dumps(dxpy.remove(id))
