@@ -186,11 +186,8 @@ def mv(args):
             dxpy.get_handler(source)
             objects.append(source)
         except:
-            if not source.startswith('/'):
-                source = '/' + source
-            folders.append(source)
-    if not args.destination.startswith('/'):
-        args.destination = '/' + args.destination
+            folders.append(resolve_path(source))
+    args.destination = resolve_path(args.destination)
     # Doesn't exactly make sense when we can't specify a source by name yet
     # try:
     #     dxproj.list_folder(args.destination)
