@@ -29,7 +29,13 @@ def load_env():
 
 def get_json_from_stdin():
     user_json_str = raw_input('Type JSON here> ')
-    return json.loads(user_json_str)
+    user_json = None
+    try:
+        user_json = json.loads(user_json_str)
+    except:
+        print 'Error: user input could not be parsed as JSON'
+        return None
+    return user_json
 
 # Loading environment
 
@@ -66,11 +72,22 @@ def api(args):
     if args.input is not None:
         with open(args.input, 'r') as fd:
             data = fd.read()
-            json_input = json.loads(data)
+            try:
+                json_input = json.loads(data)
+            except:
+                print 'Error: file contents could not be parsed as JSON'
+                return
     elif args.stdin:
         json_input = get_json_from_stdin()
-    print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
-                                        json_input))
+        if json_input == None:
+            return
+    resp = None
+    try:
+        resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
+                                  json_input)
+        print json.dumps(resp)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def clean_folder_path(path):
     folders = path.split('/')
