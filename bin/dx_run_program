@@ -20,8 +20,13 @@ if len(args) != 1:
 
 program_name = args[0]
 
+latest_stamp = 0
+
 try:
-    program_id = dxpy.find_data_objects(classname="program", properties={"name": program_name}).next()['id']
+    for result in dxpy.find_data_objects(classname="program", properties={"name": program_name}):
+        if dxpy.DXProgram(result['id']).describe()['created'] > latest_stamp:
+            latest_stamp = dxpy.DXProgram(result['id']).describe()['created']
+            program_id = result['id']
 except StopIteration:
     try:
         dxpy.describe(program_name)
