@@ -53,6 +53,7 @@ def set_port(args):
 
 def set_project(args):
     write_env_var("DX_PROJECT_CONTEXT_ID", args.project)
+    write_env_var("DX_CLI_WD", '/')
 
 def set_wd(args):
     write_env_var("DX_CLI_WD", args.folder)
