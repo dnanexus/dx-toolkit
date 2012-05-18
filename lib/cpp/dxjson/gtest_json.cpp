@@ -22,6 +22,43 @@ void printStringAsIntegers(string str) {
   cout<<"\n";
 }
 
+TEST(JSONTest, ParseJSONTestSuiteExampleFile) {
+  // The file being parsed has been downloaded from here
+  // http://code.google.com/p/json-test-suite/downloads/detail?name=sample.zip
+  // Structure of this JSON file is like this (console.dir() output from v8(node.js) for this file):
+  /*
+  { a: 
+   { '6U閆崬밺뀫颒myj츥휘:$薈mY햚#rz飏+玭V㭢뾿愴YꖚX亥ᮉ푊\u0006垡㐭룝"厓ᔧḅ^Sqpv媫"⤽걒"˽Ἆ?ꇆ䬔未tv{DV鯀Tἆl凸g\\㈭ĭ즿UH㽤': null,
+     'b茤z\\.N': [ [Object] ],
+     obj: { key: 'wrong value' },
+     '퓲꽪m{㶩/뇿#⼢&᭙硞㪔E嚉c樱㬇1a綑᝖DḾ䝩': null },
+  key: '6.908319653520691E8',
+  z: 
+   { '6U閆崬밺뀫颒myj츥휘:$薈mY햚#rz飏+玭V㭢뾿愴YꖚX亥ᮉ푊\u0006垡㐭룝"厓ᔧḅ^Sqpv媫"⤽걒"˽Ἆ?ꇆ䬔未tv{DV鯀Tἆl凸g\\㈭ĭ즿UH㽤': null,
+     'b茤z\\.N': [ [Object] ],
+     obj: { key: 'wrong value' },
+     '퓲꽪m{㶩/뇿#⼢&᭙硞㪔E嚉c樱㬇1a綑᝖DḾ䝩': null } }
+  */
+  std::fstream ifs;
+  ifs.open("json-test-suite.json", std::fstream::in);
+  ASSERT_FALSE(ifs.fail()); // should be able to open this file
+  // Read the whole file in a string
+  std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+  ifs.close();
+
+  JSON j1 = JSON::parse(str); // Should be able to parse the file
+  
+  // Just afew simple assertions
+  ASSERT_TRUE(j1.type() == JSON_OBJECT);
+  ASSERT_EQ(j1["a"]["obj"]["key"], "wrong value");
+  ASSERT_EQ(j1["z"]["퓲꽪m{㶩/뇿#⼢&᭙硞㪔E嚉c樱㬇1a綑᝖DḾ䝩"].type(), JSON_NULL);
+  ASSERT_EQ(j1["z"]["6U閆崬밺뀫颒myj츥휘:$薈mY햚#rz飏+玭V㭢뾿愴YꖚX亥ᮉ푊\u0006垡㐭룝\"厓ᔧḅ^Sqpv媫\"⤽걒\"˽Ἆ?ꇆ䬔未tv{DV鯀Tἆl凸g\\㈭ĭ즿UH㽤"].type(), JSON_NULL);
+  
+  std::string stringification = j1.toString();
+  // Assert that we stringify one of the unicode string in this file correctly
+  ASSERT_TRUE(stringification.find("6U閆崬밺뀫颒myj츥휘:$薈mY햚#rz飏+玭V㭢뾿愴YꖚX亥ᮉ푊\\u0006垡㐭룝\\\"厓ᔧḅ^Sqpv媫\\\"⤽걒\\\"˽Ἆ?ꇆ䬔未tv{DV鯀Tἆl凸g\\\\㈭ĭ즿UH㽤") != std::string::npos);
+}
+
 TEST(JSONTest, CreationIndexingAndConstness) {
 
   JSON j1 = JSON::parse("{\"x\": 1, \"hello\": \"world\"}");
@@ -229,6 +266,9 @@ TEST(JSONTest, ResizeArray) {
 }
 
 TEST(JSONTest, UnicodeAndEscapeSequences) {
+  JSON j1_1 = "\u0905\u0928\u0941\u0930\u093e\u0917 \u092c\u093f\u092f\u093e\u0928\u0940";
+  ASSERT_EQ(j1_1, "अनुराग बियानी");
+  
   JSON j1 = "\u6e05\u534e\u5927\u5b66";
   ASSERT_EQ(j1, "清华大学");
 
