@@ -30,7 +30,7 @@ API_VERSION = '1.0.0'
 AUTH_HELPER = None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_data=True, want_full_response=False, **kwargs):
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=None, jsonify_data=True, want_full_response=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
@@ -52,6 +52,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_
         raise DXError("Unable to send request without authentication")
     if auth is None:
         auth = AUTH_HELPER
+    if config is None:
+        config = {}
+    # TODO: decide which routes are safe to retry
+    # TODO: exponential backoff policy in requests
+    config.setdefault('max_retries', 0)
     if 'Content-Type' not in headers:
         headers['Content-Type'] = 'application/json'
     if jsonify_data:
@@ -60,7 +65,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_
     headers['DNAnexus-API'] = API_VERSION
 
     response = requests.request(method, url, data=data, headers=headers,
-                                auth=auth, **kwargs)
+                                auth=auth, config=config, **kwargs)
 
     # If HTTP code that is not 200 (OK) is received and the content is
     # JSON, parse it and throw the appropriate error.  Otherwise,
@@ -78,10 +83,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, jsonify_
     if want_full_response:
         return response
     else:
-        for header in response.headers:
-            if header.lower() == 'content-type' and \
-                    response.headers[header].startswith('application/json'):
-                return json.loads(response.content)
+        # response.headers key lookup is case-insensitive
+        if response.headers['content-type'].startswith('application/json'):
+            return json.loads(response.content)
         return response.content
 
 class DXHTTPOAuth2(AuthBase):
