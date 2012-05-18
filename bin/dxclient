@@ -23,6 +23,9 @@ def load_env():
                 os.environ[filename] = value
     except:
         pass
+    if 'DX_CLI_WD' not in os.environ:
+        write_env_var("DX_CLI_WD", '/')
+        os.environ['DX_CLI_WD'] = '/'
 
 def get_json_from_stdin():
     user_json_str = raw_input('Type JSON here> ')
@@ -37,6 +40,7 @@ def login(args):
     # when implemented
     write_env_var('DX_SECURITY_CONTEXT',
                   '{"auth_token":"outside","auth_token_type":"Bearer"}')
+    write_env_var("DX_CLI_WD", '/')
 
 def logout(args):
     write_env_var('DX_SECURITY_CONTEXT', '')
@@ -50,6 +54,12 @@ def set_port(args):
 def set_project(args):
     write_env_var("DX_PROJECT_CONTEXT_ID", args.project)
 
+def set_wd(args):
+    write_env_var("DX_CLI_WD", args.folder)
+
+def pwd(args):
+    print os.environ['DX_CLI_WD']
+
 def api(args):
     json_input = json.loads(args.input_json)
     if args.input is not None:
@@ -61,19 +71,67 @@ def api(args):
     print json.dumps(dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                         json_input))
 
+def clean_folder_path(path):
+    folders = path.split('/')
+
+    newpath = ""
+    for folder in folders:
+        if folder == '':
+            continue
+        newpath += '/' + folder
+    if newpath == "":
+        return '/'
+    return newpath
+
+def resolve_path(path):
+    wd = os.environ['DX_CLI_WD']
+    if path == '.':
+        return wd
+    elif path == '..':
+        if wd == '/':
+            return '/'
+        else:
+            return os.path.dirname(wd)
+    elif path.startswith('/'):
+        return clean_folder_path(path)
+    else:
+        return clean_folder_path(wd + '/' + path)
+
+def cd(args):
+    wd = os.environ['DX_CLI_WD']
+    args.folder = resolve_path(args.folder)
+
+    if not wd.startswith(args.folder):
+        try:
+            dxproj = dxpy.DXProject()
+            dxproj.list_folder(folder=args.folder)
+        except:
+            print args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID']
+            return
+
+    set_wd(args)
+
 # TODO: add -l functionality
 def ls(args):
     dxproj = dxpy.DXProject()
-    if not args.folder.startswith('/'):
-        args.folder = '/' + args.folder
-    resp = dxproj.list_folder(folder=args.folder, describe={})
+    args.folder = resolve_path(args.folder)
+
+    resp = None
+    try:
+        resp = dxproj.list_folder(folder=args.folder, describe={})
+    except dxpy.DXAPIError as detail:
+        print detail
+        return
     if args.json:
         print json.dumps(resp)
         return
 
     if not args.obj:
         for folder in resp["folders"]:
-            print folder
+            if args.full:
+                print folder
+            else:
+                print os.path.basename(folder) + '/'
     if not args.folders:
         for obj in resp["objects"]:
             if not args.all and obj['describe']['hidden']:
@@ -87,30 +145,75 @@ def ls(args):
 
 def mkdir(args):
     dxproj = dxpy.DXProject()
-    if not args.folder.startswith('/'):
-        args.folder = '/' + args.folder
-    if args.parents:
-        try:
-            dxproj.new_folder(folder=args.folder, parents=True)
-        except dxpy.DXAPIError as inst:
-            if inst.name != 'InvalidState':
-                raise inst
-    else:
-        dxproj.new_folder(folder=args.folder)
+    args.folder = resolve_path(args.folder)
+    try:
+        dxproj.new_folder(folder=args.folder, parents=args.parents)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def rmdir(args):
     dxproj = dxpy.DXProject()
-    if not args.folder.startswith('/'):
-        args.folder = '/' + args.folder
-    dxproj.remove_folder(folder=args.folder)
+    args.folder = resolve_path(args.folder)
+    try:
+        dxproj.remove_folder(folder=args.folder)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def rm(args):
     dxproj = dxpy.DXProject()
-    dxproj.remove_objects(args.objects)
+    if args.all:
+        folder = '/'
+        if 'DX_CLI_WD' in os.environ:
+            folder = os.environ['DX_CLI_WD']
+
+        if not args.force:
+            user_resp = raw_input('Confirm deleting all objects in folder \"' + folder + '\" (y/n): ')
+            if user_resp != 'y':
+                return
+        def grab_id(ahash):
+            return ahash['id']
+        dxproj.remove_objects( map(grab_id, dxproj.list_folder(folder=folder)['objects']))
+    else:
+        dxproj.remove_objects(args.objects)
+
+def mv(args):
+    dxproj = dxpy.DXProject()
+    objects = []
+    folders = []
+    for source in args.sources:
+        try:
+            dxpy.get_handler(source)
+            objects.append(source)
+        except:
+            if not source.startswith('/'):
+                source = '/' + source
+            folders.append(source)
+    if not args.destination.startswith('/'):
+        args.destination = '/' + args.destination
+    # Doesn't exactly make sense when we can't specify a source by name yet
+    # try:
+    #     dxproj.list_folder(args.destination)
+    # except:
+    #     if len(objects) != 1 or len(folders) != 0:
+    #         raise SyntaxError()
+    #     else:
+    #         dxobj = dxpy.get_handler(objects[0])
+    #         dxobj.rename(args.destination)
+
+    try:
+        dxproj.move(args.destination, objects=objects, folders=folders)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def describe(args):
+    desc = None
     if args.dxid.startswith('job'):
-        desc = dxpy.DXJob(args.dxid).describe()
+        try:
+            desc = dxpy.DXJob(args.dxid).describe()
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
         if args.json:
             print json.dumps(desc)
         if not args.json:
@@ -133,7 +236,12 @@ def describe(args):
             print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
             print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     elif args.dxid.startswith('project'):
-        desc = dxpy.DXProject(args.dxid).describe() # TODO get args!
+        try:
+            desc = dxpy.DXProject(args.dxid).describe() # TODO get args!
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
         if args.json:
             print json.dumps(desc)
         else: # TODO: Finish adding flags, etc.
@@ -156,7 +264,12 @@ def describe(args):
         if args.details:
             json_input["details"] = True
 
-        desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+        try:
+            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
         if args.json:
             print json.dumps(desc)
         else:
@@ -215,53 +328,128 @@ def new_record(args):
     properties = get_properties_from_args(args.properties)
     details = None
     if args.details is not None:
-        details = json.loads(args.details)
+        try:
+            details = json.loads(args.details)
+        except:
+            print 'Error: details could not be parsed as JSON'
     init_from = None
     if args.init is not None:
         init_from = dxpy.DXRecord(args.init)
 
-    dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
-                                 tags=args.tags, types=args.types, 
-                                 hidden=hidden, properties=properties,
-                                 details=details,
-                                 folder=args.folder,
-                                 parents=args.parents, init_from=init_from)
-    print dxrecord.get_id()
+    dxrecord = None
+    try:
+        dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
+                                     tags=args.tags, types=args.types, 
+                                     hidden=hidden, properties=properties,
+                                     details=details,
+                                     folder=args.folder,
+                                     parents=args.parents, init_from=init_from)
+        print dxrecord.get_id()
+    except dxpy.DXAPIError as detail:
+        print detail
+
+def new_gtable(args):
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except:
+            print 'Error: details could not be parsed as JSON'
+
+    json_input = {}
+    if args.input is not None:
+        with open(args.input, 'r') as fd:
+            data = fd.read()
+            json_input = json.loads(data)
+
+    if 'columns' in json_input:
+        args.columns = json_input['columns']
+    elif args.columns is not None:
+        args.columns = json.loads(args.columns)
+    if 'indices' in json_input:
+        args.indices = json_input['indices']
+    elif args.indices is not None:
+        args.indices = json.loads(args.indices)
+
+    try:
+        dxgtable = dxpy.new_dxgtable(project=args.project, name=args.name,
+                                     tags=args.tags, types=args.types, 
+                                     hidden=hidden, properties=properties,
+                                     details=details,
+                                     folder=args.folder,
+                                     parents=args.parents,
+                                     columns=args.columns,
+                                     indices=args.indices)
+        print dxgtable.get_id()
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def set_visibility(args):
-    dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
-                       {"hidden": (args.visibility == 'hidden')})
+    try:
+        dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
+                           {"hidden": (args.visibility == 'hidden')})
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def set_details(args):
-    dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
-                       json.loads(args.details))
+    try:
+        args.details = json.loads(args.details)
+        dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
+                           args.details)
+    except ValueError:
+        print 'Error: details could not be parsed as JSON'
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def add_types(args):
-    dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
-                       {"types": args.types})
+    try:
+        dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
+                           {"types": args.types})
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def remove_types(args):
-    dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
-                       {"types": args.types})
+    try:
+        dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
+                           {"types": args.types})
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def add_tags(args):
-    dxpy.get_handler(args.dxid).add_tags(args.tags)
+    try:
+        dxpy.get_handler(args.dxid).add_tags(args.tags)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def remove_tags(args):
-    dxpy.get_handler(args.dxid).remove_tags(args.tags)
+    try:
+        dxpy.get_handler(args.dxid).remove_tags(args.tags)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def rename(args):
-    dxpy.get_handler(args.dxid).rename(args.name)
+    try:
+        dxpy.get_handler(args.dxid).rename(args.name)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def set_properties(args):
     properties = get_properties_from_args(args.properties)
-    dxpy.get_handler(args.dxid).set_properties(properties)
+    try:
+        dxpy.get_handler(args.dxid).set_properties(properties)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def unset_properties(args):
     properties = {}
     for prop in args.properties:
         properties[prop] = None
-    dxpy.get_handler(args.dxid).set_properties(properties)
+    try:
+        dxpy.get_handler(args.dxid).set_properties(properties)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def file_get(args):
     filename = args.output
@@ -270,7 +458,10 @@ def file_get(args):
             filename = os.path.basename(dxpy.api.fileDescribe(args.dxid)['name'])
         except KeyError:
             filename = args.dxid
-    dxpy.download_dxfile(args.dxid, filename)
+    try:
+        dxpy.download_dxfile(args.dxid, filename)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def file_put(args):
     print dxpy.upload_local_file(args.filename).get_id()
@@ -283,78 +474,92 @@ def gtable_get(args):
                                                       int(args.gri[2]),
                                                       args.gri_mode,
                                                       args.gri_name)
-    result = dxpy.DXGTable(args.dxid).get_rows(query=gri_query, starting=args.starting,
-                                               limit=args.limit)
-    if args.json:
-        print json.dumps(result)
-        return
-    if result["next"] is not None:
-        print "Use as STARTING to continue query: " + str(result["next"])
-    print "# retrieved rows: " + str(result["size"])
-    for row in result["data"]:
-        print json.dumps(row)
+    try:
+        result = dxpy.DXGTable(args.dxid).get_rows(query=gri_query, starting=args.starting,
+                                                   limit=args.limit)
+        if args.json:
+            print json.dumps(result)
+            return
+        if result["next"] is not None:
+            print "Use as STARTING to continue query: " + str(result["next"])
+        print "# retrieved rows: " + str(result["size"])
+        for row in result["data"]:
+            print json.dumps(row)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def find_jobs(args):
-    results = list(dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
-                                  state=args.state, origin_job=args.origin, parent_job=args.parent,
-                                  describe=args.nodesc,
-                                  modified_after=args.mod_after, modified_before=args.mod_before))
-    if args.json:
-        print json.dumps(results)
-        return
-    if not args.nodesc:
-        for result in results:
-            print result["id"]
-    else:
-        job_ids = {}
-        job_children = {}
-        origin_jobs = []
-        for i in range(len(results)):
-            job_ids[results[i]['id']] = i
-            parent = results[i]['describe']['parentJob']
-            if parent is None:
-                origin_jobs.append(i)
-            elif parent in job_children:
-                job_children[parent].append(i)
-            else:
-                job_children[parent] = [i]
+    try:
+        results = list(dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
+                                      state=args.state, origin_job=args.origin, parent_job=args.parent,
+                                      describe=args.nodesc,
+                                      modified_after=args.mod_after, modified_before=args.mod_before))
 
-        def print_children(parent_id, num_tabs):
-            print_string = ""
-            for j in range(num_tabs):
-                print_string += '\t'
-            print_string += parent_id + ' (' + results[ job_ids[parent_id] ]['describe']['state'] + ')'
-            print print_string
+        if args.json:
+            print json.dumps(results)
+            return
+        if not args.nodesc:
+            for result in results:
+                print result["id"]
+        else:
+            job_ids = {}
+            job_children = {}
+            origin_jobs = []
+            for i in range(len(results)):
+                job_ids[results[i]['id']] = i
+                parent = results[i]['describe']['parentJob']
+                if parent is None:
+                    origin_jobs.append(i)
+                elif parent in job_children:
+                    job_children[parent].append(i)
+                else:
+                    job_children[parent] = [i]
 
-            if parent_id in job_children:
-                for child in job_children[parent_id]:
-                    print_children(results[child]['id'], num_tabs + 1)
+            def print_children(parent_id, num_tabs):
+                print_string = ""
+                for j in range(num_tabs):
+                    print_string += '\t'
+                print_string += parent_id + ' (' + results[ job_ids[parent_id] ]['describe']['state'] + ')'
+                print print_string
 
-        for origin_job in origin_jobs:
-            orig_id = results[origin_job]["id"]
-            print_children(orig_id, 0)
+                if parent_id in job_children:
+                    for child in job_children[parent_id]:
+                        print_children(results[child]['id'], num_tabs + 1)
+
+            for origin_job in origin_jobs:
+                orig_id = results[origin_job]["id"]
+                print_children(orig_id, 0)
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def find_data(args):
     properties = get_properties_from_args(args.properties)
-    results = list(dxpy.find_data_objects(classname=args.classname, state=args.state,
-                                          visibility=args.visibility, properties=properties,
-                                          name=args.name,
-                                          type_=args.type, tag=args.tag, link=args.link,
-                                          project=args.project, folder=args.folder,
-                                          recurse=args.recurse,
-                                          modified_after=args.mod_after, modified_before=args.mod_before,
-                                          created_after=args.created_after, created_before=args.created_before,
-                                          describe=args.describe))
-    if args.json:
-        print json.dumps(results)
-        return
-    for result in results:
-        print result["id"]
+    try:
+        results = list(dxpy.find_data_objects(classname=args.classname, state=args.state,
+                                              visibility=args.visibility, properties=properties,
+                                              name=args.name,
+                                              type_=args.type, tag=args.tag, link=args.link,
+                                              project=args.project, folder=args.folder,
+                                              recurse=args.recurse,
+                                              modified_after=args.mod_after, modified_before=args.mod_before,
+                                              created_after=args.created_after, created_before=args.created_before,
+                                              describe=args.describe))
+        if args.json:
+            print json.dumps(results)
+            return
+        for result in results:
+            print result["id"]
+    except dxpy.DXAPIError as detail:
+        print detail
 
 def close(args):
-    json_input = {}
-    dxpy.DXHTTPRequest('/' + args.dxid + '/close',
-                       json_input)
+    try:
+        obj = dxpy.get_handler(args.dxid)
+        obj.close()
+    except dxpy.DXAPIError as detail:
+        print detail
+    if args.block:
+        obj._wait_on_close()
 
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
@@ -394,8 +599,18 @@ parser_ls.add_argument('--name', help='show names instead of object IDs', action
 parser_ls.add_argument('--both', help='show both names and object IDs', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
 parser_ls.add_argument('--folders', help='show only folders', action='store_true')
-parser_ls.add_argument('folder', help='folder to list, default is \"/\"', nargs='?', default='/')
+parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
+parser_ls.add_argument('folder', help='folder to list, default is \"/\"', nargs='?', default='.')
 parser_ls.set_defaults(func=ls)
+
+parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
+                                  description='Change the current working directory')
+parser_cd.add_argument('folder', help='Folder to which to change the current working directory, default is \"/\"', nargs='?', default='/')
+parser_cd.set_defaults(func=cd)
+
+parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
+                                   description='Print current working directory')
+parser_pwd.set_defaults(func=pwd)
 
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder')
@@ -410,8 +625,17 @@ parser_rmdir.set_defaults(func=rmdir)
 
 parser_rm = subparsers.add_parser('rm', help='Remove objects',
                                   description='Remove objects')
-parser_rm.add_argument('objects', help='object IDs to remove', nargs='+')
+parser_rm.add_argument('objects', help='object IDs to remove', nargs='*')
+parser_rm.add_argument('--all', help='Remove all objects in the current working directory.', action='store_true')
+parser_rm.add_argument('-f', '--force', help='Execute without asking for confirmations', action='store_true')
+parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory')
 parser_rm.set_defaults(func=rm)
+
+parser_mv = subparsers.add_parser('mv', help='Move a objects and/or folders',
+                                  description='Move a objects and/or folders')
+parser_mv.add_argument('sources', help='Object IDs and/or folder names to move', nargs='*')
+parser_mv.add_argument('destination', help='Folder into which to move the sources')
+parser_mv.set_defaults(func=mv)
 
 parser_file = subparsers.add_parser('file', help='Interact with remote files')
 subparsers_file = parser_file.add_subparsers()
@@ -448,6 +672,7 @@ parser_describe.set_defaults(func=describe)
 
 parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object')
 parser_close.add_argument('dxid', help='Object ID to close')
+parser_close.add_argument('--block', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
@@ -503,6 +728,12 @@ parser_new_record = subparsers_new.add_parser('record', help='Create a new recor
                                               parents=[parser_dataobject_args])
 parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
 parser_new_record.set_defaults(func=new_record)
+
+parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable', parents=[parser_dataobject_args])
+parser_new_gtable.add_argument('--columns', help='JSON for specifying the columns')
+parser_new_gtable.add_argument('--indices', help='JSON for specifying the indices')
+parser_new_gtable.add_argument('--input', help='a filename containing the JSON input to be used (currently only used for overriding --columns and --indices)')
+parser_new_gtable.set_defaults(func=new_gtable)
 
 parser_set_details = subparsers.add_parser('set_details', help='Set details on an object')
 parser_set_details.add_argument('dxid', help='Data object to modify')
