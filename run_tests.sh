@@ -12,6 +12,7 @@ source "$root/environment"
 export DB_PORT=`$root/../bin/nuc-config mongod.port`
 export DX_APISERVER_PORT=`$root/../bin/nuc-config apiserver.port`
 export DX_APISERVER_HOST=localhost
+export DX_JOBSERVER_PORT=`$root/../bin/nuc-config jobserver.port`
 export PYTHONPATH="$root/../execserver/env/lib/python2.7/site-packages:$PYTHONPATH"
 
 dbpath="$root/test_db"
@@ -27,7 +28,12 @@ echo -n "Starting API server on port $DX_APISERVER_PORT..."
 api_server_pid=$!
 echo " (PID $api_server_pid)"
 
-# Need to wait until the API server is up and ready to handle requests before
+echo -n "Starting job server on port $DX_JOBSERVER_PORT..."
+"$root"/../jobserver/server.js --port $DX_JOBSERVER_PORT > jobserver.log 2>&1 &
+job_server_pid=$!
+echo " (PID $job_server_pid)"
+
+# Hack: Wait until the API server and job server are up and ready to handle requests before
 # starting to run tests.
 sleep 3
 
@@ -45,6 +51,8 @@ function kill_them {
   kill $test_pid 2>/dev/null
   echo "Killing API server ($api_server_pid)"
   kill $api_server_pid 2>/dev/null
+  echo "Killing job server ($job_server_pid)"
+  kill $job_server_pid 2>/dev/null
   echo "Killing MongoDB ($mongod_pid)"
   kill $mongod_pid 2>/dev/null
 
