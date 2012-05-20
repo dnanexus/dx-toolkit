@@ -71,20 +71,23 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
     # JSON, parse it and throw the appropriate error.  Otherwise,
     # raise the usual exception.
     if response.status_code != requests.codes.ok:
-        for header in response.headers:
-            if header.lower() == 'content-type' and \
-                    response.headers[header].startswith('application/json'):
-                content = json.loads(response.content)
-                raise DXAPIError(content["error"]["type"],
-                                 content["error"]["message"],
-                                 response.status_code)
+        # response.headers key lookup is case-insensitive
+        if response.headers.get('content-type', '').startswith('application/json'):
+            content = json.loads(response.content)
+            raise DXAPIError(content["error"]["type"],
+                             content["error"]["message"],
+                             response.status_code)
         response.raise_for_status()
 
     if want_full_response:
         return response
     else:
-        # response.headers key lookup is case-insensitive
-        if response.headers['content-type'].startswith('application/json'):
+        if 'content-length' in response.headers:
+            if int(response.headers['content-length']) != len(response.content):
+                raise DXError("Content-Length header is set to %d but content length is %d"
+                              % (int(response.headers['content-length']), len(response.content)))
+        
+        if response.headers.get('content-type', '').startswith('application/json'):
             return json.loads(response.content)
         return response.content
 
