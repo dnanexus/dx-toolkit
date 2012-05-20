@@ -36,7 +36,7 @@ echo -n "Initializing database..."
 echo " done."
 
 echo -n "Starting tests..."
-"$root"/lib/python/test/test_dxpy.py &
+"$root"/lib/python/test/test_dxpy.py $@ &
 test_pid=$!
 echo " (PID $test_pid)"
 
