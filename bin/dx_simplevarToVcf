@@ -7,6 +7,8 @@ import re
 
 #Usage: sample input: dx_Simplevar2Vcf
 def main():
+    
+    print "here"
 
     parser = OptionParser("Usage: %prog table_id output quality_filter")
     parser.add_option("--table_id", dest="simple_var_id", help="Simplevar table id to read from")
