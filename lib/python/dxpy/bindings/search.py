@@ -209,8 +209,6 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
                 query["modified"]["before"] = now() + modified_before
     query["describe"] = describe
 
-    print query
-
     while True:
         resp = dxpy.api.systemFindJobs(query, **kwargs)
         
