@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+import os, sys, json, fileinput, re
+from optparse import OptionParser
+from collections import defaultdict
+import dxpy
+
+parser = OptionParser(usage="%prog [options] job_id", description="Get stdout/stderr streams for a job and, optionally, its subjobs.")
+parser.add_option("-1", "--only_this_job", help="Do not recurse into subjobs' output streams", action='store_true', default=False)
+parser.add_option("-f", "--print_to_files", help="Instead of printing a summary, print each stream into a file <job_id>.stdout, etc. in the working directory", action='store_true', default=False)
+parser.add_option("-q", "--quiet", help="Do not print banners when using summary format", action='store_true', default=False)
+(opts, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.print_help()
+    parser.error("Incorrect number of arguments")
+
+job_id = args[0]
+
+root_job = dxpy.DXJob(job_id)
+
+jobs = [root_job] if opts.only_this_job else [dxpy.DXJob(job['id']) for job in dxpy.find_jobs(origin_job=job_id)]
+
+job_banners = {}; subjobs = {}; stdouts = {}; stderrs = {}
+
+for job in jobs:
+#    if 'stdout' in desc and desc['stdout'] is not None:
+#        print  
+    desc = job.describe()
+    job_banners[job.get_id()] = "Job %s (%s.%s)" % (desc['id'], desc['program'], desc['function'])
+    subjobs.setdefault(desc['parentJob'], [])
+    if desc['parentJob'] != desc['id']:
+        subjobs[desc['parentJob']].append(desc['id'])
+    stdouts[job.get_id()] = desc['stdout']
+    stderrs[job.get_id()] = desc['stderr']
+
+def print_streams(job_id, indent_level):
+    INDENT = '    '*indent_level
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    print INDENT, OKGREEN, '====', job_banners[job_id], 'stdout', '====', ENDC 
+    for line in dxpy.DXFile(stdouts[job_id]):
+        print INDENT, line
+    print INDENT, WARNING, '====', job_banners[job_id], 'stderr', '====', ENDC
+    for line in dxpy.DXFile(stderrs[job_id]):
+        print INDENT, line
+    for subjob_id in subjobs.get(job_id, []):
+        print_streams(subjob_id, indent_level+1)
+
+print_streams(job_id, 0)
+
+#    print "w00t", desc
