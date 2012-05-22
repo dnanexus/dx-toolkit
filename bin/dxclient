@@ -3,7 +3,6 @@
 import sys, os, datetime
 import argparse
 
-import dxpy
 import json
 
 def write_env_var(var, value):
@@ -40,6 +39,9 @@ def get_json_from_stdin():
 # Loading environment
 
 load_env()
+
+# IMPORTANT: Import dxpy AFTER loading environment variables
+import dxpy
 
 def login(args):
     # TODO: Remove this and replace with actual logic and interaction
