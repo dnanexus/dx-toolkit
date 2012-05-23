@@ -44,12 +44,14 @@ def print_streams(job_id, indent_level):
     desc = job_descriptions[job_id]
     print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + OKGREEN + ') stdout', '====', ENDC 
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
-    for line in dxpy.DXFile(stdouts[job_id]):
-        print INDENT+tag+line
+    if stdouts[job_id] != None:
+        for line in dxpy.DXFile(stdouts[job_id]):
+            print INDENT+tag+line
     print INDENT + WARN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + WARN + ') stderr', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
-    for line in dxpy.DXFile(stderrs[job_id]):
-        print INDENT+tag+line
+    if stderrs[job_id] != None:
+        for line in dxpy.DXFile(stderrs[job_id]):
+            print INDENT+tag+line
     for subjob_id in subjobs.get(job_id, []):
         print_streams(subjob_id, indent_level+1)
 
