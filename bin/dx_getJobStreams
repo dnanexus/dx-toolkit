@@ -26,6 +26,7 @@ else:
     jobs = [dxpy.DXJob(job['id']) for job in dxpy.find_jobs(origin_job=job_id)]
     if len(jobs) == 0:
         jobs = [root_job]
+        jobs.extend([dxpy.DXJob(job['id']) for job in dxpy.find_jobs(parent_job=job_id)])
 
 job_descriptions = {}; subjobs = {}; stdouts = {}; stderrs = {}
 
