@@ -28,7 +28,7 @@ for job in jobs:
     desc = job.describe()
     job_descriptions[job.get_id()] = desc
     subjobs.setdefault(desc['parentJob'], [])
-    if desc['parentJob'] != desc['id']:
+    if desc['parentJob'] != desc['id'] and not opts.only_this_job:
         subjobs[desc['parentJob']].append(desc['id'])
     stdouts[job.get_id()] = desc.get('stdout', None)
     stderrs[job.get_id()] = desc.get('stderr', None)
@@ -46,7 +46,8 @@ def print_streams(job_id, indent_level):
     status = desc['state']
     if status == 'failed':
         status = FAIL + 'FAILED' + OKGREEN
-    print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC 
+    if not opts.quiet:
+        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC 
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stdouts[job_id] != None:
         for line in dxpy.DXFile(stdouts[job_id]):
@@ -55,7 +56,8 @@ def print_streams(job_id, indent_level):
     status = desc['state']
     if status == 'failed':
         status = FAIL + 'FAILED' + WARN
-    print INDENT + WARN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + WARN + ') (' + status + ')', 'stderr', '====', ENDC
+    if not opts.quiet:
+        print INDENT + WARN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + WARN + ') (' + status + ')', 'stderr', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stderrs[job_id] != None:
         for line in dxpy.DXFile(stderrs[job_id]):
