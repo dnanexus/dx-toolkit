@@ -35,7 +35,7 @@ echo " (PID $job_server_pid)"
 
 # Hack: Wait until the API server and job server are up and ready to handle requests before
 # starting to run tests.
-sleep 3
+sleep 8
 
 echo -n "Initializing database..."
 "$root"/../apiserver/tasks/init_database.js
