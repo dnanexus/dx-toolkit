@@ -27,6 +27,7 @@ else:
     if len(jobs) == 0:
         jobs = [root_job]
         jobs.extend([dxpy.DXJob(job['id']) for job in dxpy.find_jobs(parent_job=job_id)])
+        # TODO: recurse? This only pulls in the first level children
 
 job_descriptions = {}; subjobs = {}; stdouts = {}; stderrs = {}
 
