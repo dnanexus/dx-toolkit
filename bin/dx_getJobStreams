@@ -9,7 +9,7 @@ parser = OptionParser(usage="%prog [options] job_id", description="Get stdout/st
 parser.add_option("-1", "--only_this_job", help="Do not recurse into subjobs' output streams", action='store_true', default=False)
 parser.add_option("-f", "--print_to_files", help="Instead of printing a summary, print each stream into a file <job_id>.stdout, etc. in the working directory", action='store_true', default=False)
 parser.add_option("-q", "--quiet", help="Do not print banners when using summary format", action='store_true', default=False)
-parser.add_option("-p", "--prepend_tag", help="Prepend job or sub-job tag to every line", action='store_true', default=False)
+parser.add_option("-n", "--no_tag", help="Do not prepend job tag to every line", action='store_true', default=False)
 (opts, args) = parser.parse_args()
 
 if len(args) != 1:
@@ -25,8 +25,6 @@ jobs = [root_job] if opts.only_this_job else [dxpy.DXJob(job['id']) for job in d
 job_descriptions = {}; subjobs = {}; stdouts = {}; stderrs = {}
 
 for job in jobs:
-#    if 'stdout' in desc and desc['stdout'] is not None:
-#        print  
     desc = job.describe()
     job_descriptions[job.get_id()] = desc
     subjobs.setdefault(desc['parentJob'], [])
@@ -45,11 +43,11 @@ def print_streams(job_id, indent_level):
     ENDC = '\033[0m'
     desc = job_descriptions[job_id]
     print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + OKGREEN + ') stdout', '====', ENDC 
-    tag = OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC if opts.prepend_tag else ''
+    tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     for line in dxpy.DXFile(stdouts[job_id]):
         print INDENT+tag+line
     print INDENT + WARN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + WARN + ') stderr', '====', ENDC
-    tag = OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC if opts.prepend_tag else ''
+    tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     for line in dxpy.DXFile(stderrs[job_id]):
         print INDENT+tag+line
     for subjob_id in subjobs.get(job_id, []):
