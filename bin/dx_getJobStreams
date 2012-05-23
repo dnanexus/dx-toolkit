@@ -68,6 +68,7 @@ def print_streams(job_id, indent_level):
     if stderrs[job_id] != None:
         for line in dxpy.DXFile(stderrs[job_id]):
             print INDENT+tag+line
+
     for subjob_id in subjobs.get(job_id, []):
         print_streams(subjob_id, indent_level+1)
 
