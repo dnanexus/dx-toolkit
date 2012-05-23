@@ -30,8 +30,8 @@ for job in jobs:
     subjobs.setdefault(desc['parentJob'], [])
     if desc['parentJob'] != desc['id']:
         subjobs[desc['parentJob']].append(desc['id'])
-    stdouts[job.get_id()] = desc['stdout']
-    stderrs[job.get_id()] = desc['stderr']
+    stdouts[job.get_id()] = desc.get('stdout', None)
+    stderrs[job.get_id()] = desc.get('stderr', None)
 
 def print_streams(job_id, indent_level):
     INDENT = '    '*indent_level
