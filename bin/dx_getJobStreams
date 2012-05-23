@@ -20,7 +20,12 @@ job_id = args[0]
 
 root_job = dxpy.DXJob(job_id)
 
-jobs = [root_job] if opts.only_this_job else [dxpy.DXJob(job['id']) for job in dxpy.find_jobs(origin_job=job_id)]
+if opts.only_this_job:
+    jobs = [root_job]
+else:
+    jobs = [dxpy.DXJob(job['id']) for job in dxpy.find_jobs(origin_job=job_id)]
+    if len(jobs) == 0:
+        jobs = [root_job]
 
 job_descriptions = {}; subjobs = {}; stdouts = {}; stderrs = {}
 
@@ -47,7 +52,7 @@ def print_streams(job_id, indent_level):
     if status == 'failed':
         status = FAIL + 'FAILED' + OKGREEN
     if not opts.quiet:
-        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC 
+        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + FAIL + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stdouts[job_id] != None:
         for line in dxpy.DXFile(stdouts[job_id]):
