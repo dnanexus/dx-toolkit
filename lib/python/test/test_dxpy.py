@@ -744,6 +744,7 @@ class TestDXProgramJob(unittest.TestCase):
     def test_run_dxprogram(self):
         dxprogram = dxpy.DXProgram()
         dxprogram.new(name="test_program",
+                      dxapi="1.04",
                       inputs=[{"name": "chromosomes", "class": "record"},
                               {"name": "rowFetchChunk", "class": "int"}
                               ],
