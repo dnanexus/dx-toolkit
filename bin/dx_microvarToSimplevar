@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+import dxpy
+import math
+import operator
+from optparse import OptionParser
+import re
+
+#Example: dx_microvarToSimplevar --table_id gtable-9yZvF200000PYKJyV4k00005 --microvar_file variants.txt --extract_header
+
+def main():
+
+    parser = OptionParser("Usage: % mappings_id file_name")
+    parser.add_option("--table_id", dest="simplevar_id", help="Simplevar table to write to ")
+    parser.add_option("--microvar_file", dest="file_name", help="Name of file to import microvar from")
+    parser.add_option("--part_id_min", dest="file_name", help="Min table part")
+    parser.add_option("--part_id_max", dest="file_name", help="Max table part")
+    (opts, args) = parser.parse_args()
+
+    
+    simpleVar = dxpy.open_dxgtable(opts.simplevar_id, None, 40000, opts.part_id_min, opts.part_id_max)
+    inputFile = open(opts.microvar_file, 'r')
+    
+    fileIter = inputFile.__iter__()
+    count = 1
+
+    while 1:
+        try:
+            input = fileIter.next()
+            if count%100000 == 0:
+                print "Processed count %i variants " % count
+            count += 1
+            
+            if input[0] != "#":
+                tabSplit = input.split("\t")
+                #Appending chr to the column, adding one since chromosomes are zero indexed
+                chr = "chr"+str(int(tabSplit[0])+1)
+                
+                #lo and high are zero indexed
+                lo = int(tabSplit[1])
+                hi = int(tabSplit[2])
+                if tabSplit[4] == "var":
+
+                    ref = tabSplit[3].upper()
+                    alt = tabSplit[5].upper()
+                    genotypeQuality = int(float(tabSplit[6]))
+                    qual = int(float(tabSplit[7]))
+                    coverage = int(tabSplit[8])
+                    readsConsistent = int(tabSplit[9])
+
+                    type = "Unknown"
+                    altOptions = alt.split("/")
+                    typeList = []
+                    for x in altOptions:
+                        if x != ref:
+                            if len(x) == len(ref) and len(ref) == 1:
+                                typeList.append("SNP")
+                            elif ref in x:
+                                typeList.append("Ins")
+                            elif x in ref:
+                                typeList.append("Del")
+                            else:
+                                typeList.append("Complex")
+                    type = typeList[0]
+                    for x in typeList:
+                        if typeList[0] != x:
+                            type = "Mixed"
+                    simpleVar.add_rows([[chr, lo, hi, type, ref, alt, qual, coverage, genotypeQuality, readsConsistent]])
+                else:
+                    if tabSplit[4] == "ref":
+                        type = "Ref"
+                    else:
+                        type = "No-call"
+                    simpleVar.add_rows([[chr, lo, hi, type, "", "", 0, 0, 0, 0]])
+        except StopIteration:
+            break
