@@ -16,14 +16,18 @@ def main():
     parser.add_option("--quality_filter", dest="filter", default=0, help="What quality score filter to apply")
     parser.add_option("--region", "-L", dest="region", action="append", help="Regions to pull mappings from in the format chr:lo-hi, useful for parallelization")
     parser.add_option("--region_index_offset", dest="index_offset", type="int", default=0, help="For region arguments, shift the index by this amount (useful for converting from one-indexed to zero-indexed lists)")
+    parser.add_option("--export_minimal_columns", dest="export_minimal_columns", default=True, action="store_false" , help="Export more columns than the minimal simplevar set, if present")
+    
+    
     
     (opts, args) = parser.parse_args()
     outputFile = open(opts.file_name, 'w')
+    writeAdditionalColumns = opts.export_minimal_columns
     
     simpleVarTable = dxpy.open_dxgtable(opts.simple_var_id)
     
     try:
-        originalContigSet = simpleVarTable.get_details()['originalContigSet']
+        originalContigSet = simpleVarTable.get_details()['original_contigset']
     except:
         raise Exception("The original reference genome must be attached as a detail")
         
@@ -36,6 +40,8 @@ def main():
     chromosomeOffsets = {}
     for i in range(len(contigDetails['contigs']['names'])):
         chromosomeOffsets[contigDetails['contigs']['names'][i]] = contigDetails['contigs']['offsets'][i]
+
+    print chromosomeOffsets
 
     contigSequence = open("ref.txt",'r').read()
     
@@ -54,10 +60,10 @@ def main():
         for x in regions:
             query = simpleVarTable.genomic_range_query(chr=x[0][0],lo=int(x[0][1])+opts.index_offset,hi=int(x[0][2])+opts.index_offset,mode='overlap',index='gri')
             for row in simpleVarTable.iterate_query_rows(query=query):
-                writeRow(row, col, filter, outputFile)
+                writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequence, chromosomeOffsets)
     else:
         for row in simpleVarTable.iterate_rows():
-            writeRow(row, col, filter, outputFile)
+            writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequence, chromosomeOffsets)
 
 
 def parseRegions(input):
@@ -66,7 +72,10 @@ def parseRegions(input):
         result.append(re.findall("(\w+):(\d+)-(\d+)", x))
     return result
 
-def writeRow(row, col, filter, outputFile):
+def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequence, chromosomeOffsets):
+    
+    minimalColumns = ["chr", "lo", "hi", "type", "ref", "alt", "qual", "coverage", "genotypeQuality"]
+    
     chr = str(row[col["chr"]])
     pos = str(row[col["lo"]]-1)
     ref = str(row[col["ref"]])
@@ -82,7 +91,16 @@ def writeRow(row, col, filter, outputFile):
     else:
         filter = "PASS"
         
-    outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter+"\t"+vcfAdditional+"\n")
+    outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter)
+    if writeAdditionalColumns:
+        for k,v in col.iteritems():
+            if k not in minimalColumns:
+                outputFile.write("\t"+row[v])
+    outputFile.write("\n")
+    
+    
+    
+    
     
     
 main()
