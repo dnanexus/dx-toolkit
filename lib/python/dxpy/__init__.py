@@ -103,7 +103,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
                 break # Disable retries
         if last_error is None:
             last_error = DXError("Internal error in DXHTTPRequest")
-        raise last_error
+    raise last_error
 
 class DXHTTPOAuth2(AuthBase):
     def __init__(self, security_context):
