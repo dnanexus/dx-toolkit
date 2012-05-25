@@ -97,7 +97,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
                 return response.content
         except ConnectionError as e:
             last_error = e
-        except HTTPError as e:
+        except (DXAPIError, HTTPError) as e:
             last_error = e
             if method != 'GET' and response.status_code != requests.codes.server_error:
                 break # Disable retries
