@@ -67,7 +67,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
     headers['DNAnexus-API'] = API_VERSION
 
     last_error = None
-    for retry in range(MAX_RETRIES):
+    for retry in range(MAX_RETRIES + 1):
         try:
             response = requests.request(method, url, data=data, headers=headers,
                                         auth=auth, config=config, **kwargs)
