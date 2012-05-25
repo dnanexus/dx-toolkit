@@ -30,6 +30,8 @@ API_VERSION = '1.0.0'
 AUTH_HELPER = None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
+MAX_RETRIES = 0
+
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=None, jsonify_data=True, want_full_response=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -56,7 +58,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
         config = {}
     # TODO: decide which routes are safe to retry
     # TODO: exponential backoff policy in requests
-    config.setdefault('max_retries', 0)
+    config.setdefault('max_retries', MAX_RETRIES)
     if 'Content-Type' not in headers:
         headers['Content-Type'] = 'application/json'
     if jsonify_data:
@@ -64,32 +66,44 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
 
     headers['DNAnexus-API'] = API_VERSION
 
-    response = requests.request(method, url, data=data, headers=headers,
-                                auth=auth, config=config, **kwargs)
+    last_error = None
+    for retry in range(MAX_RETRIES):
+        try:
+            response = requests.request(method, url, data=data, headers=headers,
+                                        auth=auth, config=config, **kwargs)
 
-    # If HTTP code that is not 200 (OK) is received and the content is
-    # JSON, parse it and throw the appropriate error.  Otherwise,
-    # raise the usual exception.
-    if response.status_code != requests.codes.ok:
-        # response.headers key lookup is case-insensitive
-        if response.headers.get('content-type', '').startswith('application/json'):
-            content = json.loads(response.content)
-            raise DXAPIError(content["error"]["type"],
-                             content["error"]["message"],
-                             response.status_code)
-        response.raise_for_status()
+            # If HTTP code that is not 200 (OK) is received and the content is
+            # JSON, parse it and throw the appropriate error.  Otherwise,
+            # raise the usual exception.
+            if response.status_code != requests.codes.ok:
+                # response.headers key lookup is case-insensitive
+                if response.headers.get('content-type', '').startswith('application/json'):
+                    content = json.loads(response.content)
+                    raise DXAPIError(content["error"]["type"],
+                                     content["error"]["message"],
+                                     response.status_code)
+                response.raise_for_status()
 
-    if want_full_response:
-        return response
-    else:
-        if 'content-length' in response.headers:
-            if int(response.headers['content-length']) != len(response.content):
-                raise DXError("Content-Length header is set to %d but content length is %d"
-                              % (int(response.headers['content-length']), len(response.content)))
-        
-        if response.headers.get('content-type', '').startswith('application/json'):
-            return json.loads(response.content)
-        return response.content
+            if want_full_response:
+                return response
+            else:
+                if 'content-length' in response.headers:
+                    if int(response.headers['content-length']) != len(response.content):
+                        raise HTTPError("Received response with content-length header set to %s but content length is %d"
+                            % (response.headers['content-length'], len(response.content)))
+                
+                if response.headers.get('content-type', '').startswith('application/json'):
+                    return json.loads(response.content)
+                return response.content
+        except ConnectionError as e:
+            last_error = e
+        except HTTPError as e:
+            last_error = e
+            if method != 'GET' and response.status_code != requests.codes.server_error:
+                break # Disable retries
+        if last_error is None:
+            last_error = DXError("Internal error in DXHTTPRequest")
+        raise last_error
 
 class DXHTTPOAuth2(AuthBase):
     def __init__(self, security_context):
