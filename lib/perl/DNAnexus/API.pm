@@ -6,10 +6,115 @@ use Exporter;
 use DNAnexus qw(DXHTTPRequest);
 
 
-sub fileNew(;$%) {
+sub appAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub appDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub appDestroy($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+}
+
+
+sub appGet($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/get', $input_params, %kwargs);
+}
+
+
+sub appInstall($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/install', $input_params, %kwargs);
+}
+
+
+sub appPublish($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/publish', $input_params, %kwargs);
+}
+
+
+sub appRemoveTag($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTag', $input_params, %kwargs);
+}
+
+
+sub appRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub appRun($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/run', $input_params, %kwargs);
+}
+
+
+sub appUninstall($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/uninstall', $input_params, %kwargs);
+}
+
+
+sub appUpdate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
+}
+
+
+sub appNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/file/new', $input_params, %kwargs);
+    return DXHTTPRequest('/app/new', $input_params, %kwargs);
+}
+
+
+sub discitemDelete($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/delete', $input_params, %kwargs);
+}
+
+
+sub discitemDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub discitemLike($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/like', $input_params, %kwargs);
+}
+
+
+sub discitemNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/discitem/new', $input_params, %kwargs);
 }
 
 
@@ -111,10 +216,10 @@ sub fileUpload($;$%) {
 }
 
 
-sub gtableNew(;$%) {
+sub fileNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/gtable/new', $input_params, %kwargs);
+    return DXHTTPRequest('/file/new', $input_params, %kwargs);
 }
 
 
@@ -230,10 +335,10 @@ sub gtableSetVisibility($;$%) {
 }
 
 
-sub jobNew(;$%) {
+sub gtableNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/job/new', $input_params, %kwargs);
+    return DXHTTPRequest('/gtable/new', $input_params, %kwargs);
 }
 
 
@@ -244,6 +349,13 @@ sub jobDescribe($;$%) {
 }
 
 
+sub jobStreamLog($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/streamLog', $input_params, %kwargs);
+}
+
+
 sub jobTerminate($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -251,10 +363,52 @@ sub jobTerminate($;$%) {
 }
 
 
-sub programNew(;$%) {
+sub jobNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/program/new', $input_params, %kwargs);
+    return DXHTTPRequest('/job/new', $input_params, %kwargs);
+}
+
+
+sub notificationsGet(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/notifications/get', $input_params, %kwargs);
+}
+
+
+sub notificationsMarkRead(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/notifications/markRead', $input_params, %kwargs);
+}
+
+
+sub privateDxdata(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/private/dxdata', $input_params, %kwargs);
+}
+
+
+sub privateLaunchExampleMicrojob(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/private/launchExampleMicrojob', $input_params, %kwargs);
+}
+
+
+sub privateTestProjectTxn(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/private/testProjectTxn', $input_params, %kwargs);
+}
+
+
+sub privateUpdateJob(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/private/updateJob', $input_params, %kwargs);
 }
 
 
@@ -356,10 +510,10 @@ sub programSetVisibility($;$%) {
 }
 
 
-sub projectNew(;$%) {
+sub programNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/project/new', $input_params, %kwargs);
+    return DXHTTPRequest('/program/new', $input_params, %kwargs);
 }
 
 
@@ -381,6 +535,20 @@ sub projectDestroy($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+}
+
+
+sub projectIncreasePermissions($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/increasePermissions', $input_params, %kwargs);
+}
+
+
+sub projectLeave($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/leave', $input_params, %kwargs);
 }
 
 
@@ -419,6 +587,20 @@ sub projectRemoveObjects($;$%) {
 }
 
 
+sub projectRenameFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/renameFolder', $input_params, %kwargs);
+}
+
+
+sub projectSetPermissions($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setPermissions', $input_params, %kwargs);
+}
+
+
 sub projectUpdate($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -426,10 +608,10 @@ sub projectUpdate($;$%) {
 }
 
 
-sub recordNew(;$%) {
+sub projectNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/record/new', $input_params, %kwargs);
+    return DXHTTPRequest('/project/new', $input_params, %kwargs);
 }
 
 
@@ -517,10 +699,10 @@ sub recordSetVisibility($;$%) {
 }
 
 
-sub systemGetLog(;$%) {
+sub recordNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/system/getLog', $input_params, %kwargs);
+    return DXHTTPRequest('/record/new', $input_params, %kwargs);
 }
 
 
@@ -528,6 +710,13 @@ sub systemFindDataObjects(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/system/findDataObjects', $input_params, %kwargs);
+}
+
+
+sub systemFindDiscitems(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findDiscitems', $input_params, %kwargs);
 }
 
 
@@ -545,10 +734,24 @@ sub systemFindProjects(;$%) {
 }
 
 
-sub tableNew(;$%) {
+sub systemGetLog(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/table/new', $input_params, %kwargs);
+    return DXHTTPRequest('/system/getLog', $input_params, %kwargs);
+}
+
+
+sub systemSearchDataObjects(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/searchDataObjects', $input_params, %kwargs);
+}
+
+
+sub systemShortenURL(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/shortenURL', $input_params, %kwargs);
 }
 
 
@@ -692,6 +895,76 @@ sub tableUpdate($;$%) {
 }
 
 
+sub tableNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/table/new', $input_params, %kwargs);
+}
+
+
+sub userDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub workspaceClone($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/clone', $input_params, %kwargs);
+}
+
+
+sub workspaceDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub workspaceListFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listFolder', $input_params, %kwargs);
+}
+
+
+sub workspaceMove($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/move', $input_params, %kwargs);
+}
+
+
+sub workspaceNewFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/newFolder', $input_params, %kwargs);
+}
+
+
+sub workspaceRemoveFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeFolder', $input_params, %kwargs);
+}
+
+
+sub workspaceRemoveObjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeObjects', $input_params, %kwargs);
+}
+
+
+sub workspaceRenameFolder($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/renameFolder', $input_params, %kwargs);
+}
+
+
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(fileNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload gtableNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility jobNew jobDescribe jobTerminate programNew programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility projectNew projectClone projectDescribe projectDestroy projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectUpdate recordNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility systemGetLog systemFindDataObjects systemFindJobs systemFindProjects tableNew tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate);
+our @EXPORT_OK = qw(appAddTags appDescribe appDestroy appGet appInstall appPublish appRemoveTag appRemoveTags appRun appUninstall appUpdate appNew discitemDelete discitemDescribe discitemLike discitemNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead privateDxdata privateLaunchExampleMicrojob privateTestProjectTxn privateUpdateJob programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility programNew projectClone projectDescribe projectDestroy projectIncreasePermissions projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRenameFolder projectSetPermissions projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindDataObjects systemFindDiscitems systemFindJobs systemFindProjects systemGetLog systemSearchDataObjects systemShortenURL tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate tableNew userDescribe workspaceClone workspaceDescribe workspaceListFolder workspaceMove workspaceNewFolder workspaceRemoveFolder workspaceRemoveObjects workspaceRenameFolder);
 
