@@ -58,7 +58,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
         config = {}
     # TODO: decide which routes are safe to retry
     # TODO: exponential backoff policy in requests
-    config.setdefault('max_retries', MAX_RETRIES)
+    # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
+    # config.setdefault('max_retries', MAX_RETRIES)
     if 'Content-Type' not in headers:
         headers['Content-Type'] = 'application/json'
     if jsonify_data:
