@@ -26,13 +26,20 @@ from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
 from dxpy.exceptions import *
 
+snappy_available = True
+try:
+    import snappy
+except ImportError:
+    snappy_available = False
+
 API_VERSION = '1.0.0'
 AUTH_HELPER = None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
 MAX_RETRIES = 0
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=None, jsonify_data=True, want_full_response=False, **kwargs):
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=None,
+                  use_compression=None, jsonify_data=True, want_full_response=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
@@ -67,6 +74,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
 
     headers['DNAnexus-API'] = API_VERSION
 
+    if use_compression == 'snappy':
+        if not snappy_available:
+            raise DXError("Snappy compression requested, but the snappy module is unavailable")
+        headers['accept-encoding'] = 'snappy'
+
     last_error = None
     for retry in range(MAX_RETRIES + 1):
         try:
@@ -92,10 +104,15 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
                     if int(response.headers['content-length']) != len(response.content):
                         raise HTTPError("Received response with content-length header set to %s but content length is %d"
                             % (response.headers['content-length'], len(response.content)))
-                
+
+                if use_compression and response.headers.get('content-encoding', '') == 'snappy':
+                    decoded_content = snappy.uncompress(response.content)
+                else:
+                    decoded_content = response.content
+
                 if response.headers.get('content-type', '').startswith('application/json'):
-                    return json.loads(response.content)
-                return response.content
+                    return json.loads(decoded_content)
+                return decoded_content
         except ConnectionError as e:
             last_error = e
         except (DXAPIError, HTTPError) as e:
