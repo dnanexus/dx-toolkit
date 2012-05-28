@@ -1,7 +1,7 @@
 '''
 DNAnexus Program Builder Library
 
-Contains methods used by the application builder to compile and deploy programs onto the platform.
+Contains methods used by the application builder to compile and deploy programs and apps onto the platform.
 
 '''
 
@@ -15,10 +15,12 @@ def validate_program_spec(program_spec):
     if "name" not in program_spec:
         raise ProgramBuilderException("Program specification does not contain a name")
 
+def validate_app_spec(app_spec):
+    if "globalWorkspace" not in app_spec:
+        raise ProgramBuilderException("App specification does not contain a globalWorkspace field")
+
 def get_program_spec(src_dir):
-    program_spec_file = os.path.join(src_dir, "dxprogram")
-    if not os.path.exists(program_spec_file):
-        program_spec_file = os.path.join(src_dir, "dxprogram.json")
+    program_spec_file = os.path.join(src_dir, "dxprogram.json")
     with open(program_spec_file) as fh:
         program_spec = json.load(fh)
 
@@ -26,6 +28,14 @@ def get_program_spec(src_dir):
     if 'project' not in program_spec:
         program_spec['project'] = dxpy.WORKSPACE_ID
     return program_spec
+
+def get_app_spec(src_dir):
+    app_spec_file = os.path.join(src_dir, "dxapp.json")
+    with open(app_spec_file) as fh:
+        app_spec = json.load(fh)
+
+    validate_app_spec(app_spec)
+    return app_spec
 
 def build(src_dir):
     logging.debug("Building in " + src_dir)
@@ -99,3 +109,18 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
         dxpy.DXProgram(program_id).add_tags(program_spec["categories"])
 
     return program_id
+
+def create_app(program_id, src_dir):
+    app_spec = get_app_spec(src_dir)
+    print "Will create app with spec: ", app_spec
+
+    program_desc = dxpy.DXProgram(program_id).describe()
+    app_spec["program"] = program_id
+    app_spec["name"] = program_desc["name"]
+    # TODO
+    app_spec["owner"] = "me"
+    # TODO
+    app_spec["version"] = "1.2.3"
+    app_id = dxpy.api.appNew(app_spec)["id"]
+
+    return app_id

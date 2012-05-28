@@ -480,5 +480,6 @@ from dxrecord import *
 from dxproject import *
 from dxjob import *
 from dxprogram import *
+from dxapp import *
 from search import *
 from dxdataobject_functions import *
