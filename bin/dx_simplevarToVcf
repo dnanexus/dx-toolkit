@@ -74,7 +74,7 @@ def parseRegions(input):
 
 def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequence, chromosomeOffsets):
     
-    minimalColumns = ["chr", "lo", "hi", "type", "ref", "alt", "qual", "coverage", "genotypeQuality"]
+    minimalColumns = ["chr", "lo", "hi", "type", "ref", "alt", "qual", "coverage", "genotypeQuality", "vcf_alt"]
     
     chr = str(row[col["chr"]])
     pos = str(row[col["lo"]]-1)
