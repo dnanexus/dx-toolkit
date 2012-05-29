@@ -1,7 +1,15 @@
 '''
 DNAnexus Program Builder Library
 
-Contains methods used by the application builder to compile and deploy programs and apps onto the platform.
+Contains methods used by the application builder to compile and deploy programs
+and apps onto the platform.
+
+You can specify the destination project in the following ways (with the earlier
+ones taking precedence):
+
+* Supply the 'project' argument to upload_resources or upload_program.
+* Supply the 'project' attribute in your dxprogram.json.
+* Set the DX_WORKSPACE_ID environment variable (when running in a job context).
 
 '''
 
@@ -48,8 +56,9 @@ def build(src_dir):
         or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
         subprocess.check_call(["make", "-C", src_dir, "-j8"])
 
-def upload_resources(src_dir):
+def upload_resources(src_dir, project=None):
     program_spec = get_program_spec(src_dir)
+    dest_project = project or program_spec['project']
     resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         logging.debug("Uploading in " + src_dir)
@@ -58,7 +67,7 @@ def upload_resources(src_dir):
             subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
             if 'folder' in program_spec:
                 try:
-                    dxpy.DXProject(program_spec['project']).new_folder(program_spec['folder'], parents=True)
+                    dxpy.DXProject(dest_project).new_folder(program_spec['folder'], parents=True)
                 except dxpy.exceptions.DXAPIError:
                     pass # TODO: make this better
             target_folder = program_spec['folder'] if 'folder' in program_spec else '/'
@@ -68,16 +77,18 @@ def upload_resources(src_dir):
     else:
         return None
 
-def upload_program(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False):
+def upload_program(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None):
     program_spec = get_program_spec(src_dir)
+
+    dest_project = project or program_spec['project']
 
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])
-        for result in dxpy.find_data_objects(classname="program", properties={"name": program_spec["name"]}, project=program_spec['project']):
+        for result in dxpy.find_data_objects(classname="program", properties={"name": program_spec["name"]}, project=dest_project):
             if overwrite:
                 logging.info("Deleting program %s" % (result['id']))
                 # TODO: test me
-                dxpy.DXProject(program_spec['project']).remove_objects([result['id']])
+                dxpy.DXProject(dest_project).remove_objects([result['id']])
             else:
                 raise ProgramBuilderException("A program with name %s already exists (id %s) and the overwrite option was not given" % (program_spec["name"], result['id']))
 
@@ -103,7 +114,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
     if "description" in program_spec:
         properties["description"] = program_spec["description"]
 
-    dxpy.api.programSetProperties(program_id, {"project": dxpy.WORKSPACE_ID, "properties": properties})
+    dxpy.api.programSetProperties(program_id, {"project": dest_project, "properties": properties})
 
     if "categories" in program_spec:
         dxpy.DXProgram(program_id).add_tags(program_spec["categories"])
