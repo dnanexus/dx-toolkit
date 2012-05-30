@@ -63,6 +63,8 @@ class DXProgram(DXDataObject):
 
         '''
         for field in 'run', 'dxapi':
+            if field not in kwargs:
+                raise DXError("%s: Keyword argument %s is required" % (self.__class__.__name__, field))
             dx_hash[field] = kwargs[field]
             del kwargs[field]
         for field in 'inputs', 'outputs', 'access', 'description', 'subtitle':

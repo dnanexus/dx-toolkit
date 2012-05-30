@@ -8,6 +8,12 @@ This remote file handler is a file-like object.
 import cStringIO as StringIO
 from dxpy.bindings import *
 
+snappy_available = True
+try:
+    import snappy
+except ImportError:
+    snappy_available = False
+
 class DXFile(DXDataObject):
     '''
     :param dxid: Object ID
@@ -117,7 +123,7 @@ class DXFile(DXDataObject):
         self._file_length = None
         self._cur_part = 1
 
-    def read(self, size=None, **kwargs):
+    def read(self, size=None, use_compression=None, **kwargs):
         '''
         :param size: Maximum number of bytes to be read
         :type size: integer
@@ -150,17 +156,29 @@ class DXFile(DXDataObject):
         else:
             self._pos = self._file_length
 
-        # TODO: fix performance issue with requests
+        if use_compression == 'snappy':
+            if not snappy_available:
+                raise DXError("Snappy compression requested, but the snappy module is unavailable")
+            headers['accept-encoding'] = 'snappy'
 
-        #resp = requests.get(url, headers=headers)
-        #resp.raise_for_status()
-        #return resp.content
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
 
-        # Temporary workaround via urllib2
-        import urllib2
-        req = urllib2.Request(url, headers=headers)
-        response = urllib2.urlopen(req)
-        return response.read()
+        if 'content-length' in response.headers:
+            if int(response.headers['content-length']) != len(response.content):
+                raise HTTPError("Received response with content-length header set to %s but content length is %d"
+                                % (response.headers['content-length'], len(response.content)))
+
+        if use_compression and response.headers.get('content-encoding', '') == 'snappy':
+            return snappy.uncompress(response.content)
+        else:
+            return response.content
+
+        # Debug fallback
+        # import urllib2
+        # req = urllib2.Request(url, headers=headers)
+        # response = urllib2.urlopen(req)
+        # return response.read()
 
     def seek(self, offset):
         '''
