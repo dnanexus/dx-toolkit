@@ -70,9 +70,11 @@ def writeRow(row, col, outputFile):
     if row[col["mate_id"]] == -1:
         tlen = 0
     else:
-        tlen = str(max(int(row[col["hi2"]]),int(row[col["hi"]])) - min(int(row[col["lo2"]]),int(row[col["lo"]])))
+        tlen = str((max(int(row[col["hi2"]]),int(row[col["hi"]])) - min(int(row[col["lo2"]]),int(row[col["lo"]])))*(1-2*row[col["mate_id"]]))
     
     outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(row[col["lo"]]+1) + "\t")
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + row[col["chr2"]] + "\t")
     outputFile.write(str(row[col["lo2"]]+1) + "\t" + tlen + "\t" + row[col["sequence"]][::orientation] + "\t")
     outputFile.write(str(row[col["quality"]][::orientation] + "\n"))
+
+main()
