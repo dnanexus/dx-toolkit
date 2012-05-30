@@ -58,14 +58,24 @@ def writeRow(row, col, outputFile):
     flag += 0x40*(row[col["mate_id"]] == 0) + 0x80*(row[col["mate_id"]] == 1) + 0x100*(row[col["status"]] == "SECONDARY")
     flag += 0x200*(row[col["qc"]] == "not passing quality controls") + 0x400*(row[col["qc"]] == "PCR or optical duplicate")
     flag += (0x200+0x400)*(row[col["qc"]] == "both not qc and PCR or optical duplicate")
+    
     chromosome = row[col["chr"]]
     if row[col["chr"]] == "":
         chromosome = "*"
+    readName = row[col["name"]]
+    if readName.strip("@") == "":
+        readName = "*"
+    orientation = 1
+    if row[col["negative_strand"]]:
+        orientation = -1
+    if row[col["mate_id"]] == -1 or row[col["chr"]] != row[col["chr2"]]:
+        tlen = 0
+    else:
+        tlen = str((max(int(row[col["hi2"]]),int(row[col["hi"]])) - min(int(row[col["lo2"]]),int(row[col["lo"]])))*(1-2*row[col["mate_id"]]))
     
-
-    outputFile.write(row[col["name"]].strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(row[col["lo"]]+1) + "\t")
+    outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(row[col["lo"]]+1) + "\t")
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + row[col["chr2"]] + "\t")
-    outputFile.write(str(row[col["lo2"]]+1) + "\t" + str(int(math.fabs(row[col["hi"]] - row[col["lo"]]))) + "\t" + row[col["sequence"]] + "\t")
-    outputFile.write(str(row[col["quality"]] + "\n"))
-    
+    outputFile.write(str(row[col["lo2"]]+1) + "\t" + tlen + "\t" + row[col["sequence"]][::orientation] + "\t")
+    outputFile.write(str(row[col["quality"]][::orientation] + "\n"))
+
 main()
