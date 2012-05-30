@@ -52,11 +52,13 @@ class DXApp(DXDataObject):
         available to its developers until :meth:`publish()` is called, and is not run until :meth:`run()` is called.
 
         '''
-        for field in 'program', 'globalWorkspace':
+        for field in 'program', 'globalWorkspace', 'version':
+            if field not in kwargs:
+                raise DXError("%s: Keyword argument %s is required" % (self.__class__.__name__, field))
             dx_hash[field] = kwargs[field]
             del kwargs[field]
 
-        for field in 'subtitle', 'description', 'version', 'owner', 'billing', 'access':
+        for field in 'subtitle', 'description', 'owner', 'billing', 'access':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]
