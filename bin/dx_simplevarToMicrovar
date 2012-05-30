@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+import dxpy
+import math
+from optparse import OptionParser
+import re
+
+
+#Example usage: dx_simplevarToMicroVar --table_id gtable-9yjjk2Q00005kK9k79X0000P --output test.out
+
+def main():
+
+    parser = OptionParser("Usage: % mappings_id file_name")
+    parser.add_option("--table_id", dest="simplevar_id", help="Simplevar table to read from")
+    parser.add_option("--output", dest="file_name", help="File to write to")
+    (opts, args) = parser.parse_args()
+
+    col = {}
+    names = simpleVar.get_col_names()   
+    for i in range(len(names)):
+        col[names[i]] = i+1
+
+    outputFile = open(opts.file_name, 'w')
+    outputFile.write("#chrom\tleft\tright\tref_seq\tcall_type\tvariant_seq\tvariant_score\tprob_not_ref\tcoverage")
+    if col.get("read_counts") != None:
+        outputFile.write("\tread_counts")
+    outputFile.write("\n")
+    simpleVar = dxpy.open_dxgtable(opts.simplevar_id)
+    
+    
+    for row in simpleVar.iterate_rows():
+        outputFile.write(row[col["chr"]]+"\t"+str(row[col["lo"]])+"\t"+str(row[col["hi"]])+"\t"+row[col["ref"]]+"\t"+row[col["type"]]+"\t"+row[col["alt"]]+"\t"+str(row[col["genotypeQuality"]])+"\t"+str(row[col["qual"]])+"\t"+str(row[col["coverage"]]))
+        if col.get("read_counts") != None:
+            outputFile.write("\t" + row[col["read_counts"]])
+        outputFile.write("\n")
+    
+    outputFile.close()
+           

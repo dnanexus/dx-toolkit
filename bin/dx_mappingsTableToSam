@@ -38,9 +38,7 @@ def main():
     names = mappingsTable.get_col_names()   
     for i in range(len(names)):
         col[names[i]] = i+1
-    
-    print opts.region
-    
+        
     if opts.region == None:  
         for row in mappingsTable.iterate_rows():
             writeRow(row, col, outputFile)
@@ -60,8 +58,12 @@ def writeRow(row, col, outputFile):
     flag += 0x40*(row[col["mate_id"]] == 0) + 0x80*(row[col["mate_id"]] == 1) + 0x100*(row[col["status"]] == "SECONDARY")
     flag += 0x200*(row[col["qc"]] == "not passing quality controls") + 0x400*(row[col["qc"]] == "PCR or optical duplicate")
     flag += (0x200+0x400)*(row[col["qc"]] == "both not qc and PCR or optical duplicate")
+    chromosome = row[col["chr"]]
+    if row[col["chr"]] == "":
+        chromosome = "*"
+    
 
-    outputFile.write(row[col["name"]].strip("@") + "\t" + str(flag) + "\t" + row[col["chr"]] + "\t" + str(row[col["lo"]]+1) + "\t")
+    outputFile.write(row[col["name"]].strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(row[col["lo"]]+1) + "\t")
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + row[col["chr2"]] + "\t")
     outputFile.write(str(row[col["lo2"]]+1) + "\t" + str(int(math.fabs(row[col["hi"]] - row[col["lo"]]))) + "\t" + row[col["sequence"]] + "\t")
     outputFile.write(str(row[col["quality"]] + "\n"))
