@@ -91,7 +91,7 @@ class DXWorkspace(object):
         :param parents: Whether to recursively create all parent folders if they are missing
         :type parents: boolean
 
-        Creates a new folder in the project
+        Creates a new folder in the project or workspace
 
         """
         api_method = dxpy.api.workspaceNewFolder
@@ -175,7 +175,7 @@ class DXWorkspace(object):
         :param folder: Full path to the folder to remove
         :type folder: string
 
-        Removes the specified folder in the project; it must be empty
+        Removes the specified folder in the project or workspace; it must be empty
         to be removed.
 
         """
@@ -188,12 +188,12 @@ class DXWorkspace(object):
 
     def remove_objects(self, objects, **kwargs):
         """
-        :param objects: List of object IDs to remove from the project
+        :param objects: List of object IDs to remove from the project or workspace
         :type objects: list of strings
 
-        Removes the specified objects in the project; removal
+        Removes the specified objects in the project or workspace; removal
         propagates to any linked hidden objects that would otherwise
-        be unreachable from any visible object in the project.
+        be unreachable from any visible object in the project or workspace.
 
         """
         api_method = dxpy.api.workspaceRemoveObjects
