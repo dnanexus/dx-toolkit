@@ -295,18 +295,25 @@ def describe(args):
                              'hidden', 'details', 'links', 'created', 'modified', 'state']
             print "ID\t\t" + desc["id"]
             print "Class\t\t" + desc["class"]
-            print "Project\t\t" + desc["project"]
-            print "Folder\t\t" + desc["folder"]
+            if 'project' in desc:
+                print "Project\t\t" + desc["project"]
+            if 'folder' in desc:
+                print "Folder\t\t" + desc["folder"]
             print "Name\t\t" + desc["name"]
-            print "State\t\t" + desc["state"]
-            print "Hidden\t\t" + json.dumps(desc["hidden"])
-            print "Types\t\t" + json.dumps(desc["types"])
+            if 'state' in desc:
+                print "State\t\t" + desc["state"]
+            if 'hidden' in desc:
+                print "Hidden\t\t" + json.dumps(desc["hidden"])
+            if 'types' in desc:
+                print "Types\t\t" + json.dumps(desc["types"])
             if 'properties' in desc:
                 print "Properties\t" + json.dumps(desc["properties"])
-            print "Tags\t\t" + json.dumps(desc["tags"])
+            if 'tags' in desc:
+                print "Tags\t\t" + json.dumps(desc["tags"])
             if 'details' in desc:
                 print "Details\t\t" + json.dumps(desc["details"])
-            print "Outgoing links\t" + json.dumps(desc["links"])
+            if 'links' in desc:
+                print "Outgoing links\t" + json.dumps(desc["links"])
             print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
             print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
             for field in desc:
