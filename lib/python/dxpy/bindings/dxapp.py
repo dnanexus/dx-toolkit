@@ -31,8 +31,10 @@ class DXApp(DXDataObject):
         :type dx_hash: dict
         :param program: ID of the program which the app will be created from
         :type program: string
-        :param subtitle: A short description of the app (optional)
-        :type subtitle: string
+        :param title: Title or brand name of the app (optional)
+        :type title: string
+        :param summary: A short description of the app (optional)
+        :type summary: string
         :param description: An extended description of the app (optional)
         :type description: string
         :param version: app's version
@@ -58,7 +60,7 @@ class DXApp(DXDataObject):
             dx_hash[field] = kwargs[field]
             del kwargs[field]
 
-        for field in 'subtitle', 'description', 'owner', 'billing', 'access':
+        for field in 'title', 'summary', 'description', 'owner', 'billing', 'access':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]

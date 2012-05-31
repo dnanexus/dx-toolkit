@@ -49,10 +49,12 @@ class DXProgram(DXDataObject):
         :type access: dict
         :param dxapi: API version string
         :type dxapi: string
+        :param title: title string (optional)
+        :type title: string
+        :param summary: summary string (optional)
+        :type summary: string
         :param description: description string (optional)
         :type description: string
-        :param subtitle: subtitle string (optional)
-        :type subtitle: string
 
         It is highly recommended that :mod:`dxpy.program_builder` is
         used for program creation.
@@ -67,7 +69,7 @@ class DXProgram(DXDataObject):
                 raise DXError("%s: Keyword argument %s is required" % (self.__class__.__name__, field))
             dx_hash[field] = kwargs[field]
             del kwargs[field]
-        for field in 'inputs', 'outputs', 'access', 'description', 'subtitle':
+        for field in 'inputs', 'outputs', 'access', 'title', 'summary', 'description':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]

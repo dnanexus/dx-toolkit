@@ -109,8 +109,10 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
     program_id = dxpy.api.programNew(program_spec)["id"]
 
     properties = {"name": program_spec["name"]}
-    if "subtitle" in program_spec:
-        properties["subtitle"] = program_spec["subtitle"]
+    if "title" in program_spec:
+        properties["title"] = program_spec["title"]
+    if "summary" in program_spec:
+        properties["summary"] = program_spec["summary"]
     if "description" in program_spec:
         properties["description"] = program_spec["description"]
 
@@ -125,13 +127,22 @@ def create_app(program_id, src_dir):
     app_spec = get_app_spec(src_dir)
     print "Will create app with spec: ", app_spec
 
-    program_desc = dxpy.DXProgram(program_id).describe()
+    program_desc = dxpy.DXProgram(program_id).describe(incl_properties=True)
     app_spec["program"] = program_id
     app_spec["name"] = program_desc["name"]
+
+    if "title" in program_desc["properties"]:
+        app_spec["title"] = program_desc["properties"]["title"]
+    if "summary" in program_desc["properties"]:
+        app_spec["summary"] = program_desc["properties"]["summary"]
+    if "description" in program_desc["properties"]:
+        app_spec["description"] = program_desc["properties"]["description"]
+
     # TODO
     app_spec["owner"] = "me"
     # TODO
     app_spec["version"] = "1.2.3"
+
     app_id = dxpy.api.appNew(app_spec)["id"]
 
     return app_id
