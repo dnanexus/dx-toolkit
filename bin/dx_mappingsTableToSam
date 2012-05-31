@@ -95,5 +95,3 @@ def writeRow(row, col, outputFile):
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + chromosome2 + "\t")
     outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + row[col["sequence"]][::orientation] + "\t")
     outputFile.write(str(row[col["quality"]][::orientation] + "\n"))
-
-main()
