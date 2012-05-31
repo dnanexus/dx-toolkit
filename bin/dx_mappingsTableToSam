@@ -42,7 +42,6 @@ def main():
     if opts.region == None:  
         for row in mappingsTable.iterate_rows():
             writeRow(row, col, outputFile)
-            
     else:
         for region in opts.region:
             includeDictionary = {}
@@ -53,6 +52,14 @@ def main():
         
 
 def writeRow(row, col, outputFile):
+    
+    
+    #This is something of a hack to deal with a bug in the import script.
+    #   that bug is being fixed and when that change moves through the system
+    if row[col["chr2"]] == "*" or row[col["chr2"]] == '' and row[col["status2"]] != "UNMAPPED":
+        print row
+        row[col["status2"]] = "UNMAPPED"
+    
     flag = 0x1*(row[col["mate_id"]] >= -1 and row[col["mate_id"]] <= 1) + 0x2*(row[col["proper_pair"]] == True) + 0x4*(row[col["status"]] == "UNMAPPED")
     flag += 0x8*(row[col["status2"]] == "UNMAPPED") + 0x10*(row[col["negative_strand"]] == True) + 0x20*(row[col["negative_strand2"]] == True)
     flag += 0x40*(row[col["mate_id"]] == 0) + 0x80*(row[col["mate_id"]] == 1) + 0x100*(row[col["status"]] == "SECONDARY")
@@ -60,22 +67,33 @@ def writeRow(row, col, outputFile):
     flag += (0x200+0x400)*(row[col["qc"]] == "both not qc and PCR or optical duplicate")
     
     chromosome = row[col["chr"]]
+    lo = row[col["lo"]]+1
     if row[col["chr"]] == "":
         chromosome = "*"
-    readName = row[col["name"]]
+        lo = 0
+
+    chromosome2 = row[col["chr2"]]
+    lo2 = row[col["lo2"]]+1
+    if row[col["chr2"]] == "":
+        chromosome2 = "*"
+        lo2 = 0
+        
+    readName = row[col["name"]]    
     if readName.strip("@") == "":
         readName = "*"
     orientation = 1
+    
+        
     if row[col["negative_strand"]]:
         orientation = -1
-    if row[col["mate_id"]] == -1 or row[col["chr"]] != row[col["chr2"]]:
+    if row[col["mate_id"]] == -1 or row[col["chr"]] != row[col["chr2"]] or row[col["chr"]] == '' or row[col["chr"]] == '*':
         tlen = 0
     else:
         tlen = str((max(int(row[col["hi2"]]),int(row[col["hi"]])) - min(int(row[col["lo2"]]),int(row[col["lo"]])))*(1-2*row[col["mate_id"]]))
-    
-    outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(row[col["lo"]]+1) + "\t")
-    outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + row[col["chr2"]] + "\t")
-    outputFile.write(str(row[col["lo2"]]+1) + "\t" + tlen + "\t" + row[col["sequence"]][::orientation] + "\t")
+
+    outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
+    outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + chromosome2 + "\t")
+    outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + row[col["sequence"]][::orientation] + "\t")
     outputFile.write(str(row[col["quality"]][::orientation] + "\n"))
 
 main()
