@@ -13,4 +13,4 @@ if len(args) != 1:
 
 id = args[0]
 
-print json.dumps(dxpy.describe(id))
+print json.dumps(dxpy.describe(id) , indent=4)
