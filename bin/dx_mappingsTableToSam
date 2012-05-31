@@ -57,7 +57,6 @@ def writeRow(row, col, outputFile):
     #This is something of a hack to deal with a bug in the import script.
     #   that bug is being fixed and when that change moves through the system
     if row[col["chr2"]] == "*" or row[col["chr2"]] == '' and row[col["status2"]] != "UNMAPPED":
-        print row
         row[col["status2"]] = "UNMAPPED"
     
     flag = 0x1*(row[col["mate_id"]] >= -1 and row[col["mate_id"]] <= 1) + 0x2*(row[col["proper_pair"]] == True) + 0x4*(row[col["status"]] == "UNMAPPED")
@@ -83,7 +82,7 @@ def writeRow(row, col, outputFile):
         readName = "*"
     orientation = 1
     
-        
+    
     if row[col["negative_strand"]]:
         orientation = -1
     if row[col["mate_id"]] == -1 or row[col["chr"]] != row[col["chr2"]] or row[col["chr"]] == '' or row[col["chr"]] == '*':
@@ -95,3 +94,5 @@ def writeRow(row, col, outputFile):
     outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + chromosome2 + "\t")
     outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + row[col["sequence"]][::orientation] + "\t")
     outputFile.write(str(row[col["quality"]][::orientation] + "\n"))
+
+main()
