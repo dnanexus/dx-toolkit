@@ -5,6 +5,7 @@ DXFile Handler
 This remote file handler is a file-like object.
 '''
 
+import logging
 import cStringIO as StringIO
 from dxpy.bindings import *
 
@@ -161,13 +162,23 @@ class DXFile(DXDataObject):
                 raise DXError("Snappy compression requested, but the snappy module is unavailable")
             headers['accept-encoding'] = 'snappy'
 
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
+        # HACK. TODO: integrate with overall dxpy retry policy
+        FILE_DOWNLOAD_RETRIES = 5
+        for i in range(FILE_DOWNLOAD_RETRIES):
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
 
-        if 'content-length' in response.headers:
-            if int(response.headers['content-length']) != len(response.content):
-                raise HTTPError("Received response with content-length header set to %s but content length is %d"
-                                % (response.headers['content-length'], len(response.content)))
+            if 'content-length' in response.headers:
+                if int(response.headers['content-length']) != len(response.content):
+                    if i == FILE_DOWNLOAD_RETRIES-1:
+                        raise HTTPError("Received response with content-length header set to %s but content length is %d"
+                                        % (response.headers['content-length'], len(response.content)))
+                    else:
+                        logging.error("Received response with content-length header set to %s but content length is %d"
+                                      % (response.headers['content-length'], len(response.content)))
+                        continue
+
+            break
 
         if use_compression and response.headers.get('content-encoding', '') == 'snappy':
             return snappy.uncompress(response.content)
