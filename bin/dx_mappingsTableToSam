@@ -38,61 +38,79 @@ def main():
     names = mappingsTable.get_col_names()   
     for i in range(len(names)):
         col[names[i]] = i+1
+    defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"UNMAPPED", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False}
+
         
     if opts.region == None:  
         for row in mappingsTable.iterate_rows():
-            writeRow(row, col, outputFile)
+            writeRow(row, col, defaultCol, outputFile)
     else:
         for region in opts.region:
             includeDictionary = {}
             intervalMatch = re.findall("(\w+):(\d+)-(\d+)", region)
             query = mappingsTable.genomic_range_query(intervalMatch[0][0],int(intervalMatch[0][1])+opts.region_index_offset,int(intervalMatch[0][2])+opts.region_index_offset,mode='overlap',index='gri')
             for row in mappingsTable.iterate_query_rows(query=query):
-                writeRow(row, col, outputFile)
+                writeRow(row, col, defaultCol, outputFile)
         
-
-def writeRow(row, col, outputFile):
+        
+        
+        
+    
+def writeRow(row, col, defaultCol, outputFile):
+    
+    values = {}
+    for k,v in defaultCol.iteritems():
+        if col.get(k) == None:
+            values[k] = defaultCol[k]
+        else:
+            values[k] = row[col[k]]
     
     
     #This is something of a hack to deal with a bug in the import script.
     #   that bug is being fixed and when that change moves through the system
-    if row[col["chr2"]] == "*" or row[col["chr2"]] == '' and row[col["status2"]] != "UNMAPPED":
-        row[col["status2"]] = "UNMAPPED"
+    #   this will be removed
+    if values["chr2"] == "*" or values["chr2"] == '' and values["status2"] != "UNMAPPED":
+        values["status2"] = "UNMAPPED"
     
-    flag = 0x1*(row[col["mate_id"]] >= -1 and row[col["mate_id"]] <= 1) + 0x2*(row[col["proper_pair"]] == True) + 0x4*(row[col["status"]] == "UNMAPPED")
-    flag += 0x8*(row[col["status2"]] == "UNMAPPED") + 0x10*(row[col["negative_strand"]] == True) + 0x20*(row[col["negative_strand2"]] == True)
-    flag += 0x40*(row[col["mate_id"]] == 0) + 0x80*(row[col["mate_id"]] == 1) + 0x100*(row[col["status"]] == "SECONDARY")
-    flag += 0x200*(row[col["qc"]] == "not passing quality controls") + 0x400*(row[col["qc"]] == "PCR or optical duplicate")
-    flag += (0x200+0x400)*(row[col["qc"]] == "both not qc and PCR or optical duplicate")
+    flag = 0x1*(values["mate_id"] >= -1 and values["mate_id"] <= 1) + 0x2*(values["proper_pair"] == True) + 0x4*(values["status"] == "UNMAPPED")
+    flag += 0x8*(values["status2"] == "UNMAPPED") + 0x10*(values["negative_strand"] == True) + 0x20*(values["negative_strand2"] == True)
+    flag += 0x40*(values["mate_id"] == 0) + 0x80*(values["mate_id"] == 1) + 0x100*(values["status"] == "SECONDARY")
+    flag += 0x200*(values["qc"] == "not passing quality controls") + 0x400*(values["qc"] == "PCR or optical duplicate")
+    flag += (0x200+0x400)*(values["qc"] == "both not qc and PCR or optical duplicate")
     
-    chromosome = row[col["chr"]]
-    lo = row[col["lo"]]+1
-    if row[col["chr"]] == "":
+    chromosome = values["chr"]
+    lo = values["lo"]+1
+    if values["chr"] == "":
         chromosome = "*"
         lo = 0
 
-    chromosome2 = row[col["chr2"]]
-    lo2 = row[col["lo2"]]+1
-    if row[col["chr2"]] == "":
+    chromosome2 = values["chr2"]
+    lo2 = values["lo2"]+1
+    if values["chr2"] == "":
         chromosome2 = "*"
         lo2 = 0
         
-    readName = row[col["name"]]    
+    readName = values["name"]    
     if readName.strip("@") == "":
         readName = "*"
     orientation = 1
     
+    if values["lo2"] != 0 and values["hi2"] == 0:
+        print row
+
     
-    if row[col["negative_strand"]]:
+    
+    
+    if values["negative_strand"]:
         orientation = -1
-    if row[col["mate_id"]] == -1 or row[col["chr"]] != row[col["chr2"]] or row[col["chr"]] == '' or row[col["chr"]] == '*':
+    if values["mate_id"] == -1 or values["chr"] != values["chr2"] or values["chr"] == '' or values["chr"] == '*':
         tlen = 0
     else:
-        tlen = str((max(int(row[col["hi2"]]),int(row[col["hi"]])) - min(int(row[col["lo2"]]),int(row[col["lo"]])))*(1-2*row[col["mate_id"]]))
+        tlen = str((max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])))*(1-2*values["mate_id"]))
 
     outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
-    outputFile.write(str(row[col["error_probability"]]) + "\t" + row[col["cigar"]] + "\t" + chromosome2 + "\t")
-    outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + row[col["sequence"]][::orientation] + "\t")
-    outputFile.write(str(row[col["quality"]][::orientation] + "\n"))
+    outputFile.write(str(values["error_probability"]) + "\t" + values["cigar"] + "\t" + chromosome2 + "\t")
+    outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + values["sequence"][::orientation] + "\t")
+    outputFile.write(str(values["quality"][::orientation] + "\n"))
 
 main()
