@@ -1,0 +1,369 @@
+#!/usr/bin/env python
+
+import dxpy
+import math
+import operator
+from optparse import OptionParser
+import re
+
+#Example: dx_vcfToSimplevar --table_id gtable-9yZvF200000PYKJyV4k00005 --vcf_file variants.vcf --extract_header
+
+def main():
+
+    parser = OptionParser("Usage: % mappings_id file_name")
+    parser.add_option("--table_id", dest="simplevar_id", action="append", help="Simplevar table id to read from")
+    parser.add_option("--vcf_file", dest="file_name", help="Name of file to import VCF from")
+    parser.add_option("--compress_no_call", dest="compress_no_call", action = "store_true", default = False, help="All contigous blocks of no-call will be compressed to a single row")
+    parser.add_option("--compress_reference", dest="compress_reference", action="store_true", default = False, help="All contiguous blocks of reference will be compressed to a single row")
+    parser.add_option("--store_full_vcf", dest="store_full_vcf", action="store_true", default = False, help="All contiguous blocks of reference will be compressed to a single row")
+    parser.add_option("--extract_header", dest="extract_header", action="store_true", default = False, help="Use this to set the details for the header data")
+    parser.add_option("--store_samples_individually", dest="store_samples_individually", action="store_true", default = False, help="Each column of samples will be stored in its own gtable. You must provide as many table_ids as there are columns")
+
+    (opts, args) = parser.parse_args()
+    
+    print opts.store_samples_individually
+    
+    simpleVarArray = []
+    for x in opts.simplevar_id:
+        simpleVarArray.append(dxpy.open_dxgtable(x))
+    vcfFile = open(opts.file_name, 'r')
+    compressNoCall = opts.compress_no_call
+    compressReference = opts.compress_reference
+    storeFullVcf = opts.store_full_vcf
+    extractHeader = opts.extract_header
+    
+    priorType = "None"
+    priorPosition = -1
+
+    fileIter = vcfFile.__iter__()
+    count = 1
+
+    #Additional data will contain the extra format and info columns that are optional in VCF and may not be
+    #   present in the VCF file. These are stored in an extended table 
+    additionalData = []
+    
+    header = ''
+    while 1:
+        try:
+            input = fileIter.next()
+            if count%100000 == 0:
+                print "Processed count %i variants " % count
+            count += 1
+            if input[0] == "#":
+                header += input
+                #extract additional column header data
+                if(input[1] != "#"):
+                    if extractHeader:
+                        for simpleVar in simpleVarArray:
+                            details = simpleVar.get_details()
+                            if details.get('header') == None:
+                                details.update({'header':header})
+                                simpleVar.set_details(details)
+            else:
+                for a in range(len(simpleVarArray)):
+                    simpleVar = simpleVarArray[a]
+                    #simpleVar.add_rows([["chr", 1, 2, "SNP", "", "", 0, 0, 0, "", ""]])
+                    if opts.store_samples_individually:
+                        line = ''
+                        tabSplit = input.strip().split("\t")
+                        for x in tabSplit[:9]:
+                            line += x+"\t"
+                        line += tabSplit[9+a]
+                    else:
+                        line = input
+                    tabSplit = line.strip().split("\t")
+                    chr = tabSplit[0]
+                    lo = int(tabSplit[1])
+                    hi = lo + len(tabSplit[3])
+                    ref = tabSplit[3].replace(".","")
+                    
+                    
+                    #In VCF format, the ALT column holds possible candidate alleles. The actual call as to the
+                    #   variant and its zygosity is a combination of ALT and the genotype specified in the info field.
+                    #   We store all of the options (including ref) and calculated the actual calls later
+                    altOptions = [ref]
+                    altOptions.extend(tabSplit[4].split(","))
+                    qual = tabSplit[5]
+                    type = "Unknown"
+                    if qual == ".":
+                        #type = "No-call"
+                        qual = 0
+                    else:
+                        qual = int(float(tabSplit[5]))
+    
+                    formatColumn = tabSplit[7]
+                    infoColumn = tabSplit[8]
+                    genotypeQuality = 0
+                    
+                    coverage = re.findall("DP=(\d+);", formatColumn)
+                    if(len(coverage) > 0):
+                        coverage = int(coverage[0])
+                    else:
+                        coverage = 0
+                        
+                    if altOptions == [ref, '.']:
+                        if type == "No-call":
+                            if compressNoCall == False:
+                                entry = [chr, lo, hi, type, "", "", 0, 0, 0]
+                                entry.append(tabSplit[4])
+                                vcfSpecificData = ''
+                                for x in tabSplit[7:]:
+                                    vcfSpecificData += x+"\t"
+                                entry.append(tabSplit[7:].strip())
+                        else:
+                            type = "Ref"
+                            if compressReference == False:
+                                entry = [chr, lo, hi, type, "", "", 0, 0, 0]
+                                entry.append(tabSplit[4])
+                                vcfSpecificData = ''
+                                for x in tabSplit[7:]:
+                                    vcfSpecificData += x+"\t"
+                                entry.append(vcfSpecificData.strip())
+                    else:
+                        print "here"
+                        print line
+                        #In VCF format, the prior character to a sequence change is given in some cases (Ins, Del)
+                        #   we are removing this in our format, and so need to figure out which characters to filter   
+                        overlap = findMatchingSequence(ref, altOptions, False)
+                        ref = ref[overlap:]
+                        for i in range(len(altOptions)):
+                            altOptions[i] = altOptions[i][overlap:]
+                        reverseOverlap = findMatchingSequence(ref, altOptions, True)
+    
+                        ref = ref[:len(ref)-reverseOverlap]
+                        for i in range(len(altOptions)):
+                            altOptions[i] = altOptions[i][:len(altOptions[i])-reverseOverlap]
+                        
+                        #Find all of the genotypes 
+                        genotypePossibilities = {}
+                        allNoCall = True
+                        allRef = True
+                        for x in tabSplit[9:]:
+                            genotype = getInfoField("GT", infoColumn, x)
+                            print genotype
+                            if genotype != "./.":
+                                allNoCall = False
+                                if genotype != "0|0" and genotype != "0/0":
+                                    allRef = False
+                                genotypeQuality = float(getInfoField("GQ", infoColumn, x))
+                                if genotypeQuality == False:
+                                    genotypeQuality = 0
+                                if genotype != False:
+                                    if genotypePossibilities.get(genotype) == None:
+                                        genotypePossibilities[genotype] = float(genotypeQuality)
+                                    else:
+                                        genotypePossibilities[genotype] += float(genotypeQuality)
+                                
+                                else:
+                                    genotypeQuality = 0
+                        if allNoCall == False and allRef == False:
+                            print "Some Calls Are Present"
+                            genotypePossibilities = sorted(genotypePossibilities.iteritems(), key=operator.itemgetter(1), reverse=True)
+                            print genotypePossibilities
+                            
+                            if len(genotypePossibilities) > 0:
+                                genotype = genotypePossibilities[0][0]
+                                genotypeQuality = genotypePossibilities[0][1]
+                                if len(genotypePossibilities) > 1:
+                                    genotypeQuality -= genotypePossibilities[1][1]
+                                alt = ""
+                                if genotype == "0/0" or genotype == "0|0" or genotype == False:
+                                    if(len(genotypePossibilities) > 1):
+                                        genotype = genotypePossibilities[1][0]
+                                        genotypeQuality = 0
+                                    else:
+                                        type = "Ref"
+                                        
+                                        
+                                genotypeSplit = re.split("[\|\/]", genotype)
+                                for i in range(len(genotypeSplit)):
+                                    
+                                #This is done to ensure the convention of placing the ref allele first
+                                #   in practice, it seems that all VCFs already place the ref first
+                                    genotypeSplit[i] = int(genotypeSplit[i])
+                                genotypeSplit.sort()
+            
+                                
+                                alleles = []
+                                for x in genotypeSplit:
+                                    if len(alt) > 0:
+                                        alt += "/"
+                                    alt += altOptions[x]
+                                    if x != 0:
+                                        alleles.append(altOptions[x])
+                                    if len(altOptions[x]) == 0:
+                                        alt += "-"
+                            else:
+                                alt = "?"
+                                for x in altOptions:
+                                    alt += "/"+x
+                                genotypeQuality = 0
+                                
+                            typeList = []                
+                            #These rules determine how to characterize the type of change that has occurred
+                            for x in alleles:
+                                if len(x) == len(ref) and len(ref) == 1:
+                                    type = "SNP"
+                                elif ref in x:
+                                    type = "Ins"
+                                elif x in ref:
+                                    type = "Del"
+                                else:
+                                    type = "Complex"
+                                for x in typeList[1::]:
+                                    if typeList[0] != x:
+                                        type = "Mixed"
+        
+                            hi = lo+len(ref)-1
+                            if len(ref) == 0:
+                                ref = "-"
+                            entry = [chr, lo+overlap-1, hi, type, ref.upper(), alt.upper(), qual, coverage, int(genotypeQuality)]
+                            if storeFullVcf:
+                                entry.append(tabSplit[4])
+                                vcfSpecificData = ''
+                                #Tried this line because undertain if trailing NT printed is normal or a bug
+                                #for x in tabSplit[7:len(tabSplit)]:
+                                print input
+                                for x in tabSplit[7:]:
+                                    vcfSpecificData += x+"\t"
+                                entry.append(vcfSpecificData.strip())
+                            #print entry
+                            print entry
+                            simpleVar.add_rows([entry])
+                        elif allNoCall:
+                            if compressNoCall == False:
+                                print "No Calls Present"
+                                entry = [chr, lo, hi, type, "", "", 0, 0, 0]
+                                entry.append(tabSplit[4])
+                                vcfSpecificData = ''
+                                for x in tabSplit[7:]:
+                                    vcfSpecificData += x+"\t"
+                                print entry
+                                entry.append(tabSplit[7:].strip())
+                            else:
+                                print "No calls were compressed"
+                                type = "No-call"
+                        elif compressReference == False:
+                            print "Only ref Present"
+                            type = "Ref"
+                            entry = [chr, lo, hi, type, "", "", 0, 0, 0]
+                            entry.append(tabSplit[4])
+                            vcfSpecificData = ''
+                            for x in tabSplit[7:]:
+                                vcfSpecificData += x+"\t"
+                            print entry
+                            entry.append(tabSplit[7:].strip())
+                        else:
+                            print "Ref calls were compressed"
+                            type = "Ref"
+                    
+                    if compressReference:
+                        if priorType == "Ref" and type != priorType:
+                            entry = [chr, priorPosition, lo, type, "", "", 0, 0, 0]
+                            if storeFullVcf:
+                                entry.extend([".", ""])
+                            print entry
+                            simpleVar.add_rows([entry])                        
+                    if compressNoCall:
+                        if priorType == "No-call" and type != priorType:
+                            entry = [chr, priorPosition, lo, type, "", "", 0, 0, 0]
+                            if storeFullVcf:
+                                entry.extend([".",""])
+                            print entry
+                            simpleVar.add_rows([entry])
+                    if type != priorType:
+                        priorType = type
+                        priorPosition = lo-1
+        except StopIteration:
+            break
+
+def findMatchingSequence(ref, altOptions, reverse):
+    if reverse == True:
+        for i in range(len(altOptions)):
+            altOptions[i] = altOptions[i][::-1]
+            ref = ref[::-1]
+    position = 0
+    minLength = len(ref)
+    for x in altOptions:
+        if len(x) < minLength:
+            minLength = len(x)
+    for i in range(minLength):
+        for x in altOptions:
+            if ref[i] != x[i]:
+                return i
+    return minLength
+
+def getInfoField(fieldName, infoColumn, infoContents):
+    if infoColumn.count(fieldName) > 0:
+        entrySplitColumn = infoColumn.split(":")
+        position = -1
+        for i in range(len(entrySplitColumn)):
+            if entrySplitColumn[i] == fieldName:
+                position = i
+                entrySplitInfo = infoContents.split(":")
+                if len(entrySplitInfo) == len(entrySplitColumn):
+                    return entrySplitInfo[position]
+    return False
+    
+def generateEmptyList(columns):
+    result = []
+    for i in range(columns):
+        result.append('')
+    return result
+
+def checkRowValidity(row, storeFullVcf):
+    if storeFullVcf:
+        if len(row) != 9:
+            print False
+            print row
+    else:
+        if len(row) != 7:
+            print False
+            print row
+            
+    if type(row[0]) is not str:
+        print 0
+    if type(row[1]) is not int:
+        print 1
+    if type(row[2]) is not int:
+        print 2
+    if type(row[3]) is not str:
+        print 3
+    if type(row[4]) is not str:
+        print 4
+    if type(row[5]) is not str:
+        print 5
+    if type(row[6]) is not int:
+        print 6
+    if type(row[7]) is not int:
+        print 7
+    if type(row[8]) is not int:
+        print 8
+    if storeFullVcf:
+        if type(row[9]) is not str:
+            print 9
+        if type(row[10]) is not str:
+            print 10
+            
+    
+    if type(row[0]) is str:
+        if type(row[1]) is int:
+            if type(row[2]) is int:
+                if type(row[3]) is str:
+                    if type(row[4]) is str:
+                        if type(row[5]) is str:
+                            if type(row[6]) is int:
+                                if type(row[7]) is int:
+                                    if type(row[8]) is int:
+                                        if storeFullVcf:
+                                            if type(row[9]) is str:
+                                                if type(row[10]) is str:
+                                                    return True
+                                        else:
+                                            return True
+    print False
+    print row
+    return False
+
+
+main()
