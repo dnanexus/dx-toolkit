@@ -145,4 +145,7 @@ def create_app(program_id, src_dir):
 
     app_id = dxpy.api.appNew(app_spec)["id"]
 
+    if app_spec["categories"]:
+        dxpy.api.appAddCategories(app_id, input_params={'categories': app_spec["categories"]})
+
     return app_id
