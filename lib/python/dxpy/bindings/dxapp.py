@@ -88,7 +88,7 @@ class DXApp(DXDataObject):
                 updates[field] = kwargs[field]
                 del kwargs[field]
 
-        resp = dxpy.api.appUpdate(self._dxid, updates, **kwargs)
+        resp = dxpy.api.appUpdate(self._dxid, input_params=updates, **kwargs)
 
     def addTags(self, tags, **kwargs):
         """
@@ -97,7 +97,7 @@ class DXApp(DXDataObject):
 
         Adds application name tags (aliases) to this app.
         """
-        return dxpy.api.appAddTags(self._dxid, tags, **kwargs)
+        return dxpy.api.appAddTags(self._dxid, input_params=tags, **kwargs)
 
     def removeTag(self, **kwargs):
         """
@@ -153,7 +153,7 @@ class DXApp(DXDataObject):
         if project is None and "DX_JOB_ID" not in os.environ:
             project = self._proj
 
-        return DXJob(dxpy.api.appRun(self._dxid, {"input": app_input,
-                                                  "project": project,
-                                                  "folder": folder},
-                                     **kwargs)["id"])
+        return DXJob(dxpy.api.appRun(
+                self._dxid,
+                input_params={"input": app_input, "project": project, "folder": folder},
+                **kwargs)["id"])
