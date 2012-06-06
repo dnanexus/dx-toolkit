@@ -71,7 +71,7 @@ def upload_resources(src_dir, project=None):
                 except dxpy.exceptions.DXAPIError:
                     pass # TODO: make this better
             target_folder = program_spec['folder'] if 'folder' in program_spec else '/'
-            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True, folder=target_folder)
+            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True, folder=target_folder, hidden=True)
             archive_link = dxpy.dxlink(dx_resource_archive.get_id())
             return [{'name': 'resources.tar.xz', 'id': archive_link}]
     else:
