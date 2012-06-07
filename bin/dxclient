@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, datetime
+import sys, os, datetime, urlparse, requests, base64, getpass
 import argparse
 
 import json
@@ -46,8 +46,21 @@ import dxpy
 def login(args):
     # TODO: Remove this and replace with actual logic and interaction
     # when implemented
+    token = 'outside'
+    if args.demo:
+        username = raw_input('Username: ')
+        password = getpass.getpass()
+
+        authserver = 'http://nucleusdemo.dev.dnanexus.com:443'
+        # authserver = 'http://' + os.environ['DX_AUTHSERVER_HOST'] + ':' + os.environ['DX_AUTHSERVER_PORT']
+        session = requests.session()
+
+        response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
+        response.raise_for_status()
+        token = json.loads(response.content)["access_token"]
+
     write_env_var('DX_SECURITY_CONTEXT',
-                  '{"auth_token":"outside","auth_token_type":"Bearer"}')
+                  '{"auth_token":"' + token + '","auth_token_type":"Bearer"}')
     write_env_var("DX_CLI_WD", '/')
 
 def logout(args):
@@ -188,7 +201,7 @@ def rm(args):
 
         if not args.force:
             user_resp = raw_input('Confirm deleting all objects in folder \"' + folder + '\" (y/n): ')
-            if user_resp != 'y':
+            if user_resp[0].lower() != 'y':
                 return
         def grab_id(ahash):
             return ahash['id']
@@ -609,6 +622,7 @@ parser_set_project.add_argument('project', help='Project ID')
 parser_set_project.set_defaults(func=set_project)
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
+parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.set_defaults(func=login)
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
