@@ -57,7 +57,9 @@ def main():
                         for simpleVar in simpleVarArray:
                             details = simpleVar.get_details()
                             if details.get('header') == None:
+                                print details
                                 details.update({'header':header})
+                                print details
                                 simpleVar.set_details(details)
             else:
                 for a in range(len(simpleVarArray)):
@@ -120,8 +122,6 @@ def main():
                                     vcfSpecificData += x+"\t"
                                 entry.append(vcfSpecificData.strip())
                     else:
-                        print "here"
-                        print line
                         #In VCF format, the prior character to a sequence change is given in some cases (Ins, Del)
                         #   we are removing this in our format, and so need to figure out which characters to filter   
                         overlap = findMatchingSequence(ref, altOptions, False)
@@ -140,7 +140,6 @@ def main():
                         allRef = True
                         for x in tabSplit[9:]:
                             genotype = getInfoField("GT", infoColumn, x)
-                            print genotype
                             if genotype != "./.":
                                 allNoCall = False
                                 if genotype != "0|0" and genotype != "0/0":
@@ -157,10 +156,7 @@ def main():
                                 else:
                                     genotypeQuality = 0
                         if allNoCall == False and allRef == False:
-                            print "Some Calls Are Present"
                             genotypePossibilities = sorted(genotypePossibilities.iteritems(), key=operator.itemgetter(1), reverse=True)
-                            print genotypePossibilities
-                            
                             if len(genotypePossibilities) > 0:
                                 genotype = genotypePossibilities[0][0]
                                 genotypeQuality = genotypePossibilities[0][1]
@@ -221,40 +217,29 @@ def main():
                             if storeFullVcf:
                                 entry.append(tabSplit[4])
                                 vcfSpecificData = ''
-                                #Tried this line because undertain if trailing NT printed is normal or a bug
-                                #for x in tabSplit[7:len(tabSplit)]:
-                                print input
                                 for x in tabSplit[7:]:
                                     vcfSpecificData += x+"\t"
                                 entry.append(vcfSpecificData.strip())
-                            #print entry
-                            print entry
                             simpleVar.add_rows([entry])
                         elif allNoCall:
                             if compressNoCall == False:
-                                print "No Calls Present"
                                 entry = [chr, lo, hi, type, "", "", 0, 0, 0]
                                 entry.append(tabSplit[4])
                                 vcfSpecificData = ''
                                 for x in tabSplit[7:]:
                                     vcfSpecificData += x+"\t"
-                                print entry
                                 entry.append(tabSplit[7:].strip())
                             else:
-                                print "No calls were compressed"
                                 type = "No-call"
                         elif compressReference == False:
-                            print "Only ref Present"
                             type = "Ref"
                             entry = [chr, lo, hi, type, "", "", 0, 0, 0]
                             entry.append(tabSplit[4])
                             vcfSpecificData = ''
                             for x in tabSplit[7:]:
                                 vcfSpecificData += x+"\t"
-                            print entry
                             entry.append(tabSplit[7:].strip())
                         else:
-                            print "Ref calls were compressed"
                             type = "Ref"
                     
                     if compressReference:
@@ -262,14 +247,12 @@ def main():
                             entry = [chr, priorPosition, lo, type, "", "", 0, 0, 0]
                             if storeFullVcf:
                                 entry.extend([".", ""])
-                            print entry
                             simpleVar.add_rows([entry])                        
                     if compressNoCall:
                         if priorType == "No-call" and type != priorType:
                             entry = [chr, priorPosition, lo, type, "", "", 0, 0, 0]
                             if storeFullVcf:
                                 entry.extend([".",""])
-                            print entry
                             simpleVar.add_rows([entry])
                     if type != priorType:
                         priorType = type

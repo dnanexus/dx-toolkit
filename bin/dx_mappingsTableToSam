@@ -15,10 +15,15 @@ def main():
     parser.add_option("--output", dest="file_name", help="Name of file to write SAM to")
     parser.add_option("--region_index_offset", dest="region_index_offset", type = "int", default = 0, help="Adjust regions by this amount. Useful for converting between zero and one indexed lists")
     parser.add_option("--region", "-L", "-l", dest="region", type="string",  action="append", help="Regions to extract mappings for, in the format ChrX:A-B")
+    parser.add_option("--store_mappings_columns", dest="store_mappings_columns", action="store_true", default=False, help="Output mappings table columns not in the mandatory fields in the optional fields to allow for easy reimport of a modified SAM")
+    parser.add_option("--output_ids", dest="output_ids", action="store_true", default=False, help="Write gtable ids as an optional field to allow for easy reimport")
     (opts, args) = parser.parse_args()
 
     
     mappingsTable = dxpy.open_dxgtable(opts.mappings_id)
+    storeMappingsColumns = opts.store_mappings_columns
+    writeIds = opts.output_ids
+    
     
     try:
         originalContig = mappingsTable.get_details()['original_contigset']
@@ -43,20 +48,20 @@ def main():
         
     if opts.region == None:  
         for row in mappingsTable.iterate_rows():
-            writeRow(row, col, defaultCol, outputFile)
+            writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
     else:
         for region in opts.region:
             includeDictionary = {}
             intervalMatch = re.findall("(\w+):(\d+)-(\d+)", region)
             query = mappingsTable.genomic_range_query(intervalMatch[0][0],int(intervalMatch[0][1])+opts.region_index_offset,int(intervalMatch[0][2])+opts.region_index_offset,mode='overlap',index='gri')
             for row in mappingsTable.iterate_query_rows(query=query):
-                writeRow(row, col, defaultCol, outputFile)
+                writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
         
         
         
         
     
-def writeRow(row, col, defaultCol, outputFile):
+def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
     
     values = {}
     for k,v in defaultCol.iteritems():
@@ -98,9 +103,6 @@ def writeRow(row, col, defaultCol, outputFile):
     if values["lo2"] != 0 and values["hi2"] == 0:
         print row
 
-    
-    
-    
     if values["negative_strand"]:
         orientation = -1
     if values["mate_id"] == -1 or values["chr"] != values["chr2"] or values["chr"] == '' or values["chr"] == '*':
@@ -111,6 +113,16 @@ def writeRow(row, col, defaultCol, outputFile):
     outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
     outputFile.write(str(values["error_probability"]) + "\t" + values["cigar"] + "\t" + chromosome2 + "\t")
     outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + values["sequence"][::orientation] + "\t")
-    outputFile.write(str(values["quality"][::orientation] + "\n"))
+    outputFile.write(str(values["quality"][::orientation]))
+    
+    if storeMappingsColumns:
+        tagHash = {"status": "Z0", "hi":"Z1", "negative_strand":"Z2", "qc":"Z3", "template_id":"Z4", "mate_id":"Z5", "status2":"Z6", "hi2":"Z7", "negative_strand2":"Z8", "proper_pair2":"Z9"}
+        for k,v in tagHash.iteritems():
+            if col.get(k) != None:
+                outputFile.write("\t"+v+":"+"Z"+":"+str(values[k]))
+    if writeIds:
+        outputFile.write("\tZD:Z:"+str(row[0]))
+    outputFile.write("\n")
+    
 
 main()
