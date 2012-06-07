@@ -140,8 +140,6 @@ def create_app(program_id, src_dir):
 
     # TODO
     app_spec["owner"] = "me"
-    # TODO
-    app_spec["version"] = "1.2.3"
 
     app_id = dxpy.api.appNew(app_spec)["id"]
 
