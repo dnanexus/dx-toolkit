@@ -120,7 +120,7 @@ using namespace std;
 //
 //   ObjectInfo oi = resolver.ParsePath(object_path);
 //   
-//   Fills in only project.name, object.name, object.path
+//   Fills in only one of project.id/project.name, plus object.name, object.folder
 
 class ObjectInfo
 {
