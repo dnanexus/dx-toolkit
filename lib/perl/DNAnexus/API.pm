@@ -20,17 +20,17 @@ sub appAddTags($;$%) {
 }
 
 
+sub appDelete($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/delete', $input_params, %kwargs);
+}
+
+
 sub appDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub appDestroy($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
 }
 
 
@@ -994,5 +994,5 @@ sub workspaceRenameFolder($;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(appAddCategories appAddTags appDescribe appDestroy appGet appInstall appListCategories appPublish appRemoveCategories appRemoveTag appRemoveTags appRun appUninstall appUpdate appNew discitemDelete discitemDescribe discitemLike discitemNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead privateDxdata privateLaunchExampleMicrojob privateTestProjectTxn privateUpdateJob programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility programNew projectClone projectDescribe projectDestroy projectIncreasePermissions projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRenameFolder projectSetPermissions projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindApps systemFindDataObjects systemFindDiscitems systemFindJobs systemFindProjects systemGetLog systemSearchDataObjects systemShortenURL tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate tableNew userDescribe workspaceClone workspaceDescribe workspaceListFolder workspaceMove workspaceNewFolder workspaceRemoveFolder workspaceRemoveObjects workspaceRenameFolder);
+our @EXPORT_OK = qw(appAddCategories appAddTags appDelete appDescribe appGet appInstall appListCategories appPublish appRemoveCategories appRemoveTag appRemoveTags appRun appUninstall appUpdate appNew discitemDelete discitemDescribe discitemLike discitemNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead privateDxdata privateLaunchExampleMicrojob privateTestProjectTxn privateUpdateJob programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility programNew projectClone projectDescribe projectDestroy projectIncreasePermissions projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRenameFolder projectSetPermissions projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindApps systemFindDataObjects systemFindDiscitems systemFindJobs systemFindProjects systemGetLog systemSearchDataObjects systemShortenURL tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate tableNew userDescribe workspaceClone workspaceDescribe workspaceListFolder workspaceMove workspaceNewFolder workspaceRemoveFolder workspaceRemoveObjects workspaceRenameFolder);
 

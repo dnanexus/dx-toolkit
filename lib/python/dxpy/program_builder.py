@@ -160,6 +160,6 @@ def create_app(program_id, src_dir, publish=False, overwrite=False):
         logging.debug("Searching for previously existing apps with name " + app_spec["name"])
         for result in previous_apps:
             print "Deleting %s%s" % (result['id'], (" (" + result['describe']['version'] + ")") if 'version' in result['describe'] else '')
-            dxpy.api.appDestroy(result['id'])
+            dxpy.api.appDelete(result['id'])
 
     return app_id

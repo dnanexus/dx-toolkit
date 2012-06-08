@@ -20,21 +20,21 @@ dx::JSON appAddTags(const std::string &object_id, const dx::JSON &input_params) 
 }
 
 
+dx::JSON appDelete(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/delete"), input_params);
+}
+
+dx::JSON appDelete(const std::string &object_id, const dx::JSON &input_params) {
+  return appDelete(object_id, input_params.toString());
+}
+
+
 dx::JSON appDescribe(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
 }
 
 dx::JSON appDescribe(const std::string &object_id, const dx::JSON &input_params) {
   return appDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON appDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
-}
-
-dx::JSON appDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return appDestroy(object_id, input_params.toString());
 }
 
 

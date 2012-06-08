@@ -129,11 +129,11 @@ class DXApp(DXDataObject):
         """
         return dxpy.api.appPublish(self._dxid, **kwargs)
 
-    def destroy(self, **kwargs):
+    def delete(self, **kwargs):
         """
         Removes this app object from the platform.
         """
-        return dxpy.api.appDestroy(self._dxid, **kwargs)
+        return dxpy.api.appDelete(self._dxid, **kwargs)
 
     def run(self, app_input, project=None, folder="/", **kwargs):
         '''

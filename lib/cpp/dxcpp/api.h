@@ -12,12 +12,12 @@ dx::JSON appAddTags(const std::string &object_id, const std::string &input_param
 dx::JSON appAddTags(const std::string &object_id, const dx::JSON &input_params);
 
 
+dx::JSON appDelete(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appDelete(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON appDescribe(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON appDescribe(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON appDestroy(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON appGet(const std::string &object_id, const std::string &input_params="{}");

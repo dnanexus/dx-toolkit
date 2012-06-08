@@ -16,14 +16,14 @@ def appAddTags(app_name_or_id, alias=None, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/addTags' % fully_qualified_version, input_params, **kwargs)
 
 
+def appDelete(app_name_or_id, alias=None, input_params={}, **kwargs):
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/delete' % fully_qualified_version, input_params, **kwargs)
+
+
 def appDescribe(app_name_or_id, alias=None, input_params={}, **kwargs):
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/describe' % fully_qualified_version, input_params, **kwargs)
-
-
-def appDestroy(app_name_or_id, alias=None, input_params={}, **kwargs):
-    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
-    return DXHTTPRequest('/%s/destroy' % fully_qualified_version, input_params, **kwargs)
 
 
 def appGet(app_name_or_id, alias=None, input_params={}, **kwargs):
