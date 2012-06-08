@@ -4,6 +4,10 @@
 #include "dxjson/dxjson.h"
 
 
+dx::JSON appAddCategories(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appAddCategories(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON appAddTags(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON appAddTags(const std::string &object_id, const dx::JSON &input_params);
 
@@ -24,8 +28,16 @@ dx::JSON appInstall(const std::string &object_id, const std::string &input_param
 dx::JSON appInstall(const std::string &object_id, const dx::JSON &input_params);
 
 
+dx::JSON appListCategories(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appListCategories(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON appPublish(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON appPublish(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appRemoveCategories(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appRemoveCategories(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON appRemoveTag(const std::string &object_id, const std::string &input_params="{}");
@@ -402,6 +414,10 @@ dx::JSON recordSetVisibility(const std::string &object_id, const dx::JSON &input
 
 dx::JSON recordNew(const std::string &input_params="{}");
 dx::JSON recordNew(const dx::JSON &input_params);
+
+
+dx::JSON systemFindApps(const std::string &input_params="{}");
+dx::JSON systemFindApps(const dx::JSON &input_params);
 
 
 dx::JSON systemFindDataObjects(const std::string &input_params="{}");

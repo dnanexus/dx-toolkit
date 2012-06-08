@@ -2,6 +2,15 @@
 #include "api.h"
 
 
+dx::JSON appAddCategories(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addCategories"), input_params);
+}
+
+dx::JSON appAddCategories(const std::string &object_id, const dx::JSON &input_params) {
+  return appAddCategories(object_id, input_params.toString());
+}
+
+
 dx::JSON appAddTags(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
 }
@@ -47,12 +56,30 @@ dx::JSON appInstall(const std::string &object_id, const dx::JSON &input_params) 
 }
 
 
+dx::JSON appListCategories(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listCategories"), input_params);
+}
+
+dx::JSON appListCategories(const std::string &object_id, const dx::JSON &input_params) {
+  return appListCategories(object_id, input_params.toString());
+}
+
+
 dx::JSON appPublish(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/publish"), input_params);
 }
 
 dx::JSON appPublish(const std::string &object_id, const dx::JSON &input_params) {
   return appPublish(object_id, input_params.toString());
+}
+
+
+dx::JSON appRemoveCategories(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeCategories"), input_params);
+}
+
+dx::JSON appRemoveCategories(const std::string &object_id, const dx::JSON &input_params) {
+  return appRemoveCategories(object_id, input_params.toString());
 }
 
 
@@ -899,6 +926,15 @@ dx::JSON recordNew(const std::string &input_params) {
 
 dx::JSON recordNew(const dx::JSON &input_params) {
   return recordNew(input_params.toString());
+}
+
+
+dx::JSON systemFindApps(const std::string &input_params) {
+  return DXHTTPRequest("/system/findApps", input_params);
+}
+
+dx::JSON systemFindApps(const dx::JSON &input_params) {
+  return systemFindApps(input_params.toString());
 }
 
 
