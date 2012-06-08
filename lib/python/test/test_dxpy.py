@@ -16,11 +16,7 @@ def get_objects_from_listf(listf):
 
 def remove_all(proj_id, folder="/"):
     dxproject = dxpy.DXProject(proj_id)
-    listf = dxproject.list_folder(folder)
-    dxproject.remove_objects(get_objects_from_listf(listf))
-    for subfolder in listf["folders"]:
-        remove_all(proj_id, subfolder)
-        dxproject.remove_folder(subfolder)
+    dxproject.remove_folder(folder, recurse=True)
 
 class TestDXProject(unittest.TestCase):
     def tearDown(self):
@@ -327,7 +323,7 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable.close(block=True)
 
         desc = self.dxgtable.describe()
-        self.assertEqual(desc["size"], 64)
+        self.assertEqual(desc["length"], 64)
 
     def test_table_context_manager(self):
         with dxpy.new_dxgtable(
@@ -401,14 +397,14 @@ class TestDXGTable(unittest.TestCase):
         dxgtable.close(True)
 
         desc = dxgtable.describe()
-        self.assertEqual(desc["size"], 10)
+        self.assertEqual(desc["length"], 10)
 
         # Offset + limit queries
         result = dxgtable.get_rows(starting=0, limit=1);
         self.assertEqual(result["data"],
                          [[0, 'chr1',  0,  3, 'a']]);
         self.assertEqual(result["next"], 1);
-        self.assertEqual(result["size"], 1);
+        self.assertEqual(result["length"], 1);
 
         result = dxgtable.get_rows(starting=4, limit=3);
         self.assertEqual(result["data"],
@@ -416,7 +412,7 @@ class TestDXGTable(unittest.TestCase):
                           [5, 'chr1', 16, 21, 'f'],
                           [6, 'chr1', 17, 19, 'g']]);
         self.assertEqual(result["next"], 7);
-        self.assertEqual(result["size"], 3);
+        self.assertEqual(result["length"], 3);
 
         # Range query
         genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 22, 25)
@@ -424,7 +420,7 @@ class TestDXGTable(unittest.TestCase):
         self.assertEqual(result["data"],
                          [[4, 'chr1', 15, 23, 'e']]);
         self.assertEqual(result["next"], None);
-        self.assertEqual(result["size"], 1);
+        self.assertEqual(result["length"], 1);
 
         # Range query with nonconsecutive rows in result
         genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 20, 26)
@@ -434,7 +430,7 @@ class TestDXGTable(unittest.TestCase):
                     [5, 'chr1', 16, 21, 'f'],
                     [8, 'chr1', 25, 30, 'i']]);
         self.assertEqual(result["next"], None);
-        self.assertEqual(result["size"], 3);
+        self.assertEqual(result["length"], 3);
 
         # Testing iterate_rows
         row_num = 5
