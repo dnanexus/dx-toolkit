@@ -148,10 +148,17 @@ def cd(args):
 def ls(args):
     dxproj = dxpy.DXProject()
     args.folder = resolve_path(args.folder)
+    only = ""
+    if args.obj and not args.folders and not args.full:
+        only = "objects"
+    elif not args.obj and args.folders and not args.full:
+        only = "folders"
+    else:
+        only = "all"
 
     resp = None
     try:
-        resp = dxproj.list_folder(folder=args.folder, describe={})
+        resp = dxproj.list_folder(folder=args.folder, describe={}, only=only, includeHidden=args.all)
     except dxpy.DXAPIError as detail:
         print detail
         return
@@ -167,8 +174,6 @@ def ls(args):
                 print os.path.basename(folder) + '/'
     if not args.folders:
         for obj in resp["objects"]:
-            if not args.all and obj['describe']['hidden']:
-                continue
             if not args.name and not args.both:
                 print obj['id']
             elif args.name and not args.both:

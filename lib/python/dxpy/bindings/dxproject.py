@@ -102,12 +102,16 @@ class DXWorkspace(object):
                                 "parents": parents},
                    **kwargs)
 
-    def list_folder(self, folder="/", describe=False, **kwargs):
+    def list_folder(self, folder="/", describe=False, only="all", includeHidden=False, **kwargs):
         """
         :param folder: Full path to the folder to list
         :type folder: string
         :param describe: Either false or the input to /describe to be called on each object
         :type describe: bool or dict
+        :param only: Indicate "objects" for only objects, "folders" for only folders, or "all" for both
+        :type only: string
+        :param includeHidden: Indicate whether hidden objects should be returned
+        :type includeHidden: bool
         :returns: A hash with key "objects" for the list of object IDs and key "folders" for the list of folder routes
         :rtype: dict
 
@@ -122,7 +126,9 @@ class DXWorkspace(object):
             api_method = dxpy.api.projectListFolder
 
         return api_method(self._dxid, {"folder": folder,
-                                       "describe": describe},
+                                       "describe": describe,
+                                       "only": only,
+                                       "includeHidden": includeHidden},
                           **kwargs)
 
     def move(self, destination, objects=[], folders=[], **kwargs):
@@ -170,10 +176,12 @@ class DXWorkspace(object):
                                 "destination": destination},
                    **kwargs)
 
-    def remove_folder(self, folder, **kwargs):
+    def remove_folder(self, folder, recurse=False, **kwargs):
         """
         :param folder: Full path to the folder to remove
         :type folder: string
+        :param recurse: Whether to remove all objects in the folder as well
+        :type recurse: bool
 
         Removes the specified folder in the project or workspace; it must be empty
         to be removed.
@@ -183,7 +191,7 @@ class DXWorkspace(object):
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectRemoveFolder
 
-        api_method(self._dxid, {"folder": folder},
+        api_method(self._dxid, {"folder": folder, "recurse": recurse},
                    **kwargs)
 
     def remove_objects(self, objects, **kwargs):
