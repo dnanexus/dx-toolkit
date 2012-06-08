@@ -432,6 +432,10 @@ def recordNew(input_params={}, **kwargs):
     return DXHTTPRequest('/record/new', input_params, **kwargs)
 
 
+def systemFindApps(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findApps', input_params, **kwargs)
+
+
 def systemFindDataObjects(input_params={}, **kwargs):
     return DXHTTPRequest('/system/findDataObjects', input_params, **kwargs)
 
