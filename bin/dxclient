@@ -336,12 +336,15 @@ def describe(args):
                     if field == "media":
                         print "Media type\t" + desc['media']
                     elif field == "size":
-                        if desc["class"] == "file":
+                        if desc["class"] == "file" or desc["class"] == "gtable":
                             print "Size (bytes)\t" + str(desc['size'])
-                        elif desc["class"] == "gtable":
-                            print "Size (rows)\t" + str(desc['size'])
                         else:
                             print "Size\t\t" + str(desc['size'])
+                    elif field == "length":
+                        if desc["class"] == "gtable":
+                            print "Size (rows)\t" + str(desc['length'])
+                        else:
+                            print "Size\t\t" + str(desc['length'])
                     elif field == "columns":
                         coldescs = ""
                         for column in desc["columns"]:
@@ -519,7 +522,7 @@ def gtable_get(args):
             return
         if result["next"] is not None:
             print "Use as STARTING to continue query: " + str(result["next"])
-        print "# retrieved rows: " + str(result["size"])
+        print "# retrieved rows: " + str(result["length"])
         for row in result["data"]:
             print json.dumps(row)
     except dxpy.DXAPIError as detail:
