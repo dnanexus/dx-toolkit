@@ -123,7 +123,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     return program_id
 
-def create_app(program_id, src_dir, overwrite=False):
+def create_app(program_id, src_dir, publish=False, overwrite=False):
     app_spec = get_app_spec(src_dir)
     print "Will create app with spec: ", app_spec
 
@@ -152,6 +152,9 @@ def create_app(program_id, src_dir, overwrite=False):
 
     if "categories" in app_spec:
         dxpy.api.appAddCategories(app_id, input_params={'categories': app_spec["categories"]})
+
+    if publish:
+        dxpy.api.appPublish(app_id)
 
     if overwrite:
         logging.debug("Searching for previously existing apps with name " + app_spec["name"])
