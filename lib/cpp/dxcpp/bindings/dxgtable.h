@@ -126,7 +126,7 @@ public:
    * report.
    * @param limit An integer representing the limit on the number of
    * rows to be returned.
-   * @return A JSON object with keys "size", "next", and "data".
+   * @return A JSON object with keys "length", "next", and "data".
    */
   dx::JSON getRows(const dx::JSON &query=dx::JSON(dx::JSON_NULL),
                    const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),

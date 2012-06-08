@@ -104,7 +104,7 @@ class DXGTable(DXDataObject):
         :type starting: integer
         :param limit: Max number of rows to be returned
         :type limit: integer
-        :returns: A hash with the key-value pairs "size": the number of rows returned, "next": a value to use as "starting" to get the next chunk of rows, and "data": a list of rows satisfying the query.
+        :returns: A hash with the key-value pairs "length": the number of rows returned, "next": a value to use as "starting" to get the next chunk of rows, and "data": a list of rows satisfying the query.
         
         Queries the gtable for rows using the given parameters.  If
         *columns* is set, the order of elements in the returned rows
@@ -163,7 +163,7 @@ class DXGTable(DXDataObject):
         """
 
         if end is None:
-            end = int(self.describe(**kwargs)['size'])
+            end = int(self.describe(**kwargs)['length'])
         cursor = start
         while cursor < end:
             request_size = self._bufsize
