@@ -38,7 +38,7 @@ program_id = dxpy.program_builder.upload_program(src_dir, bundled_resources, ove
 print >> sys.stderr, "Created program " + program_id + " successfully"
 
 if opts.create_app:
-    app_id = dxpy.program_builder.create_app(program_id, src_dir, publish=opts.publish, overwrite=opts.overwrite)
+    app_id = dxpy.program_builder.create_app(program_id, src_dir, publish=opts.publish, set_default=opts.publish)
 
 if opts.create_app:
     print >> sys.stderr, "Created app " + app_id + " successfully"

@@ -123,7 +123,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     return program_id
 
-def create_app(program_id, src_dir, publish=False, overwrite=False):
+def create_app(program_id, src_dir, publish=False, set_default=False):
     app_spec = get_app_spec(src_dir)
     print "Will create app with spec: ", app_spec
 
@@ -141,25 +141,12 @@ def create_app(program_id, src_dir, publish=False, overwrite=False):
     # TODO
     app_spec["owner"] = "me"
 
-    # Find all apps with the same name. But don't delete any until creating the
-    # new app succeeds.
-    #
-    # TODO: obtain > 1000 results if necessary
-    if overwrite:
-        previous_apps = dxpy.api.systemFindApps({"name": app_spec["name"], "describe": True})['results']
-
     app_id = dxpy.api.appNew(app_spec)["id"]
 
     if "categories" in app_spec:
         dxpy.api.appAddCategories(app_id, input_params={'categories': app_spec["categories"]})
 
     if publish:
-        dxpy.api.appPublish(app_id)
-
-    if overwrite:
-        logging.debug("Searching for previously existing apps with name " + app_spec["name"])
-        for result in previous_apps:
-            print "Deleting %s%s" % (result['id'], (" (" + result['describe']['version'] + ")") if 'version' in result['describe'] else '')
-            dxpy.api.appDelete(result['id'])
+        dxpy.api.appPublish(app_id, input_params={'makeDefault': set_default})
 
     return app_id
