@@ -56,9 +56,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
     '''
     url = APISERVER + resource
 
-    if auth is None and AUTH_HELPER is None:
-        # TODO: support for unauthenticated requests to unprivileged routes
-        raise DXError("Unable to send request without authentication")
     if auth is None:
         auth = AUTH_HELPER
     if config is None:
