@@ -240,6 +240,21 @@ def mv(args):
     except dxpy.DXAPIError as detail:
         print detail
 
+def get_io_spec(spec):
+    def get_io_desc(parameter):
+        desc = ""
+        if "optional" in parameter and parameter["optional"]:
+            desc += "["
+        desc += parameter["name"] + " (" + parameter["class"]
+        if "default" in parameter:
+            desc += ", " + str(parameter["default"])
+        desc += ")"
+        if "optional" in parameter and parameter["optional"]:
+            desc += "]"
+        return desc
+
+    return ', '.join(map(get_io_desc, spec))
+
 def describe(args):
     desc = None
     if args.dxid.startswith('job'):
@@ -256,7 +271,10 @@ def describe(args):
             print "Class\t\t" + desc["class"]
             print "Project context\t" + desc["project"]
             print "Workspace\t" + desc["workspace"]
-            print "Program\t\t" + desc["program"]
+            if "program" in desc:
+                print "Program\t\t" + desc["program"]
+            elif "app" in desc:
+                print "App\t\t" + desc["app"]
             print "State\t\t" + desc["state"]
             if desc["parentJob"] is None:
                 print "Parent job\tNone"
@@ -307,6 +325,54 @@ def describe(args):
                     print "Apps installed\tNone"
                 else:
                     print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
+    elif args.dxid.startswith('app'):
+        json_input = {}
+
+
+        try:
+            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
+        if args.json:
+            print json.dumps(desc)
+        else:
+            print "ID\t\t" + desc["id"]
+            print "Class\t\t" + desc["class"]
+            print "Owner\t\t" + desc["owner"]
+            print "Name\t\t" + desc["name"]
+            print "Version\t\t" + desc["version"]
+            print "Aliases\t\t" + ', '.join(desc["aliases"])
+            print "Created by\t" + desc["createdBy"]
+            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+            print "Created from\t" + desc["program"]
+            if desc["deleted"]:
+                print "Deleted\t\ttrue"
+            else:
+                print "Deleted\t\tfalse"
+
+            if 'published' not in desc or desc["published"] < 0:
+                "Published\tN/A"
+            else:
+                "Published\t" + datetime.datetime.fromtimestamp(desc['published']/1000).ctime()
+
+            if not desc["deleted"]:
+                if "title" in desc:
+                    print "Title\t\t" + desc["title"]
+                if "subtitle" in desc:
+                    print "Subtitle\t\t" + desc["subtitle"]
+                if "description" in desc:
+                    print "Description\t" + desc["description"]
+                print "Categories\t\t" + ', '.join(desc["categories"])
+                print "Access\t\t" + json.dumps(desc["access"])
+                print "API version\t" + desc["dxapi"]
+                print "Inputs\t\t" + get_io_spec(desc["inputs"])
+                print "Outputs\t\t" + get_io_spec(desc["outputs"])
+                print "Run spec\t" + json.dumps(desc["run"])
+                print "GlobalWorkspace\t" + desc["globalWorkspace"]
+        
     else:
         json_input = {}
         if args.project is not None:
@@ -374,6 +440,8 @@ def describe(args):
                         for column in desc["columns"]:
                             coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
                         print "Columns" + coldescs[:-1]
+                    elif field == "inputs" or field == "outputs":
+                        print field.capitalize() + "\t\t" + get_io_spec(desc[field])
                     else: # Unhandled prettifying
                         print field + "\t\t" + json.dumps(desc[field])
 
