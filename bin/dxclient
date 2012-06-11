@@ -287,7 +287,26 @@ def describe(args):
             print "Protected\t" + json.dumps(desc["protected"])
             print "Restricted\t" + json.dumps(desc["restricted"])
             print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()            
+            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    elif args.dxid.startswith('user'):
+        try:
+            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', {"appsInstalled": True, "subscriptions": True})
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
+        if args.json:
+            print json.dumps(desc)
+        else:
+            print "ID\t\t" + desc["id"]
+            print "Name\t\t" + desc["first"] + " " + desc["middle"] + " " + desc["last"]
+            if "email" in desc:
+                print "Email\t\t" + desc["email"]
+            if "appsInstalled" in desc:
+                if len(desc["appsInstalled"]) == 0:
+                    print "Apps installed\tNone"
+                else:
+                    print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
     else:
         json_input = {}
         if args.project is not None:
