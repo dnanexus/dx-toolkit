@@ -243,17 +243,86 @@ def mv(args):
 def get_io_spec(spec):
     def get_io_desc(parameter):
         desc = ""
-        if "optional" in parameter and parameter["optional"]:
+        is_optional = False;
+        if "default" in parameter or ("optional" in parameter and parameter["optional"]):
+            is_optional = True
             desc += "["
         desc += parameter["name"] + " (" + parameter["class"]
+        if "type" in parameter:
+            desc += ", "
+            if isinstance(parameter["type"], dict):
+                desc += "type satisfying " + json.dumps(parameter["type"])
+            else:
+                desc += "type " + parameter["type"]
         if "default" in parameter:
             desc += ", " + str(parameter["default"])
         desc += ")"
-        if "optional" in parameter and parameter["optional"]:
+        if is_optional:
             desc += "]"
         return desc
 
-    return ', '.join(map(get_io_desc, spec))
+    return '\n\t\t'.join(map(get_io_desc, spec))
+
+def print_project_desc(desc):
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    print "Name\t\t" + desc["name"]
+    print "Description\t" + desc["description"]
+    print "Protected\t" + json.dumps(desc["protected"])
+    print "Restricted\t" + json.dumps(desc["restricted"])
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    print "Data usage\t" + str(desc["dataUsage"])
+    if "folders" in desc:
+        print "Folders\t\t" + ', '.join(desc["folders"])
+    if "objects" in desc:
+        print "# Files\t\t" + str(desc["objects"])
+    if "permissions" in desc:
+        print "Permissions\t" + json.dumps(desc["permissions"])
+    if "appWorkspaces" in desc:
+        print "App workspaces\t" + json.dumps(desc["appWorkspaces"])
+
+def print_app_desc(desc):
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    print "Owner\t\t" + desc["owner"]
+    print "Name\t\t" + desc["name"]
+    print "Version\t\t" + desc["version"]
+    print "Aliases\t\t" + ', '.join(desc["aliases"])
+    print "Created by\t" + desc["createdBy"]
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    print "Created from\t" + desc["program"]
+    if desc["deleted"]:
+        print "Deleted\t\ttrue"
+    else:
+        print "Deleted\t\tfalse"
+
+        if 'published' not in desc or desc["published"] < 0:
+            "Published\tN/A"
+        else:
+            "Published\t" + datetime.datetime.fromtimestamp(desc['published']/1000).ctime()
+
+    if not desc["deleted"]:
+        if "title" in desc:
+            print "Title\t\t" + desc["title"]
+        if "subtitle" in desc:
+            print "Subtitle\t\t" + desc["subtitle"]
+        if "description" in desc:
+            print "Description\t" + desc["description"]
+        print "Categories\t" + ', '.join(desc["categories"])
+        print "Access\t\t" + json.dumps(desc["access"])
+        print "API version\t" + desc["dxapi"]
+        print "Inputs\t\t" + get_io_spec(desc["inputs"])
+        print "Outputs\t\t" + get_io_spec(desc["outputs"])
+        print "Interpreter\t" + desc["run"]["interpreter"]
+        if "resources" in desc:
+            print "Resources\t" + json.dumps(desc["run"]["resources"])
+        if "bundledDepends" in desc:
+            print "bundledDepends\t" + json.dumps(desc["run"]["bundledDepends"])
+        if "execDepends" in desc:
+            print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
+        print "GlobalWorkspace\t" + desc["globalWorkspace"]
 
 def describe(args):
     desc = None
@@ -298,14 +367,7 @@ def describe(args):
         if args.json:
             print json.dumps(desc)
         else: # TODO: Finish adding flags, etc.
-            print "ID\t\t" + desc["id"]
-            print "Class\t\t" + desc["class"]
-            print "Name\t\t" + desc["name"]
-            print "Description\t" + desc["description"]
-            print "Protected\t" + json.dumps(desc["protected"])
-            print "Restricted\t" + json.dumps(desc["restricted"])
-            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+            print_project_desc(desc)
     elif args.dxid.startswith('user'):
         try:
             desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', {"appsInstalled": True, "subscriptions": True})
@@ -328,7 +390,6 @@ def describe(args):
     elif args.dxid.startswith('app'):
         json_input = {}
 
-
         try:
             desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
         except dxpy.DXAPIError as detail:
@@ -338,41 +399,7 @@ def describe(args):
         if args.json:
             print json.dumps(desc)
         else:
-            print "ID\t\t" + desc["id"]
-            print "Class\t\t" + desc["class"]
-            print "Owner\t\t" + desc["owner"]
-            print "Name\t\t" + desc["name"]
-            print "Version\t\t" + desc["version"]
-            print "Aliases\t\t" + ', '.join(desc["aliases"])
-            print "Created by\t" + desc["createdBy"]
-            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
-            print "Created from\t" + desc["program"]
-            if desc["deleted"]:
-                print "Deleted\t\ttrue"
-            else:
-                print "Deleted\t\tfalse"
-
-            if 'published' not in desc or desc["published"] < 0:
-                "Published\tN/A"
-            else:
-                "Published\t" + datetime.datetime.fromtimestamp(desc['published']/1000).ctime()
-
-            if not desc["deleted"]:
-                if "title" in desc:
-                    print "Title\t\t" + desc["title"]
-                if "subtitle" in desc:
-                    print "Subtitle\t\t" + desc["subtitle"]
-                if "description" in desc:
-                    print "Description\t" + desc["description"]
-                print "Categories\t\t" + ', '.join(desc["categories"])
-                print "Access\t\t" + json.dumps(desc["access"])
-                print "API version\t" + desc["dxapi"]
-                print "Inputs\t\t" + get_io_spec(desc["inputs"])
-                print "Outputs\t\t" + get_io_spec(desc["outputs"])
-                print "Run spec\t" + json.dumps(desc["run"])
-                print "GlobalWorkspace\t" + desc["globalWorkspace"]
-        
+            print_app_desc(desc)
     else:
         json_input = {}
         if args.project is not None:
@@ -684,6 +711,47 @@ def find_data(args):
     except dxpy.DXAPIError as detail:
         print detail
 
+def find_projects(args):
+    try:
+        results = list(dxpy.find_projects(name=args.name, level=args.level, describe=args.describe))
+        if args.json:
+            print json.dumps(results)
+            return
+        for result in results:
+            if args.describe is True:
+                print ""
+                print_project_desc(result["describe"])
+                print "Permissions\t" + result["level"]
+            else:
+                print result["id"] + ": " + result["level"]
+        print ""
+    except dxpy.DXAPIError as detail:
+        print detail    
+
+def find_apps(args):
+    try:
+        results = list(dxpy.find_apps(name=args.name, category=args.category,
+                                      all_versions=args.all,
+                                      published=(not args.unpublished),
+                                      owner=args.owner, created_by=args.creator,
+                                      developer=args.developer,
+                                      created_after=args.created_after, created_before=args.created_before,
+                                      modified_after=args.mod_after, modified_before=args.mod_before,
+                                      describe=args.describe))
+                                      
+        if args.json:
+            print json.dumps(results)
+            return
+        for result in results:
+            if args.describe is True:
+                print ""
+                print_app_desc(result["describe"])
+            else:
+                print result["id"]
+        print ""
+    except dxpy.DXAPIError as detail:
+        print detail    
+
 def close(args):
     try:
         obj = dxpy.get_handler(args.dxid)
@@ -842,6 +910,27 @@ parser_find_data.add_argument('--created_after', type=int, help='Timestamp after
 parser_find_data.add_argument('--created_before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
 parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
 parser_find_data.set_defaults(func=find_data)
+
+parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args])
+parser_find_projects.add_argument('--name', help='Name of the project')
+parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
+parser_find_projects.add_argument('--describe', help='Also return descriptions of the projects', action='store_true')
+parser_find_projects.set_defaults(func=find_projects)
+
+parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args])
+parser_find_apps.add_argument('--name', help='Name of the app')
+parser_find_apps.add_argument('--category', help='Category of the app')
+parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
+parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
+parser_find_apps.add_argument('--owner', help='Owner of the app')
+parser_find_apps.add_argument('--creator', help='Creator of the app version')
+parser_find_apps.add_argument('--developer', help='Developer of the app')
+parser_find_apps.add_argument('--created_after', type=int, help='Timestamp after which the app version was created (negative number means ms in the past)')
+parser_find_apps.add_argument('--created_before', type=int, help='Timestamp before which the app version was created (negative number means ms in the past)')
+parser_find_apps.add_argument('--mod_after', type=int, help='Timestamp after which the app was last modified (negative number means ms in the past)')
+parser_find_apps.add_argument('--mod_before', type=int, help='Timestamp before which the app was last modified (negative number means ms in the past)')
+parser_find_apps.add_argument('--describe', help='Also return descriptions of the apps', action='store_true')
+parser_find_apps.set_defaults(func=find_apps)
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')

@@ -17,7 +17,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
-                      describe=False, **kwargs):
+                      describe=None, **kwargs):
     """
     :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "program"
     :type classname: string
@@ -69,6 +69,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
             print "Found gtable with name " + result["describe"]["name"]
 
     """
+
     query = {}
     if classname is not None:
         query["class"] = classname
@@ -119,7 +120,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
                 query["created"]["before"] = created_before
             else:
                 query["created"]["before"] = now() + created_before
-    query["describe"] = describe
+    if describe is not None:
+        query["describe"] = describe
 
     while True:
         resp = dxpy.api.systemFindDataObjects(query, **kwargs)
@@ -221,8 +223,10 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
         else:
             raise StopIteration()
 
-def find_projects(level='CONTRIBUTE', describe=False, **kwargs):
+def find_projects(name=None, level=None, describe=None, **kwargs):
     """
+    :param name: Name of the project
+    :type name: string
     :param level: Minimum permissions level of returned project IDs
     :type level: string
     :param describe: Either false or the input to the describe call for the project
@@ -233,9 +237,109 @@ def find_projects(level='CONTRIBUTE', describe=False, **kwargs):
     minimum permissions level.
 
     """
-    query = {"level": level, "describe": describe}
+    query = {}
+    if name is not None:
+        query["name"] = name
+    if level is not None:
+        query["level"] = level
+    if describe is not None:
+        query["describe"] = describe
 
     resp = dxpy.api.systemFindProjects(query, **kwargs)
 
     for i in resp["results"]:
         yield i
+
+def find_apps(name=None, category=None, all_versions=None, published=None,
+              owner=None, created_by=None, developer=None,
+              created_after=None, created_before=None,
+              modified_after=None, modified_before=None,
+              describe=None, **kwargs):
+    """
+    :param name: Name of the app
+    :type name: string
+    :param category: Name of a category with which to restrict the results
+    :type category: string
+    :param all_versions: Whether to return all versions of the apps or just the default versions
+    :type all_versions: bool
+    :param published: Whether to restrict the results to only published apps
+    :type published: bool
+    :param owner: Entity ID (user or organization) that should own the app
+    :type owner: string
+    :param created_by: User ID of the developer that created the version
+    :type created_by: string
+    :param developer: User ID of a developer of the app
+    :type developer: string
+    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
+    :type created_after: integer
+    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
+    :type created_before: integer
+    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
+    :type modified_after: integer
+    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
+    :type modified_before: integer
+    :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
+    :type describe: boolean
+    :rtype: generator
+    
+    This is a generator function which returns the search results over
+    apps and handles fetching of future chunks if necessary.  The
+    search is not restricted by any fields which are omitted and
+    otherwise imposes the restrictions requested.  All timestamps are
+    in milliseconds since the Epoch.
+
+    """
+
+    query = {}
+    if name is not None:
+        query["name"] = name
+    if category is not None:
+        query["category"] = category
+    if all_versions is not None:
+        query["allVersions"] = all_versions
+    if published is not None:
+        query["published"] = published
+    if owner is not None:
+        query["owner"] = owner
+    if created_by is not None:
+        query["createdBy"] = created_by
+    if developer is not None:
+        query["developer"] = developer
+    if modified_after is not None or modified_before is not None:
+        query["modified"] = {}
+        if modified_after is not None:
+            if modified_after >= 0:
+                query["modified"]["after"] = modified_after
+            else:
+                query["modified"]["after"] = now() + modified_after
+        if modified_before is not None:
+            if modified_before >= 0:
+                query["modified"]["before"] = modified_before
+            else:
+                query["modified"]["before"] = now() + modified_before
+    if created_after is not None or created_before is not None:
+        query["created"] = {}
+        if created_after is not None:
+            if created_after >= 0:
+                query["created"]["after"] = created_after
+            else:
+                query["created"]["after"] = now() + created_after
+        if created_before is not None:
+            if created_before >= 0:
+                query["created"]["before"] = created_before
+            else:
+                query["created"]["before"] = now() + created_before
+    if describe is not None:
+        query["describe"] = describe
+
+    while True:
+        resp = dxpy.api.systemFindApps(query, **kwargs)
+        
+        for i in resp["results"]:
+            yield i
+
+        # set up next query
+        if resp["next"] is not None:
+            query["starting"] = resp["next"]
+        else:
+            raise StopIteration()
