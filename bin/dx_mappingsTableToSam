@@ -110,14 +110,17 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
     else:
         tlen = str((max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])))*(1-2*values["mate_id"]))
 
-    qual = str(values["quality"][::orientation])
-    if qual == "":
+    if values.get("quality") == None:
         qual = "*"
+    elif str(values["quality"][::orientation]) == "": 
+        qual = "*"
+    else:
+        qual = str(values["quality"][::orientation])
 
     outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
     outputFile.write(str(values["error_probability"]) + "\t" + values["cigar"] + "\t" + chromosome2 + "\t")
     outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + values["sequence"][::orientation] + "\t")
-    outputFile.write(str(values["quality"][::orientation]))
+    outputFile.write(qual))
     
     if storeMappingsColumns:
         tagHash = {"status": "Z0", "hi":"Z1", "negative_strand":"Z2", "qc":"Z3", "template_id":"Z4", "mate_id":"Z5", "status2":"Z6", "hi2":"Z7", "negative_strand2":"Z8", "proper_pair2":"Z9"}
