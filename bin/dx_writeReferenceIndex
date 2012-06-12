@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+import dxpy
+import math
+import operator
+from optparse import OptionParser
+import re
+
+#Example: dx_writeReferenceIndex --contig_set record-9yZvF200000PYKJyV4k00005 --writeSamtoolsIndex ref.fa.fai --writePicardDictionary ref.dict
+
+def main():
+
+    parser = OptionParser("Usage: % --contig_set options")
+    parser.add_option("--contig_set", dest="contig_set", help="ContigSet to extract chromosome information from")
+    parser.add_option("--writeSamtoolsIndex", dest="samtools", default="", help="Write .fa.fai file to this file name")
+    parser.add_option("--writePicardDictionary", dest="picard", default="", help="Write .dict file to this file name")
+
+    (opts, args) = parser.parse_args()
+
+    if opts.samtools != "":
+        writeReferenceIndex(opts.contig_set, opts.samtools)
+    if opts.picard != "":
+        writeGenomeDict(opts.contig_set, opts.picard)
+
+
+def writeGenomeDict(contig_set, dictFileName):
+    print contig_set
+    details = dxpy.DXRecord(contig_set).get_details()
+    sizes = details['contigs']['sizes']
+    names = details['contigs']['names']
+
+    dictFile = open(dictFileName, 'w')
+    dictFile.write("@HD\tVN:1.0\tSN:unsorted\n")
+    for i in range(len(sizes)):
+        line = "@SQ\tSN:%s\tLN:%s\n" % (names[i], str(sizes[i]))
+        dictFile.write(line)
+    return
+
+def writeReferenceIndex(contig_set, indexFileName):
+    details = dxpy.DXRecord(contig_set).get_details()
+    sizes = details['contigs']['sizes']
+    names = details['contigs']['names']
+    
+    dictFile = open(indexFileName, 'w')
+    priorOffset = 0
+    priorLength = 0
+    first = True
+    for i in range(len(names)):
+        offset = priorOffset + len(names[i])+ 2 + priorLength + math.ceil(float(priorLength)/50.0)
+        if first:
+            first = False
+        else:
+            offset += 1
+        dictFile.write(names[i]+"\t"+str(sizes[i]) + "\t" + str(int(offset)) + "\t50\t51\n")
+        priorOffset = offset
+        priorLength = sizes[i]
+    return
+
+main()
