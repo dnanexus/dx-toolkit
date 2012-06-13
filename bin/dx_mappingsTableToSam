@@ -100,8 +100,8 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
         readName = "*"
     orientation = 1
     
-    if values["lo2"] != 0 and values["hi2"] == 0:
-        print row
+    #if values["lo2"] != 0 and values["hi2"] == 0:
+    #    print row
 
     if values["negative_strand"]:
         orientation = -1
