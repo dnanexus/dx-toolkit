@@ -324,6 +324,58 @@ def print_app_desc(desc):
             print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
         print "GlobalWorkspace\t" + desc["globalWorkspace"]
 
+def print_data_obj_desc(desc):
+    common_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types',
+                     'hidden', 'details', 'links', 'created', 'modified', 'state']
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    if 'project' in desc:
+        print "Project\t\t" + desc["project"]
+    if 'folder' in desc:
+        print "Folder\t\t" + desc["folder"]
+    print "Name\t\t" + desc["name"]
+    if 'state' in desc:
+        print "State\t\t" + desc["state"]
+    if 'hidden' in desc:
+        print "Hidden\t\t" + json.dumps(desc["hidden"])
+    if 'types' in desc:
+        print "Types\t\t" + json.dumps(desc["types"])
+    if 'properties' in desc:
+        print "Properties\t" + json.dumps(desc["properties"])
+    if 'tags' in desc:
+        print "Tags\t\t" + json.dumps(desc["tags"])
+    if 'details' in desc:
+        print "Details\t\t" + json.dumps(desc["details"])
+    if 'links' in desc:
+        print "Outgoing links\t" + json.dumps(desc["links"])
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    for field in desc:
+        if field in common_fields:
+            continue
+        else:
+            if field == "media":
+                print "Media type\t" + desc['media']
+            elif field == "size":
+                if desc["class"] == "file" or desc["class"] == "gtable":
+                    print "Size (bytes)\t" + str(desc['size'])
+                else:
+                    print "Size\t\t" + str(desc['size'])
+            elif field == "length":
+                if desc["class"] == "gtable":
+                    print "Size (rows)\t" + str(desc['length'])
+                else:
+                    print "Size\t\t" + str(desc['length'])
+            elif field == "columns":
+                coldescs = ""
+                for column in desc["columns"]:
+                    coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
+                print "Columns" + coldescs[:-1]
+            elif field == "inputs" or field == "outputs":
+                print field.capitalize() + "\t\t" + get_io_spec(desc[field])
+            else: # Unhandled prettifying
+                print field + "\t\t" + json.dumps(desc[field])
+
 def describe(args):
     desc = None
     if args.dxid.startswith('job'):
@@ -421,56 +473,7 @@ def describe(args):
             print json.dumps(desc)
         else:
             # Must be a data object
-            common_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types',
-                             'hidden', 'details', 'links', 'created', 'modified', 'state']
-            print "ID\t\t" + desc["id"]
-            print "Class\t\t" + desc["class"]
-            if 'project' in desc:
-                print "Project\t\t" + desc["project"]
-            if 'folder' in desc:
-                print "Folder\t\t" + desc["folder"]
-            print "Name\t\t" + desc["name"]
-            if 'state' in desc:
-                print "State\t\t" + desc["state"]
-            if 'hidden' in desc:
-                print "Hidden\t\t" + json.dumps(desc["hidden"])
-            if 'types' in desc:
-                print "Types\t\t" + json.dumps(desc["types"])
-            if 'properties' in desc:
-                print "Properties\t" + json.dumps(desc["properties"])
-            if 'tags' in desc:
-                print "Tags\t\t" + json.dumps(desc["tags"])
-            if 'details' in desc:
-                print "Details\t\t" + json.dumps(desc["details"])
-            if 'links' in desc:
-                print "Outgoing links\t" + json.dumps(desc["links"])
-            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
-            for field in desc:
-                if field in common_fields:
-                    continue
-                else:
-                    if field == "media":
-                        print "Media type\t" + desc['media']
-                    elif field == "size":
-                        if desc["class"] == "file" or desc["class"] == "gtable":
-                            print "Size (bytes)\t" + str(desc['size'])
-                        else:
-                            print "Size\t\t" + str(desc['size'])
-                    elif field == "length":
-                        if desc["class"] == "gtable":
-                            print "Size (rows)\t" + str(desc['length'])
-                        else:
-                            print "Size\t\t" + str(desc['length'])
-                    elif field == "columns":
-                        coldescs = ""
-                        for column in desc["columns"]:
-                            coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
-                        print "Columns" + coldescs[:-1]
-                    elif field == "inputs" or field == "outputs":
-                        print field.capitalize() + "\t\t" + get_io_spec(desc[field])
-                    else: # Unhandled prettifying
-                        print field + "\t\t" + json.dumps(desc[field])
+            print_data_obj_desc(desc)
 
 def get_properties_from_args(args_properties):
     properties = None
@@ -707,7 +710,12 @@ def find_data(args):
             print json.dumps(results)
             return
         for result in results:
-            print result["id"]
+            if args.describe is True:
+                print ""
+                print_data_obj_desc(result["describe"])
+            else:
+                print result["id"]
+        print ""
     except dxpy.DXAPIError as detail:
         print detail
 
