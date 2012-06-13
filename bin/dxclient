@@ -46,7 +46,6 @@ import dxpy
 def login(args):
     # TODO: Remove this and replace with actual logic and interaction
     # when implemented
-    token = 'outside'
     if args.demo:
         username = raw_input('Username: ')
         password = getpass.getpass()
@@ -60,7 +59,7 @@ def login(args):
         token = json.loads(response.content)["access_token"]
 
     write_env_var('DX_SECURITY_CONTEXT',
-                  '{"auth_token":"' + token + '","auth_token_type":"Bearer"}')
+                  '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}')
     write_env_var("DX_CLI_WD", '/')
 
 def logout(args):
@@ -793,6 +792,7 @@ parser_set_project.add_argument('project', help='Project ID')
 parser_set_project.set_defaults(func=set_project)
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
+parser_login.add_argument('--token', help='Authentication token to use', default='outside')
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.set_defaults(func=login)
 
