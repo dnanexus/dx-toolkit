@@ -768,6 +768,33 @@ class TestDXProgramJob(unittest.TestCase):
         self.assertTrue("output" in jobdesc)
         dxjob.terminate()
 
+class TestDXApp(unittest.TestCase):
+    def test_create_app(self):
+        dxprogram = dxpy.DXProgram()
+        dxprogram.new(name="test_program",
+                      dxapi="1.04",
+                      inputs=[{"name": "chromosomes", "class": "record"},
+                              {"name": "rowFetchChunk", "class": "int"}
+                              ],
+                      outputs=[{"name": "mappings", "class": "record"}],
+                      run={"code": "def main(): pass",
+                           "interpreter": "python2.7",
+                           "execDepends": [{"name": "python-numpy"}]})
+        dxapp = dxpy.DXApp()
+        dxapp.new(program=dxprogram.get_id(), version="0.0.1",
+                  owner="user-000000000000000000000001", name="app_name")
+        appdesc = dxapp.describe()
+        self.assertEqual(appdesc["name"], "app_name")
+        self.assertEqual(appdesc["version"], "0.0.1")
+        self.assertTrue("0.0.1" in appdesc["aliases"])
+        self.assertTrue("default" in appdesc["aliases"])
+        dxsameapp = dxpy.DXApp(name="app_name")
+        sameappdesc = dxsameapp.describe()
+        self.assertEqual(appdesc, sameappdesc)
+        dxanothersameapp = dxpy.DXApp(name="app_name", alias="0.0.1")
+        anothersameappdesc = dxanothersameapp.describe()
+        self.assertEqual(appdesc, anothersameappdesc)
+
 @unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
 class TestDXJob(unittest.TestCase):
     def test_job_from_app(self):

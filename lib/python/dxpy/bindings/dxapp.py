@@ -1,6 +1,6 @@
 """
 DXApp Handler
-+++++++++++++++++
++++++++++++++
 
 Apps are data objects which provide a way for programs to be distributed to users in the system.
 They store an executable and specifications for input, output, execution, access, and billing. 
@@ -14,23 +14,65 @@ from dxpy.bindings import *
 # DXApp #
 #########
 
-class DXApp(DXDataObject):
+class DXApp(object):
     '''
     Remote app object handler
 
-    .. automethod:: _new
     '''
 
     _class = "app"
 
-    _describe = staticmethod(dxpy.api.appDescribe)
+    def __init__(self, dxid=None, name=None, alias=None):
+        if dxid is not None or name is not None:
+            self.set_id(dxid=dxid, name=name, alias=alias)
 
-    def _new(self, dx_hash, **kwargs):
+    def set_id(self, dxid=None, name=None, alias=None):
         '''
-        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
-        :type dx_hash: dict
+        :param dxid: App ID
+        :type dxid: string
+        :param name: App name
+        :type name: string
+        :param alias: App version or tag
+        :type alias: string
+        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* and some other input are both given or if neither *dxid* nor *name* are given
+
+        Discards the currently stored ID and associates the handler
+        with the requested parameters.  Note that if *dxid* is given,
+        the other fields should not be given, and if *name* is given,
+        *alias* has default value "default".
+
+        '''
+        self._dxid = None
+        self._name = None
+        self._alias = None
+        if dxid is not None:
+            if name is not None or alias is not None:
+                raise DXError("Did not expect name or alias to be given if dxid is given")
+            if re.match("app-[0-9a-zA-Z]{24}", dxid) is None or \
+                    len(dxid) != len('app') + 25:
+                raise DXError("Given app ID does not match expected format")
+            self._dxid = dxid
+        elif name is not None:
+            self._name = name
+            if alias is not None:
+                self._alias = alias
+            else:
+                self._alias = 'default'
+        else:
+            raise DXError("Did not expect name or alias to be given if dxid is given")
+
+    def get_id(self):
+        if self._dxid is not None:
+            return self._dxid
+        else:
+            return 'app-' + self._name + '/' + self._alias
+
+    def new(self, **kwargs):
+        '''
         :param program: ID of the program which the app will be created from
         :type program: string
+        :param name: Name of the app (optional; inherited from name if not given)
+        :type name: string
         :param title: Title or brand name of the app (optional)
         :type title: string
         :param summary: A short description of the app (optional)
@@ -45,8 +87,8 @@ class DXApp(DXDataObject):
         :type billing: dict
         :param access: access specification (optional)
         :type access: dict
-        :param globalWorkspace: Contents to be put into the app's global workspace
-        :type globalWorkspace: array
+        :param globalWorkspace: Contents to be put into the app's global workspace (existing project ID or list of object IDs)
+        :type globalWorkspace: string or array
 
         It is highly recommended that :mod:`dxpy.program_builder` is used for program and app creation.
 
@@ -54,19 +96,26 @@ class DXApp(DXDataObject):
         available to its developers until :meth:`publish()` is called, and is not run until :meth:`run()` is called.
 
         '''
-        for field in 'program', 'globalWorkspace', 'version':
+        dx_hash = {}
+        for field in 'program', 'version':
             if field not in kwargs:
                 raise DXError("%s: Keyword argument %s is required" % (self.__class__.__name__, field))
             dx_hash[field] = kwargs[field]
             del kwargs[field]
 
-        for field in 'title', 'summary', 'description', 'owner', 'billing', 'access':
+        for field in 'name', 'title', 'summary', 'description', 'owner', 'billing', 'access', 'globalWorkspace':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]
 
         resp = dxpy.api.appNew(dx_hash, **kwargs)
-        self.set_ids(resp["id"], None)
+        self.set_id(dxid=resp["id"])
+
+    def describe(self, **kwargs):
+        if self._dxid is not None:
+            return dxpy.api.appDescribe(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appDescribe('app-' + self._name, alias=self._alias, **kwargs)
 
     def update(self, **kwargs):
         '''
@@ -88,7 +137,11 @@ class DXApp(DXDataObject):
                 updates[field] = kwargs[field]
                 del kwargs[field]
 
-        resp = dxpy.api.appUpdate(self._dxid, input_params=updates, **kwargs)
+        if self._dxid is not None:
+            resp = dxpy.api.appUpdate(self._dxid, input_params=updates, **kwargs)
+        else:
+            resp = dxpy.api.appUpdate('app-' + self._name, alias=self._alias,
+                                      input_params=updates, **kwargs)
 
     def addTags(self, tags, **kwargs):
         """
@@ -97,43 +150,69 @@ class DXApp(DXDataObject):
 
         Adds application name tags (aliases) to this app.
         """
-        return dxpy.api.appAddTags(self._dxid, input_params=tags, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appAddTags(self._dxid, input_params=tags, **kwargs)
+        else:
+            return dxpy.api.appAddTags('app-' + self._name, alias=self._alias,
+                                       input_params=tags, **kwargs)
 
-    def removeTag(self, **kwargs):
+    def removeTags(self, **kwargs):
         """
-        Remove the application name tag (alias) that the app is being addressed by.
+        :param tags: Tags to remove from the app
+        :type tags: array
+
+        Remove the application name tags (aliases) that the app is
+        being addressed by.
         """
-        return dxpy.api.appRemoveTag(self._dxid, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appRemoveTags(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appRemoveTags('app-' + self._name, alias=self._alias, **kwargs)
 
     def install(self, **kwargs):
         """
         Installs the app in the current user's account.
         """
-        return dxpy.api.appInstall(self._dxid, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appInstall(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appInstall('app-' + self._name, alias=self._alias, **kwargs)
 
     def uninstall(self, **kwargs):
         """
         Uninstalls the app from the current user's account.
         """
-        return dxpy.api.appUninstall(self._dxid, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appUninstall(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appUninstall('app-' + self._name, alias=self._alias, **kwargs)
 
     def get(self, **kwargs):
         """
         Returns the contents of the app.
         """
-        return dxpy.api.appGet(self._dxid, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appGet(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appGet('app-' + self._name, alias=self._alias, **kwargs)
 
     def publish(self, **kwargs):
         """
         Publishes the app, so all users can find it on the platform.
         """
-        return dxpy.api.appPublish(self._dxid, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appPublish(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appPublish('app-' + self._name, alias=self._alias, **kwargs)
 
     def delete(self, **kwargs):
         """
         Removes this app object from the platform.
         """
-        return dxpy.api.appDelete(self._dxid, **kwargs)
+        if self._dxid is not None:
+            return dxpy.api.appDelete(self._dxid, **kwargs)
+        else:
+            return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
 
     def run(self, app_input, project=None, folder="/", **kwargs):
         '''
@@ -153,7 +232,13 @@ class DXApp(DXDataObject):
         if project is None and "DX_JOB_ID" not in os.environ:
             project = self._proj
 
-        return DXJob(dxpy.api.appRun(
-                self._dxid,
-                input_params={"input": app_input, "project": project, "folder": folder},
-                **kwargs)["id"])
+        if self._dxid is not None:
+            return DXJob(dxpy.api.appRun(
+                    self._dxid,
+                    input_params={"input": app_input, "project": project, "folder": folder},
+                    **kwargs)["id"])
+        else:
+            return DXJob(dxpy.api.appRun(
+                    'app-' + self._name, alias=self._alias,
+                    input_params={"input": app_input, "project": project, "folder": folder},
+                    **kwargs)["id"])
