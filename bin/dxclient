@@ -299,7 +299,8 @@ def print_app_desc(desc):
     print "Created by\t" + desc["createdBy"]
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
-    print "Created from\t" + desc["program"]
+    if "program" in desc:
+        print "Created from\t" + desc["program"]
     if desc["deleted"]:
         print "Deleted\t\ttrue"
     else:
