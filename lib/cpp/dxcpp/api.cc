@@ -6,129 +6,241 @@
 #include "api.h"
 
 
-dx::JSON appAddCategories(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addCategories"), input_params);
+dx::JSON appAddCategories(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addCategories"), input_params);
 }
 
-dx::JSON appAddCategories(const std::string &object_id, const dx::JSON &input_params) {
-  return appAddCategories(object_id, input_params.toString());
+dx::JSON appAddCategories(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appAddCategories(app_id_or_name, input_params.toString());
 }
 
-
-dx::JSON appAddTags(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
+dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appAddCategories(app_name + std::string("/") + app_alias, input_params);
 }
 
-dx::JSON appAddTags(const std::string &object_id, const dx::JSON &input_params) {
-  return appAddTags(object_id, input_params.toString());
-}
-
-
-dx::JSON appDelete(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/delete"), input_params);
-}
-
-dx::JSON appDelete(const std::string &object_id, const dx::JSON &input_params) {
-  return appDelete(object_id, input_params.toString());
+dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appAddCategoriesWithAlias(app_name, app_alias, input_params.toString());
 }
 
 
-dx::JSON appDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+dx::JSON appAddTags(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addTags"), input_params);
 }
 
-dx::JSON appDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return appDescribe(object_id, input_params.toString());
+dx::JSON appAddTags(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appAddTags(app_id_or_name, input_params.toString());
 }
 
-
-dx::JSON appGet(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/get"), input_params);
+dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appAddTags(app_name + std::string("/") + app_alias, input_params);
 }
 
-dx::JSON appGet(const std::string &object_id, const dx::JSON &input_params) {
-  return appGet(object_id, input_params.toString());
-}
-
-
-dx::JSON appInstall(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/install"), input_params);
-}
-
-dx::JSON appInstall(const std::string &object_id, const dx::JSON &input_params) {
-  return appInstall(object_id, input_params.toString());
+dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appAddTagsWithAlias(app_name, app_alias, input_params.toString());
 }
 
 
-dx::JSON appListCategories(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/listCategories"), input_params);
+dx::JSON appDelete(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/delete"), input_params);
 }
 
-dx::JSON appListCategories(const std::string &object_id, const dx::JSON &input_params) {
-  return appListCategories(object_id, input_params.toString());
+dx::JSON appDelete(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appDelete(app_id_or_name, input_params.toString());
 }
 
-
-dx::JSON appPublish(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/publish"), input_params);
+dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appDelete(app_name + std::string("/") + app_alias, input_params);
 }
 
-dx::JSON appPublish(const std::string &object_id, const dx::JSON &input_params) {
-  return appPublish(object_id, input_params.toString());
-}
-
-
-dx::JSON appRemoveCategories(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeCategories"), input_params);
-}
-
-dx::JSON appRemoveCategories(const std::string &object_id, const dx::JSON &input_params) {
-  return appRemoveCategories(object_id, input_params.toString());
+dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appDeleteWithAlias(app_name, app_alias, input_params.toString());
 }
 
 
-dx::JSON appRemoveTag(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTag"), input_params);
+dx::JSON appDescribe(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/describe"), input_params);
 }
 
-dx::JSON appRemoveTag(const std::string &object_id, const dx::JSON &input_params) {
-  return appRemoveTag(object_id, input_params.toString());
+dx::JSON appDescribe(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appDescribe(app_id_or_name, input_params.toString());
 }
 
-
-dx::JSON appRemoveTags(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
+dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appDescribe(app_name + std::string("/") + app_alias, input_params);
 }
 
-dx::JSON appRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
-  return appRemoveTags(object_id, input_params.toString());
-}
-
-
-dx::JSON appRun(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params);
-}
-
-dx::JSON appRun(const std::string &object_id, const dx::JSON &input_params) {
-  return appRun(object_id, input_params.toString());
+dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appDescribeWithAlias(app_name, app_alias, input_params.toString());
 }
 
 
-dx::JSON appUninstall(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/uninstall"), input_params);
+dx::JSON appGet(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/get"), input_params);
 }
 
-dx::JSON appUninstall(const std::string &object_id, const dx::JSON &input_params) {
-  return appUninstall(object_id, input_params.toString());
+dx::JSON appGet(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appGet(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appGet(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appGetWithAlias(app_name, app_alias, input_params.toString());
 }
 
 
-dx::JSON appUpdate(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params);
+dx::JSON appInstall(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/install"), input_params);
 }
 
-dx::JSON appUpdate(const std::string &object_id, const dx::JSON &input_params) {
-  return appUpdate(object_id, input_params.toString());
+dx::JSON appInstall(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appInstall(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appInstall(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appInstallWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appListCategories(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/listCategories"), input_params);
+}
+
+dx::JSON appListCategories(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appListCategories(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appListCategories(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appListCategoriesWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appPublish(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/publish"), input_params);
+}
+
+dx::JSON appPublish(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appPublish(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appPublish(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appPublishWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appRemoveCategories(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/removeCategories"), input_params);
+}
+
+dx::JSON appRemoveCategories(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appRemoveCategories(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appRemoveCategories(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appRemoveCategoriesWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appRemoveTag(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/removeTag"), input_params);
+}
+
+dx::JSON appRemoveTag(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appRemoveTag(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appRemoveTag(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appRemoveTagWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appRemoveTags(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/removeTags"), input_params);
+}
+
+dx::JSON appRemoveTags(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appRemoveTags(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appRemoveTags(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appRemoveTagsWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appRun(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/run"), input_params);
+}
+
+dx::JSON appRun(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appRun(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appRun(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appRunWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/uninstall"), input_params);
+}
+
+dx::JSON appUninstall(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appUninstall(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appUninstall(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appUninstallWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
+dx::JSON appUpdate(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/update"), input_params);
+}
+
+dx::JSON appUpdate(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appUpdate(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appUpdate(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appUpdateWithAlias(app_name, app_alias, input_params.toString());
 }
 
 

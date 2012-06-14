@@ -9,60 +9,88 @@
 #include "dxjson/dxjson.h"
 
 
-dx::JSON appAddCategories(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appAddCategories(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appAddCategories(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appAddCategories(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appAddTags(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appAddTags(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appDelete(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appDelete(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appDelete(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appDelete(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appDescribe(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appDescribe(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appGet(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appGet(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appGet(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appGet(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appInstall(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appInstall(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appInstall(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appInstall(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appListCategories(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appListCategories(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appListCategories(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appListCategories(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appPublish(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appPublish(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appPublish(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appPublish(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appRemoveCategories(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appRemoveCategories(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appRemoveCategories(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appRemoveCategories(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appRemoveTag(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appRemoveTag(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appRemoveTag(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appRemoveTag(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appRemoveTags(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appRemoveTags(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appRun(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appRun(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appRun(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appRun(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appUninstall(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appUninstall(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appUninstall(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appUpdate(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appUpdate(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appUpdate(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appUpdate(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
 dx::JSON appNew(const std::string &input_params="{}");
