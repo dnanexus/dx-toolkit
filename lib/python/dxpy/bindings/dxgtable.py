@@ -61,19 +61,35 @@ class DXGTable(DXDataObject):
         :type columns: list of column descriptors
         :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`. (optional)
         :type indices: list of index descriptors
+        :param init_from: GTable from which to initialize the metadata including column and index specs
+        :type init_from: :class:`GTable`
 
         Creates a new gtable with the given column names in *columns*
         and the indices described in *indices*.
 
         '''
 
-        dx_hash["columns"] = kwargs["columns"]
-        del kwargs["columns"]
+        if "columns" in kwargs:
+            if kwargs["columns"] is not None:
+                dx_hash["columns"] = kwargs["columns"]
+            del kwargs["columns"]
+        else:
+            if "init_from" not in kwargs:
+                raise DXError("Column specs need to be specified if init_from is not used")
 
         if "indices" in kwargs:
             if kwargs["indices"] is not None:
                 dx_hash["indices"] = kwargs["indices"]
             del kwargs["indices"]
+
+        if "init_from" in kwargs:
+            if kwargs["init_from"] is not None:
+                if not isinstance(kwargs["init_from"], DXGTable):
+                    raise DXError("Expected instance of DXGTable to init_from")
+                dx_hash["initializeFrom"] = \
+                    {"id": kwargs["init_from"].get_id(),
+                     "project": kwargs["init_from"].get_proj_id()}
+            del kwargs["init_from"]
 
         resp = dxpy.api.gtableNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])

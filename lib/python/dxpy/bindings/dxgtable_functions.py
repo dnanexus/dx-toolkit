@@ -33,13 +33,15 @@ def open_dxgtable(dxid, project=None, buffer_size=40000):
 
     return DXGTable(dxid, project=project, buffer_size=buffer_size)
 
-def new_dxgtable(columns, indices=None, keep_open=False,
+def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
                  buffer_size=40000, **kwargs):
     '''
     :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
     :type columns: list of column descriptors
     :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable._new` for more details. (optional)
     :type indices: list of index descriptors
+    :param init_from: GTable from which to initialize the metadata including column and index specs
+    :type init_from: :class:`GTable`
     :returns: Remote table handler for the created table
     :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
 
@@ -71,7 +73,7 @@ def new_dxgtable(columns, indices=None, keep_open=False,
     '''
     
     dxgtable = DXGTable(keep_open=keep_open, buffer_size=buffer_size)
-    dxgtable.new(columns=columns, indices=indices, **kwargs)
+    dxgtable.new(columns=columns, indices=indices, init_from=init_from, **kwargs)
     return dxgtable
 
 def extend_dxgtable(dxid, columns, indices=None, keep_open=False,
