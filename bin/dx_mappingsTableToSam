@@ -14,7 +14,7 @@ def main():
     parser.add_option("--table_id", dest="mappings_id", help="Mappings table id to read from")
     parser.add_option("--output", dest="file_name", help="Name of file to write SAM to")
     parser.add_option("--region_index_offset", dest="region_index_offset", type = "int", default = 0, help="Adjust regions by this amount. Useful for converting between zero and one indexed lists")
-    parser.add_option("--region", "-L", "-l", dest="region", type="string",  action="append", help="Regions to extract mappings for, in the format ChrX:A-B")
+    parser.add_option("--region_file", dest="region_file", type="string",  default="", help="Regions to extract mappings for, in the format ChrX:A-B")
     parser.add_option("--store_mappings_columns", dest="store_mappings_columns", action="store_true", default=False, help="Output mappings table columns not in the mandatory fields in the optional fields to allow for easy reimport of a modified SAM")
     parser.add_option("--output_ids", dest="output_ids", action="store_true", default=False, help="Write gtable ids as an optional field to allow for easy reimport")
     (opts, args) = parser.parse_args()
@@ -23,6 +23,11 @@ def main():
     mappingsTable = dxpy.open_dxgtable(opts.mappings_id)
     storeMappingsColumns = opts.store_mappings_columns
     writeIds = opts.output_ids
+    
+    regions = []
+    if opts.region_file != "":
+        regions = re.findall("(\w+):(\d+)-(\d+)", open(opts.region_file, 'r').read())
+    
     
     
     try:
@@ -46,21 +51,15 @@ def main():
     defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"UNMAPPED", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False}
 
         
-    if opts.region == None:  
+    if len(regions) == 0:
         for row in mappingsTable.iterate_rows():
             writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
     else:
-        for region in opts.region:
-            includeDictionary = {}
-            intervalMatch = re.findall("(\w+):(\d+)-(\d+)", region)
-            query = mappingsTable.genomic_range_query(intervalMatch[0][0],int(intervalMatch[0][1])+opts.region_index_offset,int(intervalMatch[0][2])+opts.region_index_offset,mode='overlap',index='gri')
+        for x in regions:
+            query = mappingsTable.genomic_range_query(x[0],int(x[1])+opts.region_index_offset,int(x[2])+opts.region_index_offset,mode='overlap',index='gri')
             for row in mappingsTable.iterate_query_rows(query=query):
                 writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
         
-        
-        
-        
-    
 def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
     
     values = {}
@@ -100,8 +99,8 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
         readName = "*"
     orientation = 1
     
-    #if values["lo2"] != 0 and values["hi2"] == 0:
-    #    print row
+    if values["lo2"] != 0 and values["hi2"] == 0:
+        print row
 
     if values["negative_strand"]:
         orientation = -1
