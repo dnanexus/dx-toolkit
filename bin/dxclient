@@ -57,9 +57,9 @@ def login(args):
         response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
         response.raise_for_status()
         token = json.loads(response.content)["access_token"]
-
-    write_env_var('DX_SECURITY_CONTEXT',
-                  '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}')
+    else:
+        write_env_var('DX_SECURITY_CONTEXT',
+                      '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}')
     write_env_var("DX_CLI_WD", '/')
 
 def logout(args):
