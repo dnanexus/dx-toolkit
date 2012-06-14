@@ -32,7 +32,7 @@ def get_json_from_stdin():
     try:
         user_json = json.loads(user_json_str)
     except:
-        print 'Error: user input could not be parsed as JSON'
+        parser.exit(1, 'Error: user input could not be parsed as JSON\n')
         return None
     return user_json
 
@@ -97,7 +97,7 @@ def api(args):
             try:
                 json_input = json.loads(data)
             except:
-                print 'Error: file contents could not be parsed as JSON'
+                parser.exit(1, 'Error: file contents could not be parsed as JSON\n')
                 return
     elif args.stdin:
         json_input = get_json_from_stdin()
@@ -109,7 +109,7 @@ def api(args):
                                   json_input)
         print json.dumps(resp)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def clean_folder_path(path):
     folders = path.split('/')
@@ -146,7 +146,7 @@ def cd(args):
             dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
             dxproj.list_folder(folder=args.folder)
         except:
-            print args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID']
+            parser.exit(1, args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID'] + '\n')
             return
 
     set_wd(args)
@@ -194,7 +194,7 @@ def mkdir(args):
     try:
         dxproj.new_folder(folder=args.folder, parents=args.parents)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def rmdir(args):
     dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
@@ -202,7 +202,7 @@ def rmdir(args):
     try:
         dxproj.remove_folder(folder=args.folder)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def rm(args):
     dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
@@ -245,7 +245,7 @@ def mv(args):
     try:
         dxproj.move(args.destination, objects=objects, folders=folders)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def get_io_spec(spec):
     def get_io_desc(parameter):
@@ -390,7 +390,7 @@ def describe(args):
         try:
             desc = dxpy.DXJob(args.dxid).describe()
         except dxpy.DXAPIError as detail:
-            print detail
+            parser.exit(1, str(detail) + '\n')
             return
 
         if args.json:
@@ -421,7 +421,7 @@ def describe(args):
         try:
             desc = dxpy.get_handler(args.dxid).describe() # TODO get args!
         except dxpy.DXAPIError as detail:
-            print detail
+            parser.exit(1, str(detail) + '\n')
             return
 
         if args.json:
@@ -474,7 +474,7 @@ def describe(args):
         try:
             desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
         except dxpy.DXAPIError as detail:
-            print detail
+            parser.exit(1, str(detail) + '\n')
             return
 
         if args.json:
@@ -501,7 +501,7 @@ def new_record(args):
         try:
             details = json.loads(args.details)
         except:
-            print 'Error: details could not be parsed as JSON'
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
     init_from = None
     if args.init is not None:
         init_from = dxpy.DXRecord(args.init)
@@ -516,7 +516,7 @@ def new_record(args):
                                      parents=args.parents, init_from=init_from)
         print dxrecord.get_id()
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def new_gtable(args):
     hidden = (args.visibility == 'hidden')
@@ -526,7 +526,7 @@ def new_gtable(args):
         try:
             details = json.loads(args.details)
         except:
-            print 'Error: details could not be parsed as JSON'
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
 
     json_input = {}
     if args.input is not None:
@@ -554,14 +554,14 @@ def new_gtable(args):
                                      indices=args.indices)
         print dxgtable.get_id()
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def set_visibility(args):
     try:
         dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
                            {"hidden": (args.visibility == 'hidden')})
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def set_details(args):
     try:
@@ -571,46 +571,46 @@ def set_details(args):
     except ValueError:
         print 'Error: details could not be parsed as JSON'
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def add_types(args):
     try:
         dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
                            {"types": args.types})
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def remove_types(args):
     try:
         dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
                            {"types": args.types})
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def add_tags(args):
     try:
         dxpy.get_handler(args.dxid).add_tags(args.tags)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def remove_tags(args):
     try:
         dxpy.get_handler(args.dxid).remove_tags(args.tags)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def rename(args):
     try:
         dxpy.get_handler(args.dxid).rename(args.name)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def set_properties(args):
     properties = get_properties_from_args(args.properties)
     try:
         dxpy.get_handler(args.dxid).set_properties(properties)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def unset_properties(args):
     properties = {}
@@ -619,7 +619,7 @@ def unset_properties(args):
     try:
         dxpy.get_handler(args.dxid).set_properties(properties)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def file_get(args):
     filename = args.output
@@ -631,7 +631,7 @@ def file_get(args):
     try:
         dxpy.download_dxfile(args.dxid, filename)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def file_put(args):
     print dxpy.upload_local_file(args.filename).get_id()
@@ -656,7 +656,7 @@ def gtable_get(args):
         for row in result["data"]:
             print json.dumps(row)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def find_jobs(args):
     try:
@@ -700,7 +700,7 @@ def find_jobs(args):
                 orig_id = results[origin_job]["id"]
                 print_children(orig_id, 0)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def find_data(args):
     properties = get_properties_from_args(args.properties)
@@ -725,7 +725,7 @@ def find_data(args):
                 print result["id"]
         print ""
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def find_projects(args):
     try:
@@ -773,7 +773,7 @@ def close(args):
         obj = dxpy.get_handler(args.dxid)
         obj.close()
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
     if args.block:
         obj._wait_on_close()
 
