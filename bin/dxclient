@@ -79,6 +79,13 @@ def set_project(args):
 def set_wd(args):
     write_env_var("DX_CLI_WD", args.folder)
 
+def printenv(args):
+    print "Auth token used\t\t" + json.loads(os.environ["DX_SECURITY_CONTEXT"])["auth_token"]
+    print "API server host\t\t" + os.environ["DX_APISERVER_HOST"]
+    print "API server port\t\t" + os.environ["DX_APISERVER_PORT"]
+    print "Current workspace\t" + os.environ["DX_PROJECT_CONTEXT_ID"]
+    print "Current folder\t\t" + os.environ["DX_CLI_WD"]
+
 def pwd(args):
     print os.environ['DX_CLI_WD']
 
@@ -791,6 +798,9 @@ parser_set_port.set_defaults(func=set_port)
 parser_set_project = subparsers_set.add_parser('project', help='Sets the default project ID')
 parser_set_project.add_argument('project', help='Project ID')
 parser_set_project.set_defaults(func=set_project)
+
+parser_printenv = subparsers.add_parser('printenv', help='Prints all environment variables set for the CLI')
+parser_printenv.set_defaults(func=printenv)
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
 parser_login.add_argument('--token', help='Authentication token to use', default='outside')
