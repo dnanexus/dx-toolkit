@@ -135,7 +135,7 @@ def cd(args):
 
     if not wd.startswith(args.folder):
         try:
-            dxproj = dxpy.DXProject()
+            dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
             dxproj.list_folder(folder=args.folder)
         except:
             print args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID']
@@ -145,7 +145,7 @@ def cd(args):
 
 # TODO: add -l functionality
 def ls(args):
-    dxproj = dxpy.DXProject()
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
     args.folder = resolve_path(args.folder)
     only = ""
     if args.obj and not args.folders and not args.full:
@@ -181,7 +181,7 @@ def ls(args):
                 print obj['id'] + '\t' + obj['describe']['name']
 
 def mkdir(args):
-    dxproj = dxpy.DXProject()
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
     args.folder = resolve_path(args.folder)
     try:
         dxproj.new_folder(folder=args.folder, parents=args.parents)
@@ -189,7 +189,7 @@ def mkdir(args):
         print detail
 
 def rmdir(args):
-    dxproj = dxpy.DXProject()
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
     args.folder = resolve_path(args.folder)
     try:
         dxproj.remove_folder(folder=args.folder)
@@ -197,7 +197,7 @@ def rmdir(args):
         print detail
 
 def rm(args):
-    dxproj = dxpy.DXProject()
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
     if args.all:
         folder = '/'
         if 'DX_CLI_WD' in os.environ:
@@ -214,7 +214,7 @@ def rm(args):
         dxproj.remove_objects(args.objects)
 
 def mv(args):
-    dxproj = dxpy.DXProject()
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
     objects = []
     folders = []
     for source in args.sources:
@@ -408,9 +408,9 @@ def describe(args):
             print "Launched by\t" + desc["launchedBy"]
             print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
             print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
-    elif args.dxid.startswith('project'):
+    elif args.dxid.startswith('project') or args.dxid.startswith('workspace'):
         try:
-            desc = dxpy.DXProject(args.dxid).describe() # TODO get args!
+            desc = dxpy.get_handler(args.dxid).describe() # TODO get args!
         except dxpy.DXAPIError as detail:
             print detail
             return
@@ -730,7 +730,7 @@ def find_projects(args):
                 print_project_desc(result["describe"])
                 print "Permissions\t" + result["level"]
             else:
-                print result["id"] + ": " + result["level"]
+                print result["id"] + " : " + result["level"]
         print ""
     except dxpy.DXAPIError as detail:
         print detail    
