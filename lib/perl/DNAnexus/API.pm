@@ -11,100 +11,184 @@ use DNAnexus qw(DXHTTPRequest);
 
 
 sub appAddCategories($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addCategories', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/addCategories', $input_params, %kwargs);
+}
+
+sub appAddCategoriesWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appAddCategories($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appAddTags($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/addTags', $input_params, %kwargs);
+}
+
+sub appAddTagsWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appAddTags($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appDelete($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/delete', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/delete', $input_params, %kwargs);
+}
+
+sub appDeleteWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appDelete($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/describe', $input_params, %kwargs);
+}
+
+sub appDescribeWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appDescribe($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appGet($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/get', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/get', $input_params, %kwargs);
+}
+
+sub appGetWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appGet($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appInstall($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/install', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/install', $input_params, %kwargs);
+}
+
+sub appInstallWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appInstall($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appListCategories($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/listCategories', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/listCategories', $input_params, %kwargs);
+}
+
+sub appListCategoriesWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appListCategories($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appPublish($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/publish', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/publish', $input_params, %kwargs);
+}
+
+sub appPublishWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appPublish($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appRemoveCategories($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeCategories', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/removeCategories', $input_params, %kwargs);
+}
+
+sub appRemoveCategoriesWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appRemoveCategories($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appRemoveTag($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTag', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/removeTag', $input_params, %kwargs);
+}
+
+sub appRemoveTagWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appRemoveTag($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appRemoveTags($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/removeTags', $input_params, %kwargs);
+}
+
+sub appRemoveTagsWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appRemoveTags($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appRun($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/run', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/run', $input_params, %kwargs);
+}
+
+sub appRunWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appRun($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appUninstall($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/uninstall', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/uninstall', $input_params, %kwargs);
+}
+
+sub appUninstallWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appUninstall($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
 sub appUpdate($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/update', $input_params, %kwargs);
+}
+
+sub appUpdateWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appUpdate($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
