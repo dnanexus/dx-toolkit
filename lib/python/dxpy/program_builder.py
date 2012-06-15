@@ -123,7 +123,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     return program_id
 
-def create_app(program_id, src_dir, publish=False, set_default=False):
+def create_app(program_id, src_dir, publish=False, set_default=False, owner=None):
     app_spec = get_app_spec(src_dir)
     print "Will create app with spec: ", app_spec
 
@@ -138,8 +138,8 @@ def create_app(program_id, src_dir, publish=False, set_default=False):
     if "description" in program_desc["properties"]:
         app_spec["description"] = program_desc["properties"]["description"]
 
-    # TODO
-    app_spec["owner"] = "me"
+    if owner:
+        app_spec["owner"] = owner
 
     app_id = dxpy.api.appNew(app_spec)["id"]
 

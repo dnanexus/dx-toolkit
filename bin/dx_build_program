@@ -13,6 +13,7 @@ parser.add_option("-f", "--overwrite", help="Overwrite existing program and app 
 parser.add_option("-a", "--create_app", help="Create an app from the program (requires dxapp.json to be present)", action='store_true', default=False)
 parser.add_option("-p", "--destination_project", help="Insert the program into the project with the specified project ID.", default=None)
 parser.add_option("--publish", help="Publish the app after it has been created.", action='store_true', default=False)
+parser.add_option("-o", "--owner", help="Owner (username or organization) to set for the app.", default=None)
 (opts, args) = parser.parse_args()
 
 if len(args) != 1:
@@ -38,7 +39,7 @@ program_id = dxpy.program_builder.upload_program(src_dir, bundled_resources, ove
 print >> sys.stderr, "Created program " + program_id + " successfully"
 
 if opts.create_app:
-    app_id = dxpy.program_builder.create_app(program_id, src_dir, publish=opts.publish, set_default=opts.publish)
+    app_id = dxpy.program_builder.create_app(program_id, src_dir, publish=opts.publish, set_default=opts.publish, owner=opts.owner)
 
 if opts.create_app:
     print >> sys.stderr, "Created app " + app_id + " successfully"
