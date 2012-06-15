@@ -57,9 +57,7 @@ def main():
                         for simpleVar in simpleVarArray:
                             details = simpleVar.get_details()
                             if details.get('header') == None:
-                                print details
                                 details.update({'header':header})
-                                print details
                                 simpleVar.set_details(details)
             else:
                 for a in range(len(simpleVarArray)):

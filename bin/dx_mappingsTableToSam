@@ -28,7 +28,7 @@ def main():
     if opts.region_file != "":
         regions = re.findall("(\w+):(\d+)-(\d+)", open(opts.region_file, 'r').read())
     
-    
+    name = mappingsTable.describe()['name']
     
     try:
         originalContig = mappingsTable.get_details()['original_contigset']
@@ -41,14 +41,17 @@ def main():
     
     outputFile = open(opts.file_name, 'w')
     
+    
     for i in range(len(contigNames)):
         outputFile.write("@SQ\tSN:"+contigNames[i]+"\tLN:"+str(contigSizes[i])+"\n")
+    for i in range(len(mappingsTable.get_details()['read_groups'])):
+        outputFile.write("@RG\tID:"+str(i)+"\tSM:Sample_1\n")
 
     col = {}
     names = mappingsTable.get_col_names()   
     for i in range(len(names)):
         col[names[i]] = i+1
-    defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"UNMAPPED", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False}
+    defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"UNMAPPED", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False, "read_group":0}
 
         
     if len(regions) == 0:
@@ -99,26 +102,26 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
         readName = "*"
     orientation = 1
     
-    if values["lo2"] != 0 and values["hi2"] == 0:
-        print row
-
+    
+    if values.get("quality") == None:
+        qual = "*"
+    else:
+        qual = values["quality"]
+    seq = values["sequence"]
+    
     if values["negative_strand"]:
-        orientation = -1
+        seq = reverseComplement(seq)
+        qual = qual[::-1]
+    
     if values["mate_id"] == -1 or values["chr"] != values["chr2"] or values["chr"] == '' or values["chr"] == '*':
         tlen = 0
     else:
         tlen = str((max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])))*(1-2*values["mate_id"]))
 
-    if values.get("quality") == None:
-        qual = "*"
-    elif str(values["quality"][::orientation]) == "": 
-        qual = "*"
-    else:
-        qual = str(values["quality"][::orientation])
-
+    
     outputFile.write(readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
     outputFile.write(str(values["error_probability"]) + "\t" + values["cigar"] + "\t" + chromosome2 + "\t")
-    outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + values["sequence"][::orientation] + "\t")
+    outputFile.write(str(lo2) + "\t" + str(tlen) + "\t" + seq + "\t")
     outputFile.write(qual)
     
     if storeMappingsColumns:
@@ -126,9 +129,22 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
         for k,v in tagHash.iteritems():
             if col.get(k) != None:
                 outputFile.write("\t"+v+":"+"Z"+":"+str(values[k]))
+    if col.get("read_group") != None:
+        outputFile.write("\tRG:Z:"+str(values["read_group"]))
+    
     if writeIds:
         outputFile.write("\tZD:Z:"+str(row[0]))
     outputFile.write("\n")
-    
+
+
+def reverseComplement(seq):
+    rc = {"A":"T", "T":"A", "G":"C", "C":"G"}
+    result = ''
+    for x in seq[::-1]:
+        result += rc.get(x, x)
+    return result
+        
+
+
 
 main()
