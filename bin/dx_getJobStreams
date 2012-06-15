@@ -58,7 +58,7 @@ def print_streams(job_id, indent_level):
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stdouts[job_id] != None:
         for line in dxpy.DXFile(stdouts[job_id]):
-            print INDENT+tag+line
+            print INDENT + tag + line.decode("utf-8")
 
     status = desc['state']
     if status == 'failed':
@@ -68,7 +68,7 @@ def print_streams(job_id, indent_level):
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stderrs[job_id] != None:
         for line in dxpy.DXFile(stderrs[job_id]):
-            print INDENT+tag+line
+            print INDENT + tag + line.decode("utf-8")
 
     for subjob_id in subjobs.get(job_id, []):
         print_streams(subjob_id, indent_level+1)
