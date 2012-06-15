@@ -4,6 +4,7 @@ import dxpy
 import math
 from optparse import OptionParser
 import re
+import subprocess
 
 #Usage: sample input: dx_MappingsTableToSamBwa --table_id <gtable_id> --output <filename>
 #Example: dx_MappingsTableToSamBwa --table_id gtable-9yZvF200000PYKJyV4k00005 --output mappings.sam
@@ -17,6 +18,7 @@ def main():
     parser.add_option("--region_file", dest="region_file", type="string",  default="", help="Regions to extract mappings for, in the format ChrX:A-B")
     parser.add_option("--store_mappings_columns", dest="store_mappings_columns", action="store_true", default=False, help="Output mappings table columns not in the mandatory fields in the optional fields to allow for easy reimport of a modified SAM")
     parser.add_option("--output_ids", dest="output_ids", action="store_true", default=False, help="Write gtable ids as an optional field to allow for easy reimport")
+    parser.add_option("--discard_unmapped", dest="discard_unmapped", action="store_true", default=False, help="If set, do not write unmapped reads to SAM")
     (opts, args) = parser.parse_args()
 
     
@@ -53,10 +55,18 @@ def main():
         col[names[i]] = i+1
     defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"UNMAPPED", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False, "read_group":0}
 
+    unmappedFile = open("unmapped.txt", 'w')
         
     if len(regions) == 0:
         for row in mappingsTable.iterate_rows():
-            writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
+            if row[col["status"]] == "UNMAPPED":
+                if opts.discard_unmapped == False:
+                    writeRow(row, col, defaultCol, unmappedFile, storeMappingsColumns, writeIds)
+            else:
+                writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
+        outputFile.close()
+        unmappedFile.close()
+        subprocess.call("cat unmapped.txt >> %s" % (opts.file_name), shell=True)
     else:
         for x in regions:
             query = mappingsTable.genomic_range_query(x[0],int(x[1])+opts.region_index_offset,int(x[2])+opts.region_index_offset,mode='overlap',index='gri')
