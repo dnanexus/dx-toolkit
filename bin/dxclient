@@ -2,6 +2,7 @@
 
 import sys, os, datetime, urlparse, requests, base64, getpass
 import argparse
+import shlex # respects quotes substrings when splitting
 
 import json
 
@@ -1034,5 +1035,12 @@ parser_api.add_argument('--input', help='a filename containing the JSON input to
 parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
 parser_api.set_defaults(func=api)
 
-args = parser.parse_args(sys.argv[1:])
+# "Execution" starts here
+
+args_list = sys.argv[1:]
+# Take in things from the pipe, respecting quotes substrings
+if not sys.stdin.isatty():
+    args_list += shlex.split(sys.stdin.read())
+
+args = parser.parse_args(args_list)
 args.func(args)
