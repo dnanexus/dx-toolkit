@@ -84,8 +84,10 @@ class DXJob(object):
 
         return self._dxid
 
-    def describe(self, **kwargs):
+    def describe(self, io=True, **kwargs):
         """
+        :param io: Include input and output fields in description
+        :type io: bool
         :returns: Description of the job
         :rtype: dict
 
@@ -94,7 +96,7 @@ class DXJob(object):
         documentation for the full list.
 
         """
-        return dxpy.api.jobDescribe(self._dxid, **kwargs)
+        return dxpy.api.jobDescribe(self._dxid, {"io": io}, **kwargs)
 
     def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
         '''

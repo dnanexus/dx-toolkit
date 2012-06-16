@@ -156,8 +156,8 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     :type modified_after: integer
     :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
     :type modified_before: integer
-    :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False)
-    :type describe: boolean
+    :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False) (use the dict {"io": False} to exclude detailed IO information)
+    :type describe: boolean or dict
     :rtype: generator
 
     This is a generator function which returns the search results and

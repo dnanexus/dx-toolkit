@@ -401,6 +401,7 @@ def describe(args):
             print "Project context\t" + desc["project"]
             print "Workspace\t" + desc["workspace"]
             if "program" in desc:
+                print str(desc["program"])
                 print "Program\t\t" + desc["program"]
             elif "app" in desc:
                 print "App\t\t" + desc["app"]
@@ -660,9 +661,12 @@ def gtable_get(args):
 
 def find_jobs(args):
     try:
+        describe = args.nodesc
+        if args.nodesc is True:
+            describe = {"io": False}
         results = list(dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
                                       state=args.state, origin_job=args.origin, parent_job=args.parent,
-                                      describe=args.nodesc,
+                                      describe=describe,
                                       modified_after=args.mod_after, modified_before=args.mod_before))
 
         if args.json:
