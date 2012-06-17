@@ -155,12 +155,13 @@ def get_id_from_path(path):
     full_path = resolve_path(path)
     try:
         results = list(dxpy.find_data_objects(name=os.path.basename(full_path),
+                                              describe={},
                                               project=os.environ['DX_PROJECT_CONTEXT_ID'],
                                               folder=os.path.dirname(full_path)))
         if len(results) > 1:
             print 'Found ' + str(len(results)) + ' objects with full path ' + full_path + ' with IDs:'
             for result in results:
-                print result['id']
+                print_ls_l_desc(result['describe'])
             parser.exit(1)
         elif len(results) == 1:
             return results[0]['id']
@@ -185,6 +186,9 @@ def cd(args):
 
 def cmp_names(x, y):
     return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())    
+
+def print_ls_l_desc(desc):
+    print desc['state'] + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + desc['class'] + '\t' + desc['name'] + ' : ' + desc['id']
 
 def ls(args):
     dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
@@ -229,7 +233,7 @@ def ls(args):
                 addendum = ' : ' + resp['objects'][i]['id']
 
             if args.l:
-                print resp['objects'][i]['describe']['state'] + '\t' + str(datetime.datetime.fromtimestamp(resp['objects'][i]['describe']['modified']/1000)) + '  ' + resp['objects'][i]['describe']['class'] + '\t' + resp['objects'][i]['describe']['name'] + addendum
+                print_ls_l_desc(resp['objects'][i]['describe'])
             else:
                 print resp['objects'][i]['describe']['name'] + addendum
 
