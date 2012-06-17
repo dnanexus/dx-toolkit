@@ -908,14 +908,21 @@ def shell(orig_args):
             exit(0)
         except KeyboardInterrupt:
             print ""
-            exit(0)
+            continue
         if cmd == '':
             continue
         try:
             args = parser.parse_args(shlex.split(cmd))
             args.func(args)
+        except StopIteration:
+            exit(0)
         except:
             pass
+
+def exit_shell(args):
+    global interactive
+    if interactive:
+        raise StopIteration()
 
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
@@ -925,7 +932,10 @@ parser = argparse.ArgumentParser(epilog='README: If you have not already set env
 subparsers = parser.add_subparsers()
 
 parser_shell = subparsers.add_parser('sh', help='Run interactive shell')
-parser_shell.set_defaults(func=shell, sh=True)
+parser_shell.set_defaults(func=shell)
+
+parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell')
+parser_exit.set_defaults(func=exit_shell)
 
 parser_set = subparsers.add_parser('set', help='Sets default values for communication with the API server',
                                    description='Sets default values for communication with the API server')
