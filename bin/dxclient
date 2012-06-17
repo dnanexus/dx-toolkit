@@ -3,16 +3,23 @@
 import sys, os, datetime, urlparse, requests, base64, getpass
 import argparse
 import shlex # respects quotes substrings when splitting
+import readline
 
 import json
 
+interactive = False
+
 def write_env_var(var, value):
-    try:
-        os.mkdir(os.path.expanduser('~/.dnanexus-env/'))
-    except:
-        pass
-    with open(os.path.expanduser('~/.dnanexus-env/' + var), 'w') as fd:
-        fd.write(value)
+    global interactive
+    if interactive is True:
+        os.environ[var] = value
+    else:
+        try:
+            os.mkdir(os.path.expanduser('~/.dnanexus-env/'))
+        except:
+            pass
+        with open(os.path.expanduser('~/.dnanexus-env/' + var), 'w') as fd:
+            fd.write(value)
 
 def load_env():
     try:
@@ -49,6 +56,7 @@ def login(args):
     # when implemented
     token = args.token
     if args.demo:
+        print "Logging into nucleusdemo.dev.dnanexus.com"
         username = raw_input('Username: ')
         password = getpass.getpass()
 
@@ -59,6 +67,8 @@ def login(args):
         response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
         response.raise_for_status()
         token = json.loads(response.content)["access_token"]
+    else:
+        print "Using token \"outside\""
 
     write_env_var('DX_SECURITY_CONTEXT',
                   '{"auth_token":"' + token + '","auth_token_type":"Bearer"}')
@@ -115,8 +125,18 @@ def api(args):
 def clean_folder_path(path):
     folders = path.split('/')
 
-    newpath = ""
+    sanitized_folders = []
+
     for folder in folders:
+        if folder == '.':
+            pass
+        elif folder == '..' and len(sanitized_folders) > 0:
+            sanitized_folders.pop()
+        else:
+            sanitized_folders.append(folder)
+
+    newpath = ""
+    for folder in sanitized_folders:
         if folder == '':
             continue
         newpath += '/' + folder
@@ -126,17 +146,28 @@ def clean_folder_path(path):
 
 def resolve_path(path):
     wd = os.environ['DX_CLI_WD']
-    if path == '.':
-        return wd
-    elif path == '..':
-        if wd == '/':
-            return '/'
-        else:
-            return os.path.dirname(wd)
-    elif path.startswith('/'):
+    if path.startswith('/'):
         return clean_folder_path(path)
     else:
         return clean_folder_path(wd + '/' + path)
+
+def get_id_from_path(path):
+    full_path = resolve_path(path)
+    try:
+        results = list(dxpy.find_data_objects(name=os.path.basename(full_path),
+                                              project=os.environ['DX_PROJECT_CONTEXT_ID'],
+                                              folder=os.path.dirname(full_path)))
+        if len(results) > 1:
+            print 'Found ' + str(len(results)) + ' objects with full path ' + full_path + ' with IDs:'
+            for result in results:
+                print result['id']
+            parser.exit(1)
+        elif len(results) == 1:
+            return results[0]['id']
+        else:
+            return None
+    except dxpy.DXAPIError:
+        return None
 
 def cd(args):
     wd = os.environ['DX_CLI_WD']
@@ -152,7 +183,9 @@ def cd(args):
 
     set_wd(args)
 
-# TODO: add -l functionality
+def cmp_names(x, y):
+    return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())    
+
 def ls(args):
     dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
     args.folder = resolve_path(args.folder)
@@ -181,13 +214,26 @@ def ls(args):
             else:
                 print os.path.basename(folder) + '/'
     if not args.folders:
-        for obj in resp["objects"]:
-            if not args.name and not args.both:
-                print obj['id']
-            elif args.name and not args.both:
-                print obj['describe']['name']
+        resp["objects"].sort(cmp=cmp_names)
+        last_name = None
+        next_name = None
+        for i in range(len(resp["objects"])):
+            current_name = resp['objects'][i]['describe']['name']
+            if i < len(resp['objects']) - 1:
+                next_name = resp['objects'][i + 1]['describe']['name']
             else:
-                print obj['id'] + '\t' + obj['describe']['name']
+                next_name = None
+            addendum = ''
+
+            if (last_name is not None and last_name == current_name) or (next_name is not None and current_name == next_name):
+                addendum = ' : ' + resp['objects'][i]['id']
+
+            if args.l:
+                print resp['objects'][i]['describe']['state'] + '\t' + str(datetime.datetime.fromtimestamp(resp['objects'][i]['describe']['modified']/1000)) + '  ' + resp['objects'][i]['describe']['class'] + '\t' + resp['objects'][i]['describe']['name'] + addendum
+            else:
+                print resp['objects'][i]['describe']['name'] + addendum
+
+            last_name = current_name
 
 def mkdir(args):
     dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
@@ -385,7 +431,36 @@ def print_data_obj_desc(desc):
             else: # Unhandled prettifying
                 print field + "\t\t" + json.dumps(desc[field])
 
+def print_job_desc(desc):
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    print "Project context\t" + desc["project"]
+    print "Workspace\t" + desc["workspace"]
+    if "program" in desc:
+        print "Program\t\t" + desc["program"]
+    elif "app" in desc:
+        print "App\t\t" + desc["app"]
+    print "State\t\t" + desc["state"]
+    if desc["parentJob"] is None:
+        print "Parent job\tNone"
+    else:
+        print "Parent job\t" + json.dumps(desc["parentJob"])
+    print "Origin job\t" + desc["originJob"]
+    print "Function\t" + desc["function"]
+    if "originalInput" in desc:
+        print "Original Input\t" + json.dumps(desc["originalInput"])
+        print "Input\t\t" + json.dumps(desc["input"])
+        print "Output\t\t" + json.dumps(desc["output"])
+    print "Launched by\t" + desc["launchedBy"]
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+
 def describe(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     desc = None
     if args.dxid.startswith('job'):
         try:
@@ -397,28 +472,7 @@ def describe(args):
         if args.json:
             print json.dumps(desc)
         if not args.json:
-            print "ID\t\t" + desc["id"]
-            print "Class\t\t" + desc["class"]
-            print "Project context\t" + desc["project"]
-            print "Workspace\t" + desc["workspace"]
-            if "program" in desc:
-                print str(desc["program"])
-                print "Program\t\t" + desc["program"]
-            elif "app" in desc:
-                print "App\t\t" + desc["app"]
-            print "State\t\t" + desc["state"]
-            if desc["parentJob"] is None:
-                print "Parent job\tNone"
-            else:
-                print "Parent job\t" + json.dumps(desc["parentJob"])
-            print "Origin job\t" + desc["originJob"]
-            print "Function\t" + desc["function"]
-            print "Original Input\t" + json.dumps(desc["originalInput"])
-            print "Input\t\t" + json.dumps(desc["input"])
-            print "Output\t\t" + json.dumps(desc["output"])
-            print "Launched by\t" + desc["launchedBy"]
-            print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-            print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+            print_job_desc(desc)
     elif args.dxid.startswith('project') or args.dxid.startswith('workspace'):
         try:
             desc = dxpy.get_handler(args.dxid).describe() # TODO get args!
@@ -559,6 +613,11 @@ def new_gtable(args):
         parser.exit(1, str(detail) + '\n')
 
 def set_visibility(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
                            {"hidden": (args.visibility == 'hidden')})
@@ -566,6 +625,11 @@ def set_visibility(args):
         parser.exit(1, str(detail) + '\n')
 
 def set_details(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         args.details = json.loads(args.details)
         dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
@@ -576,6 +640,11 @@ def set_details(args):
         parser.exit(1, str(detail) + '\n')
 
 def add_types(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
                            {"types": args.types})
@@ -583,6 +652,11 @@ def add_types(args):
         parser.exit(1, str(detail) + '\n')
 
 def remove_types(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
                            {"types": args.types})
@@ -590,24 +664,44 @@ def remove_types(args):
         parser.exit(1, str(detail) + '\n')
 
 def add_tags(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         dxpy.get_handler(args.dxid).add_tags(args.tags)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def remove_tags(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         dxpy.get_handler(args.dxid).remove_tags(args.tags)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def rename(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         dxpy.get_handler(args.dxid).rename(args.name)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def set_properties(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     properties = get_properties_from_args(args.properties)
     try:
         dxpy.get_handler(args.dxid).set_properties(properties)
@@ -615,6 +709,11 @@ def set_properties(args):
         parser.exit(1, str(detail) + '\n')
 
 def unset_properties(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     properties = {}
     for prop in args.properties:
         properties[prop] = None
@@ -624,6 +723,11 @@ def unset_properties(args):
         parser.exit(1, str(detail) + '\n')
 
 def file_get(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     filename = args.output
     if filename is None:
         try:
@@ -639,6 +743,11 @@ def file_put(args):
     print dxpy.upload_local_file(args.filename).get_id()
 
 def gtable_get(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     gri_query = None
     if args.gri is not None:
         gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
@@ -774,6 +883,11 @@ def find_apps(args):
         print detail    
 
 def close(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
     try:
         obj = dxpy.get_handler(args.dxid)
         obj.close()
@@ -782,12 +896,36 @@ def close(args):
     if args.block:
         obj._wait_on_close()
 
+def shell(orig_args):
+    global interactive
+    interactive = True
+
+    while True:
+        try:
+            cmd = raw_input('> ')
+        except EOFError:
+            print ""
+            exit(0)
+        except KeyboardInterrupt:
+            print ""
+            exit(0)
+        if cmd == '':
+            continue
+        try:
+            args = parser.parse_args(shlex.split(cmd))
+            args.func(args)
+        except:
+            pass
+
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
 
 parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAnexus Command-Line Client, API v1.0.0')
 
 subparsers = parser.add_subparsers()
+
+parser_shell = subparsers.add_parser('sh', help='Run interactive shell')
+parser_shell.set_defaults(func=shell, sh=True)
 
 parser_set = subparsers.add_parser('set', help='Sets default values for communication with the API server',
                                    description='Sets default values for communication with the API server')
@@ -821,8 +959,6 @@ parser_ls = subparsers.add_parser('ls', help='List folders and objects in a fold
                                   parents=[global_args])
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
-parser_ls.add_argument('--name', help='show names instead of object IDs', action='store_true')
-parser_ls.add_argument('--both', help='show both names and object IDs', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
 parser_ls.add_argument('--folders', help='show only folders', action='store_true')
 parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
