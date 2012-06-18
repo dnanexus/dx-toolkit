@@ -67,11 +67,14 @@ def login(args):
         response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
         response.raise_for_status()
         token = json.loads(response.content)["access_token"]
-    else:
+    elif args.token == 'outside':
         print "Using token \"outside\""
 
-    write_env_var('DX_SECURITY_CONTEXT',
-                  '{"auth_token":"' + token + '","auth_token_type":"Bearer"}')
+    sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
+
+    dxpy.set_security_context(json.loads(sec_context))
+
+    write_env_var('DX_SECURITY_CONTEXT', sec_context)
     write_env_var("DX_CLI_WD", '/')
 
 def logout(args):
@@ -79,13 +82,16 @@ def logout(args):
 
 def set_host(args):
     write_env_var("DX_APISERVER_HOST", args.host)
+    dxpy.set_api_server_info(host=args.host, port=os.environ["DX_APISERVER_PORT"])
 
 def set_port(args):
     write_env_var("DX_APISERVER_PORT", args.port)
+    dxpy.set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=args.port)
 
 def set_project(args):
     write_env_var("DX_PROJECT_CONTEXT_ID", args.project)
     write_env_var("DX_CLI_WD", '/')
+    dxpy.set_workspace_id(args.project)
 
 def set_wd(args):
     write_env_var("DX_CLI_WD", args.folder)
@@ -1188,9 +1194,12 @@ parser_api.set_defaults(func=api)
 # "Execution" starts here
 
 args_list = sys.argv[1:]
-# Take in things from the pipe, respecting quotes substrings
+# Take in things from the pipe, respecting quoted substrings
 if not sys.stdin.isatty():
-    args_list += shlex.split(sys.stdin.read())
-
-args = parser.parse_args(args_list)
-args.func(args)
+    for line in sys.stdin.read().splitlines():
+        args = parser.parse_args(args_list + shlex.split(line))
+        args.func(args)
+    
+else:
+    args = parser.parse_args(args_list)
+    args.func(args)
