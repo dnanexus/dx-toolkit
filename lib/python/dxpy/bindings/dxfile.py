@@ -13,8 +13,8 @@ from dxpy.bindings import *
 if dxpy.snappy_available:
     import snappy
 
-DEFAULT_BUFFER_SIZE = 1024*1024*128
-DEFAULT_REQUEST_SIZE = 1024*1024*32
+DEFAULT_FILE_BUFFER_SIZE = 1024*1024*128
+DEFAULT_FILE_REQUEST_SIZE = 1024*1024*32
 
 class DXFile(DXDataObject):
     '''
@@ -47,7 +47,7 @@ class DXFile(DXDataObject):
     _list_projects = staticmethod(dxpy.api.fileListProjects)
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=DEFAULT_BUFFER_SIZE, request_size=DEFAULT_REQUEST_SIZE,
+                 buffer_size=DEFAULT_FILE_BUFFER_SIZE, request_size=DEFAULT_FILE_REQUEST_SIZE,
                  num_http_threads=4):
         '''
         Note: Each upload part must be at least 5 MB (per S3 backend requirements). This is enforced by the API server
