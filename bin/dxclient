@@ -82,11 +82,13 @@ def logout(args):
 
 def set_host(args):
     write_env_var("DX_APISERVER_HOST", args.host)
-    dxpy.set_api_server_info(host=args.host, port=os.environ["DX_APISERVER_PORT"])
+    if "DX_APISERVER_PORT" in os.environ:
+        dxpy.set_api_server_info(host=args.host, port=os.environ["DX_APISERVER_PORT"])
 
 def set_port(args):
     write_env_var("DX_APISERVER_PORT", args.port)
-    dxpy.set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=args.port)
+    if "DX_APISERVER_HOST" in os.environ:
+        dxpy.set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=args.port)
 
 def set_project(args):
     write_env_var("DX_PROJECT_CONTEXT_ID", args.project)
