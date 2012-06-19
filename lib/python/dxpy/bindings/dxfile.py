@@ -13,6 +13,9 @@ from dxpy.bindings import *
 if dxpy.snappy_available:
     import snappy
 
+DEFAULT_BUFFER_SIZE = 1024*1024*128
+DEFAULT_REQUEST_SIZE = 1024*1024*32
+
 class DXFile(DXDataObject):
     '''
     :param dxid: Object ID
@@ -44,7 +47,7 @@ class DXFile(DXDataObject):
     _list_projects = staticmethod(dxpy.api.fileListProjects)
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=1024*1024*128, request_size=1024*1024*32,
+                 buffer_size=DEFAULT_BUFFER_SIZE, request_size=DEFAULT_REQUEST_SIZE,
                  num_http_threads=4):
         '''
         Note: Each upload part must be at least 5 MB (per S3 backend requirements). This is enforced by the API server
@@ -59,7 +62,14 @@ class DXFile(DXDataObject):
         if dxid is not None:
             self.set_ids(dxid, project)
         self._keep_open = keep_open
-        # Default maximum buffer size is 128MB
+
+        if request_size < 5*1024*1024:
+            raise DXError("Request size must be at least 5 MB")
+        if buffer_size < request_size:
+            raise DXError("Buffer size must be greater than or equal to request size")
+        if buffer_size % request_size != 0:
+            raise DXError("Buffer size must be divisible by request size")
+
         self._bufsize = buffer_size
         self._request_size = request_size
 
