@@ -440,8 +440,8 @@ class DXFile(DXDataObject):
 
 
 def _string_buffer_length(buf):
-    old_pos = buf.tell()
+    orig_pos = buf.tell()
     buf.seek(0, os.SEEK_END)
     buf_len = buf.tell()
-    buf.seek(old_pos)
+    buf.seek(orig_pos)
     return buf_len
