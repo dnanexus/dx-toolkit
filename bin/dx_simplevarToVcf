@@ -77,10 +77,11 @@ def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequenc
     minimalColumns = ["chr", "lo", "hi", "type", "ref", "alt", "qual", "coverage", "genotypeQuality", "vcf_alt"]
     
     chr = str(row[col["chr"]])
-    pos = str(row[col["lo"]]-1)
-    ref = str(row[col["ref"]])
+    pos = row[col["lo"]]+1
+    ref = str(row[col["ref"]]).replace("-","")
     if (row[col["type"]]) == "Ins" or (row[col["type"]]) == "Del" or (row[col["type"]]) == "Complex" or (row[col["type"]]) == "Mixed":
-        ref = contigSequence[chromosomeOffsets[chr]+int(pos)-1]+ref
+        ref = contigSequence[chromosomeOffsets[chr]+int(pos)]+ref
+        pos += 1
     altOptions = row[col["alt"]].split("/")
     qual = str(row[col["qual"]])
     filter = "."
@@ -91,11 +92,11 @@ def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequenc
     else:
         filter = "PASS"
         
-    outputFile.write(chr+"\t"+pos+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter)
+    outputFile.write(chr+"\t"+str(pos)+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter)
     if writeAdditionalColumns:
         for k,v in col.iteritems():
             if k not in minimalColumns:
-                outputFile.write("\t"+row[v])
+                outputFile.write("\t"+str(row[v]))
     outputFile.write("\n")
     
     
