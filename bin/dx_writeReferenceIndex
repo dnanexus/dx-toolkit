@@ -46,12 +46,12 @@ def writeReferenceIndex(contig_set, indexFileName):
     priorLength = 0
     first = True
     for i in range(len(names)):
-        offset = priorOffset + len(names[i])+ 2 + priorLength + math.ceil(float(priorLength)/50.0)
+        offset = priorOffset + len(names[i])+ 2 + priorLength + math.ceil(float(priorLength)/60.0)
         if first:
             first = False
         else:
             offset += 1
-        dictFile.write(names[i]+"\t"+str(sizes[i]) + "\t" + str(int(offset)) + "\t50\t51\n")
+        dictFile.write(names[i]+"\t"+str(sizes[i]) + "\t" + str(int(offset)) + "\t60\t61\n")
         priorOffset = offset
         priorLength = sizes[i]
     return

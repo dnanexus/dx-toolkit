@@ -122,15 +122,10 @@ def main():
                     else:
                         #In VCF format, the prior character to a sequence change is given in some cases (Ins, Del)
                         #   we are removing this in our format, and so need to figure out which characters to filter   
-                        overlap = findMatchingSequence(ref, altOptions, False)
+                        overlap = checkOverlap(ref, altOptions)
                         ref = ref[overlap:]
                         for i in range(len(altOptions)):
                             altOptions[i] = altOptions[i][overlap:]
-                        reverseOverlap = findMatchingSequence(ref, altOptions, True)
-    
-                        ref = ref[:len(ref)-reverseOverlap]
-                        for i in range(len(altOptions)):
-                            altOptions[i] = altOptions[i][:len(altOptions[i])-reverseOverlap]
                         
                         #Find all of the genotypes 
                         genotypePossibilities = {}
@@ -198,20 +193,24 @@ def main():
                             for x in alleles:
                                 if len(x) == len(ref) and len(ref) == 1:
                                     type = "SNP"
-                                elif ref in x:
+                                elif len(x) == len(ref):
+                                    type = "MNP"
+                                elif len(x) > len(ref) and isSubSequence(x, ref):
                                     type = "Ins"
-                                elif x in ref:
+                                elif len(x) < len(ref) and isSubSequence(ref, x):
                                     type = "Del"
                                 else:
                                     type = "Complex"
-                                for x in typeList[1::]:
-                                    if typeList[0] != x:
-                                        type = "Mixed"
+                                typeList.append(type)
+                                typeList = list(set(typeList))
+                                if len(typeList) > 1:
+                                    break                                
+                                
         
-                            hi = lo+len(ref)-1
+                            hi = lo-overlap+len(ref)-1
                             if len(ref) == 0:
                                 ref = "-"
-                            entry = [chr, lo+overlap-1, hi, type, ref.upper(), alt.upper(), qual, coverage, int(genotypeQuality)]
+                            entry = [chr, lo-overlap-1, hi, type, ref.upper(), alt.upper(), qual, coverage, int(genotypeQuality)]
                             if storeFullVcf:
                                 entry.append(tabSplit[4])
                                 vcfSpecificData = ''
@@ -258,21 +257,27 @@ def main():
         except StopIteration:
             break
 
-def findMatchingSequence(ref, altOptions, reverse):
-    if reverse == True:
-        for i in range(len(altOptions)):
-            altOptions[i] = altOptions[i][::-1]
-            ref = ref[::-1]
-    position = 0
-    minLength = len(ref)
+def checkOverlap(ref, altOptions):
+    overlap = 1
     for x in altOptions:
-        if len(x) < minLength:
-            minLength = len(x)
-    for i in range(minLength):
-        for x in altOptions:
-            if ref[i] != x[i]:
-                return i
-    return minLength
+        if len(x) > 0 and len(ref) > 0:
+            if x[0] != ref[0]:
+                return 0
+    return 1
+
+
+def isSubSequence(longer, shorter):
+    if len(shorter) == 0:
+        return True
+    s = 0;
+    l = 0;
+    while l != len(longer):
+        if longer[l] == shorter[s]:
+            s += 1
+            if s == len(shorter):
+                return True
+        l += 1
+    return False
 
 def getInfoField(fieldName, infoColumn, infoContents):
     if infoColumn.count(fieldName) > 0:

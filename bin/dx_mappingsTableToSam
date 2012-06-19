@@ -53,7 +53,7 @@ def main():
     names = mappingsTable.get_col_names()   
     for i in range(len(names)):
         col[names[i]] = i+1
-    defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"UNMAPPED", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False, "read_group":0}
+    defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False, "read_group":0}
 
     unmappedFile = open("unmapped.txt", 'w')
         
@@ -86,10 +86,10 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
     #This is something of a hack to deal with a bug in the import script.
     #   that bug is being fixed and when that change moves through the system
     #   this will be removed
-    if values["chr2"] == "*" or values["chr2"] == '' and values["status2"] != "UNMAPPED":
-        values["status2"] = "UNMAPPED"
+    #if values["chr2"] == "*" or values["chr2"] == '' and values["status2"] != "UNMAPPED":
+    #    values["status2"] = "UNMAPPED"
     
-    flag = 0x1*(values["mate_id"] >= -1 and values["mate_id"] <= 1) + 0x2*(values["proper_pair"] == True) + 0x4*(values["status"] == "UNMAPPED")
+    flag = 0x1*(values["mate_id"] > -1 and values["mate_id"] <= 1) + 0x2*(values["proper_pair"] == True) + 0x4*(values["status"] == "UNMAPPED")
     flag += 0x8*(values["status2"] == "UNMAPPED") + 0x10*(values["negative_strand"] == True) + 0x20*(values["negative_strand2"] == True)
     flag += 0x40*(values["mate_id"] == 0) + 0x80*(values["mate_id"] == 1) + 0x100*(values["status"] == "SECONDARY")
     flag += 0x200*(values["qc"] == "not passing quality controls") + 0x400*(values["qc"] == "PCR or optical duplicate")
@@ -148,7 +148,7 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
 
 
 def reverseComplement(seq):
-    rc = {"A":"T", "T":"A", "G":"C", "C":"G"}
+    rc = {"A":"T", "T":"A", "G":"C", "C":"G", "a":"T", "t":"A", "c":"G", "g":"C"}
     result = ''
     for x in seq[::-1]:
         result += rc.get(x, x)
