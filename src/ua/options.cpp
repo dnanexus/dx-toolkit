@@ -3,45 +3,27 @@
 using namespace std;
 
 #include <boost/lexical_cast.hpp>
-
 #include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
 
 #include "dxjson/dxjson.h"
 
-void Options::initFromEnvironment() {
-  char * dxProjectContextID;
-  char * dxSecurityContext;
-  char * dxApiserverHost;
-  char * dxApiserverPort;
-
-  dxProjectContextID = getenv("DX_PROJECT_CONTEXT_ID");
-  if (dxProjectContextID != NULL) {
-    project = dxProjectContextID;
-  }
-
-  dxSecurityContext = getenv("DX_SECURITY_CONTEXT");
-  if (dxSecurityContext != NULL) {
-    // parse as JSON and extract auth token
-    dx::JSON secContext = dx::JSON::parse(dxSecurityContext);
-    authToken = secContext["auth_token"].get<string>();
-  }
-
-  dxApiserverHost = getenv("DX_APISERVER_HOST");
-  if (dxApiserverHost != NULL) {
-    apiserverHost = dxApiserverHost;
-  }
-
-  dxApiserverPort = getenv("DX_APISERVER_PORT");
-  if (dxApiserverPort != NULL) {
-    apiserverPort = boost::lexical_cast<int>(dxApiserverPort);
+string envVarMapper(const string &var) {
+  if (var == "DX_APISERVER_HOST") {
+    return "apiserver-host";
+  } else if (var == "DX_APISERVER_PORT") {
+    return "apiserver-port";
+  } else if (var == "DX_PROJECT_CONTEXT_ID") {
+    return "project";
+  } else {
+    return "";
   }
 }
 
-Options::Options(int argc, char * argv[]) {
-  desc = new po::options_description("Allowed options");
-  desc->add_options()
+Options::Options() {
+  visible_opts = new po::options_description("Allowed options");
+  visible_opts->add_options()
     ("help,h", "Produce a help message")
     ("auth-token,a", po::value<string>(&authToken), "Specify the authentication token")
     ("project,p", po::value<string>(&project), "Name or ID of the destination project")
@@ -51,21 +33,49 @@ Options::Options(int argc, char * argv[]) {
     // ("chunks,c", po::value<int>(&chunks)->default_value(-1), "Number of chunks in which the file should be uploaded")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
-    ("progress,g", po::value<bool>(&progress)->default_value(false), "Report upload progress")
+    ("progress,g", po::bool_switch(&progress), "Report upload progress")
+    ;
+
+  hidden_opts = new po::options_description();
+  hidden_opts->add_options()
     ("file", po::value<string>(&file), "File to upload")
     ;
 
-  po::positional_options_description pos_desc;
-  pos_desc.add("file", -1);
+  command_line_opts = new po::options_description();
+  command_line_opts->add(*visible_opts);
+  command_line_opts->add(*hidden_opts);
 
-  initFromEnvironment();
+  env_opts = new po::options_description();
+  env_opts->add_options()
+    ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
+    ("apiserver-port", po::value<int>(&apiserverPort), "API server port")
+    ("project", po::value<string>(&project), "ID of the destination project")
+    ;
 
-  po::store(po::command_line_parser(argc, argv).options(*desc).positional(pos_desc).run(), vm);
+  pos_opts = new po::positional_options_description();
+  pos_opts->add("file", -1);
+}
+
+void Options::parse(int argc, char * argv[]) {
+  po::store(po::command_line_parser(argc, argv).options(*command_line_opts).positional(*pos_opts).run(), vm);
+  po::notify(vm);
+
+  po::store(parse_environment(*env_opts, envVarMapper), vm);
   po::notify(vm);
 
   if (name.empty()) {
     fs::path p(file);
     name = p.filename().string();
+  }
+
+  if (authToken.empty()) {
+    char * dxSecurityContext = getenv("DX_SECURITY_CONTEXT");
+    if (dxSecurityContext != NULL) {
+      dx::JSON secContext = dx::JSON::parse(dxSecurityContext);
+      if (secContext.has("auth_token")) {
+        authToken = secContext["auth_token"].get<string>();
+      }
+    }
   }
 }
 
@@ -74,7 +84,7 @@ bool Options::help() {
 }
 
 void Options::printHelp() {
-  cerr << (*desc) << endl;
+  cerr << (*visible_opts) << endl;
 }
 
 void Options::validate() {
@@ -123,7 +133,7 @@ string Options::getFile() {
 
 ostream &operator<<(ostream &out, const Options &opt) {
   if (opt.vm.count("help")) {
-    out << (*(opt.desc)) << endl;
+    out << (*(opt.visible_opts)) << endl;
   } else {
     out << "Options:" << endl
         << "  auth token: " << opt.authToken << endl
