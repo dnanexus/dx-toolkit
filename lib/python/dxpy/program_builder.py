@@ -123,7 +123,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     return program_id
 
-def create_app(program_id, src_dir, publish=False, set_default=False, owner=None):
+def create_app(program_id, src_dir, publish=False, set_default=False, owner=None, try_versions=None):
     app_spec = get_app_spec(src_dir)
     print >> sys.stderr, "Will create app with spec: ", app_spec
 
@@ -140,8 +140,24 @@ def create_app(program_id, src_dir, publish=False, set_default=False, owner=None
 
     if owner:
         app_spec["owner"] = owner
+    if not try_versions:
+        try_versions = [app_spec["version"]]
 
-    app_id = dxpy.api.appNew(app_spec)["id"]
+    for version in try_versions:
+        try:
+            app_spec['version'] = version
+            app_id = dxpy.api.appNew(app_spec)["id"]
+            break
+        except dxpy.exceptions.DXAPIError as e:
+            # TODO: detect this error more reliably
+            if e.name == 'InvalidInput' and e.msg == 'Specified name and version conflict with an existing alias':
+                # The version number was already taken, try the next alternative
+                print >> sys.stderr, '%s %s already exists' % (app_spec["name"], version)
+                continue
+            raise e
+    else:
+        # All versions failed
+        raise EnvironmentError('Could not create any of the requested versions: ' + ', '.join(try_versions))
 
     if "categories" in app_spec:
         dxpy.api.appAddCategories(app_id, input_params={'categories': app_spec["categories"]})
