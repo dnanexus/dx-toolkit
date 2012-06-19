@@ -32,12 +32,12 @@ try:
 except ImportError:
     snappy_available = False
 
-gevent_available = True
-try:
-    import gevent, gevent.pool, gevent.monkey
-    gevent.monkey.patch_all(thread=False, select=False)
-except ImportError:
-    gevent_available = False
+#gevent_available = True
+#try:
+#    import gevent, gevent.pool, gevent.monkey
+#    gevent.monkey.patch_all(thread=False, select=False)
+#except ImportError:
+#    gevent_available = False
 
 API_VERSION = '1.0.0'
 AUTH_HELPER = None
