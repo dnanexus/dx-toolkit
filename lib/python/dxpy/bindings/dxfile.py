@@ -7,12 +7,11 @@ This remote file handler is a file-like object.
 
 import os, logging
 import cStringIO as StringIO
+import concurrent.futures
 from dxpy.bindings import *
 
 if dxpy.snappy_available:
     import snappy
-if dxpy.gevent_available:
-    import gevent, gevent.pool
 
 class DXFile(DXDataObject):
     '''
@@ -45,8 +44,15 @@ class DXFile(DXDataObject):
     _list_projects = staticmethod(dxpy.api.fileListProjects)
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=1024*1024*128, request_size=1024*1024*16,
+                 buffer_size=1024*1024*128, request_size=1024*1024*32,
                  num_http_threads=8):
+        '''
+        Note: Each upload part must be at least 5 MB (per S3 backend requirements). This is enforced by the API server
+        on file close. This means file close will fail if any of the following is true about the tunable args above:
+        - buffer_size < 5 MB
+        - request_size < 5 MB
+        - request_size % buffer_size != 0
+        '''
         self._keep_open = keep_open
         self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
@@ -130,7 +136,7 @@ class DXFile(DXDataObject):
         self._file_length = None
         self._cur_part = 1
 
-    def read(self, size=None, use_compression=None, **kwargs):
+    def slow_read(self, size=None, use_compression=None, **kwargs):
         '''
         :param size: Maximum number of bytes to be read
         :type size: integer
@@ -142,11 +148,11 @@ class DXFile(DXDataObject):
 
         '''
 
-        url = self.get_download_url()
+        url = self.get_download_url(**kwargs)
         headers = {}
 
         if self._file_length is None:
-            desc = self.describe()
+            desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
 
         if self._pos == self._file_length:
@@ -212,7 +218,6 @@ class DXFile(DXDataObject):
     def _generate_upload_part_args(self, data):
         for chunk_start_pos in xrange(0, len(data), self._request_size):
             chunk_end_pos = min(chunk_start_pos + self._request_size - 1, len(data))
-            print "yielding data[", chunk_start_pos, ":", chunk_end_pos, "+1], part", self._cur_part
             yield (data[chunk_start_pos:chunk_end_pos+1], self._cur_part)
             self._cur_part += 1
 
@@ -223,23 +228,19 @@ class DXFile(DXDataObject):
         data = self._write_buf.getvalue()
         self._write_buf = StringIO.StringIO()
 
-        if not dxpy.gevent_available:
-            multithread = False
-
         if len(data) <= self._request_size or not multithread:
             self.upload_part(data, self._cur_part, **kwargs)
             self._cur_part += 1
         else: # multithreaded upload
             if self._http_threadpool == None:
-                self._http_threadpool = gevent.pool.Pool(size=self._http_threadpool_size)
+                self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
             def do_upload_part(args):
                 data, part = args
                 self.upload_part(data, index=part, **kwargs)
 
-            for result in self._http_threadpool.imap_unordered(do_upload_part, self._generate_upload_part_args(data)):
+            for result in self._http_threadpool.map(do_upload_part, self._generate_upload_part_args(data)):
                 pass
-            self._http_threadpool.join()
 
     def write(self, string, **kwargs):
         '''
@@ -334,18 +335,18 @@ class DXFile(DXDataObject):
 
     def get_download_url(self, duration=24*3600, **kwargs):
         if self._download_url is None or self._download_url_expires > time.time():
-            logging.debug("Download URL unset or expired, requesting a new one")
+            # logging.debug("Download URL unset or expired, requesting a new one")
             resp = dxpy.api.fileDownload(self._dxid, {"duration": duration}, **kwargs)
             self._download_url = resp["url"]
             self._download_url_expires = time.time() + duration - 60 # Try to account for drift
         return self._download_url
 
-    def _generate_read_requests(self, start_pos=0, end_pos=None):
-        url = self.get_download_url()
+    def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
+        url = self.get_download_url(**kwargs)
         headers = {}
 
         if self._file_length == None:
-            desc = self.describe()
+            desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
 
         if end_pos == None:
@@ -380,20 +381,21 @@ class DXFile(DXDataObject):
 
     def _start_response_iterator(self, request_batch):
         if self._http_threadpool == None:
-            self._http_threadpool = gevent.pool.Pool(size=self._http_threadpool_size)
+            self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
         def send(r):
             r.send(prefetch=True)
             return r.response
 
-        self._response_iterator = self._http_threadpool.imap(send, request_batch)
+        self._response_iterator = self._http_threadpool.map(send, request_batch)
 
-    def fast_read(self, length=None):
+    def read(self, length=None, use_compression=None, **kwargs):
+        # Note passthrough kwargs are not respected while using the same response iterator (i.e. until next seek).
         if self._response_iterator == None:
-            self._request_iterator = self._generate_read_requests(start_pos=self._pos)
+            self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
 
         if self._file_length == None:
-            desc = self.describe()
+            desc = self.describe(**kwargs)
             self._file_length = int(desc["size"])
 
         if self._pos == self._file_length:
@@ -418,14 +420,20 @@ class DXFile(DXDataObject):
                 remaining_len = orig_file_pos + length - self._pos
                 response = self._next_response()
                 response.raise_for_status()
-                if len(response.content) < remaining_len:
-                    buf.write(response.content)
-                    self._pos += len(response.content)
+
+                if use_compression and response.headers.get('content-encoding', '') == 'snappy':
+                    content = snappy.uncompress(response.content)
+                else:
+                    content = response.content
+
+                if len(content) < remaining_len:
+                    buf.write(content)
+                    self._pos += len(content)
                 else: # response goes beyond requested length
-                    buf.write(response.content[:remaining_len])
+                    buf.write(content[:remaining_len])
                     self._pos += remaining_len
                     self._read_buf = StringIO.StringIO()
-                    self._read_buf.write(response.content[remaining_len:])
+                    self._read_buf.write(content[remaining_len:])
                     self._read_buf.seek(0)
             buf.seek(orig_buf_pos)
             return buf.read()

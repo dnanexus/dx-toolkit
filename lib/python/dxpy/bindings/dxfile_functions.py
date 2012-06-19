@@ -67,6 +67,18 @@ def new_dxfile(keep_open=False, buffer_size=1024*1024*128, **kwargs):
     dx_file.new(**kwargs)
     return dx_file
 
+def slow_download_dxfile(dxid, filename, chunksize=1024*1024*128, append=False,
+                    **kwargs):
+    mode = 'ab' if append else 'wb'
+    with DXFile(dxid) as dxfile:
+        with open(filename, mode) as fd:
+            while True:
+                file_content = dxfile.slow_read(chunksize, **kwargs)
+                if len(file_content) == 0:
+                    break
+                fd.write(file_content)
+
+
 def download_dxfile(dxid, filename, chunksize=1024*1024*128, append=False,
                     **kwargs):
     '''
@@ -85,24 +97,11 @@ def download_dxfile(dxid, filename, chunksize=1024*1024*128, append=False,
         download_dxfile("file-xxxx", "localfilename.fastq")
 
     '''
-
     mode = 'ab' if append else 'wb'
     with DXFile(dxid) as dxfile:
         with open(filename, mode) as fd:
             while True:
                 file_content = dxfile.read(chunksize, **kwargs)
-                if len(file_content) == 0:
-                    break
-                fd.write(file_content)
-
-
-def fast_download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
-                    **kwargs):
-    mode = 'ab' if append else 'wb'
-    with DXFile(dxid) as dxfile:
-        with open(filename, mode) as fd:
-            while True:
-                file_content = dxfile.fast_read(1024) #chunksize, **kwargs)
                 if len(file_content) == 0:
                     break
                 fd.write(file_content)
