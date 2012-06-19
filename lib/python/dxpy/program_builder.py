@@ -125,7 +125,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
 def create_app(program_id, src_dir, publish=False, set_default=False, owner=None):
     app_spec = get_app_spec(src_dir)
-    print "Will create app with spec: ", app_spec
+    print >> sys.stderr, "Will create app with spec: ", app_spec
 
     program_desc = dxpy.DXProgram(program_id).describe(incl_properties=True)
     app_spec["program"] = program_id
