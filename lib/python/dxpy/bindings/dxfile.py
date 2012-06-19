@@ -45,7 +45,7 @@ class DXFile(DXDataObject):
 
     def __init__(self, dxid=None, project=None, keep_open=False,
                  buffer_size=1024*1024*128, request_size=1024*1024*32,
-                 num_http_threads=8):
+                 num_http_threads=4):
         '''
         Note: Each upload part must be at least 5 MB (per S3 backend requirements). This is enforced by the API server
         on file close. This means file close will fail if any of the following is true about the tunable args above:
@@ -440,8 +440,8 @@ class DXFile(DXDataObject):
 
 
 def _string_buffer_length(buf):
-    old_pos = buf.tell()
+    orig_pos = buf.tell()
     buf.seek(0, os.SEEK_END)
     buf_len = buf.tell()
-    buf.seek(old_pos)
+    buf.seek(orig_pos)
     return buf_len
