@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -D_FILE_OFFSET_BITS=64 -Wall 
 add_subdirectory(../dxjson dxjson)
 add_subdirectory(../SimpleHttpLib SimpleHttpLib)
 
-add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxprogram.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxproject.cc)
+add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxprogram.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxapp.cc bindings/dxproject.cc)
 set_target_properties(dxcpp PROPERTIES COMPILE_FLAGS -fPIC)
 target_link_libraries(dxcpp dxjson curl dxhttp)
 

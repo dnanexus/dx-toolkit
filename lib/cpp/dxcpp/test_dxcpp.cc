@@ -9,8 +9,8 @@
 using namespace std;
 using namespace dx;
 
-string proj_id = "project-000000000000000000000001";
-string second_proj_id = "project-000000000000000000000002";
+string proj_id = "";
+string second_proj_id = "";
 
 // TODO: Finish writing tests for other classes.
 
@@ -24,13 +24,7 @@ JSON getObjFromListf(JSON &listf) {
 
 void remove_all(const string &proj, const string &folder="/") {
   DXProject dxproject(proj);
-  JSON listf = dxproject.listFolder(folder);
-  dxproject.removeObjects(getObjFromListf(listf));
-  for (int i = 0; i < listf["folders"].size(); i++) {
-    string subfolder = listf["folders"][i].get<string>();
-    remove_all(proj, subfolder);
-    dxproject.removeFolder(subfolder);
-  }
+  dxproject.removeFolder(folder, true);
 }
 
 ////////////
@@ -702,7 +696,7 @@ TEST_F(DXGTableTest, AddRowsNoIndexTest) {
   dxgtable.close(true);
 
   desc = dxgtable.describe();
-  EXPECT_EQ(64, desc["size"].get<int>());
+  EXPECT_EQ(64, desc["length"].get<int>());
 }
 
 TEST_F(DXGTableTest, InvalidSpecTest) {
@@ -723,7 +717,7 @@ TEST_F(DXGTableTest, GetRowsTest) {
   dxgtable.close(true);
 
   JSON rows = dxgtable.getRows();
-  EXPECT_EQ(64, rows["size"].get<int>());
+  EXPECT_EQ(64, rows["length"].get<int>());
   EXPECT_EQ(JSON_NULL, rows["next"].type());
   EXPECT_EQ(64, rows["data"].size());
 }
@@ -755,20 +749,20 @@ TEST_F(DXGTableTest, GRITest) {
   dxgtable.close(true);
 
   desc = dxgtable.describe();
-  ASSERT_EQ(desc["size"].get<int>(), 10);
+  ASSERT_EQ(desc["length"].get<int>(), 10);
 
   //Offset + limit queries
   JSON result = dxgtable.getRows(JSON(JSON_NULL), JSON(JSON_NULL), 0, 1);
   ASSERT_EQ(result["data"],
             JSON::parse("[[0, \"chr1\",  0,  3, \"a\"]]"));
   ASSERT_EQ(result["next"].get<int>(), 1);
-  ASSERT_EQ(result["size"].get<int>(), 1);
+  ASSERT_EQ(result["length"].get<int>(), 1);
 
   result = dxgtable.getRows(JSON(JSON_NULL), JSON(JSON_NULL), 4, 3);
   ASSERT_EQ(result["data"],
             JSON::parse("[[4, \"chr1\", 15, 23, \"e\"], [5, \"chr1\", 16, 21, \"f\"], [6, \"chr1\", 17, 19, \"g\"]]"));
   ASSERT_EQ(result["next"].get<int>(), 7);
-  ASSERT_EQ(result["size"].get<int>(), 3);
+  ASSERT_EQ(result["length"].get<int>(), 3);
 
   // Range query
   JSON genomic_query = DXGTable::genomicRangeQuery("chr1", 22, 25);
@@ -776,7 +770,7 @@ TEST_F(DXGTableTest, GRITest) {
   ASSERT_EQ(result["data"],
             JSON::parse("[[4, \"chr1\", 15, 23, \"e\"]]"));
   ASSERT_EQ(result["next"], JSON(JSON_NULL));
-  ASSERT_EQ(result["size"].get<int>(), 1);
+  ASSERT_EQ(result["length"].get<int>(), 1);
 
   // Range query with nonconsecutive rows in result
   genomic_query = DXGTable::genomicRangeQuery("chr1", 20, 26);
@@ -784,14 +778,42 @@ TEST_F(DXGTableTest, GRITest) {
   ASSERT_EQ(result["data"],
             JSON::parse("[[4, \"chr1\", 15, 23, \"e\"], [5, \"chr1\", 16, 21, \"f\"], [8, \"chr1\", 25, 30, \"i\"]]"));
   ASSERT_EQ(result["next"], JSON(JSON_NULL));
-  ASSERT_EQ(result["size"].get<int>(), 3);
+  ASSERT_EQ(result["length"].get<int>(), 3);
 
   // TODO: Test with > 1 index
 }
 
+///////////
+// DXApp //
+///////////
+
+// This was used to test using a locally made app object.  Once we
+// have a more convenient way of generating an app object, we can put
+// in tests.
+//
+// TEST(DXAppTest, SimpleTest) {
+//   DXApp dxapp;
+//   dxapp.setID("app-9zF6jpPxK60yb2Vk91600001");
+//   JSON desc = dxapp.describe();
+//   string name = desc["name"].get<string>();
+//   DXApp second_dxapp(name);
+//   JSON secondDesc = second_dxapp.describe();
+//   ASSERT_EQ(desc, secondDesc);
+// }
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   loadFromEnvironment();
+  JSON project_hash(JSON_OBJECT);
+  project_hash["name"] = "test_project";
+  JSON resp = projectNew(project_hash);
+  proj_id = resp["id"].get<string>();
+  project_hash["name"] = "second_test_project";
+  resp = projectNew(project_hash);
+  second_proj_id = resp["id"].get<string>();
+
+  setWorkspaceID(proj_id);
+
   int result = RUN_ALL_TESTS();
   remove(foofilename.c_str());
   return result;

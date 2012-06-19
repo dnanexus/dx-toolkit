@@ -39,7 +39,7 @@ class DXProject {
   dx::JSON listFolder(const std::string &folder="/") const;
   void moveFolder(const std::string &folder,
                   const std::string &dest_folder) const;
-  void removeFolder(const std::string &folder) const;
+  void removeFolder(const std::string &folder, const bool recurse=false) const;
 
   // Objects-specific
   void moveObjects(const dx::JSON &objects,

@@ -59,8 +59,12 @@ void DXProject::moveFolder(const string &folder,
               "\"destination\": \"" + dest_folder + "\"}");
 }
 
-void DXProject::removeFolder(const string &folder) const {
-  projectRemoveFolder(dxid_, "{\"folder\": \"" + folder + "\"}");
+void DXProject::removeFolder(const string &folder, const bool recurse) const {
+  if (recurse) {
+    projectRemoveFolder(dxid_, "{\"folder\": \"" + folder + "\", \"recurse\": true}");
+  } else {
+    projectRemoveFolder(dxid_, "{\"folder\": \"" + folder + "\"}");
+  }
 }
 
 // Objects-specific
