@@ -142,8 +142,7 @@ class DXFile(DXDataObject):
 
         '''
 
-        resp = dxpy.api.fileDownload(self._dxid, **kwargs)
-        url = resp["url"]
+        url = self.get_download_url()
         headers = {}
 
         if self._file_length is None:
