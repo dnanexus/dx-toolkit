@@ -146,7 +146,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-    request_size = max(DEFAULT_REQUEST_SIZE, file_size/10000)
+    request_size = max(DEFAULT_REQUEST_SIZE, file_size/9999)
     if request_size > DEFAULT_REQUEST_SIZE:
         buffer_size = request_size * 4
     dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, buffer_size=buffer_size,
