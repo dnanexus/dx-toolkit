@@ -816,5 +816,8 @@ int main(int argc, char **argv) {
 
   int result = RUN_ALL_TESTS();
   remove(foofilename.c_str());
+  projectDestroy(proj_id);
+  projectDestroy(second_proj_id);
+
   return result;
 }
