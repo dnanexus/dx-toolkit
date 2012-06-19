@@ -13,7 +13,7 @@ the remote file systems.
 import os
 from dxpy.bindings import *
 
-def open_dxfile(dxid, project=None, buffer_size=1024*1024*100):
+def open_dxfile(dxid, project=None, buffer_size=1024*1024*128):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -37,7 +37,7 @@ def open_dxfile(dxid, project=None, buffer_size=1024*1024*100):
     # TODO: support streaming of compressed files: spawn a subprocess and use Popen.communicate() if appropriate data type is detected
     return DXFile(dxid, project=project, buffer_size=buffer_size)
 
-def new_dxfile(keep_open=False, buffer_size=1024*1024*100, **kwargs):
+def new_dxfile(keep_open=False, buffer_size=1024*1024*128, **kwargs):
     '''
     :param media_type: Internet Media Type (optional)
     :type media_type: string
@@ -67,7 +67,7 @@ def new_dxfile(keep_open=False, buffer_size=1024*1024*100, **kwargs):
     dx_file.new(**kwargs)
     return dx_file
 
-def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
+def download_dxfile(dxid, filename, chunksize=1024*1024*128, append=False,
                     **kwargs):
     '''
     :param dxid: Object ID of a file
@@ -95,8 +95,21 @@ def download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
                     break
                 fd.write(file_content)
 
+
+def fast_download_dxfile(dxid, filename, chunksize=1024*1024*100, append=False,
+                    **kwargs):
+    mode = 'ab' if append else 'wb'
+    with DXFile(dxid) as dxfile:
+        with open(filename, mode) as fd:
+            while True:
+                file_content = dxfile.fast_read(1024) #chunksize, **kwargs)
+                if len(file_content) == 0:
+                    break
+                fd.write(file_content)
+
+
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
-                      buffer_size=1024*1024*100, wait_on_close=False, **kwargs):
+                      wait_on_close=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -123,11 +136,11 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     TODO: Do I want an optional argument to indicate in what size
     chunks the file should be uploaded or in how many pieces?
-
+    
     '''
     fd = file if filename is None else open(filename, 'rb')
 
-    dxfile = new_dxfile(keep_open=keep_open, buffer_size=buffer_size, media_type=media_type, **kwargs)
+    dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
@@ -154,7 +167,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     return dxfile
 
 def upload_string(to_upload, media_type=None, keep_open=False,
-                  buffer_size=1024*1024*100, wait_on_close=False, **kwargs):
+                  wait_on_close=False, **kwargs):
     """
     :param to_upload: String to upload into a file
     :type to_upload: string
@@ -172,8 +185,7 @@ def upload_string(to_upload, media_type=None, keep_open=False,
     
     """
 
-    dxfile = new_dxfile(media_type=media_type, keep_open=keep_open,
-                        buffer_size=buffer_size, **kwargs)
+    dxfile = new_dxfile(media_type=media_type, keep_open=keep_open, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 

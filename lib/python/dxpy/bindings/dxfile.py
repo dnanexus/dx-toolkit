@@ -5,15 +5,14 @@ DXFile Handler
 This remote file handler is a file-like object.
 '''
 
-import logging
+import os, logging
 import cStringIO as StringIO
 from dxpy.bindings import *
 
-snappy_available = True
-try:
+if dxpy.snappy_available:
     import snappy
-except ImportError:
-    snappy_available = False
+if dxpy.gevent_available:
+    import gevent, gevent.pool
 
 class DXFile(DXDataObject):
     '''
@@ -46,14 +45,21 @@ class DXFile(DXDataObject):
     _list_projects = staticmethod(dxpy.api.fileListProjects)
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=1024*1024*100):
+                 buffer_size=1024*1024*128, request_size=1024*1024*16,
+                 num_http_threads=8):
         self._keep_open = keep_open
+        self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
         if dxid is not None:
             self.set_ids(dxid, project)
         self._keep_open = keep_open
-        # Default maximum buffer size is 100MB
+        # Default maximum buffer size is 128MB
         self._bufsize = buffer_size
+        self._request_size = request_size
+
+        self._download_url, self._download_url_expires = None, None
+        self._request_iterator, self._response_iterator, self._http_threadpool = None, None, None
+        self._http_threadpool_size = num_http_threads
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -158,7 +164,7 @@ class DXFile(DXDataObject):
             self._pos = self._file_length
 
         if use_compression == 'snappy':
-            if not snappy_available:
+            if not dxpy.snappy_available:
                 raise DXError("Snappy compression requested, but the snappy module is unavailable")
             headers['accept-encoding'] = 'snappy'
 
@@ -201,14 +207,40 @@ class DXFile(DXDataObject):
 
         '''
         self._pos = offset
-
-    def flush(self, **kwargs):
-        '''
-        Flushes the internal buffer
-        '''
-        self.upload_part(self._write_buf.getvalue(), self._cur_part, **kwargs)
         self._write_buf = StringIO.StringIO()
-        self._cur_part += 1
+        self._request_iterator, self._response_iterator, self._http_threadpool = None, None, None
+
+    def _generate_upload_part_args(self, data):
+        for chunk_start_pos in xrange(0, len(data), self._request_size):
+            chunk_end_pos = min(chunk_start_pos + self._request_size - 1, len(data))
+            print "yielding data[", chunk_start_pos, ":", chunk_end_pos, "+1], part", self._cur_part
+            yield (data[chunk_start_pos:chunk_end_pos+1], self._cur_part)
+            self._cur_part += 1
+
+    def flush(self, multithread=True, **kwargs):
+        '''
+        Flushes the internal write buffer
+        '''
+        data = self._write_buf.getvalue()
+        self._write_buf = StringIO.StringIO()
+
+        if not dxpy.gevent_available:
+            multithread = False
+
+        if len(data) <= self._request_size or not multithread:
+            self.upload_part(data, self._cur_part, **kwargs)
+            self._cur_part += 1
+        else: # multithreaded upload
+            if self._http_threadpool == None:
+                self._http_threadpool = gevent.pool.Pool(size=self._http_threadpool_size)
+
+            def do_upload_part(args):
+                data, part = args
+                self.upload_part(data, index=part, **kwargs)
+
+            for result in self._http_threadpool.imap_unordered(do_upload_part, self._generate_upload_part_args(data)):
+                pass
+            self._http_threadpool.join()
 
     def write(self, string, **kwargs):
         '''
@@ -223,7 +255,7 @@ class DXFile(DXDataObject):
 
         '''
 
-        remaining_space = (self._bufsize - self._write_buf.tell())
+        remaining_space = self._bufsize - self._write_buf.tell()
         self._write_buf.write(string[:remaining_space])
         if self._write_buf.tell() == self._bufsize:
             self.flush(**kwargs)
@@ -297,6 +329,112 @@ class DXFile(DXDataObject):
         resp.raise_for_status()
 
         # TODO: Consider retrying depending on the status
-        
+
         if display_progress:
             print >> sys.stderr, "."
+
+    def get_download_url(self, duration=24*3600, **kwargs):
+        if self._download_url is None or self._download_url_expires > time.time():
+            logging.debug("Download URL unset or expired, requesting a new one")
+            resp = dxpy.api.fileDownload(self._dxid, {"duration": duration}, **kwargs)
+            self._download_url = resp["url"]
+            self._download_url_expires = time.time() + duration - 60 # Try to account for drift
+        return self._download_url
+
+    def _generate_read_requests(self, start_pos=0, end_pos=None):
+        url = self.get_download_url()
+        headers = {}
+
+        if self._file_length == None:
+            desc = self.describe()
+            self._file_length = int(desc["size"])
+
+        if end_pos == None:
+            end_pos = self._file_length
+        if end_pos > self._file_length:
+            raise DXError("Invalid end_pos")
+
+        for chunk_start_pos in xrange(start_pos, end_pos, self._request_size):
+            chunk_end_pos = min(chunk_start_pos + self._request_size - 1, end_pos)
+            headers["Range"] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
+            request = requests.get(url, headers=headers, return_response=False, prefetch=True)
+            yield request
+
+    def _next_response(self):
+        '''
+        Dequeues and returns the next response from the response queue.
+        Expects self._request_iterator, self._response_iterator to be set.
+        '''
+        while True:
+            try:
+                return self._response_iterator.next()
+            except (StopIteration, AttributeError):
+                batch_size = self._bufsize / self._request_size
+                request_batch = []
+                try:
+                    for i in xrange(batch_size):
+                        request_batch.append(self._request_iterator.next())
+                except StopIteration:
+                    if len(request_batch) == 0:
+                        raise
+                self._start_response_iterator(request_batch)
+
+    def _start_response_iterator(self, request_batch):
+        if self._http_threadpool == None:
+            self._http_threadpool = gevent.pool.Pool(size=self._http_threadpool_size)
+
+        def send(r):
+            r.send(prefetch=True)
+            return r.response
+
+        self._response_iterator = self._http_threadpool.imap(send, request_batch)
+
+    def fast_read(self, length=None):
+        if self._response_iterator == None:
+            self._request_iterator = self._generate_read_requests(start_pos=self._pos)
+
+        if self._file_length == None:
+            desc = self.describe()
+            self._file_length = int(desc["size"])
+
+        if self._pos == self._file_length:
+            return ""
+
+        if length == None or length > self._file_length - self._pos:
+            length = self._file_length - self._pos
+
+#        print "FL %d, pos %d, length %d" % (self._file_length, self._pos, length)
+
+        buf = self._read_buf
+        buf_remaining_bytes = _string_buffer_length(buf) - buf.tell()
+#        print "buf length", _string_buffer_length(buf), "pos", buf.tell(), "rem bytes", buf_remaining_bytes
+        if length <= buf_remaining_bytes:
+            self._pos += length
+            return buf.read(length)
+        else:
+            orig_buf_pos = buf.tell()
+            orig_file_pos = self._pos
+            buf.seek(0, os.SEEK_END)
+            while self._pos < orig_file_pos + length:
+                remaining_len = orig_file_pos + length - self._pos
+                response = self._next_response()
+                response.raise_for_status()
+                if len(response.content) < remaining_len:
+                    buf.write(response.content)
+                    self._pos += len(response.content)
+                else: # response goes beyond requested length
+                    buf.write(response.content[:remaining_len])
+                    self._pos += remaining_len
+                    self._read_buf = StringIO.StringIO()
+                    self._read_buf.write(response.content[remaining_len:])
+                    self._read_buf.seek(0)
+            buf.seek(orig_buf_pos)
+            return buf.read()
+
+
+def _string_buffer_length(buf):
+    old_pos = buf.tell()
+    buf.seek(0, os.SEEK_END)
+    buf_len = buf.tell()
+    buf.seek(old_pos)
+    return buf_len
