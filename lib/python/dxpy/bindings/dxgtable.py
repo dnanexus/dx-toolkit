@@ -3,9 +3,13 @@ DXGTable Handler
 ****************
 """
 
+import os, json
 import cStringIO as StringIO
-import json
+import concurrent.futures
 from dxpy.bindings import *
+
+DEFAULT_TABLE_ROW_BUFFER_SIZE = 40000
+DEFAULT_TABLE_REQUEST_SIZE = 1024*1024*32 # bytes
 
 class DXGTable(DXDataObject):
     '''Remote GenomicTable object handler
@@ -14,7 +18,6 @@ class DXGTable(DXDataObject):
     '''
 
     _class = "gtable"
-
 
     _describe = staticmethod(dxpy.api.gtableDescribe)
     _add_types = staticmethod(dxpy.api.gtableAddTypes)
@@ -29,14 +32,18 @@ class DXGTable(DXDataObject):
     _close = staticmethod(dxpy.api.gtableClose)
     _list_projects = staticmethod(dxpy.api.gtableListProjects)
 
-    # Default maximum buffer size is 20MB
-    _row_buf_maxsize = 1024*1024*20
-
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=40000):
+                 request_size=DEFAULT_TABLE_REQUEST_SIZE, num_http_threads=4):
         self._keep_open = keep_open
-        self._bufsize = buffer_size
-        self._row_buf = StringIO.StringIO()
+
+        self._request_size = request_size
+        self._row_buf = []
+        self._row_buffer_size = DEFAULT_TABLE_ROW_BUFFER_SIZE
+        self._string_row_buf = None
+        self._http_threadpool = None
+        self._http_threadpool_size = num_http_threads
+        self._http_threadpool_futures = set()
+
         if dxid is not None:
             self.set_ids(dxid, project)
 
@@ -44,14 +51,12 @@ class DXGTable(DXDataObject):
         return self
 
     def __exit__(self, type, value, traceback):
+        self.flush()
         if not self._keep_open:
             self.close()
-        if self._row_buf.tell() > 0:
-            self.flush()
 
     def __del__(self):
-        if self._row_buf.tell() > 0:
-            self.flush()
+        self.flush()
 
     def _new(self, dx_hash, **kwargs):
         '''
@@ -105,8 +110,7 @@ class DXGTable(DXDataObject):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous gtable object if the buffer is nonempty.
         '''
-        if self._row_buf.tell() > 0:
-            self.flush()
+        self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
 
@@ -182,7 +186,7 @@ class DXGTable(DXDataObject):
             end = int(self.describe(**kwargs)['length'])
         cursor = start
         while cursor < end:
-            request_size = self._bufsize
+            request_size = self._row_buffer_size
             if end is not None:
                 request_size = min(request_size, end - cursor)
             buffer = self.get_rows(starting=cursor, limit=request_size, **kwargs)['data']
@@ -215,7 +219,7 @@ class DXGTable(DXDataObject):
         while cursor is not None:
             resp = self.get_rows(query=query, columns=columns,
                                  starting=cursor,
-                                 limit=self._bufsize)
+                                 limit=self._row_buffer_size)
             buffer = resp['data']
             cursor = resp['next']
             if len(buffer) < 1: break
@@ -225,8 +229,7 @@ class DXGTable(DXDataObject):
     def __iter__(self, **kwargs):
         return self.iterate_rows(**kwargs)
 
-    def extend(self, columns, indices=None, keep_open=False,
-               buffer_size=40000, **kwargs):
+    def extend(self, columns, indices=None, keep_open=False, **kwargs):
         '''
         :param columns: List of new column names
         :type columns: list of strings
@@ -251,13 +254,13 @@ class DXGTable(DXDataObject):
             dx_hash["indices"] = indices
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
         return DXGTable(resp["id"], dx_hash["project"],
-                        keep_open, buffer_size)
+                        keep_open)
 
     def add_rows(self, data, part=None, **kwargs):
         '''
         :param data: List of rows to be added
-        :type data: list of list
-        :param part: The part ID to label the rows in data.
+        :type data: list of lists
+        :param part: The part ID to label the rows in data. Optional; it will be selected automatically if not given.
         :type part: integer
         :raises: :exc:`dxpy.exceptions.DXGTableError`
 
@@ -275,14 +278,33 @@ class DXGTable(DXDataObject):
 
         if part is None:
             for row in data:
-                rowjson = json.dumps(row)
-                if self._row_buf.tell() > 0:
-                    self._row_buf.write(", ")
-                self._row_buf.write(rowjson)
-                if self._row_buf.tell() >= self._row_buf_maxsize:
-                    self.flush()
+                self._row_buf.append(row)
+                if len(self._row_buf) >= self._row_buffer_size:
+                    self._flush_row_buf_to_string_buf()
+                    if self._string_row_buf.tell() > self._request_size:
+                        self._finalize_string_row_buf()
+                        self._send_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+                        self._string_row_buf = None
         else:
             dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
+
+    def add_row(self, row, **kwargs):
+        '''
+        :param row: Row to be added
+        :type data: list
+        :raises: :exc:`dxpy.exceptions.DXGTableError`
+
+        Adds a single row to the current gtable. Rows may be queued up for addition internally
+        and will be flushed to the remote server periodically.
+
+        Example::
+
+            with new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                               dxpy.DXGTable.make_column_desc("b", "int32")]) as dxgtable:
+                for i in range(1000):
+                    dxgtable.add_row(["foo", i])
+        '''
+        self.add_rows([row], **kwargs)
 
     def get_unused_part_id(self, **kwargs):
         '''
@@ -295,17 +317,39 @@ class DXGTable(DXDataObject):
         '''
         return dxpy.api.gtableNextPart(self._dxid, **kwargs)['part']
 
+    def _flush_row_buf_to_string_buf(self):
+        if self._string_row_buf == None:
+            self._string_row_buf = StringIO.StringIO()
+            self._string_row_buf.write('{"data": [')
+
+        if len(self._row_buf) > 0:
+            self._string_row_buf.write(json.dumps(self._row_buf)[1:])
+            self._string_row_buf.seek(-1, os.SEEK_END) # chop off trailing "]"
+            self._string_row_buf.write(", ")
+            self._row_buf = []
+
+    def _finalize_string_row_buf(self, part_id=None):
+        if part_id == None:
+            part_id = self.get_unused_part_id()
+        self._string_row_buf.seek(-2, os.SEEK_END) # chop off trailing ", "
+        self._string_row_buf.write('], "part": %s}' % str(part_id))
+
     def flush(self, **kwargs):
         '''
-        Sends any rows in the internal buffer to the API server.  
+        Sends any rows in the internal buffer to the API server. If the buffer is empty, does nothing.
         '''
-        dxpy.api.gtableAddRows(self._dxid,
-                              '{"data": [' + self._row_buf.getvalue() + '], "part":' + \
-                                  str(self.get_unused_part_id())+'}',
-                              jsonify_data=False, **kwargs)
+        if len(self._row_buf) > 0:
+            self._flush_row_buf_to_string_buf()
+        if self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": ['):
+            self._finalize_string_row_buf()
+            self._send_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+            self._string_row_buf = None
 
-        self._row_buf.close()
-        self._row_buf = StringIO.StringIO()
+        if len(self._http_threadpool_futures) > 0:
+            #print "Waiting for %d futures..." % len(self._http_threadpool_futures)
+            concurrent.futures.wait(self._http_threadpool_futures)
+            self._http_threadpool_futures = set()
+            #print "Done waiting for futures"
 
     def close(self, block=False, **kwargs):
         '''
@@ -315,11 +359,10 @@ class DXGTable(DXDataObject):
         Closes the gtable.
 
         '''
-        if self._row_buf.tell() > 0:
-            self.flush(**kwargs)
+        self.flush(**kwargs)
 
         dxpy.api.gtableClose(self._dxid, **kwargs)
-        
+
         if block:
             self._wait_on_close(**kwargs)
 
@@ -452,3 +495,19 @@ class DXGTable(DXDataObject):
             raise DXGTableError("Unrecognized substring index query mode: " + \
                                 str(mode))
         return query
+
+    def _send_add_rows_request(self, *args, **kwargs):
+        #print "Sending add rows request"
+        if self._http_threadpool == None:
+            self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+
+        while len(self._http_threadpool_futures) >= self._http_threadpool_size:
+            #print "Waiting for a future to complete..."
+            future = concurrent.futures.as_completed(self._http_threadpool_futures).next()
+            if future.exception() != None:
+                raise future.exception()
+            self._http_threadpool_futures.remove(future)
+            #print "Done"
+
+        future = self._http_threadpool.submit(dxpy.api.gtableAddRows, *args, **kwargs)
+        self._http_threadpool_futures.add(future)

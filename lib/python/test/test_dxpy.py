@@ -222,7 +222,6 @@ class TestDXFile(unittest.TestCase):
                 self.assertEqual(line, "Line " + str(lineno))
                 lineno += 1
 
-@unittest.skip("FIXME - some GTable tests hang forever")
 class TestDXGTable(unittest.TestCase):
     """
     TODO: Test iterators, gri, and other queries

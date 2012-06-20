@@ -10,7 +10,7 @@ methods return a remote table handler.
 
 from dxpy.bindings import *
 
-def open_dxgtable(dxid, project=None, buffer_size=40000):
+def open_dxgtable(dxid, project=None):
     '''
     :param dxid: table ID
     :type dxid: string
@@ -31,10 +31,10 @@ def open_dxgtable(dxid, project=None, buffer_size=40000):
 
     '''
 
-    return DXGTable(dxid, project=project, buffer_size=buffer_size)
+    return DXGTable(dxid, project=project)
 
 def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
-                 buffer_size=40000, **kwargs):
+                 **kwargs):
     '''
     :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
     :type columns: list of column descriptors
@@ -72,12 +72,11 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
 
     '''
     
-    dxgtable = DXGTable(keep_open=keep_open, buffer_size=buffer_size)
+    dxgtable = DXGTable(keep_open=keep_open)
     dxgtable.new(columns=columns, indices=indices, init_from=init_from, **kwargs)
     return dxgtable
 
-def extend_dxgtable(dxid, columns, indices=None, keep_open=False,
-                    buffer_size=40000, **kwargs):
+def extend_dxgtable(dxid, columns, indices=None, keep_open=False, **kwargs):
     '''
     :param dxid: Object ID of table to extend
     :type dxid: string
@@ -108,4 +107,4 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=False,
     '''
 
     return DXGTable(dxid).extend(columns, indices,
-                                 keep_open, buffer_size, **kwargs)
+                                 keep_open, **kwargs)
