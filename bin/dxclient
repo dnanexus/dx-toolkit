@@ -278,6 +278,11 @@ def rm(args):
             return ahash['id']
         dxproj.remove_objects( map(grab_id, dxproj.list_folder(folder=folder)['objects']))
     else:
+        for i in range(len(args.objects)):
+            id_or_none = get_id_from_path(args.objects[i])
+            if id_or_none is not None:
+                args.objects[i] = id_or_none
+
         dxproj.remove_objects(args.objects)
 
 def mv(args):
