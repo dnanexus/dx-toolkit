@@ -347,7 +347,12 @@ class DXGTable(DXDataObject):
 
         if len(self._http_threadpool_futures) > 0:
             #print "Waiting for %d futures..." % len(self._http_threadpool_futures)
-            concurrent.futures.wait(self._http_threadpool_futures)
+            #concurrent.futures.wait(self._http_threadpool_futures)
+            self._http_threadpool.shutdown()            
+            self._http_threadpool = None
+            for future in self._http_threadpool_futures:
+                if future.exception() != None:
+                    raise future.exception()
             self._http_threadpool_futures = set()
             #print "Done waiting for futures"
 
