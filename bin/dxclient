@@ -60,7 +60,7 @@ def login(args):
         if args.host is not None:
             authserver = 'http://' + args.host
         if args.port is not None:
-            authserver += ':' + args.port
+            authserver += ':' + str(args.port)
         print 'Logging into ' + authserver
 
         username = raw_input('Username: ')
@@ -69,11 +69,12 @@ def login(args):
         # authserver = 'http://' + os.environ['DX_AUTHSERVER_HOST'] + ':' + os.environ['DX_AUTHSERVER_PORT']
         session = requests.session()
 
-        response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
+        response = ""
         try:
+            response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
             response.raise_for_status()
-        except requests.exceptions.HTTPError as details:
-            print 'Error contacting the auth server: ' + details
+        except requests.exceptions.RequestException as details:
+            print 'Error contacting the auth server: ' + str(details)
             parser.exit(1)
         token = json.loads(response.content)["access_token"]
     elif args.token == 'outside':
@@ -986,7 +987,7 @@ parser_login = subparsers.add_parser('login', help='Log in and acquire credentia
 parser_login.add_argument('--token', help='Authentication token to use', default='outside')
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
-parser_login.add_argument('--port', help='Log into the given auth server port (host must also be given)')
+parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
 parser_login.set_defaults(func=login)
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
