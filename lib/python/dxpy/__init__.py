@@ -89,8 +89,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
                 # response.headers key lookup is case-insensitive
                 if response.headers.get('content-type', '').startswith('application/json'):
                     content = json.loads(response.content)
-                    raise DXAPIError(content["error"]["type"],
-                                     content["error"]["message"],
+                    raise DXAPIError(content,
                                      response.status_code)
                 response.raise_for_status()
 

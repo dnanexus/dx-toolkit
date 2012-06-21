@@ -2,6 +2,8 @@
 Exceptions for the :mod:`dxpy` package.
 '''
 
+import json
+
 class DXError(Exception):
     '''Base class for exceptions in this package'''
     pass
@@ -12,13 +14,20 @@ class DXAPIError(DXError):
     not 200 (OK).
 
     '''
-    def __init__(self, name, msg, code):
-        self.name = name
-        self.msg = msg
+    def __init__(self, content, code):
+        self.name = content["error"]["type"]
+        self.msg = content["error"]["message"]
+        if "details" in content["error"]:
+            self.details = content["error"]["details"]
+        else:
+            self.details = None
         self.code = code
 
     def __str__(self):
-        return self.name + ": " + self.msg + ", code " + str(self.code)
+        output = self.name + ": " + self.msg + ", code " + str(self.code)
+        if self.details is not None:
+            output += "\nDetails: " + json.dumps(self.details)
+        return output
 
 class DXFileError(DXError):
     '''Exception for :class:`dxpy.bindings.DXFile`'''
