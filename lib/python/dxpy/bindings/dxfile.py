@@ -299,7 +299,7 @@ class DXFile(DXDataObject):
         dxpy.api.fileClose(self._dxid, **kwargs)
 
         if block:
-            self._wait_on_close()
+            self._wait_on_close(**kwargs)
 
     def wait_on_close(self, timeout=sys.maxint, **kwargs):
         '''
