@@ -23,16 +23,6 @@ public:
 
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);
 
-private:
-
-  po::options_description * visible_opts;
-  po::options_description * hidden_opts;
-  po::options_description * command_line_opts;
-  po::options_description * env_opts;
-  po::positional_options_description * pos_opts;
-
-  po::variables_map vm;
-
   std::string authToken;
   std::string apiserverHost;
   int apiserverPort;
@@ -43,12 +33,19 @@ private:
   std::string file;
 
   int threads;
-  /* int chunks; */
   int chunkSize;
   int tries;
   bool progress;
 
-  void initFromEnvironment();
+private:
+
+  po::options_description * visible_opts;
+  po::options_description * hidden_opts;
+  po::options_description * command_line_opts;
+  po::options_description * env_opts;
+  po::positional_options_description * pos_opts;
+
+  po::variables_map vm;
 };
 
 #endif

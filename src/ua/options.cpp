@@ -30,7 +30,6 @@ Options::Options() {
     ("folder,f", po::value<string>(&folder)->default_value("/"), "Name of the destination folder")
     ("name,n", po::value<string>(&name), "Name of the file to be created")
     ("threads,t", po::value<int>(&threads)->default_value(4), "Number of parallel upload threads")
-    // ("chunks,c", po::value<int>(&chunks)->default_value(-1), "Number of chunks in which the file should be uploaded")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
@@ -110,11 +109,6 @@ void Options::validate() {
     msg << "Number of threads must be positive: " << threads;
     throw runtime_error(msg.str());
   }
-  // if (chunks < 1) {
-  //   ostringstream msg;
-  //   msg << "Number of chunks must be positive: " << chunks;
-  //   throw runtime_error(msg.str());
-  // }
   if (chunkSize < 1) {
     ostringstream msg;
     msg << "Chunk size must be positive: " << chunkSize;
@@ -146,7 +140,6 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  file: " << opt.file << endl
 
         << "  threads: " << opt.threads << endl
-        // << "  chunks: " << opt.chunks << endl
         << "  chunkSize: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl
         << "  progress: " << opt.progress << endl
