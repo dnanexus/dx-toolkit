@@ -474,7 +474,7 @@ namespace dx {
 
     Integer() {}
     Integer(const int64_t &v):val(v) {}
-    void write(std::ostream &out) const { out<<val; }
+    void write(std::ostream &out) const { out << val; }
     JSONValue type() const { return JSON_INTEGER; }
     size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
     Value* returnMyNewCopy() const { return new Integer(*this); }
@@ -494,7 +494,7 @@ namespace dx {
 
     Real() {}
     Real(const double &v):val(v) {}
-    void write(std::ostream &out) const { out<<val; }
+    void write(std::ostream &out) const { out << val; }
     JSONValue type() const { return JSON_REAL; }
     size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
     Value* returnMyNewCopy() const { return new Real(*this); }
@@ -513,7 +513,7 @@ namespace dx {
 
     String() {}
     String(const std::string &v):val(v) {}
-    // TODO: Make sure cout<<stl::string works as expected;
+    // TODO: Make sure cout << stl::string works as expected;
     void write(std::ostream &out) const;
     JSONValue type() const { return JSON_STRING; }
     std::string returnString() const { return val; }
@@ -590,7 +590,7 @@ namespace dx {
     JSON& jsonAtKey(const std::string &s);
     const JSON& jsonAtKey(const std::string &s) const;
     JSONValue type() const { return JSON_BOOLEAN; }
-    void write(std::ostream &out) const { out<<((val) ? "true" : "false"); }
+    void write(std::ostream &out) const { out << ((val) ? "true" : "false"); }
     Value* returnMyNewCopy() const { return new Boolean(*this); }
     void read(std::istream &in);
     bool isEqual(const Value* other) const;
@@ -600,7 +600,7 @@ namespace dx {
 
   class Null: public Value {
   public:
-    void write(std::ostream &out) const { out<<"null"; }
+    void write(std::ostream &out) const { out << "null"; }
     JSONValue type() const { return JSON_NULL; }
     Value* returnMyNewCopy() const { return new Null(*this); }
     void read(std::istream &in);
