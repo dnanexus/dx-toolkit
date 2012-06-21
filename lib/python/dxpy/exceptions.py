@@ -35,3 +35,10 @@ class DXProgramError(DXError):
 class DXJobFailureError(DXError):
     '''Exception produced by :class:`dxpy.bindings.DXJob` when a job fails'''
     pass
+
+class ProgramError(DXError):
+    '''Base class for fatal exceptions to be raised while using dxpy inside DNAnexus execution containers.
+    Throwing this exception will cause the Python execution template to write exception information into the file
+    *job_error.json* in the current working directory, allowing reporting of the error state through the DNAnexus
+    API.'''
+    pass
