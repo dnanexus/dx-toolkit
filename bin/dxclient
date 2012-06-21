@@ -55,17 +55,26 @@ def login(args):
     # TODO: Remove this and replace with actual logic and interaction
     # when implemented
     token = args.token
-    if args.demo:
-        print "Logging into nucleusdemo.dev.dnanexus.com"
+    if args.demo or args.host is not None or args.port is not None:
+        authserver = 'http://nucleusdemo.dev.dnanexus.com:443'
+        if args.host is not None:
+            authserver = 'http://' + args.host
+        if args.port is not None:
+            authserver += ':' + args.port
+        print 'Logging into ' + authserver
+
         username = raw_input('Username: ')
         password = getpass.getpass()
 
-        authserver = 'http://nucleusdemo.dev.dnanexus.com:443'
         # authserver = 'http://' + os.environ['DX_AUTHSERVER_HOST'] + ':' + os.environ['DX_AUTHSERVER_PORT']
         session = requests.session()
 
         response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as details:
+            print 'Error contacting the auth server: ' + details
+            parser.exit(1)
         token = json.loads(response.content)["access_token"]
     elif args.token == 'outside':
         print "Using token \"outside\""
@@ -976,6 +985,8 @@ parser_printenv.set_defaults(func=printenv)
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
 parser_login.add_argument('--token', help='Authentication token to use', default='outside')
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
+parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
+parser_login.add_argument('--port', help='Log into the given auth server port (host must also be given)')
 parser_login.set_defaults(func=login)
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
