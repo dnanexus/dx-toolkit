@@ -6,7 +6,7 @@ project(ua)
 set(CMAKE_BUILD_TYPE, Release)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -std=c++0x -Wno-deprecated")
 
 # set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -static")
 # set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_C_LINK_FLAGS}")
@@ -21,5 +21,5 @@ add_subdirectory("$ENV{NUCLEUS_HOME}/client/lib/cpp/dxcpp" dxcpp EXCLUDE_FROM_AL
 add_subdirectory("$ENV{NUCLEUS_HOME}/client/lib/cpp/resolver" resolver EXCLUDE_FROM_ALL)
 include_directories("$ENV{NUCLEUS_HOME}/client/lib/cpp")
 
-add_executable(ua main.cpp options.cpp)
+add_executable(ua main.cpp options.cpp chunk.cpp)
 target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system)

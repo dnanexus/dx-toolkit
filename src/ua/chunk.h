@@ -1,8 +1,10 @@
 #ifndef UA_CHUNK_H
 #define UA_CHUNK_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
+#include <iostream>
 
 class Chunk {
 public:
@@ -19,6 +21,8 @@ public:
   int64_t start;
   int64_t end;
   std::vector<char> data;
+
+  friend std::ostream &operator<<(std::ostream &out, const Chunk &opt);
 };
 
 #endif

@@ -1,8 +1,13 @@
+#include <cstdint>
 #include <iostream>
 #include <queue>
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
+
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 #include "options.h"
 #include "chunk.h"
@@ -26,6 +31,18 @@ queue<Chunk> chunksToRead;
 queue<Chunk> chunksToCompress;
 queue<Chunk> chunksToUpload;
 queue<Chunk> chunksFinished;
+
+void createChunks(const string &filename, const string &fileID, const Options &opt) {
+  cerr << "Creating chunks:" << endl;
+  fs::path p(filename);
+  const int64_t size = fs::file_size(p);
+  for (int64_t start = 0; start < size; start += opt.chunkSize) {
+    int64_t end = min(start + opt.chunkSize, size);
+    Chunk c(filename, fileID, opt.tries, start, end);
+    cerr << c << endl;
+    chunksToRead.push(c);
+  }
+}
 
 JSON securityContext(const string &authToken) {
   JSON ctx(JSON_OBJECT);
@@ -124,6 +141,17 @@ void testProjectPermissions(const string &projectID) {
   }
 }
 
+void testFileExists(const string &filename) {
+  cerr << "Testing existence of local file " << filename << "...";
+  fs::path p(filename);
+  if (fs::exists(p)) {
+    cerr << " success." << endl;
+  } else {
+    cerr << " failure." << endl;
+    throw runtime_error("Local file " + filename + " does not exist.");
+  }
+}
+
 /*
  * Create the folder in which the file object(s) will be created, including
  * any parent folders.
@@ -185,8 +213,13 @@ int main(int argc, char * argv[]) {
     testProjectPermissions(projectID);
     createFolder(projectID, opt.folder);
 
-    // string fileID = createFileObject(opt);
-    // cerr << "fileID is " << fileID << endl;
+    testFileExists(opt.file);
+
+    string fileID = createFileObject(opt);
+    cerr << "fileID is " << fileID << endl;
+
+    createChunks(opt.file, fileID, opt);
+
     // fileClose(fileID);
   } catch (exception &e) {
     cerr << "ERROR: " << e.what() << endl;
