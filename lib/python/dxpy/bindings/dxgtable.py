@@ -56,6 +56,8 @@ class DXGTable(DXDataObject):
             self.close()
 
     def __del__(self):
+        # TODO: when this is triggered by interpreter shutdown, the thread pool is not available,
+        # and we will wait for the request queue forever. In this case, revert to synchronous, in-thread flushing.
         self.flush()
 
     def _new(self, dx_hash, **kwargs):
@@ -283,7 +285,7 @@ class DXGTable(DXDataObject):
                     self._flush_row_buf_to_string_buf()
                     if self._string_row_buf.tell() > self._request_size:
                         self._finalize_string_row_buf()
-                        self._send_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+                        self._async_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
                         self._string_row_buf = None
         else:
             dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
@@ -342,7 +344,7 @@ class DXGTable(DXDataObject):
             self._flush_row_buf_to_string_buf()
         if self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": ['):
             self._finalize_string_row_buf()
-            self._send_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+            self._async_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
             self._string_row_buf = None
 
         if len(self._http_threadpool_futures) > 0:
@@ -501,7 +503,7 @@ class DXGTable(DXDataObject):
                                 str(mode))
         return query
 
-    def _send_add_rows_request(self, *args, **kwargs):
+    def _async_add_rows_request(self, *args, **kwargs):
         #print "Sending add rows request"
         if self._http_threadpool == None:
             self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)

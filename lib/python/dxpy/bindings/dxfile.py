@@ -13,8 +13,14 @@ from dxpy.bindings import *
 if dxpy.snappy_available:
     import snappy
 
-DEFAULT_BUFFER_SIZE = 1024*1024*128
-DEFAULT_REQUEST_SIZE = 1024*1024*32
+DEFAULT_BUFFER_SIZE = 1024*1024*32
+
+def _string_buffer_length(buf):
+    orig_pos = buf.tell()
+    buf.seek(0, os.SEEK_END)
+    buf_len = buf.tell()
+    buf.seek(orig_pos)
+    return buf_len
 
 class DXFile(DXDataObject):
     '''
@@ -47,15 +53,8 @@ class DXFile(DXDataObject):
     _list_projects = staticmethod(dxpy.api.fileListProjects)
 
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=DEFAULT_BUFFER_SIZE, request_size=DEFAULT_REQUEST_SIZE,
+                 buffer_size=DEFAULT_BUFFER_SIZE,
                  num_http_threads=4):
-        '''
-        Note: Each upload part must be at least 5 MB (per S3 backend requirements). This is enforced by the API server
-        on file close. This means file close will fail if any of the following is true about the tunable args above:
-        - buffer_size < 5 MB
-        - request_size < 5 MB
-        - request_size % buffer_size != 0
-        '''
         self._keep_open = keep_open
         self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
@@ -63,18 +62,14 @@ class DXFile(DXDataObject):
             self.set_ids(dxid, project)
         self._keep_open = keep_open
 
-        if request_size < 5*1024*1024:
-            raise DXError("Request size must be at least 5 MB")
-        if buffer_size < request_size:
-            raise DXError("Buffer size must be greater than or equal to request size")
-        if buffer_size % request_size != 0:
-            raise DXError("Buffer size must be divisible by request size")
+        if buffer_size < 5*1024*1024:
+            raise DXError("Buffer size must be at least 5 MB")
 
         self._bufsize = buffer_size
-        self._request_size = request_size
 
         self._download_url, self._download_url_expires = None, None
         self._request_iterator, self._response_iterator, self._http_threadpool = None, None, None
+        self._http_threadpool_futures = set()
         self._http_threadpool_size = num_http_threads
 
     def _new(self, dx_hash, media_type=None, **kwargs):
@@ -104,6 +99,8 @@ class DXFile(DXDataObject):
             self.flush()
 
     def __del__(self):
+        # TODO: when this is triggered by interpreter shutdown, the thread pool is not available,
+        # and we will wait for the request queue forever. In this case, revert to synchronous, in-thread flushing.
         if self._write_buf.tell() > 0:
             self.flush()
 
@@ -225,11 +222,11 @@ class DXFile(DXDataObject):
         self._write_buf = StringIO.StringIO()
         self._request_iterator, self._response_iterator, self._http_threadpool = None, None, None
 
-    def _generate_upload_part_args(self, data):
-        for chunk_start_pos in xrange(0, len(data), self._request_size):
-            chunk_end_pos = min(chunk_start_pos + self._request_size - 1, len(data))
-            yield (data[chunk_start_pos:chunk_end_pos+1], self._cur_part)
-            self._cur_part += 1
+#    def _generate_upload_part_args(self, data):
+#        for chunk_start_pos in xrange(0, len(data), self._request_size):
+#            chunk_end_pos = min(chunk_start_pos + self._request_size - 1, len(data))
+#            yield (data[chunk_start_pos:chunk_end_pos+1], self._cur_part)
+#            self._cur_part += 1
 
     def flush(self, multithread=True, **kwargs):
         '''
@@ -238,21 +235,42 @@ class DXFile(DXDataObject):
         data = self._write_buf.getvalue()
         self._write_buf = StringIO.StringIO()
 
-        if len(data) <= self._request_size or not multithread:
+        if len(data) <= self._bufsize or not multithread:
             self.upload_part(data, self._cur_part, **kwargs)
-            self._cur_part += 1
         else: # multithreaded upload
-            if self._http_threadpool == None:
-                self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+            self._async_upload_part_request(data, index=self._cur_part, **kwargs)
 
-            def do_upload_part(args):
-                data, part = args
-                self.upload_part(data, index=part, **kwargs)
+        self._cur_part += 1
 
-            for result in self._http_threadpool.map(do_upload_part, self._generate_upload_part_args(data)):
-                pass
+        if len(self._http_threadpool_futures) > 0:
+            #print "Waiting for %d futures..." % len(self._http_threadpool_futures)
+            #concurrent.futures.wait(self._http_threadpool_futures)
+            self._http_threadpool.shutdown()
+            self._http_threadpool = None
+            for future in self._http_threadpool_futures:
+                if future.exception() != None:
+                    raise future.exception()
+            self._http_threadpool_futures = set()
+            #print "Done waiting for futures"
 
-    def write(self, string, **kwargs):
+            #for result in self._http_threadpool.map(do_upload_part, self._generate_upload_part_args(data)): pass
+
+    def _async_upload_part_request(self, *args, **kwargs):
+        if self._http_threadpool == None:
+            self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+
+        while len(self._http_threadpool_futures) >= self._http_threadpool_size:
+            #print "Waiting for a future to complete..."
+            future = concurrent.futures.as_completed(self._http_threadpool_futures).next()
+            if future.exception() != None:
+                raise future.exception()
+            self._http_threadpool_futures.remove(future)
+            #print "Done"
+
+        future = self._http_threadpool.submit(self.upload_part, *args, **kwargs)
+        self._http_threadpool_futures.add(future)
+
+    def write(self, string, multithread=True, **kwargs):
         '''
         :param str: String to be written
         :type str: string
@@ -264,12 +282,24 @@ class DXFile(DXDataObject):
             Writing to remote files is append-only.  Using :meth:`seek` will not affect where the next :meth:`write` will occur.
 
         '''
-
         remaining_space = self._bufsize - self._write_buf.tell()
-        self._write_buf.write(string[:remaining_space])
-        if self._write_buf.tell() == self._bufsize:
-            self.flush(**kwargs)
-            self.write(string[remaining_space:])
+        if len(string) <= remaining_space:
+            self._write_buf.write(string)
+        else:
+            self._write_buf.write(string[:remaining_space])
+
+            data = self._write_buf.getvalue()
+            self._write_buf = StringIO.StringIO()
+
+            if multithread:
+                self._async_upload_part_request(data, index=self._cur_part, **kwargs)
+            else:
+                self.upload_part(data, self._cur_part, **kwargs)
+
+            self._cur_part += 1
+
+            # TODO: check if repeat string splitting is bad for performance when len(string) >> _bufsize
+            self.write(string[remaining_space:], **kwargs)
 
     def closed(self, **kwargs):
         '''
@@ -364,8 +394,8 @@ class DXFile(DXDataObject):
         if end_pos > self._file_length:
             raise DXError("Invalid end_pos")
 
-        for chunk_start_pos in xrange(start_pos, end_pos, self._request_size):
-            chunk_end_pos = min(chunk_start_pos + self._request_size - 1, end_pos)
+        for chunk_start_pos in xrange(start_pos, end_pos, self._bufsize):
+            chunk_end_pos = min(chunk_start_pos + self._bufsize - 1, end_pos)
             headers["Range"] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             request = requests.get(url, headers=headers, return_response=False, prefetch=True)
             yield request
@@ -379,7 +409,7 @@ class DXFile(DXDataObject):
             try:
                 return self._response_iterator.next()
             except (StopIteration, AttributeError):
-                batch_size = self._bufsize / self._request_size
+                batch_size = self._http_threadpool_size
                 request_batch = []
                 try:
                     for i in xrange(batch_size):
@@ -447,11 +477,3 @@ class DXFile(DXDataObject):
                     self._read_buf.seek(0)
             buf.seek(orig_buf_pos)
             return buf.read()
-
-
-def _string_buffer_length(buf):
-    orig_pos = buf.tell()
-    buf.seek(0, os.SEEK_END)
-    buf_len = buf.tell()
-    buf.seek(orig_pos)
-    return buf_len

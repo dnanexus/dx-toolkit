@@ -13,8 +13,7 @@ the remote file systems.
 import os
 from dxpy.bindings import *
 
-def open_dxfile(dxid, project=None, request_size=DEFAULT_REQUEST_SIZE,
-                buffer_size=DEFAULT_BUFFER_SIZE):
+def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -35,10 +34,9 @@ def open_dxfile(dxid, project=None, request_size=DEFAULT_REQUEST_SIZE,
         DXFile(dxid)
 
     '''
-    return DXFile(dxid, project=project, request_size=request_size, buffer_size=buffer_size)
+    return DXFile(dxid, project=project, buffer_size=buffer_size)
 
-def new_dxfile(keep_open=False, request_size=DEFAULT_REQUEST_SIZE,
-               buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
+def new_dxfile(keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     '''
     :param media_type: Internet Media Type (optional)
     :type media_type: string
@@ -63,12 +61,11 @@ def new_dxfile(keep_open=False, request_size=DEFAULT_REQUEST_SIZE,
         dxFile.new(**kwargs)
 
     '''
-    
-    dx_file = DXFile(keep_open=keep_open, request_size=request_size, buffer_size=buffer_size)
+    dx_file = DXFile(keep_open=keep_open, buffer_size=buffer_size)
     dx_file.new(**kwargs)
     return dx_file
 
-def slow_download_dxfile(dxid, filename, chunksize=DEFAULT_REQUEST_SIZE, append=False,
+def slow_download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                     **kwargs):
     mode = 'ab' if append else 'wb'
     with DXFile(dxid) as dxfile:
@@ -80,7 +77,7 @@ def slow_download_dxfile(dxid, filename, chunksize=DEFAULT_REQUEST_SIZE, append=
                 fd.write(file_content)
 
 
-def download_dxfile(dxid, filename, chunksize=DEFAULT_REQUEST_SIZE, append=False,
+def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                     **kwargs):
     '''
     :param dxid: Object ID of a file
@@ -141,16 +138,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     fd = file if filename is None else open(filename, 'rb')
 
     # Prevent exceeding 10K parts limit
-    buffer_size = DEFAULT_BUFFER_SIZE
     try:
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-    request_size = max(DEFAULT_REQUEST_SIZE, file_size/9999)
-    if request_size > DEFAULT_REQUEST_SIZE:
-        buffer_size = request_size * 4
-    dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, buffer_size=buffer_size,
-                        request_size=request_size, **kwargs)
+    buffer_size = max(DEFAULT_BUFFER_SIZE, file_size/9999)
+
+    dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, buffer_size=buffer_size, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
