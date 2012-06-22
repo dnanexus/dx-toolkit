@@ -3,6 +3,11 @@
 #
 import os, sys, base64, json, pprint, re, boto, syslog, pwd, logging, string, inspect, datetime
 
+def setuname():
+    if os.environ['SUDO_USER']:
+        return os.environ['SUDO_USER']
+    else:
+        return pwd.getpwuid(os.getuid())[0]
 
 #
 # Static class for logging. E.g. DXLog.warning("my warning")
@@ -13,7 +18,8 @@ class DXLog:
 
     LEVELS = ('debug','info','notice','warn','error','critical','alert','emerg')
     logger = logging.getLogger(__name__)
-    uname =  pwd.getpwuid(os.getuid())[0]
+    uname = setuname()
+
     program = os.path.basename(sys.argv[0])
     logger.setLevel(logging.DEBUG)
     stderr_formatter = logging.Formatter('%(program)s:%(message)s')
