@@ -1,40 +1,31 @@
 #include <iostream>
+#include <queue>
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
 #include "options.h"
+#include "chunk.h"
 
 using namespace std;
 using namespace dx;
 
-// /*
-//  * Ensure that the project specified in opt exists. This incidentally
-//  * ensures that the user has LIST permission on the project, and an error
-//  * will be reported if not. However, file creation will still fail if the
-//  * user does not have CONTRIBUTE permission.
-//  */
-// bool validateProject(const Options &opt) {
-//   try {
-//     JSON projDesc = projectDescribe(opt.project);
-//     cerr << "Project: " << projDesc.toString() << endl;
-//   } catch (DXAPIError &e) {
-//     cerr << "An error occurred:" << endl
-//          << " name: " << e.name << endl
-//          << " resp_code: " << e.resp_code << endl;
+/*
+ * The Upload Agent operates as a collection of threads, operating on a set
+ * of queues of Chunk objects.
+ *
+ * A Chunk represents a range of bytes within a file. Each file to be
+ * uploaded is split into a set of chunks, each containing the name of the
+ * local file; the ID of the file object being created; and the start and
+ * end of the chunk within the file.
+ *
+ * Chunks are initially added to the queue chunksToRead.
+ */
 
-//     if (e.name == "ResourceNotFound") {
-//       cerr << "ERROR: Project " << opt.project << " does not exist." << endl;
-//     } else if (e.name == "PermissionDenied") {
-//       cerr << "ERROR: Project " << opt.project << " is not accessible." << endl;
-//     } else {
-//       cerr << "ERROR: " << e.what() << endl;
-//     }
-
-//     return false;
-//   }
-//   return true;
-// }
+queue<Chunk> chunksToRead;
+queue<Chunk> chunksToCompress;
+queue<Chunk> chunksToUpload;
+queue<Chunk> chunksFinished;
 
 JSON securityContext(const string &authToken) {
   JSON ctx(JSON_OBJECT);
@@ -49,8 +40,8 @@ void testServerConnection() {
     JSON result = systemFindProjects();
     cerr << " success." << endl;
   } catch (exception &e) {
-    cerr << " failed." << endl;
-    throw e;
+    cerr << " failure." << endl;
+    throw;
   }
 }
 
@@ -95,10 +86,10 @@ string resolveProject(const string &projectSpec) {
     JSON projects = findResult["results"];
 
     if (projects.size() == 0) {
-      cerr << " failed" << endl;
+      cerr << " failure." << endl;
       throw runtime_error("\"" + projectSpec + "\" is not a valid project name or ID");
     } else if (projects.size() > 1) {
-      cerr << " failed" << endl;
+      cerr << " failure." << endl;
       throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project");
     } else {
       projectID = projects[0]["id"].get<string>();
@@ -107,7 +98,47 @@ string resolveProject(const string &projectSpec) {
     }
   } catch (DXAPIError &e) {
     cerr << "Call to findProjects failed." << endl;
-    throw e;
+    throw;
+  }
+}
+
+/*
+ * Ensure that we have at least CONTRIBUTE access to the project.
+ */
+void testProjectPermissions(const string &projectID) {
+  cerr << "Testing permissions on project " << projectID << "...";
+  try {
+    JSON desc = projectDescribe(projectID);
+    string level = desc["level"].get<string>();
+
+    if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
+      cerr << " success." << endl;
+      return;
+    } else {
+      cerr << " failure." << endl;
+      throw runtime_error("Permission level " + level + " is not sufficient to create files in project " + projectID);
+    }
+  } catch (DXAPIError &e) {
+    cerr << " call to projectDescribe failed." << endl;
+    throw;
+  }
+}
+
+/*
+ * Create the folder in which the file object(s) will be created, including
+ * any parent folders.
+ */
+void createFolder(const string &projectID, const string &folder) {
+  cerr << "Creating folder " << folder << " and parents in project " << projectID << "...";
+  try {
+    JSON params(JSON_OBJECT);
+    params["folder"] = folder;
+    params["parents"] = true;
+    projectNewFolder(projectID, params);
+    cerr << " success." << endl;
+  } catch (DXAPIError &e) {
+    cerr << " failure." << endl;
+    throw runtime_error("Could not create folder " + folder + " in project " + projectID + " (" + e.what() + ")");
   }
 }
 
@@ -136,7 +167,7 @@ int main(int argc, char * argv[]) {
   Options opt;
   opt.parse(argc, argv);
 
-  if (opt.help() || opt.getFile().empty()) {
+  if (opt.help() || opt.file.empty()) {
     opt.printHelp();
     return 1;
   }
@@ -148,26 +179,14 @@ int main(int argc, char * argv[]) {
   setSecurityContext(securityContext(opt.authToken));
   setProjectContext(opt.project);
 
-  /*
-   * TODO:
-   *
-   * (+) Verify that the API server host and port and the auth token are
-   *     valid (i.e., that we can connect to the API server.
-   *
-   * (>) Resolve the project specifier to a project ID
-   *
-   * (*) Verify that we have CONTRIBUTE permissions on the project.
-   *
-   * (*) Create the folder (could be done automatically in fileNew).
-   */
-
   try {
     testServerConnection();
     string projectID = resolveProject(opt.project);
+    testProjectPermissions(projectID);
+    createFolder(projectID, opt.folder);
 
     // string fileID = createFileObject(opt);
     // cerr << "fileID is " << fileID << endl;
-
     // fileClose(fileID);
   } catch (exception &e) {
     cerr << "ERROR: " << e.what() << endl;

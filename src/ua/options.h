@@ -19,8 +19,6 @@ public:
   void printHelp();
   void validate();
 
-  std::string getFile();
-
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);
 
   std::string authToken;

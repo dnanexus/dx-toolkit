@@ -121,10 +121,6 @@ void Options::validate() {
   }
 }
 
-string Options::getFile() {
-  return file;
-}
-
 ostream &operator<<(ostream &out, const Options &opt) {
   if (opt.vm.count("help")) {
     out << (*(opt.visible_opts)) << endl;
