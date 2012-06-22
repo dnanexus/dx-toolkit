@@ -354,6 +354,8 @@ def print_project_desc(desc):
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     print "Data usage\t" + str(desc["dataUsage"])
+    if "level" in desc:
+        print "Access level\t" + desc["level"]
     if "folders" in desc:
         print "Folders\t\t" + ', '.join(desc["folders"])
     if "objects" in desc:
