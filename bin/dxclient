@@ -483,6 +483,10 @@ def print_job_desc(desc):
     print "Launched by\t" + desc["launchedBy"]
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    if "failureReason" in desc:
+        print "Failure reason\t" + desc["failureReason"]
+    if "failureMessage" in desc:
+        print "Failure message\t" + desc["failureMessage"]
 
 def describe(args):
     # Attempt to resolve name
