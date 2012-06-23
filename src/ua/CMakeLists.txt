@@ -21,5 +21,5 @@ add_subdirectory("$ENV{NUCLEUS_HOME}/client/lib/cpp/dxcpp" dxcpp EXCLUDE_FROM_AL
 add_subdirectory("$ENV{NUCLEUS_HOME}/client/lib/cpp/resolver" resolver EXCLUDE_FROM_ALL)
 include_directories("$ENV{NUCLEUS_HOME}/client/lib/cpp")
 
-add_executable(ua main.cpp options.cpp chunk.cpp)
+add_executable(ua main.cpp options.cpp chunk.cpp bqueue.cpp)
 target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system boost_thread)
