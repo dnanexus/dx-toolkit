@@ -101,6 +101,7 @@ class DXFile(DXDataObject):
     def __del__(self):
         # TODO: when this is triggered by interpreter shutdown, the thread pool is not available,
         # and we will wait for the request queue forever. In this case, revert to synchronous, in-thread flushing.
+        # Use isinstance(sys.exc_info()[0], SystemExit)
         if self._write_buf.tell() > 0:
             self.flush()
 
