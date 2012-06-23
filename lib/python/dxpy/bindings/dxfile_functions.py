@@ -160,13 +160,14 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if not keep_open:
         dxfile.close(block=wait_on_close, **remaining_kwargs)
 
-    if filename is not None:
-        dxfile.rename(os.path.basename(filename), **remaining_kwargs)
-    else:
-        try:
-            dxfile.rename(os.path.basename(file.name), **remaining_kwargs)
-        except AttributeError:
-            pass
+    if 'name' not in kwargs:
+        if filename is not None:
+            dxfile.rename(os.path.basename(filename), **remaining_kwargs)
+        else:
+            try:
+                dxfile.rename(os.path.basename(file.name), **remaining_kwargs)
+            except AttributeError:
+                pass
 
     return dxfile
 
