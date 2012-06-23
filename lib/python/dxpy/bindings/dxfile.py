@@ -235,10 +235,10 @@ class DXFile(DXDataObject):
         data = self._write_buf.getvalue()
         self._write_buf = StringIO.StringIO()
 
-        if len(data) <= self._bufsize or not multithread:
-            self.upload_part(data, self._cur_part, **kwargs)
-        else: # multithreaded upload
+        if multithread:
             self._async_upload_part_request(data, index=self._cur_part, **kwargs)
+        else:
+            self.upload_part(data, self._cur_part, **kwargs)
 
         self._cur_part += 1
 
