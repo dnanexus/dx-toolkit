@@ -229,8 +229,9 @@ class DXApp(object):
         with the given input *app_input*.
 
         '''
-        if project is None and "DX_JOB_ID" not in os.environ:
-            project = self._proj
+        if project is None:
+            global WORKSPACE_ID
+            project = WORKSPACE_ID
 
         if self._dxid is not None:
             return DXJob(dxpy.api.appRun(
