@@ -22,6 +22,9 @@ public:
   int64_t end;
   std::vector<char> data;
 
+  void readData();
+  void clearData();
+
   friend std::ostream &operator<<(std::ostream &out, const Chunk &opt);
 };
 

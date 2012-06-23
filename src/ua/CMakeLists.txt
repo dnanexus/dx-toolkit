@@ -22,4 +22,4 @@ add_subdirectory("$ENV{NUCLEUS_HOME}/client/lib/cpp/resolver" resolver EXCLUDE_F
 include_directories("$ENV{NUCLEUS_HOME}/client/lib/cpp")
 
 add_executable(ua main.cpp options.cpp chunk.cpp)
-target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system)
+target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system boost_thread)

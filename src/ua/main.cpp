@@ -6,6 +6,7 @@
 #include "dxcpp/dxcpp.h"
 
 #include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
 
 namespace fs = boost::filesystem;
 
@@ -14,6 +15,8 @@ namespace fs = boost::filesystem;
 
 using namespace std;
 using namespace dx;
+
+Options opt;
 
 /*
  * The Upload Agent operates as a collection of threads, operating on a set
@@ -27,20 +30,147 @@ using namespace dx;
  * Chunks are initially added to the queue chunksToRead.
  */
 
-queue<Chunk> chunksToRead;
-queue<Chunk> chunksToCompress;
-queue<Chunk> chunksToUpload;
-queue<Chunk> chunksFinished;
+unsigned int totalChunks;
 
-void createChunks(const string &filename, const string &fileID, const Options &opt) {
+queue<Chunk *> chunksToRead;
+queue<Chunk *> chunksToCompress;
+queue<Chunk *> chunksToUpload;
+queue<Chunk *> chunksFinished;
+queue<Chunk *> chunksFailed;
+
+// A mutex for each queue
+boost::mutex mutRead;
+boost::mutex mutCompress;
+boost::mutex mutUpload;
+boost::mutex mutFinished;
+boost::mutex mutFailed;
+
+bool doneReading = false;
+bool doneCompressing = false;
+bool doneUploading = false;
+
+// Condition variable indicating that chunksToCompress can receive new
+// chunks from chunksToRead.
+boost::condition_variable condFillCompress;
+
+// Condition variable indicating that chunksToUpload can receive new chunks
+// from chunksToCompress.
+boost::condition_variable condFillUpload;
+
+unsigned int createChunks(const string &filename, const string &fileID) {
   cerr << "Creating chunks:" << endl;
   fs::path p(filename);
   const int64_t size = fs::file_size(p);
   for (int64_t start = 0; start < size; start += opt.chunkSize) {
     int64_t end = min(start + opt.chunkSize, size);
-    Chunk c(filename, fileID, opt.tries, start, end);
-    cerr << c << endl;
+    Chunk * c = new Chunk(filename, fileID, opt.tries, start, end);
+    cerr << (*c) << endl;
     chunksToRead.push(c);
+  }
+  return chunksToRead.size();
+}
+
+void readOneChunk() {
+  Chunk * c;
+  {
+    boost::unique_lock<boost::mutex> lockRead(mutRead);
+    c = chunksToRead.front();
+    chunksToRead.pop();
+  }
+
+  cerr << "Reading chunk " << (*c) << "..." << endl;
+  c->readData();
+
+  cerr << "Finished reading chunk " << (*c) << "." << endl;
+  boost::unique_lock<boost::mutex> lockCompress(mutCompress);
+  while (chunksToCompress.size() >= opt.threads) {
+    condFillCompress.wait(lockCompress);
+  }
+  chunksToCompress.push(c);
+}
+
+/*
+ * If the number of chunks in chunksToCompress is less than opt.threads,
+ * then take a chunk from chunksToRead, read its contents, and put it in
+ * chunksToCompress.
+ */
+void readChunks() {
+  while (true) {
+    if (chunksToRead.empty()) {
+      doneReading = true;
+      break;
+    } else {
+      readOneChunk();
+    }
+  }
+}
+
+void compressOneChunk() {
+  if (!chunksToCompress.empty()) {
+    Chunk * c;
+    {
+      boost::unique_lock<boost::mutex> lockCompress(mutCompress);
+      c = chunksToCompress.front();
+      chunksToCompress.pop();
+    }
+    if (chunksToCompress.size() < opt.threads) {
+      condFillCompress.notify_one();
+    }
+
+    cerr << "Compressing chunk " << (*c) << "..." << endl;
+    // TODO: compress the chunk
+
+    cerr << "Finished compressing chunk " << (*c) << "." << endl;
+    boost::unique_lock<boost::mutex> lockUpload(mutUpload);
+    while (chunksToUpload.size() >= opt.threads) {
+      condFillUpload.wait(lockUpload);
+    }
+    chunksToUpload.push(c);
+  }
+}
+
+void compressChunks() {
+  while (true) {
+    if (doneReading && chunksToCompress.empty()) {
+      doneCompressing = true;
+      break;
+    } else {
+      compressOneChunk();
+    }
+  }
+}
+
+void uploadOneChunk() {
+  if (!chunksToUpload.empty()) {
+    Chunk * c;
+    {
+      boost::unique_lock<boost::mutex> lockUpload(mutUpload);
+      c = chunksToUpload.front();
+      chunksToUpload.pop();
+    }
+    if (chunksToUpload.size() < opt.threads) {
+      condFillUpload.notify_one();
+    }
+
+    cerr << "Uploading chunk " << (*c) << "..." << endl;
+    // TODO: upload the chunk
+
+    cerr << "Finished uploading chunk " << (*c) << "." << endl;
+    {
+      boost::unique_lock<boost::mutex> lockFinished(mutFinished);
+      chunksFinished.push(c);
+    }
+  }
+}
+
+void uploadChunks() {
+  while (true) {
+    if (doneReading && doneCompressing && chunksToUpload.empty()) {
+      doneUploading = true;
+      break;
+    } else {
+      uploadOneChunk();
+    }
   }
 }
 
@@ -175,7 +305,7 @@ void createFolder(const string &projectID, const string &folder) {
  * specified in opt, and with the specified name. The folder and any parent
  * folders are created if they do not exist.
  */
-string createFileObject(const Options &opt) {
+string createFileObject() {
   JSON params(JSON_OBJECT);
   params["project"] = opt.project;
   params["folder"] = opt.folder;
@@ -192,7 +322,6 @@ string createFileObject(const Options &opt) {
 int main(int argc, char * argv[]) {
   cerr << "DNAnexus Upload Agent" << endl;
 
-  Options opt;
   opt.parse(argc, argv);
 
   if (opt.help() || opt.file.empty()) {
@@ -215,10 +344,34 @@ int main(int argc, char * argv[]) {
 
     testFileExists(opt.file);
 
-    string fileID = createFileObject(opt);
+    string fileID = createFileObject();
     cerr << "fileID is " << fileID << endl;
 
-    createChunks(opt.file, fileID, opt);
+    totalChunks = createChunks(opt.file, fileID);
+    cerr << "Created " << totalChunks << " chunks." << endl;
+
+    cerr << "Creating read thread..." << endl;
+    boost::thread readThread(readChunks);
+
+    cerr << "Creating compress thread.." << endl;
+    boost::thread compressThread(compressChunks);
+
+    cerr << "Creating upload thread.." << endl;
+    boost::thread uploadThread(uploadChunks);
+
+    cerr << "Joining read thread..." << endl;
+    readThread.join();
+    cerr << "Read thread finished." << endl;
+
+    cerr << "Joining compress thread..." << endl;
+    compressThread.join();
+    cerr << "Compress thread finished." << endl;
+
+    cerr << "Joining upload thread..." << endl;
+    uploadThread.join();
+    cerr << "Upload thread finished." << endl;
+
+    cerr << "Exiting." << endl;
 
     // fileClose(fileID);
   } catch (exception &e) {
