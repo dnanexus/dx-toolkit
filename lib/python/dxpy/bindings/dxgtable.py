@@ -198,7 +198,7 @@ class DXGTable(DXDataObject):
         if self._http_threadpool is None:
             DXGTable._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
-        request_iterator = self._generate_read_requests(start_row=start, end_row=end, get_rows_params={}, **kwargs)
+        request_iterator = self._generate_read_requests(start_row=start, end_row=end, **kwargs)
 
         for response in dxpy.utils.response_iterator(request_iterator, self._http_threadpool, max_active_tasks=self._http_threadpool_size):
             for row in response['data']:
