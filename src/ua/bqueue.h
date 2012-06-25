@@ -22,13 +22,7 @@ class Chunk;  // forward declaration, so we don't need to include chunk.h
 class BlockingQueue {
 public:
 
-  BlockingQueue(int capacity_ = -1)
-    : capacity(capacity_)
-  {
-  }
-
-  ~BlockingQueue()
-  {
+  BlockingQueue(int capacity_ = -1) : capacity(capacity_) {
   }
 
   void setCapacity(int capacity_);
