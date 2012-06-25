@@ -9,18 +9,13 @@ import os, logging
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
+import dxpy.utils
 
 if dxpy.snappy_available:
     import snappy
 
+# TODO: adaptive buffer size
 DEFAULT_BUFFER_SIZE = 1024*1024*32
-
-def _string_buffer_length(buf):
-    orig_pos = buf.tell()
-    buf.seek(0, os.SEEK_END)
-    buf_len = buf.tell()
-    buf.seek(orig_pos)
-    return buf_len
 
 class DXFile(DXDataObject):
     '''
@@ -52,14 +47,17 @@ class DXFile(DXDataObject):
     _close = staticmethod(dxpy.api.fileClose)
     _list_projects = staticmethod(dxpy.api.fileListProjects)
 
-    def __init__(self, dxid=None, project=None, keep_open=False,
-                 buffer_size=DEFAULT_BUFFER_SIZE,
-                 num_http_threads=4):
+    _http_threadpool = None
+    _http_threadpool_size = NUM_HTTP_THREADS
+
+    @classmethod
+    def set_http_threadpool_size(cls, num_threads):
+        cls._http_threadpool_size = num_threads
+
+    def __init__(self, dxid=None, project=None, keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE):
         self._keep_open = keep_open
         self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
-        if dxid is not None:
-            self.set_ids(dxid, project)
         self._keep_open = keep_open
 
         if buffer_size < 5*1024*1024:
@@ -68,9 +66,11 @@ class DXFile(DXDataObject):
         self._bufsize = buffer_size
 
         self._download_url, self._download_url_expires = None, None
-        self._request_iterator, self._response_iterator, self._http_threadpool = None, None, None
+        self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
-        self._http_threadpool_size = num_http_threads
+
+        if dxid is not None:
+            self.set_ids(dxid, project)
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -93,17 +93,20 @@ class DXFile(DXDataObject):
         return self
 
     def __exit__(self, type, value, traceback):
+        self.flush()
         if (not self._keep_open) and self._get_state() == "open":
             self.close()
-        if self._write_buf.tell() > 0:
-            self.flush()
 
     def __del__(self):
-        # TODO: when this is triggered by interpreter shutdown, the thread pool is not available,
-        # and we will wait for the request queue forever. In this case, revert to synchronous, in-thread flushing.
-        # Use isinstance(sys.exc_info()[0], SystemExit)
-        if self._write_buf.tell() > 0:
-            self.flush()
+        '''
+        When this is triggered by interpreter shutdown, the thread pool is not available,
+        and we will wait for the request queue forever. In this case, we must revert to synchronous, in-thread flushing.
+        I don't know how to detect this condition, so I'll use that for all destructor events.
+        Use a context manager or flush the object explicitly to avoid this.
+
+        Also, neither this nor context managers are compatible with kwargs pass-through (so e.g. no custom auth).
+        '''
+        self.flush(multithread=False)
 
     def __iter__(self):
         buffer = self.read(self._bufsize)
@@ -134,8 +137,7 @@ class DXFile(DXDataObject):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous file object if the buffer is nonempty.
         '''
-        if self._write_buf.tell() > 0:
-            self.flush()
+        self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
 
@@ -143,72 +145,6 @@ class DXFile(DXDataObject):
         self._pos = 0
         self._file_length = None
         self._cur_part = 1
-
-    def slow_read(self, size=None, use_compression=None, **kwargs):
-        '''
-        :param size: Maximum number of bytes to be read
-        :type size: integer
-        :rtype: string
-
-        Returns the next *size* bytes or until the end of file if no
-        *size* is given or there are fewer than *size* bytes left in
-        the file.
-
-        '''
-
-        url = self.get_download_url(**kwargs)
-        headers = {}
-
-        if self._file_length is None:
-            desc = self.describe(**kwargs)
-            self._file_length = int(desc["size"])
-
-        if self._pos == self._file_length:
-            return ""
-
-        if self._pos > 0 or size is not None:
-            endbyte = self._file_length - 1
-            if size is not None:
-                endbyte = min(self._pos + size - 1, endbyte)
-
-            headers["Range"] = "bytes=" + str(self._pos) + "-" + str(endbyte)
-            self._pos = endbyte + 1
-        else:
-            self._pos = self._file_length
-
-        if use_compression == 'snappy':
-            if not dxpy.snappy_available:
-                raise DXError("Snappy compression requested, but the snappy module is unavailable")
-            headers['accept-encoding'] = 'snappy'
-
-        # HACK. TODO: integrate with overall dxpy retry policy
-        FILE_DOWNLOAD_RETRIES = 5
-        for i in range(FILE_DOWNLOAD_RETRIES):
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-
-            if 'content-length' in response.headers:
-                if int(response.headers['content-length']) != len(response.content):
-                    if i == FILE_DOWNLOAD_RETRIES-1:
-                        raise HTTPError("Received response with content-length header set to %s but content length is %d"
-                                        % (response.headers['content-length'], len(response.content)))
-                    else:
-                        logging.error("Received response with content-length header set to %s but content length is %d"
-                                      % (response.headers['content-length'], len(response.content)))
-                        continue
-
-            break
-
-        if use_compression and response.headers.get('content-encoding', '') == 'snappy':
-            return snappy.uncompress(response.content)
-        else:
-            return response.content
-
-        # Debug fallback
-        # import urllib2
-        # req = urllib2.Request(url, headers=headers)
-        # response = urllib2.urlopen(req)
-        # return response.read()
 
     def seek(self, offset):
         '''
@@ -221,52 +157,39 @@ class DXFile(DXDataObject):
         '''
         self._pos = offset
         self._write_buf = StringIO.StringIO()
-        self._request_iterator, self._response_iterator, self._http_threadpool = None, None, None
-
-#    def _generate_upload_part_args(self, data):
-#        for chunk_start_pos in xrange(0, len(data), self._request_size):
-#            chunk_end_pos = min(chunk_start_pos + self._request_size - 1, len(data))
-#            yield (data[chunk_start_pos:chunk_end_pos+1], self._cur_part)
-#            self._cur_part += 1
+        self._request_iterator, self._response_iterator = None, None
 
     def flush(self, multithread=True, **kwargs):
         '''
         Flushes the internal write buffer
         '''
-        data = self._write_buf.getvalue()
-        self._write_buf = StringIO.StringIO()
+        if self._write_buf.tell() > 0:
+            data = self._write_buf.getvalue()
+            self._write_buf = StringIO.StringIO()
 
-        if multithread:
-            self._async_upload_part_request(data, index=self._cur_part, **kwargs)
-        else:
-            self.upload_part(data, self._cur_part, **kwargs)
+            if multithread:
+                self._async_upload_part_request(data, index=self._cur_part, **kwargs)
+            else:
+                self.upload_part(data, self._cur_part, **kwargs)
 
-        self._cur_part += 1
+            self._cur_part += 1
 
         if len(self._http_threadpool_futures) > 0:
-            #print "Waiting for %d futures..." % len(self._http_threadpool_futures)
-            #concurrent.futures.wait(self._http_threadpool_futures)
-            self._http_threadpool.shutdown()
-            self._http_threadpool = None
+            concurrent.futures.wait(self._http_threadpool_futures)
             for future in self._http_threadpool_futures:
                 if future.exception() != None:
                     raise future.exception()
             self._http_threadpool_futures = set()
-            #print "Done waiting for futures"
-
-            #for result in self._http_threadpool.map(do_upload_part, self._generate_upload_part_args(data)): pass
 
     def _async_upload_part_request(self, *args, **kwargs):
         if self._http_threadpool == None:
-            self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+            DXFile._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
-            #print "Waiting for a future to complete..."
             future = concurrent.futures.as_completed(self._http_threadpool_futures).next()
             if future.exception() != None:
                 raise future.exception()
             self._http_threadpool_futures.remove(future)
-            #print "Done"
 
         future = self._http_threadpool.submit(self.upload_part, *args, **kwargs)
         self._http_threadpool_futures.add(future)
@@ -323,9 +246,7 @@ class DXFile(DXDataObject):
         be closed until all parts have been fully uploaded, and an
         exception will be thrown in this case.
         '''
-
-        if self._write_buf.tell() > 0:
-            self.flush(**kwargs)
+        self.flush(**kwargs)
 
         dxpy.api.fileClose(self._dxid, **kwargs)
 
@@ -369,8 +290,6 @@ class DXFile(DXDataObject):
         resp = requests.post(url, data=data, headers=headers)
         resp.raise_for_status()
 
-        # TODO: Consider retrying depending on the status
-
         if display_progress:
             print >> sys.stderr, "."
 
@@ -384,7 +303,6 @@ class DXFile(DXDataObject):
 
     def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
         url = self.get_download_url(**kwargs)
-        headers = {}
 
         if self._file_length == None:
             desc = self.describe(**kwargs)
@@ -397,41 +315,35 @@ class DXFile(DXDataObject):
 
         for chunk_start_pos in xrange(start_pos, end_pos, self._bufsize):
             chunk_end_pos = min(chunk_start_pos + self._bufsize - 1, end_pos)
-            headers["Range"] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
-            request = requests.get(url, headers=headers, return_response=False, prefetch=True)
-            yield request
+            headers = {'Range': "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)}
+            yield DXHTTPRequest, [url, ''], {'method': 'GET',
+                                             'headers': headers,
+                                             'jsonify_data': False,
+                                             'prepend_srv': False,
+                                             'prefetch': True}
 
-    def _next_response(self):
-        '''
-        Dequeues and returns the next response from the response queue.
-        Expects self._request_iterator, self._response_iterator to be set.
-        '''
-        while True:
-            try:
-                return self._response_iterator.next()
-            except (StopIteration, AttributeError):
-                batch_size = self._http_threadpool_size
-                request_batch = []
-                try:
-                    for i in xrange(batch_size):
-                        request_batch.append(self._request_iterator.next())
-                except StopIteration:
-                    if len(request_batch) == 0:
-                        raise
-                self._start_response_iterator(request_batch)
+    def _next_response_content(self):
+        if self._http_threadpool is None:
+            DXFile._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
-    def _start_response_iterator(self, request_batch):
-        if self._http_threadpool == None:
-            self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
-
-        def send(r):
-            r.send(prefetch=True)
-            return r.response
-
-        self._response_iterator = self._http_threadpool.map(send, request_batch)
+        if self._response_iterator is None:
+            self._response_iterator = dxpy.utils.response_iterator(self._request_iterator, self._http_threadpool,
+                                                                   max_active_tasks=self._http_threadpool_size)
+        return self._response_iterator.next()
 
     def read(self, length=None, use_compression=None, **kwargs):
-        # Note passthrough kwargs are not respected while using the same response iterator (i.e. until next seek).
+        '''
+        :param size: Maximum number of bytes to be read
+        :type size: integer
+        :rtype: string
+
+        Returns the next *size* bytes or until the end of file if no *size* is given or there are fewer than *size*
+        bytes left in the file.
+
+        .. note::
+        After the first call to read(), passthrough kwargs are not respected while using the same response iterator
+        (i.e. until next seek).
+        '''
         if self._response_iterator == None:
             self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)
 
@@ -445,11 +357,8 @@ class DXFile(DXDataObject):
         if length == None or length > self._file_length - self._pos:
             length = self._file_length - self._pos
 
-#        print "FL %d, pos %d, length %d" % (self._file_length, self._pos, length)
-
         buf = self._read_buf
-        buf_remaining_bytes = _string_buffer_length(buf) - buf.tell()
-#        print "buf length", _string_buffer_length(buf), "pos", buf.tell(), "rem bytes", buf_remaining_bytes
+        buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
         if length <= buf_remaining_bytes:
             self._pos += length
             return buf.read(length)
@@ -459,13 +368,7 @@ class DXFile(DXDataObject):
             buf.seek(0, os.SEEK_END)
             while self._pos < orig_file_pos + length:
                 remaining_len = orig_file_pos + length - self._pos
-                response = self._next_response()
-                response.raise_for_status()
-
-                if use_compression and response.headers.get('content-encoding', '') == 'snappy':
-                    content = snappy.uncompress(response.content)
-                else:
-                    content = response.content
+                content = self._next_response_content()
 
                 if len(content) < remaining_len:
                     buf.write(content)
@@ -478,3 +381,9 @@ class DXFile(DXDataObject):
                     self._read_buf.seek(0)
             buf.seek(orig_buf_pos)
             return buf.read()
+
+        # Debug fallback
+        # import urllib2
+        # req = urllib2.Request(url, headers=headers)
+        # response = urllib2.urlopen(req)
+        # return response.read()

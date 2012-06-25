@@ -21,7 +21,7 @@ beforehand as applicable while using the format 'hostname:port'
 
 '''
 
-import os, json, requests
+import os, json, requests, time
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
 from dxpy.exceptions import *
@@ -36,10 +36,18 @@ API_VERSION = '1.0.0'
 AUTH_HELPER = None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
-MAX_RETRIES = 0
+DEFAULT_RETRIES = 5
+
+http_server_errors = set([requests.codes.server_error,
+                          requests.codes.bad_gateway,
+                          requests.codes.service_unavailable,
+                          requests.codes.gateway_timeout])
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=None,
-                  use_compression=None, jsonify_data=True, want_full_response=False, **kwargs):
+                  use_compression=None, jsonify_data=True, want_full_response=False,
+                  prepend_srv=True,
+                  max_retries=DEFAULT_RETRIES, always_retry=False,
+                  **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
@@ -48,20 +56,22 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
     :type jsonify_data: boolean
     :param want_full_response: Indicates whether the function should return the full :class:`requests.Response` object or just the content of the response
     :type want_full_response: boolean
+    :param max_retries: Number of retries to perform for requests which are safe to retry. Safe requests are GET requests or requests which produced a network error or HTTP/1.1 server error (500, 502, 503, 504).
+    :type max_retries: int
+    :param always_retry: Indicates whether to attempt retries even for requests which are not considered safe to retry.
+    :type always_retry: boolean
     :returns: Response from API server in the requested format.  Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the contents of the response will **always** be converted from JSON to Python before it is returned, and it will therefore be of type list or dict.
     :raises: :exc:`requests.exceptions.HTTPError` if response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
 
     Wrapper around requests.request(). Inserts authentication and
     converts *data* to JSON.
     '''
-    url = APISERVER + resource
+    url = APISERVER + resource if prepend_srv else resource
 
     if auth is None:
         auth = AUTH_HELPER
     if config is None:
         config = {}
-    # TODO: decide which routes are safe to retry
-    # TODO: exponential backoff policy in requests
     # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
     # config.setdefault('max_retries', MAX_RETRIES)
     if 'Content-Type' not in headers:
@@ -77,7 +87,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
         headers['accept-encoding'] = 'snappy'
 
     last_error = None
-    for retry in range(MAX_RETRIES + 1):
+    for retry in range(max_retries + 1):
         try:
             response = requests.request(method, url, data=data, headers=headers,
                                         auth=auth, config=config, **kwargs)
@@ -109,12 +119,19 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
                 if response.headers.get('content-type', '').startswith('application/json'):
                     return json.loads(decoded_content)
                 return decoded_content
-        except ConnectionError as e:
+        except (DXAPIError, ConnectionError, HTTPError) as e:
             last_error = e
-        except (DXAPIError, HTTPError) as e:
-            last_error = e
-            if method != 'GET' and response.status_code != requests.codes.server_error:
-                break # Disable retries
+            
+            # TODO: support HTTP/1.1 503 Retry-After
+            # TODO: if the socket was dropped mid-request, ConnectionError is raised, but non-idempotent requests are unsafe to retry
+            # Distinguish between connection initiation errors and dropped socket errors
+            if retry < max_retries:
+                if always_retry or isinstance(e, ConnectionError) or method == 'GET' or response.status_code in http_server_errors:
+                    delay = 2 ** (retry+1)
+                    logging.warn("%s: Waiting %d seconds before try %d of %d..." % (url, delay, retry+1, max_retries))
+                    time.sleep(delay)
+                    continue
+            break
         if last_error is None:
             last_error = DXError("Internal error in DXHTTPRequest")
     raise last_error

@@ -60,6 +60,8 @@ import dxpy.api
 from dxpy.exceptions import *
 import copy
 
+NUM_HTTP_THREADS = 4
+
 class DXDataObject(object):
     """Abstract base class for all remote object handlers"""
 

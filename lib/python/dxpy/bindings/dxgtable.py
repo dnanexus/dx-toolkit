@@ -3,11 +3,12 @@ DXGTable Handler
 ****************
 """
 
-import os, json
+import os, sys, json
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
 
+# TODO: adaptive buffer size
 DEFAULT_TABLE_ROW_BUFFER_SIZE = 40000
 DEFAULT_TABLE_REQUEST_SIZE = 1024*1024*32 # bytes
 
@@ -32,16 +33,21 @@ class DXGTable(DXDataObject):
     _close = staticmethod(dxpy.api.gtableClose)
     _list_projects = staticmethod(dxpy.api.gtableListProjects)
 
+    _http_threadpool = None
+    _http_threadpool_size = NUM_HTTP_THREADS
+
+    @classmethod
+    def set_http_threadpool_size(cls, num_threads):
+        cls._http_threadpool_size = num_threads
+
     def __init__(self, dxid=None, project=None, keep_open=False,
-                 request_size=DEFAULT_TABLE_REQUEST_SIZE, num_http_threads=4):
+                 request_size=DEFAULT_TABLE_REQUEST_SIZE):
         self._keep_open = keep_open
 
         self._request_size = request_size
         self._row_buf = []
         self._row_buffer_size = DEFAULT_TABLE_ROW_BUFFER_SIZE
         self._string_row_buf = None
-        self._http_threadpool = None
-        self._http_threadpool_size = num_http_threads
         self._http_threadpool_futures = set()
 
         if dxid is not None:
@@ -56,9 +62,15 @@ class DXGTable(DXDataObject):
             self.close()
 
     def __del__(self):
-        # TODO: when this is triggered by interpreter shutdown, the thread pool is not available,
-        # and we will wait for the request queue forever. In this case, revert to synchronous, in-thread flushing.
-        self.flush()
+        '''
+        When this is triggered by interpreter shutdown, the thread pool is not available,
+        and we will wait for the request queue forever. In this case, we must revert to synchronous, in-thread flushing.
+        I don't know how to detect this condition, so I'll use that for all destructor events.
+        Use a context manager or flush the object explicitly to avoid this.
+
+        Also, neither this nor context managers are compatible with kwargs pass-through (so e.g. no custom auth).
+        '''
+        self.flush(multithread=False)
 
     def _new(self, dx_hash, **kwargs):
         '''
@@ -155,7 +167,7 @@ class DXGTable(DXDataObject):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        return dxpy.api.gtableGet(self._dxid, get_rows_params, **kwargs)
+        return dxpy.api.gtableGet(self._dxid, get_rows_params, always_retry=True, **kwargs)
 
     def get_col_names(self, **kwargs):
         '''
@@ -183,20 +195,14 @@ class DXGTable(DXDataObject):
         interval [*start*, *end*).
 
         """
+        if self._http_threadpool is None:
+            DXGTable._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
-        if end is None:
-            end = int(self.describe(**kwargs)['length'])
-        cursor = start
-        while cursor < end:
-            request_size = self._row_buffer_size
-            if end is not None:
-                request_size = min(request_size, end - cursor)
-            buffer = self.get_rows(starting=cursor, limit=request_size, **kwargs)['data']
-            if len(buffer) < 1: break
-            for row in buffer:
+        request_iterator = self._generate_read_requests(start_row=start, end_row=end, get_rows_params={}, **kwargs)
+
+        for response in dxpy.utils.response_iterator(request_iterator, self._http_threadpool, max_active_tasks=self._http_threadpool_size):
+            for row in response['data']:
                 yield row
-                cursor += 1
-                if cursor >= end: break
 
     def iterate_query_rows(self, query=None, columns=None, **kwargs):
         """
@@ -228,8 +234,8 @@ class DXGTable(DXDataObject):
             for row in buffer:
                 yield row
 
-    def __iter__(self, **kwargs):
-        return self.iterate_rows(**kwargs)
+    def __iter__(self):
+        return self.iterate_rows()
 
     def extend(self, columns, indices=None, keep_open=False, **kwargs):
         '''
@@ -336,7 +342,7 @@ class DXGTable(DXDataObject):
         self._string_row_buf.seek(-2, os.SEEK_END) # chop off trailing ", "
         self._string_row_buf.write('], "part": %s}' % str(part_id))
 
-    def flush(self, **kwargs):
+    def flush(self, multithread=True, **kwargs):
         '''
         Sends any rows in the internal buffer to the API server. If the buffer is empty, does nothing.
         '''
@@ -344,19 +350,18 @@ class DXGTable(DXDataObject):
             self._flush_row_buf_to_string_buf()
         if self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": ['):
             self._finalize_string_row_buf()
-            self._async_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+            if multithread:
+                self._async_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+            else:
+                dxpy.api.gtableAddRows(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
             self._string_row_buf = None
 
         if len(self._http_threadpool_futures) > 0:
-            #print "Waiting for %d futures..." % len(self._http_threadpool_futures)
-            #concurrent.futures.wait(self._http_threadpool_futures)
-            self._http_threadpool.shutdown()
-            self._http_threadpool = None
+            concurrent.futures.wait(self._http_threadpool_futures)
             for future in self._http_threadpool_futures:
                 if future.exception() != None:
                     raise future.exception()
             self._http_threadpool_futures = set()
-            #print "Done waiting for futures"
 
     def close(self, block=False, **kwargs):
         '''
@@ -504,17 +509,28 @@ class DXGTable(DXDataObject):
         return query
 
     def _async_add_rows_request(self, *args, **kwargs):
-        #print "Sending add rows request"
-        if self._http_threadpool == None:
-            self._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+        if self._http_threadpool is None:
+            DXGTable._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
-            #print "Waiting for a future to complete..."
             future = concurrent.futures.as_completed(self._http_threadpool_futures).next()
             if future.exception() != None:
                 raise future.exception()
             self._http_threadpool_futures.remove(future)
-            #print "Done"
 
         future = self._http_threadpool.submit(dxpy.api.gtableAddRows, *args, **kwargs)
         self._http_threadpool_futures.add(future)
+
+    # TODO: deal with invalid start_row, end_row
+    def _generate_read_requests(self, start_row=0, end_row=None, get_rows_params={}, **kwargs):
+        kwargs['always_retry'] = True
+        if end_row is None:
+            end_row = int(self.describe(**kwargs)['length'])
+        cursor = start_row
+        while cursor < end_row:
+            request_size = min(self._row_buffer_size, end_row - cursor)
+            my_get_rows_params = dict(get_rows_params)
+            my_get_rows_params['starting'] = cursor
+            my_get_rows_params['limit'] = request_size
+            yield dxpy.api.gtableGet, [self._dxid, my_get_rows_params], kwargs
+            cursor += request_size

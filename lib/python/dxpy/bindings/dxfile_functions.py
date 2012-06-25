@@ -65,18 +65,6 @@ def new_dxfile(keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     dx_file.new(**kwargs)
     return dx_file
 
-def slow_download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
-                    **kwargs):
-    mode = 'ab' if append else 'wb'
-    with DXFile(dxid) as dxfile:
-        with open(filename, mode) as fd:
-            while True:
-                file_content = dxfile.slow_read(chunksize, **kwargs)
-                if len(file_content) == 0:
-                    break
-                fd.write(file_content)
-
-
 def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                     **kwargs):
     '''
