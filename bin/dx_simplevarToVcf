@@ -7,8 +7,6 @@ import re
 
 #Usage: sample input: dx_Simplevar2Vcf
 def main():
-    
-    print "here"
 
     parser = OptionParser("Usage: %prog table_id output quality_filter")
     parser.add_option("--table_id", dest="simple_var_id", help="Simplevar table id to read from")
@@ -17,8 +15,6 @@ def main():
     parser.add_option("--region", "-L", dest="region", action="append", help="Regions to pull mappings from in the format chr:lo-hi, useful for parallelization")
     parser.add_option("--region_index_offset", dest="index_offset", type="int", default=0, help="For region arguments, shift the index by this amount (useful for converting from one-indexed to zero-indexed lists)")
     parser.add_option("--export_minimal_columns", dest="export_minimal_columns", default=True, action="store_false" , help="Export more columns than the minimal simplevar set, if present")
-    
-    
     
     (opts, args) = parser.parse_args()
     outputFile = open(opts.file_name, 'w')
@@ -41,7 +37,6 @@ def main():
     for i in range(len(contigDetails['contigs']['names'])):
         chromosomeOffsets[contigDetails['contigs']['names'][i]] = contigDetails['contigs']['offsets'][i]
 
-    print chromosomeOffsets
 
     contigSequence = open("ref.txt",'r').read()
     
@@ -76,28 +71,31 @@ def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequenc
     
     minimalColumns = ["chr", "lo", "hi", "type", "ref", "alt", "qual", "coverage", "genotypeQuality", "vcf_alt"]
     
-    chr = str(row[col["chr"]])
-    pos = row[col["lo"]]+1
-    ref = str(row[col["ref"]]).replace("-","")
-    if (row[col["type"]]) == "Ins" or (row[col["type"]]) == "Del" or (row[col["type"]]) == "Complex" or (row[col["type"]]) == "Mixed":
-        ref = contigSequence[chromosomeOffsets[chr]+int(pos)]+ref
-        pos += 1
-    altOptions = row[col["alt"]].split("/")
-    qual = str(row[col["qual"]])
-    filter = "."
-    vcfAlt = row[col["vcf_alt"]]
-    vcfAdditional = row[col["vcf_additional_data"]]
-    if row[3] != "Ref" and row[3] != "No-call" and qual < filter:
-        filter = "q"+str(filter)
-    else:
-        filter = "PASS"
-        
-    outputFile.write(chr+"\t"+str(pos)+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter)
-    if writeAdditionalColumns:
-        for k,v in col.iteritems():
-            if k not in minimalColumns:
-                outputFile.write("\t"+str(row[v]))
-    outputFile.write("\n")
+    if row[col["type"]] != "No-call":
+    
+        chr = str(row[col["chr"]])
+        pos = row[col["lo"]]+1
+        ref = str(row[col["ref"]]).replace("-","")
+        if row[col["type"]] != "No-call":
+            if (row[col["type"]]) == "Ins" or (row[col["type"]]) == "Del" or (row[col["type"]]) == "Complex" or (row[col["type"]]) == "Mixed":
+                ref = contigSequence[chromosomeOffsets[chr]+int(pos)]+ref
+                pos += 1
+            altOptions = row[col["alt"]].split("/")
+            qual = str(row[col["qual"]])
+            filter = "."
+            vcfAlt = row[col["vcf_alt"]]
+            vcfAdditional = row[col["vcf_additional_data"]]
+            if row[3] != "Ref" and qual < filter:
+                filter = "q"+str(filter)
+            else:
+                filter = "PASS"
+                
+            outputFile.write(chr+"\t"+str(pos)+"\t.\t"+ref+"\t"+vcfAlt+"\t"+qual+"\t"+filter)
+            if writeAdditionalColumns:
+                for k,v in col.iteritems():
+                    if k not in minimalColumns:
+                        outputFile.write("\t"+str(row[v]))
+        outputFile.write("\n")
     
     
     

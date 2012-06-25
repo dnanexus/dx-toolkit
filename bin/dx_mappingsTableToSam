@@ -113,7 +113,7 @@ def writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds):
     orientation = 1
     
     
-    if values.get("quality") == None:
+    if values.get("quality") == None or values.get("quality") == "":
         qual = "*"
     else:
         qual = values["quality"]
