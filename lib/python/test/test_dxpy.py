@@ -222,6 +222,16 @@ class TestDXFile(unittest.TestCase):
                 self.assertEqual(line, "Line " + str(lineno))
                 lineno += 1
 
+    def test_dxfile_errors(self):
+        self.dxfile = dxpy.new_dxfile()
+        self.dxfile.write("Line 1\nLine 2\nLine 3\n")
+        
+        with self.assertRaises(DXFileError):
+            self.dxfile.read(3)
+        with self.assertRaises(DXFileError):
+            for line in self.dxfile:
+                pass
+
 class TestDXGTable(unittest.TestCase):
     """
     TODO: Test iterators, gri, and other queries

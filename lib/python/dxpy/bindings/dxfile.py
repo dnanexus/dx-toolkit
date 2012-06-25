@@ -61,7 +61,7 @@ class DXFile(DXDataObject):
         self._keep_open = keep_open
 
         if buffer_size < 5*1024*1024:
-            raise DXError("Buffer size must be at least 5 MB")
+            raise DXFileError("Buffer size must be at least 5 MB")
 
         self._bufsize = buffer_size
 
@@ -257,7 +257,7 @@ class DXFile(DXDataObject):
         '''
         :param timeout: Max amount of time to wait (in seconds) until the file is closed.
         :type timeout: integer
-        :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the remote file has been closed
+        :raises: :exc:`dxpy.exceptions.DXFileError` if the timeout is reached before the remote file has been closed
 
         Wait until the remote file is closed.
         '''
@@ -311,7 +311,7 @@ class DXFile(DXDataObject):
         if end_pos == None:
             end_pos = self._file_length
         if end_pos > self._file_length:
-            raise DXError("Invalid end_pos")
+            raise DXFileError("Invalid end_pos")
 
         for chunk_start_pos in xrange(start_pos, end_pos, self._bufsize):
             chunk_end_pos = min(chunk_start_pos + self._bufsize - 1, end_pos)
@@ -349,6 +349,8 @@ class DXFile(DXDataObject):
 
         if self._file_length == None:
             desc = self.describe(**kwargs)
+            if desc["state"] != "closed":
+                raise DXFileError("Cannot read from file until it is in the closed state")
             self._file_length = int(desc["size"])
 
         if self._pos == self._file_length:
