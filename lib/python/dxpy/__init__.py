@@ -128,7 +128,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
             if retry < max_retries:
                 if always_retry or isinstance(e, ConnectionError) or method == 'GET' or response.status_code in http_server_errors:
                     delay = 2 ** (retry+1)
-                    logging.warn("%s: Waiting %d seconds before try %d of %d..." % (url, delay, retry+1, max_retries))
+                    logging.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
                     time.sleep(delay)
                     continue
             break
