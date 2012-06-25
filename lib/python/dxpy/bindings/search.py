@@ -137,7 +137,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
 
 def find_jobs(launched_by=None, program=None, project=None, state=None,
               origin_job=None, parent_job=None,
-              modified_after=None, modified_before=None, describe=False,
+              created_after=None, created_before=None, describe=False,
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
@@ -152,10 +152,10 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     :type origin_job: string
     :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
     :type parent_job: string
-    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
-    :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
-    :type modified_before: integer
+    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
+    :type created_after: integer
+    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
+    :type created_before: integer
     :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False) (use the dict {"io": False} to exclude detailed IO information)
     :type describe: boolean or dict
     :rtype: generator
@@ -170,7 +170,7 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
 
         two_days_ago = time.time()
         for result in find_jobs(state="done", project=proj_id,
-                                modified_after=time.time()-}):
+                                created_after=time.time()-}):
             print "Found gtable with object id " + result["id"]
 
         for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
@@ -197,18 +197,18 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
             query["parentJob"] = None
         else:
             query["parentJob"] = parent_job
-    if modified_after is not None or modified_before is not None:
-        query["modified"] = {}
-        if modified_after is not None:
-            if modified_after >= 0:
-                query["modified"]["after"] = modified_after
+    if created_after is not None or created_before is not None:
+        query["created"] = {}
+        if created_after is not None:
+            if created_after >= 0:
+                query["created"]["after"] = created_after
             else:
-                query["modified"]["after"] = now() + modified_after
-        if modified_before is not None:
-            if modified_before >= 0:
-                query["modified"]["before"] = modified_before
+                query["created"]["after"] = now() + created_after
+        if created_before is not None:
+            if created_before >= 0:
+                query["created"]["before"] = created_before
             else:
-                query["modified"]["before"] = now() + modified_before
+                query["created"]["before"] = now() + created_before
     query["describe"] = describe
 
     while True:

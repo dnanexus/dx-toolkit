@@ -970,7 +970,7 @@ def find_jobs(args):
         results = list(dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
                                       state=args.state, origin_job=args.origin, parent_job=args.parent,
                                       describe=describe,
-                                      modified_after=args.mod_after, modified_before=args.mod_before))
+                                      created_after=args.created_after, created_before=args.created_before))
 
         if args.json:
             print json.dumps(results)
@@ -996,7 +996,9 @@ def find_jobs(args):
                 print_string = ""
                 for j in range(num_tabs):
                     print_string += '\t'
-                print_string += parent_id + ' ('
+                print_string += parent_id + ' ' + \
+                    str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
+                    ' ('
                 state = results[ job_ids[parent_id] ]['describe']['state']
                 if state in JOB_STATES:
                     print_string += JOB_STATES[state]
@@ -1338,6 +1340,9 @@ def shell(orig_args):
         except:
             pass
 
+def print_help(args):
+    parser.print_help()
+
 def exit_shell(args):
     global interactive
     if interactive:
@@ -1347,11 +1352,15 @@ global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
 
 parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAne' + CYAN + 'x' + ENDC + 'us Command-Line Client, API v1.0.0')
+parser.add_argument('--version', action='version', version='dxclient 0.0.1')
 
 subparsers = parser.add_subparsers()
 
 parser_shell = subparsers.add_parser('sh', help='Run interactive shell')
 parser_shell.set_defaults(func=shell)
+
+parser_help = subparsers.add_parser('help', help='Display help message')
+parser_help.set_defaults(func=print_help)
 
 parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell')
 parser_exit.set_defaults(func=exit_shell)
@@ -1480,7 +1489,7 @@ parser_find = subparsers.add_parser('find', help='Search functionality over data
                                     description='Search functionality over data objects, projects, and jobs')
 subparsers_find = parser_find.add_subparsers()
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', parents=[global_args])
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args])
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--program', help='Program ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -1488,8 +1497,8 @@ parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", 
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
-parser_find_jobs.add_argument('--mod_after', type=int, help='Timestamp after which the job was last modified (negative number means ms in the past)')
-parser_find_jobs.add_argument('--mod_before', type=int, help='Timestamp before which the job was last modified (negative number means ms in the past)')
+parser_find_jobs.add_argument('--created_after', type=int, help='Timestamp after which the job was last created (negative number means ms in the past)')
+parser_find_jobs.add_argument('--created_before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
 parser_find_jobs.set_defaults(func=find_jobs)
 
 parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args])
