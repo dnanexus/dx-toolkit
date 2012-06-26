@@ -116,7 +116,7 @@ def main():
                             writeReferenceRow(simpleVar, vcfLine, priors, sample, compressReference, storeFullVcf, refBuffer)
                         else:
                             #Write variant row
-                            if writeVariantRow(simpleVar, vcfLine, storeFullVcf) == "Ref":
+                            if writeVariantRow(simpleVar, vcfLine, storeFullVcf) == "ref":
                                 writeReferenceRow(simpleVar, vcfLine, priors, sample, compressReference, storeFullVcf, refBuffer)
                             else:
                                 writeReferenceBuffer(simpleVar, refBuffer, sample, storeFullVcf)
@@ -168,14 +168,17 @@ def writeVariantRow(simpleVar, line, storeFullVcf):
     qual = line['qual']
     formatColumn = line['formatColumn']
     infoColumn = line['infoColumn']
-    coverage = line['coverage']
+    totalCoverage = line['totalCoverage']
     tabSplit = line['tabSplit']
     
-    recordCoverage = False
-    if "coverage" in simpleVar.get_col_names():
-        recordCoverage = True
+    altCoverage = []
+    for x in altOptions:
+        altCoverage.append(0)
     
-    
+    #recordCoverage = False
+    #if "coverage" in simpleVar.get_col_names():
+    #    recordCoverage = True
+        
     #In VCF format, the prior character to a sequence change is given in some cases (Ins, Del)
     #   we are removing this in our format, and so need to figure out which characters to filter   
     overlap = checkOverlap(ref, altOptions)
@@ -191,7 +194,12 @@ def writeVariantRow(simpleVar, line, storeFullVcf):
     for x in tabSplit[9:]:
         mappedReads = getInfoField("DP", infoColumn, x)
         if mappedReads != False:
-            totalCoverage += mappedReads
+            totalCoverage += int(mappedReads)
+        covByAlt = getInfoField("AD", infoColumn, x)
+        if covByAlt != False:
+            covByAltSplit = covByAlt.split(",")
+            for i in range(len(covByAltSplit)):
+                altCoverage[i] += int(covByAltSplit[i])
         genotype = getInfoField("GT", infoColumn, x)
         if genotype != "./.":
             allNoCall = False
@@ -221,7 +229,7 @@ def writeVariantRow(simpleVar, line, storeFullVcf):
                     genotype = genotypePossibilities[1][0]
                     genotypeQuality = 0
                 else:
-                    type = "Ref"
+                    type = "ref"
                     
                     
             genotypeSplit = re.split("[\|\/]", genotype)
@@ -232,12 +240,14 @@ def writeVariantRow(simpleVar, line, storeFullVcf):
                 genotypeSplit[i] = int(genotypeSplit[i])
             genotypeSplit.sort()
 
-            
+            coverage = ''
             alleles = []
             for x in genotypeSplit:
                 if len(alt) > 0:
                     alt += "/"
+                    coverage += "/"
                 alt += altOptions[x]
+                coverage += str(altCoverage[x])
                 if x != 0:
                     alleles.append(altOptions[x])
                 if len(altOptions[x]) == 0:
@@ -252,25 +262,25 @@ def writeVariantRow(simpleVar, line, storeFullVcf):
         #These rules determine how to characterize the type of change that has occurred
         for x in alleles:
             if len(x) == len(ref) and len(ref) == 1:
-                type = "SNP"
+                type = "snp"
             elif len(x) == len(ref):
-                type = "MNP"
+                type = "mnp"
             elif len(x) > len(ref) and isSubSequence(x, ref):
-                type = "Ins"
+                type = "ins"
             elif len(x) < len(ref) and isSubSequence(ref, x):
-                type = "Del"
+                type = "del"
             else:
-                type = "Complex"
+                type = "complex"
             typeList.append(type)
             typeList = list(set(typeList))
             if len(typeList) > 1:
+                type = "mixed"
                 break                                
             
 
         if len(ref) == 0:
             ref = "-"
-        
-        entry = [chr, lo, hi, type, ref.upper(), alt.upper(), qual, coverage, total_coverage, int(genotypeQuality)]
+        entry = [chr, lo, hi, type, ref.upper(), alt.upper(), qual, coverage, totalCoverage, int(genotypeQuality)]
         if storeFullVcf:
             entry.append(tabSplit[4])
             vcfSpecificData = ''
@@ -281,10 +291,10 @@ def writeVariantRow(simpleVar, line, storeFullVcf):
     elif allNoCall:
         writeNoCallRow(simpleVar, chr, lo, hi, storeFullVcf)
     else:
-        return "Ref"
+        return "ref"
     return "No action needed"
 
-def parseVcfLine(storeSamplesIndividually, input, sample, findCoverage):
+def parseVcfLine(storeSamplesIndividually, input, sample):
     if storeSamplesIndividually:
         line = ''
         tabSplit = input.strip().split("\t")
@@ -305,14 +315,11 @@ def parseVcfLine(storeSamplesIndividually, input, sample, findCoverage):
     altOptions = [ref]
     altOptions.extend(tabSplit[4].split(","))
     qual = tabSplit[5]
-    type = "Unknown"
+    type = "unknown"
     overlap = checkOverlap(ref, altOptions)
-    lo -= overlap
-    #Subtract once to set the starting point to be the same as lo,
-    #and again to account for the ref string being longer
-    hi -= 2*overlap
+    lo += overlap
     if qual == ".":
-        type = "No-call"
+        type = "no-call"
         qual = 0
     else:
         qual = int(float(tabSplit[5]))
@@ -323,7 +330,7 @@ def parseVcfLine(storeSamplesIndividually, input, sample, findCoverage):
     
     if storeSamplesIndividually:
         totalCoverage = re.findall("DP=(\d+);", formatColumn)
-        if(len(coverage) > 0):
+        if(len(totalCoverage) > 0):
             totalCoverage = int(totalCoverage[0])
         else:
             totalCoverage = 0
@@ -390,8 +397,6 @@ def findCoveragePerAllele(line):
             result += "/"
         result += str(int(float(coverage)*float(fraction)))
     return result
-    
-
 
 def writeReferenceRowData(simpleVar, vcfLine, storeFullVcf, storeInBuffer, refBuffer, sample):
 
@@ -403,9 +408,24 @@ def writeReferenceRowData(simpleVar, vcfLine, storeFullVcf, storeInBuffer, refBu
     qual = vcfLine['qual']
     formatColumn = vcfLine['formatColumn']
     infoColumn = vcfLine['infoColumn']
-    coverage = vcfLine['coverage']
     tabSplit = vcfLine['tabSplit']
-    entry = [chr, lo, hi, "Ref", ref.upper(), ref.upper(), qual, coverage, qual]
+    
+    totalCoverage = 0
+    coverage = ''
+    for x in tabSplit[9:]:
+        covByAlt = getInfoField("AD", infoColumn, x)
+        if covByAlt != False:
+            print covByAlt
+            covByAltSplit = covByAlt.split(",")
+            coverage = str(covByAltSplit[0])
+            for i in range(len(covByAltSplit)):
+                totalCoverage += int(covByAltSplit[i])
+        else:
+            mappedReads = getInfoField("DP", infoColumn, x)
+            if mappedReads != False:
+                totalCoverage += int(mappedReads)
+
+    entry = [chr, lo, hi, "ref", ref.upper(), ref.upper(), qual, coverage, totalCoverage, qual]
     if storeFullVcf:
         entry.append(tabSplit[4])
         vcfSpecificData = ''
@@ -418,13 +438,13 @@ def writeReferenceRowData(simpleVar, vcfLine, storeFullVcf, storeInBuffer, refBu
         simpleVar.add_rows([entry][:])
 
 def writeCompressedReferenceRow(simpleVar, chr, lo, hi, storeFullVcf):
-    entry = [chr, lo, hi, "Ref", "", "", 0, 0, 0]
+    entry = [chr, lo, hi, "ref", "", "", 0, "", 0, 0]
     if storeFullVcf:
         entry.extend([".", ""])
     simpleVar.add_rows([entry])
 
 def writeNoCallRow(simpleVar, chr, lo, hi, storeFullVcf):
-    entry = [chr, lo, hi, "No-call", "", "", 0, 0, 0]
+    entry = [chr, lo, hi, "no-call", "", "", 0, "", 0, 0]
     if storeFullVcf:
         entry.extend([".", ""])
     simpleVar.add_rows([entry][:])
@@ -433,14 +453,14 @@ def writeReferenceBuffer(simpleVar, refBuffer, sample, storeFullVcf):
     row = []
     for x in refBuffer[sample][:]:
         if row == []:
-            row = [x[0], x[1], x[2], "Ref", "", "", 0, 0, 0]
+            row = [x[0], x[1], x[2], "ref", "", "", 0, "", 0, 0]
         elif row[2] == x[1]:
             row[2] = x[2]
         else:
             if storeFullVcf:
                 row.extend([".",""])
             simpleVar.add_rows([row])
-            row = [x[0], x[1], x[2], "Ref", "", "", 0, 0, 0]
+            row = [x[0], x[1], x[2], "ref", "", "", 0, "", 0, 0]
     if row != []:
         if storeFullVcf:
             row.extend([".",""])
