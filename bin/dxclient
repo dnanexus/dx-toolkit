@@ -66,7 +66,7 @@ def grab_contents_of_folder(completer, folder):
                                                 includeHidden=True)
             completer.folders = ['../', './'] + map(lambda folder: os.path.basename(folder).replace(' ', '\ ') + '/', resp['folders'])
             completer.ids = map(lambda result: result['id'], resp['objects'])
-            completer.names = map(lambda result: result['describe']['name'], resp['objects'])
+            completer.names = map(lambda result: result['describe']['name'].replace(' ', '\ '), resp['objects'])
             completer.cwd = folder
         except:
             pass
