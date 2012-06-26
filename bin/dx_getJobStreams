@@ -49,12 +49,13 @@ def print_streams(job_id, indent_level):
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     desc = job_descriptions[job_id]
+    program_or_app = desc['program'] if 'program' in desc else desc['app']
 
     status = desc['state']
     if status == 'failed':
         status = FAIL + 'FAILED' + OKGREEN
     if not opts.quiet:
-        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + desc['program'] + ':' + HEADER + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC
+        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + program_or_app + ':' + HEADER + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stdouts[job_id] != None:
         for line in dxpy.DXFile(stdouts[job_id]):
@@ -64,7 +65,7 @@ def print_streams(job_id, indent_level):
     if status == 'failed':
         status = FAIL + 'FAILED' + WARN
     if not opts.quiet:
-        print INDENT + WARN + '==== Job', desc['id'], '(' + desc['program'] + ':' + HEADER + desc['function'] + WARN + ') (' + status + ')', 'stderr', '====', ENDC
+        print INDENT + WARN + '==== Job', desc['id'], '(' + program_or_app + ':' + HEADER + desc['function'] + WARN + ') (' + status + ')', 'stderr', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stderrs[job_id] != None:
         for line in dxpy.DXFile(stderrs[job_id]):
