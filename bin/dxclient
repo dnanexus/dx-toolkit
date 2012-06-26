@@ -235,11 +235,22 @@ def login(args):
 
     dxpy.set_security_context(json.loads(sec_context))
 
-    write_env_var('DX_SECURITY_CONTEXT', sec_context)
-    write_env_var("DX_CLI_WD", '/')
+    set_auth_token(sec_context=sec_context, write=args.save)
+    setenv(args)
 
 def logout(args):
     write_env_var('DX_SECURITY_CONTEXT', '')
+
+def set_auth_token(token=None, sec_context=None, write=False):
+    if token is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
+    elif sec_context is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = sec_context
+    else:
+        parser.exit(1, 'Error: set_auth_token was called with no token nor security context hash')
+    if write:
+        write_env_var('DX_SECURITY_CONTEXT', sec_context)
+        write_env_var("DX_CLI_WD", '/')
 
 def set_host(host, write):
     os.environ['DX_APISERVER_HOST'] = host
@@ -1420,6 +1431,7 @@ parser_login.add_argument('--token', help='Authentication token to use', default
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
+parser_login.add_argument('--save', help='Save token for future sessions', action='store_true')
 parser_login.set_defaults(func=login)
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
