@@ -523,14 +523,14 @@ class DXGTable(DXDataObject):
         self._http_threadpool_futures.add(future)
 
     def _generate_read_requests(self, start_row=0, end_row=None, query=None, columns=None, **kwargs):
+        kwargs['query'] = query
+        kwargs['columns'] = columns
         if end_row is None:
             end_row = int(self.describe(**kwargs)['length'])
         cursor = start_row
         while cursor < end_row:
             request_size = min(self._row_buffer_size, end_row - cursor)
             my_kwargs = dict(kwargs)
-            my_kwargs['query'] = query
-            my_kwargs['columns'] = columns
             my_kwargs['starting'] = cursor
             my_kwargs['limit'] = request_size
             yield self.get_rows, [], my_kwargs
