@@ -63,8 +63,8 @@ def grab_contents_of_folder(completer, folder):
             if completer.dxproj is None or completer.dxproj.get_id() != os.environ['DX_PROJECT_CONTEXT_ID']:
                 completer.dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
             resp = completer.dxproj.list_folder(folder=folder, describe={},
-                                           includeHidden=True)
-            completer.folders = ['../', './'] + map(lambda folder: os.path.basename(folder) + '/', resp['folders'])
+                                                includeHidden=True)
+            completer.folders = ['../', './'] + map(lambda folder: os.path.basename(folder).replace(' ', '\ ') + '/', resp['folders'])
             completer.ids = map(lambda result: result['id'], resp['objects'])
             completer.names = map(lambda result: result['describe']['name'], resp['objects'])
             completer.cwd = folder
