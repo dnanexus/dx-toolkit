@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void Chunk::readData() {
+void Chunk::read() {
   // cerr << "Reading data for chunk " << (*this) << "...";
   const int64_t len = end - start;
   data.clear();
@@ -24,7 +24,16 @@ void Chunk::readData() {
   }
 }
 
-void Chunk::clearData() {
+void Chunk::compress() {
+  // TODO: compress the data into a new buffer, then swap that with the
+  // uncompressed data
+}
+
+void Chunk::upload() {
+  // TODO: get the upload URL for this chunk; upload the data
+}
+
+void Chunk::clear() {
   // A trick for forcing a vector's contents to be deallocated: swap the
   // memory from data into v; v will be destroyed when this function exits.
   vector<char> v;
@@ -33,7 +42,7 @@ void Chunk::clearData() {
 
 ostream &operator<<(ostream &out, const Chunk &chunk) {
   out << "[" << chunk.localFile << ":" << chunk.start << "-" << chunk.end
-      << " -> " << chunk.fileID
+      << " -> " << chunk.fileID << "[" << chunk.index << "]"
       << ", tries=" << chunk.triesLeft << ", data_size=" << chunk.data.size()
       << "]";
   return out;

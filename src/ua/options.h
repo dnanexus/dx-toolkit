@@ -30,7 +30,8 @@ public:
   std::string name;
   std::string file;
 
-  int threads;
+  int compressThreads;
+  int uploadThreads;
   int chunkSize;
   int tries;
   bool progress;

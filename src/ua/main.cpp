@@ -41,12 +41,11 @@ BlockingQueue chunksFailed;
 
 boost::mutex outputMutex;
 
-void logChunk(Chunk * c, const string &message, int threadID = -1) {
+void logChunk(Chunk * c, const string &message) {
   boost::unique_lock<boost::mutex> lock(outputMutex);
-  if (threadID != -1) {
-    cerr << "Thread " << threadID << ": ";
-  }
-  cerr << "Chunk " << (*c) << ": " << message << endl;
+  cerr << "Thread " << boost::this_thread::get_id() << ": "
+       << "Chunk " << (*c) << ": "
+       << message << endl;
 }
 
 unsigned int createChunks(const string &filename, const string &fileID) {
@@ -56,7 +55,7 @@ unsigned int createChunks(const string &filename, const string &fileID) {
   unsigned int numChunks = 0;
   for (int64_t start = 0; start < size; start += opt.chunkSize) {
     int64_t end = min(start + opt.chunkSize, size);
-    Chunk * c = new Chunk(filename, fileID, opt.tries, start, end);
+    Chunk * c = new Chunk(filename, fileID, numChunks, opt.tries, start, end);
     logChunk(c, "created");
     chunksToRead.produce(c);
     ++numChunks;
@@ -68,46 +67,47 @@ bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
 }
 
-void readChunks(int tid) {
+void readChunks() {
   while (true) {
     Chunk * c = chunksToRead.consume();
 
-    logChunk(c, "Reading...", tid);
-    c->readData();
+    logChunk(c, "Reading...");
+    c->read();
 
-    logChunk(c, "Finished reading.", tid);
+    logChunk(c, "Finished reading.");
     chunksToCompress.produce(c);
   }
 }
 
-void compressChunks(int tid) {
+void compressChunks() {
   while (true) {
     Chunk * c = chunksToCompress.consume();
 
-    logChunk(c, "Compressing...", tid);
-    // TODO: compress the chunk
+    logChunk(c, "Compressing...");
+    c->compress();
 
-    logChunk(c, "Finished compressing.", tid);
+    logChunk(c, "Finished compressing.");
     chunksToUpload.produce(c);
   }
 }
 
-void uploadChunks(int tid) {
+void uploadChunks() {
   while (true) {
     Chunk * c = chunksToUpload.consume();
 
-    logChunk(c, "Uploading...", tid);
-    // TODO: upload the chunk
-    c->clearData();
+    logChunk(c, "Uploading...");
 
-    logChunk(c, "Finished uploading.", tid);
+    c->upload();
+    c->clear();
+
+    logChunk(c, "Finished uploading.");
     chunksFinished.produce(c);
   }
 }
 
 void monitor() {
   while (true) {
-    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+    boost::this_thread::sleep(boost::posix_time::milliseconds(300));
     {
       boost::unique_lock<boost::mutex> lock(outputMutex);
       cerr << "In monitor thread." << endl;
@@ -269,6 +269,36 @@ string createFileObject() {
   return result["id"].get<string>();
 }
 
+void interruptWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
+  cerr << "Interrupting worker threads:";
+  cerr << " read...";
+  readThread.interrupt();
+  cerr << " compress...";
+  for (int i = 0; i < compressThreads.size(); ++i) {
+    compressThreads[i].interrupt();
+  }
+  cerr << " upload...";
+  for (int i = 0; i < uploadThreads.size(); ++i) {
+    uploadThreads[i].interrupt();
+  }
+  cerr << endl;
+}
+
+void joinWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
+  cerr << "Joining worker threads:";
+  cerr << " read...";
+  readThread.join();
+  cerr << " compress...";
+  for (int i = 0; i < compressThreads.size(); ++i) {
+    compressThreads[i].join();
+  }
+  cerr << " upload...";
+  for (int i = 0; i < uploadThreads.size(); ++i) {
+    uploadThreads[i].join();
+  }
+  cerr << endl;
+}
+
 int main(int argc, char * argv[]) {
   cerr << "DNAnexus Upload Agent" << endl;
 
@@ -286,8 +316,8 @@ int main(int argc, char * argv[]) {
   setSecurityContext(securityContext(opt.authToken));
   setProjectContext(opt.project);
 
-  chunksToCompress.setCapacity(opt.threads);
-  chunksToUpload.setCapacity(opt.threads);
+  chunksToCompress.setCapacity(opt.compressThreads);
+  chunksToUpload.setCapacity(opt.uploadThreads);
 
   try {
     testServerConnection();
@@ -304,21 +334,19 @@ int main(int argc, char * argv[]) {
     cerr << "Created " << totalChunks << " chunks." << endl;
 
     cerr << "Creating read thread..." << endl;
-    boost::thread readThread(readChunks, 0);
+    boost::thread readThread(readChunks);
 
     vector<boost::thread> compressThreads;
     cerr << "Creating compress threads.." << endl;
-    for (int i = 0; i < opt.threads; ++i) {
-      compressThreads.push_back(boost::thread(compressChunks, i));
+    for (int i = 0; i < opt.compressThreads; ++i) {
+      compressThreads.push_back(boost::thread(compressChunks));
     }
-    // boost::thread compressThread(compressChunks);
 
     vector<boost::thread> uploadThreads;
     cerr << "Creating upload threads.." << endl;
-    for (int i = 0; i < opt.threads; ++i) {
-      uploadThreads.push_back(boost::thread(uploadChunks, i));
+    for (int i = 0; i < opt.uploadThreads; ++i) {
+      uploadThreads.push_back(boost::thread(uploadChunks));
     }
-    // boost::thread uploadThread(uploadChunks);
 
     cerr << "Creating monitor thread.." << endl;
     boost::thread monitorThread(monitor);
@@ -327,31 +355,8 @@ int main(int argc, char * argv[]) {
     monitorThread.join();
     cerr << "Monitor thread finished." << endl;
 
-    cerr << "Interrupting worker threads:";
-    cerr << " read...";
-    readThread.interrupt();
-    cerr << " compress...";
-    for (int i = 0; i < opt.threads; ++i) {
-      compressThreads[i].interrupt();
-    }
-    cerr << " upload...";
-    for (int i = 0; i < opt.threads; ++i) {
-      uploadThreads[i].interrupt();
-    }
-    cerr << endl;
-
-    cerr << "Joining worker threads:";
-    cerr << " read...";
-    readThread.join();
-    cerr << " compress...";
-    for (int i = 0; i < opt.threads; ++i) {
-      compressThreads[i].join();
-    }
-    cerr << " upload...";
-    for (int i = 0; i < opt.threads; ++i) {
-      uploadThreads[i].join();
-    }
-    cerr << endl;
+    interruptWorkerThreads(readThread, uploadThreads, compressThreads);
+    joinWorkerThreads(readThread, uploadThreads, compressThreads);
 
     cerr << "Exiting." << endl;
 

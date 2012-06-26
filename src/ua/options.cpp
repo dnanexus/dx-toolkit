@@ -29,7 +29,8 @@ Options::Options() {
     ("project,p", po::value<string>(&project), "Name or ID of the destination project")
     ("folder,f", po::value<string>(&folder)->default_value("/"), "Name of the destination folder")
     ("name,n", po::value<string>(&name), "Name of the file to be created")
-    ("threads,t", po::value<int>(&threads)->default_value(4), "Number of parallel upload threads")
+    ("compress-threads,c", po::value<int>(&compressThreads)->default_value(2), "Number of parallel compression threads")
+    ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
@@ -104,9 +105,14 @@ void Options::validate() {
   if (project.empty()) {
     throw runtime_error("A project must be specified");
   }
-  if (threads < 1) {
+  if (compressThreads < 1) {
     ostringstream msg;
-    msg << "Number of threads must be positive: " << threads;
+    msg << "Number of compression threads must be positive: " << compressThreads;
+    throw runtime_error(msg.str());
+  }
+  if (uploadThreads < 1) {
+    ostringstream msg;
+    msg << "Number of upload threads must be positive: " << uploadThreads;
     throw runtime_error(msg.str());
   }
   if (chunkSize < 1) {
@@ -135,7 +141,8 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  name: " << opt.name << endl
         << "  file: " << opt.file << endl
 
-        << "  threads: " << opt.threads << endl
+        << "  compression threads: " << opt.compressThreads << endl
+        << "  upload threads: " << opt.uploadThreads << endl
         << "  chunkSize: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl
         << "  progress: " << opt.progress << endl
