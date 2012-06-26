@@ -1,30 +1,35 @@
 #include "SimpleHttp.h"
 
-/* This function serves as a callback for response headers read by libcurl
-   Libcurl documentation @
-   (http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTHEADERFUNCTION)
-   says that callback is called once for each header and only complete header line are passed
-   So we do not need to handle case of multi-line headers differently.
-
-   Please see: http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
-            The first response header returned will always be "Status-line",
-   Also See : http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+/*
+ * This function serves as a callback for response headers read by libcurl
+ *
+ * The libcurl documentation at
+ * http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTHEADERFUNCTION
+ * says that the callback is called once for each header and only complete
+ * header line are passed. So we do not need to handle multi-line headers
+ * ourselves.
+ *
+ * Please see: http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html
+ *   The first response header returned will always be "Status-line",
+ * Also see: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
  */
 static size_t headers_callback(void *buffer, size_t size, size_t nmemb, void *userp) {
   char *buf = reinterpret_cast<char*>(buffer);
   HttpHeaders *pHeaders = reinterpret_cast<HttpHeaders*>(userp);
   size_t result = 0u;
   if (pHeaders != NULL) {
-    /* Note: std::string is capable of storing binary stream data
-             and can store "\0" as normal character (witout terminating string).
-             - Until C++11, it is not guaranteed to be contiguously stored though.
-             - Use caution when using .c_str(), if string contains "\0", use .data() instead
-
-             Since binary data can be stored in std::string, unicode characters can be present
-             But beware of using .length() or .size(), since they will return number of
-             bytes storage (i.e., char) needed to store the string, and not actual number of
-             characters persay.
-    */
+    /*
+     * Note: std::string is capable of storing binary stream data and can
+     * store "\0" as normal character (witout terminating string).
+     *
+     * - Until C++11, it is not guaranteed to be contiguously stored though.
+     * - Use caution when using .c_str(), if string contains "\0", use .data() instead
+     *
+     * Since binary data can be stored in std::string, unicode characters
+     * can be present But beware of using .length() or .size(), since they
+     * will return number of bytes storage (i.e., char) needed to store the
+     * string, and not actual number of characters.
+     */
     std::string s = "";
     s.append(buf, size * nmemb);
     result = size * nmemb;
@@ -103,7 +108,7 @@ void HttpRequest::send() {
 
   curl = curl_easy_init();
 
-  if(curl != NULL) {
+  if (curl != NULL) {
     respData = "";
     // Set time out to infinite
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
@@ -119,16 +124,20 @@ void HttpRequest::send() {
     curl_slist *header = NULL;
     std::vector<std::string> header_vec;
     header_vec = reqHeader.getAllHeadersAsVector(); // inefficient quick hack, use iterator instead
-    for (unsigned i = 0;i < header_vec.size(); i++)
+    for (unsigned i = 0;i < header_vec.size(); i++) {
       header = curl_slist_append(header, header_vec[i].c_str());
+    }
 
-    if(header != NULL)
+    if (header != NULL) {
       assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header));
+    }
     //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
-    /* Set the URL that is about to receive our POST. This URL can
-       just as well be a https:// URL if that is what should receive the
-       data. */
+    /*
+     * Set the URL that is about to receive our POST. This URL can
+     * just as well be a https:// URL if that is what should receive the
+     * data.
+     */
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()));
 
     // Make a copy of reqData, because read_callback (see HTTP_PUT case below) will modify it
@@ -191,9 +200,7 @@ void HttpRequest::send() {
     /* always cleanup */
     curl_easy_cleanup(curl);
     curl = NULL;
-  }
-  else
-  {
+  } else {
     throw HttpRequestException("Unable to initialize object of type CURL");
   }
 }

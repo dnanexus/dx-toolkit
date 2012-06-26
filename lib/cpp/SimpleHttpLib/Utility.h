@@ -8,10 +8,10 @@
 
 namespace HttpHelperUtils {
   using namespace std;
-  
+
   // This function remove leading and trailing whitespaces from a string
   // One sample use case: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-  //    - Removing leading/trailing whitespaces in header field 
+  //    - Removing leading/trailing whitespaces in header field
   string stripWhitespaces(const string &s);
 
   // Split a string on first ":" sign
@@ -23,5 +23,6 @@ namespace HttpHelperUtils {
   // If no colon is present, then first string in output pair
   // contains the complete input string, and second string is empty
   pair<string, string> splitOnFirstColon(const string &s);
-}
+};
+
 #endif

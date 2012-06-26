@@ -14,13 +14,13 @@ public:
   //      for rationale behind "statusLine" and separating headers on colons, etc
   std::map<std::string, std::string> header;
   std::string statusLine; // Makes sense only for response headers
-  
+
   void addHeaderLine(const std::string &s);
-  
-  size_t count() const { 
+
+  size_t count() const {
     return header.size();
   }
-  
+
   // It is user's responsbility to add content to already existing header with ","
   // See: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
   // Please note that calling this function as a RValue will create a blank header
@@ -33,15 +33,15 @@ public:
   bool isPresent(const std::string &key) const {
     return (header.count(key) > 0);
   }
-  
+
   const std::string getStatusLine() const {
     return statusLine;
   }
-  
+
   void setStatusLine(const std::string &l) {
     statusLine = l;
   }
-  
+
   void appendHeaderString(const std::string &s);
 
   // Currently an inefficient way to get back all headers
@@ -52,7 +52,7 @@ public:
 
   // This copies the content of "map" into vector and sends it back
   // HIGHLY INEFFICENT for obvious reasons. Provided only as a quick hack
-  std::vector<std::string> getAllHeadersAsVector() const; 
+  std::vector<std::string> getAllHeadersAsVector() const;
 
   void clear() {
     header.clear();

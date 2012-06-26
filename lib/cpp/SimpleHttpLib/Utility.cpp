@@ -2,7 +2,7 @@
 
 // This function remove leading and trailing whitespaces from a string
 // One sample use case: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-//    - Removing leading/trailing whitespaces in header field 
+//    - Removing leading/trailing whitespaces in header field
 std::string HttpHelperUtils::stripWhitespaces(const string &s) {
   const unsigned length = s.size();
   unsigned firstNWS = length, lastNWS = length;
@@ -30,7 +30,7 @@ std::pair<std::string, std::string> HttpHelperUtils::splitOnFirstColon(const str
   pair<string, string> out;
   if (s.size() == 0u)
     return out;
-  
+
   size_t colonPos = s.find(':');
 
   if (colonPos == string::npos) {
