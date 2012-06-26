@@ -374,6 +374,29 @@ class TestDXGTable(unittest.TestCase):
             self.assertEqual(row[2], counter)
             counter += 1
         self.assertEqual(counter, 64)
+        
+        counter = 0
+        for row in self.dxgtable.iterate_rows(start=1):
+            self.assertEqual(row[2], counter+1)
+            counter += 1
+        self.assertEqual(counter, 63)
+
+        counter = 0
+        for row in self.dxgtable.iterate_rows(end=2):
+            self.assertEqual(row[2], counter)
+            counter += 1
+        self.assertEqual(counter, 2)
+
+        counter = 0
+        for row in self.dxgtable.iterate_rows(start=1, end=63):
+            self.assertEqual(row[2], counter+1)
+            counter += 1
+        self.assertEqual(counter, 62)
+
+        counter = 0
+        for row in self.dxgtable.iterate_rows(columns=['a'], start=1, end=63):
+            counter += 1
+        self.assertEqual(counter, 62)
 
     def test_gri(self):
         data10 = [['chr2', 22, 28, 'j'],
