@@ -509,6 +509,7 @@ class DXGTable(DXDataObject):
         return query
 
     def _async_add_rows_request(self, *args, **kwargs):
+        kwargs['always_retry'] = True
         if self._http_threadpool is None:
             DXGTable._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
 

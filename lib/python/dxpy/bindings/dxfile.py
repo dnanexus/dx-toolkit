@@ -287,8 +287,7 @@ class DXFile(DXDataObject):
         headers = {}
         headers['Content-Length'] = str(len(data))
 
-        resp = requests.post(url, data=data, headers=headers)
-        resp.raise_for_status()
+        DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
 
         if display_progress:
             print >> sys.stderr, "."
