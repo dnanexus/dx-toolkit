@@ -7,6 +7,6 @@ clean:
 	rm -rvf build
 
 install: all
-	cp -v build/ua $(NUCLEUS_HOME)/client/bin
+	cp -v build/ua $(DNANEXUS_HOME)/bin
 
 .PHONY: all
