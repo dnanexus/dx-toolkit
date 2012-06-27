@@ -43,7 +43,7 @@ http_server_errors = set([requests.codes.server_error,
                           requests.codes.service_unavailable,
                           requests.codes.gateway_timeout])
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=None,
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=3600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
                   max_retries=DEFAULT_RETRIES, always_retry=False,
@@ -89,7 +89,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, config=N
     last_error = None
     for retry in range(max_retries + 1):
         try:
-            response = requests.request(method, url, data=data, headers=headers,
+            response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
                                         auth=auth, config=config, **kwargs)
 
             # If HTTP code that is not 200 (OK) is received and the content is
