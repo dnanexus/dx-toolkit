@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import sys, os, datetime, urlparse, requests, base64, getpass
+import sys, os, datetime, urlparse, requests, urlparse, base64, getpass
 import argparse
 import shlex # respects quotes substrings when splitting
+from requests.auth import HTTPBasicAuth
 
 import json
 
@@ -203,21 +204,20 @@ load_env()
 import dxpy
 
 def login(args):
+    global interactive
+    if not interactive:
+        args.save = True
+
     # TODO: Remove this and replace with actual logic and interaction
     # when implemented
-    token = args.token
-    if args.demo or args.host is not None or args.port is not None:
-        authserver = 'http://nucleusdemo.dev.dnanexus.com:443'
-        if args.host is not None:
-            authserver = 'http://' + args.host
-        if args.port is not None:
-            authserver += ':' + str(args.port)
+    if args.host is not None or args.port is not None:
+        authserver = 'http://' + args.host
+        authserver += ':' + str(args.port)
         print 'Logging into ' + authserver
 
         username = raw_input('Username: ')
         password = getpass.getpass()
 
-        # authserver = 'http://' + os.environ['DX_AUTHSERVER_HOST'] + ':' + os.environ['DX_AUTHSERVER_PORT']
         session = requests.session()
 
         response = ""
@@ -228,10 +228,31 @@ def login(args):
             print 'Error contacting the auth server: ' + str(details)
             parser.exit(1)
         token = json.loads(response.content)["access_token"]
-    elif args.token == 'outside':
-        print "Using token \"outside\""
+        sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
+    elif args.token is None:
+        authserver = 'https://auth.dnanexus.com'
+        print 'Logging into ' + authserver
+        username = raw_input('Username: ')
+        password = getpass.getpass()
+        auth = HTTPBasicAuth(username, password)
 
-    sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
+        session = requests.session()
+        res = requests.post(authserver+"/oauth2/authorize",
+                            data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
+                            auth=auth,
+                            allow_redirects=False,
+                            verify=False)
+        assert(res.status_code == requests.codes.found)
+        code = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])['code'][0]
+        
+        res = requests.post(authserver+"/oauth2/token",
+                            data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"},
+                            verify=False)
+        assert(res.status_code == requests.codes.ok)
+        token_res = json.loads(res.content)
+        sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
+    else:
+        sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
 
     dxpy.set_security_context(json.loads(sec_context))
 
@@ -294,12 +315,14 @@ def prompt_for_var(prompt_str, env_var_str):
             return default
 
 def setenv(args):
+    global interactive
+    if not interactive:
+        args.save = True
     if args.current:
-        if args.save:
-            env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD']
-            for var in env_vars:
-                if var in os.environ:
-                    write_env_var(var, os.environ[var])
+        env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD']
+        for var in env_vars:
+            if var in os.environ:
+                write_env_var(var, os.environ[var])
     else:
         api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
         api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
@@ -1414,15 +1437,15 @@ parser_exit.set_defaults(func=exit_shell)
 
 parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
                                       description='Sets environment variables for communication with the API server')
-parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.', action='store_true')
-parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions if --save is true.', action='store_true')
+parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
+parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
 parser_setenv.set_defaults(func=setenv)
 
 parser_printenv = subparsers.add_parser('printenv', help='Prints all environment variables set for the CLI')
 parser_printenv.set_defaults(func=printenv)
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
-parser_login.add_argument('--token', help='Authentication token to use', default='outside')
+parser_login.add_argument('--token', help='Authentication token to use')
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
