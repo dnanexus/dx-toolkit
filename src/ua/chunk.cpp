@@ -41,6 +41,11 @@ void Chunk::upload() {
   LOG << "Upload URL: " << url << endl;
 
   CURL * curl = curl_easy_init();
+  if (curl == NULL) {
+    throw runtime_error("An error occurred when initializing the HTTP connection");
+  }
+
+  curl_easy_cleanup(curl);
 }
 
 void Chunk::clear() {
