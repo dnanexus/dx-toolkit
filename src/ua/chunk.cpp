@@ -4,10 +4,18 @@
 #include <fstream>
 #include <sstream>
 
+#include <curl/curl.h>
+#include <boost/thread.hpp>
+
+#include "dxjson/dxjson.h"
+#include "dxcpp/dxcpp.h"
+
+#include "log.h"
+
 using namespace std;
+using namespace dx;
 
 void Chunk::read() {
-  // cerr << "Reading data for chunk " << (*this) << "...";
   const int64_t len = end - start;
   data.clear();
   data.resize(len);
@@ -15,9 +23,7 @@ void Chunk::read() {
   in.seekg(start);
   in.read(&(data[0]), len);
   if (in) {
-    // cerr << " success." << endl;
   } else {
-    // cerr << " failure." << endl;
     ostringstream msg;
     msg << "readData failed on chunk " << (*this);
     throw runtime_error(msg.str());
@@ -31,6 +37,10 @@ void Chunk::compress() {
 
 void Chunk::upload() {
   // TODO: get the upload URL for this chunk; upload the data
+  string url = uploadURL();
+  LOG << "Upload URL: " << url << endl;
+
+  CURL * curl = curl_easy_init();
 }
 
 void Chunk::clear() {
@@ -38,6 +48,20 @@ void Chunk::clear() {
   // memory from data into v; v will be destroyed when this function exits.
   vector<char> v;
   data.swap(v);
+}
+
+string Chunk::uploadURL() const {
+  JSON params(JSON_OBJECT);
+  params["index"] = index + 1;  // minimum part index is 1
+  JSON result = fileUpload(fileID, params);
+  return result["url"].get<string>();
+}
+
+/*
+ * Logs a message about this chunk.
+ */
+void Chunk::log(const string &message) const {
+  LOG << "Thread " << boost::this_thread::get_id() << ": " << "Chunk " << (*this) << ": " << message << endl;
 }
 
 ostream &operator<<(ostream &out, const Chunk &chunk) {

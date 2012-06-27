@@ -2,17 +2,21 @@
 #include <iostream>
 #include <queue>
 
-#include "dxjson/dxjson.h"
-#include "dxcpp/dxcpp.h"
+#include <curl/curl.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 
 namespace fs = boost::filesystem;
 
+#include "dxjson/dxjson.h"
+#include "dxcpp/dxcpp.h"
+
 #include "options.h"
 #include "chunk.h"
 #include "bqueue.h"
+
+#include "log.h"
 
 using namespace std;
 using namespace dx;
@@ -39,24 +43,15 @@ BlockingQueue chunksToUpload;
 BlockingQueue chunksFinished;
 BlockingQueue chunksFailed;
 
-boost::mutex outputMutex;
-
-void logChunk(Chunk * c, const string &message) {
-  boost::unique_lock<boost::mutex> lock(outputMutex);
-  cerr << "Thread " << boost::this_thread::get_id() << ": "
-       << "Chunk " << (*c) << ": "
-       << message << endl;
-}
-
 unsigned int createChunks(const string &filename, const string &fileID) {
-  cerr << "Creating chunks:" << endl;
+  LOG << "Creating chunks:" << endl;
   fs::path p(filename);
   const int64_t size = fs::file_size(p);
   unsigned int numChunks = 0;
   for (int64_t start = 0; start < size; start += opt.chunkSize) {
     int64_t end = min(start + opt.chunkSize, size);
     Chunk * c = new Chunk(filename, fileID, numChunks, opt.tries, start, end);
-    logChunk(c, "created");
+    c->log("created");
     chunksToRead.produce(c);
     ++numChunks;
   }
@@ -71,10 +66,10 @@ void readChunks() {
   while (true) {
     Chunk * c = chunksToRead.consume();
 
-    logChunk(c, "Reading...");
+    c->log("Reading...");
     c->read();
 
-    logChunk(c, "Finished reading.");
+    c->log("Finished reading.");
     chunksToCompress.produce(c);
   }
 }
@@ -83,10 +78,10 @@ void compressChunks() {
   while (true) {
     Chunk * c = chunksToCompress.consume();
 
-    logChunk(c, "Compressing...");
+    c->log("Compressing...");
     c->compress();
 
-    logChunk(c, "Finished compressing.");
+    c->log("Finished compressing.");
     chunksToUpload.produce(c);
   }
 }
@@ -95,12 +90,12 @@ void uploadChunks() {
   while (true) {
     Chunk * c = chunksToUpload.consume();
 
-    logChunk(c, "Uploading...");
+    c->log("Uploading...");
 
     c->upload();
     c->clear();
 
-    logChunk(c, "Finished uploading.");
+    c->log("Finished uploading.");
     chunksFinished.produce(c);
   }
 }
@@ -109,13 +104,12 @@ void monitor() {
   while (true) {
     boost::this_thread::sleep(boost::posix_time::milliseconds(300));
     {
-      boost::unique_lock<boost::mutex> lock(outputMutex);
-      cerr << "In monitor thread." << endl;
-      cerr << "  to read: " << chunksToRead.size() << endl
-           << "  to compress: " << chunksToCompress.size() << endl
-           << "  to upload: " << chunksToUpload.size() << endl
-           << "  finished: " << chunksFinished.size() << endl
-           << "  failed: " << chunksFailed.size() << endl;
+      LOG << "In monitor thread." << endl
+          << "  to read: " << chunksToRead.size() << endl
+          << "  to compress: " << chunksToCompress.size() << endl
+          << "  to upload: " << chunksToUpload.size() << endl
+          << "  finished: " << chunksFinished.size() << endl
+          << "  failed: " << chunksFailed.size() << endl;
 
       if (finished()) {
         return;
@@ -132,12 +126,12 @@ JSON securityContext(const string &authToken) {
 }
 
 void testServerConnection() {
-  cerr << "Testing connection to API server...";
+  LOG << "Testing connection to API server...";
   try {
     JSON result = systemFindProjects();
-    cerr << " success." << endl;
+    LOG << " success." << endl;
   } catch (exception &e) {
-    cerr << " failure." << endl;
+    LOG << " failure." << endl;
     throw;
   }
 }
@@ -156,7 +150,7 @@ void testServerConnection() {
  * ambiguous; otherwise, the projectSpec is unambiguously a project name.
  */
 string resolveProject(const string &projectSpec) {
-  cerr << "Resolving project specifier " << projectSpec << "...";
+  LOG << "Resolving project specifier " << projectSpec << "...";
   string projectID;
 
   try {
@@ -170,7 +164,7 @@ string resolveProject(const string &projectSpec) {
   }
 
   if (!projectID.empty()) {
-    cerr << " found project ID " << projectID << endl;
+    LOG << " found project ID " << projectID << endl;
     return projectID;
   }
 
@@ -183,18 +177,18 @@ string resolveProject(const string &projectSpec) {
     JSON projects = findResult["results"];
 
     if (projects.size() == 0) {
-      cerr << " failure." << endl;
+      LOG << " failure." << endl;
       throw runtime_error("\"" + projectSpec + "\" is not a valid project name or ID");
     } else if (projects.size() > 1) {
-      cerr << " failure." << endl;
+      LOG << " failure." << endl;
       throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project");
     } else {
       projectID = projects[0]["id"].get<string>();
-      cerr << " found project ID " << projectID << endl;
+      LOG << " found project ID " << projectID << endl;
       return projectID;
     }
   } catch (DXAPIError &e) {
-    cerr << "Call to findProjects failed." << endl;
+    LOG << "Call to findProjects failed." << endl;
     throw;
   }
 }
@@ -203,31 +197,31 @@ string resolveProject(const string &projectSpec) {
  * Ensure that we have at least CONTRIBUTE access to the project.
  */
 void testProjectPermissions(const string &projectID) {
-  cerr << "Testing permissions on project " << projectID << "...";
+  LOG << "Testing permissions on project " << projectID << "...";
   try {
     JSON desc = projectDescribe(projectID);
     string level = desc["level"].get<string>();
 
     if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
-      cerr << " success." << endl;
+      LOG << " success." << endl;
       return;
     } else {
-      cerr << " failure." << endl;
+      LOG << " failure." << endl;
       throw runtime_error("Permission level " + level + " is not sufficient to create files in project " + projectID);
     }
   } catch (DXAPIError &e) {
-    cerr << " call to projectDescribe failed." << endl;
+    LOG << " call to projectDescribe failed." << endl;
     throw;
   }
 }
 
 void testFileExists(const string &filename) {
-  cerr << "Testing existence of local file " << filename << "...";
+  LOG << "Testing existence of local file " << filename << "...";
   fs::path p(filename);
   if (fs::exists(p)) {
-    cerr << " success." << endl;
+    LOG << " success." << endl;
   } else {
-    cerr << " failure." << endl;
+    LOG << " failure." << endl;
     throw runtime_error("Local file " + filename + " does not exist.");
   }
 }
@@ -237,15 +231,15 @@ void testFileExists(const string &filename) {
  * any parent folders.
  */
 void createFolder(const string &projectID, const string &folder) {
-  cerr << "Creating folder " << folder << " and parents in project " << projectID << "...";
+  LOG << "Creating folder " << folder << " and parents in project " << projectID << "...";
   try {
     JSON params(JSON_OBJECT);
     params["folder"] = folder;
     params["parents"] = true;
     projectNewFolder(projectID, params);
-    cerr << " success." << endl;
+    LOG << " success." << endl;
   } catch (DXAPIError &e) {
-    cerr << " failure." << endl;
+    LOG << " failure." << endl;
     throw runtime_error("Could not create folder " + folder + " in project " + projectID + " (" + e.what() + ")");
   }
 }
@@ -261,46 +255,61 @@ string createFileObject() {
   params["folder"] = opt.folder;
   params["name"] = opt.name;
   params["parents"] = true;
-  cerr << "Creating new file with parameters " << params.toString() << endl;
+  LOG << "Creating new file with parameters " << params.toString() << endl;
 
   JSON result = fileNew(params);
-  cerr << "Got result " << result.toString() << endl;
+  LOG << "Got result " << result.toString() << endl;
 
   return result["id"].get<string>();
 }
 
 void interruptWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
-  cerr << "Interrupting worker threads:";
-  cerr << " read...";
+  LOG << "Interrupting worker threads:";
+  LOG << " read...";
   readThread.interrupt();
-  cerr << " compress...";
+  LOG << " compress...";
   for (int i = 0; i < compressThreads.size(); ++i) {
     compressThreads[i].interrupt();
   }
-  cerr << " upload...";
+  LOG << " upload...";
   for (int i = 0; i < uploadThreads.size(); ++i) {
     uploadThreads[i].interrupt();
   }
-  cerr << endl;
+  LOG << endl;
 }
 
 void joinWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
-  cerr << "Joining worker threads:";
-  cerr << " read...";
+  LOG << "Joining worker threads:";
+  LOG << " read...";
   readThread.join();
-  cerr << " compress...";
+  LOG << " compress...";
   for (int i = 0; i < compressThreads.size(); ++i) {
     compressThreads[i].join();
   }
-  cerr << " upload...";
+  LOG << " upload...";
   for (int i = 0; i < uploadThreads.size(); ++i) {
     uploadThreads[i].join();
   }
-  cerr << endl;
+  LOG << endl;
+}
+
+void curlInit() {
+  LOG << "Initializing HTTP library...";
+  CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
+  if (code != 0) {
+    ostringstream msg;
+    msg << "An error occurred when initializing the HTTP library (code " << code << ")" << endl;
+    throw runtime_error(msg.str());
+  }
+  LOG << " done." << endl;
+}
+
+void curlCleanup() {
+  curl_global_cleanup();
 }
 
 int main(int argc, char * argv[]) {
-  cerr << "DNAnexus Upload Agent" << endl;
+  LOG << "DNAnexus Upload Agent" << endl;
 
   opt.parse(argc, argv);
 
@@ -309,7 +318,7 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-  cerr << opt;
+  LOG << opt;
   opt.validate();
 
   setAPIServerInfo(opt.apiserverHost, opt.apiserverPort);
@@ -320,6 +329,8 @@ int main(int argc, char * argv[]) {
   chunksToUpload.setCapacity(opt.uploadThreads);
 
   try {
+    curlInit();
+
     testServerConnection();
     string projectID = resolveProject(opt.project);
     testProjectPermissions(projectID);
@@ -328,41 +339,43 @@ int main(int argc, char * argv[]) {
     testFileExists(opt.file);
 
     string fileID = createFileObject();
-    cerr << "fileID is " << fileID << endl;
+    LOG << "fileID is " << fileID << endl;
 
     totalChunks = createChunks(opt.file, fileID);
-    cerr << "Created " << totalChunks << " chunks." << endl;
+    LOG << "Created " << totalChunks << " chunks." << endl;
 
-    cerr << "Creating read thread..." << endl;
+    LOG << "Creating read thread..." << endl;
     boost::thread readThread(readChunks);
 
     vector<boost::thread> compressThreads;
-    cerr << "Creating compress threads.." << endl;
+    LOG << "Creating compress threads.." << endl;
     for (int i = 0; i < opt.compressThreads; ++i) {
       compressThreads.push_back(boost::thread(compressChunks));
     }
 
     vector<boost::thread> uploadThreads;
-    cerr << "Creating upload threads.." << endl;
+    LOG << "Creating upload threads.." << endl;
     for (int i = 0; i < opt.uploadThreads; ++i) {
       uploadThreads.push_back(boost::thread(uploadChunks));
     }
 
-    cerr << "Creating monitor thread.." << endl;
+    LOG << "Creating monitor thread.." << endl;
     boost::thread monitorThread(monitor);
 
-    cerr << "Joining monitor thread..." << endl;
+    LOG << "Joining monitor thread..." << endl;
     monitorThread.join();
-    cerr << "Monitor thread finished." << endl;
+    LOG << "Monitor thread finished." << endl;
 
     interruptWorkerThreads(readThread, uploadThreads, compressThreads);
     joinWorkerThreads(readThread, uploadThreads, compressThreads);
 
-    cerr << "Exiting." << endl;
-
     // fileClose(fileID);
+
+    curlCleanup();
+
+    LOG << "Exiting." << endl;
   } catch (exception &e) {
-    cerr << "ERROR: " << e.what() << endl;
+    LOG << "ERROR: " << e.what() << endl;
     return 1;
   }
 

@@ -30,7 +30,13 @@ public:
   void upload();
   void clear();
 
+  void log(const std::string &message) const;
+
   friend std::ostream &operator<<(std::ostream &out, const Chunk &opt);
+
+private:
+
+  std::string uploadURL() const;
 };
 
 #endif
