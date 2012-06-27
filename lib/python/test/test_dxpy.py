@@ -814,7 +814,7 @@ class TestDXApp(unittest.TestCase):
                            "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         dxapp.new(program=dxprogram.get_id(), version="0.0.1",
-                  owner="user-000000000000000000000001", name="app_name")
+                  owner="user-000000000000000000000000", name="app_name")
         appdesc = dxapp.describe()
         self.assertEqual(appdesc["name"], "app_name")
         self.assertEqual(appdesc["version"], "0.0.1")

@@ -233,13 +233,20 @@ class DXApp(object):
             global WORKSPACE_ID
             project = WORKSPACE_ID
 
+        run_input = {"input": app_input,
+                     "folder": folder}
+
+        global JOB_ID
+        if JOB_ID is None:
+            run_input["project"] = project
+
         if self._dxid is not None:
             return DXJob(dxpy.api.appRun(
                     self._dxid,
-                    input_params={"input": app_input, "project": project, "folder": folder},
+                    input_params=run_input,
                     **kwargs)["id"])
         else:
             return DXJob(dxpy.api.appRun(
                     'app-' + self._name, alias=self._alias,
-                    input_params={"input": app_input, "project": project, "folder": folder},
+                    input_params=run_input,
                     **kwargs)["id"])

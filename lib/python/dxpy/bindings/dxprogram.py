@@ -102,7 +102,12 @@ class DXProgram(DXDataObject):
             global WORKSPACE_ID
             project = WORKSPACE_ID
 
-        return DXJob(dxpy.api.programRun(self._dxid, {"input": program_input,
-                                                      "project": project,
-                                                      "folder": folder},
+        run_input = {"input": program_input,
+                     "folder": folder}
+
+        global JOB_ID
+        if JOB_ID is None:
+            run_input["project"] = project
+
+        return DXJob(dxpy.api.programRun(self._dxid, run_input,
                                          **kwargs)["id"])
