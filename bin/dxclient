@@ -236,6 +236,7 @@ def login(args):
     dxpy.set_security_context(json.loads(sec_context))
 
     set_auth_token(sec_context=sec_context, write=args.save)
+    args.current = False
     setenv(args)
 
 def logout(args):
@@ -250,28 +251,19 @@ def set_auth_token(token=None, sec_context=None, write=False):
         parser.exit(1, 'Error: set_auth_token was called with no token nor security context hash')
     if write:
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
-        write_env_var("DX_CLI_WD", '/')
 
-def set_host(host, write):
+def set_api_host_port(host, port, write):
     os.environ['DX_APISERVER_HOST'] = host
-    if write:
-        write_env_var("DX_APISERVER_HOST", host)
-    if "DX_APISERVER_PORT" in os.environ:
-        dxpy.set_api_server_info(host=host, port=os.environ["DX_APISERVER_PORT"])
-
-def set_port(port, write):
     os.environ['DX_APISERVER_PORT'] = port
     if write:
+        write_env_var("DX_APISERVER_HOST", host)
         write_env_var("DX_APISERVER_PORT", port)
-    if "DX_APISERVER_HOST" in os.environ:
-        dxpy.set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=port)
+    dxpy.set_api_server_info(host=host, port=port)
 
 def set_project(project, write):
     os.environ['DX_PROJECT_CONTEXT_ID'] = project
-    os.environ['DX_CLI_WD'] = '/'
     if write:
         write_env_var("DX_PROJECT_CONTEXT_ID", project)
-        write_env_var("DX_CLI_WD", '/')
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
@@ -279,41 +271,43 @@ def set_wd(folder, write):
     if write:
         write_env_var("DX_CLI_WD", folder)
 
+def prompt_for_var(prompt_str, env_var_str):
+    prompt = prompt_str
+    default = None
+    if env_var_str in os.environ:
+        default = os.environ[env_var_str]
+        prompt += ' [' + default + ']: '
+    else:
+        prompt += ': '
+    while True:
+        try: 
+            value = raw_input(prompt)
+        except KeyboardInterrupt:
+            print ''
+            continue
+        except EOFError:
+            print ''
+            raise EOFError()
+        if value != '':
+            return value
+        elif default is not None:
+            return default
+
 def setenv(args):
-    prompt = 'API server host'
-    if 'DX_APISERVER_HOST' in os.environ:
-        prompt += ' [' + os.environ['DX_APISERVER_HOST'] + ']: '
+    if args.current:
+        if args.save:
+            env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD']
+            for var in env_vars:
+                if var in os.environ:
+                    write_env_var(var, os.environ[var])
     else:
-        prompt += ': '
-    apihost = raw_input(prompt)
-    if apihost != '':
-        set_host(apihost, args.save)
+        api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
+        api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
+        set_api_host_port(api_host, api_port, args.save)
 
-    prompt = 'API server port'
-    if 'DX_APISERVER_PORT' in os.environ:
-        prompt += ' [' + os.environ['DX_APISERVER_PORT'] + ']: '
-    else:
-        prompt += ': '
-    apiport = raw_input(prompt)
-    if apiport != '':
-        set_post(apiport, args.save)
-
-    prompt = 'Workspace'
-    if 'DX_PROJECT_CONTEXT_ID' in os.environ:
-        prompt += ' [' + os.environ['DX_PROJECT_CONTEXT_ID'] + ']: '
-    else:
-        prompt += ': '
-    project = raw_input(prompt)
-    if project != '':
+        project = prompt_for_var('Workspace', 'DX_PROJECT_CONTEXT_ID')
+        wd = prompt_for_var('Current folder', 'DX_CLI_WD')
         set_project(project, args.save)
-
-    prompt = 'Current folder'
-    if 'DX_CLI_WD' in os.environ:
-        prompt += ' [' + os.environ['DX_CLI_WD'] + ']: '
-    else:
-        prompt += ': '
-    wd = raw_input(prompt)
-    if wd != '':
         set_wd(wd, args.save)
 
 def printenv(args):
@@ -1421,6 +1415,7 @@ parser_exit.set_defaults(func=exit_shell)
 parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
                                       description='Sets environment variables for communication with the API server')
 parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.', action='store_true')
+parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions if --save is true.', action='store_true')
 parser_setenv.set_defaults(func=setenv)
 
 parser_printenv = subparsers.add_parser('printenv', help='Prints all environment variables set for the CLI')
@@ -1431,7 +1426,7 @@ parser_login.add_argument('--token', help='Authentication token to use', default
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
-parser_login.add_argument('--save', help='Save token for future sessions', action='store_true')
+parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.set_defaults(func=login)
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
