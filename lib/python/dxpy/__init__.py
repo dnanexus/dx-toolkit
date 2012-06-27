@@ -24,6 +24,7 @@ beforehand as applicable while using the format 'hostname:port'
 import os, json, requests, time
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
+import httplib
 from dxpy.exceptions import *
 
 snappy_available = True
@@ -119,7 +120,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
                 if response.headers.get('content-type', '').startswith('application/json'):
                     return json.loads(decoded_content)
                 return decoded_content
-        except (DXAPIError, ConnectionError, HTTPError) as e:
+        except (DXAPIError, ConnectionError, HTTPError, httplib.HTTPException) as e:
             last_error = e
             
             # TODO: support HTTP/1.1 503 Retry-After

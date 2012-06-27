@@ -7,6 +7,6 @@ clean:
 	rm -rvf build
 
 install: all
-	cp -v build/contigset2fasta $(NUCLEUS_HOME)/client/bin
+	cp -v build/contigset2fasta $(DNANEXUS_HOME)/bin
 
 .PHONY: all
