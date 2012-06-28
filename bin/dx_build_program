@@ -10,7 +10,7 @@ from optparse import OptionParser
 import dxpy, dxpy.program_builder
 
 parser = OptionParser(usage="%prog [options] program_dir", description="Upload a DNAnexus program.")
-parser.add_option("-f", "--overwrite", help="Overwrite existing program and app with same name", action='store_true', default=False)
+parser.add_option("-f", "--overwrite", help="Remove existing programs of the same name", action='store_true', default=False)
 parser.add_option("-a", "--create_app", help="Create an app from the program (requires dxapp.json to be present)", action='store_true', default=False)
 parser.add_option("-p", "--destination_project", help="Insert the program into the project with the specified project ID.", default=None)
 parser.add_option("--publish", help="Publish the app after it has been created.", action='store_true', default=False)
