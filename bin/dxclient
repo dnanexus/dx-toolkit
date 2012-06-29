@@ -1182,11 +1182,11 @@ def parse_bool(string):
 
 def parse_obj(string, klass):
     id_or_none = get_id_from_path(string)
-    if id_or_none is None:
-        raise ValueError('Error: Unrecognized path or ID')
-    elif not id_or_none.startswith(klass):
-        raise TypeError('Error: The given object is of class ' + id_or_none[:id_or_none.find('-')] + ' but an object of class ' + klass + ' was expected.')
-    return {'$dnanexus_link': id_or_none}
+    if id_or_none is not None:
+        string = id_or_none
+    if not string.startswith(klass):
+            raise TypeError('Error: The given object is of class ' + id_or_none[:id_or_none.find('-')] + ' but an object of class ' + klass + ' was expected.')
+    return {'$dnanexus_link': string}
 
 parse_input = {'boolean': parse_bool,
                'string': (lambda string: string),
