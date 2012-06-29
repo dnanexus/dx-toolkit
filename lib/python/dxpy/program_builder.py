@@ -52,6 +52,7 @@ def build(src_dir):
     # TODO: use Gentoo or deb buildsystem
     config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
+        logging.debug("Running ./configure")
         subprocess.check_call([config_script])
     if os.path.isfile(os.path.join(src_dir, "Makefile")) \
         or os.path.isfile(os.path.join(src_dir, "makefile")) \
