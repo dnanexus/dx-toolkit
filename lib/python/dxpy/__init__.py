@@ -37,6 +37,10 @@ API_VERSION = '1.0.0'
 AUTH_HELPER = None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
+APISERVER_PROTOCOL = 'http'
+APISERVER_HOST = 'localhost'
+APISERVER_PORT = 8124
+
 DEFAULT_RETRIES = 5
 
 http_server_errors = set([requests.codes.server_error,
@@ -150,11 +154,15 @@ class DXHTTPOAuth2(AuthBase):
             raise NotImplementedError("Token types other than bearer are not yet supported")
         return r
 
-def set_api_server_info(host='localhost', port=8124, protocol='http'):
-    global APISERVER_HOST, APISERVER_PORT, APISERVER
-    APISERVER_HOST = host
-    APISERVER_PORT = port
-    APISERVER = protocol + "://" + host + ":" + str(port)
+def set_api_server_info(host=None, port=None, protocol=None):
+    global APISERVER_PROTOCOL, APISERVER_HOST, APISERVER_PORT, APISERVER
+    if host is not None:
+        APISERVER_HOST = host
+    if port is not None:
+        APISERVER_PORT = port
+    if protocol is not None:
+        APISERVER_PROTOCOL = protocol
+    APISERVER = APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + str(APISERVER_PORT)
 
 def set_security_context(security_context):
     global SECURITY_CONTEXT, AUTH_HELPER
@@ -197,10 +205,9 @@ def set_project_context(dxid):
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
 
-if "DX_APISERVER_HOST" in os.environ and "DX_APISERVER_PORT" in os.environ:
-    set_api_server_info(host=os.environ["DX_APISERVER_HOST"], port=os.environ["DX_APISERVER_PORT"])
-else:
-    set_api_server_info()
+set_api_server_info(host=os.environ.get("DX_APISERVER_HOST", None),
+                    port=os.environ.get("DX_APISERVER_PORT", None),
+                    protocol=os.environ.get("DX_APISERVER_PROTOCOL", None))
 
 if "DX_SECURITY_CONTEXT" in os.environ:
     set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
