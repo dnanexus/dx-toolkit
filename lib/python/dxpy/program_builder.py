@@ -13,8 +13,10 @@ ones taking precedence):
 
 '''
 
-import os, sys, json, subprocess, tempfile, logging
+import os, sys, json, subprocess, tempfile, logging, multiprocessing
 import dxpy
+
+NUM_CORES = multiprocessing.cpu_count()
 
 class ProgramBuilderException(Exception):
     pass
@@ -54,7 +56,8 @@ def build(src_dir):
     if os.path.isfile(os.path.join(src_dir, "Makefile")) \
         or os.path.isfile(os.path.join(src_dir, "makefile")) \
         or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
-        subprocess.check_call(["make", "-C", src_dir, "-j8"])
+        logging.debug("Building with make -j%d" % (NUM_CORES,))
+        subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
 
 def upload_resources(src_dir, project=None):
     program_spec = get_program_spec(src_dir)
