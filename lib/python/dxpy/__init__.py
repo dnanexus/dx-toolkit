@@ -95,7 +95,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     for retry in range(max_retries + 1):
         try:
             response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
-                                        auth=auth, config=config, **kwargs)
+                                        auth=auth, config=config, verify=False, **kwargs)
 
             # If HTTP code that is not 200 (OK) is received and the content is
             # JSON, parse it and throw the appropriate error.  Otherwise,
@@ -162,7 +162,10 @@ def set_api_server_info(host=None, port=None, protocol=None):
         APISERVER_PORT = port
     if protocol is not None:
         APISERVER_PROTOCOL = protocol
-    APISERVER = APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + str(APISERVER_PORT)
+    if port is None or port == '':
+        APISERVER = APISERVER_PROTOCOL + "://" + APISERVER_HOST
+    else:
+        APISERVER = APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + str(APISERVER_PORT)
 
 def set_security_context(security_context):
     global SECURITY_CONTEXT, AUTH_HELPER

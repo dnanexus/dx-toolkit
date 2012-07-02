@@ -273,13 +273,15 @@ def set_auth_token(token=None, sec_context=None, write=False):
     if write:
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
-def set_api_host_port(host, port, write):
+def set_api(protocol, host, port, write):
+    os.environ['DX_APISERVER_PROTOCOL'] = protocol
     os.environ['DX_APISERVER_HOST'] = host
     os.environ['DX_APISERVER_PORT'] = port
     if write:
+        write_env_var("DX_APISERVER_PROTOCOL", protocol)
         write_env_var("DX_APISERVER_HOST", host)
         write_env_var("DX_APISERVER_PORT", port)
-    dxpy.set_api_server_info(host=host, port=port)
+    dxpy.set_api_server_info(host=host, port=port, protocol=protocol)
 
 def set_project(project, write):
     os.environ['DX_PROJECT_CONTEXT_ID'] = project
@@ -324,9 +326,10 @@ def setenv(args):
             if var in os.environ:
                 write_env_var(var, os.environ[var])
     else:
+        api_protocol = prompt_for_var('API server protocol', 'DX_APISERVER_PROTOCOL')
         api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
         api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
-        set_api_host_port(api_host, api_port, args.save)
+        set_api(api_protocol, api_host, api_port, args.save)
 
         project = prompt_for_var('Workspace', 'DX_PROJECT_CONTEXT_ID')
         wd = prompt_for_var('Current folder', 'DX_CLI_WD')
@@ -334,11 +337,12 @@ def setenv(args):
         set_wd(wd, args.save)
 
 def printenv(args):
-    print "Auth token used\t\t" + json.loads(os.environ["DX_SECURITY_CONTEXT"])["auth_token"]
-    print "API server host\t\t" + os.environ["DX_APISERVER_HOST"]
-    print "API server port\t\t" + os.environ["DX_APISERVER_PORT"]
-    print "Current workspace\t" + os.environ["DX_PROJECT_CONTEXT_ID"]
-    print "Current folder\t\t" + os.environ["DX_CLI_WD"]
+    print "Auth token used\t\t" + str(json.loads(os.environ.get("DX_SECURITY_CONTEXT", "{\"auth_token\": null}"))["auth_token"])
+    print "API server protocol\t" + str(os.environ.get("DX_APISERVER_PROTOCOL"))
+    print "API server host\t\t" + str(os.environ.get("DX_APISERVER_HOST"))
+    print "API server port\t\t" + str(os.environ.get("DX_APISERVER_PORT"))
+    print "Current workspace\t" + str(os.environ.get("DX_PROJECT_CONTEXT_ID"))
+    print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
 
 def pwd(args):
     print os.environ['DX_CLI_WD']
