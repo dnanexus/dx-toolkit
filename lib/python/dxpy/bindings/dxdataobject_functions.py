@@ -32,7 +32,6 @@ def get_dxlink_ids(link):
 
 def _guess_link_target_type(link):
     if is_dxlink(link):
-        print "Is link"
         link = link['$dnanexus_link']
     class_name, _id = link.split("-")
     class_name = 'DX'+class_name.capitalize()
