@@ -51,8 +51,24 @@ def clean_folder_path(path):
         return '/'
     return newpath
 
+def resolve_path_with_project(path):
+    substrings = path.split(':')
+    if len(substrings) > 2:
+        parser.exit(1, 'At most one colon expected in a path')
+    if len(substrings) == 2:
+        project = substrings[0]
+        wd = '/'
+    else:
+        project = None
+        wd = os.environ.get('DX_CLI_WD', '/')
+    folderpath = substrings[-1]
+    if folderpath.startswith('/'):
+        return project, clean_folder_path(folderpath)
+    else:
+        return project, clean_folder_path(wd + '/' + folderpath)
+
 def resolve_path(path):
-    wd = os.environ['DX_CLI_WD']
+    wd = os.environ.get('DX_CLI_WD', '/')
     if path.startswith('/'):
         return clean_folder_path(path)
     else:
@@ -384,7 +400,7 @@ def get_id_from_path(path):
     try:
         results = list(dxpy.find_data_objects(name=os.path.basename(full_path),
                                               describe={},
-                                              project=os.environ['DX_PROJECT_CONTEXT_ID'],
+                                              project=os.environ.get('DX_PROJECT_CONTEXT_ID', None),
                                               folder=os.path.dirname(full_path)))
         if len(results) > 1:
             print 'Found ' + str(len(results)) + ' objects with full path ' + full_path + ':'
@@ -422,7 +438,8 @@ def cd(args):
             parser.exit(1, args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID'] + '\n')
             return
 
-    set_wd(args.folder, False)
+    global interactive
+    set_wd(args.folder, not interactive)
 
 def cmp_names(x, y):
     return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())    
@@ -434,8 +451,12 @@ def print_ls_l_desc(desc):
         print desc['state'] + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + desc['name'] + ' : ' + desc['id']
 
 def ls(args):
-    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-    args.folder = resolve_path(args.folder)
+    project, folderpath = resolve_path_with_project(args.path)
+    if project is None:
+        project = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+    if project is None:
+        parser.exit(1, 'Current workspace must be set with \'setenv\' before any data can be listed\n')
+    dxproj = dxpy.get_handler(project)
     only = ""
     if args.obj and not args.folders and not args.full:
         only = "objects"
@@ -446,7 +467,7 @@ def ls(args):
 
     resp = None
     try:
-        resp = dxproj.list_folder(folder=args.folder, describe={}, only=only, includeHidden=args.all)
+        resp = dxproj.list_folder(folder=folderpath, describe={}, only=only, includeHidden=args.all)
     except dxpy.DXAPIError as detail:
         print detail
         return
@@ -860,7 +881,7 @@ def describe(args):
         json_input = {}
         if args.project is not None:
             json_input["project"] = args.project
-        else:
+        elif 'DX_PROJECT_CONTEXT_ID' in os.environ:
             json_input["project"] = os.environ["DX_PROJECT_CONTEXT_ID"]
         if args.properties:
             json_input["properties"] = True
@@ -1542,7 +1563,7 @@ parser_ls.add_argument('-l', help='use a long listing format', action='store_tru
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
 parser_ls.add_argument('--folders', help='show only folders', action='store_true')
 parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
-parser_ls.add_argument('folder', help='folder to list, default is \"/\"', nargs='?', default='.')
+parser_ls.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
 parser_ls.set_defaults(func=ls)
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
