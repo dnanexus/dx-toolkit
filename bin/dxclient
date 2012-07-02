@@ -3,6 +3,7 @@
 import sys, os, datetime, urlparse, requests, base64, getpass
 import argparse
 import shlex # respects quotes substrings when splitting
+import textwrap
 from requests.auth import HTTPBasicAuth
 
 import json
@@ -331,6 +332,16 @@ def setenv(args):
         api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
         set_api(api_protocol, api_host, api_port, args.save)
 
+        if args.projects:
+            print ""
+            print "Available projects:"
+            find_proj_args = argparse.Namespace()
+            find_proj_args.name = None
+            find_proj_args.json = False
+            find_proj_args.level = None
+            find_proj_args.describe = None
+            find_projects(find_proj_args)
+
         project = prompt_for_var('Workspace', 'DX_PROJECT_CONTEXT_ID')
         wd = prompt_for_var('Current folder', 'DX_CLI_WD')
         set_project(project, args.save)
@@ -576,15 +587,19 @@ def get_io_spec(spec):
     return '\n\t\t'.join(map(get_io_desc, spec))
 
 def print_project_desc(desc):
+    recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces']
+
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     print "Name\t\t" + desc["name"]
-    print "Description\t" + desc["description"]
+    print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=80)
+    print "Owner\t\t" + desc["owner"]
     print "Protected\t" + json.dumps(desc["protected"])
     print "Restricted\t" + json.dumps(desc["restricted"])
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     print "Data usage\t" + str(desc["dataUsage"])
+    print "Tags\t\t" + json.dumps(desc["tags"])
     if "level" in desc:
         print "Access level\t" + desc["level"]
     if "folders" in desc:
@@ -596,7 +611,13 @@ def print_project_desc(desc):
     if "appWorkspaces" in desc:
         print "App workspaces\t" + json.dumps(desc["appWorkspaces"])
 
+    for field in desc:
+        if field not in recognized_fields:
+            print field + '\t\t' + json.dumps(desc[field])
+
 def print_app_desc(desc):
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputs', 'outputs', 'run', 'globalWorkspace', 'installed', 'openSource']
+
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     print "Owner\t\t" + desc["owner"]
@@ -608,6 +629,14 @@ def print_app_desc(desc):
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     if "program" in desc:
         print "Created from\t" + desc["program"]
+    if desc['installed'] == True:
+        print 'Installed\ttrue'
+    else:
+        print 'Installed\tfalse'
+    if desc['openSource'] == True:
+        print 'Open source\ttrue'
+    else:
+        print 'Open source\tfalse'
     if desc["deleted"]:
         print "Deleted\t\ttrue"
     else:
@@ -639,9 +668,12 @@ def print_app_desc(desc):
             print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
         print "GlobalWorkspace\t" + desc["globalWorkspace"]
 
+    for field in desc:
+        if field not in recognized_fields:
+            print field + '\t\t' + json.dumps(desc[field])
+
 def print_data_obj_desc(desc):
-    common_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types',
-                     'hidden', 'details', 'links', 'created', 'modified', 'state']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputs', 'outputs', 'run', 'summary', 'dxapi', 'access']
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     if 'project' in desc:
@@ -665,8 +697,33 @@ def print_data_obj_desc(desc):
         print "Outgoing links\t" + json.dumps(desc["links"])
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    if "title" in desc:
+        print "Title\t\t" + desc["title"]
+    if "subtitle" in desc:
+        print "Subtitle\t\t" + desc["subtitle"]
+    if "description" in desc:
+        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=80)
+    if 'summary' in desc:
+        print textwrap.fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=80)
+    if 'access' in desc:
+        print "Access\t\t" + json.dumps(desc["access"])
+    if 'dxapi' in desc:
+        print "API version\t" + desc["dxapi"]
+    if "inputs" in desc:
+        print "Inputs\t\t" + get_io_spec(desc['inputs'])
+    if "outputs" in desc:
+        print "Outputs\t\t" + get_io_spec(desc['outputs'])
+    if 'run' in desc:
+        print "Interpreter\t" + desc["run"]["interpreter"]
+        if "resources" in desc:
+            print "Resources\t" + json.dumps(desc["run"]["resources"])
+        if "bundledDepends" in desc:
+            print "bundledDepends\t" + json.dumps(desc["run"]["bundledDepends"])
+        if "execDepends" in desc:
+            print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
+
     for field in desc:
-        if field in common_fields:
+        if field in recognized_fields:
             continue
         else:
             if field == "media":
@@ -692,10 +749,15 @@ def print_data_obj_desc(desc):
                 print field + "\t\t" + json.dumps(desc[field])
 
 def print_job_desc(desc):
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace']
+
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     print "Project context\t" + desc["project"]
     print "Workspace\t" + desc["workspace"]
+    if 'projectWorkspace' in desc:
+        print 'Cache workspace\t' + desc['projectWorkspace']
+        print 'GlobalWorkspace\t' + desc['globalWorkspace']
     if "program" in desc:
         print "Program\t\t" + desc["program"]
     elif "app" in desc:
@@ -714,13 +776,24 @@ def print_job_desc(desc):
         print "Original Input\t" + json.dumps(desc["originalInput"])
         print "Input\t\t" + json.dumps(desc["input"])
         print "Output\t\t" + json.dumps(desc["output"])
+    if 'folder' in desc:
+        print 'Output folder\t' + desc['folder']
     print "Launched by\t" + desc["launchedBy"]
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    if 'waitingOnChildren' in desc:
+        print 'Pending subjobs\t' + json.dumps(desc['waitingOnChildren'])
     if "failureReason" in desc:
         print "Failure reason\t" + desc["failureReason"]
     if "failureMessage" in desc:
         print "Failure message\t" + desc["failureMessage"]
+    if "stdout" in desc:
+        print "File of stdout\t" + str(desc['stdout'])
+    if 'stderr' in desc:
+        print 'File of stderr\t' + str(desc['stderr'])
+    for field in desc:
+        if field not in recognized_fields:
+            print field + '\t\t' + json.dumps(desc[field])
 
 def describe(args):
     # Attempt to resolve name
@@ -1118,7 +1191,7 @@ def find_data(args):
 
 def find_projects(args):
     try:
-        results = list(dxpy.find_projects(name=args.name, level=args.level, describe=args.describe))
+        results = list(dxpy.find_projects(name=args.name, level=args.level, describe=True))
         if args.json:
             print json.dumps(results)
             return
@@ -1128,7 +1201,7 @@ def find_projects(args):
                 print_project_desc(result["describe"])
                 print "Permissions\t" + result["level"]
             else:
-                print result["id"] + " : " + result["level"]
+                print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
         print ""
     except dxpy.DXAPIError as detail:
         print detail    
@@ -1441,6 +1514,7 @@ parser_exit.set_defaults(func=exit_shell)
 
 parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
                                       description='Sets environment variables for communication with the API server')
+parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
 parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
 parser_setenv.set_defaults(func=setenv)
