@@ -11,6 +11,7 @@ the exact same syntax: newFolder, listFolder, renameFolder, removeFolder, move, 
 also a minimalist describe method that returns metadata about the objects and folders inside the workspace.
 """
 
+import dxpy
 from dxpy.bindings import *
 
 ###############
@@ -24,8 +25,7 @@ class DXWorkspace(object):
         if dxid is not None:
             self.set_id(dxid)
         else:
-            global WORKSPACE_ID
-            self.set_id(WORKSPACE_ID)
+            self.set_id(dxpy.WORKSPACE_ID)
 
     def __str__(self):
         desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "

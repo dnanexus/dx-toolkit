@@ -63,7 +63,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     :type want_full_response: boolean
     :param max_retries: Number of retries to perform for requests which are safe to retry. Safe requests are GET requests or requests which produced a network error or HTTP/1.1 server error (500, 502, 503, 504).
     :type max_retries: int
-    :param always_retry: Indicates whether to attempt retries even for requests which are not considered safe to retry.
+    :param always_retry: Indicates whether to attempt retries even for requests which are not considered safe to retry.  Exception: if the HTTP response has code 422, no retries will be attempted (request is invalid and cannot be fulfilled with retries).
     :type always_retry: boolean
     :returns: Response from API server in the requested format.  Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the contents of the response will **always** be converted from JSON to Python before it is returned, and it will therefore be of type list or dict.
     :raises: :exc:`requests.exceptions.HTTPError` if response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
@@ -131,7 +131,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
             # TODO: if the socket was dropped mid-request, ConnectionError is raised, but non-idempotent requests are unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                if always_retry or isinstance(e, ConnectionError) or method == 'GET' or response.status_code in http_server_errors:
+                if (always_retry or isinstance(e, ConnectionError) or method == 'GET' or response.status_code in http_server_errors) and response.status_code != 422:
                     delay = 2 ** (retry+1)
                     logging.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
                     time.sleep(delay)

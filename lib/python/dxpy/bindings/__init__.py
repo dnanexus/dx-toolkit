@@ -95,8 +95,7 @@ class DXDataObject(object):
         remaining_kwargs = {p: kwargs[p] for p in kwargs if p not in common_creation_params}
 
         if "project" not in dx_hash:
-            global WORKSPACE_ID
-            dx_hash["project"] = WORKSPACE_ID
+            dx_hash["project"] = dxpy.WORKSPACE_ID
 
         return dx_hash, remaining_kwargs
 
@@ -155,8 +154,7 @@ class DXDataObject(object):
             self._dxid = dxid
 
         if self._proj is None and project is None:
-            global WORKSPACE_ID
-            self._proj = WORKSPACE_ID
+            self._proj = dxpy.WORKSPACE_ID
         else:
             self._proj = project
 

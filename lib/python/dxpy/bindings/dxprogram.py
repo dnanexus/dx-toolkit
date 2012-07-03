@@ -7,6 +7,7 @@ for input, output, and execution.  They can be run by calling the :func:`DXProgr
 
 """
 
+import dxpy
 from dxpy.bindings import *
 
 #############
@@ -99,14 +100,12 @@ class DXProgram(DXDataObject):
 
         '''
         if project is None:
-            global WORKSPACE_ID
-            project = WORKSPACE_ID
+            project = dxpy.WORKSPACE_ID
 
         run_input = {"input": program_input,
                      "folder": folder}
 
-        global JOB_ID
-        if JOB_ID is None:
+        if dxpy.JOB_ID is None:
             run_input["project"] = project
 
         return DXJob(dxpy.api.programRun(self._dxid, run_input,

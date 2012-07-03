@@ -8,6 +8,7 @@ They can be run by calling the :func:`DXApp.run` method.
 
 """
 
+import dxpy
 from dxpy.bindings import *
 
 #########
@@ -230,14 +231,12 @@ class DXApp(object):
 
         '''
         if project is None:
-            global WORKSPACE_ID
-            project = WORKSPACE_ID
+            project = dxpy.WORKSPACE_ID
 
         run_input = {"input": app_input,
                      "folder": folder}
 
-        global JOB_ID
-        if JOB_ID is None:
+        if dxpy.JOB_ID is None:
             run_input["project"] = project
 
         if self._dxid is not None:
