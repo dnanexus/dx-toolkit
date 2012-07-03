@@ -13,7 +13,7 @@ def now():
     return int(time.time()*1000)
 
 def find_data_objects(classname=None, state=None, visibility=None,
-                      name=None, properties=None, type_=None, tag=None,
+                      name=None, properties=None, typename=None, tag=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
@@ -29,9 +29,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type name: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
-    :param type_: Type that each result must conform to
-    :type type_: string
-    :param tag: Tag that each result must conform to
+    :param typename: Type that each result must conform to
+    :type typename: string
+    :param tag: Tag that each result must be tagged with
     :type tag: string
     :param link: ID of an object to which each result must link to
     :type link: string
@@ -81,8 +81,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
         query["name"] = name
     if properties is not None:
         query["properties"] = properties
-    if type_ is not None:
-        query["type"] = type_
+    if typename is not None:
+        query["type"] = typename
     if tag is not None:
         query["tag"] = tag
     if link is not None:

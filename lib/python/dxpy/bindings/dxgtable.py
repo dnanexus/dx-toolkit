@@ -389,18 +389,18 @@ class DXGTable(DXDataObject):
         self._wait_on_close(timeout, **kwargs)
 
     @staticmethod
-    def make_column_desc(name, type_):
+    def make_column_desc(name, typename):
         """
         :param name: Column name
         :type name: string
-        :param type_: Data type for the column (one of "boolean", "uint8", "int32", "int64", "float", "double", "string")
-        :type type_: string
+        :param typename: Data type for the column (one of "boolean", "uint8", "int32", "int64", "float", "double", "string")
+        :type typename: string
 
         Returns a column descriptor with the given name and type.
 
         """
 
-        return {"name": name, "type": type_}
+        return {"name": name, "type": typename}
 
     @staticmethod
     def genomic_range_index(chr, lo, hi, name="gri"):
