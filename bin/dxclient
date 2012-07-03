@@ -348,6 +348,12 @@ def setenv(args):
         api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
         set_api(api_protocol, api_host, api_port, args.save)
 
+        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
+            old_project = os.environ['DX_PROJECT_CONTEXT_ID']
+            projects = [old_project]
+        else:
+            old_project = None
+
         if args.projects:
             print ""
             print "Available projects:"
@@ -356,9 +362,15 @@ def setenv(args):
             find_proj_args.json = False
             find_proj_args.level = None
             find_proj_args.describe = None
-            find_projects(find_proj_args)
+            projects = find_projects(find_proj_args)
 
+        # Eliminate current default if it is not a found project
+        if old_project is not None and old_project not in projects:
+            os.environ.pop('DX_PROJECT_CONTEXT_ID')
         project = prompt_for_var('Workspace', 'DX_PROJECT_CONTEXT_ID')
+        # Eliminate current default if there's a change in project
+        if project != old_project:
+            os.environ['DX_CLI_WD'] = '/'
         wd = prompt_for_var('Current folder', 'DX_CLI_WD')
         set_project(project, args.save)
         set_wd(wd, args.save)
@@ -391,7 +403,7 @@ def api(args):
     try:
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                   json_input)
-        print json.dumps(resp)
+        print json.dumps(resp, indent=4)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
@@ -472,7 +484,7 @@ def ls(args):
         print detail
         return
     if args.json:
-        print json.dumps(resp)
+        print json.dumps(resp, indent=4)
         return
 
     if not args.obj:
@@ -613,7 +625,7 @@ def print_project_desc(desc):
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     print "Name\t\t" + desc["name"]
-    print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=80)
+    print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
     print "Owner\t\t" + desc["owner"]
     print "Protected\t" + json.dumps(desc["protected"])
     print "Restricted\t" + json.dumps(desc["restricted"])
@@ -723,9 +735,9 @@ def print_data_obj_desc(desc):
     if "subtitle" in desc:
         print "Subtitle\t\t" + desc["subtitle"]
     if "description" in desc:
-        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=80)
+        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
     if 'summary' in desc:
-        print textwrap.fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=80)
+        print textwrap.fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=64)
     if 'access' in desc:
         print "Access\t\t" + json.dumps(desc["access"])
     if 'dxapi' in desc:
@@ -803,11 +815,14 @@ def print_job_desc(desc):
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     if 'waitingOnChildren' in desc:
-        print 'Pending subjobs\t' + json.dumps(desc['waitingOnChildren'])
+        if len(desc['waitingOnChildren']) == 0:
+            print 'Pending subjobs\tNone'
+        else:
+            print 'Pending subjobs\t' + ', '.join(desc['waitingOnChildren'])
     if "failureReason" in desc:
         print "Failure reason\t" + desc["failureReason"]
     if "failureMessage" in desc:
-        print "Failure message\t" + desc["failureMessage"]
+        print textwrap.fill("Failure message\t" + desc["failureMessage"], subsequent_indent='\t\t', width=64)
     if "stdout" in desc:
         print "File of stdout\t" + str(desc['stdout'])
     if 'stderr' in desc:
@@ -831,7 +846,7 @@ def describe(args):
             return
 
         if args.json:
-            print json.dumps(desc)
+            print json.dumps(desc, indent=4)
         if not args.json:
             print_job_desc(desc)
     elif args.dxid.startswith('project') or args.dxid.startswith('workspace'):
@@ -842,7 +857,7 @@ def describe(args):
             return
 
         if args.json:
-            print json.dumps(desc)
+            print json.dumps(desc, indent=4)
         else: # TODO: Finish adding flags, etc.
             print_project_desc(desc)
     elif args.dxid.startswith('user'):
@@ -853,7 +868,7 @@ def describe(args):
             return
 
         if args.json:
-            print json.dumps(desc)
+            print json.dumps(desc, indent=4)
         else:
             print "ID\t\t" + desc["id"]
             print "Name\t\t" + desc["first"] + " " + desc["middle"] + " " + desc["last"]
@@ -874,7 +889,7 @@ def describe(args):
             return
 
         if args.json:
-            print json.dumps(desc)
+            print json.dumps(desc, indent=4)
         else:
             print_app_desc(desc)
     else:
@@ -895,7 +910,7 @@ def describe(args):
             return
 
         if args.json:
-            print json.dumps(desc)
+            print json.dumps(desc, indent=4)
         else:
             # Must be a data object
             print_data_obj_desc(desc)
@@ -1120,13 +1135,13 @@ def gtable_get(args):
         result = dxpy.DXGTable(args.dxid).get_rows(query=gri_query, starting=args.starting,
                                                    limit=args.limit)
         if args.json:
-            print json.dumps(result)
+            print json.dumps(result, indent=4)
             return
         if result["next"] is not None:
             print "Use as STARTING to continue query: " + str(result["next"])
         print "# retrieved rows: " + str(result["length"])
         for row in result["data"]:
-            print json.dumps(row)
+            print json.dumps(row, indent=4)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
@@ -1141,7 +1156,7 @@ def find_jobs(args):
                                       created_after=args.created_after, created_before=args.created_before))
 
         if args.json:
-            print json.dumps(results)
+            print json.dumps(results, indent=4)
             return
         if not args.nodesc:
             for result in results:
@@ -1198,7 +1213,7 @@ def find_data(args):
                                               created_after=args.created_after, created_before=args.created_before,
                                               describe=args.describe))
         if args.json:
-            print json.dumps(results)
+            print json.dumps(results, indent=4)
             return
         for result in results:
             if args.describe is True:
@@ -1214,7 +1229,7 @@ def find_projects(args):
     try:
         results = list(dxpy.find_projects(name=args.name, level=args.level, describe=True))
         if args.json:
-            print json.dumps(results)
+            print json.dumps(results, indent=4)
             return
         for result in results:
             if args.describe is True:
@@ -1224,8 +1239,9 @@ def find_projects(args):
             else:
                 print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
         print ""
+        return map(lambda result: result["id"], results)
     except dxpy.DXAPIError as detail:
-        print detail    
+        print detail
 
 def find_apps(args):
     try:
@@ -1239,7 +1255,7 @@ def find_apps(args):
                                       describe=True))
                                       
         if args.json:
-            print json.dumps(results)
+            print json.dumps(results, indent=4)
             return
         for result in results:
             print result["describe"]["name"] + " (v" + result["describe"]["version"] + ", " + result["id"] + ")"
@@ -1463,7 +1479,7 @@ def run(args):
 
     if args.verbose:
         print "Calling " + handler.get_id() + " with output folder " + args.folder + " with input:"
-        print json.dumps(args.input)
+        print json.dumps(args.input, indent=4)
 
     try:
         dxjob = handler.run(args.input, folder=args.folder)
@@ -1505,8 +1521,9 @@ def shell(orig_args):
             args.func(args)
         except StopIteration:
             exit(0)
-        except:
-            pass
+        except BaseException as details:
+            if str(details) != '1':
+                print str(details) + '\n'
 
 def print_help(args):
     parser.print_help()
