@@ -40,7 +40,7 @@ def _guess_link_target_type(link):
     cls = dxpy.__dict__[class_name]
     return cls
 
-def get_handler(link):
+def get_handler(link, project=None):
     '''
     :param link: String containing an object ID or dict containing a DXLink
     Parses a string or DXLink dict. Creates and returns an object handler for it.
@@ -51,7 +51,7 @@ def get_handler(link):
     '''
     try:
         cls = _guess_link_target_type(link)
-        return cls(link)
+        return cls(link, project=project)
     except Exception as e:
         raise DXError("Could not parse link "+str(link))
 

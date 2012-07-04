@@ -6,6 +6,7 @@ managed by the API server.  All jobs (running, failed, or done) can be
 found using :func:`dxpy.bindings.search.find_jobs`.
 '''
 
+import dxpy
 from dxpy.bindings import *
 import time
 
@@ -17,7 +18,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
-                      describe=None, **kwargs):
+                      describe=None, limit=None, level=None,
+                      return_handler=False, **kwargs):
     """
     :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "program"
     :type classname: string
@@ -51,6 +53,12 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type created_before: integer
     :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
     :type describe: boolean
+    :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
+    :type level: string
+    :param limit: The maximum number of results to be returned
+    :type limit: int
+    :param return_handler: Whether to yield results as dxpy object handlers or as a dict with keys "id" and "project"
+    :type return_handler: boolean
     :rtype: generator
 
     This is a generator function which returns the search results and
@@ -122,18 +130,148 @@ def find_data_objects(classname=None, state=None, visibility=None,
                 query["created"]["before"] = now() + created_before
     if describe is not None:
         query["describe"] = describe
+    if level is not None:
+        query['level'] = level
+    if limit is not None:
+        query["limit"] = limit
+
+    num_results = 0
 
     while True:
         resp = dxpy.api.systemFindDataObjects(query, **kwargs)
         
         for i in resp["results"]:
-            yield i
+            if num_results == limit:
+                raise StopIteration()
+            num_results += 1
+            if return_handler:
+                handler = dxpy.get_handler(i['id'], project=i['project'])
+                yield handler
+            else:
+                yield i
 
         # set up next query
         if resp["next"] is not None:
             query["starting"] = resp["next"]
         else:
             raise StopIteration()
+
+def find_one_data_object(classname=None, state=None, visibility=None,
+                         name=None, properties=None, typename=None, tag=None,
+                         link=None, project=None, folder=None, recurse=None,
+                         modified_after=None, modified_before=None,
+                         created_after=None, created_before=None,
+                         describe=None, return_handler=None, **kwargs):
+    """
+    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "program"
+    :type classname: string
+    :param state: State of the object ("open", "closing", "closed", "any")
+    :type state: string
+    :param visibility: Visibility of the object ("hidden", "visible", "either")
+    :type visibility: string
+    :param name: Name of the object
+    :type name: string
+    :param properties: Properties (key-value pairs) that each result must have
+    :type properties: dict
+    :param typename: Type that each result must conform to
+    :type typename: string
+    :param tag: Tag that each result must be tagged with
+    :type tag: string
+    :param link: ID of an object to which each result must link to
+    :type link: string
+    :param project: ID of a project in which each result must belong
+    :type project: string
+    :param folder: If *project* is given, full path to a folder in which each result must belong (default is the root folder)
+    :type folder: string
+    :param recurse: If *project* is given, whether to look in subfolders as well
+    :type recurse: boolean
+    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
+    :type modified_after: integer
+    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
+    :type modified_before: integer
+    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
+    :type created_after: integer
+    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
+    :type created_before: integer
+    :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
+    :type describe: boolean
+    :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
+    :type level: string
+    :param return_handler: Whether to return a result as a dxpy object handler or as a dict with keys "id" and "project"
+    :type return_handler: boolean
+    :rtype: dict, handler, or None
+
+    This is a function which returns the first data object found which
+    satisfies all of the constraints.  If no results are found, it
+    returns None.
+
+    """
+
+    query = {}
+    if classname is not None:
+        query["class"] = classname
+    if state is not None:
+        query["state"] = state
+    if visibility is not None:
+        query["visibility"] = visibility
+    if name is not None:
+        query["name"] = name
+    if properties is not None:
+        query["properties"] = properties
+    if typename is not None:
+        query["type"] = typename
+    if tag is not None:
+        query["tag"] = tag
+    if link is not None:
+        query["link"] = link
+    if project is not None:
+        query["scope"] = {"project": project}
+        if folder is not None:
+            query["scope"]["folder"] = folder
+        if recurse is not None:
+            query["scope"]["recurse"] = recurse
+    else:
+        query["scope"] = {}
+        query["scope"]["project"] = dxpy.WORKSPACE_ID
+    if modified_after is not None or modified_before is not None:
+        query["modified"] = {}
+        if modified_after is not None:
+            if modified_after >= 0:
+                query["modified"]["after"] = modified_after
+            else:
+                query["modified"]["after"] = now() + modified_after
+        if modified_before is not None:
+            if modified_before >= 0:
+                query["modified"]["before"] = modified_before
+            else:
+                query["modified"]["before"] = now() + modified_before
+    if created_after is not None or created_before is not None:
+        query["created"] = {}
+        if created_after is not None:
+            if created_after >= 0:
+                query["created"]["after"] = created_after
+            else:
+                query["created"]["after"] = now() + created_after
+        if created_before is not None:
+            if created_before >= 0:
+                query["created"]["before"] = created_before
+            else:
+                query["created"]["before"] = now() + created_before
+    if describe is not None:
+        query["describe"] = describe
+    query["limit"] = 1
+
+    resp = dxpy.api.systemFindDataObjects(query, **kwargs)
+
+    if len(resp['results']) == 0:
+        return None
+    else:
+        if return_handler:
+            handler = dxpy.get_handler(resp['results'][0]['id'],
+                                       project=resp['results'][0]['project'])
+            return handler
+        else:
+            return resp['results'][0]
 
 def find_jobs(launched_by=None, program=None, project=None, state=None,
               origin_job=None, parent_job=None,
