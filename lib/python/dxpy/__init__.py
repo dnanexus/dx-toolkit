@@ -95,7 +95,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     for retry in range(max_retries + 1):
         try:
             response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
-                                        auth=auth, config=config, verify=False, **kwargs)
+                                        auth=auth, config=config, **kwargs)
 
             # If HTTP code that is not 200 (OK) is received and the content is
             # JSON, parse it and throw the appropriate error.  Otherwise,
