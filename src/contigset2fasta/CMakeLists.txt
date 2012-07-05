@@ -17,9 +17,9 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 set (CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
-add_subdirectory("$ENV{DNANEXUS_HOME}/lib/cpp/dxcpp" dxcpp)
+add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp)
 
-include_directories("$ENV{DNANEXUS_HOME}/lib/cpp")
+include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(contigset2fasta contigset2fasta.cpp)
 target_link_libraries(contigset2fasta dxcpp)
