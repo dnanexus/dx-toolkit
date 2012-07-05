@@ -1,0 +1,9 @@
+lib/
+*~
+*.log
+*.swp
+*.pid
+*.pyc
+*.a
+.DS_Store
+.coverage
