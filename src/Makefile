@@ -4,7 +4,8 @@ DESTDIR="$$DNANEXUS_HOME"
 all: src_libs python contigset2fasta
 
 src_libs:
-	cp -a bash perl javascript ../lib/
+	mkdir -p "$(DESTDIR)/lib"
+	cp -a bash perl javascript "$(DESTDIR)/lib"
 
 python:
 	mkdir -p "$(DESTDIR)/lib/python"
