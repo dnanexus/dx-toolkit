@@ -257,14 +257,12 @@ def login(args):
         res = requests.post(authserver+"/oauth2/authorize",
                             data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
                             auth=auth,
-                            allow_redirects=False,
-                            verify=False)
+                            allow_redirects=False)
         assert(res.status_code == requests.codes.found)
         code = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])['code'][0]
         
         res = requests.post(authserver+"/oauth2/token",
-                            data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"},
-                            verify=False)
+                            data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"})
         assert(res.status_code == requests.codes.ok)
         token_res = json.loads(res.content)
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
@@ -1206,7 +1204,7 @@ def find_data(args):
         results = list(dxpy.find_data_objects(classname=args.classname, state=args.state,
                                               visibility=args.visibility, properties=properties,
                                               name=args.name,
-                                              type_=args.type, tag=args.tag, link=args.link,
+                                              typename=args.type, tag=args.tag, link=args.link,
                                               project=args.project, folder=args.folder,
                                               recurse=args.recurse,
                                               modified_after=args.mod_after, modified_before=args.mod_before,

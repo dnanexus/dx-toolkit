@@ -51,7 +51,10 @@ def get_handler(link, project=None):
     '''
     try:
         cls = _guess_link_target_type(link)
-        return cls(link, project=project)
+        if project is not None:
+            return cls(link, project=project)
+        else:
+            return cls(link)
     except Exception as e:
         raise DXError("Could not parse link "+str(link))
 
