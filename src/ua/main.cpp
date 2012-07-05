@@ -15,7 +15,6 @@ namespace fs = boost::filesystem;
 #include "options.h"
 #include "chunk.h"
 #include "bqueue.h"
-
 #include "log.h"
 
 using namespace std;
