@@ -1520,7 +1520,7 @@ def shell(orig_args):
         except StopIteration:
             exit(0)
         except BaseException as details:
-            if str(details) != '1':
+            if str(details) != '1' and str(details) != '0':
                 print str(details) + '\n'
 
 def print_help(args):
