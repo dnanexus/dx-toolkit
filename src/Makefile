@@ -9,7 +9,7 @@ src_libs:
 
 python:
 	mkdir -p "$(DESTDIR)/lib/python"
-	(source ../environment; cd python; ./setup.py build; ./setup.py install --install-purelib="$(DESTDIR)/lib/python")
+	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python")
 
 contigset2fasta:
 	$(MAKE) -C contigset2fasta
