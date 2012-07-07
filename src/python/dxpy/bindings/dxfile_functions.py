@@ -94,7 +94,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
 
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
-                      wait_on_close=False, **kwargs):
+                      wait_on_close=False, use_existing_dxfile=None, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -102,6 +102,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type file: File-like object
     :param media_type: Internet Media Type
     :type media_type: string
+    :param wait_on_close: Wait for the file to close
+    :type wait_on_close: boolean
+    :param use_existing_dxfile: Instead of creating a new file, use this one
+    :type use_existing_dxfile: :class:`dxpy.bindings.dxfile.DXFile`
     :returns: Remote file handler
     :rtype: :class:`dxpy.bindings.dxfile.DXFile`
 
@@ -132,7 +136,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         file_size = 0
     buffer_size = max(DEFAULT_BUFFER_SIZE, file_size/9999)
 
-    dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, buffer_size=buffer_size, **kwargs)
+    if use_existing_dxfile:
+        dxfile = use_existing_dxfile
+    else:
+        dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, buffer_size=buffer_size, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
