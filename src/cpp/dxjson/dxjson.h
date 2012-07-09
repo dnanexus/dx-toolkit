@@ -323,11 +323,7 @@ namespace dx {
       * @return Reference to current object (to allow chaining of = operations).
       */
     template<typename T>
-    JSON& operator =(const std::vector<T> &vec) {
-      clear();
-      this->val = new Array(vec);
-      return *this;
-    }
+    JSON& operator =(const std::vector<T> &vec);
 
     /** Copies the provided std::map value to current JSON object (as a JSON_OBJECT)
       * @note Current value of object will be erased.
@@ -335,11 +331,7 @@ namespace dx {
       * @return Reference to current object (to allow chaining of = operations).
       */
     template<typename T>
-    JSON& operator =(const std::map<std::string, T> &m) {
-      clear();
-      this->val = new Object(m);
-      return *this;
-    }
+    JSON& operator =(const std::map<std::string, T> &m);
 
     /** Conversion operator. Currently only typecasting to a numeric type (real/integer/bool)
       * is supported.
@@ -626,6 +618,20 @@ namespace dx {
       this->val = new Integer(static_cast<int64_t>(x));
     else
       this->val = new Real(static_cast<double>(x));
+    return *this;
+  }
+
+  template<typename T>
+  JSON& JSON::operator =(const std::vector<T> &vec) {
+    clear();
+    this->val = new Array(vec);
+    return *this;
+  }
+
+  template<typename T>
+  JSON& JSON::operator =(const std::map<std::string, T> &m) {
+    clear();
+    this->val = new Object(m);
     return *this;
   }
 
