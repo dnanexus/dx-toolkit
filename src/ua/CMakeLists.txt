@@ -22,4 +22,4 @@ add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/resolver" resolver EXCLUDE_FROM_AL
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(ua main.cpp options.cpp chunk.cpp bqueue.cpp)
-target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system boost_thread)
+target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system boost_thread-mt)
