@@ -91,7 +91,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
             raise DXError("Snappy compression requested, but the snappy module is unavailable")
         headers['accept-encoding'] = 'snappy'
 
-    last_error = None
+    response, last_error = None, None
     for retry in range(max_retries + 1):
         try:
             response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
@@ -131,7 +131,15 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
             # TODO: if the socket was dropped mid-request, ConnectionError is raised, but non-idempotent requests are unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                if (always_retry or isinstance(e, ConnectionError) or method == 'GET' or response.status_code in http_server_errors) and response.status_code != 422:
+                ok_to_retry = False
+                if isinstance(e, ConnectionError):
+                    ok_to_retry = True
+                elif response is not None:
+                    if response.status_code != 422:
+                        if always_retry or method == 'GET' or response.status_code in http_server_errors:
+                            ok_to_retry = True
+
+                if ok_to_retry:
                     delay = 2 ** (retry+1)
                     logging.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
                     time.sleep(delay)
