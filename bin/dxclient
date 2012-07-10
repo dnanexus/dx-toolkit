@@ -647,7 +647,7 @@ def print_project_desc(desc):
             print field + '\t\t' + json.dumps(desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputs', 'outputs', 'run', 'globalWorkspace', 'installed', 'openSource']
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'installed', 'openSource']
 
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
@@ -688,15 +688,15 @@ def print_app_desc(desc):
         print "Categories\t" + ', '.join(desc["categories"])
         print "Access\t\t" + json.dumps(desc["access"])
         print "API version\t" + desc["dxapi"]
-        print "Inputs\t\t" + get_io_spec(desc["inputs"])
-        print "Outputs\t\t" + get_io_spec(desc["outputs"])
-        print "Interpreter\t" + desc["run"]["interpreter"]
-        if "resources" in desc:
-            print "Resources\t" + json.dumps(desc["run"]["resources"])
-        if "bundledDepends" in desc:
-            print "bundledDepends\t" + json.dumps(desc["run"]["bundledDepends"])
-        if "execDepends" in desc:
-            print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
+        print "Input Spec\t" + get_io_spec(desc["inputSpec"])
+        print "Output Spec\t" + get_io_spec(desc["outputSpec"])
+        print "Interpreter\t" + desc["runSpec"]["interpreter"]
+        if "resources" in desc["runSpec"]:
+            print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+        if "bundledDepends" in desc["runSpec"]:
+            print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+        if "execDepends" in desc["runSpec"]:
+            print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
         print "GlobalWorkspace\t" + desc["globalWorkspace"]
 
     for field in desc:
@@ -704,7 +704,7 @@ def print_app_desc(desc):
             print field + '\t\t' + json.dumps(desc[field])
 
 def print_data_obj_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputs', 'outputs', 'run', 'summary', 'dxapi', 'access']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access']
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     if 'project' in desc:
@@ -740,18 +740,18 @@ def print_data_obj_desc(desc):
         print "Access\t\t" + json.dumps(desc["access"])
     if 'dxapi' in desc:
         print "API version\t" + desc["dxapi"]
-    if "inputs" in desc:
-        print "Inputs\t\t" + get_io_spec(desc['inputs'])
-    if "outputs" in desc:
-        print "Outputs\t\t" + get_io_spec(desc['outputs'])
-    if 'run' in desc:
-        print "Interpreter\t" + desc["run"]["interpreter"]
-        if "resources" in desc:
-            print "Resources\t" + json.dumps(desc["run"]["resources"])
-        if "bundledDepends" in desc:
-            print "bundledDepends\t" + json.dumps(desc["run"]["bundledDepends"])
-        if "execDepends" in desc:
-            print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
+    if "inputSpec" in desc:
+        print "Input Spec\t" + get_io_spec(desc['inputSpec'])
+    if "outputSpec" in desc:
+        print "Output Spec\t" + get_io_spec(desc['outputSpec'])
+    if 'runSpec' in desc:
+        print "Interpreter\t" + desc["runSpec"]["interpreter"]
+        if "resources" in desc['runSpec']:
+            print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+        if "bundledDepends" in desc['runSpec']:
+            print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+        if "execDepends" in desc['runSpec']:
+            print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
 
     for field in desc:
         if field in recognized_fields:
@@ -774,8 +774,6 @@ def print_data_obj_desc(desc):
                 for column in desc["columns"]:
                     coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
                 print "Columns" + coldescs[:-1]
-            elif field == "inputs" or field == "outputs":
-                print field.capitalize() + "\t\t" + get_io_spec(desc[field])
             else: # Unhandled prettifying
                 print field + "\t\t" + json.dumps(desc[field])
 
@@ -1463,7 +1461,7 @@ def run(args):
         # Select input interactively
         desc = handler.describe()
         args.input = {}
-        required_inputs, optional_inputs = get_exec_inputs(desc["inputs"])
+        required_inputs, optional_inputs = get_exec_inputs(desc["inputSpec"])
         if len(required_inputs) > 0:
             for param in required_inputs:
                 get_input(args.input, param)

@@ -40,12 +40,12 @@ class DXProgram(DXDataObject):
         '''
         :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
         :type dx_hash: dict
-        :param run: run specification
-        :type run: dict
-        :param inputs: input specification (optional)
-        :type inputs: dict
-        :param outputs: output specification (optional)
-        :type outputs: dict
+        :param runSpec: run specification
+        :type runSpec: dict
+        :param inputSpec: input specification (optional)
+        :type inputSpec: dict
+        :param outputSpec: output specification (optional)
+        :type outputSpec: dict
         :param access: access specification (optional)
         :type access: dict
         :param dxapi: API version string
@@ -65,12 +65,12 @@ class DXProgram(DXDataObject):
         until :meth:`run()` is called.
 
         '''
-        for field in 'run', 'dxapi':
+        for field in 'runSpec', 'dxapi':
             if field not in kwargs:
                 raise DXError("%s: Keyword argument %s is required" % (self.__class__.__name__, field))
             dx_hash[field] = kwargs[field]
             del kwargs[field]
-        for field in 'inputs', 'outputs', 'access', 'title', 'summary', 'description':
+        for field in 'inputSpec', 'outputSpec', 'access', 'title', 'summary', 'description':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]
