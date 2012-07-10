@@ -17,9 +17,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
-add_subdirectory("$ENV{DNANEXUS_HOME}/lib/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
-add_subdirectory("$ENV{DNANEXUS_HOME}/lib/cpp/resolver" resolver EXCLUDE_FROM_ALL)
-include_directories("$ENV{DNANEXUS_HOME}/lib/cpp")
+add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
+add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/resolver" resolver EXCLUDE_FROM_ALL)
+include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(ua main.cpp options.cpp chunk.cpp bqueue.cpp)
 target_link_libraries(ua dxjson dxcpp boost_program_options boost_filesystem boost_system boost_thread)
