@@ -1,25 +1,12 @@
 #include "dxjson.h"
 #include <cstdio>
-#include <mutex>
 
 using namespace dx;
 
 /**
- * Determine the "slack" when comparing two floating point values. Two
- * floating point values f1 and f2 are compared as follows: (|f1 - f2| <=
- * epsilon): if true, then f1 == f2, else f1 != f2.
+ * Determine the relative error when comparing two floating point values.
  */
 static double json_epsilon = std::numeric_limits<double>::epsilon();
-
-/**
- * This mutex is used to lock operations on static variable: json_epsilon.
- */
-static std::mutex json_epsilonMutex;
-
-void JSON::setEpsilon(double eps_val) {
-  std::lock_guard<std::mutex> lock(json_epsilonMutex);
-  json_epsilon = eps_val;
-}
 
 double JSON::getEpsilon() {
   return json_epsilon;
@@ -793,7 +780,29 @@ bool Integer::isEqual(const Value *other) const {
 
 bool Real::isEqual(const Value* other) const {
   const Real *p = dynamic_cast<const Real*>(other);
-  return (p != NULL && (fabs(this->val - p->val) <= JSON::getEpsilon()));
+  
+  // In our implementation of isEqual, "Real" is *never* equal to Integer
+  // TODO: Decide if this is desired behavior ?
+  if (p == NULL)
+    return false;
+
+  //Ref: 1. http://floating-point-gui.de/errors/comparison/
+  //     2. http://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+  double diff = fabs(this->val - p->val);
+  double eps = JSON::getEpsilon();
+
+  // If numbers are really close (absolute error), return true
+  // needed for numbers near zero
+  if (diff <= eps) {
+    return true;
+  }
+  // Now use absolute error to check for "closeness"
+  double absA = fabs(this->val);
+  double absB = fabs(p->val);
+  double largest = (absA > absB) ? absA : absB;
+  // always use largest to check for relative error
+  // so that isEqual() remain commutative
+  return diff <= (largest * eps);
 }
 
 bool String::isEqual(const Value* other) const {

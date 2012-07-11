@@ -93,15 +93,9 @@ namespace dx {
       */
     Value *val;
 
-    /** Set the "epsilon" parameter to provided value
-      * @param eps_val epsilon for comparing floating point will be set to this value.
-      * @see getEpsilon()
-      */
-    static void setEpsilon(double eps_val);
-
     /** Returns the current "epsilon" paramerer value.
       * @return The currrent value of "epsilon" parameter
-      * @see setEpsilon()
+      * @see json_epsilon
       */
     static double getEpsilon();
 
@@ -662,9 +656,9 @@ namespace dx {
 
   /** Return back the string stored inside JSON_STRING object
     * @note The returned string is in C++ style, and not escaped like it would be
-    *       if printed using toString() or write() method. So a newline will be
-    *       present at ASCII 10, and not "\n" inside string. Also it will not contain
-    *       enclosing quotes.
+    *       if printed using toString() or write() method. For example: a newline will be
+    *       present at ASCII 10, and not "\n" inside string. 
+    *       Also it will not contain enclosing quotes.
     * @return The C++ style string for contents of JSON_STRING object
     */
   template<>

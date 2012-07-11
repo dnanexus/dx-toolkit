@@ -544,8 +544,6 @@ TEST(JSONTest, Numbers) {
   ASSERT_EQ(JSON(1ll), JSON(uint8_t(1)));
   ASSERT_NE(j1, j2); // REAL and INTEGER value are never equal in out implementation
 
-  double precision = JSON::getEpsilon();
-  JSON::setEpsilon(std::max(precision, 1e-12));
   j1 = JSON::parse("-1e-20");
   j2 = JSON::parse("-1e-23");
 
@@ -656,23 +654,42 @@ TEST(JSONTest, Iterators) {
   // TODO: Add more iterators test, specially those which use stl algorithms heavily
 
 }
-TEST(JSONTest, FloatingPointPrecision) {
+TEST(JSONTest, RealNumberApproxComparisonTest) {
+  double eps = JSON::getEpsilon();
+  ASSERT_EQ(eps, std::numeric_limits<double>::epsilon());
+  
   JSON j1 = 5.7;
   JSON j2 = 5.701;
   ASSERT_TRUE(j1 != j2);
-  JSON::setEpsilon(.1);
-  ASSERT_TRUE(j1 == j2);
-  ASSERT_EQ(JSON::getEpsilon(), .1);
   
-  JSON::setEpsilon(2);
-  j1 = 6.2;
-  j2 = 7.1;
-  ASSERT_EQ(JSON::getEpsilon(), 2.0);
+  j1 = eps, j2 = 2.0*eps;
   ASSERT_TRUE(j1 == j2);
 
-  JSON::setEpsilon(1e-12);
-  ASSERT_NE(j1, j2);
-  ASSERT_EQ(JSON::getEpsilon(), 1e-12);
+  j1 = eps, j2 = 2.1*eps;
+  ASSERT_TRUE(j1 != j2);
+  
+  j1 = 0.0, j2 = eps;
+  ASSERT_TRUE(j1 == j2);
+  
+  j1 = 0.0, j2 = eps * eps;
+  ASSERT_TRUE(j1 == j2);
+  
+  j1 = -1.0 * eps, j2 = 0.0;
+  ASSERT_TRUE(j1 == j2); 
+  
+  j1 = 0.0, j2 = 1.00000000000001 * eps;
+  ASSERT_TRUE(j1 != j2);
+  
+  j1 = 0.0, j2 = .0000000000000001 * eps;
+  ASSERT_TRUE(j1 == j2);
+
+  j1 = 1e30, j2 = 1e30 - eps;
+  ASSERT_TRUE(j1 == j2);
+
+  // Due to relative error check the real number below are approx equal
+  // Even though absolute difference between them is quite high
+  j1 = 1e30, j2 = 1e30 - (0.9e30 * eps);
+  ASSERT_TRUE(j1 == j2);
 }
 
 int main(int argc, char **argv) {

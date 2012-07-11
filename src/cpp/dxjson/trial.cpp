@@ -54,10 +54,7 @@ int main() {
     JSON j6 = 12.21;
     JSON j7 = 12.22;
     assert(j6 != j7);
-    JSON::setEpsilon(.2);
-    assert(j6 == j7);
-    JSON::setEpsilon(1e-12);
-
+    
     JSON j8(JSON_ARRAY);
     j8.push_back(12.21);
     j8.push_back("hello");
