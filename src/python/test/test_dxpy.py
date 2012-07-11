@@ -773,13 +773,13 @@ class TestDXProgramJob(unittest.TestCase):
         dxprogram = dxpy.DXProgram()
         dxprogram.new(name="test_program",
                       dxapi="1.04",
-                      inputs=[{"name": "chromosomes", "class": "record"},
-                              {"name": "rowFetchChunk", "class": "int"}
-                              ],
-                      outputs=[{"name": "mappings", "class": "record"}],
-                      run={"code": "def main(): pass",
-                           "interpreter": "python2.7",
-                           "execDepends": [{"name": "python-numpy"}]})
+                      inputSpec=[{"name": "chromosomes", "class": "record"},
+                                 {"name": "rowFetchChunk", "class": "int"}
+                                 ],
+                      outputSpec=[{"name": "mappings", "class": "record"}],
+                      runSpec={"code": "def main(): pass",
+                               "interpreter": "python2.7",
+                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
@@ -805,13 +805,13 @@ class TestDXApp(unittest.TestCase):
         dxprogram = dxpy.DXProgram()
         dxprogram.new(name="test_program",
                       dxapi="1.04",
-                      inputs=[{"name": "chromosomes", "class": "record"},
-                              {"name": "rowFetchChunk", "class": "int"}
-                              ],
-                      outputs=[{"name": "mappings", "class": "record"}],
-                      run={"code": "def main(): pass",
-                           "interpreter": "python2.7",
-                           "execDepends": [{"name": "python-numpy"}]})
+                      inputSpec=[{"name": "chromosomes", "class": "record"},
+                                 {"name": "rowFetchChunk", "class": "int"}
+                                 ],
+                      outputSpec=[{"name": "mappings", "class": "record"}],
+                      runSpec={"code": "def main(): pass",
+                               "interpreter": "python2.7",
+                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         dxapp.new(program=dxprogram.get_id(), version="0.0.1",
                   owner="user-000000000000000000000000", name="app_name")
@@ -886,13 +886,13 @@ class TestDXSearch(unittest.TestCase):
     def find_jobs(self):
         dxprogram = dxpy.DXProgram()
         dxprogram.new(name="test_program",
-                      inputs=[{"name": "chromosomes", "class": "record"},
-                              {"name": "rowFetchChunk", "class": "int"}
-                              ],
-                      outputs=[{"name": "mappings", "class": "record"}],
-                      run={"code": "def main(): pass",
-                           "interpreter": "python2.7",
-                           "execDepends": [{"name": "python-numpy"}]})
+                      inputSpec=[{"name": "chromosomes", "class": "record"},
+                                 {"name": "rowFetchChunk", "class": "int"}
+                                 ],
+                      outputSpec=[{"name": "mappings", "class": "record"}],
+                      runSpec={"code": "def main(): pass",
+                               "interpreter": "python2.7",
+                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
