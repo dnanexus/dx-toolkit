@@ -88,9 +88,25 @@ static size_t read_callback(void *data, size_t size, size_t nmemb, void *userdat
   return copy_size;
 }
 
-static void assertLibCurlFunctions(CURLcode retVal, const std::string &msg = "") {
-  if (retVal != CURLE_OK)
-    throw HttpRequestException((msg.size() > 0u) ? msg.c_str() : "An error occured while using a libcurl functionality");
+// convert int to string
+static std::string itos(int i)  {
+  std::stringstream s;
+  s << i;
+  return s.str();
+}
+
+void HttpRequest::assertLibCurlFunctions(CURLcode retVal, const std::string &msg = "") {
+  if (retVal != CURLE_OK) {
+    // See http://curl.haxx.se/libcurl/c/libcurl-errors.html to interpret error code
+    std::string exceptionStr = "\n*******\nERROR while using a libcurl functionality.\nError code = " + itos(retVal) + "\nError Buffer: ";
+    errorBuffer[CURL_ERROR_SIZE] = 0;
+    exceptionStr += std::string(errorBuffer);
+    if (msg.size() > 0u) {
+      exceptionStr += "\nUser Message: " + msg;
+    }
+    exceptionStr += "\n********\n";
+    throw HttpRequestException(exceptionStr);
+  }
 }
 
 //////////////////////////////////////////////////
@@ -109,6 +125,10 @@ void HttpRequest::send() {
   curl = curl_easy_init();
 
   if (curl != NULL) {
+    // Set errorBuffer to recieve human readable error messages from libcurl
+    // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
+    assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, &errorBuffer));
+
     respData = "";
     // Set time out to infinite
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
@@ -116,7 +136,7 @@ void HttpRequest::send() {
     /* Set the user agent - optional */
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_USERAGENT, "DNAnexus: libcurl-C++ wrapper"));
 
-    /* Setting this option, since libcurl fails in multi-threading enviornment otherwise */
+    /* Setting this option, since libcurl fails in multi-threaded enviornment otherwise */
     /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l));
 
@@ -131,7 +151,7 @@ void HttpRequest::send() {
     if (header != NULL) {
       assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header));
     }
-    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+//    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 
     /*
      * Set the URL that is about to receive our POST. This URL can
@@ -192,8 +212,17 @@ void HttpRequest::send() {
     /** "respData" is a member variable of HttpRequest */
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData) );
 
-    /* Perform the request, res will get the return code */
-    assertLibCurlFunctions( curl_easy_perform(curl), "Error while performing curl request: curl_easy_perform");
+    /* Perform the actual request */
+    // Retry 5 times before giving up
+    CURLcode retVal;
+    for (int tries = 0; tries < 5; ++tries) {
+      retVal = curl_easy_perform(curl);
+      if (retVal != CURLE_OK)
+        sleep(2); // retry after 2 seconds;
+      else
+        break;
+    }
+    assertLibCurlFunctions(retVal, "Error while performing curl request: curl_easy_perform.");
 
     assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode) );
 

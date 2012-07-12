@@ -10,6 +10,9 @@
 #include <curl/curl.h>
 #include <exception>
 #include <cassert>
+#include <sstream>
+#include <unistd.h>
+
 #include "SimpleHttpHeaders.h"
 #include "Utility.h"
 
@@ -32,6 +35,8 @@ public:
   HttpMethod method;
   std::string url;
   long responseCode;
+  //http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
+  char errorBuffer[CURL_ERROR_SIZE + 1];
 
   // User must provide size and number of bytes in request data,
   // So that we do not terminate string by "\0"
@@ -54,6 +59,7 @@ public:
 
   HttpRequest()
     : curl(NULL), method(HTTP_POST), responseCode(-1) {
+      memset(errorBuffer, 0, CURL_ERROR_SIZE + 1); // Reset error buffer to zero
   }
 
   void setHeaders(const HttpHeaders& _reqHeader) { reqHeader = _reqHeader; }
@@ -100,7 +106,9 @@ public:
       curl_easy_cleanup(curl);
     }
   }
-
+  
+  void assertLibCurlFunctions(CURLcode retVal, const std::string &msg);
+  
   static HttpRequest request(const HttpMethod& _method, const std::string& _url,
                              const HttpHeaders& _reqHeader = HttpHeaders(), const char* _data = NULL, const size_t& _length = 0u) {
     HttpRequest hr;
