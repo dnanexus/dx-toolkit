@@ -36,7 +36,7 @@ def open_dxgtable(dxid, project=None):
 def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
                  **kwargs):
     '''
-    :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
+    :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required if init_from is not provided)
     :type columns: list of column descriptors
     :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable._new` for more details. (optional)
     :type indices: list of index descriptors

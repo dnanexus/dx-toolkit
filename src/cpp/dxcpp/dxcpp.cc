@@ -24,6 +24,7 @@ JSON g_SECURITY_CONTEXT;
 string g_JOB_ID;
 string g_WORKSPACE_ID;
 string g_PROJECT_CONTEXT_ID;
+string g_APISERVER_PROTOCOL;
 
 JSON DXHTTPRequest(const string &resource, const string &data,
 		   const map<string, string> &headers) {
@@ -112,9 +113,16 @@ void setProjectContext(const string &project_id) {
 void loadFromEnvironment() {
   if (!g_APISERVER_SET &&
       (getenv("DX_APISERVER_HOST") != NULL) &&
-      (getenv("DX_APISERVER_PORT") != NULL))
-    setAPIServerInfo(getenv("DX_APISERVER_HOST"),
-		     atoi(getenv("DX_APISERVER_PORT")));
+      (getenv("DX_APISERVER_PORT") != NULL)) {
+    if (getenv("DX_APISERVER_PROTOCOL") != NULL) {
+      setAPIServerInfo(getenv("DX_APISERVER_HOST"),
+                       atoi(getenv("DX_APISERVER_PORT")),
+                       getenv("DX_APISERVER_PROTOCOL"));
+    } else {
+      setAPIServerInfo(getenv("DX_APISERVER_HOST"),
+                       atoi(getenv("DX_APISERVER_PORT")));
+    }
+  }
 
   if (!g_SECURITY_CONTEXT_SET &&
       getenv("DX_SECURITY_CONTEXT") != NULL)

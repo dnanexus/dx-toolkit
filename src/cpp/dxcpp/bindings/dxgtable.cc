@@ -9,8 +9,8 @@ void DXGTable::reset_buffer_() {
   row_buffer_ << "{\"data\": [";
 }
 
-void DXGTable::setIDs(const std::string &dxid,
-		      const std::string &proj) {
+void DXGTable::setIDs(const string &dxid,
+		      const string &proj) {
   flush();
 
   DXDataObject::setIDs(dxid, proj);
@@ -26,6 +26,53 @@ void DXGTable::create(const vector<JSON> &columns,
   if (indices.size() > 0) {
     input_params["indices"] = indices;
   }
+
+  const JSON resp = gtableNew(input_params);
+
+  setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
+}
+
+void DXGTable::create(const string &init_from,
+		      const JSON &data_obj_fields) {
+  JSON input_params = data_obj_fields;
+  input_params["initializeFrom"] = init_from;
+  if (!data_obj_fields.has("project")) {
+    input_params["project"] = g_WORKSPACE_ID;
+  }
+
+  const JSON resp = gtableNew(input_params);
+
+  setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
+}
+
+void DXGTable::create(const string &init_from,
+		      const vector<JSON> &columns,
+		      const JSON &data_obj_fields) {
+  JSON input_params = data_obj_fields;
+  input_params["initializeFrom"] = init_from;
+  if (!data_obj_fields.has("project")) {
+    input_params["project"] = g_WORKSPACE_ID;
+  }
+  input_params["columns"] = columns;
+
+  const JSON resp = gtableNew(input_params);
+
+  setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
+}
+
+void DXGTable::create(const string &init_from,
+		      const vector<JSON> &columns,
+		      const vector<JSON> &indices,
+		      const JSON &data_obj_fields) {
+  JSON input_params = data_obj_fields;
+  input_params["initializeFrom"] = init_from;
+  if (!data_obj_fields.has("project")) {
+    input_params["project"] = g_WORKSPACE_ID;
+  }
+  if (columns.size() > 0) {
+    input_params["columns"] = columns;
+  }
+  input_params["indices"] = indices;
 
   const JSON resp = gtableNew(input_params);
 
@@ -111,8 +158,9 @@ void DXGTable::waitOnClose() const {
   waitOnState();
 }
 
-DXGTable DXGTable::openDXGTable(const string &dxid) {
-  return DXGTable(dxid);
+DXGTable DXGTable::openDXGTable(const string &dxid,
+				const string &proj) {
+  return DXGTable(dxid, proj);
 }
 
 DXGTable DXGTable::newDXGTable(const vector<JSON> &columns,
@@ -120,6 +168,30 @@ DXGTable DXGTable::newDXGTable(const vector<JSON> &columns,
                                const JSON &data_obj_fields) {
   DXGTable gtable;
   gtable.create(columns, indices, data_obj_fields);
+  return gtable;
+}
+
+DXGTable DXGTable::newDXGTable(const string &init_from,
+			       const JSON &data_obj_fields) {
+  DXGTable gtable;
+  gtable.create(init_from, data_obj_fields);
+  return gtable;
+}
+
+DXGTable DXGTable::newDXGTable(const string &init_from,
+                               const vector<JSON> &columns,
+                               const JSON &data_obj_fields) {
+  DXGTable gtable;
+  gtable.create(init_from, columns, data_obj_fields);
+  return gtable;
+}
+
+DXGTable DXGTable::newDXGTable(const string &init_from,
+                               const vector<JSON> &columns,
+                               const vector<JSON> &indices,
+                               const JSON &data_obj_fields) {
+  DXGTable gtable;
+  gtable.create(init_from, columns, indices, data_obj_fields);
   return gtable;
 }
 
@@ -168,11 +240,11 @@ JSON DXGTable::substringIndex(const string &column, const string &name) {
   return index_desc;
 }
 
-JSON DXGTable::genomicRangeQuery(const std::string &chr,
+JSON DXGTable::genomicRangeQuery(const string &chr,
                                  const int64_t lo,
                                  const int64_t hi,
-                                 const std::string &mode,
-                                 const std::string &index) {
+                                 const string &mode,
+                                 const string &index) {
   JSON query(JSON_OBJECT);
   query["index"] = index;
   query["parameters"] = JSON(JSON_OBJECT);

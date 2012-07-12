@@ -120,8 +120,14 @@ void DXDataObject::remove() {
   setIDs("");
 }
 
-JSON DXLink(const std::string &dxid) {
+JSON DXLink(const std::string &dxid, const std::string &proj) {
   JSON link(JSON_OBJECT);
-  link["$dnanexus_link"] = dxid;
+  if (proj == "") {
+    link["$dnanexus_link"] = dxid;
+  } else {
+    link["$dnanexus_link"] = JSON(JSON_OBJECT);
+    link["$dnanexus_link"]["project"] = proj;
+    link["$dnanexus_link"]["id"] = dxid;
+  }
   return link;
 }

@@ -11,6 +11,11 @@ def appAddCategories(app_name_or_id, alias=None, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/addCategories' % fully_qualified_version, input_params, **kwargs)
 
 
+def appAddDevelopers(app_name_or_id, alias=None, input_params={}, **kwargs):
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addDevelopers' % fully_qualified_version, input_params, **kwargs)
+
+
 def appAddTags(app_name_or_id, alias=None, input_params={}, **kwargs):
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/addTags' % fully_qualified_version, input_params, **kwargs)
@@ -41,6 +46,11 @@ def appListCategories(app_name_or_id, alias=None, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/listCategories' % fully_qualified_version, input_params, **kwargs)
 
 
+def appListDevelopers(app_name_or_id, alias=None, input_params={}, **kwargs):
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listDevelopers' % fully_qualified_version, input_params, **kwargs)
+
+
 def appPublish(app_name_or_id, alias=None, input_params={}, **kwargs):
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, **kwargs)
@@ -51,9 +61,9 @@ def appRemoveCategories(app_name_or_id, alias=None, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/removeCategories' % fully_qualified_version, input_params, **kwargs)
 
 
-def appRemoveTag(app_name_or_id, alias=None, input_params={}, **kwargs):
+def appRemoveDevelopers(app_name_or_id, alias=None, input_params={}, **kwargs):
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
-    return DXHTTPRequest('/%s/removeTag' % fully_qualified_version, input_params, **kwargs)
+    return DXHTTPRequest('/%s/removeDevelopers' % fully_qualified_version, input_params, **kwargs)
 
 
 def appRemoveTags(app_name_or_id, alias=None, input_params={}, **kwargs):
@@ -78,22 +88,6 @@ def appUpdate(app_name_or_id, alias=None, input_params={}, **kwargs):
 
 def appNew(input_params={}, **kwargs):
     return DXHTTPRequest('/app/new', input_params, **kwargs)
-
-
-def discitemDelete(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/delete' % object_id, input_params, **kwargs)
-
-
-def discitemDescribe(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
-
-
-def discitemLike(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/like' % object_id, input_params, **kwargs)
-
-
-def discitemNew(input_params={}, **kwargs):
-    return DXHTTPRequest('/discitem/new', input_params, **kwargs)
 
 
 def fileAddTags(object_id, input_params={}, **kwargs):
@@ -224,6 +218,30 @@ def gtableNew(input_params={}, **kwargs):
     return DXHTTPRequest('/gtable/new', input_params, **kwargs)
 
 
+def inviteAccept(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/accept' % object_id, input_params, **kwargs)
+
+
+def inviteApprove(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/approve' % object_id, input_params, **kwargs)
+
+
+def inviteDecline(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/decline' % object_id, input_params, **kwargs)
+
+
+def inviteDescribe(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
+
+
+def inviteDestroy(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/destroy' % object_id, input_params, **kwargs)
+
+
+def inviteReject(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/reject' % object_id, input_params, **kwargs)
+
+
 def jobDescribe(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
 
@@ -246,22 +264,6 @@ def notificationsGet(input_params={}, **kwargs):
 
 def notificationsMarkRead(input_params={}, **kwargs):
     return DXHTTPRequest('/notifications/markRead', input_params, **kwargs)
-
-
-def privateDxdata(input_params={}, **kwargs):
-    return DXHTTPRequest('/private/dxdata', input_params, **kwargs)
-
-
-def privateLaunchExampleMicrojob(input_params={}, **kwargs):
-    return DXHTTPRequest('/private/launchExampleMicrojob', input_params, **kwargs)
-
-
-def privateTestProjectTxn(input_params={}, **kwargs):
-    return DXHTTPRequest('/private/testProjectTxn', input_params, **kwargs)
-
-
-def privateUpdateJob(input_params={}, **kwargs):
-    return DXHTTPRequest('/private/updateJob', input_params, **kwargs)
 
 
 def programAddTags(object_id, input_params={}, **kwargs):
@@ -324,8 +326,16 @@ def programNew(input_params={}, **kwargs):
     return DXHTTPRequest('/program/new', input_params, **kwargs)
 
 
+def projectAddTags(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, **kwargs)
+
+
 def projectClone(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/clone' % object_id, input_params, **kwargs)
+
+
+def projectDecreasePermissions(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/decreasePermissions' % object_id, input_params, **kwargs)
 
 
 def projectDescribe(object_id, input_params={}, **kwargs):
@@ -336,8 +346,12 @@ def projectDestroy(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/destroy' % object_id, input_params, **kwargs)
 
 
-def projectIncreasePermissions(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/increasePermissions' % object_id, input_params, **kwargs)
+def projectInvite(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/invite' % object_id, input_params, **kwargs)
+
+
+def projectJoin(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/join' % object_id, input_params, **kwargs)
 
 
 def projectLeave(object_id, input_params={}, **kwargs):
@@ -364,12 +378,24 @@ def projectRemoveObjects(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, **kwargs)
 
 
+def projectRemoveTags(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, **kwargs)
+
+
 def projectRenameFolder(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, **kwargs)
 
 
-def projectSetPermissions(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/setPermissions' % object_id, input_params, **kwargs)
+def projectSetProperties(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, **kwargs)
+
+
+def projectSubscribe(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/subscribe' % object_id, input_params, **kwargs)
+
+
+def projectUnsubscribe(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/unsubscribe' % object_id, input_params, **kwargs)
 
 
 def projectUpdate(object_id, input_params={}, **kwargs):
@@ -432,6 +458,26 @@ def recordNew(input_params={}, **kwargs):
     return DXHTTPRequest('/record/new', input_params, **kwargs)
 
 
+def requestApprove(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/approve' % object_id, input_params, **kwargs)
+
+
+def requestDescribe(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
+
+
+def requestDestroy(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/destroy' % object_id, input_params, **kwargs)
+
+
+def requestReject(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/reject' % object_id, input_params, **kwargs)
+
+
+def systemFindAffiliates(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findAffiliates', input_params, **kwargs)
+
+
 def systemFindApps(input_params={}, **kwargs):
     return DXHTTPRequest('/system/findApps', input_params, **kwargs)
 
@@ -444,6 +490,14 @@ def systemFindDiscitems(input_params={}, **kwargs):
     return DXHTTPRequest('/system/findDiscitems', input_params, **kwargs)
 
 
+def systemFindFeeditems(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findFeeditems', input_params, **kwargs)
+
+
+def systemFindInvites(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findInvites', input_params, **kwargs)
+
+
 def systemFindJobs(input_params={}, **kwargs):
     return DXHTTPRequest('/system/findJobs', input_params, **kwargs)
 
@@ -452,12 +506,24 @@ def systemFindProjects(input_params={}, **kwargs):
     return DXHTTPRequest('/system/findProjects', input_params, **kwargs)
 
 
+def systemFindRequests(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findRequests', input_params, **kwargs)
+
+
+def systemFindUsers(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/findUsers', input_params, **kwargs)
+
+
 def systemGetLog(input_params={}, **kwargs):
     return DXHTTPRequest('/system/getLog', input_params, **kwargs)
 
 
-def systemSearchDataObjects(input_params={}, **kwargs):
-    return DXHTTPRequest('/system/searchDataObjects', input_params, **kwargs)
+def systemGetProjectTags(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/getProjectTags', input_params, **kwargs)
+
+
+def systemGlobalSearch(input_params={}, **kwargs):
+    return DXHTTPRequest('/system/globalSearch', input_params, **kwargs)
 
 
 def systemShortenURL(input_params={}, **kwargs):
@@ -502,6 +568,10 @@ def tableGetDetails(object_id, input_params={}, **kwargs):
 
 def tableListProjects(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/listProjects' % object_id, input_params, **kwargs)
+
+
+def tableModifyColumn(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/modifyColumn' % object_id, input_params, **kwargs)
 
 
 def tableRemoveColumns(object_id, input_params={}, **kwargs):
@@ -552,12 +622,20 @@ def userDescribe(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
 
 
+def userUpdate(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/update' % object_id, input_params, **kwargs)
+
+
 def workspaceClone(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/clone' % object_id, input_params, **kwargs)
 
 
 def workspaceDescribe(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
+
+
+def workspaceDestroy(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/destroy' % object_id, input_params, **kwargs)
 
 
 def workspaceListFolder(object_id, input_params={}, **kwargs):

@@ -52,6 +52,9 @@ class DXProject {
                     const std::string &dest_folder) const {
     clone(objects, dx::JSON(dx::JSON_ARRAY), dest_proj, dest_folder);
   }
+
+  void invite(const std::string &invitee, const std::string &level) const;
+  void decreasePerms(const std::string &member, const std::string &level) const;
 };
 
 #endif

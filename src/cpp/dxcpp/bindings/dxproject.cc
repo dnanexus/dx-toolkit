@@ -72,3 +72,10 @@ void DXProject::removeObjects(const JSON &objects) const {
   projectRemoveObjects(dxid_, "{\"objects\":" + objects.toString() + "}");
 }
 
+void DXProject::invite(const string &invitee, const string &level) const {
+  projectInvite(dxid_, "{\"invitee\":\"" + invitee + "\",\"level\":\"" + level + "\"}");
+}
+
+void DXProject::decreasePerms(const string &member, const string &level) const {
+  projectDecreasePermissions(dxid_, "{\"" + member + "\":\"" + level + "\"}");
+}

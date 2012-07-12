@@ -23,6 +23,23 @@ dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::strin
 }
 
 
+dx::JSON appAddDevelopers(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addDevelopers"), input_params);
+}
+
+dx::JSON appAddDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appAddDevelopers(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appAddDevelopers(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appAddDevelopersWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
 dx::JSON appAddTags(const std::string &app_id_or_name, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addTags"), input_params);
 }
@@ -125,6 +142,23 @@ dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::stri
 }
 
 
+dx::JSON appListDevelopers(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/listDevelopers"), input_params);
+}
+
+dx::JSON appListDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appListDevelopers(app_id_or_name, input_params.toString());
+}
+
+dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appListDevelopers(app_name + std::string("/") + app_alias, input_params);
+}
+
+dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appListDevelopersWithAlias(app_name, app_alias, input_params.toString());
+}
+
+
 dx::JSON appPublish(const std::string &app_id_or_name, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/publish"), input_params);
 }
@@ -159,20 +193,20 @@ dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::st
 }
 
 
-dx::JSON appRemoveTag(const std::string &app_id_or_name, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/removeTag"), input_params);
+dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/removeDevelopers"), input_params);
 }
 
-dx::JSON appRemoveTag(const std::string &app_id_or_name, const dx::JSON &input_params) {
-  return appRemoveTag(app_id_or_name, input_params.toString());
+dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params) {
+  return appRemoveDevelopers(app_id_or_name, input_params.toString());
 }
 
-dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
-  return appRemoveTag(app_name + std::string("/") + app_alias, input_params);
+dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params) {
+  return appRemoveDevelopers(app_name + std::string("/") + app_alias, input_params);
 }
 
-dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
-  return appRemoveTagWithAlias(app_name, app_alias, input_params.toString());
+dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params) {
+  return appRemoveDevelopersWithAlias(app_name, app_alias, input_params.toString());
 }
 
 
@@ -250,42 +284,6 @@ dx::JSON appNew(const std::string &input_params) {
 
 dx::JSON appNew(const dx::JSON &input_params) {
   return appNew(input_params.toString());
-}
-
-
-dx::JSON discitemDelete(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/delete"), input_params);
-}
-
-dx::JSON discitemDelete(const std::string &object_id, const dx::JSON &input_params) {
-  return discitemDelete(object_id, input_params.toString());
-}
-
-
-dx::JSON discitemDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON discitemDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return discitemDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON discitemLike(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/like"), input_params);
-}
-
-dx::JSON discitemLike(const std::string &object_id, const dx::JSON &input_params) {
-  return discitemLike(object_id, input_params.toString());
-}
-
-
-dx::JSON discitemNew(const std::string &input_params) {
-  return DXHTTPRequest("/discitem/new", input_params);
-}
-
-dx::JSON discitemNew(const dx::JSON &input_params) {
-  return discitemNew(input_params.toString());
 }
 
 
@@ -577,6 +575,60 @@ dx::JSON gtableNew(const dx::JSON &input_params) {
 }
 
 
+dx::JSON inviteAccept(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/accept"), input_params);
+}
+
+dx::JSON inviteAccept(const std::string &object_id, const dx::JSON &input_params) {
+  return inviteAccept(object_id, input_params.toString());
+}
+
+
+dx::JSON inviteApprove(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/approve"), input_params);
+}
+
+dx::JSON inviteApprove(const std::string &object_id, const dx::JSON &input_params) {
+  return inviteApprove(object_id, input_params.toString());
+}
+
+
+dx::JSON inviteDecline(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/decline"), input_params);
+}
+
+dx::JSON inviteDecline(const std::string &object_id, const dx::JSON &input_params) {
+  return inviteDecline(object_id, input_params.toString());
+}
+
+
+dx::JSON inviteDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+}
+
+dx::JSON inviteDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return inviteDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON inviteDestroy(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+}
+
+dx::JSON inviteDestroy(const std::string &object_id, const dx::JSON &input_params) {
+  return inviteDestroy(object_id, input_params.toString());
+}
+
+
+dx::JSON inviteReject(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/reject"), input_params);
+}
+
+dx::JSON inviteReject(const std::string &object_id, const dx::JSON &input_params) {
+  return inviteReject(object_id, input_params.toString());
+}
+
+
 dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
 }
@@ -628,42 +680,6 @@ dx::JSON notificationsMarkRead(const std::string &input_params) {
 
 dx::JSON notificationsMarkRead(const dx::JSON &input_params) {
   return notificationsMarkRead(input_params.toString());
-}
-
-
-dx::JSON privateDxdata(const std::string &input_params) {
-  return DXHTTPRequest("/private/dxdata", input_params);
-}
-
-dx::JSON privateDxdata(const dx::JSON &input_params) {
-  return privateDxdata(input_params.toString());
-}
-
-
-dx::JSON privateLaunchExampleMicrojob(const std::string &input_params) {
-  return DXHTTPRequest("/private/launchExampleMicrojob", input_params);
-}
-
-dx::JSON privateLaunchExampleMicrojob(const dx::JSON &input_params) {
-  return privateLaunchExampleMicrojob(input_params.toString());
-}
-
-
-dx::JSON privateTestProjectTxn(const std::string &input_params) {
-  return DXHTTPRequest("/private/testProjectTxn", input_params);
-}
-
-dx::JSON privateTestProjectTxn(const dx::JSON &input_params) {
-  return privateTestProjectTxn(input_params.toString());
-}
-
-
-dx::JSON privateUpdateJob(const std::string &input_params) {
-  return DXHTTPRequest("/private/updateJob", input_params);
-}
-
-dx::JSON privateUpdateJob(const dx::JSON &input_params) {
-  return privateUpdateJob(input_params.toString());
 }
 
 
@@ -802,12 +818,30 @@ dx::JSON programNew(const dx::JSON &input_params) {
 }
 
 
+dx::JSON projectAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
+}
+
+dx::JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return projectAddTags(object_id, input_params.toString());
+}
+
+
 dx::JSON projectClone(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params);
 }
 
 dx::JSON projectClone(const std::string &object_id, const dx::JSON &input_params) {
   return projectClone(object_id, input_params.toString());
+}
+
+
+dx::JSON projectDecreasePermissions(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/decreasePermissions"), input_params);
+}
+
+dx::JSON projectDecreasePermissions(const std::string &object_id, const dx::JSON &input_params) {
+  return projectDecreasePermissions(object_id, input_params.toString());
 }
 
 
@@ -829,12 +863,21 @@ dx::JSON projectDestroy(const std::string &object_id, const dx::JSON &input_para
 }
 
 
-dx::JSON projectIncreasePermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/increasePermissions"), input_params);
+dx::JSON projectInvite(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/invite"), input_params);
 }
 
-dx::JSON projectIncreasePermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return projectIncreasePermissions(object_id, input_params.toString());
+dx::JSON projectInvite(const std::string &object_id, const dx::JSON &input_params) {
+  return projectInvite(object_id, input_params.toString());
+}
+
+
+dx::JSON projectJoin(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/join"), input_params);
+}
+
+dx::JSON projectJoin(const std::string &object_id, const dx::JSON &input_params) {
+  return projectJoin(object_id, input_params.toString());
 }
 
 
@@ -892,6 +935,15 @@ dx::JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &inpu
 }
 
 
+dx::JSON projectRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
+}
+
+dx::JSON projectRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return projectRemoveTags(object_id, input_params.toString());
+}
+
+
 dx::JSON projectRenameFolder(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/renameFolder"), input_params);
 }
@@ -901,12 +953,30 @@ dx::JSON projectRenameFolder(const std::string &object_id, const dx::JSON &input
 }
 
 
-dx::JSON projectSetPermissions(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setPermissions"), input_params);
+dx::JSON projectSetProperties(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
 }
 
-dx::JSON projectSetPermissions(const std::string &object_id, const dx::JSON &input_params) {
-  return projectSetPermissions(object_id, input_params.toString());
+dx::JSON projectSetProperties(const std::string &object_id, const dx::JSON &input_params) {
+  return projectSetProperties(object_id, input_params.toString());
+}
+
+
+dx::JSON projectSubscribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/subscribe"), input_params);
+}
+
+dx::JSON projectSubscribe(const std::string &object_id, const dx::JSON &input_params) {
+  return projectSubscribe(object_id, input_params.toString());
+}
+
+
+dx::JSON projectUnsubscribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/unsubscribe"), input_params);
+}
+
+dx::JSON projectUnsubscribe(const std::string &object_id, const dx::JSON &input_params) {
+  return projectUnsubscribe(object_id, input_params.toString());
 }
 
 
@@ -1045,6 +1115,51 @@ dx::JSON recordNew(const dx::JSON &input_params) {
 }
 
 
+dx::JSON requestApprove(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/approve"), input_params);
+}
+
+dx::JSON requestApprove(const std::string &object_id, const dx::JSON &input_params) {
+  return requestApprove(object_id, input_params.toString());
+}
+
+
+dx::JSON requestDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+}
+
+dx::JSON requestDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return requestDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON requestDestroy(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+}
+
+dx::JSON requestDestroy(const std::string &object_id, const dx::JSON &input_params) {
+  return requestDestroy(object_id, input_params.toString());
+}
+
+
+dx::JSON requestReject(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/reject"), input_params);
+}
+
+dx::JSON requestReject(const std::string &object_id, const dx::JSON &input_params) {
+  return requestReject(object_id, input_params.toString());
+}
+
+
+dx::JSON systemFindAffiliates(const std::string &input_params) {
+  return DXHTTPRequest("/system/findAffiliates", input_params);
+}
+
+dx::JSON systemFindAffiliates(const dx::JSON &input_params) {
+  return systemFindAffiliates(input_params.toString());
+}
+
+
 dx::JSON systemFindApps(const std::string &input_params) {
   return DXHTTPRequest("/system/findApps", input_params);
 }
@@ -1072,6 +1187,24 @@ dx::JSON systemFindDiscitems(const dx::JSON &input_params) {
 }
 
 
+dx::JSON systemFindFeeditems(const std::string &input_params) {
+  return DXHTTPRequest("/system/findFeeditems", input_params);
+}
+
+dx::JSON systemFindFeeditems(const dx::JSON &input_params) {
+  return systemFindFeeditems(input_params.toString());
+}
+
+
+dx::JSON systemFindInvites(const std::string &input_params) {
+  return DXHTTPRequest("/system/findInvites", input_params);
+}
+
+dx::JSON systemFindInvites(const dx::JSON &input_params) {
+  return systemFindInvites(input_params.toString());
+}
+
+
 dx::JSON systemFindJobs(const std::string &input_params) {
   return DXHTTPRequest("/system/findJobs", input_params);
 }
@@ -1090,6 +1223,24 @@ dx::JSON systemFindProjects(const dx::JSON &input_params) {
 }
 
 
+dx::JSON systemFindRequests(const std::string &input_params) {
+  return DXHTTPRequest("/system/findRequests", input_params);
+}
+
+dx::JSON systemFindRequests(const dx::JSON &input_params) {
+  return systemFindRequests(input_params.toString());
+}
+
+
+dx::JSON systemFindUsers(const std::string &input_params) {
+  return DXHTTPRequest("/system/findUsers", input_params);
+}
+
+dx::JSON systemFindUsers(const dx::JSON &input_params) {
+  return systemFindUsers(input_params.toString());
+}
+
+
 dx::JSON systemGetLog(const std::string &input_params) {
   return DXHTTPRequest("/system/getLog", input_params);
 }
@@ -1099,12 +1250,21 @@ dx::JSON systemGetLog(const dx::JSON &input_params) {
 }
 
 
-dx::JSON systemSearchDataObjects(const std::string &input_params) {
-  return DXHTTPRequest("/system/searchDataObjects", input_params);
+dx::JSON systemGetProjectTags(const std::string &input_params) {
+  return DXHTTPRequest("/system/getProjectTags", input_params);
 }
 
-dx::JSON systemSearchDataObjects(const dx::JSON &input_params) {
-  return systemSearchDataObjects(input_params.toString());
+dx::JSON systemGetProjectTags(const dx::JSON &input_params) {
+  return systemGetProjectTags(input_params.toString());
+}
+
+
+dx::JSON systemGlobalSearch(const std::string &input_params) {
+  return DXHTTPRequest("/system/globalSearch", input_params);
+}
+
+dx::JSON systemGlobalSearch(const dx::JSON &input_params) {
+  return systemGlobalSearch(input_params.toString());
 }
 
 
@@ -1204,6 +1364,15 @@ dx::JSON tableListProjects(const std::string &object_id, const std::string &inpu
 
 dx::JSON tableListProjects(const std::string &object_id, const dx::JSON &input_params) {
   return tableListProjects(object_id, input_params.toString());
+}
+
+
+dx::JSON tableModifyColumn(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/modifyColumn"), input_params);
+}
+
+dx::JSON tableModifyColumn(const std::string &object_id, const dx::JSON &input_params) {
+  return tableModifyColumn(object_id, input_params.toString());
 }
 
 
@@ -1315,6 +1484,15 @@ dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params
 }
 
 
+dx::JSON userUpdate(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params);
+}
+
+dx::JSON userUpdate(const std::string &object_id, const dx::JSON &input_params) {
+  return userUpdate(object_id, input_params.toString());
+}
+
+
 dx::JSON workspaceClone(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params);
 }
@@ -1330,6 +1508,15 @@ dx::JSON workspaceDescribe(const std::string &object_id, const std::string &inpu
 
 dx::JSON workspaceDescribe(const std::string &object_id, const dx::JSON &input_params) {
   return workspaceDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON workspaceDestroy(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+}
+
+dx::JSON workspaceDestroy(const std::string &object_id, const dx::JSON &input_params) {
+  return workspaceDestroy(object_id, input_params.toString());
 }
 
 

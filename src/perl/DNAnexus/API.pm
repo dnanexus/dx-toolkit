@@ -23,6 +23,19 @@ sub appAddCategoriesWithAlias($;$%) {
 }
 
 
+sub appAddDevelopers($;$%) {
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$app_id_or_name.'/addDevelopers', $input_params, %kwargs);
+}
+
+sub appAddDevelopersWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appAddDevelopers($app_name.'/'.$app_alias, $input_params, %kwargs);
+}
+
+
 sub appAddTags($;$%) {
     my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -101,6 +114,19 @@ sub appListCategoriesWithAlias($;$%) {
 }
 
 
+sub appListDevelopers($;$%) {
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$app_id_or_name.'/listDevelopers', $input_params, %kwargs);
+}
+
+sub appListDevelopersWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appListDevelopers($app_name.'/'.$app_alias, $input_params, %kwargs);
+}
+
+
 sub appPublish($;$%) {
     my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -127,16 +153,16 @@ sub appRemoveCategoriesWithAlias($;$%) {
 }
 
 
-sub appRemoveTag($;$%) {
+sub appRemoveDevelopers($;$%) {
     my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$app_id_or_name.'/removeTag', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$app_id_or_name.'/removeDevelopers', $input_params, %kwargs);
 }
 
-sub appRemoveTagWithAlias($;$%) {
+sub appRemoveDevelopersWithAlias($;$%) {
     my ($app_name, $app_alias, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return appRemoveTag($app_name.'/'.$app_alias, $input_params, %kwargs);
+    return appRemoveDevelopers($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
@@ -196,34 +222,6 @@ sub appNew(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/app/new', $input_params, %kwargs);
-}
-
-
-sub discitemDelete($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/delete', $input_params, %kwargs);
-}
-
-
-sub discitemDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub discitemLike($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/like', $input_params, %kwargs);
-}
-
-
-sub discitemNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/discitem/new', $input_params, %kwargs);
 }
 
 
@@ -451,6 +449,48 @@ sub gtableNew(;$%) {
 }
 
 
+sub inviteAccept($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/accept', $input_params, %kwargs);
+}
+
+
+sub inviteApprove($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/approve', $input_params, %kwargs);
+}
+
+
+sub inviteDecline($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/decline', $input_params, %kwargs);
+}
+
+
+sub inviteDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub inviteDestroy($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+}
+
+
+sub inviteReject($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/reject', $input_params, %kwargs);
+}
+
+
 sub jobDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -490,34 +530,6 @@ sub notificationsMarkRead(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/notifications/markRead', $input_params, %kwargs);
-}
-
-
-sub privateDxdata(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/private/dxdata', $input_params, %kwargs);
-}
-
-
-sub privateLaunchExampleMicrojob(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/private/launchExampleMicrojob', $input_params, %kwargs);
-}
-
-
-sub privateTestProjectTxn(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/private/testProjectTxn', $input_params, %kwargs);
-}
-
-
-sub privateUpdateJob(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/private/updateJob', $input_params, %kwargs);
 }
 
 
@@ -626,10 +638,24 @@ sub programNew(;$%) {
 }
 
 
+sub projectAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
 sub projectClone($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/clone', $input_params, %kwargs);
+}
+
+
+sub projectDecreasePermissions($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/decreasePermissions', $input_params, %kwargs);
 }
 
 
@@ -647,10 +673,17 @@ sub projectDestroy($;$%) {
 }
 
 
-sub projectIncreasePermissions($;$%) {
+sub projectInvite($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/increasePermissions', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/invite', $input_params, %kwargs);
+}
+
+
+sub projectJoin($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/join', $input_params, %kwargs);
 }
 
 
@@ -696,6 +729,13 @@ sub projectRemoveObjects($;$%) {
 }
 
 
+sub projectRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
 sub projectRenameFolder($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -703,10 +743,24 @@ sub projectRenameFolder($;$%) {
 }
 
 
-sub projectSetPermissions($;$%) {
+sub projectSetProperties($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setPermissions', $input_params, %kwargs);
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub projectSubscribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/subscribe', $input_params, %kwargs);
+}
+
+
+sub projectUnsubscribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/unsubscribe', $input_params, %kwargs);
 }
 
 
@@ -815,6 +869,41 @@ sub recordNew(;$%) {
 }
 
 
+sub requestApprove($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/approve', $input_params, %kwargs);
+}
+
+
+sub requestDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub requestDestroy($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
+}
+
+
+sub requestReject($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/reject', $input_params, %kwargs);
+}
+
+
+sub systemFindAffiliates(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findAffiliates', $input_params, %kwargs);
+}
+
+
 sub systemFindApps(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -836,6 +925,20 @@ sub systemFindDiscitems(;$%) {
 }
 
 
+sub systemFindFeeditems(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findFeeditems', $input_params, %kwargs);
+}
+
+
+sub systemFindInvites(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findInvites', $input_params, %kwargs);
+}
+
+
 sub systemFindJobs(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -850,6 +953,20 @@ sub systemFindProjects(;$%) {
 }
 
 
+sub systemFindRequests(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findRequests', $input_params, %kwargs);
+}
+
+
+sub systemFindUsers(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/findUsers', $input_params, %kwargs);
+}
+
+
 sub systemGetLog(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -857,10 +974,17 @@ sub systemGetLog(;$%) {
 }
 
 
-sub systemSearchDataObjects(;$%) {
+sub systemGetProjectTags(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/system/searchDataObjects', $input_params, %kwargs);
+    return DXHTTPRequest('/system/getProjectTags', $input_params, %kwargs);
+}
+
+
+sub systemGlobalSearch(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/globalSearch', $input_params, %kwargs);
 }
 
 
@@ -938,6 +1062,13 @@ sub tableListProjects($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
+}
+
+
+sub tableModifyColumn($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/modifyColumn', $input_params, %kwargs);
 }
 
 
@@ -1025,6 +1156,13 @@ sub userDescribe($;$%) {
 }
 
 
+sub userUpdate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
+}
+
+
 sub workspaceClone($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -1036,6 +1174,13 @@ sub workspaceDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub workspaceDestroy($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/destroy', $input_params, %kwargs);
 }
 
 
@@ -1082,5 +1227,5 @@ sub workspaceRenameFolder($;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(appAddCategories appAddTags appDelete appDescribe appGet appInstall appListCategories appPublish appRemoveCategories appRemoveTag appRemoveTags appRun appUninstall appUpdate appNew discitemDelete discitemDescribe discitemLike discitemNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead privateDxdata privateLaunchExampleMicrojob privateTestProjectTxn privateUpdateJob programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility programNew projectClone projectDescribe projectDestroy projectIncreasePermissions projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRenameFolder projectSetPermissions projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindApps systemFindDataObjects systemFindDiscitems systemFindJobs systemFindProjects systemGetLog systemSearchDataObjects systemShortenURL tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate tableNew userDescribe workspaceClone workspaceDescribe workspaceListFolder workspaceMove workspaceNewFolder workspaceRemoveFolder workspaceRemoveObjects workspaceRenameFolder);
+our @EXPORT_OK = qw(appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListCategories appListDevelopers appPublish appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew inviteAccept inviteApprove inviteDecline inviteDescribe inviteDestroy inviteReject jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead programAddTags programAddTypes programClose programDescribe programGet programGetDetails programListProjects programRemoveTags programRemoveTypes programRename programRun programSetDetails programSetProperties programSetVisibility programNew projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectJoin projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectSubscribe projectUnsubscribe projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew requestApprove requestDescribe requestDestroy requestReject systemFindAffiliates systemFindApps systemFindDataObjects systemFindDiscitems systemFindFeeditems systemFindInvites systemFindJobs systemFindProjects systemFindRequests systemFindUsers systemGetLog systemGetProjectTags systemGlobalSearch systemShortenURL tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableModifyColumn tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate tableNew userDescribe userUpdate workspaceClone workspaceDescribe workspaceDestroy workspaceListFolder workspaceMove workspaceNewFolder workspaceRemoveFolder workspaceRemoveObjects workspaceRenameFolder);
 

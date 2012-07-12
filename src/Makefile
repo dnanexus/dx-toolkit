@@ -1,7 +1,17 @@
 SHELL=/bin/bash -e
 DESTDIR="$$DNANEXUS_HOME"
 
-all: src_libs python contigset2fasta
+all: api_wrappers src_libs python contigset2fasta
+
+api_wrappers:
+	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
+	../bin/generateWrapperTable ../build/list_of_all_routes.txt > ../build/wrapper_table.json
+	cat ../build/wrapper_table.json | api_wrappers/generatePythonAPIWrappers.py > python/dxpy/api.py
+	cat ../build/wrapper_table.json | api_wrappers/generateCppAPIHWrappers.py > cpp/dxcpp/api.h
+	cat ../build/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
+	cat ../build/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
+	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/DNAnexus/API.pm
+	rm ../bin/generateWrapperTable
 
 src_libs:
 	mkdir -p "$(DESTDIR)/lib"
@@ -20,4 +30,4 @@ clean:
 install:
 	$(MAKE) -C contigset2fasta install
 
-.PHONY: python contigset2fasta src_libs
+.PHONY: api_wrappers python contigset2fasta src_libs

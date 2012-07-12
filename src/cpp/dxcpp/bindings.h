@@ -201,8 +201,9 @@ class DXDataObject {
  * existing data object ID.
  *
  * @param dxid Data object ID to link to
+ * @param proj Project ID to specify in the link
  */
-dx::JSON DXLink(const std::string &dxid);
+dx::JSON DXLink(const std::string &dxid, const std::string &proj="");
 
 #include "bindings/dxrecord.h"
 //#include "bindings/dxtable.h"

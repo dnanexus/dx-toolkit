@@ -122,6 +122,8 @@ class DXApp(object):
         '''
         :param program: ID of the program to replace the app's contents with
         :type program: string
+        :param details: Metadata to store with the app
+        :type details: dict or list
         :param billing: billing specification (optional)
         :type billing: dict
         :param access: access specification (optional)
@@ -133,7 +135,7 @@ class DXApp(object):
 
         '''
         updates = {}
-        for field in 'program', 'billing', 'access', 'globalWorkspace':
+        for field in 'program', 'billing', 'access', 'globalWorkspace', 'details':
             if field in kwargs:
                 updates[field] = kwargs[field]
                 del kwargs[field]

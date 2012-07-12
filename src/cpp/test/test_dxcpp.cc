@@ -33,8 +33,14 @@ void remove_all(const string &proj, const string &folder="/") {
 
 TEST(DXLinkTest, CreationTest) {
   string record_id = "record-0000000000000000000000pb";
+  string proj_id = "project-0000000000000000000000pb";
   JSON link = DXLink(record_id);
   EXPECT_EQ(record_id, link["$dnanexus_link"].get<string>());
+  EXPECT_EQ(1, link.size());
+
+  link = DXLink(record_id, proj_id);
+  EXPECT_EQ(record_id, link["$dnanexus_link"]["id"].get<string>());
+  EXPECT_EQ(proj_id, link["$dnanexus_link"]["project"].get<string>());
   EXPECT_EQ(1, link.size());
 }
 

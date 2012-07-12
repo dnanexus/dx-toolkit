@@ -15,6 +15,12 @@ dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::strin
 dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
+dx::JSON appAddDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appAddDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+
+
 dx::JSON appAddTags(const std::string &app_id_or_name, const std::string &input_params="{}");
 dx::JSON appAddTags(const std::string &app_id_or_name, const dx::JSON &input_params);
 dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
@@ -51,6 +57,12 @@ dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::stri
 dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
+dx::JSON appListDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appListDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+
+
 dx::JSON appPublish(const std::string &app_id_or_name, const std::string &input_params="{}");
 dx::JSON appPublish(const std::string &app_id_or_name, const dx::JSON &input_params);
 dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
@@ -63,10 +75,10 @@ dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::st
 dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
-dx::JSON appRemoveTag(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appRemoveTag(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appRemoveTagWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}");
+dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params);
+dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
+dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
 
 
 dx::JSON appRemoveTags(const std::string &app_id_or_name, const std::string &input_params="{}");
@@ -95,22 +107,6 @@ dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_
 
 dx::JSON appNew(const std::string &input_params="{}");
 dx::JSON appNew(const dx::JSON &input_params);
-
-
-dx::JSON discitemDelete(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON discitemDelete(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON discitemDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON discitemDescribe(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON discitemLike(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON discitemLike(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON discitemNew(const std::string &input_params="{}");
-dx::JSON discitemNew(const dx::JSON &input_params);
 
 
 dx::JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}");
@@ -241,6 +237,30 @@ dx::JSON gtableNew(const std::string &input_params="{}");
 dx::JSON gtableNew(const dx::JSON &input_params);
 
 
+dx::JSON inviteAccept(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON inviteAccept(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON inviteApprove(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON inviteApprove(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON inviteDecline(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON inviteDecline(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON inviteDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON inviteDescribe(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON inviteDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON inviteDestroy(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON inviteReject(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON inviteReject(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params);
 
@@ -263,22 +283,6 @@ dx::JSON notificationsGet(const dx::JSON &input_params);
 
 dx::JSON notificationsMarkRead(const std::string &input_params="{}");
 dx::JSON notificationsMarkRead(const dx::JSON &input_params);
-
-
-dx::JSON privateDxdata(const std::string &input_params="{}");
-dx::JSON privateDxdata(const dx::JSON &input_params);
-
-
-dx::JSON privateLaunchExampleMicrojob(const std::string &input_params="{}");
-dx::JSON privateLaunchExampleMicrojob(const dx::JSON &input_params);
-
-
-dx::JSON privateTestProjectTxn(const std::string &input_params="{}");
-dx::JSON privateTestProjectTxn(const dx::JSON &input_params);
-
-
-dx::JSON privateUpdateJob(const std::string &input_params="{}");
-dx::JSON privateUpdateJob(const dx::JSON &input_params);
 
 
 dx::JSON programAddTags(const std::string &object_id, const std::string &input_params="{}");
@@ -341,8 +345,16 @@ dx::JSON programNew(const std::string &input_params="{}");
 dx::JSON programNew(const dx::JSON &input_params);
 
 
+dx::JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON projectClone(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON projectClone(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON projectDecreasePermissions(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectDecreasePermissions(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON projectDescribe(const std::string &object_id, const std::string &input_params="{}");
@@ -353,8 +365,12 @@ dx::JSON projectDestroy(const std::string &object_id, const std::string &input_p
 dx::JSON projectDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
-dx::JSON projectIncreasePermissions(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectIncreasePermissions(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectInvite(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectInvite(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON projectJoin(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectJoin(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON projectLeave(const std::string &object_id, const std::string &input_params="{}");
@@ -381,12 +397,24 @@ dx::JSON projectRemoveObjects(const std::string &object_id, const std::string &i
 dx::JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &input_params);
 
 
+dx::JSON projectRemoveTags(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON projectRenameFolder(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON projectRenameFolder(const std::string &object_id, const dx::JSON &input_params);
 
 
-dx::JSON projectSetPermissions(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectSetPermissions(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectSetProperties(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON projectSubscribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectSubscribe(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON projectUnsubscribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON projectUnsubscribe(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON projectUpdate(const std::string &object_id, const std::string &input_params="{}");
@@ -449,6 +477,26 @@ dx::JSON recordNew(const std::string &input_params="{}");
 dx::JSON recordNew(const dx::JSON &input_params);
 
 
+dx::JSON requestApprove(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON requestApprove(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON requestDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON requestDescribe(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON requestDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON requestDestroy(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON requestReject(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON requestReject(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON systemFindAffiliates(const std::string &input_params="{}");
+dx::JSON systemFindAffiliates(const dx::JSON &input_params);
+
+
 dx::JSON systemFindApps(const std::string &input_params="{}");
 dx::JSON systemFindApps(const dx::JSON &input_params);
 
@@ -461,6 +509,14 @@ dx::JSON systemFindDiscitems(const std::string &input_params="{}");
 dx::JSON systemFindDiscitems(const dx::JSON &input_params);
 
 
+dx::JSON systemFindFeeditems(const std::string &input_params="{}");
+dx::JSON systemFindFeeditems(const dx::JSON &input_params);
+
+
+dx::JSON systemFindInvites(const std::string &input_params="{}");
+dx::JSON systemFindInvites(const dx::JSON &input_params);
+
+
 dx::JSON systemFindJobs(const std::string &input_params="{}");
 dx::JSON systemFindJobs(const dx::JSON &input_params);
 
@@ -469,12 +525,24 @@ dx::JSON systemFindProjects(const std::string &input_params="{}");
 dx::JSON systemFindProjects(const dx::JSON &input_params);
 
 
+dx::JSON systemFindRequests(const std::string &input_params="{}");
+dx::JSON systemFindRequests(const dx::JSON &input_params);
+
+
+dx::JSON systemFindUsers(const std::string &input_params="{}");
+dx::JSON systemFindUsers(const dx::JSON &input_params);
+
+
 dx::JSON systemGetLog(const std::string &input_params="{}");
 dx::JSON systemGetLog(const dx::JSON &input_params);
 
 
-dx::JSON systemSearchDataObjects(const std::string &input_params="{}");
-dx::JSON systemSearchDataObjects(const dx::JSON &input_params);
+dx::JSON systemGetProjectTags(const std::string &input_params="{}");
+dx::JSON systemGetProjectTags(const dx::JSON &input_params);
+
+
+dx::JSON systemGlobalSearch(const std::string &input_params="{}");
+dx::JSON systemGlobalSearch(const dx::JSON &input_params);
 
 
 dx::JSON systemShortenURL(const std::string &input_params="{}");
@@ -519,6 +587,10 @@ dx::JSON tableGetDetails(const std::string &object_id, const dx::JSON &input_par
 
 dx::JSON tableListProjects(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON tableListProjects(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON tableModifyColumn(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON tableModifyColumn(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON tableRemoveColumns(const std::string &object_id, const std::string &input_params="{}");
@@ -569,12 +641,20 @@ dx::JSON userDescribe(const std::string &object_id, const std::string &input_par
 dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params);
 
 
+dx::JSON userUpdate(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON userUpdate(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON workspaceClone(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON workspaceClone(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON workspaceDescribe(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON workspaceDescribe(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON workspaceDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON workspaceDestroy(const std::string &object_id, const dx::JSON &input_params);
 
 
 dx::JSON workspaceListFolder(const std::string &object_id, const std::string &input_params="{}");

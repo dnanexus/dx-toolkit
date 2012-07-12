@@ -93,7 +93,10 @@ public:
   void setIDs(const std::string &dxid, const std::string &proj="default");
 
   /**
+   * Creates a new GTable.
    *
+   * @param columns Vector of column descriptors; must be nonempty
+   * @param indices Vector of index descriptors
    * @param data_obj_fields JSON containing the optional fields with
    * which to create the object ("project", "types", "details",
    * "hidden", "name", "properties", "tags")
@@ -101,10 +104,63 @@ public:
   void create(const std::vector<dx::JSON> &columns,
               const std::vector<dx::JSON> &indices,
               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+
+  /**
+   * Creates a new GTable.
+   *
+   * @param columns Vector of column descriptors; must be nonempty
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project" if not using the default
+   * project, "types", "details", "hidden", "name", "properties",
+   * "tags")
+   */
   void create(const std::vector<dx::JSON> &columns,
               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT)) {
     create(columns, std::vector<dx::JSON>(), data_obj_fields);
   }
+
+  /**
+   * Creates a new GTable.
+   *
+   * @param init_from ID of a GTable from which to initialize all
+   * metadata, including column and index specs.
+   * @param data_obj_fields
+   */
+  void create(const std::string &init_from,
+	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+
+  /**
+   * Creates a new GTable.
+   *
+   * @param init_from ID of a GTable from which to initialize all
+   * metadata, including column and index specs.
+   * @param columns Vector of column descriptors with which to
+   * override the defaults specified by init_from.  This should be a
+   * nonempty.
+   * @param data_obj_fields
+   */
+  void create(const std::string &init_from,
+	      const std::vector<dx::JSON> &columns,
+	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+
+  /**
+   * Creates a new GTable.
+   *
+   * @param init_from ID of a GTable from which to initialize all
+   * metadata, including column and index specs.
+   * @param columns Vector of column descriptors with which to
+   * override the defaults specified by init_from.  Use an empty array
+   * to avoid overriding it but to override the index specs.
+   * @param indices Vector of index descriptors with which to override
+   * the defaults specified in init_from.  Unlike columns in this
+   * method, an empty array will explicitly set the index specs to be
+   * an empty list.
+   * @param data_obj_fields
+   */
+  void create(const std::string &init_from,
+	      const std::vector<dx::JSON> &columns,
+              const std::vector<dx::JSON> &indices,
+	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   DXGTable extend(const std::vector<dx::JSON> &columns,
                   const std::vector<dx::JSON> &indices,
@@ -194,7 +250,8 @@ public:
   DXGTable clone(const std::string &dest_proj_id,
                  const std::string &dest_folder="/") const;
 
-  static DXGTable openDXGTable(const std::string &dxid);
+  static DXGTable openDXGTable(const std::string &dxid,
+			       const std::string &project="default");
 
   static DXGTable newDXGTable(const std::vector<dx::JSON> &columns,
                               const std::vector<dx::JSON> &indices,
@@ -206,6 +263,18 @@ public:
                               dx::JSON(dx::JSON_OBJECT)) {
     return newDXGTable(columns, std::vector<dx::JSON>(), data_obj_fields);
   }
+
+  static DXGTable newDXGTable(const std::string &init_from,
+			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+
+  static DXGTable newDXGTable(const std::string &init_from,
+			      const std::vector<dx::JSON> &columns,
+			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+
+  static DXGTable newDXGTable(const std::string &init_from,
+			      const std::vector<dx::JSON> &columns,
+			      const std::vector<dx::JSON> &indices,
+			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   static DXGTable extendDXGTable(const DXGTable &dxgtable,
                                  const std::vector<dx::JSON> &columns,
