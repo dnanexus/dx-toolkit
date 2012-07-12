@@ -121,15 +121,20 @@ public:
 
 class HttpRequestException : public std::exception {
 public:
+  const static int UNSUPPORTED_HTTP_METHOD = -1;
+  const static int INIT_FAILED = -2;
+  const static int ALREADY_IN_USE = -3;
 
   std::string err;
-
-  HttpRequestException()
-    : err("Unknown error occured while using HttpRequest class") {
-  }
-
-  HttpRequestException(const std::string &err)
-    : err(err) {
+  
+  /** errorCode is either integer equivalent (always positive) of CURLcode
+    * returned by libcurl functions, or, it is one of the integer value (always negative)
+    * defined as static constants in HttpRequestException class
+    */
+  int errorCode;
+  
+  HttpRequestException(const std::string &err, const int &code)
+    : err(err), errorCode(code) {
   }
 
   virtual const char* what() const throw() {
@@ -138,6 +143,9 @@ public:
 
   virtual ~HttpRequestException() throw() {
   }
+private:
+  // Disallow default constructor, so as not to throw exceptions without error message/code
+  HttpRequestException() {}
 };
 
 #endif

@@ -105,7 +105,7 @@ void HttpRequest::assertLibCurlFunctions(CURLcode retVal, const std::string &msg
       exceptionStr += "\nUser Message: " + msg;
     }
     exceptionStr += "\n********\n";
-    throw HttpRequestException(exceptionStr);
+    throw HttpRequestException(exceptionStr, retVal);
   }
 }
 
@@ -120,7 +120,7 @@ void HttpRequest::send() {
 
   // This function should never be called while "curl" member variable is in use
   if (curl != NULL)
-    throw HttpRequestException("curl member variable is already in use. Cannot be reused until previous operation is complete");
+    throw HttpRequestException("ERROR: curl member variable is already in use. Cannot be reused until previous operation is complete", HttpRequestException::ALREADY_IN_USE);
 
   curl = curl_easy_init();
 
@@ -198,7 +198,7 @@ void HttpRequest::send() {
         assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_NOBODY, 1l));
         break;
       default:
-        throw HttpRequestException("Unknown HttpMethod type");
+        throw HttpRequestException("Unknown HttpMethod type", HttpRequestException::UNSUPPORTED_HTTP_METHOD);
     }
 
     // Set callback for receiving headers from the response
@@ -230,6 +230,6 @@ void HttpRequest::send() {
     curl_easy_cleanup(curl);
     curl = NULL;
   } else {
-    throw HttpRequestException("Unable to initialize object of type CURL");
+    throw HttpRequestException("Error: Unable to initialize object of type CURL", HttpRequestException::INIT_FAILED);
   }
 }
