@@ -279,6 +279,13 @@ TEST_F(DXRecordTest, CreateRemoveTest) {
   ASSERT_THROW(third_record.describe(), DXAPIError);
 }
 
+TEST_F(DXRecordTest, InitializeFromTest) {
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  DXRecord second_record = DXRecord::newDXRecord(dxrecord);
+  JSON desc = second_record.describe();
+  ASSERT_EQ(desc["name"], dxrecord.getID());
+}
+
 TEST_F(DXRecordTest, DescribeTest) {
   DXRecord dxrecord = DXRecord::newDXRecord();
   JSON desc = dxrecord.describe();

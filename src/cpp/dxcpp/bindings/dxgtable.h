@@ -120,7 +120,11 @@ public:
   }
 
   /**
-   * Creates a new GTable.
+   * Creates a new GTable and initializes it using the metadata from
+   * an existing GTable.  Note that the default behavior of creating a
+   * new data object in the current workspace is still in effect and
+   * needs to be explicitly stated if the project of the object
+   * specified as init_from is to be used.
    *
    * @param init_from a GTable from which to initialize all metadata,
    * including column and index specs.

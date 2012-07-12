@@ -36,6 +36,18 @@ class DXRecord: public DXDataObject {
   void create(const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
+   * Creates a new remote record object.  The handler is updated with
+   * the object ID.
+   *
+   * @param init_from a DXRecord from which to initialize the metadata
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   */
+  void create(const DXRecord &init_from,
+              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+
+  /**
    * Create a new remote record object.
    *
    * @param data_obj_fields JSON containing the optional fields with
@@ -44,6 +56,20 @@ class DXRecord: public DXDataObject {
    * @return A DXRecord remote object handler.
    */
   static DXRecord newDXRecord(const dx::JSON &data_obj_fields=
+			      dx::JSON(dx::JSON_OBJECT));
+
+  /**
+   * Create a new remote record object, initializing it from another
+   * record.
+   *
+   * @param init_from a DXRecord from which to initialize the metadata
+   * @param data_obj_fields JSON containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   * @return A DXRecord remote object handler.
+   */
+  static DXRecord newDXRecord(const DXRecord &init_from,
+                              const dx::JSON &data_obj_fields=
 			      dx::JSON(dx::JSON_OBJECT));
 
   /**
