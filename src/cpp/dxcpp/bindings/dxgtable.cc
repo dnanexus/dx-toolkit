@@ -32,10 +32,12 @@ void DXGTable::create(const vector<JSON> &columns,
   setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
-void DXGTable::create(const string &init_from,
+void DXGTable::create(const DXGTable &init_from,
 		      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
-  input_params["initializeFrom"] = init_from;
+  input_params["initializeFrom"] = JSON(JSON_OBJECT);
+  input_params["initializeFrom"]["id"] = init_from.getID();
+  input_params["initializeFrom"]["project"] = init_from.getProjectID();
   if (!data_obj_fields.has("project")) {
     input_params["project"] = g_WORKSPACE_ID;
   }
@@ -45,11 +47,13 @@ void DXGTable::create(const string &init_from,
   setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
-void DXGTable::create(const string &init_from,
+void DXGTable::create(const DXGTable &init_from,
 		      const vector<JSON> &columns,
 		      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
-  input_params["initializeFrom"] = init_from;
+  input_params["initializeFrom"] = JSON(JSON_OBJECT);
+  input_params["initializeFrom"]["id"] = init_from.getID();
+  input_params["initializeFrom"]["project"] = init_from.getProjectID();
   if (!data_obj_fields.has("project")) {
     input_params["project"] = g_WORKSPACE_ID;
   }
@@ -60,12 +64,14 @@ void DXGTable::create(const string &init_from,
   setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
-void DXGTable::create(const string &init_from,
+void DXGTable::create(const DXGTable &init_from,
 		      const vector<JSON> &columns,
 		      const vector<JSON> &indices,
 		      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
-  input_params["initializeFrom"] = init_from;
+  input_params["initializeFrom"] = JSON(JSON_OBJECT);
+  input_params["initializeFrom"]["id"] = init_from.getID();
+  input_params["initializeFrom"]["project"] = init_from.getProjectID();
   if (!data_obj_fields.has("project")) {
     input_params["project"] = g_WORKSPACE_ID;
   }
@@ -171,14 +177,14 @@ DXGTable DXGTable::newDXGTable(const vector<JSON> &columns,
   return gtable;
 }
 
-DXGTable DXGTable::newDXGTable(const string &init_from,
+DXGTable DXGTable::newDXGTable(const DXGTable &init_from,
 			       const JSON &data_obj_fields) {
   DXGTable gtable;
   gtable.create(init_from, data_obj_fields);
   return gtable;
 }
 
-DXGTable DXGTable::newDXGTable(const string &init_from,
+DXGTable DXGTable::newDXGTable(const DXGTable &init_from,
                                const vector<JSON> &columns,
                                const JSON &data_obj_fields) {
   DXGTable gtable;
@@ -186,7 +192,7 @@ DXGTable DXGTable::newDXGTable(const string &init_from,
   return gtable;
 }
 
-DXGTable DXGTable::newDXGTable(const string &init_from,
+DXGTable DXGTable::newDXGTable(const DXGTable &init_from,
                                const vector<JSON> &columns,
                                const vector<JSON> &indices,
                                const JSON &data_obj_fields) {

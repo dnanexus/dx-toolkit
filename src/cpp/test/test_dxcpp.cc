@@ -635,6 +635,20 @@ TEST_F(DXGTableTest, CreateDXGTableTest) {
   }
 }
 
+TEST_F(DXGTableTest, InitializeFromGTableTest) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+
+  DXGTable second_table = DXGTable::newDXGTable(dxgtable);
+  JSON desc = second_table.describe();
+  ASSERT_EQ(DXGTableTest::columns.size(), desc["columns"].size());
+  for (int i = 0; i < DXGTableTest::columns.size(); i++) {
+    ASSERT_EQ(DXGTableTest::columns[i]["name"].get<string>(),
+              desc["columns"][i]["name"].get<string>());
+    ASSERT_EQ(DXGTableTest::columns[i]["type"].get<string>(),
+              desc["columns"][i]["type"].get<string>());
+  }
+}
+
 TEST_F(DXGTableTest, ExtendDXGTableTest) {
   DXGTable table_to_extend = DXGTable::newDXGTable(DXGTableTest::columns);
   try {
