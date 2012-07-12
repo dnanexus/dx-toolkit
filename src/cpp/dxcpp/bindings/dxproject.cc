@@ -3,79 +3,90 @@
 using namespace std;
 using namespace dx;
 
-JSON DXProject::describe(bool folders) const {
-  if (folders)
-    return projectDescribe(dxid_, string("{\"folders\": true}"));
-  else
-    return projectDescribe(dxid_);
-}
-
-void DXProject::update(const JSON &to_update) const {
-  projectUpdate(dxid_, to_update);
-}
-
-void DXProject::destroy() const {
-  projectDestroy(dxid_);
+JSON DXWorkspace::describe(bool folders) const {
+  if (folders) {
+    return DXHTTPRequest("/" + dxid_ + "/describe",
+                         "{\"folders\": true}");
+  } else {
+    return DXHTTPRequest("/" + dxid_ + "/describe",
+                         "{}");
+  }
 }
 
 // Generic
-void DXProject::move(const JSON &objects,
-                     const JSON &folders,
-                     const string &dest_folder) const {
+void DXWorkspace::move(const JSON &objects,
+                       const JSON &folders,
+                       const string &dest_folder) const {
   JSON input_params(JSON_OBJECT);
   input_params["objects"] = objects;
   input_params["folders"] = folders;
   input_params["destination"] = dest_folder;
-  projectMove(dxid_, input_params);
+  DXHTTPRequest("/" + dxid_ + "/move",
+                input_params.toString());
 }
 
-void DXProject::clone(const JSON &objects,
-                      const JSON &folders,
-                      const string &dest_proj,
-                      const string &dest_folder) const {
+void DXWorkspace::clone(const JSON &objects,
+                        const JSON &folders,
+                        const string &dest_proj,
+                        const string &dest_folder) const {
   JSON input_params(JSON_OBJECT);
   input_params["objects"] = objects;
   input_params["folders"] = folders;
   input_params["project"] = dest_proj;
   input_params["destination"] = dest_folder;
-  projectClone(dxid_, input_params);
+  DXHTTPRequest("/" + dxid_ + "/clone",
+                input_params.toString());
 }
 
 // Folder-specific
-void DXProject::newFolder(const string &folder, bool parents) const {
+void DXWorkspace::newFolder(const string &folder, bool parents) const {
   stringstream input_hash;
   input_hash << "{\"folder\": \"" + folder + "\",";
   input_hash << "\"parents\": " << (parents ? "true" : "false") << "}";
-  projectNewFolder(dxid_, input_hash.str());
+  DXHTTPRequest("/" + dxid_ + "/newFolder",
+                input_hash.str());
 }
 
-JSON DXProject::listFolder(const string &folder) const {
-  return projectListFolder(dxid_, "{\"folder\": \"" + folder + "\"}");
+JSON DXWorkspace::listFolder(const string &folder) const {
+  return DXHTTPRequest("/" + dxid_ + "/listFolder",
+                       "{\"folder\": \"" + folder + "\"}");
 }
 
-void DXProject::moveFolder(const string &folder,
-                           const string &dest_folder) const {
-  projectMove(dxid_, "{\"folders\": [\"" + folder + "\"]," +
-              "\"destination\": \"" + dest_folder + "\"}");
+void DXWorkspace::moveFolder(const string &folder,
+                             const string &dest_folder) const {
+  DXHTTPRequest("/" + dxid_ + "/move",
+                "{\"folders\": [\"" + folder + "\"]," +
+                "\"destination\": \"" + dest_folder + "\"}");
 }
 
-void DXProject::removeFolder(const string &folder, const bool recurse) const {
-  if (recurse) {
-    projectRemoveFolder(dxid_, "{\"folder\": \"" + folder + "\", \"recurse\": true}");
-  } else {
-    projectRemoveFolder(dxid_, "{\"folder\": \"" + folder + "\"}");
-  }
+void DXWorkspace::removeFolder(const string &folder, const bool recurse) const {
+  string input = recurse ?
+    "{\"folder\": \"" + folder + "\", \"recurse\": true}" :
+    "{\"folder\": \"" + folder + "\"}";
+
+  DXHTTPRequest("/" + dxid_ + "/removeFolder", input);
 }
 
 // Objects-specific
-void DXProject::removeObjects(const JSON &objects) const {
-  projectRemoveObjects(dxid_, "{\"objects\":" + objects.toString() + "}");
+void DXWorkspace::removeObjects(const JSON &objects) const {
+  DXHTTPRequest("/" + dxid_ + "/removeObjects",
+                "{\"objects\":" + objects.toString() + "}");
+}
+
+// Project methods
+
+void DXProject::update(const JSON &to_update) const {
+  projectUpdate(getID(), to_update);
+}
+
+void DXProject::destroy() const {
+  projectDestroy(getID());
 }
 
 void DXProject::invite(const string &invitee, const string &level) const {
-  projectInvite(dxid_, "{\"invitee\":\"" + invitee + "\",\"level\":\"" + level + "\"}");
+  projectInvite(getID(), "{\"invitee\":\"" + invitee + "\",\"level\":\"" + level + "\"}");
 }
 
 void DXProject::decreasePerms(const string &member, const string &level) const {
-  projectDecreasePermissions(dxid_, "{\"" + member + "\":\"" + level + "\"}");
+  projectDecreasePermissions(getID(), "{\"" + member + "\":\"" + level + "\"}");
 }
