@@ -625,15 +625,20 @@ def print_project_desc(desc):
 
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
-    print "Name\t\t" + desc["name"]
-    print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+    if "name" in desc:
+        print "Name\t\t" + desc["name"]
+    if 'description' in desc:
+        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
     print "Owner\t\t" + desc["owner"]
-    print "Protected\t" + json.dumps(desc["protected"])
-    print "Restricted\t" + json.dumps(desc["restricted"])
+    if 'protected' in desc:
+        print "Protected\t" + json.dumps(desc["protected"])
+    if 'restricted' in desc:
+        print "Restricted\t" + json.dumps(desc["restricted"])
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     print "Data usage\t" + str(desc["dataUsage"])
-    print "Tags\t\t" + json.dumps(desc["tags"])
+    if 'tags' in desc:
+        print "Tags\t\t" + json.dumps(desc["tags"])
     if "level" in desc:
         print "Access level\t" + desc["level"]
     if "folders" in desc:
