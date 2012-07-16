@@ -15,18 +15,21 @@ except ImportError:
 
 interactive = False
 
-CYAN = '\033[96m'
-BLUE = '\033[94m'
-YELLOW = '\033[93m'
-GREEN = '\033[92m'
-RED = '\033[91m'
+CYAN = '\033[36m'
+BLUE = '\033[34m'
+YELLOW = '\033[33m'
+GREEN = '\033[32m'
+RED = '\033[31m'
 BOLD = '\033[1m'
 ENDC = '\033[0m'
 
 JOB_STATES = {'failed': BOLD + RED + 'failed' + ENDC,
               'done': BOLD + GREEN + 'done' + ENDC,
               'running': GREEN + 'running' + ENDC,
-              'idle': YELLOW + 'idle' + ENDC
+              'idle': YELLOW + 'idle' + ENDC,
+              'runnable': YELLOW + 'runnable' + ENDC,
+              'waiting_on_inputs': YELLOW + 'waiting_on_inputs' + ENDC,
+              'waiting_on_outputs': YELLOW + 'waiting_on_outputs' + ENDC
               }
 
 def clean_folder_path(path):
@@ -127,16 +130,16 @@ class DXObjectCompleter():
 # first word is always a subcommand and that if the first word is a
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
-class DXCLICompleter():
-    subcommands = ['exit', 'set', 'printenv', 'login', 'logout', 'ls', 'cd', 'pwd', 'mkdir', 'rmdir', 'rm', 'file', 'gtable', 'describe', 'close', 'find', 'new', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'add_tags', 'remove_tags', 'rename', 'set_properties', 'unset_properties', 'api', 'run']
-    
-    subsubcommands = {'set': ['host', 'port', 'project'],
-                      'file': ['get', 'put'],
+class DXCLICompleter():    
+    subsubcommands = {'file': ['get', 'put'],
                       'gtable': ['get'],
                       'find': ['jobs', 'data', 'projects', 'apps'],
                       'new': ['record', 'gtable']}
 
     def __init__(self):
+        global subparsers
+        self.subcommands = map(lambda subcmd: subcmd + ' ', subparsers.choices.keys())
+
         self.dxproj = None
         self.folders = None
         self.ids = None
@@ -1112,7 +1115,25 @@ def file_get(args):
         parser.exit(1, str(detail) + '\n')
 
 def file_put(args):
-    print dxpy.upload_local_file(args.filename).get_id()
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except:
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+
+    print dxpy.upload_local_file(args.filename,
+                                 name=args.name,
+                                 tags=args.tags,
+                                 types=args.types,
+                                 hidden=hidden,
+                                 project=args.project,
+                                 properties=properties,
+                                 details=details,
+                                 folder=args.folder,
+                                 parents=args.parents).get_id()
 
 def gtable_get(args):
     # Attempt to resolve name
@@ -1532,7 +1553,7 @@ def exit_shell(args):
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
 
-parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAne' + CYAN + 'x' + ENDC + 'us Command-Line Client, API v1.0.0')
+parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAne' + CYAN + BOLD + 'x' + ENDC + 'us Command-Line Client, API v1.0.0')
 parser.add_argument('--version', action='version', version='dxclient 0.0.1')
 
 subparsers = parser.add_subparsers()
@@ -1620,10 +1641,6 @@ parser_file_get = subparsers_file.add_parser('get', help='Download a file')
 parser_file_get.add_argument('dxid', help='file ID to download')
 parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
 parser_file_get.set_defaults(func=file_get)
-
-parser_file_put = subparsers_file.add_parser('put', help='Upload a file')
-parser_file_put.add_argument('filename', help='local filename to upload')
-parser_file_put.set_defaults(func=file_put)
 
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
 subparsers_gtable = parser_gtable.add_subparsers()
@@ -1724,6 +1741,10 @@ parser_dataobject_args.add_argument('--project', help='Project (if not using the
 parser_dataobject_args.add_argument('--details', help='JSON to store as details')
 parser_dataobject_args.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
 parser_dataobject_args.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+
+parser_file_put = subparsers_file.add_parser('put', help='Upload a file', parents=[parser_dataobject_args])
+parser_file_put.add_argument('filename', help='local filename to upload')
+parser_file_put.set_defaults(func=file_put)
 
 parser_new = subparsers.add_parser('new', help='Create a new data object')
 subparsers_new = parser_new.add_subparsers()
