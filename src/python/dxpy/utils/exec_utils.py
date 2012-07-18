@@ -8,6 +8,15 @@ import dxpy
 
 ENTRY_POINT_TABLE = {}
 
+current_job, current_program, current_app = None, None, None
+if 'DX_JOB_ID' in os.environ:
+    current_job = dxpy.DXJob(os.environ['DX_JOB_ID'])
+    job_desc = current_job.describe()
+    if 'program' in job_desc:
+        current_program = dxpy.DXProgram(job_desc['program'])
+    else:
+        current_app = dxpy.DXApp(job_desc['app'])
+
 def run(function_name=None, function_input=None):
     '''
     Triggers the execution environment entry point processor.
