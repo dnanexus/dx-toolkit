@@ -8,15 +8,6 @@ import dxpy
 
 ENTRY_POINT_TABLE = {}
 
-current_job, current_program, current_app = None, None, None
-if 'DX_JOB_ID' in os.environ:
-    current_job = dxpy.DXJob(os.environ['DX_JOB_ID'])
-    job_desc = current_job.describe()
-    if 'program' in job_desc:
-        current_program = dxpy.DXProgram(job_desc['program'])
-    else:
-        current_app = dxpy.DXApp(job_desc['app'])
-
 def run(function_name=None, function_input=None):
     '''
     Triggers the execution environment entry point processor.
@@ -47,7 +38,7 @@ def run(function_name=None, function_input=None):
     changed; instead, use the environment variable *DX_JOB_INPUT*. Thus, no program code requires changing between the
     two modes.
     '''
-    if 'DX_JOB_ID' in os.environ:
+    if dxpy.JOB_ID is not None:
         logging.basicConfig()
 
         try:
@@ -57,7 +48,7 @@ def run(function_name=None, function_input=None):
 
         dx_working_dir = os.getcwd()
 
-        job = dxpy.describe(os.environ['DX_JOB_ID'])
+        job = dxpy.describe(dxpy.JOB_ID)
     else:
         if function_name is None:
             function_name = 'main'
@@ -69,13 +60,13 @@ def run(function_name=None, function_input=None):
     try:
         result = ENTRY_POINT_TABLE[job['function']](**job['input'])
     except dxpy.ProgramError as e:
-        if 'DX_JOB_ID' in os.environ:
+        if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)           
             with open("job_error.json", "w") as fh:
                 fh.write(json.dumps({"error": {"type": "ProgramError", "message": str(e)}}) + "\n")
         raise
 
-    if 'DX_JOB_ID' in os.environ:
+    if dxpy.JOB_ID is not None:
         # TODO: protect against client removing its original working directory
         os.chdir(dx_working_dir)
         with open("job_output.json", "w") as fh:

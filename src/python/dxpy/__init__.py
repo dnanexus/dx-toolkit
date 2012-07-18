@@ -238,3 +238,15 @@ else:
 from dxpy.bindings import *
 from dxpy.dxlog import *
 from dxpy.utils.exec_utils import *
+
+
+# This should be in exec_utils but fails because of circular imports
+# TODO: fix the imports
+current_job, current_program, current_app = None, None, None
+if JOB_ID is not None:
+    current_job = DXJob(JOB_ID)
+    job_desc = current_job.describe()
+    if 'program' in job_desc:
+        current_program = DXProgram(job_desc['program'])
+    else:
+        current_app = DXApp(job_desc['app'])
