@@ -26,11 +26,11 @@ def run(function_name=None, function_input=None):
     The job's *job.function* field is used to invoke the entry point function in the module from which run() has been
     called. The function name is looked up in the table of all functions decorated with *@dxpy.entry_point('name')*.
     This is the mode of operation used in the DNAnexus execution environment.
-    WARNING: the parameters *function* and *input* are disregarded in this mode of operation.
+    WARNING: The parameters *function_name* and *function_input* are disregarded in this mode of operation.
 
-    If the environment variable *DX_JOB_ID* is not set, the function name may be given in *function*; if not set, it is
-    assumed to be *main*. The function input may be given in *input*; if not set, it is set by parsing JSON from the
-    environment variable *DX_JOB_INPUT*; if that is not set, no input is given to the function.
+    If the environment variable *DX_JOB_ID* is not set, the function name may be given in *function_name*; if not set,
+    it is assumed to be *main*. The function input may be given in *function_input*; if not set, it is set by parsing
+    JSON from the environment variable *DX_JOB_INPUT*; if that is not set, no input is given to the function.
 
     The absence of *DX_JOB_ID* signals to run() that execution is happening in the debug harness. In this mode of
     operation, all calls to *dxpy.api.jobNew* (and higher level handler methods which use it) are intercepted, and run()
