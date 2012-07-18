@@ -6,9 +6,6 @@ import os, sys, json, collections
 from functools import wraps
 import dxpy
 
-print "SHIZNITZ."
-sys.exit(1)
-
 ENTRY_POINT_TABLE = {}
 
 def run(function_name=None, function_input=None):
