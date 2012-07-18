@@ -35,7 +35,7 @@ def main():
     try:
         originalContig = mappingsTable.get_details()['original_contigset']
     except:
-        raise Exception("The original reference genome must be attached as a detail")
+        raise dxpy.ProgramError("The original reference genome must be attached to mappings table")
     
     contigDetails = dxpy.DXRecord(originalContig).get_details()['contigs']
     contigNames = contigDetails['names']
