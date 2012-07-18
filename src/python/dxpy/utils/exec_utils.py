@@ -72,9 +72,7 @@ def run(function_name=None, function_input=None):
         with open("job_output.json", "w") as fh:
             fh.write(json.dumps(result) + "\n")
     else:
-        print "Init result:", result
         result = resolve_job_refs_in_test(result)
-        print "Proc result:", result
 
     return result
 
