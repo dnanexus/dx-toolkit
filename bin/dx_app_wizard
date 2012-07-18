@@ -1,0 +1,259 @@
+#!/usr/bin/env python
+
+import sys, os
+import textwrap
+import json
+
+API_VERSION = '1.0.0'
+
+CYAN = '\033[36m'
+BLUE = '\033[34m'
+YELLOW = '\033[33m'
+GREEN = '\033[32m'
+RED = '\033[31m'
+BOLD = '\033[1m'
+ENDC = '\033[0m'
+
+USING_COMPLETER = False
+
+class Completer():
+    def __init__(self, choices):
+        self.matches = None
+        self.choices = choices
+
+    def __call__(self, text, state):
+        if state == 0:
+            # TODO: Get matches
+            self.matches = filter(lambda choice: choice.startswith(text),
+                                  self.choices)
+
+        if self.matches is not None and state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
+
+try:
+    import readline
+    import rlcompleter
+    readline.parse_and_bind("tab: complete")
+    readline.set_completer_delims("")
+    USING_COMPLETER = True
+except ImportError:
+    print 'NOTE: readline module not available.  Install for tab-completion.'
+
+def use_completer(completer=None):
+    if USING_COMPLETER:
+        readline.set_completer(completer)
+
+# Expect default to be a default string value
+# Expect choices to be a list of strings
+def prompt_for_var(prompt_str, default=None, choices=None):
+    prompt = prompt_str
+    if default is not None:
+        prompt += ' [' + default + ']: '
+    else:
+        prompt += ': '
+    while True:
+        try: 
+            value = raw_input(prompt)
+        except KeyboardInterrupt:
+            print ''
+            continue
+        except EOFError:
+            print ''
+            exit(1)
+        if value != '':
+            if choices is not None and value not in choices:
+                print 'Error: unrecognized response, expected one of ' + json.dumps(choices)
+            else:
+                return value
+        elif default is not None:
+            return default
+
+def prompt_for_yn(prompt_str, default=None):
+    if default == True:
+        prompt = prompt_str + ' [Y/n]: '
+    elif default == False:
+        prompt = prompt_str + ' [y/N]: '
+    else:
+        prompt = prompt_str + ' [y/n]: '
+
+    while True:
+        try:
+            value = raw_input(prompt)
+        except KeyboardInterrupt:
+            print ''
+            continue
+        except EOFError:
+            print ''
+            exit(1)
+        if value != '':
+            if value.lower()[0] == 'y':
+                return True
+            elif value.lower()[0] == 'n':
+                return False
+            else:
+                print 'Error: unrecognized response'
+        elif default is not None:
+            return default
+
+print 'DNAne' + CYAN + BOLD + 'x' + ENDC + 'us App Wizard, API v' + API_VERSION
+print ''
+
+# TODO: Maybe detect if dxprogram.json and/or dxapp.json are present
+# before overwriting them.  And possibly use them for default values.
+
+print BOLD + 'Basic Metadata' + ENDC
+print ''
+print 'You will now be prompted for basic metadata fields that you can use to describe your program/app.  Optional fields are denoted by options with square brackets.  At the end of this wizard, the files necessary for building your program or app will be generated from the answers you provide.'
+print ''
+
+name = prompt_for_var('Program/App Name')
+title = prompt_for_var('Title', '')
+summary = prompt_for_var('Summary', '')
+description = prompt_for_var('Description', '')
+print 'Setting API version to ' + API_VERSION
+version = prompt_for_var('Version', '0.0.1')
+
+interpreter_choices = ['python2.7']
+use_completer(Completer(interpreter_choices))
+interpreter = prompt_for_var('Interpreter', 'python2.7', interpreter_choices)
+use_completer()
+
+program_json = {
+    "name": name,
+    "dxapi": API_VERSION,
+    "runSpec": {"interpreter": interpreter}
+}
+
+if title != '':
+    program_json["title"] = title
+if summary != '':
+    program_json['summary'] = summary
+if description != '':
+    program_json['description'] = description
+
+app_json = {
+    "version": version,
+}
+
+class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
+                             'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
+                             'record', 'file', 'gtable', 'table', 'program',
+                             'array:record', 'array:file', 'array:gtable', 'array:table', 'array:program'])
+
+print ''
+print BOLD + 'Input Specification' + ENDC
+print ''
+print textwrap.fill('Specifying the inputs to your program is optional but is required if you would like to publish it as an app.')
+print ''
+
+input_spec = prompt_for_yn('Specify inputs', False)
+if input_spec:
+    program_json['inputSpec'] = []
+    print ''
+    print textwrap.fill('You will now be prompted for each input parameter to your program.  Each parameter should have a unique name that is allowed as a variable name in your programming language of choice.')
+
+    while True:
+        add_input = prompt_for_yn('Add another input parameter')
+        if not add_input:
+            break
+        input_name = prompt_for_var('  Variable name')
+        input_label = prompt_for_var('  Label', '')
+
+        use_completer(class_completer)
+        input_class = prompt_for_var('  Class')
+        use_completer()
+
+        optional = prompt_for_yn('  Optional parameter')
+
+        default_val = None
+        if optional and input_class in ['int', 'float', 'string', 'boolean']:
+            default_val = prompt_for_yn('  Provide default value')
+            if default_val:
+                if input_class == 'boolean':
+                    default_val = prompt_for_var('    Default value', None, ['true', 'false'])
+                else:
+                    default_val = prompt_for_var('    Default value')
+
+                if input_class == 'boolean':
+                    default_val = (default_val == 'true')
+                elif input_class == 'int':
+                    default_val = int(default_val)
+                elif input_class == 'float':
+                    default_val = float(default_val)
+            else:
+                default_val = None
+
+        # Fill in the input parameter's JSON
+        parameter_json = {
+            "name": input_name,
+            "class": input_class,
+            "optional": optional
+            }
+        if input_label != '':
+            parameter_json['label'] = input_label
+        if default_val is not None:
+            parameter_json['default'] = default_val
+        program_json['inputSpec'].append(parameter_json)
+
+print ''
+print BOLD + 'Output Specification' + ENDC
+print ''
+print textwrap.fill('Specifying the outputs to your program is optional but is required if you would like to publish it as an app.')
+print ''
+
+output_spec = prompt_for_yn('Specify outputs', False)
+if output_spec:
+    # TODO: Prompt for outputs and store in program_json
+    program_json['outputSpec'] = []
+    print ''
+    print textwrap.fill('You will now be prompted for each output parameter of your program.')
+
+    while True:
+        add_output = prompt_for_yn('Add another output parameter')
+        if not add_output:
+            break
+        output_name = prompt_for_var('  Variable name')
+        output_label = prompt_for_var('  Label (optional)', '')
+
+        use_completer(class_completer)
+        output_class = prompt_for_var('  Class')
+        use_completer()
+
+        # Fill in the input parameter's JSON
+        parameter_json = {
+            "name": input_name,
+            "class": input_class
+            }
+        if input_label != '':
+            parameter_json['label'] = input_label
+        program_json['outputSpec'].append(parameter_json)
+
+# TODO: Generate files
+# json.dumps(program_json, indent=4)
+
+with open('dxprogram.json', 'w') as prog_file:
+    prog_file.write(json.dumps(program_json, indent=4) + '\n')
+
+print ''
+print textwrap.fill('Your program specification has been output to the dxprogram.json file.  Note that not all options for specifying inputs or special access levels were presented here.  To add such options, consult the API documentation for additional details and edit the dxprogram.json file manually.')
+
+print ''
+if input_spec and output_spec:
+    with open('dxapp.json', 'w') as app_file:
+        app_file.write(json.dumps(app_json, indent=4) + '\n')
+
+    print textwrap.fill('By specifying both inputs and outputs for your program, you have made it eligible to be published as an app.  The necessary file dxapp.json has been provided for you.  For additional options, please consult additional documentation.')
+else:
+    print textwrap.fill('The necessary file for publishing your program as an app has not been provided because you did not provide both input and output specifications.')
+
+try:
+    os.mkdir('src')
+except:
+    pass
+
+try:
+    os.mkdir('resources')
+except:
+    pass
