@@ -4,6 +4,8 @@ TODO: Write something here.
 
 from dxpy.bindings import *
 
+_test_harness_jobs = {}
+
 #########
 # DXJob #
 #########
@@ -27,6 +29,8 @@ def new_dxjob(fn_input, fn_name, **kwargs):
 
     .. note:: This method is intended for calls made from within already-executing jobs or apps.  If it is called from outside of an Execution Environment, an exception will be thrown.
 
+    .. note:: If the environment variable *DX_JOB_ID* is not set, this method assmes that it is running within the debug harness, executes the job in place, and provides a debug job handler object which does not have a corresponding remote API job object.
+
     '''
     dxjob = DXJob()
     dxjob.new(fn_input, fn_name, **kwargs)
@@ -38,6 +42,7 @@ class DXJob(object):
     _class = "job"
 
     def __init__(self, dxid=None):
+        self._test_harness_result = None
         if dxid is not None:
             self.set_id(dxid)
 
@@ -55,12 +60,17 @@ class DXJob(object):
         .. note:: This method is intended for calls made from within already-executing jobs or apps.  If it is called from outside of an Execution Environment, an exception will be thrown.
 
         '''
-
-        req_input = {}
-        req_input["input"] = fn_input
-        req_input["function"] = fn_name
-        resp = dxpy.api.jobNew(req_input, **kwargs)
-        self.set_id(resp["id"])
+        if 'DX_JOB_ID' in os.environ:
+            req_input = {}
+            req_input["input"] = fn_input
+            req_input["function"] = fn_name
+            resp = dxpy.api.jobNew(req_input, **kwargs)
+            self.set_id(resp["id"])
+        else:
+            result = dxpy.run(function_name=fn_name, function_input=fn_input)
+            self.set_id("job-" + str(len(_test_harness_jobs) + 1))
+            _test_harness_jobs[self.get_id()] = self
+            self._test_harness_result = result
 
     def set_id(self, dxid):
         '''

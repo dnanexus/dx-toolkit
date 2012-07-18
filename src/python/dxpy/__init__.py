@@ -237,3 +237,4 @@ else:
 
 from dxpy.bindings import *
 from dxpy.dxlog import *
+from dxpy.utils.exec_utils import *

@@ -2,9 +2,12 @@
 Utilities used in the DNAnexus execution environment and test harness.
 '''
 
-import os, sys
+import os, sys, json, collections
 from functools import wraps
 import dxpy
+
+print "SHIZNITZ."
+sys.exit(1)
 
 ENTRY_POINT_TABLE = {}
 
@@ -38,8 +41,16 @@ def run(function_name=None, function_input=None):
     changed; instead, use the environment variable *DX_JOB_INPUT*. Thus, no program code requires changing between the
     two modes.
     '''
-    job = None
     if 'DX_JOB_ID' in os.environ:
+        logging.basicConfig()
+
+        try:
+            logging.getLogger().addHandler(dxpy.DXLogHandler())
+        except dxpy.exceptions.DXError:
+            print "TODO: FIXME: the EE client should die if logging is not available"
+
+        dx_working_dir = os.getcwd()
+
         job = dxpy.describe(os.environ['DX_JOB_ID'])
     else:
         if function_name is None:
@@ -48,7 +59,39 @@ def run(function_name=None, function_input=None):
             function_input = json.loads(os.environ.get('DX_JOB_INPUT', '{}'))
         job = {'function': function_name, 'input': function_input}
     print "Invoking", job.get('function'), "with", job.get('input')
-    ENTRY_POINT_TABLE[job['function']](**job['input'])
+
+    try:
+        result = ENTRY_POINT_TABLE[job['function']](**job['input'])
+    except dxpy.ProgramError as e:
+        if 'DX_JOB_ID' in os.environ:
+            os.chdir(dx_working_dir)           
+            with open("job_error.json", "w") as fh:
+                fh.write(json.dumps({"error": {"type": "ProgramError", "message": str(e)}}) + "\n")
+        raise
+
+    if 'DX_JOB_ID' in os.environ:
+        # TODO: protect against client removing its original working directory
+        os.chdir(dx_working_dir)
+        with open("job_output.json", "w") as fh:
+            fh.write(json.dumps(result) + "\n")
+    else:
+        print "Init result:", result
+        result = resolve_job_refs_in_test(result)
+        print "Proc result:", result
+
+    return result
+
+def resolve_job_refs_in_test(x):
+    if isinstance(x, collections.Mapping):
+        if "job" in x and "field" in x:
+            job_result = dxpy.bindings.dxjob._test_harness_jobs[x["job"]]._test_harness_result
+            return job_result[x["field"]]
+        for key, value in x.iteritems():
+            x[key] = resolve_job_refs_in_test(value)
+    elif isinstance(x, list):
+        for i in range(len(x)):
+            x[i] = resolve_job_refs_in_test(x[i])
+    return x
 
 def entry_point(entry_point_name):
     '''
