@@ -31,6 +31,12 @@ bool DXLog::logger::Log(dx::JSON &data, string &eMsg, const string &socketPath) 
 // need to be implemented once those values are available
 bool DXLog::AppLog::initEnv(const dx::JSON &conf, string &errMsg) {
   try {
+    if (conf.type() != dx::JSON_OBJECT) throwString("App log config, " + conf.toString() + ", is not a JSON object");
+    if (! conf.has("socketPath")) throwString("Missing socketPath in App log config");
+    if (conf["socketPath"].type() != dx::JSON_ARRAY) throwString("socketPath, " + conf["socketPath"].toString() + ", is not a JSON array of strings");
+    if (conf["socketPath"].size() < 2) throwString("Size of socketPath is smaller than 2");
+    if ((conf["socketPath"][1].type() != dx::JSON_STRING) || (conf["socketPath"][0].type() != dx::JSON_STRING)) throwString("socketPath, " + conf["socketPath"].toString() + ", is not a JSON array of strings");
+
     socketPath[0] = conf["socketPath"][0].get<string>();
     socketPath[1] = conf["socketPath"][1].get<string>();
 
@@ -38,9 +44,6 @@ bool DXLog::AppLog::initEnv(const dx::JSON &conf, string &errMsg) {
     return true;
   } catch (const string &msg) {
     errMsg = msg;
-    return false;
-  } catch (std::exception &e) {
-    errMsg = e.what();
     return false;
   }
 }
@@ -58,11 +61,11 @@ bool DXLog::AppLog::log(const string &msg, int level) {
       input["socketPath"] = dx::JSON(dx::JSON_ARRAY);
       input["socketPath"].push_back(defaultPrioritySocket);
       input["socketPath"].push_back(defaultBulkSocket);
-      if (! initEnv(input, errMsg)) {
-        cerr << errMsg << endl;
-        return false;
-      }
+      if (! initEnv(input, errMsg)) throwString(errMsg);
     }
+
+    if ((level < 0) || (level > 7)) throwString("Invalid log level: " + boost::lexical_cast<string>(level));
+
     message["source"] = "DX_APP";
     message["msg"] = msg;
     message["level"] = level;
@@ -70,27 +73,34 @@ bool DXLog::AppLog::log(const string &msg, int level) {
 
     int index = socketIndex(level);
 
-    if (! boost::filesystem::exists(socketPath[index])) {
-      cerr<< "Socket " + socketPath[index] + " does not exist!" << endl;
-      return false;
-    }
+    if (! boost::filesystem::exists(socketPath[index])) throwString("Socket " + socketPath[index] + " does not exist");
 
-    if (! SendMessage2UnixDGRAMSocket(socketPath[index], message.toString(), errMsg)) {
-      cerr << errMsg << endl;
-      return false;
-    }
+    if (! SendMessage2UnixDGRAMSocket(socketPath[index], message.toString(), errMsg)) throwString(errMsg);
 
     return true;
   } catch (const string &eMsg) {
-    cerr << eMsg << endl;
+    cerr << "Log error, " + eMsg + ", level: " << level << ", msg: " + msg << endl;
     return false;
   } catch (std::exception &e) {
-    cerr << e.what() << endl;
+    cerr << "Log error, " << e.what() << ", level: " << level << ", msg: " + msg << endl;
     return false;
   }
 }
 
 bool DXLog::AppLog::done(string &errMsg) {
-  if (socketPath[0].compare(socketPath[1]) == 0) return SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg);
-  return (SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg) && SendMessage2UnixDGRAMSocket(socketPath[1], "Done", errMsg));
+  bool ret_val = SendMessage2UnixDGRAMSocket(socketPath[0], "Done", errMsg);
+  if (! ret_val) errMsg = socketPath[0] + ": " + errMsg;
+  if (socketPath[0].compare(socketPath[1]) == 0) return ret_val;
+
+  string msg2;
+  if (! SendMessage2UnixDGRAMSocket(socketPath[1], "Done", msg2)) {
+    if (! ret_val) {
+      errMsg += ", " + socketPath[1] + ": " + msg2;
+    } else {
+      errMsg = socketPath[1] + ": " + msg2;
+      ret_val = false;
+    }
+  }
+
+  return ret_val;
 }

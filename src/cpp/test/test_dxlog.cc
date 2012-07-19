@@ -41,9 +41,7 @@ TEST(UNIXDGRAMTest, Integration) {
 
     #pragma omp section
     {
-      while(! test.isActive()) {
-        usleep(100);
-      }
+      while(! test.isActive()) { usleep(100); }
       ret_val[1] = SendMessage2UnixDGRAMSocket(socketPath, "msg1", errMsg2);
       ret_val[2] = SendMessage2UnixDGRAMSocket(socketPath, "msg2", errMsg2);
       ret_val[3] = SendMessage2UnixDGRAMSocket(socketPath, "msg3", errMsg2);
@@ -79,9 +77,7 @@ TEST(UNIXDGRAMTest, Address_Used) {
 
     #pragma omp section
     {
-      while (! test1.isActive()) {
-        usleep(100);
-      }
+      while (! test1.isActive()) { usleep(100); }
       ret_val[1] = test2.run(socketPath, errMsg2);
       ret_val[2] = SendMessage2UnixDGRAMSocket(socketPath, "Done", errMsg2);
     }
@@ -222,9 +218,7 @@ TEST(DXLOGTest, Rsyslog_Byte_Seq) {
 
     #pragma omp section
     {
-      while(! test.isActive()) {
-        usleep(100);
-      }
+      while(! test.isActive()) { usleep(100); }
 
       string msg, errMsg;
       for (int i = 0; i < n; i++) {
@@ -309,9 +303,7 @@ TEST(DXLOGTest, logger) {
 
     #pragma omp section
     {
-      while(! test.isActive()) {
-        usleep(100);
-      }
+      while(! test.isActive()) { usleep(100); }
 
       string msg, errMsg;
       for (int i = 0; i < n; i++) {
@@ -330,6 +322,253 @@ TEST(DXLOGTest, logger) {
   ASSERT_EQ(test.msgs[n], "Done");
   
   unlink(socketPath.c_str());
+}
+
+TEST(AppLogTest, AppLog_Config) {
+  string errMsg;
+
+  dx::JSON conf(dx::JSON_ARRAY);
+  ASSERT_FALSE(AppLog::initEnv(conf, errMsg));
+  ASSERT_EQ(errMsg, "App log config, " + conf.toString() + ", is not a JSON object");
+
+  conf = dx::JSON(dx::JSON_OBJECT);
+  ASSERT_FALSE(AppLog::initEnv(conf, errMsg));
+  ASSERT_EQ(errMsg, "Missing socketPath in App log config");
+
+  conf["socketPath"] = dx::JSON(dx::JSON_OBJECT);
+  ASSERT_FALSE(AppLog::initEnv(conf, errMsg));
+  ASSERT_EQ(errMsg, "socketPath, " + conf["socketPath"].toString() + ", is not a JSON array of strings");
+
+  conf["socketPath"] = dx::JSON(dx::JSON_ARRAY);
+  ASSERT_FALSE(AppLog::initEnv(conf, errMsg));
+  ASSERT_EQ(errMsg, "Size of socketPath is smaller than 2");
+
+  conf["socketPath"].push_back("log1");
+  conf["socketPath"].push_back(1);
+  ASSERT_FALSE(AppLog::initEnv(conf, errMsg));
+  ASSERT_EQ(errMsg, "socketPath, " + conf["socketPath"].toString() + ", is not a JSON array of strings");
+
+  conf["socketPath"][1] = "log1";
+  ASSERT_TRUE(AppLog::initEnv(conf, errMsg));
+
+  conf["socketPath"].push_back(1);
+  ASSERT_TRUE(AppLog::initEnv(conf, errMsg));
+}
+
+bool setSocketPath() {
+  string errMsg;
+  dx::JSON conf(dx::JSON_OBJECT);
+  conf["socketPath"] = dx::JSON(dx::JSON_ARRAY);
+  conf["socketPath"].push_back(socketPath + "1");
+  conf["socketPath"].push_back(socketPath + "2");
+
+  return AppLog::initEnv(conf, errMsg);
+}
+
+void verifyAppLogData(const dx::JSON &data, const string &msg, int level) {
+  ASSERT_EQ(data["source"].get<string>(), "DX_APP");
+  ASSERT_EQ(int(data["level"]), level);
+  ASSERT_EQ(data["msg"].get<string>(), msg);
+  ASSERT_EQ(data["timestamp"].type(), dx::JSON_INTEGER);
+}
+
+void writeLog(const string &msg, const vector<bool> &desired) {
+  for(int i=0; i<10; i++)
+    ASSERT_EQ(desired[i], AppLog::log(msg, i-1));
+}
+
+TEST(AppLogTest, SOCKET_NOT_EXIST) {
+  ASSERT_TRUE(setSocketPath());
+  for (int i = 0; i < 10; i++)
+    ASSERT_FALSE(AppLog::log("OK", i-1));
+}
+
+TEST(AppLogTest, High_Priority_Socket_Only) {
+  unlink((socketPath + "1").c_str());
+  ASSERT_TRUE(setSocketPath());
+  TestDGRAM test;
+  string errMsg, errMsg2;
+
+  vector<bool> desired;
+  for (int i = 0; i < 10; i ++)
+    desired.push_back(false);
+  desired[1] = desired[2] = desired[3] = true;
+
+  omp_set_num_threads(2);
+  #pragma omp parallel sections
+  {
+    test.run(socketPath + "1", errMsg);
+    
+    #pragma omp section
+    {
+      while(! test.isActive()) { usleep(100); }
+     
+      writeLog("OK", desired);
+      SendMessage2UnixDGRAMSocket(socketPath + "1", "Done", errMsg2);
+    }
+  }
+  
+  ASSERT_FALSE(test.isActive());
+  ASSERT_EQ(test.msgs.size(), 4);
+  for (int i = 0; i < 3; i++)
+    verifyAppLogData(dx::JSON::parse(test.msgs[i]), "OK", i);
+
+  ASSERT_EQ(test.msgs[3], "Done");
+
+  unlink((socketPath + "1").c_str());
+}
+
+TEST(AppLogTest, Low_Priority_Socket_Only) {
+  unlink((socketPath + "2").c_str());
+  ASSERT_TRUE(setSocketPath());
+  TestDGRAM test;
+  string errMsg, errMsg2;
+
+  vector<bool> desired;
+  for (int i = 0; i < 10; i ++)
+    desired.push_back(true);
+  desired[0] = desired[1] = desired[2] = desired[3] = desired[9] = false;
+
+  omp_set_num_threads(2);
+  #pragma omp parallel sections
+  {
+    test.run(socketPath + "2", errMsg);
+    
+    #pragma omp section
+    {
+      while(! test.isActive()) { usleep(100); }
+     
+      writeLog("OK", desired);
+      SendMessage2UnixDGRAMSocket(socketPath + "2", "Done", errMsg2);
+    }
+  }
+  
+  ASSERT_FALSE(test.isActive());
+  ASSERT_EQ(test.msgs.size(), 6);
+  for (int i = 3; i < 8 ; i++)
+    verifyAppLogData(dx::JSON::parse(test.msgs[i-3]), "OK", i);
+
+  ASSERT_EQ(test.msgs[5], "Done");
+
+  unlink((socketPath + "2").c_str());
+}
+
+TEST(AppLogTest, Write_Log) {
+  unlink((socketPath + "1").c_str());
+  unlink((socketPath + "2").c_str());
+  ASSERT_TRUE(setSocketPath());
+  TestDGRAM test1, test2;
+  string errMsg, errMsg2, errMsg3, errMsg4;
+
+  vector<bool> desired;
+  for (int i = 0; i < 10; i ++)
+    desired.push_back(true);
+  desired[0] = desired[9] = false;
+
+  omp_set_num_threads(3);
+  #pragma omp parallel sections
+  {
+    test1.run(socketPath + "1", errMsg);
+    
+    #pragma omp section
+    {
+      test2.run(socketPath + "2", errMsg2);
+    }
+    
+    #pragma omp section
+    {
+      while(! test1.isActive()) { usleep(100); }
+      while (! test2.isActive()) { usleep(100); }
+     
+      writeLog("OK", desired);
+      SendMessage2UnixDGRAMSocket(socketPath + "1", "Done", errMsg3);
+      SendMessage2UnixDGRAMSocket(socketPath + "2", "Done", errMsg4);
+    }
+  }
+  
+  ASSERT_FALSE(test1.isActive());
+  ASSERT_EQ(test1.msgs.size(), 4);
+  for (int i = 0; i < 3 ; i++)
+    verifyAppLogData(dx::JSON::parse(test1.msgs[i]), "OK", i);
+  ASSERT_EQ(test1.msgs[3], "Done");
+
+  ASSERT_FALSE(test2.isActive());
+  ASSERT_EQ(test2.msgs.size(), 6);
+  for (int i = 0; i < 5 ; i++)
+    verifyAppLogData(dx::JSON::parse(test2.msgs[i]), "OK", i+3);
+  ASSERT_EQ(test2.msgs[5], "Done");
+
+  unlink((socketPath + "2").c_str());
+  unlink((socketPath + "1").c_str());
+}
+
+TEST(AppLogTest, AppLog_Done) {
+  unlink((socketPath + "1").c_str());
+  unlink((socketPath + "2").c_str());
+  ASSERT_TRUE(setSocketPath());
+  TestDGRAM test1, test2;
+  string errMsg, errMsg2, errMsg3, errMsg4;
+
+  ASSERT_FALSE(AppLog::done(errMsg));
+  ASSERT_EQ(errMsg, socketPath + "1: Error when sending log message: No such file or directory, " + socketPath + "2: Error when sending log message: No such file or directory");
+
+  omp_set_num_threads(3);
+  bool ret_val;
+  #pragma omp parallel sections
+  {
+    test1.run(socketPath + "1", errMsg);
+    
+    #pragma omp section
+    {
+      while(! test1.isActive()) { usleep(100); }
+      ret_val = AppLog::done(errMsg2);
+    }
+  }
+  ASSERT_FALSE(ret_val);
+  ASSERT_EQ(errMsg2, socketPath + "2: Error when sending log message: No such file or directory");
+
+  ASSERT_FALSE(test1.isActive());
+  ASSERT_FALSE(AppLog::done(errMsg));
+  ASSERT_EQ(errMsg, socketPath + "1: Error when sending log message: No such file or directory, " + socketPath + "2: Error when sending log message: No such file or directory");
+
+  #pragma omp parallel sections
+  {
+    test2.run(socketPath + "2", errMsg);
+    
+    #pragma omp section
+    {
+      while(! test2.isActive()) { usleep(100); }
+      ret_val = AppLog::done(errMsg2);
+    }
+  }
+  ASSERT_FALSE(ret_val);
+  ASSERT_EQ(errMsg2, socketPath + "1: Error when sending log message: No such file or directory");
+  ASSERT_FALSE(test2.isActive());
+  ASSERT_FALSE(AppLog::done(errMsg));
+  ASSERT_EQ(errMsg, socketPath + "1: Error when sending log message: No such file or directory, " + socketPath + "2: Error when sending log message: No such file or directory");
+
+  #pragma omp parallel sections
+  {
+    test1.run(socketPath + "1", errMsg);
+    
+    #pragma omp section
+    {
+      test2.run(socketPath + "2", errMsg);
+    }
+    
+    #pragma omp section
+    {
+      while(! test1.isActive()) { usleep(100); }
+      while(! test2.isActive()) { usleep(100); }
+
+      ret_val = AppLog::done(errMsg2);
+    }
+  }
+  ASSERT_TRUE(ret_val);
+  ASSERT_FALSE(test1.isActive());
+  ASSERT_FALSE(test2.isActive());
+  ASSERT_FALSE(AppLog::done(errMsg));
+  ASSERT_EQ(errMsg, socketPath + "1: Error when sending log message: No such file or directory, " + socketPath + "2: Error when sending log message: No such file or directory");
 }
 
 int main(int argc, char **argv) {
