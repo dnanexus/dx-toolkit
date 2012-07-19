@@ -14,6 +14,7 @@ namespace DXLog {
     protected:
       int bufSize;
       char *buffer;
+      bool active;
 
       void setBufSize(int bufSize_);
       virtual bool processMsg(){ return true; };
@@ -26,6 +27,7 @@ namespace DXLog {
 	*  It keeps on reading msgs until processMsg() returns true;
 	*/
       bool run(const string &socketPath, string &errMsg);
+      bool isActive() { return active; }
   };
 };
 

@@ -9,21 +9,17 @@ using boost::gregorian::date;
 using boost::posix_time::ptime;
 using boost::posix_time::microsec_clock;
 
-void DXLog::throwString(const string &msg) {
-  throw(msg);
+string DXLog::myPath() {
+  char buff[10000];
+  size_t len = readlink("/proc/self/exe", buff, 9999);
+  buff[len] = '\0';
+  string ret_val = string(buff);
+  int k = ret_val.find_last_of('/');
+  return ret_val.substr(0, k);
 }
 
-string DXLog::levelString(int level) {
-  switch(level) {
-    case 0: return "EMERG";
-    case 1: return "ALERT";
-    case 2: return "CRIT";
-    case 3: return "ERR";
-    case 4: return "WARNING";
-    case 5: return "NOTICE";
-    case 6: return "INFO";
-    default : return "DEBUG";
-  }
+void DXLog::throwString(const string &msg) {
+  throw(msg);
 }
 
 string DXLog::getHostname() {
@@ -32,139 +28,70 @@ string DXLog::getHostname() {
   return string(buf);
 }
 
-string DXLog::timeISOString(long long int utc) {
-  time_t t = utc/1000;
-  struct tm *ptm = gmtime( &t);
-  char timeString[80];
-  strftime(timeString, 80, "%Y-%m-%dT%H:%M:%SZ", ptm);
-  return string(timeString);
-}
-
 long long int DXLog::utcMS(){
   static ptime const epoch(date(1970, 1, 1));
   return (microsec_clock::universal_time() - epoch).total_milliseconds();
 }
 
 dx::JSON DXLog::defaultConf() { 
-  return readJSON("/etc/dxlog.conf");
+  return readJSON(myPath() + "/../config/dxlog.conf");
 }
 
 dx::JSON DXLog::defaultSchema() {
-  dx::JSON dConf = defaultConf();
-  return readJSON(dConf["logserver"]["configDir"].get<string>() + "/schema.js");
+  return readJSON(myPath() + "/../config/dbSchema.js");
 }
 
 void DXLog::ValidateLogLevel(const dx::JSON &data) {
-  if (data.type() != dx::JSON_INTEGER) throwString("Log level is not an integer");
+  if (data.type() != dx::JSON_INTEGER) throwString("Log level, " + data.toString() + ", is not an integer");
 
   int level = int(data);
-  if ((level < 0) || (level > 7)) throwString("Invalid log level " + boost::lexical_cast<string>(level));
+  if ((level < 0) || (level > 7)) throwString("Invalid log level: " + boost::lexical_cast<string>(level));
 }
 
 void DXLog::ValidateLogFacility(const dx::JSON &data) {
-  if (data.type() != dx::JSON_INTEGER) throwString("Log facility is not an integer");
+  if (data.type() != dx::JSON_INTEGER) throwString("Log facility, " + data.toString() + ", is not an integer");
  
   int facility = int(data);
   int k = facility >> 3;
-  if (((facility % 8) != 0) || (k < 0) || (k > 23)) throwString("Invalid log facility " + boost::lexical_cast<string>(facility));
+  if (((facility % 8) != 0) || (k < 0) || (k > 23)) throwString("Invalid log facility: " + boost::lexical_cast<string>(facility));
 }
 
-void DXLog::ValidateLogRequired(const dx::JSON &required) {
-  if (required.type() != dx::JSON_ARRAY) throwString("'required' is not an array of strings");
-
-  for (int i = 0; i < required.size(); i++) {
-    if (required[i].type() != dx::JSON_STRING) throwString("'required' is not an array of strings");
-  }
-}
-
-void DXLog::ValidateLogMsgSize(const dx::JSON &msgSize) {
-  if (msgSize.type() != dx::JSON_INTEGER) throwString("'maxMsgSize' is not an integer");
-
-  int s = int(msgSize);
-  if ((s<100) || (s> 100000)) throwString("Invalid max message size " + boost::lexical_cast<string>(s));
-}
-
-void DXLog::ValidateLogText(const dx::JSON &text) {
-  if (text.type() != dx::JSON_OBJECT) throwString("'text' is not a hash ");
-
-  if (! text.has("format")) throwString("missing 'format' in 'text'");
-  if (text["format"].type() != dx::JSON_STRING) throwString("'format' in 'text' is not a string");
-
-  if (! text.has("tag")) throwString("missing 'tag' in 'text'");
-  if (text["tag"].type() != dx::JSON_STRING) throwString("'tag' in 'text' is not a string");
-
-  if (text.has("maxMsgSize")) ValidateLogMsgSize(text["maxMsgSize"]);
-}
-
-void DXLog::ValidateLogMongoDBColumns(const dx::JSON &columns) {
-  if (columns.type() != dx::JSON_OBJECT) throwString("'columns' in 'mongodb' is not a hash");
-
-  for (dx::JSON::const_object_iterator it = columns.object_begin(); it != columns.object_end(); it++) {
-    if (it->second.type() != dx::JSON_STRING) throwString("column type of mongodb is not a string");
-
-    string str = it->second.get<string>();
-    if (str.compare("string") == 0) continue;
-    if (str.compare("int") == 0) continue;
-    if (str.compare("int64") == 0) continue;
-    if (str.compare("boolean") == 0) continue;
-    if (str.compare("double") == 0) continue;
-
-    throwString("invalid column type " + str + " of mongodb");
-  }
-}
-
-void DXLog::ValidateLogMongoDBIndex(const dx::JSON &index, const dx::JSON &columns) {
-  if (index.type() != dx::JSON_OBJECT) throwString("'indexes' in 'mongodb' is not an array of hash");
+void DXLog::ValidateDBSchema(const dx::JSON &schema) {
+  if (schema.type() != dx::JSON_OBJECT) throwString("Mongodb schema, " + schema.toString() + ", is not a JSON object");
   
-  for (dx::JSON::const_object_iterator it = index.object_begin(); it != index.object_end(); it++) {
-    if (! columns.has(it->first)) throwString("column " + it-> first + " in 'indexes' does not match those in 'columns'");
-    if (it->second.type() != dx::JSON_INTEGER) throwString("index value of " + it->first + " is neither 1 nor -1");
-    int k = int(it->second);
-    if ((k != 1) && (k!= -1)) throwString("index value of " + it->first + " is neither 1 nor -1");
-  }
-}
-
-void DXLog::ValidateLogMongoDBIndexes(const dx::JSON &indexes, const dx::JSON &columns) {
-  if (indexes.type() != dx::JSON_ARRAY) throwString("'indexes' in 'mongodb' is not an array of hash");
-
-  for (int i = 0; i < indexes.size(); i++)
-    ValidateLogMongoDBIndex(indexes[i], columns);
-}
-
-
-void DXLog::ValidateLogMongoDB(const dx::JSON &mongodb) {
-  if (mongodb.type() != dx::JSON_OBJECT) throwString("'mongodb' is not a hash");
-
-  if (mongodb.has("maxMsgSize")) ValidateLogMsgSize(mongodb["maxMsgSize"]);
-
-  if (! mongodb.has("columns")) throwString("missing 'columns' in 'mongodb'");
-  ValidateLogMongoDBColumns(mongodb["columns"]);
-  
-  if (mongodb.has("indexes")) ValidateLogMongoDBIndexes(mongodb["indexes"], mongodb["columns"]);
-}
-
-void DXLog::ValidateLogSchemaSingle(const dx::JSON &schema) {
-  if (schema.type() != dx::JSON_OBJECT) throwString("Log schema is not a hash");
-
-  if (schema.has("facility")) ValidateLogFacility(schema["facility"]);
-  if (schema.has("required")) ValidateLogRequired(schema["required"]);
-  
-  if (! schema.has("text")) throwString("missing schema of 'text'");
-  ValidateLogText(schema["text"]);
-  
-  if (! schema.has("mongodb")) throwString("missing schema of 'mongodb'");
-  ValidateLogMongoDB(schema["mongodb"]);
-}
-
-void DXLog::ValidateLogSchema(const dx::JSON &schema) {
-  if (schema.type() != dx::JSON_OBJECT) throwString("Log schema is not a hash");
-
   for (dx::JSON::const_object_iterator it = schema.object_begin(); it != schema.object_end(); it++) {
-    try {
-      ValidateLogSchemaSingle(it->second);
-    } catch (const string &errMsg) {
-      throwString(it->first + " " + errMsg);
-    }
+    if (it->second.type() != dx::JSON_OBJECT) throwString(it->first + " mongodb schema, " + it->second.toString() + ", is not a JSON object");
+    if (! it->second.has("collection")) throwString(it->first + ": missing collection");
+    if (it->second["collection"].type() != dx::JSON_STRING) throwString(it->first + ": collection, " + it->second["collection"].toString() + ", is not a string");
+  }
+}
+
+bool DXLog::ValidateLogData(dx::JSON &message, string &errMsg) {
+  // validate message
+  try {
+    if (message.type() != dx::JSON_OBJECT) throwString("Log input, " + message.toString() + ", is not a JSON object");
+
+    if (! message.has("timestamp")) message["timestamp"] = utcMS();
+    if (message["timestamp"].type() != dx::JSON_INTEGER) throwString("Log timestamp, " + message["timestamp"].toString() + ", is not an integer");
+
+    if (! message.has("source")) throwString("Missing log source");
+    if (message["source"].type() != dx::JSON_STRING) throwString("Log source, " + message["source"].toString() + ", is not a string");
+    string source = message["source"].get<string>();
+    if (source.substr(0,3).compare("DX_") != 0) throwString("Invalid log source: " + source);
+
+    if (! message.has("level")) message["level"] = 6;
+    ValidateLogLevel(message["level"]);
+
+    if (! message.has("hostname")) message["hostname"] = getHostname();
+    if (message["hostname"].type() != dx::JSON_STRING) throwString("Log hostname, " + message["hostname"].toString() + ", is not a string");
+
+    return true;
+  } catch (const string &msg) {
+    errMsg = msg;
+    return false;
+  } catch (std::exception &e) {
+    errMsg = string("JSONException: ") + e.what();
+    return false;
   }
 }
 
@@ -199,43 +126,8 @@ string DXLog::randomString(int n) {
   return ret_val;
 }
 
-void DXLog::splitMessage(const string &msg, vector<string> &Msgs, int msgSize) {
-  // generate a random string to index the msg
-  string s = randomString(20);
-
-  int offset = 0, index = 0;
-  Msgs.clear();
-  while (offset < msg.size()) {
-    Msgs.push_back(msg.substr(offset, msgSize) + " " + s + " - " + boost::lexical_cast<string>(index++));
-    offset += msgSize;
-  }
-}
-
-bool DXLog::SendMessage2Rsyslog(int facility, int level, const string &tag, const string &msg, int msgSize, string &errMsg) {
+bool DXLog::SendMessage2Rsyslog(int level, const string &source, const string &msg, string &errMsg, const string &socketPath) {
   string head;
-  if (! formMessageHead(facility, level, tag, head, errMsg)) return false;
-  
-  if (msg.length() < msgSize) return SendMessage2UnixDGRAMSocket("/dev/log", head + " " + msg, errMsg);
-
-  vector<string> Msgs;
-  splitMessage(msg, Msgs, msgSize);
-
-  for (int i = 0; i < Msgs.size(); i++) {
-    if (! SendMessage2UnixDGRAMSocket("/dev/log", head + " " + Msgs[i], errMsg)) return false;
-  }
-
-  return true;
-}
-
-void DXLog::StoreMsgLocal(const string &filename, const string &msg) {
-  time_t rawtime;
-  time(&rawtime);
-  struct tm *ptm = localtime(&rawtime);
-  char timeString[20];
-  strftime(timeString, 20, "%Y%m%d%H", ptm);
-
-  cout << filename + timeString + ".log" << endl;
-  ofstream messageFile((filename + timeString + "_" + boost::lexical_cast<string>(getpid()) + ".log").c_str(), ios::app);
-  messageFile << msg << endl;
-  messageFile.close();
+  if (! formMessageHead(8, level, source, head, errMsg)) return false;
+  return SendMessage2UnixDGRAMSocket(socketPath, head + " " + msg, errMsg);
 }

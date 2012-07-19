@@ -29,6 +29,7 @@ bool DXLog::SendMessage2UnixDGRAMSocket(const string &sockPath, const string &ms
 DXLog::UnixDGRAMReader::UnixDGRAMReader(int bufSize_) {
   bufSize = bufSize_;
   buffer = new char[bufSize];
+  active = false;
 }
 
 void DXLog::UnixDGRAMReader::setBufSize(int bufSize_) {
@@ -60,12 +61,14 @@ bool DXLog::UnixDGRAMReader::run(const string &socketPath, string &errMsg) {
     close(sock);
   } else {
     chmod(socketPath.c_str(), 0666);
+    active = true;
     while (true) {
       bzero(buffer, bufSize);
       if (recv(sock, buffer, bufSize, 0) >= 0) {
         if (processMsg()) break;
       }
     }
+    active = false;
     close(sock);
     unlink(socketPath.c_str());
   }
