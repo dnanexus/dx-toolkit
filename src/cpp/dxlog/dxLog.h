@@ -33,7 +33,7 @@ namespace DXLog {
       *  Reture whether or not if the message was sent successfully.
       *  Otherwise return false and errMsg contains detailed error message
       */
-      bool Log(dx::JSON &data, string &errMsg); 
+      bool Log(dx::JSON &data, string &errMsg, const string &socketPath = "/dev/log"); 
   };
 
   // Wrapper for writing logs from an app

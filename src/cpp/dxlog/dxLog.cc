@@ -16,11 +16,16 @@ dx::JSON DXLog::readJSON(const string &filename) {
   return ret_val;
 }
 
-bool DXLog::logger::Log(dx::JSON &data, string &eMsg) {
+bool DXLog::logger::Log(dx::JSON &data, string &eMsg, const string &socketPath) {
+  if (data.type() != dx::JSON_OBJECT) {
+    eMsg = "Log input, " + data.toString() + ", is not a JSON object";
+    return false;
+  }
+
   if (! data.has("hostname")) data["hostname"] = hostname;
   if (! ValidateLogData(data, eMsg)) return false;
 
-  return SendMessage2Rsyslog(int(data["level"]), data["source"].get<string>(), data.toString(), eMsg);
+  return SendMessage2Rsyslog(int(data["level"]), data["source"].get<string>(), data.toString(), eMsg, socketPath);
 }
 
 // need to be implemented once those values are available

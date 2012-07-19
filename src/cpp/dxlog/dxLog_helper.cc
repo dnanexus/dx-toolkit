@@ -33,14 +33,6 @@ long long int DXLog::utcMS(){
   return (microsec_clock::universal_time() - epoch).total_milliseconds();
 }
 
-dx::JSON DXLog::defaultConf() { 
-  return readJSON(myPath() + "/../config/dxlog.conf");
-}
-
-dx::JSON DXLog::defaultSchema() {
-  return readJSON(myPath() + "/../config/dbSchema.js");
-}
-
 void DXLog::ValidateLogLevel(const dx::JSON &data) {
   if (data.type() != dx::JSON_INTEGER) throwString("Log level, " + data.toString() + ", is not an integer");
 

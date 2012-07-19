@@ -15,9 +15,6 @@ namespace DXLog {
 
   long long int utcMS();
 
-  dx::JSON defaultConf();
-  dx::JSON defaultSchema();
-
   // throw a const string with detailed information if there is an error
   void ValidateLogLevel(const dx::JSON &level);
   void ValidateLogFacility(const dx::JSON &facility);
