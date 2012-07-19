@@ -104,7 +104,7 @@ print ''
 
 print BOLD + 'Basic Metadata' + ENDC
 print ''
-print 'You will now be prompted for basic metadata fields that you can use to describe your program/app.  Optional fields are denoted by options with square brackets.  At the end of this wizard, the files necessary for building your program or app will be generated from the answers you provide.'
+print textwrap.fill('You will now be prompted for basic metadata fields that you can use to describe your program/app.  Optional fields are denoted by options with square brackets.  At the end of this wizard, the files necessary for building your program or app will be generated from the answers you provide.')
 print ''
 
 name = prompt_for_var('Program/App Name')
@@ -151,7 +151,7 @@ input_spec = prompt_for_yn('Specify inputs', False)
 if input_spec:
     program_json['inputSpec'] = []
     print ''
-    print textwrap.fill('You will now be prompted for each input parameter to your program.  Each parameter should have a unique name that is allowed as a variable name in your programming language of choice.')
+    print textwrap.fill('You will now be prompted for each input parameter to your program.  Each parameter should have a unique name that is valid as a variable name in your programming language of choice.')
 
     while True:
         print ''
@@ -228,21 +228,31 @@ if output_spec:
             }
         program_json['outputSpec'].append(parameter_json)
 
+if interpreter == 'python2.7':
+    program_json['runSpec']['file'] = 'src/code.py'
+
+print ''
+print BOLD + '*** Generating DNAne' + CYAN + BOLD + 'x' + ENDC + BOLD + 'us App... ***' + ENDC
+
 with open('dxprogram.json', 'w') as prog_file:
     prog_file.write(json.dumps(program_json, indent=4) + '\n')
 
 print ''
-print textwrap.fill('Your program specification has been output to the dxprogram.json file.  Note that not all options for specifying inputs or special access levels were presented here.  To add such options, consult the API documentation for additional details and edit the dxprogram.json file manually.')
-
+print textwrap.fill('''Your program specification has been written to the dxprogram.json file. You can specify more
+program options by editing this file directly (see http://develop.dnanexus.com:443/Developer-Portal for complete
+documentation).''')
 print ''
 if input_spec and output_spec:
     with open('dxapp.json', 'w') as app_file:
         app_file.write(json.dumps(app_json, indent=4) + '\n')
 
-    print textwrap.fill('By specifying both inputs and outputs for your program, you have made it eligible to be published as an app.  The necessary file dxapp.json has been provided for you.  For additional options, please consult additional documentation.')
+    print textwrap.fill('''Your app specification has been written to the dxapp.json file. You can specify more
+    app options by editing this file directly (see http://develop.dnanexus.com:443/Developer-Portal for complete
+    documentation).''')
 else:
-    print textwrap.fill('The necessary file for publishing your program as an app has not been provided because you did not provide both input and output specifications.')
-
+    print textwrap.fill('''To auto-generate the app specification file (dxapp.json), please re-run this wizard and
+    provide specifications for your app's inputs and outputs.''')
+    print ''
 try:
     os.mkdir('src')
 except:
@@ -293,3 +303,6 @@ dxpy.run()
 
     with open('src/code.py', 'w') as code_file:
         code_file.write(code_template.format(app_name=name, app_version=version, inputs=inputs_str, outputs=outputs))
+
+print textwrap.fill('''App directory created! See http://develop.dnanexus.com:443/Building-Your-First-DNAnexus-App for
+next steps, or run "dx_build_program .".''')
