@@ -23,7 +23,6 @@ class Completer():
 
     def __call__(self, text, state):
         if state == 0:
-            # TODO: Get matches
             self.matches = filter(lambda choice: choice.startswith(text),
                                   self.choices)
 
@@ -206,7 +205,6 @@ print ''
 
 output_spec = prompt_for_yn('Specify outputs', False)
 if output_spec:
-    # TODO: Prompt for outputs and store in program_json
     program_json['outputSpec'] = []
     print ''
     print textwrap.fill('You will now be prompted for each output parameter of your program.')
@@ -229,9 +227,6 @@ if output_spec:
             "class": output_class
             }
         program_json['outputSpec'].append(parameter_json)
-
-# TODO: Generate files
-# json.dumps(program_json, indent=4)
 
 with open('dxprogram.json', 'w') as prog_file:
     prog_file.write(json.dumps(program_json, indent=4) + '\n')
@@ -257,8 +252,6 @@ try:
     os.mkdir('resources')
 except:
     pass
-
-# TODO: Create code template
 
 if interpreter == 'python2.7':
     code_template = '''#!/usr/bin/env python
