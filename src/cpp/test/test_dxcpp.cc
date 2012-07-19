@@ -706,6 +706,7 @@ TEST_F(DXGTableTest, AddRowsTest) {
   dxgtable.close();
 
   ASSERT_THROW(dxgtable.close(), DXAPIError);
+  dxgtable.waitOnClose();
 }
 
 TEST_F(DXGTableTest, AddRowsNoIndexTest) {
