@@ -1,3 +1,5 @@
+# ABSTRACT: DNAnexus Perl bindings
+
 =head1 NAME
 
 DNAnexus Perl bindings

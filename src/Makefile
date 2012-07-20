@@ -21,6 +21,9 @@ python:
 	mkdir -p "$(DESTDIR)/lib/python"
 	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python")
 
+perl:
+	(source ../environment; cd perl; dzil build)
+
 contigset2fasta:
 	$(MAKE) -C contigset2fasta
 
@@ -30,4 +33,4 @@ clean:
 install:
 	$(MAKE) -C contigset2fasta install
 
-.PHONY: api_wrappers python contigset2fasta src_libs
+.PHONY: api_wrappers python perl contigset2fasta src_libs
