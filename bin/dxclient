@@ -1142,9 +1142,12 @@ def file_get(args):
         args.target = id_or_none
 
     if args.stdout:
-        dxfile = dxpy.DXFile(args.target)
-        for line in dxfile:
-            print line
+        try:
+            dxfile = dxpy.DXFile(args.target)
+            for line in dxfile:
+                print line
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
     else:
         filename = args.output
         if filename is None:
@@ -1549,6 +1552,12 @@ def run(args):
         print "Origin job: "
     print dxjob.get_id()
 
+def kill(args):
+    try:
+        dxpy.api.jobTerminate(args.jobid)
+    except BaseException as details:
+        parser.exit(1, str(details) + '\n')
+
 def shell(orig_args):
     global interactive
     interactive = True
@@ -1728,6 +1737,10 @@ parser_run.add_argument('--folder', help='The folder in which to output the resu
 parser_run.add_argument('--input', help='The input to the program as JSON or a filename containing the JSON.  If this argument is not given, an interactive mode will be launched.')
 parser_run.add_argument('-v', '--verbose', help='Print additional information', action='store_true')
 parser_run.set_defaults(func=run)
+
+parser_kill = subparsers.add_parser('kill', help='Terminate a job that has not yet finished')
+parser_kill.add_argument('jobid', help='ID of the job to terminate')
+parser_kill.set_defaults(func=kill)
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
                                     description='Search functionality over data objects, projects, and jobs')
