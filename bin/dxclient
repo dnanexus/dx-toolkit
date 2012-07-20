@@ -1102,22 +1102,60 @@ def unset_properties(args):
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
+def head(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.target)
+    if id_or_none is not None:
+        args.target = id_or_none
+    if not args.target.startswith('gtable-') and \
+            not args.target.startswith('file-') and \
+            not args.target.startswith('table-'):
+        parser.exit(1, 'Error: The given object is of class ' + handler._class + ' but an object of class gtable, file, or table was expected.')
+
+    handler = dxpy.get_handler(args.target)
+
+    counter = 0
+    if args.lines > 0:
+        try:
+            if handler._class == 'file':
+                handler._bufsize = 1024*32;
+                for line in handler:
+                    print line
+                    counter += 1
+                    if counter == args.lines:
+                        break
+            else:
+                for line in handler.iterate_rows(end=args.lines):
+                    print BOLD + BLUE + str(line[0]) + ': ' + ENDC + json.dumps(line[1:])
+                    counter += 1
+                    if counter == args.lines:
+                        break
+        except StopIteration:
+            pass
+        except BaseException as detail:
+            parser.exit(1, str(detail) + "\n")
+
 def file_get(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
+    id_or_none = get_id_from_path(args.target)
     if id_or_none is not None:
-        args.dxid = id_or_none
+        args.target = id_or_none
 
-    filename = args.output
-    if filename is None:
+    if args.stdout:
+        dxfile = dxpy.DXFile(args.target)
+        for line in dxfile:
+            print line
+    else:
+        filename = args.output
+        if filename is None:
+            try:
+                filename = os.path.basename(dxpy.api.fileDescribe(args.target)['name'])
+            except KeyError:
+                filename = args.target
         try:
-            filename = os.path.basename(dxpy.api.fileDescribe(args.dxid)['name'])
-        except KeyError:
-            filename = args.dxid
-    try:
-        dxpy.download_dxfile(args.dxid, filename)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+            dxpy.download_dxfile(args.target, filename)
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
 
 def file_put(args):
     hidden = (args.visibility == 'hidden')
@@ -1639,11 +1677,21 @@ parser_mv.add_argument('sources', help='Object IDs and/or folder names to move',
 parser_mv.add_argument('destination', help='Folder into which to move the sources')
 parser_mv.set_defaults(func=mv)
 
+parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable')
+parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
+parser_head.add_argument('target', help='File or gtable ID or name to access')
+parser_head.set_defaults(func=head)
+
+parser_cat = subparsers.add_parser('cat', help='Print a file to stdout')
+parser_cat.add_argument('target', help='File ID or name to print to stdout')
+parser_cat.set_defaults(func=file_get, output=None, stdout=True)
+
 parser_file = subparsers.add_parser('file', help='Interact with remote files')
 subparsers_file = parser_file.add_subparsers()
 
 parser_file_get = subparsers_file.add_parser('get', help='Download a file')
-parser_file_get.add_argument('dxid', help='file ID to download')
+parser_file_get.add_argument('target', help='File ID or name to download')
+parser_file_get.add_argument('--stdout', help='Print the file to stdout', action='store_true')
 parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
 parser_file_get.set_defaults(func=file_get)
 
