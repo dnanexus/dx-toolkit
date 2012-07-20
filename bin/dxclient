@@ -1102,6 +1102,39 @@ def unset_properties(args):
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
+def head(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.target)
+    if id_or_none is not None:
+        args.target = id_or_none
+    if not args.target.startswith('gtable-') and \
+            not args.target.startswith('file-') and \
+            not args.target.startswith('table-'):
+        parser.exit(1, 'Error: The given object is of class ' + handler._class + ' but an object of class gtable, file, or table was expected.')
+
+    handler = dxpy.get_handler(args.target)
+
+    counter = 0
+    if args.lines > 0:
+        try:
+            if handler._class == 'file':
+                handler._bufsize = 1024*32;
+                for line in handler:
+                    print line
+                    counter += 1
+                    if counter == args.lines:
+                        break
+            else:
+                for line in handler.iterate_rows(end=args.lines):
+                    print BOLD + BLUE + str(line[0]) + ': ' + ENDC + json.dumps(line[1:])
+                    counter += 1
+                    if counter == args.lines:
+                        break
+        except StopIteration:
+            pass
+        except BaseException as detail:
+            parser.exit(1, str(detail) + "\n")
+
 def file_get(args):
     # Attempt to resolve name
     id_or_none = get_id_from_path(args.dxid)
@@ -1638,6 +1671,11 @@ parser_mv = subparsers.add_parser('mv', help='Move a objects and/or folders',
 parser_mv.add_argument('sources', help='Object IDs and/or folder names to move', nargs='*')
 parser_mv.add_argument('destination', help='Folder into which to move the sources')
 parser_mv.set_defaults(func=mv)
+
+parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable')
+parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
+parser_head.add_argument('target', help='File or gtable ID or name to access')
+parser_head.set_defaults(func=head)
 
 parser_file = subparsers.add_parser('file', help='Interact with remote files')
 subparsers_file = parser_file.add_subparsers()
