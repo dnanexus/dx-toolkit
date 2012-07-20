@@ -7,6 +7,7 @@ using namespace std;
 using namespace DXLog;
 
 const string socketPath = "test_unix_datagram_log";
+const string testMsg = "近期活動 €þıœəßð some utf-8 ĸʒ×ŋµåäö𝄞\nNew Line";
 
 class TestDGRAM : public UnixDGRAMReader{
   private:
@@ -380,7 +381,7 @@ void writeLog(const string &msg, const vector<bool> &desired) {
 TEST(AppLogTest, SOCKET_NOT_EXIST) {
   ASSERT_TRUE(setSocketPath());
   for (int i = 0; i < 10; i++)
-    ASSERT_FALSE(AppLog::log("OK", i-1));
+    ASSERT_FALSE(AppLog::log(testMsg, i-1));
 }
 
 TEST(AppLogTest, High_Priority_Socket_Only) {
@@ -403,7 +404,7 @@ TEST(AppLogTest, High_Priority_Socket_Only) {
     {
       while(! test.isActive()) { usleep(100); }
      
-      writeLog("OK", desired);
+      writeLog(testMsg, desired);
       SendMessage2UnixDGRAMSocket(socketPath + "1", "Done", errMsg2);
     }
   }
@@ -411,7 +412,7 @@ TEST(AppLogTest, High_Priority_Socket_Only) {
   ASSERT_FALSE(test.isActive());
   ASSERT_EQ(test.msgs.size(), 4);
   for (int i = 0; i < 3; i++)
-    verifyAppLogData(dx::JSON::parse(test.msgs[i]), "OK", i);
+    verifyAppLogData(dx::JSON::parse(test.msgs[i]), testMsg, i);
 
   ASSERT_EQ(test.msgs[3], "Done");
 
@@ -438,7 +439,7 @@ TEST(AppLogTest, Low_Priority_Socket_Only) {
     {
       while(! test.isActive()) { usleep(100); }
      
-      writeLog("OK", desired);
+      writeLog(testMsg, desired);
       SendMessage2UnixDGRAMSocket(socketPath + "2", "Done", errMsg2);
     }
   }
@@ -446,7 +447,7 @@ TEST(AppLogTest, Low_Priority_Socket_Only) {
   ASSERT_FALSE(test.isActive());
   ASSERT_EQ(test.msgs.size(), 6);
   for (int i = 3; i < 8 ; i++)
-    verifyAppLogData(dx::JSON::parse(test.msgs[i-3]), "OK", i);
+    verifyAppLogData(dx::JSON::parse(test.msgs[i-3]), testMsg, i);
 
   ASSERT_EQ(test.msgs[5], "Done");
 
@@ -480,7 +481,7 @@ TEST(AppLogTest, Write_Log) {
       while(! test1.isActive()) { usleep(100); }
       while (! test2.isActive()) { usleep(100); }
      
-      writeLog("OK", desired);
+      writeLog(testMsg, desired);
       SendMessage2UnixDGRAMSocket(socketPath + "1", "Done", errMsg3);
       SendMessage2UnixDGRAMSocket(socketPath + "2", "Done", errMsg4);
     }
@@ -489,13 +490,13 @@ TEST(AppLogTest, Write_Log) {
   ASSERT_FALSE(test1.isActive());
   ASSERT_EQ(test1.msgs.size(), 4);
   for (int i = 0; i < 3 ; i++)
-    verifyAppLogData(dx::JSON::parse(test1.msgs[i]), "OK", i);
+    verifyAppLogData(dx::JSON::parse(test1.msgs[i]), testMsg, i);
   ASSERT_EQ(test1.msgs[3], "Done");
 
   ASSERT_FALSE(test2.isActive());
   ASSERT_EQ(test2.msgs.size(), 6);
   for (int i = 0; i < 5 ; i++)
-    verifyAppLogData(dx::JSON::parse(test2.msgs[i]), "OK", i+3);
+    verifyAppLogData(dx::JSON::parse(test2.msgs[i]), testMsg, i+3);
   ASSERT_EQ(test2.msgs[5], "Done");
 
   unlink((socketPath + "2").c_str());
