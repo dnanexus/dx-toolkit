@@ -22,7 +22,7 @@ python:
 	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python")
 
 perl:
-	(source ../environment; cd perl; dzil build)
+	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DESTDIR)/lib/perl" DESTINSTALLSITELIB="$(DESTDIR)/lib/perl")
 
 contigset2fasta:
 	$(MAKE) -C contigset2fasta
