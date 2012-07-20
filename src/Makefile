@@ -10,7 +10,7 @@ api_wrappers:
 	cat ../build/wrapper_table.json | api_wrappers/generateCppAPIHWrappers.py > cpp/dxcpp/api.h
 	cat ../build/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
 	cat ../build/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
-	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/DNAnexus/API.pm
+	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
 	rm ../bin/generateWrapperTable
 
 src_libs:
