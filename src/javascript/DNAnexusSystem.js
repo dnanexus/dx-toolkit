@@ -35,8 +35,7 @@ exports.system = function(cmd, options) {
     // Remove \n at end of string - since "mktemp" return with a "\n" at the end
     tempFile_stdout = tempFile_stdout.replace(/\n$/g, '');
     finalCmd += " > " + tempFile_stdout;
-  }
-  else {
+  } else {
     // If output is not required, redirect it to /dev/null
     finalCmd += " > /dev/null";
   }
@@ -47,10 +46,9 @@ exports.system = function(cmd, options) {
     }
     tempFile_stderr = tempFile_stderr.replace(/\n$/g, '');
     finalCmd += " 2> " + tempFile_stderr;
-  }
-  else {
-   // Disabling for debugging purposes - stderr output will go to log
-   // finalCmd += " 2> /dev/null";
+  } else {
+    // Disabling for debugging purposes - stderr output will go to log
+    // finalCmd += " 2> /dev/null";
   }
 
   // An internal function - just for use by DNAnexus.system()
@@ -77,21 +75,23 @@ exports.system = function(cmd, options) {
     throw new Error("The command " + cmd + " exited with non-zero exit code");
   }
   var return_hash = {"exitCode": exitCode};
-  if(options["capture_stdout"] === true) {
-   f = new fs.File(tempFile_stdout);
-   f.open("r");
-   return_hash.stdout = f.read().toString("utf-8");
-   f.close();
-   delete f;
+
+  if (options["capture_stdout"] === true) {
+    f = new fs.File(tempFile_stdout);
+    f.open("r");
+    return_hash.stdout = f.read().toString("utf-8");
+    f.close();
+    delete f;
   }
 
-  if(options["capture_stderr"] === true) {
+  if (options["capture_stderr"] === true) {
     f = new fs.File(tempFile_stderr);
     f.open("r");
     return_hash.stderr = f.read().toString("utf-8");
     f.close();
     delete f;
   }
+
   clearResources();
 
   return return_hash;
