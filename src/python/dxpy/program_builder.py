@@ -87,8 +87,16 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
     dest_project = project or program_spec['project']
 
     if 'description' not in program_spec:
-        with open(os.path.join(src_dir, "README.md")) as fh:
-            program_spec['description'] = fh.read()
+        readme_filename = None
+        for filename in 'README.md', 'Readme.md', 'readme.md':
+            if os.path.exists(os.path.join(src_dir, filename)):
+                readme_filename = filename
+                break
+        if readme_filename is None:
+            logging.warn("No description found")
+        else:
+            with open(os.path.join(src_dir, readme_filename)) as fh:
+                program_spec['description'] = fh.read()
 
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])
