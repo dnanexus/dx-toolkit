@@ -56,6 +56,8 @@ namespace DXLog {
       *  Returns true if the message is successfully delivered to the log system;
       *  Otherwise returns false and errMsg contains some details of the error
       */
+
+      static dx::JSON validateMsg(const string &message, int level=6); 
       static bool log(const string &message, int level = 6);
       static bool emerg(const string &message) { return log(message, 0); }
       static bool alert(const string &message) { return log(message, 1); }

@@ -52,9 +52,20 @@ int DXLog::AppLog::socketIndex(int level) {
   return (level < 3) ? 0 : 1;
 }
 
+dx::JSON DXLog::AppLog::validateMsg(const string &msg, int level) {
+  dx::JSON message(dx::JSON_OBJECT);
+  if ((level < 0) || (level > 7)) throwString("Invalid log level: " + boost::lexical_cast<string>(level));
+
+  message["source"] = "DX_APP";
+  message["msg"] = msg;
+  message["level"] = level;
+  message["timestamp"] = utcMS();
+
+  return message;
+}
+
 bool DXLog::AppLog::log(const string &msg, int level) {
   string errMsg;
-  dx::JSON message(dx::JSON_OBJECT);
   try {
     if (! initialized) {
       dx::JSON input = dx::JSON(dx::JSON_OBJECT);
@@ -64,15 +75,9 @@ bool DXLog::AppLog::log(const string &msg, int level) {
       if (! initEnv(input, errMsg)) throwString(errMsg);
     }
 
-    if ((level < 0) || (level > 7)) throwString("Invalid log level: " + boost::lexical_cast<string>(level));
-
-    message["source"] = "DX_APP";
-    message["msg"] = msg;
-    message["level"] = level;
-    message["timestamp"] = utcMS();
+    dx::JSON message = validateMsg(msg, level);
 
     int index = socketIndex(level);
-
     if (! boost::filesystem::exists(socketPath[index])) throwString("Socket " + socketPath[index] + " does not exist");
 
     if (! SendMessage2UnixDGRAMSocket(socketPath[index], message.toString(), errMsg)) throwString(errMsg);

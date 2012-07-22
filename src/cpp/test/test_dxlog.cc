@@ -366,11 +366,14 @@ bool setSocketPath() {
   return AppLog::initEnv(conf, errMsg);
 }
 
-void verifyAppLogData(const dx::JSON &data, const string &msg, int level) {
+void verifyAppLogData(const dx::JSON &data, const string &msg, int level, int64_t t1, int64_t t2) {
   ASSERT_EQ(data["source"].get<string>(), "DX_APP");
   ASSERT_EQ(int(data["level"]), level);
   ASSERT_EQ(data["msg"].get<string>(), msg);
   ASSERT_EQ(data["timestamp"].type(), dx::JSON_INTEGER);
+  int64_t t = int64_t(data["timestamp"]);
+  ASSERT_FALSE(t < t1);
+  ASSERT_TRUE(t <= t2);
 }
 
 void writeLog(const string &msg, const vector<bool> &desired) {
@@ -389,6 +392,7 @@ TEST(AppLogTest, High_Priority_Socket_Only) {
   ASSERT_TRUE(setSocketPath());
   TestDGRAM test;
   string errMsg, errMsg2;
+  int64_t t1 = utcMS();
 
   vector<bool> desired;
   for (int i = 0; i < 10; i ++)
@@ -411,8 +415,9 @@ TEST(AppLogTest, High_Priority_Socket_Only) {
   
   ASSERT_FALSE(test.isActive());
   ASSERT_EQ(test.msgs.size(), 4);
+  int64_t t2 = utcMS();
   for (int i = 0; i < 3; i++)
-    verifyAppLogData(dx::JSON::parse(test.msgs[i]), testMsg, i);
+    verifyAppLogData(dx::JSON::parse(test.msgs[i]), testMsg, i, t1, t2);
 
   ASSERT_EQ(test.msgs[3], "Done");
 
@@ -424,6 +429,7 @@ TEST(AppLogTest, Low_Priority_Socket_Only) {
   ASSERT_TRUE(setSocketPath());
   TestDGRAM test;
   string errMsg, errMsg2;
+  int64_t t1 = utcMS();
 
   vector<bool> desired;
   for (int i = 0; i < 10; i ++)
@@ -446,8 +452,9 @@ TEST(AppLogTest, Low_Priority_Socket_Only) {
   
   ASSERT_FALSE(test.isActive());
   ASSERT_EQ(test.msgs.size(), 6);
+  int64_t t2 = utcMS();
   for (int i = 3; i < 8 ; i++)
-    verifyAppLogData(dx::JSON::parse(test.msgs[i-3]), testMsg, i);
+    verifyAppLogData(dx::JSON::parse(test.msgs[i-3]), testMsg, i, t1, t2);
 
   ASSERT_EQ(test.msgs[5], "Done");
 
@@ -466,6 +473,7 @@ TEST(AppLogTest, Write_Log) {
     desired.push_back(true);
   desired[0] = desired[9] = false;
 
+  int64_t t1 = utcMS();
   omp_set_num_threads(3);
   #pragma omp parallel sections
   {
@@ -489,14 +497,15 @@ TEST(AppLogTest, Write_Log) {
   
   ASSERT_FALSE(test1.isActive());
   ASSERT_EQ(test1.msgs.size(), 4);
+  int64_t t2 = utcMS();
   for (int i = 0; i < 3 ; i++)
-    verifyAppLogData(dx::JSON::parse(test1.msgs[i]), testMsg, i);
+    verifyAppLogData(dx::JSON::parse(test1.msgs[i]), testMsg, i, t1, t2);
   ASSERT_EQ(test1.msgs[3], "Done");
 
   ASSERT_FALSE(test2.isActive());
   ASSERT_EQ(test2.msgs.size(), 6);
   for (int i = 0; i < 5 ; i++)
-    verifyAppLogData(dx::JSON::parse(test2.msgs[i]), testMsg, i+3);
+    verifyAppLogData(dx::JSON::parse(test2.msgs[i]), testMsg, i+3, t1, t2);
   ASSERT_EQ(test2.msgs[5], "Done");
 
   unlink((socketPath + "2").c_str());
@@ -570,6 +579,46 @@ TEST(AppLogTest, AppLog_Done) {
   ASSERT_FALSE(test2.isActive());
   ASSERT_FALSE(AppLog::done(errMsg));
   ASSERT_EQ(errMsg, socketPath + "1: Error when sending log message: No such file or directory, " + socketPath + "2: Error when sending log message: No such file or directory");
+  unlink((socketPath + "1").c_str());
+  unlink((socketPath + "2").c_str());
+}
+
+bool setSocketPath2() {
+  string errMsg;
+  dx::JSON conf(dx::JSON_OBJECT);
+  conf["socketPath"] = dx::JSON(dx::JSON_ARRAY);
+  conf["socketPath"].push_back(socketPath);
+  conf["socketPath"].push_back(socketPath);
+
+  return AppLog::initEnv(conf, errMsg);
+}
+
+TEST(AppLogTest, AppLog_Done_SingleSocket) {
+  unlink((socketPath).c_str());
+  ASSERT_TRUE(setSocketPath2());
+  TestDGRAM test;
+  string errMsg, errMsg2;
+
+  ASSERT_FALSE(AppLog::done(errMsg));
+  ASSERT_EQ(errMsg, socketPath + ": Error when sending log message: No such file or directory");
+
+  omp_set_num_threads(2);
+  bool ret_val;
+  #pragma omp parallel sections
+  {
+    test.run(socketPath, errMsg);
+    
+    #pragma omp section
+    {
+      while(! test.isActive()) { usleep(100); }
+      ret_val = AppLog::done(errMsg2);
+    }
+  }
+  ASSERT_TRUE(ret_val);
+  ASSERT_FALSE(test.isActive());
+  ASSERT_FALSE(AppLog::done(errMsg));
+  ASSERT_EQ(errMsg, socketPath + ": Error when sending log message: No such file or directory");
+  unlink((socketPath).c_str());
 }
 
 int main(int argc, char **argv) {
