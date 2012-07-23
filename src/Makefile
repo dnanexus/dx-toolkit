@@ -10,7 +10,7 @@ api_wrappers:
 	cat ../build/wrapper_table.json | api_wrappers/generateCppAPIHWrappers.py > cpp/dxcpp/api.h
 	cat ../build/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
 	cat ../build/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
-	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/DNAnexus/API.pm
+	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
 	rm ../bin/generateWrapperTable
 
 src_libs:
@@ -21,6 +21,17 @@ python:
 	mkdir -p "$(DESTDIR)/lib/python"
 	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python")
 
+perl:
+	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DESTDIR)/lib/perl" DESTINSTALLSITELIB="$(DESTDIR)/lib/perl")
+
+test: test_python test_perl
+
+test_python:
+	for i in python/test/*; do $$i; done
+
+test_perl:
+	(cd perl; prove)
+
 contigset2fasta:
 	$(MAKE) -C contigset2fasta
 
@@ -30,4 +41,4 @@ clean:
 install:
 	$(MAKE) -C contigset2fasta install
 
-.PHONY: api_wrappers python contigset2fasta src_libs
+.PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl

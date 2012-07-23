@@ -79,7 +79,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
         config = {}
     # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
     # config.setdefault('max_retries', MAX_RETRIES)
-    if 'Content-Type' not in headers:
+    if 'Content-Type' not in headers and method == 'POST':
         headers['Content-Type'] = 'application/json'
     if jsonify_data:
         data = json.dumps(data)
@@ -237,3 +237,16 @@ else:
 
 from dxpy.bindings import *
 from dxpy.dxlog import *
+from dxpy.utils.exec_utils import *
+
+
+# This should be in exec_utils but fails because of circular imports
+# TODO: fix the imports
+current_job, current_program, current_app = None, None, None
+if JOB_ID is not None:
+    current_job = DXJob(JOB_ID)
+    job_desc = current_job.describe()
+    if 'program' in job_desc:
+        current_program = DXProgram(job_desc['program'])
+    else:
+        current_app = DXApp(job_desc['app'])

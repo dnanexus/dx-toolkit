@@ -286,6 +286,7 @@ class DXFile(DXDataObject):
         url = resp["url"]
         headers = {}
         headers['Content-Length'] = str(len(data))
+        headers['Content-Type'] = 'application/octet-stream'
 
         DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
 

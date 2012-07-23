@@ -1,0 +1,1902 @@
+#!/usr/bin/env python
+
+import sys, os, datetime, urlparse, requests, base64, getpass
+import argparse
+import shlex # respects quotes substrings when splitting
+import textwrap
+from requests.auth import HTTPBasicAuth
+
+import json
+
+try:
+    import readline
+except ImportError:
+    print 'readline module not available'
+
+interactive = False
+
+CYAN = '\033[36m'
+BLUE = '\033[34m'
+YELLOW = '\033[33m'
+GREEN = '\033[32m'
+RED = '\033[31m'
+BOLD = '\033[1m'
+ENDC = '\033[0m'
+
+JOB_STATES = {'failed': BOLD + RED + 'failed' + ENDC,
+              'done': BOLD + GREEN + 'done' + ENDC,
+              'running': GREEN + 'running' + ENDC,
+              'idle': YELLOW + 'idle' + ENDC,
+              'runnable': YELLOW + 'runnable' + ENDC,
+              'waiting_on_inputs': YELLOW + 'waiting_on_inputs' + ENDC,
+              'waiting_on_outputs': YELLOW + 'waiting_on_outputs' + ENDC
+              }
+
+def clean_folder_path(path):
+    folders = path.split('/')
+
+    sanitized_folders = []
+
+    for folder in folders:
+        if folder == '.':
+            pass
+        elif folder == '..' and len(sanitized_folders) > 0:
+            sanitized_folders.pop()
+        else:
+            sanitized_folders.append(folder)
+
+    newpath = ""
+    for folder in sanitized_folders:
+        if folder == '':
+            continue
+        newpath += '/' + folder
+    if newpath == "":
+        return '/'
+    return newpath
+
+def resolve_path_with_project(path):
+    substrings = path.split(':')
+    if len(substrings) > 2:
+        parser.exit(1, 'At most one colon expected in a path')
+    if len(substrings) == 2:
+        project = substrings[0]
+        wd = '/'
+    else:
+        project = None
+        wd = os.environ.get('DX_CLI_WD', '/')
+    folderpath = substrings[-1]
+    if folderpath.startswith('/'):
+        return project, clean_folder_path(folderpath)
+    else:
+        return project, clean_folder_path(wd + '/' + folderpath)
+
+def resolve_path(path):
+    wd = os.environ.get('DX_CLI_WD', '/')
+    if path.startswith('/'):
+        return clean_folder_path(path)
+    else:
+        return clean_folder_path(wd + '/' + path)
+
+def grab_contents_of_folder(completer, folder):
+    if completer.cwd != folder:
+        # Only refresh lists if the current folder is not the one
+        try:
+            if completer.dxproj is None or completer.dxproj.get_id() != os.environ['DX_PROJECT_CONTEXT_ID']:
+                completer.dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+            resp = completer.dxproj.list_folder(folder=folder, describe={},
+                                                includeHidden=True)
+            completer.folders = ['../', './'] + map(lambda folder: os.path.basename(folder).replace(' ', '\ ') + '/', resp['folders'])
+            completer.ids = map(lambda result: result['id'], resp['objects'])
+            completer.names = map(lambda result: result['describe']['name'].replace(' ', '\ '), resp['objects'])
+            completer.cwd = folder
+        except:
+            pass
+
+def get_folder_content_matches(completer, prefix):
+    completer.matches = filter(lambda folder: folder.startswith(prefix), completer.folders) + \
+        filter(lambda _id: _id.startswith(prefix), completer.ids) + \
+        filter(lambda name: name.startswith(prefix), completer.names)
+
+# This completer assumes you're trying to enter an object
+class DXObjectCompleter():
+    def __init__(self):
+        self.dxproj = None
+        self.folders = None
+        self.ids = None
+        self.names = None
+        self.cwd = None
+        self.matches = None
+
+    def __call__(self, text, state):
+        if state == 0:
+            current_line = readline.get_line_buffer()
+            words = readline.get_line_buffer().split()
+
+            # First get path to current folder
+            path = os.environ['DX_CLI_WD']
+            if len(words) > 0 and '/' in words[-1]:
+                path += '/' + words[-1][:words[-1].rfind('/')]
+            # Then update lists as necessary
+            grab_contents_of_folder(self, resolve_path(path))
+            # Then find matches
+            get_folder_content_matches(self, text)
+
+        if self.matches is not None and state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
+
+# This completer is for the command-line in the shell.  It assumes the
+# first word is always a subcommand and that if the first word is a
+# subcommand with further subcommands, then the second word must be an
+# appropriate sub-subcommand.
+class DXCLICompleter():    
+    subsubcommands = {'file': ['get', 'put'],
+                      'gtable': ['get'],
+                      'find': ['jobs', 'data', 'projects', 'apps'],
+                      'new': ['record', 'gtable']}
+
+    def __init__(self):
+        global subparsers
+        self.subcommands = map(lambda subcmd: subcmd + ' ', subparsers.choices.keys())
+
+        self.dxproj = None
+        self.folders = None
+        self.ids = None
+        self.names = None
+        self.cwd = None
+        self.matches = None
+
+    def get_subcommand_matches(self, prefix):
+        self.matches = filter(lambda subcommand: subcommand.startswith(prefix),
+                              self.subcommands)
+
+    def get_subsubcommand_matches(self, subcommand, prefix):
+        if subcommand in self.subsubcommands:
+            self.matches = filter(lambda subsubcommand: subsubcommand.startswith(prefix),
+                                  self.subsubcommands[subcommand])
+
+    def __call__(self, text, state):
+        if state == 0:
+            current_line = readline.get_line_buffer()
+            words = readline.get_line_buffer().split()
+            if len(words) > 0 and current_line[-1] == ' ':
+                words.append('')
+            num_words = len(words)
+            self.matches = None
+            if num_words == 0:
+                self.get_subcommand_matches('')
+            elif num_words == 1:
+                self.get_subcommand_matches(words[0])
+            elif num_words == 2 and words[0] in self.subsubcommands:
+                self.get_subsubcommand_matches(words[0], words[1])
+            else:
+                # First get path to current folder
+                path = os.environ['DX_CLI_WD']
+                if '/' in words[-1]:
+                    path += '/' + words[-1][:words[-1].rfind('/')]
+                # Then update lists as necessary
+                grab_contents_of_folder(self, resolve_path(path))
+                # Then find matches
+                get_folder_content_matches(self, text)
+
+        if self.matches is not None and state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
+
+def write_env_var(var, value):
+    try:
+        os.mkdir(os.path.expanduser('~/.dnanexus-env/'))
+    except:
+        pass
+    with open(os.path.expanduser('~/.dnanexus-env/' + var), 'w') as fd:
+        fd.write(value)
+
+def load_env():
+    try:
+        for filename in os.listdir(os.path.expanduser('~/.dnanexus-env')):
+            with open(os.path.expanduser('~/.dnanexus-env/'+filename), 'r') as fd:
+                value = fd.read()
+                # TODO: Find out how bad the line below is for Mac OS X.
+                os.environ[filename] = value
+    except:
+        pass
+    if 'DX_CLI_WD' not in os.environ:
+        write_env_var("DX_CLI_WD", '/')
+        os.environ['DX_CLI_WD'] = '/'
+
+def get_json_from_stdin():
+    user_json_str = raw_input('Type JSON here> ')
+    user_json = None
+    try:
+        user_json = json.loads(user_json_str)
+    except:
+        parser.exit(1, 'Error: user input could not be parsed as JSON\n')
+        return None
+    return user_json
+
+# Loading environment
+
+load_env()
+
+# IMPORTANT: Import dxpy AFTER loading environment variables
+import dxpy
+
+def login(args):
+    global interactive
+    if not interactive:
+        args.save = True
+
+    # TODO: Remove this and replace with actual logic and interaction
+    # when implemented
+    if args.host is not None or args.port is not None:
+        authserver = 'http://' + args.host
+        authserver += ':' + str(args.port)
+        print 'Logging into ' + authserver
+
+        username = raw_input('Username: ')
+        password = getpass.getpass()
+
+        session = requests.session()
+
+        response = ""
+        try:
+            response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
+            response.raise_for_status()
+        except requests.exceptions.RequestException as details:
+            print 'Error contacting the auth server: ' + str(details)
+            parser.exit(1)
+        token = json.loads(response.content)["access_token"]
+        sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
+    elif args.token is None:
+        authserver = 'https://auth.dnanexus.com'
+        print 'Logging into ' + authserver
+        username = raw_input('Username: ')
+        password = getpass.getpass()
+        auth = HTTPBasicAuth(username, password)
+
+        session = requests.session()
+        res = requests.post(authserver+"/oauth2/authorize",
+                            data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
+                            auth=auth,
+                            allow_redirects=False)
+        assert(res.status_code == requests.codes.found)
+        code = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])['code'][0]
+        
+        res = requests.post(authserver+"/oauth2/token",
+                            data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"})
+        assert(res.status_code == requests.codes.ok)
+        token_res = json.loads(res.content)
+        sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
+    else:
+        sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
+
+    dxpy.set_security_context(json.loads(sec_context))
+
+    set_auth_token(sec_context=sec_context, write=args.save)
+    args.current = False
+    setenv(args)
+
+def logout(args):
+    write_env_var('DX_SECURITY_CONTEXT', '')
+
+def set_auth_token(token=None, sec_context=None, write=False):
+    if token is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
+    elif sec_context is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = sec_context
+    else:
+        parser.exit(1, 'Error: set_auth_token was called with no token nor security context hash')
+    if write:
+        write_env_var('DX_SECURITY_CONTEXT', sec_context)
+
+def set_api(protocol, host, port, write):
+    os.environ['DX_APISERVER_PROTOCOL'] = protocol
+    os.environ['DX_APISERVER_HOST'] = host
+    os.environ['DX_APISERVER_PORT'] = port
+    if write:
+        write_env_var("DX_APISERVER_PROTOCOL", protocol)
+        write_env_var("DX_APISERVER_HOST", host)
+        write_env_var("DX_APISERVER_PORT", port)
+    dxpy.set_api_server_info(host=host, port=port, protocol=protocol)
+
+def set_project(project, write):
+    os.environ['DX_PROJECT_CONTEXT_ID'] = project
+    if write:
+        write_env_var("DX_PROJECT_CONTEXT_ID", project)
+    dxpy.set_workspace_id(project)
+
+def set_wd(folder, write):
+    os.environ['DX_CLI_WD'] = folder
+    if write:
+        write_env_var("DX_CLI_WD", folder)
+
+def prompt_for_var(prompt_str, env_var_str):
+    prompt = prompt_str
+    default = None
+    if env_var_str in os.environ:
+        default = os.environ[env_var_str]
+        prompt += ' [' + default + ']: '
+    else:
+        prompt += ': '
+    while True:
+        try: 
+            value = raw_input(prompt)
+        except KeyboardInterrupt:
+            print ''
+            continue
+        except EOFError:
+            print ''
+            raise EOFError()
+        if value != '':
+            return value
+        elif default is not None:
+            return default
+
+def setenv(args):
+    global interactive
+    if not interactive:
+        args.save = True
+    if args.current:
+        env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD']
+        for var in env_vars:
+            if var in os.environ:
+                write_env_var(var, os.environ[var])
+    else:
+        api_protocol = prompt_for_var('API server protocol', 'DX_APISERVER_PROTOCOL')
+        api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
+        api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
+        set_api(api_protocol, api_host, api_port, args.save)
+
+        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
+            old_project = os.environ['DX_PROJECT_CONTEXT_ID']
+            projects = [old_project]
+        else:
+            old_project = None
+
+        if args.projects:
+            print ""
+            print "Available projects:"
+            find_proj_args = argparse.Namespace()
+            find_proj_args.name = None
+            find_proj_args.json = False
+            find_proj_args.level = None
+            find_proj_args.describe = None
+            projects = find_projects(find_proj_args)
+
+        # Eliminate current default if it is not a found project
+        if old_project is not None and old_project not in projects:
+            os.environ.pop('DX_PROJECT_CONTEXT_ID')
+        project = prompt_for_var('Workspace', 'DX_PROJECT_CONTEXT_ID')
+        # Eliminate current default if there's a change in project
+        if project != old_project:
+            os.environ['DX_CLI_WD'] = '/'
+        wd = prompt_for_var('Current folder', 'DX_CLI_WD')
+        set_project(project, args.save)
+        set_wd(wd, args.save)
+
+def printenv(args):
+    print "Auth token used\t\t" + str(json.loads(os.environ.get("DX_SECURITY_CONTEXT", "{\"auth_token\": null}"))["auth_token"])
+    print "API server protocol\t" + str(os.environ.get("DX_APISERVER_PROTOCOL"))
+    print "API server host\t\t" + str(os.environ.get("DX_APISERVER_HOST"))
+    print "API server port\t\t" + str(os.environ.get("DX_APISERVER_PORT"))
+    print "Current workspace\t" + str(os.environ.get("DX_PROJECT_CONTEXT_ID"))
+    print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
+
+def pwd(args):
+    print os.environ['DX_CLI_WD']
+
+def api(args):
+    json_input = json.loads(args.input_json)
+    if args.input is not None:
+        with open(args.input, 'r') as fd:
+            data = fd.read()
+            try:
+                json_input = json.loads(data)
+            except:
+                parser.exit(1, 'Error: file contents could not be parsed as JSON\n')
+    elif args.stdin:
+        json_input = get_json_from_stdin()
+        if json_input == None:
+            return
+    resp = None
+    try:
+        resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
+                                  json_input)
+        print json.dumps(resp, indent=4)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def get_id_from_path(path):
+    full_path = resolve_path(path)
+    try:
+        results = list(dxpy.find_data_objects(name=os.path.basename(full_path),
+                                              describe={},
+                                              project=os.environ.get('DX_PROJECT_CONTEXT_ID', None),
+                                              folder=os.path.dirname(full_path)))
+        if len(results) > 1:
+            print 'Found ' + str(len(results)) + ' objects with full path ' + full_path + ':'
+            for result in results:
+                print_ls_l_desc(result['describe'])
+            parser.exit(1)
+        elif len(results) == 1:
+            return results[0]['id']
+        else:
+            return None
+    except dxpy.DXAPIError:
+        return None
+
+def get_app_from_exec(executable):
+    try:
+        if executable.startswith('app-'):
+            executable = executable[4:]
+        results = list(dxpy.find_apps(name=executable))
+    except dxpy.DXAPIError as detail:
+        return None
+    if len(results) > 0:
+        return executable
+    else:
+        return None
+
+def cd(args):
+    wd = os.environ['DX_CLI_WD']
+    args.folder = resolve_path(args.folder)
+
+    if not wd.startswith(args.folder):
+        try:
+            dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+            dxproj.list_folder(folder=args.folder)
+        except:
+            parser.exit(1, args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID'] + '\n')
+            return
+
+    global interactive
+    set_wd(args.folder, not interactive)
+
+def cmp_names(x, y):
+    return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())    
+
+def print_ls_l_desc(desc):
+    if desc['class'] == 'program':
+        print desc['state'] + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + BOLD + GREEN + desc['name'] + ENDC + ' : ' + desc['id']
+    else:
+        print desc['state'] + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + desc['name'] + ' : ' + desc['id']
+
+def ls(args):
+    project, folderpath = resolve_path_with_project(args.path)
+    if project is None:
+        project = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+    if project is None:
+        parser.exit(1, 'Current workspace must be set with \'setenv\' before any data can be listed\n')
+    dxproj = dxpy.get_handler(project)
+    only = ""
+    if args.obj and not args.folders and not args.full:
+        only = "objects"
+    elif not args.obj and args.folders and not args.full:
+        only = "folders"
+    else:
+        only = "all"
+
+    resp = None
+    try:
+        resp = dxproj.list_folder(folder=folderpath, describe={}, only=only, includeHidden=args.all)
+    except dxpy.DXAPIError as detail:
+        print detail
+        return
+    if args.json:
+        print json.dumps(resp, indent=4)
+        return
+
+    if not args.obj:
+        for folder in resp["folders"]:
+            if args.full:
+                print BOLD + BLUE + folder + ENDC
+            else:
+                print BOLD + BLUE + os.path.basename(folder) + '/' + ENDC
+    if not args.folders:
+        resp["objects"].sort(cmp=cmp_names)
+        last_name = None
+        next_name = None
+        for i in range(len(resp["objects"])):
+            current_name = resp['objects'][i]['describe']['name']
+            if i < len(resp['objects']) - 1:
+                next_name = resp['objects'][i + 1]['describe']['name']
+            else:
+                next_name = None
+            addendum = ''
+
+            if (last_name is not None and last_name == current_name) or (next_name is not None and current_name == next_name):
+                addendum = ' : ' + resp['objects'][i]['id']
+
+            if args.l:
+                print_ls_l_desc(resp['objects'][i]['describe'])
+            else:
+                if resp['objects'][i]['describe']['class'] == 'program':
+                    print BOLD + GREEN + resp['objects'][i]['describe']['name'] + ENDC + addendum
+                else:
+                    print resp['objects'][i]['describe']['name'] + addendum
+
+            last_name = current_name
+
+def mkdir(args):
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+    args.folder = resolve_path(args.folder)
+    try:
+        dxproj.new_folder(folder=args.folder, parents=args.parents)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def rmdir(args):
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+    args.folder = resolve_path(args.folder)
+    try:
+        dxproj.remove_folder(folder=args.folder)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def rm(args):
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+    if args.all:
+        folder = '/'
+        if 'DX_CLI_WD' in os.environ:
+            folder = os.environ['DX_CLI_WD']
+
+        if not args.force:
+            user_resp = raw_input('Confirm deleting all objects in folder \"' + folder + '\" (y/n): ')
+            if user_resp[0].lower() != 'y':
+                return
+        def grab_id(ahash):
+            return ahash['id']
+        dxproj.remove_objects( map(grab_id, dxproj.list_folder(folder=folder)['objects']))
+    else:
+        for i in range(len(args.objects)):
+            id_or_none = get_id_from_path(args.objects[i])
+            if id_or_none is not None:
+                args.objects[i] = id_or_none
+
+        dxproj.remove_objects(args.objects)
+
+def mv(args):
+    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+    objects = []
+    folders = []
+    for source in args.sources:
+        try:
+            dxpy.get_handler(source)
+            objects.append(source)
+        except:
+            folders.append(resolve_path(source))
+    args.destination = resolve_path(args.destination)
+    # Doesn't exactly make sense when we can't specify a source by name yet
+    # try:
+    #     dxproj.list_folder(args.destination)
+    # except:
+    #     if len(objects) != 1 or len(folders) != 0:
+    #         raise SyntaxError()
+    #     else:
+    #         dxobj = dxpy.get_handler(objects[0])
+    #         dxobj.rename(args.destination)
+
+    try:
+        dxproj.move(args.destination, objects=objects, folders=folders)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def get_io_desc(parameter, include_class=True, show_opt=True):
+    desc = ""
+    is_optional = False;
+    if show_opt:
+        if "default" in parameter or ("optional" in parameter and parameter["optional"]):
+            is_optional = True
+            desc += "["
+    desc += parameter["name"]
+    include_parens = include_class or 'type' in parameter or 'default' in parameter
+    if include_parens:
+        desc += " ("
+    is_first = True
+    if include_class:
+        desc += parameter["class"]
+        is_first = False
+    if "type" in parameter:
+        if not is_first:
+            desc += ", "
+        else:
+            is_first = False
+        if isinstance(parameter["type"], dict):
+            desc += "type satisfying " + json.dumps(parameter["type"])
+        else:
+            desc += "type " + parameter["type"]
+    if "default" in parameter:
+        if not is_first:
+            desc += ', '
+        desc += str(parameter["default"])
+    if include_parens:
+        desc += ")"
+    if show_opt and is_optional:
+        desc += "]"
+    return desc
+
+def get_io_spec(spec):
+    return '\n\t\t'.join(map(get_io_desc, spec))
+
+def print_project_desc(desc):
+    recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces']
+
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    if "name" in desc:
+        print "Name\t\t" + desc["name"]
+    if 'description' in desc:
+        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+    print "Owner\t\t" + desc["owner"]
+    if 'protected' in desc:
+        print "Protected\t" + json.dumps(desc["protected"])
+    if 'restricted' in desc:
+        print "Restricted\t" + json.dumps(desc["restricted"])
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    print "Data usage\t" + str(desc["dataUsage"])
+    if 'tags' in desc:
+        print "Tags\t\t" + json.dumps(desc["tags"])
+    if "level" in desc:
+        print "Access level\t" + desc["level"]
+    if "folders" in desc:
+        print "Folders\t\t" + ', '.join(desc["folders"])
+    if "objects" in desc:
+        print "# Files\t\t" + str(desc["objects"])
+    if "permissions" in desc:
+        print "Permissions\t" + json.dumps(desc["permissions"])
+    if "appWorkspaces" in desc:
+        print "App workspaces\t" + json.dumps(desc["appWorkspaces"])
+
+    for field in desc:
+        if field not in recognized_fields:
+            print field + '\t\t' + json.dumps(desc[field])
+
+def print_app_desc(desc):
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'installed', 'openSource']
+
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    print "Owner\t\t" + desc["owner"]
+    print "Name\t\t" + desc["name"]
+    print "Version\t\t" + desc["version"]
+    print "Aliases\t\t" + ', '.join(desc["aliases"])
+    print "Created by\t" + desc["createdBy"]
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    if "program" in desc:
+        print "Created from\t" + desc["program"]
+    if desc['installed'] == True:
+        print 'Installed\ttrue'
+    else:
+        print 'Installed\tfalse'
+    if desc['openSource'] == True:
+        print 'Open source\ttrue'
+    else:
+        print 'Open source\tfalse'
+    if desc["deleted"]:
+        print "Deleted\t\ttrue"
+    else:
+        print "Deleted\t\tfalse"
+
+        if 'published' not in desc or desc["published"] < 0:
+            "Published\tN/A"
+        else:
+            "Published\t" + datetime.datetime.fromtimestamp(desc['published']/1000).ctime()
+
+    if not desc["deleted"]:
+        if "title" in desc:
+            print "Title\t\t" + desc["title"]
+        if "subtitle" in desc:
+            print "Subtitle\t\t" + desc["subtitle"]
+        if "description" in desc:
+            print "Description\t" + desc["description"]
+        print "Categories\t" + ', '.join(desc["categories"])
+        print "Access\t\t" + json.dumps(desc["access"])
+        print "API version\t" + desc["dxapi"]
+        print "Input Spec\t" + get_io_spec(desc["inputSpec"])
+        print "Output Spec\t" + get_io_spec(desc["outputSpec"])
+        print "Interpreter\t" + desc["runSpec"]["interpreter"]
+        if "resources" in desc["runSpec"]:
+            print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+        if "bundledDepends" in desc["runSpec"]:
+            print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+        if "execDepends" in desc["runSpec"]:
+            print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
+        print "GlobalWorkspace\t" + desc["globalWorkspace"]
+
+    for field in desc:
+        if field not in recognized_fields:
+            print field + '\t\t' + json.dumps(desc[field])
+
+def print_data_obj_desc(desc):
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access']
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    if 'project' in desc:
+        print "Project\t\t" + desc["project"]
+    if 'folder' in desc:
+        print "Folder\t\t" + desc["folder"]
+    print "Name\t\t" + desc["name"]
+    if 'state' in desc:
+        print "State\t\t" + desc["state"]
+    if 'hidden' in desc:
+        print "Hidden\t\t" + json.dumps(desc["hidden"])
+    if 'types' in desc:
+        print "Types\t\t" + json.dumps(desc["types"])
+    if 'properties' in desc:
+        print "Properties\t" + json.dumps(desc["properties"])
+    if 'tags' in desc:
+        print "Tags\t\t" + json.dumps(desc["tags"])
+    if 'details' in desc:
+        print "Details\t\t" + json.dumps(desc["details"])
+    if 'links' in desc:
+        print "Outgoing links\t" + json.dumps(desc["links"])
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    if "title" in desc:
+        print "Title\t\t" + desc["title"]
+    if "subtitle" in desc:
+        print "Subtitle\t\t" + desc["subtitle"]
+    if "description" in desc:
+        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+    if 'summary' in desc:
+        print textwrap.fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=64)
+    if 'access' in desc:
+        print "Access\t\t" + json.dumps(desc["access"])
+    if 'dxapi' in desc:
+        print "API version\t" + desc["dxapi"]
+    if "inputSpec" in desc:
+        print "Input Spec\t" + get_io_spec(desc['inputSpec'])
+    if "outputSpec" in desc:
+        print "Output Spec\t" + get_io_spec(desc['outputSpec'])
+    if 'runSpec' in desc:
+        print "Interpreter\t" + desc["runSpec"]["interpreter"]
+        if "resources" in desc['runSpec']:
+            print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+        if "bundledDepends" in desc['runSpec']:
+            print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+        if "execDepends" in desc['runSpec']:
+            print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
+
+    for field in desc:
+        if field in recognized_fields:
+            continue
+        else:
+            if field == "media":
+                print "Media type\t" + desc['media']
+            elif field == "size":
+                if desc["class"] == "file" or desc["class"] == "gtable":
+                    print "Size (bytes)\t" + str(desc['size'])
+                else:
+                    print "Size\t\t" + str(desc['size'])
+            elif field == "length":
+                if desc["class"] == "gtable":
+                    print "Size (rows)\t" + str(desc['length'])
+                else:
+                    print "Size\t\t" + str(desc['length'])
+            elif field == "columns":
+                coldescs = ""
+                for column in desc["columns"]:
+                    coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
+                print "Columns" + coldescs[:-1]
+            else: # Unhandled prettifying
+                print field + "\t\t" + json.dumps(desc[field])
+
+def print_job_desc(desc):
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace']
+
+    print "ID\t\t" + desc["id"]
+    print "Class\t\t" + desc["class"]
+    print "Project context\t" + desc["project"]
+    print "Workspace\t" + desc["workspace"]
+    if 'projectWorkspace' in desc:
+        print 'Cache workspace\t' + desc['projectWorkspace']
+        print 'GlobalWorkspace\t' + desc['globalWorkspace']
+    if "program" in desc:
+        print "Program\t\t" + desc["program"]
+    elif "app" in desc:
+        print "App\t\t" + desc["app"]
+    if desc['state'] in JOB_STATES:
+        print "State\t\t" + JOB_STATES[desc["state"]]
+    else:
+        print "State\t\t" + desc['state']
+    if desc["parentJob"] is None:
+        print "Parent job\tNone"
+    else:
+        print "Parent job\t" + json.dumps(desc["parentJob"])
+    print "Origin job\t" + desc["originJob"]
+    print "Function\t" + desc["function"]
+    if "originalInput" in desc:
+        print "Original Input\t" + json.dumps(desc["originalInput"])
+        print "Input\t\t" + json.dumps(desc["input"])
+        print "Output\t\t" + json.dumps(desc["output"])
+    if 'folder' in desc:
+        print 'Output folder\t' + desc['folder']
+    print "Launched by\t" + desc["launchedBy"]
+    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    if 'waitingOnChildren' in desc:
+        if len(desc['waitingOnChildren']) == 0:
+            print 'Pending subjobs\tNone'
+        else:
+            print 'Pending subjobs\t' + ', '.join(desc['waitingOnChildren'])
+    if "failureReason" in desc:
+        print "Failure reason\t" + desc["failureReason"]
+    if "failureMessage" in desc:
+        print textwrap.fill("Failure message\t" + desc["failureMessage"], subsequent_indent='\t\t', width=64)
+    if "stdout" in desc:
+        print "File of stdout\t" + str(desc['stdout'])
+    if 'stderr' in desc:
+        print 'File of stderr\t' + str(desc['stderr'])
+    for field in desc:
+        if field not in recognized_fields:
+            print field + '\t\t' + json.dumps(desc[field])
+
+def describe(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    desc = None
+    if args.dxid.startswith('job'):
+        try:
+            desc = dxpy.DXJob(args.dxid).describe()
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
+            return
+
+        if args.json:
+            print json.dumps(desc, indent=4)
+        if not args.json:
+            print_job_desc(desc)
+    elif args.dxid.startswith('project') or args.dxid.startswith('workspace'):
+        try:
+            desc = dxpy.get_handler(args.dxid).describe() # TODO get args!
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
+            return
+
+        if args.json:
+            print json.dumps(desc, indent=4)
+        else: # TODO: Finish adding flags, etc.
+            print_project_desc(desc)
+    elif args.dxid.startswith('user'):
+        try:
+            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', {"appsInstalled": True, "subscriptions": True})
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
+        if args.json:
+            print json.dumps(desc, indent=4)
+        else:
+            print "ID\t\t" + desc["id"]
+            print "Name\t\t" + desc["first"] + " " + desc["middle"] + " " + desc["last"]
+            if "email" in desc:
+                print "Email\t\t" + desc["email"]
+            if "appsInstalled" in desc:
+                if len(desc["appsInstalled"]) == 0:
+                    print "Apps installed\tNone"
+                else:
+                    print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
+    elif args.dxid.startswith('app'):
+        json_input = {}
+
+        try:
+            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+        except dxpy.DXAPIError as detail:
+            print detail
+            return
+
+        if args.json:
+            print json.dumps(desc, indent=4)
+        else:
+            print_app_desc(desc)
+    else:
+        json_input = {}
+        if args.project is not None:
+            json_input["project"] = args.project
+        elif 'DX_PROJECT_CONTEXT_ID' in os.environ:
+            json_input["project"] = os.environ["DX_PROJECT_CONTEXT_ID"]
+        if args.properties:
+            json_input["properties"] = True
+        if args.details:
+            json_input["details"] = True
+
+        try:
+            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
+            return
+
+        if args.json:
+            print json.dumps(desc, indent=4)
+        else:
+            # Must be a data object
+            print_data_obj_desc(desc)
+
+def get_properties_from_args(args_properties):
+    properties = None
+    if args_properties is not None:
+        if len(args_properties) % 2 != 0:
+            raise SyntaxError('Even number of key/value strings expected for --properties')
+        properties = {}
+        for i in range(len(args_properties)/2):
+            properties[ args_properties[2*i] ] = args_properties[2*i+1]
+    return properties
+
+def new_record(args):
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except:
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    init_from = None
+    if args.init is not None:
+        init_from = dxpy.DXRecord(args.init)
+
+    dxrecord = None
+    try:
+        dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
+                                     tags=args.tags, types=args.types, 
+                                     hidden=hidden, properties=properties,
+                                     details=details,
+                                     folder=args.folder,
+                                     parents=args.parents, init_from=init_from)
+        print dxrecord.get_id()
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def new_gtable(args):
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except:
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+
+    json_input = {}
+    if args.input is not None:
+        with open(args.input, 'r') as fd:
+            data = fd.read()
+            json_input = json.loads(data)
+
+    if 'columns' in json_input:
+        args.columns = json_input['columns']
+    elif args.columns is not None:
+        args.columns = json.loads(args.columns)
+    if 'indices' in json_input:
+        args.indices = json_input['indices']
+    elif args.indices is not None:
+        args.indices = json.loads(args.indices)
+
+    try:
+        dxgtable = dxpy.new_dxgtable(project=args.project, name=args.name,
+                                     tags=args.tags, types=args.types, 
+                                     hidden=hidden, properties=properties,
+                                     details=details,
+                                     folder=args.folder,
+                                     parents=args.parents,
+                                     columns=args.columns,
+                                     indices=args.indices)
+        print dxgtable.get_id()
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def set_visibility(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
+                           {"hidden": (args.visibility == 'hidden')})
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def set_details(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        args.details = json.loads(args.details)
+        dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
+                           args.details)
+    except ValueError:
+        print 'Error: details could not be parsed as JSON'
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def add_types(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
+                           {"types": args.types})
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def remove_types(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
+                           {"types": args.types})
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def add_tags(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        dxpy.get_handler(args.dxid).add_tags(args.tags)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def remove_tags(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        dxpy.get_handler(args.dxid).remove_tags(args.tags)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def rename(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        dxpy.get_handler(args.dxid).rename(args.name)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def set_properties(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    properties = get_properties_from_args(args.properties)
+    try:
+        dxpy.get_handler(args.dxid).set_properties(properties)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def unset_properties(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    properties = {}
+    for prop in args.properties:
+        properties[prop] = None
+    try:
+        dxpy.get_handler(args.dxid).set_properties(properties)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def head(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.target)
+    if id_or_none is not None:
+        args.target = id_or_none
+    if not args.target.startswith('gtable-') and \
+            not args.target.startswith('file-') and \
+            not args.target.startswith('table-'):
+        parser.exit(1, 'Error: The given object is of class ' + handler._class + ' but an object of class gtable, file, or table was expected.')
+
+    handler = dxpy.get_handler(args.target)
+
+    counter = 0
+    if args.lines > 0:
+        try:
+            if handler._class == 'file':
+                handler._bufsize = 1024*32;
+                for line in handler:
+                    print line
+                    counter += 1
+                    if counter == args.lines:
+                        break
+            else:
+                for line in handler.iterate_rows(end=args.lines):
+                    print BOLD + BLUE + str(line[0]) + ': ' + ENDC + json.dumps(line[1:])
+                    counter += 1
+                    if counter == args.lines:
+                        break
+        except StopIteration:
+            pass
+        except BaseException as detail:
+            parser.exit(1, str(detail) + "\n")
+
+def file_get(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.target)
+    if id_or_none is not None:
+        args.target = id_or_none
+
+    if args.stdout:
+        try:
+            dxfile = dxpy.DXFile(args.target)
+            for line in dxfile:
+                print line
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
+    else:
+        filename = args.output
+        if filename is None:
+            try:
+                filename = os.path.basename(dxpy.api.fileDescribe(args.target)['name'])
+            except KeyError:
+                filename = args.target
+        try:
+            dxpy.download_dxfile(args.target, filename)
+        except dxpy.DXAPIError as detail:
+            parser.exit(1, str(detail) + '\n')
+
+def file_put(args):
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except:
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+
+    print dxpy.upload_local_file(args.filename,
+                                 name=args.name,
+                                 tags=args.tags,
+                                 types=args.types,
+                                 hidden=hidden,
+                                 project=args.project,
+                                 properties=properties,
+                                 details=details,
+                                 folder=args.folder,
+                                 parents=args.parents).get_id()
+
+def gtable_get(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    gri_query = None
+    if args.gri is not None:
+        gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
+                                                      int(args.gri[1]),
+                                                      int(args.gri[2]),
+                                                      args.gri_mode,
+                                                      args.gri_name)
+    try:
+        result = dxpy.DXGTable(args.dxid).get_rows(query=gri_query, starting=args.starting,
+                                                   limit=args.limit)
+        if args.json:
+            print json.dumps(result, indent=4)
+            return
+        if result["next"] is not None:
+            print "Use as STARTING to continue query: " + str(result["next"])
+        print "# retrieved rows: " + str(result["length"])
+        for row in result["data"]:
+            print json.dumps(row, indent=4)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def find_jobs(args):
+    try:
+        describe = args.nodesc
+        if args.nodesc is True:
+            describe = {"io": False}
+        results = list(dxpy.find_jobs(launched_by=args.user, program=args.program, project=args.project,
+                                      state=args.state, origin_job=args.origin, parent_job=args.parent,
+                                      describe=describe,
+                                      created_after=args.created_after, created_before=args.created_before))
+
+        if args.json:
+            print json.dumps(results, indent=4)
+            return
+        if not args.nodesc:
+            for result in results:
+                print result["id"]
+        else:
+            job_ids = {}
+            job_children = {}
+            origin_jobs = []
+            for i in range(len(results)):
+                job_ids[results[i]['id']] = i
+                parent = results[i]['describe']['parentJob']
+                if parent is None:
+                    origin_jobs.append(i)
+                elif parent in job_children:
+                    job_children[parent].append(i)
+                else:
+                    job_children[parent] = [i]
+
+            def print_children(parent_id, num_tabs):
+                print_string = ""
+                for j in range(num_tabs):
+                    print_string += '\t'
+                print_string += parent_id + ' ' + \
+                    str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
+                    ' ('
+                state = results[ job_ids[parent_id] ]['describe']['state']
+                if state in JOB_STATES:
+                    print_string += JOB_STATES[state]
+                else:
+                    print_string += state
+                print_string += ')'
+                print print_string
+
+                if parent_id in job_children:
+                    for child in job_children[parent_id]:
+                        print_children(results[child]['id'], num_tabs + 1)
+
+            for origin_job in origin_jobs:
+                orig_id = results[origin_job]["id"]
+                print_children(orig_id, 0)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def find_data(args):
+    properties = get_properties_from_args(args.properties)
+    try:
+        results = list(dxpy.find_data_objects(classname=args.classname, state=args.state,
+                                              visibility=args.visibility, properties=properties,
+                                              name=args.name,
+                                              typename=args.type, tag=args.tag, link=args.link,
+                                              project=args.project, folder=args.folder,
+                                              recurse=args.recurse,
+                                              modified_after=args.mod_after, modified_before=args.mod_before,
+                                              created_after=args.created_after, created_before=args.created_before,
+                                              describe=args.describe))
+        if args.json:
+            print json.dumps(results, indent=4)
+            return
+        for result in results:
+            if args.describe is True:
+                print ""
+                print_data_obj_desc(result["describe"])
+            else:
+                print result["id"]
+        print ""
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def find_projects(args):
+    try:
+        results = list(dxpy.find_projects(name=args.name, level=args.level, describe=True))
+        if args.json:
+            print json.dumps(results, indent=4)
+            return
+        for result in results:
+            if args.describe is True:
+                print ""
+                print_project_desc(result["describe"])
+                print "Permissions\t" + result["level"]
+            else:
+                print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
+        print ""
+        return map(lambda result: result["id"], results)
+    except dxpy.DXAPIError as detail:
+        print detail
+
+def find_apps(args):
+    try:
+        results = list(dxpy.find_apps(name=args.name, category=args.category,
+                                      all_versions=args.all,
+                                      published=(not args.unpublished),
+                                      owner=args.owner, created_by=args.creator,
+                                      developer=args.developer,
+                                      created_after=args.created_after, created_before=args.created_before,
+                                      modified_after=args.mod_after, modified_before=args.mod_before,
+                                      describe=True))
+                                      
+        if args.json:
+            print json.dumps(results, indent=4)
+            return
+        for result in results:
+            print result["describe"]["name"] + " (v" + result["describe"]["version"] + ", " + result["id"] + ")"
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
+def close(args):
+    # Attempt to resolve name
+    id_or_none = get_id_from_path(args.dxid)
+    if id_or_none is not None:
+        args.dxid = id_or_none
+
+    try:
+        obj = dxpy.get_handler(args.dxid)
+        obj.close()
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+    if args.block:
+        obj._wait_on_close()
+
+def get_exec_inputs(inputs):
+    required_inputs = []
+    optional_inputs = []
+    for input_spec in inputs:
+        if "default" in input_spec or ("optional" in input_spec and input_spec["optional"] == True):
+            optional_inputs.append(input_spec)
+        else:
+            required_inputs.append(input_spec)
+    return required_inputs, optional_inputs
+
+def parse_bool(string):
+    if 'true'.startswith(string.lower()) or string == '1':
+        return True
+    elif 'false'.startswith(string.lower()) or string == '0':
+        return False
+    else:
+        raise ValueError()
+
+def parse_obj(string, klass):
+    id_or_none = get_id_from_path(string)
+    if id_or_none is not None:
+        string = id_or_none
+    if not string.startswith(klass):
+            raise TypeError('Error: The given object is of class ' + id_or_none[:id_or_none.find('-')] + ' but an object of class ' + klass + ' was expected.')
+    return {'$dnanexus_link': string}
+
+parse_input = {'boolean': parse_bool,
+               'string': (lambda string: string),
+               'float': (lambda string: float(string)),
+               'int': (lambda string: int(string)),
+               'hash': (lambda string: json.loads(string)),
+               'record': (lambda string: parse_obj(string, 'record')),
+               'gtable': (lambda string: parse_obj(string, 'gtable')),
+               'file': (lambda string: parse_obj(string, 'file')),
+               'program': (lambda string: parse_obj(string, 'program')),
+               'job': (lambda string: {'$dnanexus_link': string}),
+               'app': (lambda string: {'$dnanexus_link': string}),
+               'table': (lambda string: parse_obj(string, 'table'))}
+
+def get_input_array(param_desc):
+    in_class = param_desc['class'][6:]
+    input_array = []
+    print '\nEnter list of inputs (^D or empty string to finish) of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False) + ':\n'
+    try:
+        while True:
+            try:
+                user_input = raw_input(param_desc['name'] + '[' + str(len(input_array)) + "]: ")
+            except KeyboardInterrupt:
+                print ''
+                continue
+            if user_input == '':
+                return input_array
+            try:
+                input_array.append(parse_input[in_class](user_input))
+            except ValueError as details:
+                print str(details)
+                continue
+            except TypeError as details:
+                print str(details)
+                continue
+    except EOFError:
+        return input_array
+    except BaseException as details:
+        parser.exit(1, str(details) + '\n')
+
+def get_input_single(param_desc):
+    in_class = param_desc['class']
+    print '\nEnter input of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ':'
+    try:
+        while True:
+            try:
+                user_input = raw_input(param_desc['name'] + ': ')
+            except KeyboardInterrupt:
+                print ''
+                continue
+            try:
+                value = parse_input[in_class](user_input)
+            except ValueError as details:
+                print str(details)
+                continue
+            except TypeError as details:
+                print str(details)
+                continue
+            return value
+    except BaseException as details:
+        parser.exit(1, str(details) + '\n')    
+
+def get_input(input_hash, param):
+    if param['class'].startswith('array:'):
+        input_hash[param['name']] = get_input_array(param)
+    else:
+        input_hash[param['name']] = get_input_single(param)
+
+def get_optional_inputs(input_hash, optional_inputs):
+    while True:
+        print '\nSelect an optional parameter to set by its # (^D or empty string to finish):\n'
+        for i in range(len(optional_inputs)):
+            opt_str = ' [' + str(i) + '] ' + \
+                get_io_desc(optional_inputs[i], show_opt=False)
+            if optional_inputs[i]['name'] in input_hash:
+                opt_str += ' [=' + GREEN
+                if isinstance(input_hash[optional_inputs[i]['name']], basestring):
+                    is_string = True
+                    opt_str += '"'
+                else:
+                    is_string = False
+                opt_str += str(input_hash[optional_inputs[i]['name']])
+                if is_string:
+                    opt_str += '"'
+                opt_str += ENDC + ']'
+            print opt_str
+        print ""
+        try:
+            while True:
+                try:
+                    selected = raw_input('Optional param #: ')
+                except KeyboardInterrupt:
+                    print ''
+                    continue
+                if selected == '':
+                    return
+                try:
+                    opt_num = int(selected)
+                    if opt_num < 0 or opt_num >= len(optional_inputs):
+                        raise ValueError('Error: Selection is out of range')
+                    break
+                except ValueError as details:
+                    print str(details)
+                    continue
+            get_input(input_hash, optional_inputs[opt_num])
+        except EOFError:
+            return
+        except BaseException as details:
+            parser.exit(1, str(details) + '\n')
+
+def run(args):
+    handler = None
+    if args.alias is None:
+        # Attempt to resolve name
+        id_or_none = get_id_from_path(args.executable)
+        app_name_or_none = get_app_from_exec(args.executable)
+        if id_or_none is not None and app_name_or_none is None:
+            handler = dxpy.DXProgram(id_or_none)
+        elif id_or_none is None and app_name_or_none is not None:
+            handler = dxpy.DXApp(name=app_name_or_none)
+        elif id_or_none is not None and app_name_or_none is not None:
+            print 'Found both a matching program and app:'
+            print 'Program: ' + id_or_none
+            print 'App:     ' + 'app-' + app_name_or_none
+            parser.exit(1)
+        else:
+            try:
+                handler = dxpy.get_handler(args.executable)
+            except:
+                parser.exit(1, "No matches found for " + args.executable + '\n')
+    else:
+        handler = dxpy.DXApp(name=args.executable, alias=args.alias)
+    if args.folder is None:
+        args.folder = os.environ['DX_CLI_WD']
+    else:
+        args.folder = resolve_path(args.folder)
+    if args.input is not None:
+        try:
+            args.input = json.loads(args.input)
+        except:
+            with open(args.input, 'r') as fd:
+                data = fd.read()
+                try:
+                    args.input = json.loads(data)
+                except:
+                    parser.exit(1, 'Error: input could not be parsed as JSON nor interpreted as a file of JSON\n')
+    else:
+        print 'No input given.  Entering interactive mode for input selection.'
+        try:
+            # If running from the command-line (not in the shell),
+            # bring up the tab-completer
+            import rlcompleter
+            readline.parse_and_bind("tab: complete")
+
+            readline.set_completer_delims(" /")
+            # We don't want to assume that the line will start with
+            # commands, so make sure the completer is set correctly
+            readline.set_completer(DXObjectCompleter())
+        except:
+            pass
+
+        # Select input interactively
+        desc = handler.describe()
+        args.input = {}
+        required_inputs, optional_inputs = get_exec_inputs(desc["inputSpec"])
+        if len(required_inputs) > 0:
+            for param in required_inputs:
+                get_input(args.input, param)
+        if len(optional_inputs) > 0:
+            get_optional_inputs(args.input, optional_inputs)
+        # Reset the completer once we're done grabbing input
+        try:
+            readline.set_completer(DXCLICompleter())
+        except:
+            pass
+
+    if args.verbose:
+        print "Calling " + handler.get_id() + " with output folder " + args.folder + " with input:"
+        print json.dumps(args.input, indent=4)
+
+    try:
+        dxjob = handler.run(args.input, folder=args.folder)
+    except dxpy.DXAPIError as details:
+        parser.exit(1, str(details) + '\n')
+    if args.verbose:
+        print "Origin job: "
+    print dxjob.get_id()
+
+def kill(args):
+    try:
+        dxpy.api.jobTerminate(args.jobid)
+    except BaseException as details:
+        parser.exit(1, str(details) + '\n')
+
+def shell(orig_args):
+    global interactive
+    interactive = True
+
+    # WARNING: Following two lines may not be platform-independent and
+    # should be made so.
+    try:
+        import rlcompleter
+        readline.parse_and_bind("tab: complete")
+
+        readline.set_completer_delims(" /")
+
+        readline.set_completer(DXCLICompleter())
+    except:
+        pass
+
+    while True:
+        try:
+            cmd = raw_input('> ')
+        except EOFError:
+            print ""
+            exit(0)
+        except KeyboardInterrupt:
+            print ""
+            continue
+        if cmd == '':
+            continue
+        try:
+            args = parser.parse_args(shlex.split(cmd))
+            args.func(args)
+        except StopIteration:
+            exit(0)
+        except BaseException as details:
+            if str(details) != '1' and str(details) != '0':
+                print str(details) + '\n'
+
+def print_help(args):
+    parser.print_help()
+
+def exit_shell(args):
+    global interactive
+    if interactive:
+        raise StopIteration()
+
+global_args = argparse.ArgumentParser(add_help=False)
+global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
+
+parser = argparse.ArgumentParser(epilog='''README: If you have not already set environment variables in your shell to
+specify the API server's host and port and/or your default project, use the 'set' subcommand to set these values for
+the command-line client.  NOTE: Running 'dxclient login' at the moment will set your variables for using the 'outside'
+token.''', description='DNAne' + CYAN + BOLD + 'x' + ENDC + 'us Command-Line Client, API v1.0.0',
+usage='dx subcommand [options]')
+parser.add_argument('--version', action='version', version='dxclient 0.0.1')
+
+subparsers = parser.add_subparsers()
+
+parser_shell = subparsers.add_parser('sh', help='Run interactive shell')
+parser_shell.set_defaults(func=shell)
+
+parser_help = subparsers.add_parser('help', help='Display help message')
+parser_help.set_defaults(func=print_help)
+
+parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell')
+parser_exit.set_defaults(func=exit_shell)
+
+parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
+                                      description='Sets environment variables for communication with the API server')
+parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
+parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
+parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
+parser_setenv.set_defaults(func=setenv)
+
+parser_printenv = subparsers.add_parser('printenv', help='Prints all environment variables set for the CLI')
+parser_printenv.set_defaults(func=printenv)
+
+parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
+parser_login.add_argument('--token', help='Authentication token to use')
+parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
+parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
+parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
+parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
+parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
+parser_login.set_defaults(func=login)
+
+parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
+parser_logout.set_defaults(func=logout)
+
+parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
+                                  description='List folders and/or objects in a folder',
+                                  parents=[global_args])
+parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
+parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
+parser_ls.add_argument('--obj', help='show only objects', action='store_true')
+parser_ls.add_argument('--folders', help='show only folders', action='store_true')
+parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
+parser_ls.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
+parser_ls.set_defaults(func=ls)
+
+parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
+                                  description='Change the current working directory')
+parser_cd.add_argument('folder', help='Folder to which to change the current working directory, default is \"/\"', nargs='?', default='/')
+parser_cd.set_defaults(func=cd)
+
+parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
+                                   description='Print current working directory')
+parser_pwd.set_defaults(func=pwd)
+
+parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
+                                     description='Create a new folder')
+parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
+parser_mkdir.add_argument('folder', help='folder to create; full path is required')
+parser_mkdir.set_defaults(func=mkdir)
+
+parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
+                                     description='Remove a folder')
+parser_rmdir.add_argument('folder', help='folder to remove; full path is required')
+parser_rmdir.set_defaults(func=rmdir)
+
+parser_rm = subparsers.add_parser('rm', help='Remove objects',
+                                  description='Remove objects')
+parser_rm.add_argument('objects', help='object IDs to remove', nargs='*')
+parser_rm.add_argument('--all', help='Remove all objects in the current working directory.', action='store_true')
+parser_rm.add_argument('-f', '--force', help='Execute without asking for confirmations', action='store_true')
+parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory')
+parser_rm.set_defaults(func=rm)
+
+parser_mv = subparsers.add_parser('mv', help='Move a objects and/or folders',
+                                  description='Move a objects and/or folders')
+parser_mv.add_argument('sources', help='Object IDs and/or folder names to move', nargs='*')
+parser_mv.add_argument('destination', help='Folder into which to move the sources')
+parser_mv.set_defaults(func=mv)
+
+parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable')
+parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
+parser_head.add_argument('target', help='File or gtable ID or name to access')
+parser_head.set_defaults(func=head)
+
+parser_cat = subparsers.add_parser('cat', help='Print a file to stdout')
+parser_cat.add_argument('target', help='File ID or name to print to stdout')
+parser_cat.set_defaults(func=file_get, output=None, stdout=True)
+
+parser_file = subparsers.add_parser('file', help='Interact with remote files')
+subparsers_file = parser_file.add_subparsers()
+
+parser_file_get = subparsers_file.add_parser('get', help='Download a file')
+parser_file_get.add_argument('target', help='File ID or name to download')
+parser_file_get.add_argument('--stdout', help='Print the file to stdout', action='store_true')
+parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
+parser_file_get.set_defaults(func=file_get)
+
+parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
+subparsers_gtable = parser_gtable.add_subparsers()
+
+parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable',
+                                                 parents=[global_args])
+parser_gtable_get.add_argument('--starting', type=int, help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
+parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the number of rows returned')
+parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
+parser_gtable_get.add_argument('--gri_mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
+parser_gtable_get.add_argument('--gri_name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
+parser_gtable_get.add_argument('dxid', help='GTable ID from which to fetch rows')
+parser_gtable_get.set_defaults(func=gtable_get)
+
+parser_describe = subparsers.add_parser('describe', help='Describe a remote object', description='Describe a remote object',
+                                        parents=[global_args])
+parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
+parser_describe.add_argument('--properties', help='Include properties', action='store_true')
+parser_describe.add_argument('--details', help='Include details if available', action='store_true')
+parser_describe.add_argument('dxid', help='Object ID to describe')
+parser_describe.set_defaults(func=describe)
+
+parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object')
+parser_close.add_argument('dxid', help='Object ID to close')
+parser_close.add_argument('--block', help='Wait for the object to close', action='store_true')
+parser_close.set_defaults(func=close)
+
+parser_run = subparsers.add_parser('run', help='Run a program or app', description='Run a program or app')
+parser_run.add_argument('executable', help='Name or ID of program or app to run')
+parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help='Tag or version of the app to run')
+parser_run.add_argument('--folder', help='The folder in which to output the results.  By default, the current working directory will be used.')
+parser_run.add_argument('--input', help='The input to the program as JSON or a filename containing the JSON.  If this argument is not given, an interactive mode will be launched.')
+parser_run.add_argument('-v', '--verbose', help='Print additional information', action='store_true')
+parser_run.set_defaults(func=run)
+
+parser_kill = subparsers.add_parser('kill', help='Terminate a job that has not yet finished')
+parser_kill.add_argument('jobid', help='ID of the job to terminate')
+parser_kill.set_defaults(func=kill)
+
+parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
+                                    description='Search functionality over data objects, projects, and jobs')
+subparsers_find = parser_find.add_subparsers()
+
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args])
+parser_find_jobs.add_argument('--user', help='User ID who launched the job')
+parser_find_jobs.add_argument('--program', help='Program ID that job is running')
+parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
+parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
+parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
+parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
+parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
+parser_find_jobs.add_argument('--created_after', type=int, help='Timestamp after which the job was last created (negative number means ms in the past)')
+parser_find_jobs.add_argument('--created_before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
+parser_find_jobs.set_defaults(func=find_jobs)
+
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args])
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'program', 'table'], help='Data object class')
+parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
+parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
+parser_find_data.add_argument('--name', help='Name of the object')
+parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_find_data.add_argument('--type', help='Type of the data object')
+parser_find_data.add_argument('--tag', help='Tag of the data object')
+parser_find_data.add_argument('--link', help='Object ID that the data object links to')
+parser_find_data.add_argument('--project', help='Project with which to restrict the results')
+parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
+parser_find_data.add_argument('--mod_after', type=int, help='Timestamp after which the object was last modified (negative number means ms in the past)')
+parser_find_data.add_argument('--mod_before', type=int, help='Timestamp before which the object was last modified (negative number means ms in the past)')
+parser_find_data.add_argument('--created_after', type=int, help='Timestamp after which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--created_before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
+parser_find_data.set_defaults(func=find_data)
+
+parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args])
+parser_find_projects.add_argument('--name', help='Name of the project')
+parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
+parser_find_projects.add_argument('--describe', help='Also return descriptions of the projects', action='store_true')
+parser_find_projects.set_defaults(func=find_projects)
+
+parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args])
+parser_find_apps.add_argument('--name', help='Name of the app')
+parser_find_apps.add_argument('--category', help='Category of the app')
+parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
+parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
+parser_find_apps.add_argument('--owner', help='Owner of the app')
+parser_find_apps.add_argument('--creator', help='Creator of the app version')
+parser_find_apps.add_argument('--developer', help='Developer of the app')
+parser_find_apps.add_argument('--created_after', type=int, help='Timestamp after which the app version was created (negative number means ms in the past)')
+parser_find_apps.add_argument('--created_before', type=int, help='Timestamp before which the app version was created (negative number means ms in the past)')
+parser_find_apps.add_argument('--mod_after', type=int, help='Timestamp after which the app was last modified (negative number means ms in the past)')
+parser_find_apps.add_argument('--mod_before', type=int, help='Timestamp before which the app was last modified (negative number means ms in the past)')
+parser_find_apps.set_defaults(func=find_apps)
+
+parser_dataobject_args = argparse.ArgumentParser(add_help=False)
+parser_dataobject_args.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
+parser_dataobject_args.add_argument('--name', help='Name of the object')
+parser_dataobject_args.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_dataobject_args.add_argument('--types', nargs='+', help='Types of the data object')
+parser_dataobject_args.add_argument('--tags', nargs='+', help='Tags of the data object')
+parser_dataobject_args.add_argument('--project', help='Project (if not using the default project)')
+parser_dataobject_args.add_argument('--details', help='JSON to store as details')
+parser_dataobject_args.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
+parser_dataobject_args.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+
+parser_file_put = subparsers_file.add_parser('put', help='Upload a file', parents=[parser_dataobject_args])
+parser_file_put.add_argument('filename', help='local filename to upload')
+parser_file_put.set_defaults(func=file_put)
+
+parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
+subparsers_new = parser_new.add_subparsers()
+
+parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
+                                              parents=[parser_dataobject_args])
+parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
+parser_new_record.set_defaults(func=new_record)
+
+parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable', parents=[parser_dataobject_args])
+parser_new_gtable.add_argument('--columns', help='JSON for specifying the columns')
+parser_new_gtable.add_argument('--indices', help='JSON for specifying the indices')
+parser_new_gtable.add_argument('--input', help='a filename containing the JSON input to be used (currently only used for overriding --columns and --indices)')
+parser_new_gtable.set_defaults(func=new_gtable)
+
+parser_set_details = subparsers.add_parser('set_details', help='Set details on an object')
+parser_set_details.add_argument('dxid', help='Data object to modify')
+parser_set_details.add_argument('details', help='JSON to store as details')
+parser_set_details.set_defaults(func=set_details)
+
+parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object')
+parser_set_visibility.add_argument('dxid', help='Data object to modify')
+parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
+parser_set_visibility.set_defaults(func=set_visibility)
+
+parser_add_types = subparsers.add_parser('add_types', help='Add types to an object')
+parser_add_types.add_argument('dxid', help='Data object to modify')
+parser_add_types.add_argument('types', nargs='+', help='Types to add')
+parser_add_types.set_defaults(func=add_types)
+
+parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object')
+parser_remove_types.add_argument('dxid', help='Data object to modify')
+parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
+parser_remove_types.set_defaults(func=remove_types)
+
+parser_add_tags = subparsers.add_parser('add_tags', help='Add tags to an object')
+parser_add_tags.add_argument('dxid', help='Data object to modify')
+parser_add_tags.add_argument('tags', nargs='+', help='Tags to add')
+parser_add_tags.set_defaults(func=add_tags)
+
+parser_remove_tags = subparsers.add_parser('remove_tags', help='Remove tags from an object')
+parser_remove_tags.add_argument('dxid', help='Data object to modify')
+parser_remove_tags.add_argument('tags', nargs='+', help='Tags to remove')
+parser_remove_tags.set_defaults(func=remove_tags)
+
+parser_rename = subparsers.add_parser('rename', help='Rename an object')
+parser_rename.add_argument('dxid', help='Data object to modify')
+parser_rename.add_argument('name', help='New name')
+parser_rename.set_defaults(func=rename)
+
+parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object')
+parser_set_properties.add_argument('dxid', help='Data object to modify')
+parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_set_properties.set_defaults(func=set_properties)
+
+parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object')
+parser_unset_properties.add_argument('dxid', help='Data object to modify')
+parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
+parser_unset_properties.set_defaults(func=unset_properties)
+
+parser_api = subparsers.add_parser('api', help='Make an API call')
+parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
+parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
+parser_api.add_argument('input_json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
+parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
+parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
+parser_api.set_defaults(func=api)
+
+# "Execution" starts here
+
+args_list = sys.argv[1:]
+# Take in things from the pipe, respecting quoted substrings
+if not sys.stdin.isatty():
+    for line in sys.stdin.read().splitlines():
+        if len(line) > 0:
+            args = parser.parse_args(args_list + shlex.split(line))
+            args.func(args)
+    
+else:
+    if len(args_list) > 0:
+        args = parser.parse_args(args_list)
+        args.func(args)
+    else:
+        parser.print_help()
+        sys.exit(1)

@@ -241,6 +241,9 @@ class TestDXGTable(unittest.TestCase):
 
     def tearDown(self):
         try:
+            state = self.dxgtable._get_state()
+            if state == 'closing':
+                self.dxgtable._wait_on_close()
             self.dxgtable.remove()
         except:
             pass
