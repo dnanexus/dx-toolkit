@@ -1605,7 +1605,11 @@ def exit_shell(args):
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
 
-parser = argparse.ArgumentParser(epilog='README: If you have not already set environment variables in your shell to specify the API server\'s host and port and/or your default project, use the \'set\' subcommand to set these values for the command-line client.  NOTE: Running \'dxclient login\' at the moment will set your variables for using the \'outside\' token.', description='DNAne' + CYAN + BOLD + 'x' + ENDC + 'us Command-Line Client, API v1.0.0')
+parser = argparse.ArgumentParser(epilog='''README: If you have not already set environment variables in your shell to
+specify the API server's host and port and/or your default project, use the 'set' subcommand to set these values for
+the command-line client.  NOTE: Running 'dxclient login' at the moment will set your variables for using the 'outside'
+token.''', description='DNAne' + CYAN + BOLD + 'x' + ENDC + 'us Command-Line Client, API v1.0.0',
+usage='dx subcommand [options]')
 parser.add_argument('--version', action='version', version='dxclient 0.0.1')
 
 subparsers = parser.add_subparsers()
@@ -1812,7 +1816,7 @@ parser_file_put = subparsers_file.add_parser('put', help='Upload a file', parent
 parser_file_put.add_argument('filename', help='local filename to upload')
 parser_file_put.set_defaults(func=file_put)
 
-parser_new = subparsers.add_parser('new', help='Create a new data object')
+parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
@@ -1890,5 +1894,9 @@ if not sys.stdin.isatty():
             args.func(args)
     
 else:
-    args = parser.parse_args(args_list)
-    args.func(args)
+    if len(args_list) > 0:
+        args = parser.parse_args(args_list)
+        args.func(args)
+    else:
+        parser.print_help()
+        sys.exit(1)
