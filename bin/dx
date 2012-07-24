@@ -1365,14 +1365,6 @@ def print_desc(desc):
     else:
         print_data_obj_desc(desc)
 
-def describe_id(dxid, json_input={}):
-    try:
-        desc = dxpy.DXHTTPRequest('/' + dxid + '/describe', json_input)
-        print_desc(desc)
-        return
-    except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
-
 def describe(args):
     # Attempt to resolve name
     # First, if it looks like a hash id, do that.
@@ -1397,9 +1389,24 @@ def describe(args):
     if entity_results is None:
         if args.path[-1] == ':':
             # It is the project.
-            describe_id(project)
-            return
-    else:
+            try:
+                desc = dxpy.DXHTTPRequest('/' + project + '/describe', json_input)
+                found_match = True
+                print get_result_str()
+                print_desc(desc)
+            except:
+                pass
+        elif is_container_id(args.path):
+            try:
+                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', json_input)
+                found_match = True
+                print get_result_str()
+                print_desc(desc)
+            except:
+                pass
+
+    # Found data object ids
+    if entity_results is not None:
         if len(entity_results) > 0:
             found_match = True
         for result in entity_results:
