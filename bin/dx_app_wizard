@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys, os, subprocess
 import textwrap
 import json
 from optparse import OptionParser
@@ -116,6 +116,11 @@ print ''
 
 name = prompt_for_var('Program/App Name')
 
+#if os.path.exists(name) and not opts.overwrite:
+#    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
+if os.path.exists(name):
+    sys.stderr.write('''The directory %s already exists, please move it or specify a different name.''' % name)
+
 try:
     os.mkdir(name)
 except:
@@ -176,7 +181,6 @@ if input_spec:
         input_name = prompt_for_var('  Variable name (leave empty to finish entering input parameters)', allow_empty=True)
         if input_name == '':
             break
-        input_name = prompt_for_var('  Variable name')
         input_label = prompt_for_var('  Label', '')
 
         use_completer(class_completer)
@@ -321,6 +325,7 @@ dxpy.run()
 
     with open(os.path.join(name, 'src/code.py'), 'w') as code_file:
         code_file.write(code_template.format(app_name=name, app_version=version, inputs=inputs_str, outputs=outputs))
+    subprocess.call(["chmod", "+x", os.path.join(name, 'src/code.py')])
     manifest.append(os.path.join(name, 'src/code.py'))
 
 print "Created files:"
