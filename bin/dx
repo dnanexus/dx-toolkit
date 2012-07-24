@@ -1686,7 +1686,7 @@ def set_properties(args):
         else:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
-        dxpy.get_handler(args.dxid).set_properties(properties)
+        dxpy.get_handler(entity_result['id']).set_properties(properties)
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(str(details)) + '\n')
 
@@ -1710,7 +1710,7 @@ def unset_properties(args):
         else:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
-        dxpy.get_handler(args.dxid).set_properties(properties)
+        dxpy.get_handler(entity_result['id']).set_properties(properties)
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(str(details)) + '\n')
 
@@ -2347,7 +2347,7 @@ parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the
 parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
 parser_gtable_get.add_argument('--gri_mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
 parser_gtable_get.add_argument('--gri_name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
-parser_gtable_get.add_argument('dxid', help='GTable ID from which to fetch rows')
+parser_gtable_get.add_argument('path', help='GTable ID from which to fetch rows')
 parser_gtable_get.set_defaults(func=gtable_get)
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
@@ -2361,7 +2361,7 @@ parser_describe.add_argument('path', help='Object ID or path to an object (possi
 parser_describe.set_defaults(func=describe)
 
 parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object', prog='dx close')
-parser_close.add_argument('dxid', help='Object ID to close')
+parser_close.add_argument('path', help='Path to data object to close')
 parser_close.add_argument('--block', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
 
