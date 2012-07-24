@@ -1473,6 +1473,14 @@ def get_properties_from_args(args_properties):
             properties[ args_properties[2*i] ] = args_properties[2*i+1]
     return properties
 
+def new_project(args):
+    try:
+        resp = dxpy.DXHTTPRequest('/project/new',
+                                  {"name": args.name})
+        print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
+    except BaseException as details:
+        parser.exit(1, fill(str(details)) + '\n')
+
 def new_record(args):
     hidden = (args.visibility == 'hidden')
     properties = get_properties_from_args(args.properties)
@@ -2463,6 +2471,11 @@ parser_upload.set_defaults(func=upload)
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
+
+parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
+                                               prog='dx new project')
+parser_new_project.add_argument('name', help='Name of the new project')
+parser_new_project.set_defaults(func=new_project)
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               parents=[parser_dataobject_args],
