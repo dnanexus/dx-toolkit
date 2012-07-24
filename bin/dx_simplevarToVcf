@@ -5,7 +5,6 @@ import math
 from optparse import OptionParser
 import re
 
-#Usage: sample input: dx_Simplevar2Vcf
 def main():
 
     parser = OptionParser("Usage: %prog table_id output quality_filter")
@@ -71,7 +70,7 @@ def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequenc
     
     minimalColumns = ["chr", "lo", "hi", "type", "ref", "alt", "qual", "coverage", "genotypeQuality", "vcf_alt"]
     
-    if row[col["type"]] != "No-call":
+    if row[col["type"]] != "no-call" and row[col["type"]] != "ref":
     
         chr = str(row[col["chr"]])
         pos = row[col["lo"]]+1
@@ -96,10 +95,5 @@ def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequenc
                     if k not in minimalColumns:
                         outputFile.write("\t"+str(row[v]))
         outputFile.write("\n")
-    
-    
-    
-    
-    
     
 main()
