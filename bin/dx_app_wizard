@@ -109,8 +109,9 @@ print ''
 
 print BOLD + 'Basic Metadata' + ENDC
 print ''
-print textwrap.fill('''Please enter basic metadata fields that will be used to describe your program/app.  Optional
-fields are denoted by options with square brackets.  At the end of this wizard, the files necessary for building your
+print textwrap.fill('''Please enter basic metadata fields that will be used to
+describe your program/app.  Optional fields are denoted by options with square
+brackets.  At the end of this wizard, the files necessary for building your
 program or app will be generated from the answers you provide.''')
 print ''
 
@@ -119,7 +120,8 @@ name = prompt_for_var('Program/App Name')
 #if os.path.exists(name) and not opts.overwrite:
 #    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
 if os.path.exists(name):
-    sys.stderr.write('''The directory %s already exists, please move it or specify a different name.''' % name)
+    sys.stderr.write('''The directory %s already exists, please move it or specify a different name.\n''' % name)
+    sys.exit(1)
 
 try:
     os.mkdir(name)
@@ -178,25 +180,31 @@ if input_spec:
 
     while True:
         print ''
-        input_name = prompt_for_var('  Variable name (leave empty to finish entering input parameters)', allow_empty=True)
+        input_name = prompt_for_var('Variable name (leave empty to finish entering input parameters)', allow_empty=True)
         if input_name == '':
             break
-        input_label = prompt_for_var('  Label', '')
+        input_label = prompt_for_var('Label', '')
 
         use_completer(class_completer)
-        input_class = prompt_for_var('  Class')
+        print 'Your input variable must be of one of the following classes:'
+        print '''array:boolean  array:hash     array:string   float          program
+array:file     array:int      array:table    gtable         record
+array:float    array:program  boolean        hash           string
+array:gtable   array:record   file           int            table
+'''
+        input_class = prompt_for_var('Choose a class')
         use_completer()
 
-        optional = prompt_for_yn('  Optional parameter')
+        optional = prompt_for_yn('This is an optional parameter')
 
         default_val = None
         if optional and input_class in ['int', 'float', 'string', 'boolean']:
-            default_val = prompt_for_yn('  Provide default value')
+            default_val = prompt_for_yn('A default value should be provided')
             if default_val:
                 if input_class == 'boolean':
-                    default_val = prompt_for_var('    Default value', None, ['true', 'false'])
+                    default_val = prompt_for_var('  Default value', None, ['true', 'false'])
                 else:
-                    default_val = prompt_for_var('    Default value')
+                    default_val = prompt_for_var('  Default value')
 
                 if input_class == 'boolean':
                     default_val = (default_val == 'true')
@@ -233,13 +241,19 @@ if output_spec:
 
     while True:
         print ''
-        output_name = prompt_for_var('  Variable name (leave empty to finish entering output parameters)', allow_empty=True)
+        output_name = prompt_for_var('Variable name (leave empty to finish entering output parameters)', allow_empty=True)
         if output_name == '':
             break
-        output_label = prompt_for_var('  Label (optional)', '')
+        output_label = prompt_for_var('Label (optional)', '')
 
         use_completer(class_completer)
-        output_class = prompt_for_var('  Class')
+        print 'Your input variable must be of one of the following classes:'
+        print '''array:boolean  array:hash     array:string   float          program
+array:file     array:int      array:table    gtable         record
+array:float    array:program  boolean        hash           string
+array:gtable   array:record   file           int            table
+'''
+        output_class = prompt_for_var('Class')
         use_completer()
 
         # Fill in the output parameter's JSON
@@ -260,8 +274,9 @@ with open(os.path.join(name, 'dxprogram.json'), 'w') as prog_file:
 manifest.append(os.path.join(name, 'dxprogram.json'))
 
 print ''
-print textwrap.fill('''Your program specification has been written to the dxprogram.json file. You can specify more
-program options by editing this file directly (see http://develop.dnanexus.com/Developer-Portal for complete
+print textwrap.fill('''Your program specification has been written to the
+dxprogram.json file. You can specify more program options by editing this file
+directly (see http://develop.dnanexus.com/Developer-Portal for complete
 documentation).''')
 print ''
 if input_spec and output_spec:
@@ -269,12 +284,14 @@ if input_spec and output_spec:
         app_file.write(json.dumps(app_json, indent=4) + '\n')
     manifest.append(os.path.join(name, 'dxapp.json'))
 
-    print textwrap.fill('''Your app specification has been written to the dxapp.json file. You can specify more
-    app options by editing this file directly (see http://develop.dnanexus.com/Developer-Portal for complete
-    documentation).''')
+    print textwrap.fill('''Your app specification has been written to the
+dxapp.json file. You can specify more app options by editing this file directly
+(see http://develop.dnanexus.com/Developer-Portal for complete
+documentation).''')
 else:
-    print textwrap.fill('''To auto-generate the app specification file (dxapp.json), please re-run this wizard and
-    provide specifications for your app's inputs and outputs.''')
+    print textwrap.fill('''To auto-generate the app specification file
+(dxapp.json), please re-run this wizard and provide specifications for your
+app's inputs and outputs.''')
     print ''
 
 for subdir in 'src', 'test', 'resources':
@@ -294,7 +311,7 @@ if interpreter == 'python2.7':
 import dxpy
 
 @dxpy.entry_point('main')
-def main({inputs}**kwargs):
+def main({inputs}):
     # Please fill in your application code here.
     return {outputs}
 
@@ -311,12 +328,18 @@ dxpy.run()
                 continue
             inputs.append(input_param["name"]) 
 
-        # Then, add keyword args (those which have defaults)
+        # Then, add keyword args
         for input_param in program_json["inputSpec"]:
+            if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
+                continue
             if "default" in input_param:
                 inputs.append("{name}={default}".format(name=input_param["name"], default=input_param["default"]))
-    if len(inputs) > 0:
-        inputs_str = ", ".join(inputs) + ", "
+            else:
+                inputs.append("{name}=None".format(name=input_param["name"]))
+        if len(inputs) > 0:
+            inputs_str = ", ".join(inputs)
+    else:
+        inputs_str = "**kwargs"
 
     if "outputSpec" in program_json:
         outputs = {output["name"]: None for output in program_json["outputSpec"]}
