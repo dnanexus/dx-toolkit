@@ -1229,7 +1229,7 @@ def print_app_desc(desc):
             print field + '\t\t' + json.dumps(desc[field])
 
 def print_data_obj_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy']
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     if 'project' in desc:
@@ -1255,6 +1255,8 @@ def print_data_obj_desc(desc):
     if 'links' in desc:
         print "Outgoing links\t" + json.dumps(desc["links"])
     print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+    if 'createdBy' in desc:
+        print "Created by\t" + desc['createdBy']['user']
     print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
     if "title" in desc:
         print "Title\t\t" + desc["title"]
@@ -1775,17 +1777,28 @@ def upload(args):
             details = json.loads(args.details)
         except:
             parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    if args.name is None:
+        args.name = os.path.basename(args.filename)
 
-    print dxpy.upload_local_file(args.filename,
-                                 name=args.name,
-                                 tags=args.tags,
-                                 types=args.types,
-                                 hidden=hidden,
-                                 project=args.project,
-                                 properties=properties,
-                                 details=details,
-                                 folder=args.folder,
-                                 parents=args.parents).get_id()
+    try:
+        dxfile = dxpy.upload_local_file(args.filename,
+                                        name=args.name,
+                                        tags=args.tags,
+                                        types=args.types,
+                                        hidden=hidden,
+                                        project=args.project,
+                                        properties=properties,
+                                        details=details,
+                                        folder=args.folder,
+                                        parents=args.parents)
+        if args.id_only:
+            print dxfile.get_id()
+        else:
+            if not args.no_block:
+                dxfile._wait_on_close()
+            print_desc(dxfile.describe(incl_properties=True, incl_details=True))
+    except BaseException as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def gtable_get(args):
     # Attempt to resolve name
@@ -2444,6 +2457,8 @@ parser_dataobject_args.add_argument('--folder', help='Folder path with which to 
 
 parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
+parser_upload.add_argument('--id_only', help='Print ID of the file object instead of the full description', action='store_true')
+parser_upload.add_argument('--no_block', help='Do not block until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
