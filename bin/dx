@@ -565,7 +565,7 @@ def login(args):
     if args.host is not None or args.port is not None:
         authserver = 'http://' + args.host
         authserver += ':' + str(args.port)
-        print 'Logging into ' + authserver
+        print 'Acquiring credentials from ' + authserver
 
         username = raw_input('Username: ')
         password = getpass.getpass()
@@ -583,7 +583,7 @@ def login(args):
         sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
     elif args.token is None:
         authserver = 'https://auth.dnanexus.com'
-        print 'Logging into ' + authserver
+        print 'Acquiring credentials from ' + authserver
 
         try:
             username = raw_input('Username: ')
@@ -674,7 +674,7 @@ def prompt_for_var(prompt_str, env_var_str):
         elif default is not None:
             return default
 
-def pick_and_set_project(save):
+def pick_and_set_project(args):
     try:
         results = list(dxpy.find_projects(describe=True))
     except BaseException as details:
@@ -699,8 +699,8 @@ def pick_and_set_project(save):
         default)
 
     print 'Setting current project to: ' + results[choice]['describe']['name']
-    set_project(projects[choice], save)
-    set_wd('/', save)
+    set_project(projects[choice], not state['interactive'])
+    set_wd('/', not state['interactive'])
 
 def setenv(args):
     if not state['interactive']:
@@ -717,15 +717,25 @@ def setenv(args):
         set_api(api_protocol, api_host, api_port, args.save)
 
     if args.projects:
-        pick_and_set_project(args.save)
+        pick_and_set_project(args)
 
-def printenv(args):
-    print "Auth token used\t\t" + str(json.loads(os.environ.get("DX_SECURITY_CONTEXT", "{\"auth_token\": null}"))["auth_token"])
-    print "API server protocol\t" + str(os.environ.get("DX_APISERVER_PROTOCOL"))
-    print "API server host\t\t" + str(os.environ.get("DX_APISERVER_HOST"))
-    print "API server port\t\t" + str(os.environ.get("DX_APISERVER_PORT"))
-    print "Current workspace\t" + str(os.environ.get("DX_PROJECT_CONTEXT_ID"))
-    print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
+def env(args):
+    if args.bash:
+        if 'DX_SECURITY_CONTEXT' in os.environ:
+            print "export DX_SECURITY_CONTEXT='" + os.environ['DX_SECURITY_CONTEXT'] + "'"
+        if 'DX_APISERVER_PROTOCOL' in os.environ:
+            print "export DX_APISERVER_PROTOCOL=" + os.environ['DX_APISERVER_PROTOCOL']
+        if 'DX_APISERVER_HOST' in os.environ:
+            print "export DX_APISERVER_HOST=" + os.environ['DX_APISERVER_HOST']
+        if 'DX_APISERVER_PORT' in os.environ:
+            print "export DX_APISERVER_PORT=" + os.environ['DX_APISERVER_PORT']
+    else:
+        print "Auth token used\t\t" + str(json.loads(os.environ.get("DX_SECURITY_CONTEXT", "{\"auth_token\": null}"))["auth_token"])
+        print "API server protocol\t" + str(os.environ.get("DX_APISERVER_PROTOCOL"))
+        print "API server host\t\t" + str(os.environ.get("DX_APISERVER_HOST"))
+        print "API server port\t\t" + str(os.environ.get("DX_APISERVER_PORT"))
+        print "Current workspace\t" + str(os.environ.get("DX_PROJECT_CONTEXT_ID"))
+        print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
 
 def pwd(args):
     print os.environ['DX_CLI_WD']
@@ -972,10 +982,15 @@ def mv(args):
             parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.\n')
 
         if src_result is None:
-            dxpy.DXHTTPRequest('/' + src_proj + '/renameFolder',
-                               {"folder": src_path,
-                                "newpath": dest_path})
-            return
+            if src_path == '/':
+                parser.exit(1, textwrap.fill('Cannot rename root folder; to rename the project, use the "dx rename" subcommand.', width=80) + '\n')
+            try:
+                dxpy.DXHTTPRequest('/' + src_proj + '/renameFolder',
+                                   {"folder": src_path,
+                                    "newpath": dest_path})
+                return
+            except BaseException as details:
+                parser.exit(1, str(details) + '\n')
         else:
             try:
                 if src_result['describe']['folder'] != dest_folder:
@@ -994,7 +1009,7 @@ def mv(args):
     for source in args.sources:
         src_proj, src_folderpath, src_result = resolve_existing_path(source)
         if src_proj != dest_proj:
-            parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".\n')
+            parser.exit(1, textwrap.fill('Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".', width=80) + '\n')
 
         if src_result is None:
             src_folders.append(src_folderpath)
@@ -1004,6 +1019,80 @@ def mv(args):
         dxpy.DXHTTPRequest('/' + src_proj + '/move',
                            {"objects": src_objects,
                             "folders": src_folders,
+                            "destination": dest_path})
+    except BaseException as detail:
+        parser.exit(1, str(detail) + '\n')
+
+# ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
+def cp(args):
+    try:
+        dest_proj, dest_path, none = resolve_path_with_project(args.destination, 'folder')
+        dx_dest = dxpy.get_handler(dest_proj)
+        dx_dest.list_folder(folder=dest_path, only='folders')
+    except:
+        # Destination folder path is new => renaming
+        if len(args.sources) != 1:
+            # Can't rename more than one object
+            parser.exit(1, 'The destination folder does not exist\n')
+        last_slash_pos = get_last_pos_of_char('/', dest_path)
+        if last_slash_pos == 0:
+            dest_folder = '/'
+        else:
+            dest_folder = dest_path[:last_slash_pos]
+        dest_name = dest_path[last_slash_pos + 1:].replace('\/', '/')
+        try:
+            dx_dest.list_folder(folder=dest_folder, only='folders')
+        except:
+            parser.exit(1, 'The destination folder does not exist\n')
+
+        # Clone and rename either the data object or the folder
+        # src_result is None if it could not be resolved to an object
+        src_proj, src_path, src_result = resolve_existing_path(args.sources[0])
+
+        if src_proj == dest_proj:
+            parser.exit(1, 'Using \"cp\" for copying something to a destination inside the same project is unsupported.\n')
+
+        if src_result is None:
+            contents = dxpy.DXHTTPRequest('/' + src_proj + '/listFolder',
+                                          {"folder": src_path,
+                                           "includeHidden": True})
+            dxpy.DXHTTPRequest('/' + dest_proj + '/newFolder',
+                               {"folder": dest_path})
+            dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                               {"folders": [contents['folders']],
+                                "objects": (lambda result: result['id'], contents),
+                                "project": dest_proj,
+                                "destination": dest_path})
+            return
+        else:
+            try:
+                dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                                   {"objects": [src_result['id']],
+                                    "project": dest_proj,
+                                    "destination": dest_folder})
+                dxpy.DXHTTPRequest('/' + src_result['id'] + '/rename',
+                                   {"project": dest_proj,
+                                    "name": dest_name})
+                return
+            except BaseException as details:
+                parser.exit(1, str(details) + '\n')
+
+    src_objects = []
+    src_folders = []
+    for source in args.sources:
+        src_proj, src_folderpath, src_result = resolve_existing_path(source)
+        if src_proj == dest_proj:
+            parser.exit(1, 'Using \"cp\" for copying something to a destination inside the same project is unsupported.\n')
+
+        if src_result is None:
+            src_folders.append(src_folderpath)
+        else:
+            src_objects.append(src_result['id'])
+    try:
+        dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                           {"objects": src_objects,
+                            "folders": src_folders,
+                            "project": dest_proj,
                             "destination": dest_path})
     except BaseException as detail:
         parser.exit(1, str(detail) + '\n')
@@ -1448,6 +1537,18 @@ def set_visibility(args):
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
+def get_details(args):
+    # Attempt to resolve name
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+
+    try:
+        print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
+    except dxpy.DXAPIError as detail:
+        parser.exit(1, str(detail) + '\n')
+
 def set_details(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
@@ -1534,8 +1635,15 @@ def rename(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
-    if entity_result is None and project is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+    if entity_result is None and not is_container_id(args.path):
+        if project is None:
+            parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        elif folderpath != None and folderpath != '/':
+            parser.exit(1,
+                        'Could not resolve \"' + args.path + \
+                            '''\" to an existing data object or folder; if you
+were attempting to refer to a project, append a colon ":" to indicate that it
+is a project.\n''')
 
     try:
         if entity_result is not None:
@@ -2112,13 +2220,13 @@ parser.add_argument('--version', action='version', version='dxclient 0.0.1')
 
 subparsers = parser.add_subparsers()
 
-parser_shell = subparsers.add_parser('sh', help='Run interactive shell')
+parser_shell = subparsers.add_parser('sh', help='Run interactive shell', prog='dx sh')
 parser_shell.set_defaults(func=shell)
 
-parser_help = subparsers.add_parser('help', help='Display help message')
+parser_help = subparsers.add_parser('help', help='Display help message', prog='dx help')
 parser_help.set_defaults(func=print_help)
 
-parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell')
+parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', prog='dx exit')
 parser_exit.set_defaults(func=exit_shell)
 
 parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
@@ -2128,10 +2236,11 @@ parser_setenv.add_argument('--save', help='Save settings for future sessions.  O
 parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
 parser_setenv.set_defaults(func=setenv)
 
-parser_printenv = subparsers.add_parser('printenv', help='Prints all environment variables set for the CLI')
-parser_printenv.set_defaults(func=printenv)
+parser_env = subparsers.add_parser('env', help='Prints all environment variables set for the CLI', prog='dx env')
+parser_env.add_argument('--bash', help='Prints a list of bash commands to export the environment variables', action='store_true')
+parser_env.set_defaults(func=env)
 
-parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials')
+parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
 parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
@@ -2140,12 +2249,18 @@ parser_login.add_argument('--noprojects', dest='projects', help='Do not print av
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.set_defaults(func=login)
 
-parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials', description='Log out and remove credentials')
+parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials',
+                                      description='Log out and remove credentials',
+                                      prog='dx logout')
 parser_logout.set_defaults(func=logout)
+
+parser_select = subparsers.add_parser('select', help='List and select and project to switch to',
+                                      prog='dx select')
+parser_select.set_defaults(func=pick_and_set_project, save=False)
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
                                   description='List folders and/or objects in a folder',
-                                  parents=[global_args])
+                                  parents=[global_args], prog='dx ls')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
@@ -2155,50 +2270,57 @@ parser_ls.add_argument('path', help='Folder (possibly in another project) to lis
 parser_ls.set_defaults(func=ls)
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
-                                  description='Change the current working directory')
+                                  description='Change the current working directory', prog='dx cd')
 parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
 parser_cd.set_defaults(func=cd)
 
 parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
-                                   description='Print current working directory')
+                                   description='Print current working directory', prog='dx pwd')
 parser_pwd.set_defaults(func=pwd)
 
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
-                                     description='Create a new folder')
+                                     description='Create a new folder', prog='dx mkdir')
 parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
 parser_mkdir.add_argument('path', help='Path to a folder to create; full path is required')
 parser_mkdir.set_defaults(func=mkdir)
 
 parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
-                                     description='Remove a folder')
+                                     description='Remove a folder', prog='dx rmdir')
 parser_rmdir.add_argument('path', help='Path to a folder to remove; full path is required')
 parser_rmdir.set_defaults(func=rmdir)
 
 parser_rm = subparsers.add_parser('rm', help='Remove objects',
-                                  description='Remove objects')
+                                  description='Remove objects', prog='dx rm')
 parser_rm.add_argument('paths', help='Paths to remove', nargs='*')
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
 
-parser_mv = subparsers.add_parser('mv', help='Move a objects and/or folders',
-                                  description='Move a objects and/or folders')
-parser_mv.add_argument('sources', help='Object IDs and/or folder names to move', nargs='*')
+parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside a single project',
+                                  description='Move objects and/or folders inside a single project.',
+                                  prog='dx mv')
+parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='*')
 parser_mv.add_argument('destination', help='Folder into which to move the sources')
 parser_mv.set_defaults(func=mv)
 
-parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable')
+parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders between different projects',
+                                  description='Copy objects and/or folders between different projects.  Folders will automatically be copied recursively.', prog='dx cp')
+parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='*')
+parser_cp.add_argument('destination', help='Folder into which to copy the sources')
+parser_cp.set_defaults(func=cp)
+
+parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable', prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
 parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
 
-parser_cat = subparsers.add_parser('cat', help='Print a file to stdout')
+parser_cat = subparsers.add_parser('cat', help='Print a file to stdout', prog='dx cat')
 parser_cat.add_argument('path', help='File ID or name to print to stdout')
 parser_cat.set_defaults(func=file_get, output=None, stdout=True)
 
-parser_file = subparsers.add_parser('file', help='Interact with remote files')
+parser_file = subparsers.add_parser('file', help='Interact with remote files', prog='dx file')
 subparsers_file = parser_file.add_subparsers()
 
-parser_file_get = subparsers_file.add_parser('get', help='Download a file')
+parser_file_get = subparsers_file.add_parser('get', help='Download a file', prog='dx file get')
 parser_file_get.add_argument('path', help='File ID or name to download')
 parser_file_get.add_argument('--stdout', help='Print the file to stdout', action='store_true')
 parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
@@ -2208,7 +2330,8 @@ parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtabl
 subparsers_gtable = parser_gtable.add_subparsers()
 
 parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable',
-                                                 parents=[global_args])
+                                                 parents=[global_args],
+                                                 prog='dx gtable get')
 parser_gtable_get.add_argument('--starting', type=int, help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
 parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the number of rows returned')
 parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
@@ -2217,20 +2340,22 @@ parser_gtable_get.add_argument('--gri_name', help='Override the default name of 
 parser_gtable_get.add_argument('dxid', help='GTable ID from which to fetch rows')
 parser_gtable_get.set_defaults(func=gtable_get)
 
-parser_describe = subparsers.add_parser('describe', help='Describe a remote object', description='Describe a remote object',
-                                        parents=[global_args])
+parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
+                                        description='Describe a remote object',
+                                        parents=[global_args],
+                                        prog='dx describe')
 parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
 parser_describe.add_argument('--properties', help='Include properties', action='store_true')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
 parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
 parser_describe.set_defaults(func=describe)
 
-parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object')
+parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object', prog='dx close')
 parser_close.add_argument('dxid', help='Object ID to close')
 parser_close.add_argument('--block', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
 
-parser_run = subparsers.add_parser('run', help='Run a program or app', description='Run a program or app')
+parser_run = subparsers.add_parser('run', help='Run a program or app', description='Run a program or app', prog='dx run')
 parser_run.add_argument('path', help='Name or ID of program or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help='Tag or version of the app to run')
 parser_run.add_argument('--folder', help='The folder in which to output the results.  By default, the current working directory will be used.')
@@ -2238,15 +2363,15 @@ parser_run.add_argument('--input', help='The input to the program as JSON or a f
 parser_run.add_argument('-v', '--verbose', help='Print additional information', action='store_true')
 parser_run.set_defaults(func=run)
 
-parser_kill = subparsers.add_parser('kill', help='Terminate a job that has not yet finished')
+parser_kill = subparsers.add_parser('kill', help='Terminate a job that has not yet finished', prog='dx kill')
 parser_kill.add_argument('jobid', help='ID of the job to terminate')
 parser_kill.set_defaults(func=kill)
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
-                                    description='Search functionality over data objects, projects, and jobs')
+                                    description='Search functionality over data objects, projects, and jobs', prog='dx find')
 subparsers_find = parser_find.add_subparsers()
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args])
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args], prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--program', help='Program ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -2258,7 +2383,7 @@ parser_find_jobs.add_argument('--created_after', type=int, help='Timestamp after
 parser_find_jobs.add_argument('--created_before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
 parser_find_jobs.set_defaults(func=find_jobs)
 
-parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args])
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'program', 'table'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
@@ -2277,12 +2402,12 @@ parser_find_data.add_argument('--created_before', type=int, help='Timestamp befo
 parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
 parser_find_data.set_defaults(func=find_data)
 
-parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args])
+parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args], prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
 parser_find_projects.set_defaults(func=find_projects)
 
-parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args])
+parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args], prog='dx find apps')
 parser_find_apps.add_argument('--name', help='Name of the app')
 parser_find_apps.add_argument('--category', help='Category of the app')
 parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
@@ -2307,7 +2432,7 @@ parser_dataobject_args.add_argument('--details', help='JSON to store as details'
 parser_dataobject_args.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
 parser_dataobject_args.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 
-parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args])
+parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
 parser_upload.set_defaults(func=upload)
 
@@ -2315,62 +2440,70 @@ parser_new = subparsers.add_parser('new', help='Create a new data object', prog=
 subparsers_new = parser_new.add_subparsers()
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
-                                              parents=[parser_dataobject_args])
+                                              parents=[parser_dataobject_args],
+                                              prog='dx new record')
 parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
 parser_new_record.set_defaults(func=new_record)
 
-parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable', parents=[parser_dataobject_args])
+parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable', parents=[parser_dataobject_args], prog='dx new gtable')
 parser_new_gtable.add_argument('--columns', help='JSON for specifying the columns')
 parser_new_gtable.add_argument('--indices', help='JSON for specifying the indices')
 parser_new_gtable.add_argument('--input', help='a filename containing the JSON input to be used (currently only used for overriding --columns and --indices)')
 parser_new_gtable.set_defaults(func=new_gtable)
 
-parser_set_details = subparsers.add_parser('set_details', help='Set details on an object')
+parser_get_details = subparsers.add_parser('get_details', help='Get details of an object', prog="dx set_details")
+parser_get_details.add_argument('path', help='Data object to get details for')
+parser_get_details.set_defaults(func=get_details)
+
+parser_set_details = subparsers.add_parser('set_details', help='Set details on an object', prog="dx set_details")
 parser_set_details.add_argument('path', help='Data object to modify')
 parser_set_details.add_argument('details', help='JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
 
-parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object')
+parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object', prog='dx set_visibility')
 parser_set_visibility.add_argument('path', help='Data object to modify')
 parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
 parser_set_visibility.set_defaults(func=set_visibility)
 
-parser_add_types = subparsers.add_parser('add_types', help='Add types to an object')
+parser_add_types = subparsers.add_parser('add_types', help='Add types to an object', prog='dx add_types')
 parser_add_types.add_argument('path', help='Data object to modify')
 parser_add_types.add_argument('types', nargs='+', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
 
-parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object')
+parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object', prog='dx remove_types')
 parser_remove_types.add_argument('path', help='Data object to modify')
 parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
 
-parser_add_tags = subparsers.add_parser('add_tags', help='Add tags to an object')
+parser_add_tags = subparsers.add_parser('add_tags', help='Add tags to an object', prog='dx add_tags')
 parser_add_tags.add_argument('path', help='Data object to modify')
 parser_add_tags.add_argument('tags', nargs='+', help='Tags to add')
 parser_add_tags.set_defaults(func=add_tags)
 
-parser_remove_tags = subparsers.add_parser('remove_tags', help='Remove tags from an object')
+parser_remove_tags = subparsers.add_parser('remove_tags', help='Remove tags from an object', prog='dx remove_tags')
 parser_remove_tags.add_argument('path', help='Data object to modify')
 parser_remove_tags.add_argument('tags', nargs='+', help='Tags to remove')
 parser_remove_tags.set_defaults(func=remove_tags)
 
-parser_rename = subparsers.add_parser('rename', help='Rename an object')
-parser_rename.add_argument('path', help='Path to data object to modify')
+parser_rename = subparsers.add_parser('rename',
+                                      help='Rename a project, folder, or object',
+                                      description='Rename a project, folder, or object.  To indicate a project, append a colon character ":" after the project ID or name',
+                                      prog='dx rename')
+parser_rename.add_argument('path', help='Path to project, folder, or object to rename')
 parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
 
-parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object')
+parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object', prog='dx set_properties')
 parser_set_properties.add_argument('path', help='Data object to modify')
 parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
 parser_set_properties.set_defaults(func=set_properties)
 
-parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object')
+parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object', prog='dx unset_properties')
 parser_unset_properties.add_argument('path', help='Data object to modify')
 parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
 
-parser_api = subparsers.add_parser('api', help='Make an API call')
+parser_api = subparsers.add_parser('api', help='Make an API call', prog='dx api')
 parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
 parser_api.add_argument('method', help='a valid method for the resource as documented by the API document')
 parser_api.add_argument('input_json', nargs='?', default="{}", help='the JSON input for the method as documented by the API document (if not given, \"{}\" is used)')
