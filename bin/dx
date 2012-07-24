@@ -27,6 +27,9 @@ class ResultCounter():
         return ('\n' if self.counter > 1 else '') + UNDERLINE + 'Result ' + \
             str(self.counter) + ':' + ENDC
 
+def fill(string, width=80, **kwargs):
+    return textwrap.fill(string, width=width, break_on_hyphens=False, **kwargs)
+
 CYAN = '\033[36m'
 BLUE = '\033[34m'
 YELLOW = '\033[33m'
@@ -201,7 +204,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True):
     try:
         results = list(dxpy.find_projects(name=string, describe=True))
     except BaseException as details:
-        parser.exit(1, str(details) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
 
     if len(results) == 1:
         cached_project_names[string] = results[0]['id']
@@ -233,7 +236,7 @@ def resolve_path_with_project(path, expected=None):
     # Easy case: ":"
     if path == ':':
         if 'DX_PROJECT_CONTEXT_ID' not in os.environ:
-            parser.exit(1, 'Expected a project name or ID to the left of a colon or for a current project to be set\n')
+            parser.exit(1, fill('Expected a project name or ID to the left of a colon or for a current project to be set.') + '\n')
         return os.environ['DX_PROJECT_CONTEXT_ID'], '/', None
     # Second easy case: hash ID
     if is_container_id(path):
@@ -263,7 +266,7 @@ def resolve_path_with_project(path, expected=None):
         wd = '/'
         if path.startswith(':'):
             if 'DX_PROJECT_CONTEXT_ID' not in os.environ:
-                parser.exit(1, 'Expected a project name or ID to the left of a colon or for a current project to be set\n')
+                parser.exit(1, fill('Expected a project name or ID to the left of a colon or for a current project to be set') + '\n')
             project = os.environ['DX_PROJECT_CONTEXT_ID']
         else:
             # One nonempty string to the left of a colon
@@ -298,14 +301,14 @@ def resolve_existing_path(path, expected=None, only_one=True):
         try:
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', {})
         except BaseException as details:
-            parser.exit(1, str(details) + '\n')
+            parser.exit(1, fill(str(details)) + '\n')
         result = {"id": entity_name, "describe": desc}
         if only_one:
             return project, folderpath, result
         else:
             return project, folderpath, [result]
     else:
-        msg = 'Object of name ' + entity_name + ' could not be resolved in folder ' + folderpath + ' of project ID ' + project + '\n'
+        msg = fill('Object of name ' + entity_name + ' could not be resolved in folder ' + folderpath + ' of project ID ' + project) + '\n'
         # Probably an object
         try:
             results = list(dxpy.find_data_objects(project=project,
@@ -314,7 +317,7 @@ def resolve_existing_path(path, expected=None, only_one=True):
                                                   recurse=False,
                                                   describe=True))
         except BaseException as details:
-            parser.exit(1, str(details) + '\n')
+            parser.exit(1, fill(str(details)) + '\n')
         if len(results) == 0:
             # Could not find it as a data object.  If anything, it's a
             # folder.
@@ -678,11 +681,11 @@ def pick_and_set_project(args):
     try:
         results = list(dxpy.find_projects(describe=True))
     except BaseException as details:
-        parser.exit(1, 'Error when listing available projects: ' + str(details) + '\n')
+        parser.exit(1, fill('Error when listing available projects: ' + str(details)) + '\n')
 
     projects = map(lambda result: result['id'], results)
     if len(projects) == 0:
-        parser.exit(1, 'No projects to choose from.  Please create one first!\n')
+        parser.exit(1, 'No projects to choose from.  Please create one first using "dx new project".\n')
 
     # Eliminate current default if it is not a found project
     try:
@@ -758,8 +761,8 @@ def api(args):
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                   json_input)
         print json.dumps(resp, indent=4)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def get_app_from_path(path):
     alias = 'default'
@@ -773,7 +776,7 @@ def get_app_from_path(path):
     try:
         desc = dxpy.DXHTTPRequest('/app-' + path + '/' + alias + '/describe', {})
         return desc['name'], desc['version']
-    except dxpy.DXAPIError as detail:
+    except dxpy.DXAPIError as details:
         return None, None
 
 def cd(args):
@@ -796,7 +799,7 @@ def cd(args):
         dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
         dxproj.list_folder(folder=folderpath)
     except:
-        parser.exit(1, folderpath + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID'] + '\n')
+        parser.exit(1, fill(folderpath + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID']) + '\n')
         return
 
     set_wd(folderpath, not state['interactive'])
@@ -824,7 +827,7 @@ def ls(args):
     project, folderpath, entity_results = resolve_existing_path(args.path, only_one=False)
 
     if project is None:
-        parser.exit(1, 'Current project must be set or specified before any data can be listed\n')
+        parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
     dxproj = dxpy.get_handler(project)
     only = ""
     if args.obj and not args.folders and not args.full:
@@ -893,7 +896,7 @@ def ls(args):
 
                     last_name = current_name
         except BaseException as details:
-            parser.exit(1, str(details) + '\n')
+            parser.exit(1, fill(str(details)) + '\n')
     else:
         # We have results to describe
         for result in entity_results:
@@ -905,8 +908,8 @@ def mkdir(args):
     dxproj = dxpy.get_handler(project)
     try:
         dxproj.new_folder(folder=folderpath, parents=args.parents)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def rmdir(args):
     project, folderpath, none = resolve_path_with_project(args.path, expected='folder')
@@ -914,8 +917,8 @@ def rmdir(args):
     dxproj = dxpy.get_handler(project)
     try:
         dxproj.remove_folder(folder=folderpath)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def rm(args):
     projects = {}
@@ -923,7 +926,7 @@ def rm(args):
         # Resolve the path and add it to the list
         project, folderpath, entity_result = resolve_existing_path(path)
         if project is None:
-            parser.exit(1, 'Could not resolve to a project')
+            parser.exit(1, fill('Could not resolve \"' + path + '\" to a project') + '\n')
         if project not in projects:
             projects[project] = {"folders": [], "objects": []}
         if entity_result is None:
@@ -983,14 +986,14 @@ def mv(args):
 
         if src_result is None:
             if src_path == '/':
-                parser.exit(1, textwrap.fill('Cannot rename root folder; to rename the project, use the "dx rename" subcommand.', width=80) + '\n')
+                parser.exit(1, fill('Cannot rename root folder; to rename the project, use the "dx rename" subcommand.') + '\n')
             try:
                 dxpy.DXHTTPRequest('/' + src_proj + '/renameFolder',
                                    {"folder": src_path,
                                     "newpath": dest_path})
                 return
             except BaseException as details:
-                parser.exit(1, str(details) + '\n')
+                parser.exit(1, fill(str(details)) + '\n')
         else:
             try:
                 if src_result['describe']['folder'] != dest_folder:
@@ -1002,14 +1005,14 @@ def mv(args):
                                     "name": dest_name})
                 return
             except BaseException as details:
-                parser.exit(1, str(details) + '\n')
+                parser.exit(1, fill(str(details)) + '\n')
 
     src_objects = []
     src_folders = []
     for source in args.sources:
         src_proj, src_folderpath, src_result = resolve_existing_path(source)
         if src_proj != dest_proj:
-            parser.exit(1, textwrap.fill('Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".', width=80) + '\n')
+            parser.exit(1, fill('Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".') + '\n')
 
         if src_result is None:
             src_folders.append(src_folderpath)
@@ -1020,8 +1023,8 @@ def mv(args):
                            {"objects": src_objects,
                             "folders": src_folders,
                             "destination": dest_path})
-    except BaseException as detail:
-        parser.exit(1, str(detail) + '\n')
+    except BaseException as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
@@ -1050,7 +1053,7 @@ def cp(args):
         src_proj, src_path, src_result = resolve_existing_path(args.sources[0])
 
         if src_proj == dest_proj:
-            parser.exit(1, 'Using \"cp\" for copying something to a destination inside the same project is unsupported.\n')
+            parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
         if src_result is None:
             contents = dxpy.DXHTTPRequest('/' + src_proj + '/listFolder',
@@ -1075,14 +1078,14 @@ def cp(args):
                                     "name": dest_name})
                 return
             except BaseException as details:
-                parser.exit(1, str(details) + '\n')
+                parser.exit(1, fill(str(details)) + '\n')
 
     src_objects = []
     src_folders = []
     for source in args.sources:
         src_proj, src_folderpath, src_result = resolve_existing_path(source)
         if src_proj == dest_proj:
-            parser.exit(1, 'Using \"cp\" for copying something to a destination inside the same project is unsupported.\n')
+            parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
         if src_result is None:
             src_folders.append(src_folderpath)
@@ -1094,8 +1097,8 @@ def cp(args):
                             "folders": src_folders,
                             "project": dest_proj,
                             "destination": dest_path})
-    except BaseException as detail:
-        parser.exit(1, str(detail) + '\n')
+    except BaseException as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def get_io_desc(parameter, include_class=True, show_opt=True):
     desc = ""
@@ -1142,7 +1145,7 @@ def print_project_desc(desc):
     if "name" in desc:
         print "Name\t\t" + desc["name"]
     if 'description' in desc:
-        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+        print fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
     print "Owner\t\t" + desc["owner"]
     if 'protected' in desc:
         print "Protected\t" + json.dumps(desc["protected"])
@@ -1258,9 +1261,9 @@ def print_data_obj_desc(desc):
     if "subtitle" in desc:
         print "Subtitle\t\t" + desc["subtitle"]
     if "description" in desc:
-        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+        print fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
     if 'summary' in desc:
-        print textwrap.fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=64)
+        print fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=64)
     if 'access' in desc:
         print "Access\t\t" + json.dumps(desc["access"])
     if 'dxapi' in desc:
@@ -1343,7 +1346,7 @@ def print_job_desc(desc):
     if "failureReason" in desc:
         print "Failure reason\t" + desc["failureReason"]
     if "failureMessage" in desc:
-        print textwrap.fill("Failure message\t" + desc["failureMessage"], subsequent_indent='\t\t', width=64)
+        print fill("Failure message\t" + desc["failureMessage"], subsequent_indent='\t\t', width=64)
     if "stdout" in desc:
         print "File of stdout\t" + str(desc['stdout'])
     if 'stderr' in desc:
@@ -1368,7 +1371,7 @@ def describe_id(dxid, json_input={}):
         print_desc(desc)
         return
     except BaseException as details:
-        parser.exit(1, str(details) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
 
 def describe(args):
     # Attempt to resolve name
@@ -1434,7 +1437,7 @@ def describe(args):
                     print "Apps installed\tNone"
                 else:
                     print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
-        except dxpy.DXAPIError as detail:
+        except dxpy.DXAPIError as details:
             pass
 
     # Could be an org or team
@@ -1445,7 +1448,7 @@ def describe(args):
             print get_result_str()
             for field in desc:
                 print field + '\t\t' + json.dumps(desc[field])
-        except dxpy.DXAPIError as detail:
+        except dxpy.DXAPIError as details:
             pass
 
     if not found_match:
@@ -1483,8 +1486,8 @@ def new_record(args):
                                      folder=args.folder,
                                      parents=args.parents, init_from=init_from)
         print dxrecord.get_id()
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def new_gtable(args):
     hidden = (args.visibility == 'hidden')
@@ -1521,40 +1524,40 @@ def new_gtable(args):
                                      columns=args.columns,
                                      indices=args.indices)
         print dxgtable.get_id()
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def set_visibility(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID'), + '\n')
 
     try:
         dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setVisibility',
                            {"hidden": (args.visibility == 'hidden')})
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def get_details(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
     try:
         print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def set_details(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
     try:
         args.details = json.loads(args.details)
@@ -1562,41 +1565,41 @@ def set_details(args):
                            args.details)
     except ValueError:
         print 'Error: details could not be parsed as JSON'
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def add_types(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
     try:
         dxpy.DXHTTPRequest('/' + entity_result['id'] + '/addTypes',
                            {"types": args.types})
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def remove_types(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
     try:
         dxpy.DXHTTPRequest('/' + entity_result['id'] + '/removeTypes',
                            {"types": args.types})
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def add_tags(args):
     # Attempt to resolve name
     project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
 
     if entity_result is None and project is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
     try:
         if entity_result is not None:
@@ -1608,8 +1611,8 @@ def add_tags(args):
         else:
             dxpy.DXHTTPRequest('/' + project + '/addTags',
                                {"tags": args.tags})
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def remove_tags(args):
     # Attempt to resolve name
@@ -1628,8 +1631,8 @@ def remove_tags(args):
         else:
             dxpy.DXHTTPRequest('/' + project + '/removeTags',
                                {"tags": args.tags})
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def rename(args):
     # Attempt to resolve name
@@ -1655,8 +1658,8 @@ is a project.\n''')
         else:
             dxpy.DXHTTPRequest('/' + project + '/update',
                                {"name": args.name})
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def set_properties(args):
     # Attempt to resolve name
@@ -1677,8 +1680,8 @@ def set_properties(args):
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
         dxpy.get_handler(args.dxid).set_properties(properties)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def unset_properties(args):
     # Attempt to resolve name
@@ -1701,8 +1704,8 @@ def unset_properties(args):
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
         dxpy.get_handler(args.dxid).set_properties(properties)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def head(args):
     # Attempt to resolve name
@@ -1730,8 +1733,8 @@ def head(args):
                         break
         except StopIteration:
             pass
-        except BaseException as detail:
-            parser.exit(1, str(detail) + "\n")
+        except BaseException as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def file_get(args):
     # Attempt to resolve name
@@ -1745,16 +1748,16 @@ def file_get(args):
             dxfile = dxpy.DXFile(entity_result['id'])
             for line in dxfile:
                 print line
-        except dxpy.DXAPIError as detail:
-            parser.exit(1, str(detail) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
     else:
         filename = args.output
         if filename is None:
             filename = urllib.quote(entity_result['describe']['name'], safe='')
         try:
             dxpy.download_dxfile(entity_result['id'], filename)
-        except dxpy.DXAPIError as detail:
-            parser.exit(1, str(detail) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def upload(args):
     hidden = (args.visibility == 'hidden')
@@ -1803,8 +1806,8 @@ def gtable_get(args):
         print "# retrieved rows: " + str(result["length"])
         for row in result["data"]:
             print json.dumps(row, indent=4)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def find_jobs(args):
     try:
@@ -1858,8 +1861,8 @@ def find_jobs(args):
             for origin_job in origin_jobs:
                 orig_id = results[origin_job]["id"]
                 print_children(orig_id, 0)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def find_data(args):
     properties = get_properties_from_args(args.properties)
@@ -1883,8 +1886,8 @@ def find_data(args):
             else:
                 print result["id"]
         print ""
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def find_projects(args):
     try:
@@ -1897,8 +1900,8 @@ def find_projects(args):
             print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
         print ""
         return map(lambda result: result["id"], results)
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def find_apps(args):
     try:
@@ -1916,8 +1919,8 @@ def find_apps(args):
             return
         for result in results:
             print result["describe"]["name"] + " (v" + result["describe"]["version"] + ", " + result["id"] + ")"
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
 
 def close(args):
     # Attempt to resolve name
@@ -1929,8 +1932,8 @@ def close(args):
     try:
         obj = dxpy.get_handler(entity_result['id'], project=project)
         obj.close()
-    except dxpy.DXAPIError as detail:
-        parser.exit(1, str(detail) + '\n')
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
     if args.block:
         obj._wait_on_close()
 
@@ -1997,7 +2000,7 @@ def get_input_array(param_desc):
     except EOFError:
         return input_array
     except BaseException as details:
-        parser.exit(1, str(details) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
 
 def get_input_single(param_desc):
     in_class = param_desc['class']
@@ -2019,7 +2022,7 @@ def get_input_single(param_desc):
                 continue
             return value
     except BaseException as details:
-        parser.exit(1, str(details) + '\n')    
+        parser.exit(1, fill(str(details)) + '\n')
 
 def get_input(input_hash, param):
     if param['class'].startswith('array:'):
@@ -2067,7 +2070,7 @@ def get_optional_inputs(input_hash, optional_inputs):
         except EOFError:
             return
         except BaseException as details:
-            parser.exit(1, str(details) + '\n')
+            parser.exit(1, fill(str(details)) + '\n')
 
 def run(args):
     handler = None
@@ -2151,7 +2154,7 @@ def run(args):
     try:
         dxjob = handler.run(args.input, project=dest_proj, folder=dest_path)
     except dxpy.DXAPIError as details:
-        parser.exit(1, str(details) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
     if args.verbose:
         print "Origin job: "
     print dxjob.get_id()
@@ -2160,7 +2163,7 @@ def kill(args):
     try:
         dxpy.api.jobTerminate(args.jobid)
     except BaseException as details:
-        parser.exit(1, str(details) + '\n')
+        parser.exit(1, fill(str(details)) + '\n')
 
 def shell(orig_args):
     if state['interactive']:
