@@ -13,7 +13,7 @@ setup(
     license='as-is',
     packages = find_packages(),
     scripts = glob.glob('scripts/*.py'),
-    install_requires = ['requests',
-                        'futures',
-                        'ctypes-snappy'],
+    install_requires = ['requests==0.12.1',
+                        'futures==2.1.2',
+                        'ctypes-snappy==1.02'],
 )

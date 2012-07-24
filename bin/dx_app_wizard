@@ -134,6 +134,9 @@ if description != '':
 
 app_json = {
     "version": version,
+    "details": {
+        "contactUrl": "http://develop.dnanexus.com:443/Apps/" + name
+    }
 }
 
 class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',

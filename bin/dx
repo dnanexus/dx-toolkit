@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import sys, os, datetime, urlparse, requests, base64, getpass
+import urllib
 import argparse
 import shlex # respects quotes substrings when splitting
 import textwrap
+import re
 from requests.auth import HTTPBasicAuth
 
 import json
@@ -13,13 +15,24 @@ try:
 except ImportError:
     print 'readline module not available'
 
-interactive = False
+state = {"interactive": False}
+
+
+class ResultCounter():
+    def __init__(self):
+        self.counter = 0
+
+    def __call__(self):
+        self.counter += 1
+        return ('\n' if self.counter > 1 else '') + UNDERLINE + 'Result ' + \
+            str(self.counter) + ':' + ENDC
 
 CYAN = '\033[36m'
 BLUE = '\033[34m'
 YELLOW = '\033[33m'
 GREEN = '\033[32m'
 RED = '\033[31m'
+UNDERLINE = '\033[4m'
 BOLD = '\033[1m'
 ENDC = '\033[0m'
 
@@ -32,94 +45,418 @@ JOB_STATES = {'failed': BOLD + RED + 'failed' + ENDC,
               'waiting_on_outputs': YELLOW + 'waiting_on_outputs' + ENDC
               }
 
-def clean_folder_path(path):
-    folders = path.split('/')
+DATA_STATES = {'open': YELLOW + 'open' + ENDC,
+               'closing': YELLOW + 'open' + ENDC,
+               'closed': GREEN + 'closed' + ENDC
+               }
+
+data_obj_pattern = re.compile('^(record|table|gtable|program|file)-[0-9A-Za-z]{24}$')
+hash_pattern = re.compile('^(record|table|gtable|app|program|job|project|workspace|container|file)-[0-9A-Za-z]{24}$')
+nohash_pattern = re.compile('^(user|org|app|team)-')
+
+# TODO: Should we cache the user ID entered in the login phase?  or put it in an environment variable?
+
+# TODO: Concept of local profiles: default username, project, folder, set of aliases, option to save current state to a particular profile
+
+# The following caches project names to project IDs
+cached_project_names = {}
+# The following caches project IDs to a hash of folder paths to a hash of names to data object IDs
+cached_project_paths = {}
+# The following caches aliases that the user defines to a hash of {"project": project-ID, "id": object-ID} (with the "project" key optional)
+# TODO: Allow option for saving these aliases for a future session under a particular profile, perhaps
+cached_aliases = {}
+
+def is_hashid(string):
+    return hash_pattern.match(string) is not None
+
+def is_data_obj_id(string):
+    return data_obj_pattern.match(string) is not None
+
+def is_container_id(string):
+    return is_hashid(string) and (string.startswith('project-') or string.startswith('workspace-') or string.startswith('container-'))
+
+def is_nohash_id(string):
+    return nohash_pattern.match(string) is not None
+
+def escape_folder_str(string):
+    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:')
+
+def escape_name_str(string):
+    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('/', '\/')
+
+def unescape_folder_str(string):
+    return string.replace('\:', ':').replace('\ ', ' ').replace('\\\\', '\\')
+
+def unescape_name_str(string):
+    return string.replace('\:', ':').replace('\ ', ' ').replace('\/', '/').replace('\\\\', '\\')
+
+def get_last_pos_of_char(char, string):
+    pos = len(string)
+    while pos > 0:
+        pos = string[:pos].rfind(char)
+        if pos == -1:
+            return -1
+        num_backslashes = 0
+        test_index = pos - 1
+        while test_index >= 0 and string[test_index] == '\\':
+            num_backslashes += 1
+            test_index -= 1
+        if num_backslashes % 2 == 0:
+            return pos
+    return -1
+
+# Does not return the empty string
+def split_unescaped(char, string):
+    words = []
+    pos = len(string)
+    lastpos = pos
+    while pos >= 0:
+        pos = get_last_pos_of_char(char, string[:lastpos])
+        if pos >= 0:
+            if pos + 1 != lastpos:
+                words.append(string[pos + 1: lastpos])
+            lastpos = pos
+    if lastpos != 0:
+        words.append(string[:lastpos])
+    words.reverse()
+    return words
+
+# expected is one of "entity", "folder", or None
+def clean_folder_path(path, expected=None):
+    folders = split_unescaped('/', path)
+
+    if len(folders) == 0:
+        return '/', None
+
+    if expected == 'folder' or folders[-1] == '.' or folders[-1] == '..' or get_last_pos_of_char('/', path) == len(path) - 1:
+        entity_name = None
+    else:
+        entity_name = unescape_name_str(folders[-1])
+        folders = folders[:-1]
 
     sanitized_folders = []
 
     for folder in folders:
         if folder == '.':
             pass
-        elif folder == '..' and len(sanitized_folders) > 0:
-            sanitized_folders.pop()
+        elif folder == '..':
+            if len(sanitized_folders) > 0:
+                sanitized_folders.pop()
         else:
-            sanitized_folders.append(folder)
+            sanitized_folders.append(unescape_folder_str(folder))
 
-    newpath = ""
-    for folder in sanitized_folders:
-        if folder == '':
+    if len(sanitized_folders) == 0:
+        newpath = '/'
+    else:
+        newpath = ""
+        for folder in sanitized_folders:
+            newpath += '/' + folder
+
+    return newpath, entity_name
+
+# INPUTS
+# choices: list of strings that will be presented as choices
+# default: default index of choices
+# OUTPUTS
+# index of choices to be used
+def pick(choices, default=None):
+    for i in range(len(choices)):
+        print str(i) + ') ' + choices[i]
+    print ''
+    if default is not None:
+        prompt = 'Pick a numbered choice [' + str(default) + ']: '
+    else:
+        prompt = 'Pick a numbered choice: '
+    while True:
+        try: 
+            value = raw_input(prompt)
+        except KeyboardInterrupt:
+            print ''
             continue
-        newpath += '/' + folder
-    if newpath == "":
-        return '/'
-    return newpath
+        except EOFError:
+            print ''
+            parser.exit(1)
+        if default is not None and value == '':
+            return default
+        try:
+            choice = int(value)
+            if choice not in range(len(choices)):
+                raise IndexError()
+            return choice
+        except BaseException as details:
+            print str(details)
+            print 'Not a valid selection'
 
-def resolve_path_with_project(path):
-    substrings = path.split(':')
-    if len(substrings) > 2:
-        parser.exit(1, 'At most one colon expected in a path')
+# raw_string: escaped name string
+# is_error: exit parser if it cannot be resolved.  otherwise, return None
+def resolve_container_id_or_name(raw_string, is_error=False, unescape=True):
+    if unescape:
+        string = unescape_name_str(raw_string)
+    if is_container_id(string):
+        return string
+
+    if string in cached_project_names:
+        return cached_project_names[string]
+
+    try:
+        results = list(dxpy.find_projects(name=string, describe=True))
+    except BaseException as details:
+        parser.exit(1, str(details) + '\n')
+
+    if len(results) == 1:
+        cached_project_names[string] = results[0]['id']
+        return results[0]['id']
+    elif len(results) > 1:
+        print 'Found multiple projects with name ' + string
+        choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
+        return results[choice]['id']
+    else:
+        if is_error:
+            parser.exit(1, 'Could not resolve container ID or name\n')
+        return None
+
+# INPUTS
+# - path: a path, e.g. "project-name:folder/path/objectname"
+# - expected: "folder" if only interested in a folder, "entity" if only interested in first-class entities
+#
+# OUTPUTS
+# - project: None if no current default project is found
+# - folderpath: folder path except for last name or None if path is a hash ID
+# - entity_name: sanitized name of entity or None if expected is "folder"
+#
+# Will fatally exit if:
+# - a colon is provided, but no project can be resolved
+# - expected="folder" but no project can be resolved
+# Will NOT fatally exit if:
+# - folder or path to object does not exist
+def resolve_path_with_project(path, expected=None):
+    # Easy case: ":"
+    if path == ':':
+        if 'DX_PROJECT_CONTEXT_ID' not in os.environ:
+            parser.exit(1, 'Expected a project name or ID to the left of a colon or for a current project to be set\n')
+        return os.environ['DX_PROJECT_CONTEXT_ID'], '/', None
+    # Second easy case: hash ID
+    if is_container_id(path):
+        return path, '/', None
+    elif is_hashid(path):
+        return os.environ.get('DX_PROJECT_CONTEXT_ID', None), None, path
+
+    project = None
+    wd = None
+
+    # Test for multiple colons
+    last_colon = get_last_pos_of_char(':', path)
+    if last_colon >= 0:
+        last_last_colon = get_last_pos_of_char(':', path[:last_colon])
+        if last_last_colon >= 0:
+            parser.exit(1, 'At most one colon expected in a path\n')
+
+    substrings = split_unescaped(':', path)
+
     if len(substrings) == 2:
-        project = substrings[0]
+        # project-name-or-id:folderpath/to/possible/entity
+        project = resolve_container_id_or_name(substrings[0], is_error=True)
         wd = '/'
+    elif get_last_pos_of_char(':', path) >= 0:
+        # :folderpath/to/possible/entity OR project-name-or-id:
+        # Colon is either at the beginning or at the end
+        wd = '/'
+        if path.startswith(':'):
+            if 'DX_PROJECT_CONTEXT_ID' not in os.environ:
+                parser.exit(1, 'Expected a project name or ID to the left of a colon or for a current project to be set\n')
+            project = os.environ['DX_PROJECT_CONTEXT_ID']
+        else:
+            # One nonempty string to the left of a colon
+            project = resolve_container_id_or_name(substrings[0], is_error=True)
+            return project, '/', None
     else:
-        project = None
+        # One nonempty string, no colon present, do NOT interpret as
+        # project
+        project = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+        if expected == 'folder' and project is None:
+            parser.exit(1, 'Could not resolve a project name or ID\n')
         wd = os.environ.get('DX_CLI_WD', '/')
-    folderpath = substrings[-1]
-    if folderpath.startswith('/'):
-        return project, clean_folder_path(folderpath)
-    else:
-        return project, clean_folder_path(wd + '/' + folderpath)
 
-def resolve_path(path):
-    wd = os.environ.get('DX_CLI_WD', '/')
-    if path.startswith('/'):
-        return clean_folder_path(path)
+    # Determine folderpath and entity_name if necessary
+    folderpath = substrings[-1]
+    folderpath, entity_name = clean_folder_path(wd + '/' + folderpath, expected)
+
+    return project, folderpath, entity_name
+
+# Returns either a list of results or a single result (depending on
+# how many is expected; if only one, then an interactive picking of a
+# choice will be initiated).
+# Output is of the form {"id": id, "describe": describe hash}
+# TODO: Allow arbitrary flags for the describe hash.
+def resolve_existing_path(path, expected=None, only_one=True):
+    project, folderpath, entity_name = resolve_path_with_project(path, expected)
+    if entity_name is None:
+        # Definitely a folder (or project)
+        # FIXME? Should I check that the folder exists if expected="folder"?
+        return project, folderpath, entity_name
+    elif is_hashid(entity_name):
+        try:
+            desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', {})
+        except BaseException as details:
+            parser.exit(1, str(details) + '\n')
+        result = {"id": entity_name, "describe": desc}
+        if only_one:
+            return project, folderpath, result
+        else:
+            return project, folderpath, [result]
     else:
-        return clean_folder_path(wd + '/' + path)
+        msg = 'Object of name ' + entity_name + ' could not be resolved in folder ' + folderpath + ' of project ID ' + project + '\n'
+        # Probably an object
+        try:
+            results = list(dxpy.find_data_objects(project=project,
+                                                  folder=folderpath,
+                                                  name=entity_name,
+                                                  recurse=False,
+                                                  describe=True))
+        except BaseException as details:
+            parser.exit(1, str(details) + '\n')
+        if len(results) == 0:
+            # Could not find it as a data object.  If anything, it's a
+            # folder.
+
+            if '/' in entity_name:
+                # Then there's no way it's supposed to be a folder
+                parser.exit(1, msg)
+
+            # This is the only possibility left.  Leave the
+            # error-checking for later.  Note that folderpath does
+            possible_folder = folderpath + '/' + entity_name
+            possible_folder, skip = clean_folder_path(possible_folder, 'folder')
+            return project, possible_folder, None
+
+        # Caller is okay with multiple results; just return the whole thing
+        if not only_one:
+            return project, None, results
+
+        if len(results) > 1:
+            print 'The given path \"' + path + '\" resolves to the following data objects:'
+            choice = pick(map(lambda result:
+                                  get_ls_l_desc(result['describe']),
+                              results))
+            return project, None, results[choice]
+        elif len(results) == 1:
+            return project, None, results[0]
 
 def grab_contents_of_folder(completer, folder):
-    if completer.cwd != folder:
-        # Only refresh lists if the current folder is not the one
-        try:
-            if completer.dxproj is None or completer.dxproj.get_id() != os.environ['DX_PROJECT_CONTEXT_ID']:
-                completer.dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-            resp = completer.dxproj.list_folder(folder=folder, describe={},
-                                                includeHidden=True)
-            completer.folders = ['../', './'] + map(lambda folder: os.path.basename(folder).replace(' ', '\ ') + '/', resp['folders'])
-            completer.ids = map(lambda result: result['id'], resp['objects'])
-            completer.names = map(lambda result: result['describe']['name'].replace(' ', '\ '), resp['objects'])
-            completer.cwd = folder
-        except:
-            pass
+    # Only refresh lists if the current folder is not the one
+    try:
+        resp = completer.dxproj.list_folder(folder=folder, describe={},
+                                            includeHidden=True)
+        completer.folders = ['../', './'] + map(lambda folder: escape_folder_str(os.path.basename(folder)) + '/', resp['folders'])
+        completer.names = map(lambda result: escape_name_str(result['describe']['name']) + ' ', resp['objects'])
 
-def get_folder_content_matches(completer, prefix):
-    completer.matches = filter(lambda folder: folder.startswith(prefix), completer.folders) + \
-        filter(lambda _id: _id.startswith(prefix), completer.ids) + \
-        filter(lambda name: name.startswith(prefix), completer.names)
+        if proj_id not in cached_project_paths:
+            cached_project_paths[proj_id] = {}
+        cached_project_paths[proj_id][folder] = {}
+        for obj in resp['objects']:
+            obj_name = obj['describe']['name']
+            if obj_name not in cached_project_paths[proj_id][folder]:
+                cached_project_paths[proj_id][folder][obj_name] = [obj['id']]
+            else:
+                cached_project_paths[proj_id][folder][obj_name].append(obj['id'])
+    except:
+        pass
+
+def get_project_and_folder_content_matches(completer, words):
+    start_pos = 0
+    if completer.last_slash_pos is not None:
+        start_pos = completer.last_slash_pos + 1
+    elif completer.colon_pos is not None:
+        # project already filled in
+        start_pos = completer.colon_pos + 1
+    if len(words) > 0:
+        true_prefix = words[-1][start_pos:]
+        done_prefix = ' '.join(words[:-1]) + ' ' + words[-1][:start_pos]
+    else:
+        true_prefix = ''
+        done_prefix = ''
+    completer.matches = filter(lambda folder: folder.startswith(true_prefix) and (true_prefix != '' or folder not in ['../', './']), completer.folders) + \
+        filter(lambda name: name.startswith(true_prefix), completer.names) + \
+        filter(lambda proj_name: proj_name.startswith(true_prefix), completer.project_names)
+    completer.matches = map(lambda match: done_prefix + match, completer.matches)
+
+def basename(string):
+    pos = get_last_pos_of_char('/', string)
+    if pos >= 0:
+        return unescape_name_str(string[pos+1:])
+    else:
+        return unescape_name_str(string)
+
+def obj_completer(completer, current_line, words):
+    completer.dxproj = None
+
+    # First get projects if necessary
+    colon_pos = -1
+    project = None
+    if len(words) > 0:
+        colon_pos = get_last_pos_of_char(':', words[-1])
+#        print 'colon index: ' + str(colon_pos)
+    if colon_pos < 0:
+        # Might be tab-completing a project
+        results = list(dxpy.find_projects(describe=True))
+        completer.project_names = map(lambda result: escape_name_str(result['describe']['name']) + ':', results)
+        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
+            completer.dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+    else:
+        project = unescape_name_str(words[-1][:colon_pos])
+        try:
+            completer.dxproj = dxpy.get_handler(project)
+        except:
+            results = list(dxpy.find_projects(name=project))
+            if len(results) == 1:
+                completer.dxproj = dxpy.DXProject(results[0]['id'])
+                completer.project_names = []
+            elif len(results) > 1:
+                print 'Found ' + str(len(results)) + ' projects with name ' + project + ':'
+                for result in results:
+                    print result['id']
+                parser.exit(1)
+            else:
+                parser.exit(1, 'Could not resolve project name\n')
+
+    # Then get path to current folder if we have some project to look in
+    if completer.dxproj is not None:
+        path = os.environ['DX_CLI_WD']
+        last_slash_pos = -1
+        if len(words) > 0:
+            last_slash_pos = get_last_pos_of_char('/', words[-1])
+        if last_slash_pos >= 0:
+            if colon_pos >= 0:
+                path += '/' + unescape_folder_str(words[-1][colon_pos + 1 : last_slash_pos])
+            else:
+                path += '/' + unescape_folder_str(words[-1][:last_slash_pos])
+#        print 'looking in path ' + path
+        # Then update lists as necessary
+        grab_contents_of_folder(completer, resolve_path(path))
+
+    # TODO: Then look for app names???
+
+    completer.colon_pos = colon_pos
+    completer.last_slash_pos = last_slash_pos
 
 # This completer assumes you're trying to enter an object
 class DXObjectCompleter():
     def __init__(self):
         self.dxproj = None
+        self.project_names = None
         self.folders = None
-        self.ids = None
         self.names = None
-        self.cwd = None
+        self.colon_pos = -1
+        self.last_slash_pos = -1
         self.matches = None
 
     def __call__(self, text, state):
         if state == 0:
             current_line = readline.get_line_buffer()
-            words = readline.get_line_buffer().split()
-
-            # First get path to current folder
-            path = os.environ['DX_CLI_WD']
-            if len(words) > 0 and '/' in words[-1]:
-                path += '/' + words[-1][:words[-1].rfind('/')]
-            # Then update lists as necessary
-            grab_contents_of_folder(self, resolve_path(path))
+            words = split_unescaped(' ', current_line)
+            obj_completer(self, current_line, words)
             # Then find matches
-            get_folder_content_matches(self, text)
+            get_project_and_folder_content_matches(self, words)
 
         if self.matches is not None and state < len(self.matches):
             return self.matches[state]
@@ -131,20 +468,20 @@ class DXObjectCompleter():
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():    
-    subsubcommands = {'file': ['get', 'put'],
-                      'gtable': ['get'],
-                      'find': ['jobs', 'data', 'projects', 'apps'],
-                      'new': ['record', 'gtable']}
+    subsubcommands = {'file': ['get ', 'put '],
+                      'gtable': ['get '],
+                      'find': ['jobs ', 'data ', 'projects ', 'apps '],
+                      'new': ['record ', 'gtable ']}
 
     def __init__(self):
         global subparsers
         self.subcommands = map(lambda subcmd: subcmd + ' ', subparsers.choices.keys())
-
         self.dxproj = None
+        self.project_names = None
         self.folders = None
-        self.ids = None
         self.names = None
-        self.cwd = None
+        self.colon_pos = -1
+        self.last_slash_pos = -1
         self.matches = None
 
     def get_subcommand_matches(self, prefix):
@@ -153,13 +490,14 @@ class DXCLICompleter():
 
     def get_subsubcommand_matches(self, subcommand, prefix):
         if subcommand in self.subsubcommands:
-            self.matches = filter(lambda subsubcommand: subsubcommand.startswith(prefix),
-                                  self.subsubcommands[subcommand])
+            self.matches = map(lambda subsub: subcommand + ' ' + subsub,
+                               filter(lambda subsubcommand: subsubcommand.startswith(prefix),
+                                      self.subsubcommands[subcommand]))
 
     def __call__(self, text, state):
         if state == 0:
             current_line = readline.get_line_buffer()
-            words = readline.get_line_buffer().split()
+            words = split_unescaped(' ', current_line)
             if len(words) > 0 and current_line[-1] == ' ':
                 words.append('')
             num_words = len(words)
@@ -171,14 +509,9 @@ class DXCLICompleter():
             elif num_words == 2 and words[0] in self.subsubcommands:
                 self.get_subsubcommand_matches(words[0], words[1])
             else:
-                # First get path to current folder
-                path = os.environ['DX_CLI_WD']
-                if '/' in words[-1]:
-                    path += '/' + words[-1][:words[-1].rfind('/')]
-                # Then update lists as necessary
-                grab_contents_of_folder(self, resolve_path(path))
+                obj_completer(self, current_line, words)
                 # Then find matches
-                get_folder_content_matches(self, text)
+                get_project_and_folder_content_matches(self, words)
 
         if self.matches is not None and state < len(self.matches):
             return self.matches[state]
@@ -224,8 +557,7 @@ load_env()
 import dxpy
 
 def login(args):
-    global interactive
-    if not interactive:
+    if not state['interactive']:
         args.save = True
 
     # TODO: Remove this and replace with actual logic and interaction
@@ -252,8 +584,13 @@ def login(args):
     elif args.token is None:
         authserver = 'https://auth.dnanexus.com'
         print 'Logging into ' + authserver
-        username = raw_input('Username: ')
-        password = getpass.getpass()
+
+        try:
+            username = raw_input('Username: ')
+            password = getpass.getpass()
+        except:
+            print ''
+            parser.exit(1)
         auth = HTTPBasicAuth(username, password)
 
         session = requests.session()
@@ -261,8 +598,11 @@ def login(args):
                             data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
                             auth=auth,
                             allow_redirects=False)
-        assert(res.status_code == requests.codes.found)
-        code = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])['code'][0]
+        parsed_url = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])
+        if 'code' not in parsed_url:
+            parser.exit(1, 'Error: Incorrect username and/or password\n')
+        else:
+            code = parsed_url['code'][0]
         
         res = requests.post(authserver+"/oauth2/token",
                             data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"})
@@ -287,7 +627,7 @@ def set_auth_token(token=None, sec_context=None, write=False):
     elif sec_context is not None:
         os.environ['DX_SECURITY_CONTEXT'] = sec_context
     else:
-        parser.exit(1, 'Error: set_auth_token was called with no token nor security context hash')
+        parser.exit(1, 'Error: set_auth_token was called with no token nor security context hash\n')
     if write:
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
@@ -334,9 +674,36 @@ def prompt_for_var(prompt_str, env_var_str):
         elif default is not None:
             return default
 
+def pick_and_set_project(save):
+    try:
+        results = list(dxpy.find_projects(describe=True))
+    except BaseException as details:
+        parser.exit(1, 'Error when listing available projects: ' + str(details) + '\n')
+
+    projects = map(lambda result: result['id'], results)
+    if len(projects) == 0:
+        parser.exit(1, 'No projects to choose from.  Please create one first!\n')
+
+    # Eliminate current default if it is not a found project
+    try:
+        default = projects.index(os.environ.get('DX_PROJECT_CONTEXT_ID', None))
+    except:
+        default = None
+
+    print ""
+    print "Available projects:"
+    choice = pick(
+        map(lambda result:
+                result['describe']['name'] + ' (' + result['level'] + ')',
+            results),
+        default)
+
+    print 'Setting current project to: ' + results[choice]['describe']['name']
+    set_project(projects[choice], save)
+    set_wd('/', save)
+
 def setenv(args):
-    global interactive
-    if not interactive:
+    if not state['interactive']:
         args.save = True
     if args.current:
         env_vars = ['DX_SECURITY_CONTEXT', 'DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_PROJECT_CONTEXT_ID', 'DX_CLI_WD']
@@ -344,37 +711,13 @@ def setenv(args):
             if var in os.environ:
                 write_env_var(var, os.environ[var])
     else:
-        api_protocol = prompt_for_var('API server protocol', 'DX_APISERVER_PROTOCOL')
+        api_protocol = prompt_for_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
         api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
         api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
         set_api(api_protocol, api_host, api_port, args.save)
 
-        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
-            old_project = os.environ['DX_PROJECT_CONTEXT_ID']
-            projects = [old_project]
-        else:
-            old_project = None
-
-        if args.projects:
-            print ""
-            print "Available projects:"
-            find_proj_args = argparse.Namespace()
-            find_proj_args.name = None
-            find_proj_args.json = False
-            find_proj_args.level = None
-            find_proj_args.describe = None
-            projects = find_projects(find_proj_args)
-
-        # Eliminate current default if it is not a found project
-        if old_project is not None and old_project not in projects:
-            os.environ.pop('DX_PROJECT_CONTEXT_ID')
-        project = prompt_for_var('Workspace', 'DX_PROJECT_CONTEXT_ID')
-        # Eliminate current default if there's a change in project
-        if project != old_project:
-            os.environ['DX_CLI_WD'] = '/'
-        wd = prompt_for_var('Current folder', 'DX_CLI_WD')
-        set_project(project, args.save)
-        set_wd(wd, args.save)
+    if args.projects:
+        pick_and_set_project(args.save)
 
 def printenv(args):
     print "Auth token used\t\t" + str(json.loads(os.environ.get("DX_SECURITY_CONTEXT", "{\"auth_token\": null}"))["auth_token"])
@@ -408,67 +751,70 @@ def api(args):
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
-def get_id_from_path(path):
-    full_path = resolve_path(path)
+def get_app_from_path(path):
+    alias = 'default'
+    if path.startswith('app-'):
+        if is_hashid(path):
+            return path, None
+        path = path[4:]
+    if '/' in path:
+        alias = path[path.find('/') + 1:]
+        path = path[:path.find('/')]
     try:
-        results = list(dxpy.find_data_objects(name=os.path.basename(full_path),
-                                              describe={},
-                                              project=os.environ.get('DX_PROJECT_CONTEXT_ID', None),
-                                              folder=os.path.dirname(full_path)))
-        if len(results) > 1:
-            print 'Found ' + str(len(results)) + ' objects with full path ' + full_path + ':'
-            for result in results:
-                print_ls_l_desc(result['describe'])
-            parser.exit(1)
-        elif len(results) == 1:
-            return results[0]['id']
-        else:
-            return None
-    except dxpy.DXAPIError:
-        return None
-
-def get_app_from_exec(executable):
-    try:
-        if executable.startswith('app-'):
-            executable = executable[4:]
-        results = list(dxpy.find_apps(name=executable))
+        desc = dxpy.DXHTTPRequest('/app-' + path + '/' + alias + '/describe', {})
+        return desc['name'], desc['version']
     except dxpy.DXAPIError as detail:
-        return None
-    if len(results) > 0:
-        return executable
-    else:
-        return None
+        return None, None
 
 def cd(args):
-    wd = os.environ['DX_CLI_WD']
-    args.folder = resolve_path(args.folder)
+    # entity_result should be None because expected='folder'
+    project, folderpath, none = resolve_existing_path(args.path, 'folder')
 
-    if not wd.startswith(args.folder):
-        try:
-            dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-            dxproj.list_folder(folder=args.folder)
-        except:
-            parser.exit(1, args.folder + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID'] + '\n')
-            return
+    if project is not None:
+        # It is obvious what the project is
+        if project != os.environ.get('DX_PROJECT_CONTEXT_ID', None):
+            # And it's different so we need to take action
+            set_project(project, not state['interactive'])
+    else:
+        parser.exit(1, 'Error: No current project was given\n')
 
-    global interactive
-    set_wd(args.folder, not interactive)
+    # TODO: attempt to add caching later if it's an issue
+    # if project in cached_project_paths and folderpath in cached_project_paths[project]:
+    #     set_wd(folderpath, not interactive)
+
+    try:
+        dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
+        dxproj.list_folder(folder=folderpath)
+    except:
+        parser.exit(1, folderpath + ': No such file or directory found in project ' + os.environ['DX_PROJECT_CONTEXT_ID'] + '\n')
+        return
+
+    set_wd(folderpath, not state['interactive'])
 
 def cmp_names(x, y):
     return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())    
 
-def print_ls_l_desc(desc):
-    if desc['class'] == 'program':
-        print desc['state'] + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + BOLD + GREEN + desc['name'] + ENDC + ' : ' + desc['id']
+def get_ls_l_desc(desc):
+    if desc['state'] != 'closed':
+        state_str = YELLOW + desc['state'] + ENDC
     else:
-        print desc['state'] + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + desc['name'] + ' : ' + desc['id']
+        state_str = GREEN + desc['state'] + ENDC
+
+    if desc['class'] == 'program':
+        name_str = BOLD + GREEN + desc['name'] + ENDC
+    else:
+        name_str = desc['name']
+
+    return state_str + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
+
+def print_ls_l_desc(desc):
+    print get_ls_l_desc(desc)
 
 def ls(args):
-    project, folderpath = resolve_path_with_project(args.path)
+    project, folderpath, entity_results = resolve_existing_path(args.path, only_one=False)
+
     if project is None:
-        project = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
-    if project is None:
-        parser.exit(1, 'Current workspace must be set with \'setenv\' before any data can be listed\n')
+        parser.exit(1, 'Current project must be set or specified before any data can be listed\n')
     dxproj = dxpy.get_handler(project)
     only = ""
     if args.obj and not args.folders and not args.full:
@@ -479,108 +825,187 @@ def ls(args):
         only = "all"
 
     resp = None
-    try:
-        resp = dxproj.list_folder(folder=folderpath, describe={}, only=only, includeHidden=args.all)
-    except dxpy.DXAPIError as detail:
-        print detail
-        return
-    if args.json:
-        print json.dumps(resp, indent=4)
-        return
+    if entity_results is None:
+        try:
+            resp = dxproj.list_folder(folder=folderpath,
+                                      describe={},
+                                      only=only,
+                                      includeHidden=args.all)
 
-    if not args.obj:
-        for folder in resp["folders"]:
-            if args.full:
-                print BOLD + BLUE + folder + ENDC
-            else:
-                print BOLD + BLUE + os.path.basename(folder) + '/' + ENDC
-    if not args.folders:
-        resp["objects"].sort(cmp=cmp_names)
-        last_name = None
-        next_name = None
-        for i in range(len(resp["objects"])):
-            current_name = resp['objects'][i]['describe']['name']
-            if i < len(resp['objects']) - 1:
-                next_name = resp['objects'][i + 1]['describe']['name']
-            else:
-                next_name = None
-            addendum = ''
-
-            if (last_name is not None and last_name == current_name) or (next_name is not None and current_name == next_name):
-                addendum = ' : ' + resp['objects'][i]['id']
+            # Listing the folder was successful
 
             if args.l:
-                print_ls_l_desc(resp['objects'][i]['describe'])
-            else:
-                if resp['objects'][i]['describe']['class'] == 'program':
-                    print BOLD + GREEN + resp['objects'][i]['describe']['name'] + ENDC + addendum
-                else:
-                    print resp['objects'][i]['describe']['name'] + addendum
+                print UNDERLINE + 'Project:' + ENDC + ' ' + dxproj.describe()['name'] + ' (' + project + ')'
+                print UNDERLINE + 'Folder :' + ENDC + ' ' + folderpath
 
-            last_name = current_name
+            if not args.obj:
+                for folder in resp["folders"]:
+                    if args.full:
+                        print BOLD + BLUE + folder + ENDC
+                    else:
+                        print BOLD + BLUE + os.path.basename(folder) + '/' + ENDC
+            if not args.folders:
+                if project not in cached_project_paths:
+                    cached_project_paths[project] = {}
+                cached_project_paths[project][folderpath] = {}
+
+                resp["objects"].sort(cmp=cmp_names)
+                last_name = None
+                next_name = None
+                if args.l:
+                    if len(resp['objects']) > 0:
+                        print BOLD + 'State\tLast modified\t     Name (ID)' + ENDC
+                    else:
+                        print "No data objects found in the folder"
+                for i in range(len(resp["objects"])):
+                    current_name = resp['objects'][i]['describe']['name']
+                    if i < len(resp['objects']) - 1:
+                        next_name = resp['objects'][i + 1]['describe']['name']
+                    else:
+                        next_name = None
+                    addendum = ''
+
+                    if last_name is not None and last_name == current_name:
+                        addendum = ' : ' + resp['objects'][i]['id']
+                        cached_project_paths[project][folderpath][current_name].append(resp['objects'][i]['id'])
+                    else:
+                        cached_project_paths[project][folderpath][current_name] = [resp['objects'][i]['id']]
+                        if next_name is not None and current_name == next_name:
+                            addendum = ' : ' + resp['objects'][i]['id']
+
+                    if args.l:
+                        print_ls_l_desc(resp['objects'][i]['describe'])
+                    else:
+                        if resp['objects'][i]['describe']['class'] == 'program':
+                            print BOLD + GREEN + resp['objects'][i]['describe']['name'] + ENDC + addendum
+                        else:
+                            print resp['objects'][i]['describe']['name'] + addendum
+
+                    last_name = current_name
+        except BaseException as details:
+            parser.exit(1, str(details) + '\n')
+    else:
+        # We have results to describe
+        for result in entity_results:
+            print_ls_l_desc(result['describe'])
 
 def mkdir(args):
-    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-    args.folder = resolve_path(args.folder)
+    project, folderpath, none = resolve_path_with_project(args.path, expected='folder')
+
+    dxproj = dxpy.get_handler(project)
     try:
-        dxproj.new_folder(folder=args.folder, parents=args.parents)
+        dxproj.new_folder(folder=folderpath, parents=args.parents)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def rmdir(args):
-    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-    args.folder = resolve_path(args.folder)
+    project, folderpath, none = resolve_path_with_project(args.path, expected='folder')
+
+    dxproj = dxpy.get_handler(project)
     try:
-        dxproj.remove_folder(folder=args.folder)
+        dxproj.remove_folder(folder=folderpath)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def rm(args):
-    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-    if args.all:
-        folder = '/'
-        if 'DX_CLI_WD' in os.environ:
-            folder = os.environ['DX_CLI_WD']
+    projects = {}
+    for path in args.paths:
+        # Resolve the path and add it to the list
+        project, folderpath, entity_result = resolve_existing_path(path)
+        if project is None:
+            parser.exit(1, 'Could not resolve to a project')
+        if project not in projects:
+            projects[project] = {"folders": [], "objects": []}
+        if entity_result is None:
+            if folderpath is not None:
+                if not args.recursive:
+                    parser.exit(1, 'Cannot remove a folder without setting the \"-r\" flag\n')
+                else:
+                    projects[project]['folders'].append(folderpath)
+            else:
+                parser.exit(1, 'Cannot remove a project using \"rm\"')
+        else:
+            projects[project]['objects'].append(entity_result['id'])
 
-        if not args.force:
-            user_resp = raw_input('Confirm deleting all objects in folder \"' + folder + '\" (y/n): ')
-            if user_resp[0].lower() != 'y':
-                return
-        def grab_id(ahash):
-            return ahash['id']
-        dxproj.remove_objects( map(grab_id, dxproj.list_folder(folder=folder)['objects']))
-    else:
-        for i in range(len(args.objects)):
-            id_or_none = get_id_from_path(args.objects[i])
-            if id_or_none is not None:
-                args.objects[i] = id_or_none
-
-        dxproj.remove_objects(args.objects)
-
-def mv(args):
-    dxproj = dxpy.get_handler(os.environ['DX_PROJECT_CONTEXT_ID'])
-    objects = []
-    folders = []
-    for source in args.sources:
+    for project in projects:
+        for folder in projects[project]['folders']:
+            try:
+                dxpy.DXHTTPRequest('/' + project + '/removeFolder',
+                                   {"folder": folder,
+                                    "recurse": True})
+            except BaseException as details:
+                print "Error while removing " + folder + " from " + project
+                print "  " + str(details)
         try:
-            dxpy.get_handler(source)
-            objects.append(source)
-        except:
-            folders.append(resolve_path(source))
-    args.destination = resolve_path(args.destination)
-    # Doesn't exactly make sense when we can't specify a source by name yet
-    # try:
-    #     dxproj.list_folder(args.destination)
-    # except:
-    #     if len(objects) != 1 or len(folders) != 0:
-    #         raise SyntaxError()
-    #     else:
-    #         dxobj = dxpy.get_handler(objects[0])
-    #         dxobj.rename(args.destination)
+            dxpy.DXHTTPRequest('/' + project + '/removeObjects',
+                               {"objects": projects[project]['objects']})
+        except BaseException as details:
+            print "Error while removing " + json.dumps(projects[project]['objects']) + " from " + project
+            print "  " + str(details)
 
+# ONLY for within the SAME project.  Will exit fatally otherwise.
+def mv(args):
     try:
-        dxproj.move(args.destination, objects=objects, folders=folders)
-    except dxpy.DXAPIError as detail:
+        dest_proj, dest_path, none = resolve_path_with_project(args.destination, 'folder')
+        dx_dest = dxpy.get_handler(dest_proj)
+        dx_dest.list_folder(folder=dest_path, only='folders')
+    except:
+        # Destination folder path is new => renaming
+        if len(args.sources) != 1:
+            # Can't rename more than one object
+            parser.exit(1, 'The destination folder does not exist\n')
+        last_slash_pos = get_last_pos_of_char('/', dest_path)
+        if last_slash_pos == 0:
+            dest_folder = '/'
+        else:
+            dest_folder = dest_path[:last_slash_pos]
+        dest_name = dest_path[last_slash_pos + 1:].replace('\/', '/')
+        try:
+            dx_dest.list_folder(folder=dest_folder, only='folders')
+        except:
+            parser.exit(1, 'The destination folder does not exist\n')
+
+        # Either rename the data object or rename the folder
+        src_proj, src_path, src_result = resolve_existing_path(args.sources[0])
+
+        if src_proj != dest_proj:
+            parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.\n')
+
+        if src_result is None:
+            dxpy.DXHTTPRequest('/' + src_proj + '/renameFolder',
+                               {"folder": src_path,
+                                "newpath": dest_path})
+            return
+        else:
+            try:
+                if src_result['describe']['folder'] != dest_folder:
+                    dxpy.DXHTTPRequest('/' + src_proj + '/move',
+                                       {"objects": [src_result['id']],
+                                        "destination": dest_folder})
+                dxpy.DXHTTPRequest('/' + src_result['id'] + '/rename',
+                                   {"project": src_proj,
+                                    "name": dest_name})
+                return
+            except BaseException as details:
+                parser.exit(1, str(details) + '\n')
+
+    src_objects = []
+    src_folders = []
+    for source in args.sources:
+        src_proj, src_folderpath, src_result = resolve_existing_path(source)
+        if src_proj != dest_proj:
+            parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".\n')
+
+        if src_result is None:
+            src_folders.append(src_folderpath)
+        else:
+            src_objects.append(src_result['id'])
+    try:
+        dxpy.DXHTTPRequest('/' + src_proj + '/move',
+                           {"objects": src_objects,
+                            "folders": src_folders,
+                            "destination": dest_path})
+    except BaseException as detail:
         parser.exit(1, str(detail) + '\n')
 
 def get_io_desc(parameter, include_class=True, show_opt=True):
@@ -721,7 +1146,10 @@ def print_data_obj_desc(desc):
         print "Folder\t\t" + desc["folder"]
     print "Name\t\t" + desc["name"]
     if 'state' in desc:
-        print "State\t\t" + desc["state"]
+        if desc['state'] in DATA_STATES:
+            print "State\t\t" + DATA_STATES[desc['state']]
+        else:
+            print "State\t\t" + desc["state"]
     if 'hidden' in desc:
         print "Hidden\t\t" + json.dumps(desc["hidden"])
     if 'types' in desc:
@@ -835,47 +1263,81 @@ def print_job_desc(desc):
         if field not in recognized_fields:
             print field + '\t\t' + json.dumps(desc[field])
 
+def print_desc(desc):
+    if desc['class'] in ['project', 'workspace', 'container']:
+        print_project_desc(desc)
+    elif desc['class'] == 'app':
+        print_app_desc(desc)
+    elif desc['class'] == 'job':
+        print_job_desc(desc)
+    else:
+        print_data_obj_desc(desc)
+
+def describe_id(dxid, json_input={}):
+    try:
+        desc = dxpy.DXHTTPRequest('/' + dxid + '/describe', json_input)
+        print_desc(desc)
+        return
+    except BaseException as details:
+        parser.exit(1, str(details) + '\n')
+
 def describe(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    # First, if it looks like a hash id, do that.
+    json_input = {}
+    if args.properties:
+        json_input["properties"] = True
+    if args.details:
+        json_input["details"] = True
+    if is_data_obj_id(args.path):
+        # Should prefer the current project's version if possible
+        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
+            json_input['project'] = os.environ['DX_PROJECT_CONTEXT_ID']
 
-    desc = None
-    if args.dxid.startswith('job'):
-        try:
-            desc = dxpy.DXJob(args.dxid).describe()
-        except dxpy.DXAPIError as detail:
-            parser.exit(1, str(detail) + '\n')
+    # Otherwise, attempt to look for it as a data object.
+    project, folderpath, entity_results = resolve_existing_path(args.path, expected='entity', only_one=False)
+
+    found_match = False
+
+    get_result_str = ResultCounter()
+
+    # Could be a project
+    if entity_results is None:
+        if args.path[-1] == ':':
+            # It is the project.
+            describe_id(project)
             return
+    else:
+        if len(entity_results) > 0:
+            found_match = True
+        for result in entity_results:
+            print get_result_str()
+            print_desc(result['describe'])
 
-        if args.json:
-            print json.dumps(desc, indent=4)
-        if not args.json:
-            print_job_desc(desc)
-    elif args.dxid.startswith('project') or args.dxid.startswith('workspace'):
+    # Could be an app name
+    if args.path.startswith('app-'):
         try:
-            desc = dxpy.get_handler(args.dxid).describe() # TODO get args!
-        except dxpy.DXAPIError as detail:
-            parser.exit(1, str(detail) + '\n')
-            return
+            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe')
+            print get_result_str()
+            print_desc(desc)
+            found_match = True
+        except:
+            pass
+    else:
+        for result in dxpy.find_apps(name=args.path, describe=True):
+            print get_result_str()
+            print_desc(result['describe'])
 
-        if args.json:
-            print json.dumps(desc, indent=4)
-        else: # TODO: Finish adding flags, etc.
-            print_project_desc(desc)
-    elif args.dxid.startswith('user'):
+    # Could be a user
+    if args.path.startswith('user'):
         try:
-            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', {"appsInstalled": True, "subscriptions": True})
-        except dxpy.DXAPIError as detail:
-            print detail
-            return
+            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
+            found_match = True
 
-        if args.json:
-            print json.dumps(desc, indent=4)
-        else:
+            print get_result_str()
+
             print "ID\t\t" + desc["id"]
-            print "Name\t\t" + desc["first"] + " " + desc["middle"] + " " + desc["last"]
+            print "Name\t\t" + desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"]
             if "email" in desc:
                 print "Email\t\t" + desc["email"]
             if "appsInstalled" in desc:
@@ -883,41 +1345,22 @@ def describe(args):
                     print "Apps installed\tNone"
                 else:
                     print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
-    elif args.dxid.startswith('app'):
-        json_input = {}
-
-        try:
-            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
         except dxpy.DXAPIError as detail:
-            print detail
-            return
+            pass
 
-        if args.json:
-            print json.dumps(desc, indent=4)
-        else:
-            print_app_desc(desc)
-    else:
-        json_input = {}
-        if args.project is not None:
-            json_input["project"] = args.project
-        elif 'DX_PROJECT_CONTEXT_ID' in os.environ:
-            json_input["project"] = os.environ["DX_PROJECT_CONTEXT_ID"]
-        if args.properties:
-            json_input["properties"] = True
-        if args.details:
-            json_input["details"] = True
-
+    # Could be an org or team
+    if args.path.startswith('org-') or args.path.startswith('team-'):
         try:
-            desc = dxpy.DXHTTPRequest('/' + args.dxid + '/describe', json_input)
+            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
+            found_match = True
+            print get_result_str()
+            for field in desc:
+                print field + '\t\t' + json.dumps(desc[field])
         except dxpy.DXAPIError as detail:
-            parser.exit(1, str(detail) + '\n')
-            return
+            pass
 
-        if args.json:
-            print json.dumps(desc, indent=4)
-        else:
-            # Must be a data object
-            print_data_obj_desc(desc)
+    if not found_match:
+        print "No matches found for " + args.path
 
 def get_properties_from_args(args_properties):
     properties = None
@@ -994,25 +1437,27 @@ def new_gtable(args):
 
 def set_visibility(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        dxpy.DXHTTPRequest('/' + args.dxid + '/setVisibility',
+        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setVisibility',
                            {"hidden": (args.visibility == 'hidden')})
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def set_details(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
         args.details = json.loads(args.details)
-        dxpy.DXHTTPRequest('/' + args.dxid + '/setDetails',
+        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setDetails',
                            args.details)
     except ValueError:
         print 'Error: details could not be parsed as JSON'
@@ -1021,98 +1466,143 @@ def set_details(args):
 
 def add_types(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        dxpy.DXHTTPRequest('/' + args.dxid + '/addTypes',
+        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/addTypes',
                            {"types": args.types})
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def remove_types(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        dxpy.DXHTTPRequest('/' + args.dxid + '/removeTypes',
+        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/removeTypes',
                            {"types": args.types})
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def add_tags(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None and project is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        dxpy.get_handler(args.dxid).add_tags(args.tags)
+        if entity_result is not None:
+            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/addTags',
+                               {"project": project,
+                                "tags": args.tags})
+        elif not project.startswith('project-'):
+            raise TypeError ('Cannot add tags to a non-project data container\n')
+        else:
+            dxpy.DXHTTPRequest('/' + project + '/addTags',
+                               {"tags": args.tags})
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def remove_tags(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None and project is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        dxpy.get_handler(args.dxid).remove_tags(args.tags)
+        if entity_result is not None:
+            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/removeTags',
+                               {"project": project,
+                                "tags": args.tags})
+        elif not project.startswith('project-'):
+            raise TypeError ('Cannot remove tags from a non-project data container\n')
+        else:
+            dxpy.DXHTTPRequest('/' + project + '/removeTags',
+                               {"tags": args.tags})
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def rename(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None and project is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        dxpy.get_handler(args.dxid).rename(args.name)
+        if entity_result is not None:
+            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/rename',
+                               {"project": project,
+                                "name": args.name})
+        elif not project.startswith('project-'):
+            raise TypeError ('Cannot rename a non-project data container\n')
+        else:
+            dxpy.DXHTTPRequest('/' + project + '/update',
+                               {"name": args.name})
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def set_properties(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None and project is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     properties = get_properties_from_args(args.properties)
     try:
+        if entity_result is not None:
+            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setProperties',
+                               {"project": project,
+                                "properties": properties})
+        elif not project.startswith('project-'):
+            raise TypeError ('Cannot set properties on a non-project data container\n')
+        else:
+            dxpy.DXHTTPRequest('/' + project + '/setProperties',
+                               {"properties": properties})
         dxpy.get_handler(args.dxid).set_properties(properties)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def unset_properties(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None and project is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     properties = {}
     for prop in args.properties:
         properties[prop] = None
     try:
+        if entity_result is not None:
+            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setProperties',
+                               {"project": project,
+                                "properties": properties})
+        elif not project.startswith('project-'):
+            raise TypeError ('Cannot unset properties on a non-project data container\n')
+        else:
+            dxpy.DXHTTPRequest('/' + project + '/setProperties',
+                               {"properties": properties})
         dxpy.get_handler(args.dxid).set_properties(properties)
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
 
 def head(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.target)
-    if id_or_none is not None:
-        args.target = id_or_none
-    if not args.target.startswith('gtable-') and \
-            not args.target.startswith('file-') and \
-            not args.target.startswith('table-'):
-        parser.exit(1, 'Error: The given object is of class ' + handler._class + ' but an object of class gtable, file, or table was expected.')
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+    if not entity_result['describe']['class'] in ['gtable', 'file', 'table']:
+        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class gtable, file, or table was expected\n')
 
-    handler = dxpy.get_handler(args.target)
+    handler = dxpy.get_handler(entity_result['id'])
 
     counter = 0
     if args.lines > 0:
@@ -1137,13 +1627,14 @@ def head(args):
 
 def file_get(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.target)
-    if id_or_none is not None:
-        args.target = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None or entity_result['describe']['class'] != 'file':
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a file object\n')
 
     if args.stdout:
         try:
-            dxfile = dxpy.DXFile(args.target)
+            dxfile = dxpy.DXFile(entity_result['id'])
             for line in dxfile:
                 print line
         except dxpy.DXAPIError as detail:
@@ -1151,16 +1642,13 @@ def file_get(args):
     else:
         filename = args.output
         if filename is None:
-            try:
-                filename = os.path.basename(dxpy.api.fileDescribe(args.target)['name'])
-            except KeyError:
-                filename = args.target
+            filename = urllib.quote(entity_result['describe']['name'], safe='')
         try:
-            dxpy.download_dxfile(args.target, filename)
+            dxpy.download_dxfile(entity_result['id'], filename)
         except dxpy.DXAPIError as detail:
             parser.exit(1, str(detail) + '\n')
 
-def file_put(args):
+def upload(args):
     hidden = (args.visibility == 'hidden')
     properties = get_properties_from_args(args.properties)
     details = None
@@ -1183,9 +1671,10 @@ def file_put(args):
 
 def gtable_get(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None or entity_result['describe']['class'] != 'gtable':
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a gtable object\n')
 
     gri_query = None
     if args.gri is not None:
@@ -1195,8 +1684,9 @@ def gtable_get(args):
                                                       args.gri_mode,
                                                       args.gri_name)
     try:
-        result = dxpy.DXGTable(args.dxid).get_rows(query=gri_query, starting=args.starting,
-                                                   limit=args.limit)
+        result = dxpy.DXGTable(entity_result['id']).get_rows(query=gri_query,
+                                                             starting=args.starting,
+                                                             limit=args.limit)
         if args.json:
             print json.dumps(result, indent=4)
             return
@@ -1295,16 +1785,12 @@ def find_projects(args):
             print json.dumps(results, indent=4)
             return
         for result in results:
-            if args.describe is True:
-                print ""
-                print_project_desc(result["describe"])
-                print "Permissions\t" + result["level"]
-            else:
-                print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
+            cached_project_names[result['describe']['name']] = result['id']
+            print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
         print ""
         return map(lambda result: result["id"], results)
     except dxpy.DXAPIError as detail:
-        print detail
+        parser.exit(1, str(detail) + '\n')
 
 def find_apps(args):
     try:
@@ -1327,12 +1813,13 @@ def find_apps(args):
 
 def close(args):
     # Attempt to resolve name
-    id_or_none = get_id_from_path(args.dxid)
-    if id_or_none is not None:
-        args.dxid = id_or_none
+    project, folderpath, entity_result = resolve_existing_path(args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     try:
-        obj = dxpy.get_handler(args.dxid)
+        obj = dxpy.get_handler(entity_result['id'], project=project)
         obj.close()
     except dxpy.DXAPIError as detail:
         parser.exit(1, str(detail) + '\n')
@@ -1358,12 +1845,12 @@ def parse_bool(string):
         raise ValueError()
 
 def parse_obj(string, klass):
-    id_or_none = get_id_from_path(string)
-    if id_or_none is not None:
-        string = id_or_none
-    if not string.startswith(klass):
-            raise TypeError('Error: The given object is of class ' + id_or_none[:id_or_none.find('-')] + ' but an object of class ' + klass + ' was expected.')
-    return {'$dnanexus_link': string}
+    project, path, entity_result = resolve_existing_path(string)
+    if entity_result is None:
+        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+    if not entity_result['describe']['class'] == klass:
+        raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
+    return {'$dnanexus_link': entity_result['id']}
 
 parse_input = {'boolean': parse_bool,
                'string': (lambda string: string),
@@ -1478,28 +1965,37 @@ def run(args):
     handler = None
     if args.alias is None:
         # Attempt to resolve name
-        id_or_none = get_id_from_path(args.executable)
-        app_name_or_none = get_app_from_exec(args.executable)
-        if id_or_none is not None and app_name_or_none is None:
-            handler = dxpy.DXProgram(id_or_none)
-        elif id_or_none is None and app_name_or_none is not None:
-            handler = dxpy.DXApp(name=app_name_or_none)
-        elif id_or_none is not None and app_name_or_none is not None:
-            print 'Found both a matching program and app:'
-            print 'Program: ' + id_or_none
-            print 'App:     ' + 'app-' + app_name_or_none
-            parser.exit(1)
+        project, folderpath, entity_results = resolve_existing_path(args.path, expected='entity', only_one=False)
+        app_name, app_version = get_app_from_path(args.path)
+        if entity_results is not None and len(entity_results) == 1 and app_name is None:
+            handler = dxpy.DXProgram(entity_results[0]['id'])
+        elif entity_results is None and app_name is not None:
+            if app_version is None:
+                handler = dxpy.DXApp(dxid=app_name)
+            else:
+                handler = dxpy.DXApp(name=app_name, alias=app_version)
+        elif entity_results is not None and app_name is not None:
+            print 'Found multiple executables with the path ' + args.path
+            choice = pick(map(lambda result: get_ls_l_desc(result['describe']),
+                              entity_results) + ['app-' + app_name + ', version ' + app_version])
+            if choice < len(entity_results):
+                handler = dxpy.get_handler(entity_results[choice]['id'], project)
+            else:
+                handler = dxpy.DXApp(name=app_name, alias=app_version)
         else:
-            try:
-                handler = dxpy.get_handler(args.executable)
-            except:
-                parser.exit(1, "No matches found for " + args.executable + '\n')
+            parser.exit(1, "No matches found for " + args.path + '\n')
     else:
-        handler = dxpy.DXApp(name=args.executable, alias=args.alias)
+        if args.path.startswith('app-'):
+            args.path = args.path[4:]
+        handler = dxpy.DXApp(name=args.path, alias=args.alias)
+
     if args.folder is None:
-        args.folder = os.environ['DX_CLI_WD']
+        dest_proj = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
+        dest_path = os.environ.get('DX_CLI_WD', '/')
     else:
-        args.folder = resolve_path(args.folder)
+        dest_proj, dest_path, none = resolve_existing_path(args.folder,
+                                                           expected='folder')
+
     if args.input is not None:
         try:
             args.input = json.loads(args.input)
@@ -1518,7 +2014,7 @@ def run(args):
             import rlcompleter
             readline.parse_and_bind("tab: complete")
 
-            readline.set_completer_delims(" /")
+            readline.set_completer_delims("")
             # We don't want to assume that the line will start with
             # commands, so make sure the completer is set correctly
             readline.set_completer(DXObjectCompleter())
@@ -1545,7 +2041,7 @@ def run(args):
         print json.dumps(args.input, indent=4)
 
     try:
-        dxjob = handler.run(args.input, folder=args.folder)
+        dxjob = handler.run(args.input, project=dest_proj, folder=dest_path)
     except dxpy.DXAPIError as details:
         parser.exit(1, str(details) + '\n')
     if args.verbose:
@@ -1559,8 +2055,9 @@ def kill(args):
         parser.exit(1, str(details) + '\n')
 
 def shell(orig_args):
-    global interactive
-    interactive = True
+    if state['interactive']:
+        return
+    state['interactive'] = True
 
     # WARNING: Following two lines may not be platform-independent and
     # should be made so.
@@ -1568,7 +2065,7 @@ def shell(orig_args):
         import rlcompleter
         readline.parse_and_bind("tab: complete")
 
-        readline.set_completer_delims(" /")
+        readline.set_completer_delims("")
 
         readline.set_completer(DXCLICompleter())
     except:
@@ -1598,9 +2095,10 @@ def print_help(args):
     parser.print_help()
 
 def exit_shell(args):
-    global interactive
-    if interactive:
+    if state['interactive']:
         raise StopIteration()
+
+# TODO: Add a subcommand for clearing the cache
 
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
@@ -1658,7 +2156,7 @@ parser_ls.set_defaults(func=ls)
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
                                   description='Change the current working directory')
-parser_cd.add_argument('folder', help='Folder to which to change the current working directory, default is \"/\"', nargs='?', default='/')
+parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
 parser_cd.set_defaults(func=cd)
 
 parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
@@ -1668,20 +2166,18 @@ parser_pwd.set_defaults(func=pwd)
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder')
 parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
-parser_mkdir.add_argument('folder', help='folder to create; full path is required')
+parser_mkdir.add_argument('path', help='Path to a folder to create; full path is required')
 parser_mkdir.set_defaults(func=mkdir)
 
 parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
                                      description='Remove a folder')
-parser_rmdir.add_argument('folder', help='folder to remove; full path is required')
+parser_rmdir.add_argument('path', help='Path to a folder to remove; full path is required')
 parser_rmdir.set_defaults(func=rmdir)
 
 parser_rm = subparsers.add_parser('rm', help='Remove objects',
                                   description='Remove objects')
-parser_rm.add_argument('objects', help='object IDs to remove', nargs='*')
-parser_rm.add_argument('--all', help='Remove all objects in the current working directory.', action='store_true')
-parser_rm.add_argument('-f', '--force', help='Execute without asking for confirmations', action='store_true')
-parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory')
+parser_rm.add_argument('paths', help='Paths to remove', nargs='*')
+parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
 
 parser_mv = subparsers.add_parser('mv', help='Move a objects and/or folders',
@@ -1692,18 +2188,18 @@ parser_mv.set_defaults(func=mv)
 
 parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
-parser_head.add_argument('target', help='File or gtable ID or name to access')
+parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
 
 parser_cat = subparsers.add_parser('cat', help='Print a file to stdout')
-parser_cat.add_argument('target', help='File ID or name to print to stdout')
+parser_cat.add_argument('path', help='File ID or name to print to stdout')
 parser_cat.set_defaults(func=file_get, output=None, stdout=True)
 
 parser_file = subparsers.add_parser('file', help='Interact with remote files')
 subparsers_file = parser_file.add_subparsers()
 
 parser_file_get = subparsers_file.add_parser('get', help='Download a file')
-parser_file_get.add_argument('target', help='File ID or name to download')
+parser_file_get.add_argument('path', help='File ID or name to download')
 parser_file_get.add_argument('--stdout', help='Print the file to stdout', action='store_true')
 parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
 parser_file_get.set_defaults(func=file_get)
@@ -1726,7 +2222,7 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
 parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
 parser_describe.add_argument('--properties', help='Include properties', action='store_true')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
-parser_describe.add_argument('dxid', help='Object ID to describe')
+parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
 parser_describe.set_defaults(func=describe)
 
 parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object')
@@ -1735,7 +2231,7 @@ parser_close.add_argument('--block', help='Wait for the object to close', action
 parser_close.set_defaults(func=close)
 
 parser_run = subparsers.add_parser('run', help='Run a program or app', description='Run a program or app')
-parser_run.add_argument('executable', help='Name or ID of program or app to run')
+parser_run.add_argument('path', help='Name or ID of program or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help='Tag or version of the app to run')
 parser_run.add_argument('--folder', help='The folder in which to output the results.  By default, the current working directory will be used.')
 parser_run.add_argument('--input', help='The input to the program as JSON or a filename containing the JSON.  If this argument is not given, an interactive mode will be launched.')
@@ -1784,7 +2280,6 @@ parser_find_data.set_defaults(func=find_data)
 parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args])
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
-parser_find_projects.add_argument('--describe', help='Also return descriptions of the projects', action='store_true')
 parser_find_projects.set_defaults(func=find_projects)
 
 parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args])
@@ -1812,9 +2307,9 @@ parser_dataobject_args.add_argument('--details', help='JSON to store as details'
 parser_dataobject_args.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
 parser_dataobject_args.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 
-parser_file_put = subparsers_file.add_parser('put', help='Upload a file', parents=[parser_dataobject_args])
-parser_file_put.add_argument('filename', help='local filename to upload')
-parser_file_put.set_defaults(func=file_put)
+parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args])
+parser_upload.add_argument('filename', help='local filename to upload')
+parser_upload.set_defaults(func=upload)
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
@@ -1831,47 +2326,47 @@ parser_new_gtable.add_argument('--input', help='a filename containing the JSON i
 parser_new_gtable.set_defaults(func=new_gtable)
 
 parser_set_details = subparsers.add_parser('set_details', help='Set details on an object')
-parser_set_details.add_argument('dxid', help='Data object to modify')
+parser_set_details.add_argument('path', help='Data object to modify')
 parser_set_details.add_argument('details', help='JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
 
 parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object')
-parser_set_visibility.add_argument('dxid', help='Data object to modify')
+parser_set_visibility.add_argument('path', help='Data object to modify')
 parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
 parser_set_visibility.set_defaults(func=set_visibility)
 
 parser_add_types = subparsers.add_parser('add_types', help='Add types to an object')
-parser_add_types.add_argument('dxid', help='Data object to modify')
+parser_add_types.add_argument('path', help='Data object to modify')
 parser_add_types.add_argument('types', nargs='+', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
 
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object')
-parser_remove_types.add_argument('dxid', help='Data object to modify')
+parser_remove_types.add_argument('path', help='Data object to modify')
 parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
 
 parser_add_tags = subparsers.add_parser('add_tags', help='Add tags to an object')
-parser_add_tags.add_argument('dxid', help='Data object to modify')
+parser_add_tags.add_argument('path', help='Data object to modify')
 parser_add_tags.add_argument('tags', nargs='+', help='Tags to add')
 parser_add_tags.set_defaults(func=add_tags)
 
 parser_remove_tags = subparsers.add_parser('remove_tags', help='Remove tags from an object')
-parser_remove_tags.add_argument('dxid', help='Data object to modify')
+parser_remove_tags.add_argument('path', help='Data object to modify')
 parser_remove_tags.add_argument('tags', nargs='+', help='Tags to remove')
 parser_remove_tags.set_defaults(func=remove_tags)
 
 parser_rename = subparsers.add_parser('rename', help='Rename an object')
-parser_rename.add_argument('dxid', help='Data object to modify')
+parser_rename.add_argument('path', help='Path to data object to modify')
 parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
 
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object')
-parser_set_properties.add_argument('dxid', help='Data object to modify')
+parser_set_properties.add_argument('path', help='Data object to modify')
 parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
 parser_set_properties.set_defaults(func=set_properties)
 
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object')
-parser_unset_properties.add_argument('dxid', help='Data object to modify')
+parser_unset_properties.add_argument('path', help='Data object to modify')
 parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
 
