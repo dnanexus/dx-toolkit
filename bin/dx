@@ -1799,11 +1799,11 @@ def upload(args):
                                         details=details,
                                         folder=args.folder,
                                         parents=args.parents)
+        if args.wait:
+            dxfile._wait_on_close()
         if args.id_only:
             print dxfile.get_id()
         else:
-            if not args.no_block:
-                dxfile._wait_on_close()
             print_desc(dxfile.describe(incl_properties=True, incl_details=True))
     except BaseException as details:
         parser.exit(1, fill(str(details)) + '\n')
@@ -1962,7 +1962,7 @@ def close(args):
         obj.close()
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(str(details)) + '\n')
-    if args.block:
+    if args.wait:
         obj._wait_on_close()
 
 def get_exec_inputs(inputs):
@@ -2383,7 +2383,7 @@ parser_describe.set_defaults(func=describe)
 
 parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object', prog='dx close')
 parser_close.add_argument('path', help='Path to data object to close')
-parser_close.add_argument('--block', help='Wait for the object to close', action='store_true')
+parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
 
 parser_run = subparsers.add_parser('run', help='Run a program or app', description='Run a program or app', prog='dx run')
@@ -2466,7 +2466,7 @@ parser_dataobject_args.add_argument('--folder', help='Folder path with which to 
 parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
 parser_upload.add_argument('--id_only', help='Print ID of the file object instead of the full description', action='store_true')
-parser_upload.add_argument('--no_block', help='Do not block until the file has finished closing', action='store_true')
+parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
