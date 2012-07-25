@@ -210,7 +210,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True):
         cached_project_names[string] = results[0]['id']
         return results[0]['id']
     elif len(results) > 1:
-        print 'Found multiple projects with name ' + string
+        print 'Found multiple projects with name \"' + string + '\"'
         choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
         return results[choice]['id']
     else:
@@ -956,6 +956,26 @@ def rm(args):
             print "Error while removing " + json.dumps(projects[project]['objects']) + " from " + project
             print "  " + str(details)
 
+def rmproject(args):
+    for project in args.projects:
+        # Be forgiving if they offer an extraneous colon
+        substrings = split_unescaped(':', project)
+        if len(substrings) > 1 or (len(substrings) == 1 and project[0] == ':'):
+            print fill('Was unable to remove \"' + project + '\": a nonempty string was found to the right of an unescaped colon')
+            continue
+        if len(substrings) == 0:
+            if project[0] == ':':
+                print fill('Unable to remove \":\": to remove the current project, use its name or ID')
+                continue
+        proj_id = resolve_container_id_or_name(substrings[0])
+        if proj_id is None:
+            print fill('Was unable to remove \"' + project + '\": could not resolve to a project ID')
+            continue
+        try:
+            dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {})
+        except BaseException as details:
+            print fill('Was unable to remove ' + project + ', ' + str(details))
+
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
     try:
@@ -1418,7 +1438,7 @@ def describe(args):
     # Could be an app name
     if args.path.startswith('app-'):
         try:
-            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe')
+            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
             print get_result_str()
             print_desc(desc)
             found_match = True
@@ -2325,6 +2345,12 @@ parser_rm = subparsers.add_parser('rm', help='Remove objects',
 parser_rm.add_argument('paths', help='Paths to remove', nargs='*')
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
+
+parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
+                                         description='Delete projects and all their associated data',
+                                         prog='dx rmproject')
+parser_rmproject.add_argument('projects', help='Projects to remove', nargs='*')
+parser_rmproject.set_defaults(func=rmproject)
 
 parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside a single project',
                                   description='Move objects and/or folders inside a single project.',
