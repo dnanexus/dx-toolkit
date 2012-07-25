@@ -972,7 +972,19 @@ def rmproject(args):
             print fill('Was unable to remove \"' + project + '\": could not resolve to a project ID')
             continue
         try:
+            proj_desc = dxpy.DXHTTPRequest('/' + proj_id + '/describe', {})
+            value = raw_input(fill('About to delete project \"' + proj_desc['name'] + '\" (' + proj_id + ')') + '\nPlease confirm [yes/no]: ')
+            if value.lower() != 'yes':
+                print fill('Aborting deletion of project \"' + proj_desc['name'] + '\"')
+                continue
             dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {})
+            print fill('Successfully deleted project \"' + proj_desc['name'] + '\"')
+        except EOFError:
+            print ''
+            parser.exit(1)
+        except KeyboardInterrupt:
+            print ''
+            continue
         except BaseException as details:
             print fill('Was unable to remove ' + project + ', ' + str(details))
 
