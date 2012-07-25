@@ -16,7 +16,7 @@ except ImportError:
     print 'readline module not available'
 
 state = {"interactive": False}
-
+parser_map = {}
 
 class ResultCounter():
     def __init__(self):
@@ -765,19 +765,20 @@ def api(args):
         parser.exit(1, fill(str(details)) + '\n')
 
 def get_app_from_path(path):
-    alias = 'default'
-    if path.startswith('app-'):
-        if is_hashid(path):
-            return path, None
-        path = path[4:]
+    alias = None
+    if not path.startswith('app-'):
+        path = 'app-' + path
     if '/' in path:
         alias = path[path.find('/') + 1:]
         path = path[:path.find('/')]
     try:
-        desc = dxpy.DXHTTPRequest('/app-' + path + '/' + alias + '/describe', {})
-        return desc['name'], desc['version']
+        if alias is None:
+            desc = dxpy.DXHTTPRequest('/' + path + '/describe', {})
+        else:
+            desc = dxpy.DXHTTPRequest('/' + path + '/' + alias + '/describe', {})
+        return desc
     except dxpy.DXAPIError as details:
-        return None, None
+        return None
 
 def cd(args):
     # entity_result should be None because expected='folder'
@@ -818,7 +819,7 @@ def get_ls_l_desc(desc):
     else:
         name_str = desc['name']
 
-    return state_str + '\t' + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
+    return state_str + ' '*(8-len(desc['state'])) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
 
 def print_ls_l_desc(desc):
     print get_ls_l_desc(desc)
@@ -1250,10 +1251,11 @@ def print_app_desc(desc):
         if 'inputSpec' in desc:
             print "Input Spec\t" + get_io_spec(desc["inputSpec"])
             print "Output Spec\t" + get_io_spec(desc["outputSpec"])
+            print "Interpreter\t" + desc["runSpec"]["interpreter"]
             if "resources" in desc["runSpec"]:
                 print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
             if "bundledDepends" in desc["runSpec"]:
-                print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+                print "bundledDepends\t" + fill(json.dumps(desc["runSpec"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
             if "execDepends" in desc["runSpec"]:
                 print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
         elif 'inputs' in desc:
@@ -1263,7 +1265,7 @@ def print_app_desc(desc):
             if "resources" in desc["run"]:
                 print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
             if "bundledDepends" in desc["run"]:
-                print "bundledDepends\t" + json.dumps(desc["run"]["bundledDepends"])
+                print "bundledDepends\t" + fill(json.dumps(desc["run"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
             if "execDepends" in desc["run"]:
                 print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
         print "GlobalWorkspace\t" + desc["globalWorkspace"]
@@ -1325,7 +1327,7 @@ def print_data_obj_desc(desc):
         if "resources" in desc['runSpec']:
             print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
         if "bundledDepends" in desc['runSpec']:
-            print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+            print "bundledDepends\t" + fill(json.dumps(desc["runSpec"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
         if "execDepends" in desc['runSpec']:
             print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
 
@@ -1476,6 +1478,7 @@ def describe(args):
             for result in dxpy.find_apps(name=args.path, describe=True):
                 print get_result_str()
                 print_desc(result['describe'])
+                found_match = True
 
         # Could be a user
         if args.path.startswith('user'):
@@ -1493,7 +1496,7 @@ def describe(args):
                     if len(desc["appsInstalled"]) == 0:
                         print "Apps installed\tNone"
                     else:
-                        print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
+                        print "Apps installed\t" + fill(', '.join(desc["appsInstalled"].keys()), width=64, subsequent_indent='\t\t')
             except dxpy.DXAPIError as details:
                 pass
 
@@ -2013,6 +2016,9 @@ def close(args):
     if args.wait:
         obj._wait_on_close()
 
+def build(args):
+    parser.exit(1, 'Not yet implemented\n')
+
 def get_exec_inputs(inputs):
     required_inputs = []
     optional_inputs = []
@@ -2029,12 +2035,12 @@ def parse_bool(string):
     elif 'false'.startswith(string.lower()) or string == '0':
         return False
     else:
-        raise ValueError()
+        raise ValueError('Could not resolve \"' + string +  '\" to a boolean')
 
 def parse_obj(string, klass):
     project, path, entity_result = resolve_existing_path(string)
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+        parser.exit(1, 'Could not resolve \"' + string + '\" to a name or ID\n')
     if not entity_result['describe']['class'] == klass:
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
     return {'$dnanexus_link': entity_result['id']}
@@ -2058,11 +2064,7 @@ def get_input_array(param_desc):
     print '\nEnter list of inputs (^D or empty string to finish) of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False) + ':\n'
     try:
         while True:
-            try:
-                user_input = raw_input(param_desc['name'] + '[' + str(len(input_array)) + "]: ")
-            except KeyboardInterrupt:
-                print ''
-                continue
+            user_input = raw_input(param_desc['name'] + '[' + str(len(input_array)) + "]: ")
             if user_input == '':
                 return input_array
             try:
@@ -2073,6 +2075,10 @@ def get_input_array(param_desc):
             except TypeError as details:
                 print str(details)
                 continue
+    except KeyboardInterrupt:
+        print ''
+        print 'Received keyboard interrupt, exiting...'
+        parser.exit(0)
     except EOFError:
         return input_array
     except BaseException as details:
@@ -2083,11 +2089,7 @@ def get_input_single(param_desc):
     print '\nEnter input of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ':'
     try:
         while True:
-            try:
-                user_input = raw_input(param_desc['name'] + ': ')
-            except KeyboardInterrupt:
-                print ''
-                continue
+            user_input = raw_input(param_desc['name'] + ': ')
             try:
                 value = parse_input[in_class](user_input)
             except ValueError as details:
@@ -2097,6 +2099,10 @@ def get_input_single(param_desc):
                 print str(details)
                 continue
             return value
+    except KeyboardInterrupt:
+        print ''
+        print 'Received keyboard interrupt, exiting...'
+        parser.exit(0)
     except BaseException as details:
         parser.exit(1, fill(str(details)) + '\n')
 
@@ -2127,11 +2133,7 @@ def get_optional_inputs(input_hash, optional_inputs):
         print ""
         try:
             while True:
-                try:
-                    selected = raw_input('Optional param #: ')
-                except KeyboardInterrupt:
-                    print ''
-                    continue
+                selected = raw_input('Optional param #: ')
                 if selected == '':
                     return
                 try:
@@ -2143,38 +2145,109 @@ def get_optional_inputs(input_hash, optional_inputs):
                     print str(details)
                     continue
             get_input(input_hash, optional_inputs[opt_num])
+        except KeyboardInterrupt:
+            print ''
+            print 'Received keyboard interrupt, exiting...'
+            parser.exit(0)
         except EOFError:
             return
         except BaseException as details:
             parser.exit(1, fill(str(details)) + '\n')
 
+def add_input_to_json(inputs, input_json, input_specs):
+    '''
+    :param inputs: list of [name, value] lists
+    :param input_json: input JSON being built
+    :param input_specs: list of all input specs
+    '''
+
+    if input_specs is not None:
+        # Input spec is provided.  Throw errors if name is not found,
+        # and respect the "array" class.
+        names = map(lambda spec: spec['name'], input_specs)
+        found_duplicates = False
+        for i in inputs:
+            try:
+                input_index = names.index(i[0])
+            except:
+                parser.exit(1, fill('Input field called ' + i[0] + ' was not found in the input spec') + '\n')
+
+            input_class = input_specs[input_index]['class']
+            if input_class.startswith('array:'):
+                input_class = input_class[6:]
+                is_array = True
+            else:
+                is_array = False
+
+            try:
+                parsed = parse_input[input_class](i[1])
+            except BaseException as details:
+                parser.exit(1, fill(str(details)) + '\n')
+
+            if i[0] not in input_json:
+                if is_array:
+                    input_json[i[0]] = [parsed]
+                else:
+                    input_json[i[0]] = parsed
+            elif is_array:
+                input_json[i[0]].append(parsed)
+            else:
+                 parser.exit(1, fill('Error: Found duplicate input field names for an input that does not expect an array of inputs') + '\n')
+
+    else:
+        # No input spec.  Make them all lists and then un-list them if
+        # there's only one element at the end.  (Since arbitrary JSON
+        # is valid input.)
+        for i in inputs:
+            try:
+                parsed = json.loads(i[1])
+                if i[0] not in input_json:
+                    input_json[i[0]] = [parsed]
+                else:
+                    input_json[i[0]].append(parsed)
+            except:
+                # Not valid JSON, so resolve it as a name
+                project, folderpath, entity_result = resolve_existing_path(i[1], expected='entity')
+                if entity_result is None:
+                    parser.exit(1, 'Could not resolve ' + i[1] + ' to a value or object ID')
+                if i[0] not in input_json:
+                    input_json[i[0]] = [{"$dnanexus_link": entity_result['id']}]
+                else:
+                    input_json[i[0]].append({"$dnanexus_link": entity_result['id']})
+        for key in input_json:
+            if len(input_json[key]) == 1:
+                input_json[key] = input_json[key][0]
+
 def run(args):
     handler = None
+    desc = None
     if args.alias is None:
         # Attempt to resolve name
         project, folderpath, entity_results = resolve_existing_path(args.path, expected='entity', only_one=False)
-        app_name, app_version = get_app_from_path(args.path)
-        if entity_results is not None and len(entity_results) == 1 and app_name is None:
+        app_desc = get_app_from_path(args.path)
+        if entity_results is not None and len(entity_results) == 1 and app_desc is None:
             handler = dxpy.DXProgram(entity_results[0]['id'])
-        elif entity_results is None and app_name is not None:
-            if app_version is None:
-                handler = dxpy.DXApp(dxid=app_name)
-            else:
-                handler = dxpy.DXApp(name=app_name, alias=app_version)
-        elif entity_results is not None and app_name is not None:
+            desc = entity_results[0]['describe']
+        elif entity_results is None and app_desc is not None:
+            handler = dxpy.DXApp(dxid=app_desc['id'])
+            desc = app_desc
+        elif entity_results is not None and app_desc is not None:
             print 'Found multiple executables with the path ' + args.path
             choice = pick(map(lambda result: get_ls_l_desc(result['describe']),
-                              entity_results) + ['app-' + app_name + ', version ' + app_version])
+                              entity_results) + ['app-' + app_desc['name'] + ', version ' + app_desc['version']])
             if choice < len(entity_results):
                 handler = dxpy.get_handler(entity_results[choice]['id'], project)
+                desc = entity_results[choice]['describe']
             else:
-                handler = dxpy.DXApp(name=app_name, alias=app_version)
+                handler = dxpy.DXApp(dxid=app_desc['id'])
+                desc = app_desc
         else:
             parser.exit(1, "No matches found for " + args.path + '\n')
     else:
         if args.path.startswith('app-'):
             args.path = args.path[4:]
         handler = dxpy.DXApp(name=args.path, alias=args.alias)
+        desc = handler.describe()
 
     if args.folder is None:
         dest_proj = os.environ.get('DX_PROJECT_CONTEXT_ID', None)
@@ -2183,16 +2256,46 @@ def run(args):
         dest_proj, dest_path, none = resolve_existing_path(args.folder,
                                                            expected='folder')
 
-    if args.input is not None:
+    input_json = {}
+    if 'inputSpec' in desc:
+        required_inputs, optional_inputs = get_exec_inputs(desc["inputSpec"])
+    elif 'inputs' in desc:
+        required_inputs, optional_inputs = get_exec_inputs(desc["inputs"])
+    else:
+        required_inputs, optional_inputs = None, None
+
+    if args.input_json is not None:
         try:
-            args.input = json.loads(args.input)
+            input_json = json.loads(args.input_json)
         except:
-            with open(args.input, 'r') as fd:
-                data = fd.read()
-                try:
-                    args.input = json.loads(data)
-                except:
-                    parser.exit(1, 'Error: input could not be parsed as JSON nor interpreted as a file of JSON\n')
+            parser.exit(1, 'Error: input could not be parsed as JSON\n')
+    elif args.filename is not None:
+        try:
+            fd = open(args.filename, 'r')
+            data = fd.read()
+            fd.close()
+        except BaseException as details:
+            parser.exit(1, fill(str(details)) + '\n')
+        try:
+            input_json = json.loads(data)
+        except:
+            parser.exit(1, 'Error: file could not be parsed as JSON\n')
+    elif args.stdin:
+        try:
+            input_json = json.loads(raw_input('Input JSON > '))
+        except BaseException as details:
+            parser.exit(1, fill(str(details)) + '\n')
+    elif args.input is not None:
+        input_inputs = []
+        try:
+            for i in args.input:
+                [name, value] = i.split('=')
+                input_inputs.append([name, value])
+        except:
+            parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input_name>=<input value>\n')
+        add_input_to_json(input_inputs, input_json,
+                          (required_inputs + optional_inputs) if required_inputs is not None else None)
+
     else:
         print 'No input given.  Entering interactive mode for input selection.'
         try:
@@ -2210,30 +2313,31 @@ def run(args):
 
         # Select input interactively
         desc = handler.describe()
-        args.input = {}
-        required_inputs, optional_inputs = get_exec_inputs(desc["inputSpec"])
         if len(required_inputs) > 0:
             for param in required_inputs:
-                get_input(args.input, param)
+                get_input(input_json, param)
         if len(optional_inputs) > 0:
-            get_optional_inputs(args.input, optional_inputs)
+            get_optional_inputs(input_json, optional_inputs)
         # Reset the completer once we're done grabbing input
         try:
             readline.set_completer(DXCLICompleter())
         except:
             pass
 
-    if args.verbose:
-        print "Calling " + handler.get_id() + " with output folder " + args.folder + " with input:"
-        print json.dumps(args.input, indent=4)
+    print ''
+    print 'Using input JSON:'
+    print json.dumps(input_json, indent=4)
+    print ''
 
-    try:
-        dxjob = handler.run(args.input, project=dest_proj, folder=dest_path)
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
-    if args.verbose:
-        print "Origin job: "
-    print dxjob.get_id()
+    if not args.dry_run:
+        print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
+        try:
+            dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
+        print "Job ID: " + dxjob.get_id()
+    else:
+        print 'Job ID: None (dry run)'
 
 def kill(args):
     try:
@@ -2279,7 +2383,16 @@ def shell(orig_args):
                 print str(details) + '\n'
 
 def print_help(args):
-    parser.print_help()
+    if args.command is None:
+        parser.print_help()
+    elif args.command not in parser_map:
+        parser.exit(1, 'Unrecognized command: ' + args.command + '\n')
+    elif args.subcommand is None:
+        parser_map[args.command].print_help()
+    elif (args.command + ' ' + args.subcommand) not in parser_map:
+        parser.exit(1, 'Unrecognized command and subcommand combination: ' + args.command + ' ' + args.subcommand + '\n')
+    else:
+        parser_map[args.command + ' ' + args.subcommand].print_help()
 
 def exit_shell(args):
     if state['interactive']:
@@ -2301,12 +2414,17 @@ subparsers = parser.add_subparsers()
 
 parser_shell = subparsers.add_parser('sh', help='Run interactive shell', prog='dx sh')
 parser_shell.set_defaults(func=shell)
+parser_map['sh'] = parser_shell
 
 parser_help = subparsers.add_parser('help', help='Display help message', prog='dx help')
+parser_help.add_argument('command', help='Display the help message for the given command', nargs='?', default=None)
+parser_help.add_argument('subcommand', help='Display the help message for the given subcommand of the command', nargs='?', default=None)
 parser_help.set_defaults(func=print_help)
+parser_map['help'] = parser_help
 
 parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', prog='dx exit')
 parser_exit.set_defaults(func=exit_shell)
+parser_map['exit'] = parser_exit
 
 parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
                                       description='Sets environment variables for communication with the API server')
@@ -2318,6 +2436,7 @@ parser_setenv.set_defaults(func=setenv)
 parser_env = subparsers.add_parser('env', help='Prints all environment variables set for the CLI', prog='dx env')
 parser_env.add_argument('--bash', help='Prints a list of bash commands to export the environment variables', action='store_true')
 parser_env.set_defaults(func=env)
+parser_map['env'] = parser_env
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
@@ -2327,15 +2446,18 @@ parser_login.add_argument('--port', type=int, help='Log into the given auth serv
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.set_defaults(func=login)
+parser_map['login'] = parser_login
 
 parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials',
                                       description='Log out and remove credentials',
                                       prog='dx logout')
 parser_logout.set_defaults(func=logout)
+parser_map['logout'] = parser_logout
 
 parser_select = subparsers.add_parser('select', help='List and select and project to switch to',
                                       prog='dx select')
 parser_select.set_defaults(func=pick_and_set_project, save=False)
+parser_map['select'] = parser_select
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
                                   description='List folders and/or objects in a folder',
@@ -2347,38 +2469,45 @@ parser_ls.add_argument('--folders', help='show only folders', action='store_true
 parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
 parser_ls.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
 parser_ls.set_defaults(func=ls)
+parser_map['ls'] = parser_ls
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
                                   description='Change the current working directory', prog='dx cd')
 parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
 parser_cd.set_defaults(func=cd)
+parser_map['cd'] = parser_cd
 
 parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
                                    description='Print current working directory', prog='dx pwd')
 parser_pwd.set_defaults(func=pwd)
+parser_map['pwd'] = parser_pwd
 
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder', prog='dx mkdir')
 parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
 parser_mkdir.add_argument('path', help='Path to a folder to create; full path is required')
 parser_mkdir.set_defaults(func=mkdir)
+parser_map['mkdir'] = parser_mkdir
 
 parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
                                      description='Remove a folder', prog='dx rmdir')
 parser_rmdir.add_argument('path', help='Path to a folder to remove; full path is required')
 parser_rmdir.set_defaults(func=rmdir)
+parser_map['rmdir'] = parser_rmdir
 
 parser_rm = subparsers.add_parser('rm', help='Remove objects',
                                   description='Remove objects', prog='dx rm')
 parser_rm.add_argument('paths', help='Paths to remove', nargs='*')
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
+parser_map['rm'] = parser_rm
 
 parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
                                          description='Delete projects and all their associated data',
                                          prog='dx rmproject')
 parser_rmproject.add_argument('projects', help='Projects to remove', nargs='*')
 parser_rmproject.set_defaults(func=rmproject)
+parser_map['rmproject'] = parser_rmproject
 
 parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside a single project',
                                   description='Move objects and/or folders inside a single project.',
@@ -2386,33 +2515,40 @@ parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside
 parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='*')
 parser_mv.add_argument('destination', help='Folder into which to move the sources')
 parser_mv.set_defaults(func=mv)
+parser_map['mv'] = parser_mv
 
 parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders between different projects',
                                   description='Copy objects and/or folders between different projects.  Folders will automatically be copied recursively.', prog='dx cp')
 parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='*')
 parser_cp.add_argument('destination', help='Folder into which to copy the sources')
 parser_cp.set_defaults(func=cp)
+parser_map['cp'] = parser_cp
 
 parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable', prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
 parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
+parser_map['head'] = parser_head
 
 parser_cat = subparsers.add_parser('cat', help='Print a file to stdout', prog='dx cat')
 parser_cat.add_argument('path', help='File ID or name to print to stdout')
 parser_cat.set_defaults(func=file_get, output=None, stdout=True)
+parser_map['cat'] = parser_cat
 
 parser_file = subparsers.add_parser('file', help='Interact with remote files', prog='dx file')
 subparsers_file = parser_file.add_subparsers()
+parser_map['file'] = parser_file
 
 parser_file_get = subparsers_file.add_parser('get', help='Download a file', prog='dx file get')
 parser_file_get.add_argument('path', help='File ID or name to download')
 parser_file_get.add_argument('--stdout', help='Print the file to stdout', action='store_true')
 parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
 parser_file_get.set_defaults(func=file_get)
+parser_map['file get'] = parser_file_get
 
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
 subparsers_gtable = parser_gtable.add_subparsers()
+parser_map['gtable'] = parser_gtable
 
 parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable',
                                                  parents=[global_args],
@@ -2424,6 +2560,7 @@ parser_gtable_get.add_argument('--gri_mode', help='Specify the mode of the GRI q
 parser_gtable_get.add_argument('--gri_name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
 parser_gtable_get.add_argument('path', help='GTable ID from which to fetch rows')
 parser_gtable_get.set_defaults(func=gtable_get)
+parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
                                         description='Describe a remote object',
@@ -2434,27 +2571,65 @@ parser_describe.add_argument('--properties', help='Include properties', action='
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
 parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
 parser_describe.set_defaults(func=describe)
+parser_map['describe'] = parser_describe
 
 parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object', prog='dx close')
 parser_close.add_argument('path', help='Path to data object to close')
 parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
+parser_map['close'] = parser_close
 
-parser_run = subparsers.add_parser('run', help='Run a program or app', description='Run a program or app', prog='dx run')
+parser_build = subparsers.add_parser('build', help='Build an applet/app',
+                                     description='Takes in a local directory containing your source code and a dxprogram.json file, and converts it into a program object in the current project.  With the "-a" flag, it can optionally be further packaged into an app object',
+                                     prog='dx build')
+parser_build.add_argument('directory', help='Path to your local directory')
+parser_build.add_argument('-f', '--overwrite', help='Remove existing programs of the same name', action='store_true')
+parser_build.add_argument('-a', '--create_app', help='Create an app from the program (requires dxapp.json to be present)', action='store_true')
+parser_build.add_argument("-p", "--destination_project", help="Insert the program into the project with the specified project ID.")
+parser_build.add_argument('--publish', help='Publish the app after it has been created.', action='store_true')
+parser_build.add_argument("-o", "--owner", help="Owner (username or organization) to set for the app.")
+parser_build.set_defaults(func=build)
+parser_map['build'] = parser_build
+
+parser_run = subparsers.add_parser('run', help='Run a program or app', description=(fill('Run a program or app.  If no inputs are specified, an interactive mode for selecting inputs will be launched.') + '''
+
+SPECIFYING INPUTS
+
+''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('To use the "-i" flag to specify each input field name and value, using the syntax "-i<input name>=<input value>".  For example, the following runs the program called "mapper" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable):', initial_indent='  ', subsequent_indent='  ') + '''
+
+    dx run mapper -inum=34 -istr=\'"foo"\' -igtables=reads1 -igtables=reads2
+
+''' + fill('Note that non-name values are parsed as JSON, so strings must be quoted with double quotes.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
+
+    1) -j/--input_json INPUT_JSON
+    2) -f/--input_json_file FILENAME
+    3) --stdin'''), prog='dx run', formatter_class=argparse.RawTextHelpFormatter)
 parser_run.add_argument('path', help='Name or ID of program or app to run')
-parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help='Tag or version of the app to run')
-parser_run.add_argument('--folder', help='The folder in which to output the results.  By default, the current working directory will be used.')
-parser_run.add_argument('--input', help='The input to the program as JSON or a filename containing the JSON.  If this argument is not given, an interactive mode will be launched.')
-parser_run.add_argument('-v', '--verbose', help='Print additional information', action='store_true')
-parser_run.set_defaults(func=run)
+parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help=fill('Tag or version of the app to run (default: \"default\" if an app)', width=56))
+parser_run.add_argument('--folder', help=fill('The folder in which to output the results.  By default, the current working directory will be used.', width=56))
+parser_run_input = parser_run.add_mutually_exclusive_group()
+parser_run_input.add_argument('-i', '--input', help='''An input to be added using "<input name>=<input value>"
+Examples:
+  -ichunkSize=250000     # Numerical input
+  -iname=\'\"hello world\"\' # Quotes required for strings
+  -ireads=reads_name     # Names will be resolved''', action='append')
+parser_run_input.add_argument('-j', '--input_json', help=fill('The full input JSON (keys=input field names, values=input field values)', width=56))
+parser_run_input.add_argument('-f', '--input_json_file', dest='filename', help=fill('Load input JSON from the file'))
+parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width=56), action='store_true')
+parser_run.add_argument('--dry_run', help=fill('The program or app will not be run.  The input JSON that would have been used will be printed.', width=56),
+                        action='store_true')
+parser_run.set_defaults(func=run, verbose=False)
+parser_map['run'] = parser_run
 
 parser_kill = subparsers.add_parser('kill', help='Terminate a job that has not yet finished', prog='dx kill')
 parser_kill.add_argument('jobid', help='ID of the job to terminate')
 parser_kill.set_defaults(func=kill)
+parser_map['kill'] = parser_kill
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
                                     description='Search functionality over data objects, projects, and jobs', prog='dx find')
 subparsers_find = parser_find.add_subparsers()
+parser_map['find'] = parser_find
 
 parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args], prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
@@ -2467,6 +2642,7 @@ parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='st
 parser_find_jobs.add_argument('--created_after', type=int, help='Timestamp after which the job was last created (negative number means ms in the past)')
 parser_find_jobs.add_argument('--created_before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
 parser_find_jobs.set_defaults(func=find_jobs)
+parser_map['find jobs'] = parser_find_jobs
 
 parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'program', 'table'], help='Data object class')
@@ -2486,11 +2662,13 @@ parser_find_data.add_argument('--created_after', type=int, help='Timestamp after
 parser_find_data.add_argument('--created_before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
 parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
 parser_find_data.set_defaults(func=find_data)
+parser_map['find data'] = parser_find_data
 
 parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args], prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
 parser_find_projects.set_defaults(func=find_projects)
+parser_map['find projects'] = parser_find_projects
 
 parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args], prog='dx find apps')
 parser_find_apps.add_argument('--name', help='Name of the app')
@@ -2505,6 +2683,7 @@ parser_find_apps.add_argument('--created_before', type=int, help='Timestamp befo
 parser_find_apps.add_argument('--mod_after', type=int, help='Timestamp after which the app was last modified (negative number means ms in the past)')
 parser_find_apps.add_argument('--mod_before', type=int, help='Timestamp before which the app was last modified (negative number means ms in the past)')
 parser_find_apps.set_defaults(func=find_apps)
+parser_map['find apps'] = parser_find_apps
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
@@ -2522,60 +2701,72 @@ parser_upload.add_argument('filename', help='local filename to upload')
 parser_upload.add_argument('--id_only', help='Print ID of the file object instead of the full description', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
+parser_map['upload'] = parser_upload
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
+parser_map['new'] = parser_new
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
                                                prog='dx new project')
 parser_new_project.add_argument('name', help='Name of the new project')
 parser_new_project.set_defaults(func=new_project)
+parser_map['new project'] = parser_new_project
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               parents=[parser_dataobject_args],
                                               prog='dx new record')
 parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
 parser_new_record.set_defaults(func=new_record)
+parser_map['new record'] = parser_new_record
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable', parents=[parser_dataobject_args], prog='dx new gtable')
 parser_new_gtable.add_argument('--columns', help='JSON for specifying the columns')
 parser_new_gtable.add_argument('--indices', help='JSON for specifying the indices')
 parser_new_gtable.add_argument('--input', help='a filename containing the JSON input to be used (currently only used for overriding --columns and --indices)')
 parser_new_gtable.set_defaults(func=new_gtable)
+parser_map['new gtable'] = parser_new_gtable
 
 parser_get_details = subparsers.add_parser('get_details', help='Get details of an object', prog="dx set_details")
 parser_get_details.add_argument('path', help='Data object to get details for')
 parser_get_details.set_defaults(func=get_details)
+parser_map['get_details'] = parser_get_details
 
 parser_set_details = subparsers.add_parser('set_details', help='Set details on an object', prog="dx set_details")
 parser_set_details.add_argument('path', help='Data object to modify')
 parser_set_details.add_argument('details', help='JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
+parser_map['set_details'] = parser_set_details
 
 parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object', prog='dx set_visibility')
 parser_set_visibility.add_argument('path', help='Data object to modify')
 parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
 parser_set_visibility.set_defaults(func=set_visibility)
+parser_map['set_visibility'] = parser_set_visibility
 
 parser_add_types = subparsers.add_parser('add_types', help='Add types to an object', prog='dx add_types')
 parser_add_types.add_argument('path', help='Data object to modify')
 parser_add_types.add_argument('types', nargs='+', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
+parser_map['add_types'] = parser_add_types
 
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object', prog='dx remove_types')
 parser_remove_types.add_argument('path', help='Data object to modify')
 parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
+parser_map['remove_types'] = parser_remove_types
 
 parser_add_tags = subparsers.add_parser('add_tags', help='Add tags to an object', prog='dx add_tags')
 parser_add_tags.add_argument('path', help='Data object to modify')
 parser_add_tags.add_argument('tags', nargs='+', help='Tags to add')
 parser_add_tags.set_defaults(func=add_tags)
+parser_map['add_tags'] = parser_add_tags
 
 parser_remove_tags = subparsers.add_parser('remove_tags', help='Remove tags from an object', prog='dx remove_tags')
 parser_remove_tags.add_argument('path', help='Data object to modify')
 parser_remove_tags.add_argument('tags', nargs='+', help='Tags to remove')
 parser_remove_tags.set_defaults(func=remove_tags)
+parser_map['remove_tags'] = parser_remove_tags
 
 parser_rename = subparsers.add_parser('rename',
                                       help='Rename a project, folder, or object',
@@ -2584,16 +2775,19 @@ parser_rename = subparsers.add_parser('rename',
 parser_rename.add_argument('path', help='Path to project, folder, or object to rename')
 parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
+parser_map['rename'] = parser_rename
 
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object', prog='dx set_properties')
 parser_set_properties.add_argument('path', help='Data object to modify')
 parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
 parser_set_properties.set_defaults(func=set_properties)
+parser_map['set_properties'] = parser_set_properties
 
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object', prog='dx unset_properties')
 parser_unset_properties.add_argument('path', help='Data object to modify')
 parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
+parser_map['unset_properties'] = parser_unset_properties
 
 parser_api = subparsers.add_parser('api', help='Make an API call', prog='dx api')
 parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
@@ -2602,6 +2796,7 @@ parser_api.add_argument('input_json', nargs='?', default="{}", help='the JSON in
 parser_api.add_argument('--input', help='a filename containing the JSON input to be used (takes precedence over the \'json\' argument)')
 parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
 parser_api.set_defaults(func=api)
+parser_map['api'] = parser_api
 
 # "Execution" starts here
 
