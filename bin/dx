@@ -1192,7 +1192,7 @@ def print_project_desc(desc):
             print field + '\t\t' + json.dumps(desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'installed', 'openSource']
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary']
 
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
@@ -1228,20 +1228,32 @@ def print_app_desc(desc):
             print "Title\t\t" + desc["title"]
         if "subtitle" in desc:
             print "Subtitle\t\t" + desc["subtitle"]
+        if 'summary' in desc:
+            print fill("Summary\t\t" + desc['summary'], subsequent_indent='\t\t', width=64)
         if "description" in desc:
-            print "Description\t" + desc["description"]
+            print fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
         print "Categories\t" + ', '.join(desc["categories"])
         print "Access\t\t" + json.dumps(desc["access"])
         print "API version\t" + desc["dxapi"]
-        print "Input Spec\t" + get_io_spec(desc["inputSpec"])
-        print "Output Spec\t" + get_io_spec(desc["outputSpec"])
-        print "Interpreter\t" + desc["runSpec"]["interpreter"]
-        if "resources" in desc["runSpec"]:
-            print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
-        if "bundledDepends" in desc["runSpec"]:
-            print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
-        if "execDepends" in desc["runSpec"]:
-            print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
+        if 'inputSpec' in desc:
+            print "Input Spec\t" + get_io_spec(desc["inputSpec"])
+            print "Output Spec\t" + get_io_spec(desc["outputSpec"])
+            if "resources" in desc["runSpec"]:
+                print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+            if "bundledDepends" in desc["runSpec"]:
+                print "bundledDepends\t" + json.dumps(desc["runSpec"]["bundledDepends"])
+            if "execDepends" in desc["runSpec"]:
+                print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
+        elif 'inputs' in desc:
+            print "Input Spec\t" + get_io_spec(desc['inputs'])
+            print "Output Spec\t" + get_io_spec(desc['outputs'])
+            print "Interpreter\t" + desc["run"]["interpreter"]
+            if "resources" in desc["run"]:
+                print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+            if "bundledDepends" in desc["run"]:
+                print "bundledDepends\t" + json.dumps(desc["run"]["bundledDepends"])
+            if "execDepends" in desc["run"]:
+                print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
         print "GlobalWorkspace\t" + desc["globalWorkspace"]
 
     for field in desc:
@@ -1249,7 +1261,7 @@ def print_app_desc(desc):
             print field + '\t\t' + json.dumps(desc[field])
 
 def print_data_obj_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary']
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
     if 'project' in desc:
@@ -1282,6 +1294,8 @@ def print_data_obj_desc(desc):
         print "Title\t\t" + desc["title"]
     if "subtitle" in desc:
         print "Subtitle\t\t" + desc["subtitle"]
+    if 'summary' in desc:
+        print fill("Summary\t\t" + desc['summary'], subsequent_indent='\t\t', width=64)
     if "description" in desc:
         print fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
     if 'summary' in desc:
@@ -1427,7 +1441,7 @@ def describe(args):
             except:
                 pass
 
-    # Found data object ids
+    # Found data object or is an id
     if entity_results is not None:
         if len(entity_results) > 0:
             found_match = True
@@ -1435,50 +1449,52 @@ def describe(args):
             print get_result_str()
             print_desc(result['describe'])
 
-    # Could be an app name
-    if args.path.startswith('app-'):
-        try:
-            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
-            print get_result_str()
-            print_desc(desc)
-            found_match = True
-        except:
-            pass
-    else:
-        for result in dxpy.find_apps(name=args.path, describe=True):
-            print get_result_str()
-            print_desc(result['describe'])
+    if not is_hashid(args.path):
 
-    # Could be a user
-    if args.path.startswith('user'):
-        try:
-            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
-            found_match = True
+        # Could be an app name
+        if args.path.startswith('app-'):
+            try:
+                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
+                print get_result_str()
+                print_desc(desc)
+                found_match = True
+            except:
+                pass
+        else:
+            for result in dxpy.find_apps(name=args.path, describe=True):
+                print get_result_str()
+                print_desc(result['describe'])
 
-            print get_result_str()
+        # Could be a user
+        if args.path.startswith('user'):
+            try:
+                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
+                found_match = True
 
-            print "ID\t\t" + desc["id"]
-            print "Name\t\t" + desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"]
-            if "email" in desc:
-                print "Email\t\t" + desc["email"]
-            if "appsInstalled" in desc:
-                if len(desc["appsInstalled"]) == 0:
-                    print "Apps installed\tNone"
-                else:
-                    print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
-        except dxpy.DXAPIError as details:
-            pass
+                print get_result_str()
 
-    # Could be an org or team
-    if args.path.startswith('org-') or args.path.startswith('team-'):
-        try:
-            desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
-            found_match = True
-            print get_result_str()
-            for field in desc:
-                print field + '\t\t' + json.dumps(desc[field])
-        except dxpy.DXAPIError as details:
-            pass
+                print "ID\t\t" + desc["id"]
+                print "Name\t\t" + desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"]
+                if "email" in desc:
+                    print "Email\t\t" + desc["email"]
+                if "appsInstalled" in desc:
+                    if len(desc["appsInstalled"]) == 0:
+                        print "Apps installed\tNone"
+                    else:
+                        print "Apps installed\t" + ', '.join(desc["appsInstalled"].keys())
+            except dxpy.DXAPIError as details:
+                pass
+
+        # Could be an org or team
+        if args.path.startswith('org-') or args.path.startswith('team-'):
+            try:
+                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
+                found_match = True
+                print get_result_str()
+                for field in desc:
+                    print field + '\t\t' + json.dumps(desc[field])
+            except dxpy.DXAPIError as details:
+                pass
 
     if not found_match:
         print "No matches found for " + args.path
