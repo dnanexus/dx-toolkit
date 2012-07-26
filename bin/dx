@@ -2326,15 +2326,30 @@ def run(args):
     print json.dumps(input_json, indent=4)
     print ''
 
-    if not args.dry_run:
-        print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
+    # Ask for confirmation if a tty and if input was not given as a
+    # single JSON.
+    if args.input_json is None and args.filename is None and not args.stdin and sys.stdin.isatty():
         try:
-            dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
-        except dxpy.DXAPIError as details:
+            value = raw_input('Confirm running the program/app with this input [Y/n]: ')
+        except KeyboardInterrupt:
+            print ''
+            print 'Received keyboard interrupt, exiting...'
+            parser.exit(0)
+        except EOFError:
+            print ''
+            print 'Received ^D, exiting...'
+            parser.exit(0)
+        except BaseException as details:
             parser.exit(1, fill(str(details)) + '\n')
-        print "Job ID: " + dxjob.get_id()
-    else:
-        print 'Job ID: None (dry run)'
+        if value != '' and not value.lower().startswith('y'):
+            parser.exit(0)
+
+    print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
+    try:
+        dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
+    except dxpy.DXAPIError as details:
+        parser.exit(1, fill(str(details)) + '\n')
+    print "Job ID: " + dxjob.get_id()
 
 def kill(args):
     try:
@@ -2617,8 +2632,6 @@ Examples:
 parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width=56))
 parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file'))
 parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width=56), action='store_true')
-parser_run.add_argument('--dry-run', help=fill('The program or app will not be run.  The input JSON that would have been used will be printed.', width=56),
-                        action='store_true')
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
 
