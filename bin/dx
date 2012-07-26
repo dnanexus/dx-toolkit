@@ -1160,7 +1160,7 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
     if "default" in parameter:
         if not is_first:
             desc += ', '
-        desc += str(parameter["default"])
+        desc += json.dumps(parameter['default'])
     if include_parens:
         desc += ")"
     if show_opt and is_optional:
@@ -2040,7 +2040,7 @@ def parse_bool(string):
 def parse_obj(string, klass):
     project, path, entity_result = resolve_existing_path(string)
     if entity_result is None:
-        parser.exit(1, 'Could not resolve \"' + string + '\" to a name or ID\n')
+        raise TypeError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
     return {'$dnanexus_link': entity_result['id']}
@@ -2113,6 +2113,7 @@ def get_input(input_hash, param):
         input_hash[param['name']] = get_input_single(param)
 
 def get_optional_inputs(input_hash, optional_inputs):
+    names = map(lambda spec: spec['name'], optional_inputs)
     while True:
         print '\nSelect an optional parameter to set by its # (^D or empty string to finish):\n'
         for i in range(len(optional_inputs)):
@@ -2120,14 +2121,7 @@ def get_optional_inputs(input_hash, optional_inputs):
                 get_io_desc(optional_inputs[i], show_opt=False)
             if optional_inputs[i]['name'] in input_hash:
                 opt_str += ' [=' + GREEN
-                if isinstance(input_hash[optional_inputs[i]['name']], basestring):
-                    is_string = True
-                    opt_str += '"'
-                else:
-                    is_string = False
-                opt_str += str(input_hash[optional_inputs[i]['name']])
-                if is_string:
-                    opt_str += '"'
+                opt_str += json.dumps(input_hash[optional_inputs[i]['name']])
                 opt_str += ENDC + ']'
             print opt_str
         print ""
@@ -2296,7 +2290,7 @@ def run(args):
         add_input_to_json(input_inputs, input_json,
                           (required_inputs + optional_inputs) if required_inputs is not None else None)
 
-    else:
+    elif required_inputs is not None:
         print 'No input given.  Entering interactive mode for input selection.'
         try:
             # If running from the command-line (not in the shell),
@@ -2312,7 +2306,6 @@ def run(args):
             pass
 
         # Select input interactively
-        desc = handler.describe()
         if len(required_inputs) > 0:
             for param in required_inputs:
                 get_input(input_json, param)
@@ -2603,7 +2596,11 @@ SPECIFYING INPUTS
 
     1) -j/--input_json INPUT_JSON
     2) -f/--input_json_file FILENAME
-    3) --stdin'''), prog='dx run', formatter_class=argparse.RawTextHelpFormatter)
+    3) --stdin
+
+  JOB-BASED OBJECT REFERENCES
+
+  ''' + fill('For now, job-based object references can only be used if provided as part of a full input JSON.', subsequent_indent='  ') + '\n'), prog='dx run', formatter_class=argparse.RawTextHelpFormatter)
 parser_run.add_argument('path', help='Name or ID of program or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help=fill('Tag or version of the app to run (default: \"default\" if an app)', width=56))
 parser_run.add_argument('--folder', help=fill('The folder in which to output the results.  By default, the current working directory will be used.', width=56))
