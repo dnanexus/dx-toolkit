@@ -4,7 +4,7 @@
 #define defaultPrioritySocket "/opt/dnanexus/log/priority"
 #define defaultBulkSocket "/opt/dnanexus/log/bulk"
 
-#include "dxjson/dxjson.h"
+#include "dxLog_helper.h"
 #include "unixDGRAM.h"
 
 using namespace std;
@@ -18,39 +18,27 @@ namespace DXLog {
   /** Validate that message has proper data for logging based on information specified in schema
    *  Return false if failed and errMsg has detailed information of error
    */
-  bool ValidateLogData(const dx::JSON &schema, dx::JSON &message, string &errMsg); 
+//  bool ValidateLogData(dx::JSON &message, string &errMsg); 
 
   // API for writing logs to rsyslog and/or mongodb
   class logger {
     private:
-      dx::JSON schema;  // schema of log data
-      string hostname, errmsg, txtMsgFile, dbMsgFile;  // hostname of local machine
-      bool ready; // whether or not schema is valid
-
-      void formMessage(const dx::JSON &message, string &msg);
+      string hostname;
 
     public:
-      logger();
-
-      bool isReady(string &errMsg);
+      logger() { hostname = getHostname(); }
 
       /** Send log message to rsyslog and/or mongodb.
       *  data is a hash contains the log message and related information 
       *  Reture whether or not if the message was sent successfully.
       *  Otherwise return false and errMsg contains detailed error message
       */
-      bool Log(dx::JSON &data, string &errMsg); 
-  }; 
-  
+      bool Log(dx::JSON &data, string &errMsg, const string &socketPath = "/dev/log"); 
+  };
+
   // Wrapper for writing logs from an app
   class AppLog {
     private: 
-      /** Each job has two limits of total number of messages
-      *  One is for EMERG, ALERT, and CRIT messages
-      *  The other is for ERR, WARN, NOTICE, INFO, DEBUG messages
-      *  msgCoutn stores current number of messages being stored 
-      */
-      static int msgCount[2], msgLimit; //
       static bool initialized;
 
       // Data associated with messages obtained from execution environment
@@ -68,6 +56,8 @@ namespace DXLog {
       *  Returns true if the message is successfully delivered to the log system;
       *  Otherwise returns false and errMsg contains some details of the error
       */
+
+      static dx::JSON validateMsg(const string &message, int level=6); 
       static bool log(const string &message, int level = 6);
       static bool emerg(const string &message) { return log(message, 0); }
       static bool alert(const string &message) { return log(message, 1); }
@@ -81,7 +71,7 @@ namespace DXLog {
       static bool done(string &errMsg);
   };
 
-//  bool Log(int facility, int level, const string &tag, const string &msg, string &errMsg);
+  // bool Log(int facility, int level, const string &tag, const string &msg, string &errMsg);
 };
 
 #endif
