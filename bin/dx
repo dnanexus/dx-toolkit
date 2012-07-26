@@ -2290,7 +2290,7 @@ def run(args):
         add_input_to_json(input_inputs, input_json,
                           (required_inputs + optional_inputs) if required_inputs is not None else None)
 
-    elif required_inputs is not None:
+    elif required_inputs is not None and (len(required_inputs) > 0 or len(optional_inputs) > 0):
         print 'No input given.  Entering interactive mode for input selection.'
         try:
             # If running from the command-line (not in the shell),
@@ -2316,6 +2316,10 @@ def run(args):
             readline.set_completer(DXCLICompleter())
         except:
             pass
+    elif required_inputs is not None:
+        print fill('No input given, and program/app takes in no inputs.  Skipping interactive mode for input selection.')
+    else:
+        print fill('No input given, and program has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
 
     print ''
     print 'Using input JSON:'
