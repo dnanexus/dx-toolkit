@@ -56,7 +56,6 @@ dx::JSON DXLog::AppLog::validateMsg(const string &msg, int level) {
   dx::JSON message(dx::JSON_OBJECT);
   if ((level < 0) || (level > 7)) throwString("Invalid log level: " + boost::lexical_cast<string>(level));
 
-  message["source"] = "DX_APP";
   message["msg"] = msg;
   message["level"] = level;
   message["timestamp"] = utcMS();

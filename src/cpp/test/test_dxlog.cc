@@ -367,7 +367,6 @@ bool setSocketPath() {
 }
 
 void verifyAppLogData(const dx::JSON &data, const string &msg, int level, int64_t t1, int64_t t2) {
-  ASSERT_EQ(data["source"].get<string>(), "DX_APP");
   ASSERT_EQ(int(data["level"]), level);
   ASSERT_EQ(data["msg"].get<string>(), msg);
   ASSERT_EQ(data["timestamp"].type(), dx::JSON_INTEGER);
