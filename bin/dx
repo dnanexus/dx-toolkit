@@ -2553,8 +2553,8 @@ parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from
 parser_gtable_get.add_argument('--starting', type=int, help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
 parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the number of rows returned')
 parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-parser_gtable_get.add_argument('--gri_mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
-parser_gtable_get.add_argument('--gri_name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
+parser_gtable_get.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
+parser_gtable_get.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
 parser_gtable_get.add_argument('path', help='GTable ID from which to fetch rows')
 parser_gtable_get.set_defaults(func=gtable_get)
 parser_map['gtable get'] = parser_gtable_get
@@ -2581,7 +2581,7 @@ parser_build = subparsers.add_parser('build', help='Build an applet/app',
                                      prog='dx build')
 parser_build.add_argument('directory', help='Path to your local directory')
 parser_build.add_argument('-f', '--overwrite', help='Remove existing programs of the same name', action='store_true')
-parser_build.add_argument('-a', '--create_app', help='Create an app from the program (requires dxapp.json to be present)', action='store_true')
+parser_build.add_argument('-a', '--create-app', help='Create an app from the program (requires dxapp.json to be present)', action='store_true')
 parser_build.add_argument("-p", "--destination_project", help="Insert the program into the project with the specified project ID.")
 parser_build.add_argument('--publish', help='Publish the app after it has been created.', action='store_true')
 parser_build.add_argument("-o", "--owner", help="Owner (username or organization) to set for the app.")
@@ -2614,10 +2614,10 @@ Examples:
   -ichunkSize=250000     # Numerical input
   -iname=\'\"hello world\"\' # Quotes required for strings
   -ireads=reads_name     # Names will be resolved''', action='append')
-parser_run_input.add_argument('-j', '--input_json', help=fill('The full input JSON (keys=input field names, values=input field values)', width=56))
-parser_run_input.add_argument('-f', '--input_json_file', dest='filename', help=fill('Load input JSON from the file'))
+parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width=56))
+parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file'))
 parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width=56), action='store_true')
-parser_run.add_argument('--dry_run', help=fill('The program or app will not be run.  The input JSON that would have been used will be printed.', width=56),
+parser_run.add_argument('--dry-run', help=fill('The program or app will not be run.  The input JSON that would have been used will be printed.', width=56),
                         action='store_true')
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
@@ -2640,8 +2640,8 @@ parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", 
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
-parser_find_jobs.add_argument('--created_after', type=int, help='Timestamp after which the job was last created (negative number means ms in the past)')
-parser_find_jobs.add_argument('--created_before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
+parser_find_jobs.add_argument('--created-after', type=int, help='Timestamp after which the job was last created (negative number means ms in the past)')
+parser_find_jobs.add_argument('--created-before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
@@ -2657,10 +2657,10 @@ parser_find_data.add_argument('--link', help='Object ID that the data object lin
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
 parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
-parser_find_data.add_argument('--mod_after', type=int, help='Timestamp after which the object was last modified (negative number means ms in the past)')
-parser_find_data.add_argument('--mod_before', type=int, help='Timestamp before which the object was last modified (negative number means ms in the past)')
-parser_find_data.add_argument('--created_after', type=int, help='Timestamp after which the object was created (negative number means ms in the past)')
-parser_find_data.add_argument('--created_before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--mod-after', type=int, help='Timestamp after which the object was last modified (negative number means ms in the past)')
+parser_find_data.add_argument('--mod-before', type=int, help='Timestamp before which the object was last modified (negative number means ms in the past)')
+parser_find_data.add_argument('--created-after', type=int, help='Timestamp after which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--created-before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
 parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
 parser_find_data.set_defaults(func=find_data)
 parser_map['find data'] = parser_find_data
@@ -2679,10 +2679,10 @@ parser_find_apps.add_argument('--unpublished', help='Whether to return unpublish
 parser_find_apps.add_argument('--owner', help='Owner of the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
-parser_find_apps.add_argument('--created_after', type=int, help='Timestamp after which the app version was created (negative number means ms in the past)')
-parser_find_apps.add_argument('--created_before', type=int, help='Timestamp before which the app version was created (negative number means ms in the past)')
-parser_find_apps.add_argument('--mod_after', type=int, help='Timestamp after which the app was last modified (negative number means ms in the past)')
-parser_find_apps.add_argument('--mod_before', type=int, help='Timestamp before which the app was last modified (negative number means ms in the past)')
+parser_find_apps.add_argument('--created-after', type=int, help='Timestamp after which the app version was created (negative number means ms in the past)')
+parser_find_apps.add_argument('--created-before', type=int, help='Timestamp before which the app version was created (negative number means ms in the past)')
+parser_find_apps.add_argument('--mod-after', type=int, help='Timestamp after which the app was last modified (negative number means ms in the past)')
+parser_find_apps.add_argument('--mod-before', type=int, help='Timestamp before which the app was last modified (negative number means ms in the past)')
 parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = parser_find_apps
 
@@ -2699,7 +2699,7 @@ parser_dataobject_args.add_argument('--folder', help='Folder path with which to 
 
 parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
-parser_upload.add_argument('--id_only', help='Print ID of the file object instead of the full description', action='store_true')
+parser_upload.add_argument('--id-only', help='Print ID of the file object instead of the full description', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 parser_map['upload'] = parser_upload
