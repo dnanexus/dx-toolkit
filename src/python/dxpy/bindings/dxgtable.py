@@ -339,6 +339,15 @@ class DXGTable(DXDataObject):
     def _finalize_string_row_buf(self, part_id=None):
         if part_id == None:
             part_id = self.get_unused_part_id()
+                
+        # Temporary debug
+        self._string_row_buf.seek(-2, os.SEEK_END) # chop off trailing ", "
+        tail = self._string_row_buf.read()
+        if tail != ', ':
+            self._string_row_buf.seek(-10, os.SEEK_END)
+            tail = self._string_row_buf.read()
+            raise Exception("Unexpected buffer state: _finalize_string_row_buf called twice. Buffer tail: "+tail)
+        
         self._string_row_buf.seek(-2, os.SEEK_END) # chop off trailing ", "
         self._string_row_buf.write('], "part": %s}' % str(part_id))
 

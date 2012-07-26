@@ -5,6 +5,22 @@ import math
 import operator
 from optparse import OptionParser
 import re
+import sys
+
+import subprocess
+import time
+import logging
+
+sys.path.append('/usr/local/lib/')
+import magic
+
+logging.basicConfig(level=logging.DEBUG)
+
+
+
+sys.path.append('/usr/local/lib/')
+import magic
+
 
 #Example: dx_vcfToSimplevar --table_id gtable-9yZvF200000PYKJyV4k00005 --vcf_file variants.vcf --extract_header
 
@@ -27,7 +43,10 @@ def main():
     for x in opts.simplevar_id:
         simpleVarArray.append(dxpy.open_dxgtable(x))
         priors.append({'chr':'', 'position':-1})
-    vcfFile = open(opts.file_name, 'r')
+    #vcfFile = open(opts.file_name, 'r')
+    vcfFileName = opts.file_name
+    print vcfFileName
+    print open(vcfFileName, 'r').readline()
     inferNoCall = opts.infer_no_call
     compressReference = opts.compress_reference
     storeFullVcf = opts.store_full_vcf
@@ -36,7 +55,7 @@ def main():
     priorType = "None"
     priorPosition = -1
 
-    fileIter = vcfFile.__iter__()
+    #fileIter = vcfFile.__iter__()
     count = 1
 
     #Additional data will contain the extra format and info columns that are optional in VCF and may not be
@@ -73,6 +92,8 @@ def main():
         for i in range(len(contigNames)):
             regions[contigNames[i]] = [[0, contigSizes[i]-1]]
     
+    
+    
     highestObservedInRegion = {}
     for sample in range(len(simpleVarArray)):
         highestObservedInRegion[sample] = {}
@@ -86,9 +107,11 @@ def main():
         lastRegion.append(['', -1])
     
     header = ''
+    vcfFile = open(vcfFileName, 'r')
+    #with unpack_and_open(vcfFileName) as vcfFile:
     while 1:
         try:
-            input = fileIter.next()
+            input = vcfFile.next()
             if count%100000 == 0:
                 print "Processed count %i variants " % count
             count += 1
@@ -142,7 +165,7 @@ def main():
                 for i in range(len(reg)):
                     if reg[i] < regions[chr][i][1]:
                         writeNoCallRow(simpleVarArray[sample], chr, reg[i], regions[chr][i][1], storeFullVcf)
-    
+
 
     
 def checkWithinRegion(chr, lo, hi, regions):
@@ -325,7 +348,9 @@ def parseVcfLine(storeSamplesIndividually, input, sample):
         qual = int(float(tabSplit[5]))
 
     formatColumn = tabSplit[7]
-    infoColumn = tabSplit[8]
+    infoColumn = ''
+    if len(tabSplit) > 8:
+        infoColumn = tabSplit[8]
     genotypeQuality = 0
     
     if storeSamplesIndividually:
@@ -370,7 +395,7 @@ def getInfoField(fieldName, infoColumn, infoContents):
             if entrySplitColumn[i] == fieldName:
                 position = i
                 entrySplitInfo = infoContents.split(":")
-                if len(entrySplitInfo) >= position:
+                if len(entrySplitInfo) > position:
                     return entrySplitInfo[position]
     return False
     
@@ -520,6 +545,61 @@ def checkRowValidity(row, storeFullVcf):
     print False
     print row
     return False
+
+
+def unpack_and_open(input):
+    m = magic.Magic()
+
+    # determine compression format
+    try:
+        file_type = m.from_file(input)
+    except:
+        raise dxpy.ProgramError("Unable to identify compression format")
+
+    print file_type
+
+    # if uncompressed open the file and return a handle to it
+    try:
+        if file_type == 'ASCII text' or file_type == 'ASCII English text, with very long lines':
+            return open(input)
+    except:
+        raise dxpy.ProgramError("Detected uncompressed input but unable to open file. File may be corrupted.")
+
+    # if we find a tar file throw a program error telling the user to unpack it
+    if file_type == 'application/x-tar':
+        raise dxpy.ProgramError("Program does not support tar files.  Please unpack.")
+
+    # since we haven't returned, the file is compressed.  Determine what program to use to uncompress
+    uncomp_util = None
+    if file_type == 'XZ compressed data':
+        uncomp_util = 'xzcat'
+    elif file_type[:21] == 'bzip2 compressed data':
+        uncomp_util = 'bzcat'
+    elif file_type[:20] == 'gzip compressed data':
+        uncomp_util = 'zcat'
+    elif file_type == 'POSIX tar archive (GNU)' or 'tar' in file_type:
+        raise dxpy.ProgramError("Found a tar archive.  Please untar your sequences before importing")
+    else:
+        raise dxpy.ProgramError("Unsupported compression type.  Supported formats are xz, gzip, bzip, and uncompressed")
+
+    # with that in hand, open file for reading.  If we find a tar archive then exit with error.
+    try:
+        with subprocess.Popen([uncomp_util, input], stdout=subprocess.PIPE).stdout as pipe:
+            line = pipe.next()
+        uncomp_type = m.from_buffer(line)
+        print uncomp_type
+    except:
+        raise dxpy.ProgramError("Error detecting file format after decompression")
+
+    if uncomp_type == 'POSIX tar archive (GNU)' or 'tar' in uncomp_type:
+        raise dxpy.ProgramError("Found a tar archive after decompression.  Please untar your sequences before importing")
+    elif uncomp_type != 'ASCII text':
+        raise dxpy.ProgramError("After decompression found file type other than plain text")
+    
+    try:
+        return subprocess.Popen([uncomp_util, input], stdout=subprocess.PIPE).stdout
+    except:
+        raise dxpy.ProgramError("Unable to open compressed input for reading")
 
 
 main()

@@ -117,12 +117,16 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
                             % (response.headers['content-length'], len(response.content)))
 
                 if use_compression and response.headers.get('content-encoding', '') == 'snappy':
+                    # TODO: check if snappy raises any exceptions on truncated response content
                     decoded_content = snappy.uncompress(response.content)
                 else:
                     decoded_content = response.content
 
                 if response.headers.get('content-type', '').startswith('application/json'):
-                    return json.loads(decoded_content)
+                    try:
+                        return json.loads(decoded_content)
+                    except ValueError:
+                        raise HTTPError("Invalid JSON received from server")
                 return decoded_content
         except (DXAPIError, ConnectionError, HTTPError, httplib.HTTPException) as e:
             last_error = e
