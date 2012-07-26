@@ -46,7 +46,7 @@ def main():
     #vcfFile = open(opts.file_name, 'r')
     vcfFileName = opts.file_name
     print vcfFileName
-    #print open(vcfFileName, 'r').readline()
+    print open(vcfFileName, 'r').readline()
     inferNoCall = opts.infer_no_call
     compressReference = opts.compress_reference
     storeFullVcf = opts.store_full_vcf
@@ -107,12 +107,11 @@ def main():
         lastRegion.append(['', -1])
     
     header = ''
-    #vcfFile = open(vcfFileName, 'r')
+    vcfFile = open(vcfFileName, 'r')
     #with unpack_and_open(vcfFileName) as vcfFile:
     while 1:
         try:
-            input = sys.stdin.readline()
-            #input = vcfFile.next()
+            input = vcfFile.next()
             if count%100000 == 0:
                 print "Processed count %i variants " % count
             count += 1

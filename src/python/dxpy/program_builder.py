@@ -86,6 +86,18 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     dest_project = project or program_spec['project']
 
+    if 'description' not in program_spec:
+        readme_filename = None
+        for filename in 'README.md', 'Readme.md', 'readme.md':
+            if os.path.exists(os.path.join(src_dir, filename)):
+                readme_filename = filename
+                break
+        if readme_filename is None:
+            logging.warn("No description found")
+        else:
+            with open(os.path.join(src_dir, readme_filename)) as fh:
+                program_spec['description'] = fh.read()
+
     if check_name_collisions:
         logging.debug("Searching for programs with name " + program_spec["name"])
         for result in dxpy.find_data_objects(classname="program", properties={"name": program_spec["name"]}, project=dest_project):
@@ -96,19 +108,19 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
             else:
                 raise ProgramBuilderException("A program with name %s already exists (id %s) and the overwrite option was not given" % (program_spec["name"], result['id']))
 
-    if "run" in program_spec and "file" in program_spec["run"]:
-        # Avoid using run.file for now, it's not fully implemented
-        #code_filename = os.path.join(src_dir, program_spec["run"]["file"])
+    if "runSpec" in program_spec and "file" in program_spec["runSpec"]:
+        # Avoid using runSpec.file for now, it's not fully implemented
+        #code_filename = os.path.join(src_dir, program_spec["runSpec"]["file"])
         #f = dxpy.upload_local_file(code_filename, wait_on_close=True)
-        #program_spec["run"]["file"] = f.get_id()
-        # Put it into run.code instead
-        with open(os.path.join(src_dir, program_spec["run"]["file"])) as code_fh:
-            program_spec["run"]["code"] = code_fh.read()
-            del program_spec["run"]["file"]
+        #program_spec["runSpec"]["file"] = f.get_id()
+        # Put it into runSpec.code instead
+        with open(os.path.join(src_dir, program_spec["runSpec"]["file"])) as code_fh:
+            program_spec["runSpec"]["code"] = code_fh.read()
+            del program_spec["runSpec"]["file"]
 
     if uploaded_resources is not None:
-        program_spec["run"].setdefault("bundledDepends", [])
-        program_spec["run"]["bundledDepends"].extend(uploaded_resources)
+        program_spec["runSpec"].setdefault("bundledDepends", [])
+        program_spec["runSpec"]["bundledDepends"].extend(uploaded_resources)
 
     program_id = dxpy.api.programNew(program_spec)["id"]
 
