@@ -14,11 +14,14 @@ def main():
     parser = OptionParser("Usage: % mappings_id file_name")
     parser.add_option("--table_id", dest="mappings_id", help="Mappings table id to read from")
     parser.add_option("--output", dest="file_name", help="Name of file to write SAM to")
+    parser.add_option("--start_row", dest="start_row", type="int", default=0, help="If restricting by the id of the gtable row, which id to start at. Selecting regions will override this option")
+    parser.add_option("--end_row", dest="end_row", type="int", default=0, help="If restricting by the id of the gtable row, which id to start at. Selecting regions will override this option")                  
     parser.add_option("--region_index_offset", dest="region_index_offset", type = "int", default = 0, help="Adjust regions by this amount. Useful for converting between zero and one indexed lists")
     parser.add_option("--region_file", dest="region_file", type="string",  default="", help="Regions to extract mappings for, in the format ChrX:A-B")
     parser.add_option("--store_mappings_columns", dest="store_mappings_columns", action="store_true", default=False, help="Output mappings table columns not in the mandatory fields in the optional fields to allow for easy reimport of a modified SAM")
     parser.add_option("--output_ids", dest="output_ids", action="store_true", default=False, help="Write gtable ids as an optional field to allow for easy reimport")
     parser.add_option("--discard_unmapped", dest="discard_unmapped", action="store_true", default=False, help="If set, do not write unmapped reads to SAM")
+    parser.add_option("--read_pair_aware", dest="read_pair_aware", action="store_true", default=False, help="If set, every time a paired read is encoutered, both pairs will be included if the mate chr+lo+hi of the mate is above that of the enoutered read. If this is not the case, neither will be written. WARNING: read-pair-aware is not guaranteed to output a sorted SAM file.")
     (opts, args) = parser.parse_args()
 
     
@@ -53,17 +56,48 @@ def main():
     names = mappingsTable.get_col_names()   
     for i in range(len(names)):
         col[names[i]] = i+1
+    
     defaultCol = {"sequence":"", "name":"", "quality": "", "status": "UNMAPPED", "chr":"", "lo":0, "hi":0, "negative_strand":False, "error_probability":0, "qc":"", "cigar":"", "mate_id":-1, "status2":"", "chr2":"", "lo2":0, "hi2":0, "negative_strand2":False, "proper_pair":False, "read_group":0}
 
     unmappedFile = open("unmapped.txt", 'w')
         
     if len(regions) == 0:
-        for row in mappingsTable.iterate_rows():
-            if row[col["status"]] == "UNMAPPED":
-                if opts.discard_unmapped == False:
+        if opts.end_row > 0:
+            generator = mappingsTable.iterate_rows(start=opts.start_row, end=opts.end_row)
+        else:
+            generator = mappingsTable.iterate_rows(start=opts.start_row)
+        print opts.start_row
+        print opts.end_row
+        count = 0
+        mates = 0
+        iterated = 0
+        for row in generator:
+            count += 1
+            if opts.read_pair_aware and col.get("mate_id") != None:
+                #Write unpaired reads
+                print "Mate Id: "+str(row[col["mate_id"]])
+                if row[col["mate_id"]] == -1 and (row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False):
                     writeRow(row, col, defaultCol, unmappedFile, storeMappingsColumns, writeIds)
-            else:
+                #If paired read is the left read, write it and grab the right one
+                if row[col["mate_id"]] == 0:
+                    writeRow(row, col, defaultCol, unmappedFile, storeMappingsColumns, writeIds)
+                    if row[col["status2"]] != "UNMAPPED":
+                        print row[col["chr2"]]+":"+ str(row[col["lo2"]])+"-"+str(row[col["hi2"]])
+                        query = mappingsTable.genomic_range_query(chr=row[col["chr2"]], lo=row[col["lo2"]], hi=row[col["hi2"]])
+                        iterated = 0
+                        for mateRow in mappingsTable.iterate_query_rows(query=query):
+                            print mateRow
+                            iterated += 1
+                            if mateRow[col["mate_id"]] == 1 and mateRow[col["chr2"]] == row[col["chr"]] and mateRow[col["lo2"]] == row[col["lo"]] and mateRow[col["hi2"]] == row[col["hi"]]:
+                                writeRow(mateRow, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
+                                mates += 1
+                                break
+                        print "Mate not found"
+                    else:
+                        print "Mate unmapped"
+            elif(row[col["status"]] == "UNMAPPED" or opts.discard_unmapped == False):
                 writeRow(row, col, defaultCol, outputFile, storeMappingsColumns, writeIds)
+
         outputFile.close()
         unmappedFile.close()
         subprocess.call("cat unmapped.txt >> %s" % (opts.file_name), shell=True)

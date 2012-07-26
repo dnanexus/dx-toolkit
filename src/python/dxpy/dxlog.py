@@ -49,7 +49,7 @@ class DXLogHandler(SysLogHandler):
 
     def emit(self, record):
         level = self.encodePriority(record)
-        data = json.dumps({"source": "app", "timestamp": int(round(time.time() * 1000)),
+        data = json.dumps({"source": "DX_APP", "timestamp": int(round(time.time() * 1000)),
                            "level": level, "msg": record.getMessage()})
 
         if int(record.levelno) > 40:
