@@ -291,8 +291,9 @@ class DXGTable(DXDataObject):
                     self._flush_row_buf_to_string_buf()
                     if self._string_row_buf.tell() > self._request_size:
                         self._finalize_string_row_buf()
-                        self._async_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+                        request_data = self._string_row_buf.getvalue()
                         self._string_row_buf = None
+                        self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
         else:
             dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
 
@@ -359,11 +360,12 @@ class DXGTable(DXDataObject):
             self._flush_row_buf_to_string_buf()
         if self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": ['):
             self._finalize_string_row_buf()
-            if multithread:
-                self._async_add_rows_request(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
-            else:
-                dxpy.api.gtableAddRows(self._dxid, self._string_row_buf.getvalue(), jsonify_data=False, **kwargs)
+            request_data = self._string_row_buf.getvalue()
             self._string_row_buf = None
+            if multithread:
+                self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
+            else:
+                dxpy.api.gtableAddRows(self._dxid, request_data, jsonify_data=False, **kwargs)
 
         if len(self._http_threadpool_futures) > 0:
             concurrent.futures.wait(self._http_threadpool_futures)
