@@ -31,10 +31,10 @@ class DXJobLogStreamClient(WebSocketClient):
         if msg_type == '5':
             try:
                 msg_content = json.loads(msg_data)
-            except:
-                print "Error while decoding message:", str(msg_content)
                 if (msg_content["name"] == "log"):
                     print msg_content["args"][0]
+            except:
+                print "Error while decoding message:", str(msg_content)
 
 try:
     streaming_id = dxpy.api.jobStreamLog(job_id, {"numRecentMessages": opts.num_recent_messages, "recurseJobs": not opts.no_recurse})['streamingId']
