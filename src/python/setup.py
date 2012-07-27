@@ -15,5 +15,6 @@ setup(
     scripts = glob.glob('scripts/*.py'),
     install_requires = ['requests==0.12.1',
                         'futures==2.1.2',
-                        'ctypes-snappy==1.02'],
+                        'ctypes-snappy==1.02',
+                        'ws4py==0.2.2'],
 )
