@@ -220,6 +220,12 @@ def set_project_context(dxid):
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
 
+from dxpy.utils.env import get_env
+env_vars = get_env()
+for var in env_vars:
+    if env_vars[var] is not None:
+        os.environ[var] = env_vars[var]
+
 set_api_server_info(host=os.environ.get("DX_APISERVER_HOST", None),
                     port=os.environ.get("DX_APISERVER_PORT", None),
                     protocol=os.environ.get("DX_APISERVER_PROTOCOL", None))
