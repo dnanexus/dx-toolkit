@@ -1,25 +1,25 @@
 """
-DXProject and DXWorkspace handlers
+DXProject and DXContainer handlers
 +++++++++++++++++
 
 Projects are platform entities which serve as containers for data, and are the unit of collaboration.
 
-Workspaces are special-purpose data containers which behave like projects with the PROTECTED flag unset (so that
+Containers are special-purpose data containers which behave like projects with the PROTECTED flag unset (so that
 temporary intermediate data files can be deleted), except they cannot be explicitly created or destroyed, and their
-permissions are fixed.  In particular, the workspace class shares with the project class the following methods with
+permissions are fixed.  In particular, the container class shares with the project class the following methods with
 the exact same syntax: newFolder, listFolder, renameFolder, removeFolder, move, removeObjects, and clone.  There is
-also a minimalist describe method that returns metadata about the objects and folders inside the workspace.
+also a minimalist describe method that returns metadata about the objects and folders inside the container.
 """
 
 import dxpy
 from dxpy.bindings import *
 
 ###############
-# DXWorkspace #
+# DXContainer #
 ###############
 
-class DXWorkspace(object):
-    '''Remote workspace handler'''
+class DXContainer(object):
+    '''Remote container handler'''
 
     def __init__(self, dxid=None):
         if dxid is not None:
@@ -38,7 +38,7 @@ class DXWorkspace(object):
 
     def set_id(self, dxid):
         '''
-        :param dxid: Project or workspace ID
+        :param dxid: Project or container ID
         :type dxid: string
         :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
 
@@ -51,18 +51,18 @@ class DXWorkspace(object):
                     len(dxid) != len('project') + 25:
                 raise DXError("Given project ID does not match expected format")
         else:
-            if re.match("workspace-[0-9a-zA-Z]{24}", dxid) is None or \
-                    len(dxid) != len('workspace') + 25:
-                raise DXError("Given workspace ID does not match expected format")
+            if re.match("container-[0-9a-zA-Z]{24}", dxid) is None or \
+                    len(dxid) != len('container') + 25:
+                raise DXError("Given container ID does not match expected format")
 
         self._dxid = dxid
 
     def get_id(self):
         '''
-        :returns: ID of the associated project or workspace
+        :returns: ID of the associated project or container
         :rtype: string
 
-        Returns the project or workspace ID that the handler is currently associated
+        Returns the project or container ID that the handler is currently associated
         with.
 
         '''
@@ -71,7 +71,7 @@ class DXWorkspace(object):
 
     def describe(self, **kwargs):
         """
-        :returns: A hash containing attributes of the project or workspace.
+        :returns: A hash containing attributes of the project or container.
         :rtype: dict
 
         Returns a hash which will include the keys "id", "class",
@@ -79,7 +79,7 @@ class DXWorkspace(object):
         "created".
 
         """
-        api_method = dxpy.api.workspaceDescribe
+        api_method = dxpy.api.containerDescribe
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectDescribe
         return api_method(self._dxid, **kwargs)
@@ -91,10 +91,10 @@ class DXWorkspace(object):
         :param parents: Whether to recursively create all parent folders if they are missing
         :type parents: boolean
 
-        Creates a new folder in the project or workspace
+        Creates a new folder in the project or container
 
         """
-        api_method = dxpy.api.workspaceNewFolder
+        api_method = dxpy.api.containerNewFolder
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectNewFolder
 
@@ -121,7 +121,7 @@ class DXWorkspace(object):
         folder.
 
         """
-        api_method = dxpy.api.workspaceListFolder
+        api_method = dxpy.api.containerListFolder
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectListFolder
 
@@ -148,7 +148,7 @@ class DXWorkspace(object):
         directly in *destination*.
 
         """
-        api_method = dxpy.api.workspaceMove
+        api_method = dxpy.api.containerMove
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectMove
 
@@ -164,11 +164,11 @@ class DXWorkspace(object):
         :param destination: Full path to the destination folder that will contain *folder*
         :type destination: string
 
-        Moves *folder* to reside in *destination* in the same project or workspace.
+        Moves *folder* to reside in *destination* in the same project or container.
         Note that all contained objects and subfolders are also moved.
 
         """
-        api_method = dxpy.api.workspaceMove
+        api_method = dxpy.api.containerMove
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectMove
 
@@ -183,11 +183,11 @@ class DXWorkspace(object):
         :param recurse: Whether to remove all objects in the folder as well
         :type recurse: bool
 
-        Removes the specified folder in the project or workspace; it must be empty
+        Removes the specified folder in the project or container; it must be empty
         to be removed.
 
         """
-        api_method = dxpy.api.workspaceRemoveFolder
+        api_method = dxpy.api.containerRemoveFolder
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectRemoveFolder
 
@@ -196,15 +196,15 @@ class DXWorkspace(object):
 
     def remove_objects(self, objects, **kwargs):
         """
-        :param objects: List of object IDs to remove from the project or workspace
+        :param objects: List of object IDs to remove from the project or container
         :type objects: list of strings
 
-        Removes the specified objects in the project or workspace; removal
+        Removes the specified objects in the project or container; removal
         propagates to any linked hidden objects that would otherwise
-        be unreachable from any visible object in the project or workspace.
+        be unreachable from any visible object in the project or container.
 
         """
-        api_method = dxpy.api.workspaceRemoveObjects
+        api_method = dxpy.api.containerRemoveObjects
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectRemoveObjects
 
@@ -236,7 +236,7 @@ class DXWorkspace(object):
         are modified in the source project..
 
         """
-        api_method = dxpy.api.workspaceClone
+        api_method = dxpy.api.containerClone
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectClone
 
@@ -252,7 +252,7 @@ class DXWorkspace(object):
 # DXProject #
 #############
 
-class DXProject(DXWorkspace):
+class DXProject(DXContainer):
     def update(self, name=None, description=None, protected=None,
                restricted=None, **kwargs):
         """

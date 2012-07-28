@@ -287,6 +287,87 @@ dx::JSON appNew(const dx::JSON &input_params) {
 }
 
 
+dx::JSON containerClone(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params);
+}
+
+dx::JSON containerClone(const std::string &object_id, const dx::JSON &input_params) {
+  return containerClone(object_id, input_params.toString());
+}
+
+
+dx::JSON containerDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+}
+
+dx::JSON containerDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return containerDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON containerDestroy(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
+}
+
+dx::JSON containerDestroy(const std::string &object_id, const dx::JSON &input_params) {
+  return containerDestroy(object_id, input_params.toString());
+}
+
+
+dx::JSON containerListFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listFolder"), input_params);
+}
+
+dx::JSON containerListFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return containerListFolder(object_id, input_params.toString());
+}
+
+
+dx::JSON containerMove(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/move"), input_params);
+}
+
+dx::JSON containerMove(const std::string &object_id, const dx::JSON &input_params) {
+  return containerMove(object_id, input_params.toString());
+}
+
+
+dx::JSON containerNewFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/newFolder"), input_params);
+}
+
+dx::JSON containerNewFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return containerNewFolder(object_id, input_params.toString());
+}
+
+
+dx::JSON containerRemoveFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeFolder"), input_params);
+}
+
+dx::JSON containerRemoveFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return containerRemoveFolder(object_id, input_params.toString());
+}
+
+
+dx::JSON containerRemoveObjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeObjects"), input_params);
+}
+
+dx::JSON containerRemoveObjects(const std::string &object_id, const dx::JSON &input_params) {
+  return containerRemoveObjects(object_id, input_params.toString());
+}
+
+
+dx::JSON containerRenameFolder(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/renameFolder"), input_params);
+}
+
+dx::JSON containerRenameFolder(const std::string &object_id, const dx::JSON &input_params) {
+  return containerRenameFolder(object_id, input_params.toString());
+}
+
+
 dx::JSON fileAddTags(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
 }
@@ -1490,86 +1571,5 @@ dx::JSON userUpdate(const std::string &object_id, const std::string &input_param
 
 dx::JSON userUpdate(const std::string &object_id, const dx::JSON &input_params) {
   return userUpdate(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceClone(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params);
-}
-
-dx::JSON workspaceClone(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceClone(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON workspaceDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceDestroy(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params);
-}
-
-dx::JSON workspaceDestroy(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceDestroy(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceListFolder(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/listFolder"), input_params);
-}
-
-dx::JSON workspaceListFolder(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceListFolder(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceMove(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/move"), input_params);
-}
-
-dx::JSON workspaceMove(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceMove(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceNewFolder(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/newFolder"), input_params);
-}
-
-dx::JSON workspaceNewFolder(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceNewFolder(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceRemoveFolder(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeFolder"), input_params);
-}
-
-dx::JSON workspaceRemoveFolder(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceRemoveFolder(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceRemoveObjects(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeObjects"), input_params);
-}
-
-dx::JSON workspaceRemoveObjects(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceRemoveObjects(object_id, input_params.toString());
-}
-
-
-dx::JSON workspaceRenameFolder(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/renameFolder"), input_params);
-}
-
-dx::JSON workspaceRenameFolder(const std::string &object_id, const dx::JSON &input_params) {
-  return workspaceRenameFolder(object_id, input_params.toString());
 }
 

@@ -1246,7 +1246,7 @@ def find_apps(args):
         results = list(dxpy.find_apps(name=args.name, category=args.category,
                                       all_versions=args.all,
                                       published=(not args.unpublished),
-                                      owner=args.owner, created_by=args.creator,
+                                      billed_to=args.billed_to, created_by=args.creator,
                                       developer=args.developer,
                                       created_after=args.created_after, created_before=args.created_before,
                                       modified_after=args.mod_after, modified_before=args.mod_before,
@@ -1477,11 +1477,12 @@ def run(args):
     handler = None
     desc = None
     if args.alias is None:
-        # Attempt to resolve name
+        # Attempt to resolve name (and only look for programs)
         project, folderpath, entity_results = try_call(resolve_existing_path,
                                                        args.path,
                                                        expected='entity',
-                                                       only_one=False)
+                                                       only_one=False,
+                                                       expected_classes=['program'])
         app_desc = get_app_from_path(args.path)
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
             handler = dxpy.DXProgram(entity_results[0]['id'])
@@ -1880,7 +1881,7 @@ parser_build.add_argument('-f', '--overwrite', help='Remove existing programs of
 parser_build.add_argument('-a', '--create-app', help='Create an app from the program (requires dxapp.json to be present)', action='store_true')
 parser_build.add_argument("-p", "--destination_project", help="Insert the program into the project with the specified project ID.")
 parser_build.add_argument('--publish', help='Publish the app after it has been created.', action='store_true')
-parser_build.add_argument("-o", "--owner", help="Owner (username or organization) to set for the app.")
+parser_build.add_argument("-b", "--bill-to", help="Owner (username or organization) to set for the app.")
 parser_build.set_defaults(func=build)
 parser_map['build'] = parser_build
 
@@ -1970,7 +1971,7 @@ parser_find_apps.add_argument('--name', help='Name of the app')
 parser_find_apps.add_argument('--category', help='Category of the app')
 parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
 parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
-parser_find_apps.add_argument('--owner', help='Owner of the app')
+parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
 parser_find_apps.add_argument('--created-after', type=int, help='Timestamp after which the app version was created (negative number means ms in the past)')

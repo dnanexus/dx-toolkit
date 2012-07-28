@@ -109,6 +109,42 @@ dx::JSON appNew(const std::string &input_params="{}");
 dx::JSON appNew(const dx::JSON &input_params);
 
 
+dx::JSON containerClone(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerClone(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerDescribe(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerDestroy(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerDestroy(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerListFolder(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerListFolder(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerMove(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerMove(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerNewFolder(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerNewFolder(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerRemoveFolder(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerRemoveFolder(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerRemoveObjects(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerRemoveObjects(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON containerRenameFolder(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON containerRenameFolder(const std::string &object_id, const dx::JSON &input_params);
+
+
 dx::JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params);
 
@@ -643,42 +679,6 @@ dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params
 
 dx::JSON userUpdate(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON userUpdate(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceClone(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceClone(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceDescribe(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceDestroy(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceDestroy(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceListFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceListFolder(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceMove(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceMove(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceNewFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceNewFolder(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceRemoveFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceRemoveFolder(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceRemoveObjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceRemoveObjects(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON workspaceRenameFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON workspaceRenameFolder(const std::string &object_id, const dx::JSON &input_params);
 
 
 #include "dxcpp.h"

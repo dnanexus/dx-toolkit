@@ -67,7 +67,7 @@ def get_io_spec(spec):
     return '\n\t\t'.join(map(get_io_desc, spec))
 
 def print_project_desc(desc):
-    recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces', 'billTo']
+    recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces', 'appCaches', 'billTo']
 
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
@@ -96,19 +96,24 @@ def print_project_desc(desc):
         print "# Files\t\t" + str(desc["objects"])
     if "permissions" in desc:
         print "Permissions\t" + json.dumps(desc["permissions"])
-    if "appWorkspaces" in desc:
-        print "App workspaces\t" + json.dumps(desc["appWorkspaces"])
+    if "appCaches" in desc:
+        print "App caches\t" + json.dumps(desc["appCaches"])
+    elif "appWorkspaces" in desc:
+        print "App caches\t" + json.dumps(desc["appWorkspaces"])
 
     for field in desc:
         if field not in recognized_fields:
             print field + '\t\t' + json.dumps(desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary']
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary']
 
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
-    print "Owner\t\t" + desc["owner"]
+    if 'billTo' in desc:
+        print "Billed to\t" + desc["billTo"]
+    elif 'owner' in desc:
+        print "Owner\t\t" + desc["owner"]
     print "Name\t\t" + desc["name"]
     print "Version\t\t" + desc["version"]
     print "Aliases\t\t" + ', '.join(desc["aliases"])
@@ -167,7 +172,10 @@ def print_app_desc(desc):
                 print "bundledDepends\t" + textwrap.fill(json.dumps(desc["run"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
             if "execDepends" in desc["run"]:
                 print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
-        print "GlobalWorkspace\t" + desc["globalWorkspace"]
+        if 'resources' in desc:
+            print "Resources\t" + desc['resources']
+        elif 'globalWorkspace' in desc:
+            print "GlobalWorkspace\t" + desc["globalWorkspace"]
 
     for field in desc:
         if field not in recognized_fields:
@@ -255,7 +263,7 @@ def print_data_obj_desc(desc):
                 print field + "\t\t" + json.dumps(desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache']
 
     print "ID\t\t" + desc["id"]
     print "Class\t\t" + desc["class"]
@@ -264,6 +272,9 @@ def print_job_desc(desc):
     if 'projectWorkspace' in desc:
         print 'Cache workspace\t' + desc['projectWorkspace']
         print 'GlobalWorkspace\t' + desc['globalWorkspace']
+    elif 'projectCache' in desc:
+        print 'Cache workspace\t' + desc['projectCache']
+        print 'Resources\t' + desc['resources']
     if "program" in desc:
         print "Program\t\t" + desc["program"]
     elif "app" in desc:
@@ -341,17 +352,22 @@ def print_desc(desc):
         print_data_obj_desc(desc)
 
 def get_ls_l_desc(desc):
-    if desc['state'] != 'closed':
-        state_str = YELLOW + desc['state'] + ENDC
+    if 'state' in desc:
+        state_len = len(desc['state'])
+        if desc['state'] != 'closed':
+            state_str = YELLOW + desc['state'] + ENDC
+        else:
+            state_str = GREEN + desc['state'] + ENDC
     else:
-        state_str = GREEN + desc['state'] + ENDC
+        state_str = ''
+        state_len = 0
 
     if desc['class'] == 'program':
         name_str = BOLD + GREEN + desc['name'] + ENDC
     else:
         name_str = desc['name']
 
-    return state_str + ' '*(8-len(desc['state'])) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
+    return state_str + ' '*(8 - state_len) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
 
 def print_ls_l_desc(desc):
     print get_ls_l_desc(desc)

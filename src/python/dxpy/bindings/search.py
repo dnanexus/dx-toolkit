@@ -389,7 +389,7 @@ def find_projects(name=None, level=None, describe=None, **kwargs):
         yield i
 
 def find_apps(name=None, category=None, all_versions=None, published=None,
-              owner=None, created_by=None, developer=None,
+              billed_to=None, created_by=None, developer=None,
               created_after=None, created_before=None,
               modified_after=None, modified_before=None,
               describe=None, **kwargs):
@@ -402,8 +402,8 @@ def find_apps(name=None, category=None, all_versions=None, published=None,
     :type all_versions: bool
     :param published: Whether to restrict the results to only published apps
     :type published: bool
-    :param owner: Entity ID (user or organization) that should own the app
-    :type owner: string
+    :param billed_to: Entity ID (user or organization) that pays for the app's storage costs
+    :type billed_to: string
     :param created_by: User ID of the developer that created the version
     :type created_by: string
     :param developer: User ID of a developer of the app
@@ -437,8 +437,8 @@ def find_apps(name=None, category=None, all_versions=None, published=None,
         query["allVersions"] = all_versions
     if published is not None:
         query["published"] = published
-    if owner is not None:
-        query["owner"] = owner
+    if billed_to is not None:
+        query["billTo"] = billed_to
     if created_by is not None:
         query["createdBy"] = created_by
     if developer is not None:

@@ -26,8 +26,8 @@ def validate_program_spec(program_spec):
         raise ProgramBuilderException("Program specification does not contain a name")
 
 def validate_app_spec(app_spec):
-    if "globalWorkspace" not in app_spec:
-        raise ProgramBuilderException("App specification does not contain a globalWorkspace field")
+    if "resources" not in app_spec:
+        raise ProgramBuilderException("App specification does not contain a resources field")
 
 def get_program_spec(src_dir):
     program_spec_file = os.path.join(src_dir, "dxprogram.json")
@@ -139,7 +139,7 @@ def upload_program(src_dir, uploaded_resources, check_name_collisions=True, over
 
     return program_id
 
-def create_app(program_id, src_dir, publish=False, set_default=False, owner=None, try_versions=None):
+def create_app(program_id, src_dir, publish=False, set_default=False, billTo=None, try_versions=None):
     app_spec = get_app_spec(src_dir)
     print >> sys.stderr, "Will create app with spec: ", app_spec
 
@@ -154,8 +154,8 @@ def create_app(program_id, src_dir, publish=False, set_default=False, owner=None
     if "description" in program_desc["properties"]:
         app_spec["description"] = program_desc["properties"]["description"]
 
-    if owner:
-        app_spec["owner"] = owner
+    if billTo:
+        app_spec["billTo"] = billTo
     if not try_versions:
         try_versions = [app_spec["version"]]
 

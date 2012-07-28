@@ -266,7 +266,7 @@ def resolve_path_with_project(path, expected=None, expected_classes=None):
 
     return project, folderpath, entity_name
 
-def resolve_existing_path(path, expected=None, only_one=True):
+def resolve_existing_path(path, expected=None, only_one=True, expected_classes = None):
     '''
     Returns either a list of results or a single result (depending on
     how many is expected; if only one, then an interactive picking of
@@ -276,6 +276,9 @@ def resolve_existing_path(path, expected=None, only_one=True):
     of those
 
     TODO: Allow arbitrary flags for the describe hash.
+
+    NOTE: if expected_classes is provided and conflicts with the class
+    of the hash ID, it will return None for all fields.
     '''
     project, folderpath, entity_name = resolve_path_with_project(path, expected)
     if entity_name is None:
@@ -283,6 +286,14 @@ def resolve_existing_path(path, expected=None, only_one=True):
         # FIXME? Should I check that the folder exists if expected="folder"?
         return project, folderpath, entity_name
     elif is_hashid(entity_name):
+        found_valid_class = True
+        if expected_classes is not None:
+            found_valid_class = False
+            for klass in expected_classes:
+                if entity_name.startswith(klass):
+                    found_valid_class = True
+        if not found_valid_class:
+            return None, None, None
         try:
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', {})
         except BaseException as details:

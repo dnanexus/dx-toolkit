@@ -158,7 +158,8 @@ app_json = {
     "version": version,
     "details": {
         "contactUrl": "http://develop.dnanexus.com/Apps/" + name
-    }
+    },
+    "resources": []
 }
 
 class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',

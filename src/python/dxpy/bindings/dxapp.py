@@ -70,6 +70,8 @@ class DXApp(object):
 
     def new(self, **kwargs):
         '''
+        :param initializeFrom: ID of an app object from which to initialize the app
+        :type initializeFrom: string
         :param program: ID of the program which the app will be created from
         :type program: string
         :param name: Name of the app (optional; inherited from name if not given)
@@ -82,14 +84,14 @@ class DXApp(object):
         :type description: string
         :param version: app's version
         :type version: string
-        :param owner: ID of the user or organization who will own the app (optional if an app with this name already exists)
-        :type owner: string
+        :param bill_to: ID of the user or organization who will own the app (optional if an app with this name already exists)
+        :type bill_to: string
         :param billing: billing specification (optional)
         :type billing: dict
         :param access: access specification (optional)
         :type access: dict
-        :param globalWorkspace: Contents to be put into the app's global workspace (existing project ID or list of object IDs)
-        :type globalWorkspace: string or array
+        :param resources: Contents to be put into the app's resources container (existing project ID or list of object IDs)
+        :type resources: string or list
 
         It is highly recommended that :mod:`dxpy.program_builder` is used for program and app creation.
 
@@ -98,16 +100,23 @@ class DXApp(object):
 
         '''
         dx_hash = {}
-        for field in 'program', 'version':
+        if 'program' not in kwargs and 'initializeFrom' not in kwargs:
+            raise DXError("%s: One of the keyword arguments %s and %s is required" % (self.__class__.__name__, 'program', 'initializeFrom'))
+
+        for field in ['version']:
             if field not in kwargs:
                 raise DXError("%s: Keyword argument %s is required" % (self.__class__.__name__, field))
             dx_hash[field] = kwargs[field]
             del kwargs[field]
 
-        for field in 'name', 'title', 'summary', 'description', 'owner', 'billing', 'access', 'globalWorkspace':
+        for field in 'initializeFrom', 'program', 'name', 'title', 'summary', 'description', 'billing', 'access', 'resources':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]
+
+        if "bill_to" in kwargs:
+            dx_hash['billTo'] = kwargs['bill_to']
+            del kwargs["bill_to"]
 
         resp = dxpy.api.appNew(dx_hash, **kwargs)
         self.set_id(dxid=resp["id"])
@@ -128,14 +137,14 @@ class DXApp(object):
         :type billing: dict
         :param access: access specification (optional)
         :type access: dict
-        :param globalWorkspace: Contents to be put into the app's global workspace
-        :type globalWorkspace: array
+        :param resources: Contents to be put into the app's resources container
+        :type resources: string or list
 
         Update parameters of an existing app.
 
         '''
         updates = {}
-        for field in 'program', 'billing', 'access', 'globalWorkspace', 'details':
+        for field in 'program', 'billing', 'access', 'resources', 'details':
             if field in kwargs:
                 updates[field] = kwargs[field]
                 del kwargs[field]

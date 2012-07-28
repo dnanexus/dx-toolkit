@@ -155,6 +155,51 @@ exports.appNew = function(input_params) {
 };
 
 
+exports.containerClone = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/clone', input_params);
+};
+
+
+exports.containerDescribe = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
+};
+
+
+exports.containerDestroy = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/destroy', input_params);
+};
+
+
+exports.containerListFolder = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/listFolder', input_params);
+};
+
+
+exports.containerMove = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/move', input_params);
+};
+
+
+exports.containerNewFolder = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/newFolder', input_params);
+};
+
+
+exports.containerRemoveFolder = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeFolder', input_params);
+};
+
+
+exports.containerRemoveObjects = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeObjects', input_params);
+};
+
+
+exports.containerRenameFolder = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/renameFolder', input_params);
+};
+
+
 exports.fileAddTags = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
 };
@@ -822,50 +867,5 @@ exports.userDescribe = function(object_id, input_params) {
 
 exports.userUpdate = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/update', input_params);
-};
-
-
-exports.workspaceClone = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/clone', input_params);
-};
-
-
-exports.workspaceDescribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
-};
-
-
-exports.workspaceDestroy = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/destroy', input_params);
-};
-
-
-exports.workspaceListFolder = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/listFolder', input_params);
-};
-
-
-exports.workspaceMove = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/move', input_params);
-};
-
-
-exports.workspaceNewFolder = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/newFolder', input_params);
-};
-
-
-exports.workspaceRemoveFolder = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeFolder', input_params);
-};
-
-
-exports.workspaceRemoveObjects = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeObjects', input_params);
-};
-
-
-exports.workspaceRenameFolder = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/renameFolder', input_params);
 };
 

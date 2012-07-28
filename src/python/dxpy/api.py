@@ -90,6 +90,42 @@ def appNew(input_params={}, **kwargs):
     return DXHTTPRequest('/app/new', input_params, **kwargs)
 
 
+def containerClone(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/clone' % object_id, input_params, **kwargs)
+
+
+def containerDescribe(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
+
+
+def containerDestroy(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/destroy' % object_id, input_params, **kwargs)
+
+
+def containerListFolder(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/listFolder' % object_id, input_params, **kwargs)
+
+
+def containerMove(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/move' % object_id, input_params, **kwargs)
+
+
+def containerNewFolder(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/newFolder' % object_id, input_params, **kwargs)
+
+
+def containerRemoveFolder(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/removeFolder' % object_id, input_params, **kwargs)
+
+
+def containerRemoveObjects(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, **kwargs)
+
+
+def containerRenameFolder(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, **kwargs)
+
+
 def fileAddTags(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, **kwargs)
 
@@ -624,40 +660,4 @@ def userDescribe(object_id, input_params={}, **kwargs):
 
 def userUpdate(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/update' % object_id, input_params, **kwargs)
-
-
-def workspaceClone(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/clone' % object_id, input_params, **kwargs)
-
-
-def workspaceDescribe(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
-
-
-def workspaceDestroy(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/destroy' % object_id, input_params, **kwargs)
-
-
-def workspaceListFolder(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/listFolder' % object_id, input_params, **kwargs)
-
-
-def workspaceMove(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/move' % object_id, input_params, **kwargs)
-
-
-def workspaceNewFolder(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/newFolder' % object_id, input_params, **kwargs)
-
-
-def workspaceRemoveFolder(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/removeFolder' % object_id, input_params, **kwargs)
-
-
-def workspaceRemoveObjects(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/removeObjects' % object_id, input_params, **kwargs)
-
-
-def workspaceRenameFolder(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/renameFolder' % object_id, input_params, **kwargs)
 
