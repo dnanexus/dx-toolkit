@@ -8,6 +8,8 @@ import dxpy
 
 ENTRY_POINT_TABLE = {}
 
+RUN_COUNT = 0
+
 def run(function_name=None, function_input=None):
     '''
     Triggers the execution environment entry point processor.
@@ -38,6 +40,9 @@ def run(function_name=None, function_input=None):
     changed; instead, use the environment variable *DX_JOB_INPUT*. Thus, no program code requires changing between the
     two modes.
     '''
+    global RUN_COUNT
+    RUN_COUNT += 1
+
     if dxpy.JOB_ID is not None:
         logging.basicConfig()
 
@@ -64,6 +69,12 @@ def run(function_name=None, function_input=None):
             os.chdir(dx_working_dir)           
             with open("job_error.json", "w") as fh:
                 fh.write(json.dumps({"error": {"type": "ProgramError", "message": str(e)}}) + "\n")
+        raise
+    except Exception as e:
+        if dxpy.JOB_ID is not None:
+            os.chdir(dx_working_dir)           
+            with open("job_error.json", "w") as fh:
+                fh.write(json.dumps({"error": {"type": "ProgramInternalError", "message": str(e)}}) + "\n")
         raise
 
     if dxpy.JOB_ID is not None:

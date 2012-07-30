@@ -247,7 +247,7 @@ else:
 
 from dxpy.bindings import *
 from dxpy.dxlog import *
-from dxpy.utils.exec_utils import *
+from dxpy.utils.exec_utils import run, entry_point
 
 
 # This should be in exec_utils but fails because of circular imports
