@@ -4,7 +4,7 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-import datetime, json, textwrap
+import datetime, json, textwrap, math
 
 CYAN = '\033[36m'
 BLUE = '\033[34m'
@@ -28,6 +28,8 @@ DATA_STATES = {'open': YELLOW + 'open' + ENDC,
                'closing': YELLOW + 'open' + ENDC,
                'closed': GREEN + 'closed' + ENDC
                }
+
+SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
 
 def get_io_desc(parameter, include_class=True, show_opt=True):
     desc = ""
@@ -64,271 +66,270 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
     return desc
 
 def get_io_spec(spec):
-    return '\n\t\t'.join(map(get_io_desc, spec))
+    return ('\n' + ' '*16).join(map(get_io_desc, spec))
+
+def print_field(label, value):
+    print label + " " * (16-len(label)) + textwrap.fill(value, subsequent_indent=' '*16, width=64)
+
+def print_list_field(label, values):
+    print_field(label, ('-' if len(values) == 0 else ', '.join(values)))
+
+def print_json_field(label, json_value):
+    print_field(label, json.dumps(json_value))
 
 def print_project_desc(desc):
     recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces', 'appCaches', 'billTo']
 
-    print "ID\t\t" + desc["id"]
-    print "Class\t\t" + desc["class"]
+    print_field("ID", desc["id"])
+    print_field("Class", desc["class"])
     if "name" in desc:
-        print "Name\t\t" + desc["name"]
+        print_field("Name", desc["name"])
     if 'description' in desc:
-        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+        print_field("Description", desc["description"])
     if 'owner' in desc:
-        print "Owner\t\t" + desc["owner"]
+        print_field("Owner", desc["owner"])
     elif 'billTo' in desc:
-        print "Billed to\t" + desc['billTo']
+        print_field("Billed to", desc['billTo'])
     if 'protected' in desc:
         print "Protected\t" + json.dumps(desc["protected"])
     if 'restricted' in desc:
         print "Restricted\t" + json.dumps(desc["restricted"])
-    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
-    print "Data usage\t" + str(desc["dataUsage"])
+    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+    print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
     if 'tags' in desc:
-        print "Tags\t\t" + json.dumps(desc["tags"])
+        print_list_field("Tags", join(desc["tags"]))
     if "level" in desc:
-        print "Access level\t" + desc["level"]
+        print_field("Access level", desc["level"])
     if "folders" in desc:
-        print "Folders\t\t" + ', '.join(desc["folders"])
+        print_list_field("Folders", desc["folders"])
     if "objects" in desc:
-        print "# Files\t\t" + str(desc["objects"])
+        print_field("# Files", str(desc["objects"]))
     if "permissions" in desc:
-        print "Permissions\t" + json.dumps(desc["permissions"])
+        print_field("Permissions", json.dumps(desc["permissions"]))
     if "appCaches" in desc:
-        print "App caches\t" + json.dumps(desc["appCaches"])
+        print_field("App caches", json.dumps(desc["appCaches"]))
     elif "appWorkspaces" in desc:
-        print "App caches\t" + json.dumps(desc["appWorkspaces"])
+        print_field("App caches", json.dumps(desc["appWorkspaces"]))
 
     for field in desc:
         if field not in recognized_fields:
-            print field + '\t\t' + json.dumps(desc[field])
+            print_json_field(field, desc[field])
 
 def print_app_desc(desc):
     recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary']
 
-    print "ID\t\t" + desc["id"]
-    print "Class\t\t" + desc["class"]
-    if 'billTo' in desc:
-        print "Billed to\t" + desc["billTo"]
-    elif 'owner' in desc:
-        print "Owner\t\t" + desc["owner"]
-    print "Name\t\t" + desc["name"]
-    print "Version\t\t" + desc["version"]
-    print "Aliases\t\t" + ', '.join(desc["aliases"])
-    print "Created by\t" + desc["createdBy"]
-    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+    print_field("ID", desc["id"])
+    print_field("Class", desc["class"])
+    if 'owner' in desc:
+        print_field("Owner", desc["owner"])
+    elif 'billTo' in desc:
+        print_field("Billed to", desc['billTo'])
+    print_field("Name", desc["name"])
+    print_field("Version", desc["version"])
+    print_field("Aliases", ', '.join(desc["version"]))
+    print_list_field("Aliases", desc["aliases"])
+    print_field("Created by", desc["createdBy"])
+    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "program" in desc:
-        print "Created from\t" + desc["program"]
-    if desc['installed'] == True:
-        print 'Installed\ttrue'
-    else:
-        print 'Installed\tfalse'
-    if desc['openSource'] == True:
-        print 'Open source\ttrue'
-    else:
-        print 'Open source\tfalse'
-    if desc["deleted"]:
-        print "Deleted\t\ttrue"
-    else:
-        print "Deleted\t\tfalse"
-
+        print_field("Created from", desc["program"])
+    print_json_field('Installed', desc['installed'])
+    print_json_field('Open source', desc['openSource'])
+    print_json_field('Deleted', desc['deleted'])
+    if not desc['deleted']:
         if 'published' not in desc or desc["published"] < 0:
-            "Published\tN/A"
+            print_field("Published", "-")
         else:
-            "Published\t" + datetime.datetime.fromtimestamp(desc['published']/1000).ctime()
-
-    if not desc["deleted"]:
+            print_field("Published", datetime.datetime.fromtimestamp(desc['published']/1000).ctime())
         if "title" in desc:
-            print "Title\t\t" + desc["title"]
+            print_field("Title", desc["title"])
         if "subtitle" in desc:
-            print "Subtitle\t\t" + desc["subtitle"]
+            print_field("Subtitle", desc["subtitle"])
         if 'summary' in desc:
-            print textwrap.fill("Summary\t\t" + desc['summary'], subsequent_indent='\t\t', width=64)
+            print_field("Summary", desc['summary'])
         if "description" in desc:
-            print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
-        print "Categories\t" + ', '.join(desc["categories"])
-        print "Access\t\t" + json.dumps(desc["access"])
-        print "API version\t" + desc["dxapi"]
+            print_field("Description", desc["description"])
+        print_list_field("Categories", desc["categories"])
+        print_json_field("Access", desc["access"])
+        print_field("API version", desc["dxapi"])
         if 'inputSpec' in desc:
-            print "Input Spec\t" + get_io_spec(desc["inputSpec"])
-            print "Output Spec\t" + get_io_spec(desc["outputSpec"])
-            print "Interpreter\t" + desc["runSpec"]["interpreter"]
+            print "Input Spec      " + get_io_spec(desc["inputSpec"])
+            print "Output Spec     " + get_io_spec(desc["outputSpec"])
+            print_field("Interpreter", desc["runSpec"]["interpreter"])
             if "resources" in desc["runSpec"]:
-                print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+                print_json_field("Resources", desc["runSpec"]["resources"])
             if "bundledDepends" in desc["runSpec"]:
-                print "bundledDepends\t" + textwrap.fill(json.dumps(desc["runSpec"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
+                print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
             if "execDepends" in desc["runSpec"]:
-                print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
+                print_json_field("execDepends", desc["runSpec"]["execDepends"])
         elif 'inputs' in desc:
-            print "Input Spec\t" + get_io_spec(desc['inputs'])
-            print "Output Spec\t" + get_io_spec(desc['outputs'])
-            print "Interpreter\t" + desc["run"]["interpreter"]
+            print "Input Spec      " + get_io_spec(desc['inputs'])
+            print "Output Spec     " + get_io_spec(desc['outputs'])
+            print_field("Interpreter", desc["run"]["interpreter"])
             if "resources" in desc["run"]:
-                print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+                print_json_field("Resources", desc["run"]["resources"])
             if "bundledDepends" in desc["run"]:
-                print "bundledDepends\t" + textwrap.fill(json.dumps(desc["run"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
+                print_json_field("bundledDepends", desc["run"]["bundledDepends"])
             if "execDepends" in desc["run"]:
-                print "execDepends\t" + json.dumps(desc["run"]["execDepends"])
+                print_json_field("execDepends", desc["run"]["execDepends"])
         if 'resources' in desc:
-            print "Resources\t" + desc['resources']
+            print_field("Resources", desc['resources'])
         elif 'globalWorkspace' in desc:
-            print "GlobalWorkspace\t" + desc["globalWorkspace"]
+            print_field("GlobalWorkspace", desc["globalWorkspace"])
 
     for field in desc:
         if field not in recognized_fields:
-            print field + '\t\t' + json.dumps(desc[field])
+            print_json_field(field, desc[field])
 
 def print_data_obj_desc(desc):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary']
-    print "ID\t\t" + desc["id"]
-    print "Class\t\t" + desc["class"]
+    print_field("ID", desc["id"])
+    print_field("Class", desc["class"])
     if 'project' in desc:
-        print "Project\t\t" + desc["project"]
+        print_field("Project", desc['project'])
     if 'folder' in desc:
-        print "Folder\t\t" + desc["folder"]
-    print "Name\t\t" + desc["name"]
+        print_field("Folder", desc["folder"])
+    print_field("Name", desc["name"])
     if 'state' in desc:
         if desc['state'] in DATA_STATES:
-            print "State\t\t" + DATA_STATES[desc['state']]
+            print_field("State", DATA_STATES[desc['state']])
         else:
-            print "State\t\t" + desc["state"]
+            print_field("State", desc["state"])
     if 'hidden' in desc:
-        print "Hidden\t\t" + json.dumps(desc["hidden"])
+        print_field("Visibility", ("hidden" if desc["hidden"] else "visible"))
     if 'types' in desc:
-        print "Types\t\t" + json.dumps(desc["types"])
+        print_list_field("Types", desc['types'])
     if 'properties' in desc:
-        print "Properties\t" + json.dumps(desc["properties"])
+        print_list_field("Properties", map(lambda key: key + '=' + desc['properties'][key],
+                                           desc['properties'].keys()))
     if 'tags' in desc:
-        print "Tags\t\t" + json.dumps(desc["tags"])
+        print_list_field("Tags", desc['tags'])
     if 'details' in desc:
-        print "Details\t\t" + json.dumps(desc["details"])
+        print_json_field("Details", desc["details"])
     if 'links' in desc:
-        print "Outgoing links\t" + json.dumps(desc["links"])
-    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
+        print_list_field("Outgoing links", desc['links'])
+    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     if 'createdBy' in desc:
-        print "Created by\t" + desc['createdBy']['user']
-    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+        print_field("Created by", desc['createdBy']['user'][5:])
+    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "title" in desc:
-        print "Title\t\t" + desc["title"]
+        print_field("Title", desc["title"])
     if "subtitle" in desc:
-        print "Subtitle\t\t" + desc["subtitle"]
+        print_field("Subtitle", desc["subtitle"])
     if 'summary' in desc:
-        print textwrap.fill("Summary\t\t" + desc['summary'], subsequent_indent='\t\t', width=64)
+        print_field("Summary", desc['summary'])
     if "description" in desc:
-        print textwrap.fill("Description\t" + desc["description"], subsequent_indent='\t\t', width=64)
+        print_field("Description", desc["description"])
     if 'summary' in desc:
-        print textwrap.fill('Summary\t\t' + desc['summary'], subsequent_indent='\t\t', width=64)
+        print_field('Summary', desc['summary'])
     if 'access' in desc:
-        print "Access\t\t" + json.dumps(desc["access"])
+        print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
-        print "API version\t" + desc["dxapi"]
+        print_field("API version", desc["dxapi"])
     if "inputSpec" in desc:
         print "Input Spec\t" + get_io_spec(desc['inputSpec'])
     if "outputSpec" in desc:
         print "Output Spec\t" + get_io_spec(desc['outputSpec'])
     if 'runSpec' in desc:
-        print "Interpreter\t" + desc["runSpec"]["interpreter"]
+        print_field("Interpreter", desc["runSpec"]["interpreter"])
         if "resources" in desc['runSpec']:
-            print "Resources\t" + json.dumps(desc["runSpec"]["resources"])
+            print_json_field("Resources", desc["runSpec"]["resources"])
         if "bundledDepends" in desc['runSpec']:
-            print "bundledDepends\t" + textwrap.fill(json.dumps(desc["runSpec"]["bundledDepends"]), width=64, subsequent_indent='\t\t')
+            print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
         if "execDepends" in desc['runSpec']:
-            print "execDepends\t" + json.dumps(desc["runSpec"]["execDepends"])
+            print_json_field("execDepends", desc["runSpec"]["execDepends"])
 
     for field in desc:
         if field in recognized_fields:
             continue
         else:
             if field == "media":
-                print "Media type\t" + desc['media']
+                print_field("Media type", desc['media'])
             elif field == "size":
                 if desc["class"] == "file" or desc["class"] == "gtable":
-                    print "Size (bytes)\t" + str(desc['size'])
+                    magnitude = math.floor(math.log(desc['size'], 10))
+                    level = int(min(math.floor(magnitude / 3), 4))
+                    print_field("Size", ('%d' if level == 0 else '%.2f') % (float(desc['size']) / 10**(level*3)) + ' ' + SIZE_LEVEL[level])
                 else:
-                    print "Size\t\t" + str(desc['size'])
+                    print_field("Size", str(desc['size']))
             elif field == "length":
-                if desc["class"] == "gtable":
-                    print "Size (rows)\t" + str(desc['length'])
+                if desc["class"] == "gtable" or desc['class'] == 'table':
+                    print_field("Size (rows)", str(desc['length']))
                 else:
-                    print "Size\t\t" + str(desc['length'])
+                    print_field("Length", str(desc['length']))
             elif field == "columns":
-                coldescs = ""
-                for column in desc["columns"]:
-                    coldescs += "\t\t" + column["name"] + " (" + column["type"] + ")\n"
-                print "Columns" + coldescs[:-1]
+                if len(desc['columns']) > 0:
+                    coldescs = ""
+                    for column in desc["columns"]:
+                        coldescs += column["name"] + " (" + column["type"] + ")\n" + " "*16
+                    print "Columns" + " " *(16-len("Columns")) + coldescs[:-17]
+                else:
+                    print_list_field("Columns", desc['columns'])
             else: # Unhandled prettifying
-                print field + "\t\t" + json.dumps(desc[field])
+                print_json_field(field, desc[field])
 
 def print_job_desc(desc):
     recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache']
 
-    print "ID\t\t" + desc["id"]
-    print "Class\t\t" + desc["class"]
-    print "Project context\t" + desc["project"]
-    print "Workspace\t" + desc["workspace"]
+    print_field("ID", desc["id"])
+    print_field("Class", desc["class"])
+    print_field("Project context", desc["project"])
+    print_field("Workspace", desc["workspace"])
     if 'projectWorkspace' in desc:
-        print 'Cache workspace\t' + desc['projectWorkspace']
-        print 'GlobalWorkspace\t' + desc['globalWorkspace']
+        print_field('Cache workspace', desc['projectWorkspace'])
+        print_field('GlobalWorkspace', desc['globalWorkspace'])
     elif 'projectCache' in desc:
-        print 'Cache workspace\t' + desc['projectCache']
-        print 'Resources\t' + desc['resources']
+        print_field('Cache workspace', desc['projectCache'])
+        print_field('Resources', desc['resources'])
     if "program" in desc:
-        print "Program\t\t" + desc["program"]
+        print_field("Program", desc["program"])
     elif "app" in desc:
-        print "App\t\t" + desc["app"]
+        print_field("App", desc["app"])
     if desc['state'] in JOB_STATES:
-        print "State\t\t" + JOB_STATES[desc["state"]]
+        print_field("State", JOB_STATES[desc["state"]])
     else:
-        print "State\t\t" + desc['state']
+        print_field("State", desc['state'])
     if desc["parentJob"] is None:
-        print "Parent job\tNone"
+        print_field("Parent job", "-")
     else:
-        print "Parent job\t" + json.dumps(desc["parentJob"])
-    print "Origin job\t" + desc["originJob"]
-    print "Function\t" + desc["function"]
+        print_json_field("Parent job", desc["parentJob"])
+    print_field("Origin job", desc["originJob"])
+    print_field("Function", desc["function"])
     if "originalInput" in desc:
-        print "Original Input\t" + json.dumps(desc["originalInput"])
-        print "Input\t\t" + json.dumps(desc["input"])
-        print "Output\t\t" + json.dumps(desc["output"])
+        print_json_field("Original Input", desc["originalInput"])
+        print_json_field("Input", desc["input"])
+        print_json_field("Output", desc["output"])
     if 'folder' in desc:
-        print 'Output folder\t' + desc['folder']
-    print "Launched by\t" + desc["launchedBy"]
-    print "Created\t\t" + datetime.datetime.fromtimestamp(desc['created']/1000).ctime()
-    print "Last modified\t" + datetime.datetime.fromtimestamp(desc['modified']/1000).ctime()
+        print_field('Output folder', desc['folder'])
+    print_field("Launched by", desc["launchedBy"])
+    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if 'waitingOnChildren' in desc:
-        if len(desc['waitingOnChildren']) == 0:
-            print 'Pending subjobs\tNone'
-        else:
-            print 'Pending subjobs\t' + ', '.join(desc['waitingOnChildren'])
+        print_list_field('Pending subjobs', desc['waitingOnChildren'])
     if "failureReason" in desc:
-        print "Failure reason\t" + desc["failureReason"]
+        print_field("Failure reason", desc["failureReason"])
     if "failureMessage" in desc:
-        print textwrap.fill("Failure message\t" + desc["failureMessage"], subsequent_indent='\t\t', width=64)
+        print_field("Failure message", desc["failureMessage"])
     if "stdout" in desc:
-        print "File of stdout\t" + str(desc['stdout'])
+        print_field("File of stdout", str(desc['stdout']))
     if 'stderr' in desc:
-        print 'File of stderr\t' + str(desc['stderr'])
+        print_field('File of stderr', str(desc['stderr']))
     for field in desc:
         if field not in recognized_fields:
-            print field + '\t\t' + json.dumps(desc[field])
+            print_json_field(field, desc[field])
 
 def print_user_desc(desc):
-    print "ID\t\t" + desc["id"]
-    print "Name\t\t" + desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"]
+    print_field("ID", desc["id"])
+    print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
     if "email" in desc:
-        print "Email\t\t" + desc["email"]
+        print_field("Email", desc["email"])
     if "appsInstalled" in desc:
-        if len(desc["appsInstalled"]) == 0:
-            print "Apps installed\tNone"
-        else:
-            print "Apps installed\t" + textwrap.fill(', '.join(desc["appsInstalled"].keys()), width=64, subsequent_indent='\t\t')
+        print_list_field("Apps installed", desc["appsInstalled"])
 
 def print_generic_desc(desc):
     for field in desc:
-        print field + ('\t\t' if len(field) < 8 else '\t') + json.dumps(desc[field])
+        print_json_field(field, desc[field])
 
 def print_desc(desc):
     '''
