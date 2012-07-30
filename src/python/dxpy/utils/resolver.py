@@ -9,8 +9,9 @@ For more details, see external documentation [TODO: Put link here].
 
 import dxpy
 import re, os, sys
+from dxpy.utils.describe import *
 
-def pick(choices, default=None, str_choices=None, prompt=None):
+def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False):
     '''
     :param choices: Strings between which the user will make a choice
     :type choices: list of strings
@@ -43,6 +44,8 @@ def pick(choices, default=None, str_choices=None, prompt=None):
             raise EOFError()
         if default is not None and value == '':
             return default
+        if allow_mult and value == '*':
+            return value
         try:
             choice = str_choices.index(value)
             return choice
@@ -329,8 +332,14 @@ def resolve_path_with_project(path, expected=None, expected_classes=None, multi_
     else:
         return project, folderpath, entity_name
 
-def resolve_existing_path(path, expected=None, only_one=True, expected_classes = None):
+def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False):
     '''
+    :param ask_to_resolve: Whether picking may be necessary
+    :type ask_to_resolve: boolean
+    :param allow_mult: Whether to allow the user to select multiple results from the same path
+    :type allow_mult: boolean
+    :returns: A LIST of results when ask_to_resolve is False or allow_mult is True
+
     Returns either a list of results or a single result (depending on
     how many is expected; if only one, then an interactive picking of
     a choice will be initiated if input is a tty, or else throw an error).
@@ -362,7 +371,7 @@ def resolve_existing_path(path, expected=None, only_one=True, expected_classes =
         except BaseException as details:
             raise ResolutionError(str(details))
         result = {"id": entity_name, "describe": desc}
-        if only_one:
+        if ask_to_resolve and not allow_mult:
             return project, folderpath, result
         else:
             return project, folderpath, [result]
@@ -388,21 +397,25 @@ def resolve_existing_path(path, expected=None, only_one=True, expected_classes =
             possible_folder, skip = clean_folder_path(possible_folder, 'folder')
             return project, possible_folder, None
 
-        # Caller is okay with multiple results; just return the whole thing
-        if not only_one:
+        # Caller wants ALL results; just return the whole thing
+        if not ask_to_resolve:
             return project, None, results
 
         if len(results) > 1:
-            if sys.stdin.isatty():
+            if sys.stdout.isatty():
                 print 'The given path \"' + path + '\" resolves to the following data objects:'
                 choice = pick(map(lambda result:
                                       get_ls_l_desc(result['describe']),
-                                  results))
-                return project, None, results[choice]
+                                  results),
+                              allow_mult=allow_mult)
+                if allow_mult and choice == '*':
+                    return project, None, results
+                else:
+                    return project, None, ([results[choice]] if allow_mult else results[choice])
             else:
                 raise ResolutionError('The given path \"' + path + '\" resolves to ' + str(len(results)) + ' data objects')
         elif len(results) == 1:
-            return project, None, results[0]
+            return project, None, ([results[0]] if allow_mult else results[0])
 
 def get_app_from_path(path):
     '''

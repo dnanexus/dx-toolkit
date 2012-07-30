@@ -410,7 +410,7 @@ def cmp_names(x, y):
     return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())
 
 def ls(args):
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, only_one=False)
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, ask_to_resolve=False)
 
     if project is None:
         parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
@@ -510,12 +510,12 @@ def rm(args):
     projects = {}
     for path in args.paths:
         # Resolve the path and add it to the list
-        project, folderpath, entity_result = try_call(resolve_existing_path, path)
+        project, folderpath, entity_results = try_call(resolve_existing_path, path, allow_mult=True)
         if project is None:
             parser.exit(1, fill('Could not resolve \"' + path + '\" to a project') + '\n')
         if project not in projects:
             projects[project] = {"folders": [], "objects": []}
-        if entity_result is None:
+        if entity_results is None:
             if folderpath is not None:
                 if not args.recursive:
                     parser.exit(1, 'Cannot remove a folder without setting the \"-r\" flag\n')
@@ -524,7 +524,8 @@ def rm(args):
             else:
                 parser.exit(1, 'Cannot remove a project using \"rm\"')
         else:
-            projects[project]['objects'].append(entity_result['id'])
+            projects[project]['objects'] += map(lambda result: result['id'],
+                                                entity_results)
 
     for project in projects:
         for folder in projects[project]['folders']:
@@ -732,7 +733,7 @@ def describe(args):
             json_input['project'] = dxpy.WORKSPACE_ID
 
     # Otherwise, attempt to look for it as a data object.
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', only_one=False)
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', ask_to_resolve=False)
 
     found_match = False
 
@@ -1535,7 +1536,7 @@ def run(args):
         project, folderpath, entity_results = try_call(resolve_existing_path,
                                                        args.path,
                                                        expected='entity',
-                                                       only_one=False,
+                                                       ask_to_resolve=False,
                                                        expected_classes=['program'])
         app_desc = get_app_from_path(args.path)
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
@@ -1545,7 +1546,7 @@ def run(args):
             handler = dxpy.DXApp(dxid=app_desc['id'])
             desc = app_desc
         elif entity_results is not None and app_desc is not None:
-            if not sys.stdin.isatty():
+            if not sys.stdout.isatty():
                 parser.exit(1, 'Found multiple executables with the path ' + args.path + '\n')
             print 'Found multiple executables with the path ' + args.path
             choice = pick(map(lambda result: get_ls_l_desc(result['describe']),
@@ -1613,7 +1614,7 @@ def run(args):
                           (required_inputs + optional_inputs) if required_inputs is not None else None)
 
     elif required_inputs is not None and (len(required_inputs) > 0 or len(optional_inputs) > 0):
-        if sys.stdin.isatty():
+        if sys.stdout.isatty():
             print 'No input given.  Entering interactive mode for input selection.'
             try:
                 # If running from the command-line (not in the shell),
@@ -1643,13 +1644,13 @@ def run(args):
             except:
                 pass
     elif required_inputs is not None:
-        if sys.stdin.isatty():        
+        if sys.stdout.isatty():        
             print fill('No input given, and program/app takes in no inputs.  Skipping interactive mode for input selection.')
     else:
-        if sys.stdin.isatty():
+        if sys.stdout.isatty():
             print fill('No input given, and program has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
 
-    if sys.stdin.isatty():
+    if sys.stdout.isatty():
         print ''
         print 'Using input JSON:'
         print json.dumps(input_json, indent=4)
@@ -1657,7 +1658,7 @@ def run(args):
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
-    if args.input_json is None and args.filename is None and not args.stdin and sys.stdin.isatty():
+    if args.input_json is None and args.filename is None and not args.stdin and sys.stdout.isatty():
         try:
             value = raw_input('Confirm running the program/app with this input [Y/n]: ')
         except KeyboardInterrupt:
@@ -1673,13 +1674,13 @@ def run(args):
         if value != '' and not value.lower().startswith('y'):
             parser.exit(0)
 
-    if sys.stdin.isatty():
+    if sys.stdout.isatty():
         print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
         dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(str(details)) + '\n')
-    if sys.stdin.isatty():
+    if sys.stdout.isatty():
         print "Job ID: " + dxjob.get_id()
     else:
         print dxjob.get_id()

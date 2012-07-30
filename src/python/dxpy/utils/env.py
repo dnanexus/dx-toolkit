@@ -52,7 +52,7 @@ def get_env():
             elif var in installed_file_env_vars:
                 env_vars[var] = installed_file_env_vars[var]
 
-    if sys.stdin.isatty():
+    if sys.stdout.isatty():
         already_set = []
         for var in user_file_env_vars:
             if var in env_vars and user_file_env_vars[var] != env_vars[var]:
