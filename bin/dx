@@ -39,61 +39,6 @@ def try_call(func, *args, **kwargs):
     except BaseException as details:
         parser.exit(1, fill(str(details)) + '\n')
 
-# This completer is for the command-line in the shell.  It assumes the
-# first word is always a subcommand and that if the first word is a
-# subcommand with further subcommands, then the second word must be an
-# appropriate sub-subcommand.
-class DXCLICompleter():    
-    subsubcommands = {'file': ['get ', 'put '],
-                      'gtable': ['get '],
-                      'find': ['jobs ', 'data ', 'projects ', 'apps '],
-                      'new': ['record ', 'gtable ']}
-
-    def __init__(self):
-        global subparsers
-        self.subcommands = map(lambda subcmd: subcmd + ' ', subparsers.choices.keys())
-        self.dxproj = None
-        self.project_names = None
-        self.folders = None
-        self.names = None
-        self.colon_pos = -1
-        self.last_slash_pos = -1
-        self.matches = None
-
-    def get_subcommand_matches(self, prefix):
-        self.matches = filter(lambda subcommand: subcommand.startswith(prefix),
-                              self.subcommands)
-
-    def get_subsubcommand_matches(self, subcommand, prefix):
-        if subcommand in self.subsubcommands:
-            self.matches = map(lambda subsub: subcommand + ' ' + subsub,
-                               filter(lambda subsubcommand: subsubcommand.startswith(prefix),
-                                      self.subsubcommands[subcommand]))
-
-    def __call__(self, text, state):
-        if state == 0:
-            current_line = readline.get_line_buffer()
-            words = split_unescaped(' ', current_line)
-            if len(words) > 0 and current_line[-1] == ' ':
-                words.append('')
-            num_words = len(words)
-            self.matches = None
-            if num_words == 0:
-                self.get_subcommand_matches('')
-            elif num_words == 1:
-                self.get_subcommand_matches(words[0])
-            elif num_words == 2 and words[0] in self.subsubcommands:
-                self.get_subsubcommand_matches(words[0], words[1])
-            else:
-                obj_completer(self, current_line, words)
-                # Then find matches
-                get_project_and_folder_content_matches(self, words)
-
-        if self.matches is not None and state < len(self.matches):
-            return self.matches[state]
-        else:
-            return None
-
 def get_bash_export_cmds(env_vars):
     string = ''
     for var in env_vars:
@@ -142,8 +87,98 @@ if len(args_list) == 1 and args_list[0] == 'clearenv':
 # importing dxpy will now appropriately load env variables
 import dxpy
 from dxpy.utils.resolver import *
-from dxpy.utils.interactive import *
+from dxpy.utils.completer import *
 from dxpy.utils.describe import *
+
+# This completer is for the command-line in the shell.  It assumes the
+# first word is always a subcommand and that if the first word is a
+# subcommand with further subcommands, then the second word must be an
+# appropriate sub-subcommand.
+class DXCLICompleter():    
+    subcommands = {'file': ['get ', 'put '],
+                   'gtable': ['get '],
+                   'find': ['jobs ', 'data ', 'projects ', 'apps '],
+                   'new': ['record ', 'gtable ', 'project ']}
+
+    def __init__(self):
+        global subparsers
+        self.commands = map(lambda subcmd: subcmd + ' ',
+                            subparsers.choices.keys())
+        self.matches = []
+        self.text = None
+
+    def get_command_matches(self, prefix):
+        self.matches = filter(lambda command: command.startswith(prefix),
+                              self.commands)
+
+    def get_subcommand_matches(self, command, prefix):
+        if command in self.subcommands:
+            self.matches = map(lambda sub: command + ' ' + sub,
+                               filter(lambda subcommand: subcommand.startswith(prefix),
+                                      self.subcommands[command]))
+
+    def __call__(self, text, state):
+        if state == 0 and self.text != text:
+            self.text = text
+            space_pos = get_last_pos_of_char(' ', text)
+            words = split_unescaped(' ', text)
+            if len(words) > 0 and space_pos == len(text) - 1:
+                words.append('')
+            num_words = len(words)
+            self.matches = []
+            if num_words == 0:
+                self.get_command_matches('')
+            elif num_words == 1:
+                self.get_command_matches(words[0])
+            elif num_words == 2 and words[0] in self.subcommands:
+                self.get_subcommand_matches(words[0], words[1])
+            else:
+                if words[0] == 'run':
+                    path_matches = path_completer(words[-1],
+                                                  classes=['program'])
+                elif words[0] in ['cd', 'rmdir', 'mkdir']:
+                    path_matches = path_completer(words[-1],
+                                                  expected='folder')
+                elif words[0] in ['get', 'head']:
+                    path_matches = path_completer(words[-1],
+                                                  classes=['gtable', 'file'])
+                elif words[0] in ['cat', 'upload']:
+                    path_matches = path_completer(words[-1],
+                                                  classes=['file'])
+                elif words[0] in ['ls', 'rm', 'mv', 'cp']:
+                    path_matches = path_completer(words[-1])
+                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close']:
+                    path_matches = path_completer(words[-1])
+                elif words[0] in ['describe', 'add_tags', 'remove_tags', 'rename', 'set_properties', 'unset_properties']:
+                    path_matches = path_completer(words[-1], include_current_proj=True)
+                elif words[0] in ['rmproject']:
+                    path_matches = path_completer(words[-1], expected='project', include_current_proj=True)
+                else:
+                    path_matches = []
+
+                self.matches = map(lambda match: text[:space_pos + 1] + match,
+                                   path_matches)
+
+                # Also find app name matches and append to
+                # self.matches, preferably a list of installed apps
+                if words[0] == 'run':
+                    try:
+                        app_names = map(lambda result:
+                                            result['describe']['name'],
+                                        list(dxpy.find_apps(describe=True)))
+                        app_matches = filter(lambda app_name:
+                                                 app_name.startswith(words[-1]),
+                                             app_names)
+                        self.matches += map(lambda match:
+                                                text[:space_pos + 1] + match,
+                                            app_matches)
+                    except:
+                        pass
+
+        if state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
 
 def login(args):
     if not state['interactive']:
@@ -1246,10 +1281,13 @@ def find_apps(args):
         results = list(dxpy.find_apps(name=args.name, category=args.category,
                                       all_versions=args.all,
                                       published=(not args.unpublished),
-                                      billed_to=args.billed_to, created_by=args.creator,
+                                      billed_to=args.billed_to,
+                                      created_by=args.creator,
                                       developer=args.developer,
-                                      created_after=args.created_after, created_before=args.created_before,
-                                      modified_after=args.mod_after, modified_before=args.mod_before,
+                                      created_after=args.created_after,
+                                      created_before=args.created_before,
+                                      modified_after=args.mod_after,
+                                      modified_before=args.mod_before,
                                       describe=True))
                                       
         if args.json:
@@ -1306,6 +1344,8 @@ def parse_obj(string, klass):
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
     return {'$dnanexus_link': entity_result['id']}
 
+dx_data_classes = ['record', 'gtable', 'file', 'program', 'table']
+
 parse_input = {'boolean': parse_bool,
                'string': (lambda string: string),
                'float': (lambda string: float(string)),
@@ -1323,6 +1363,13 @@ def get_input_array(param_desc):
     in_class = param_desc['class'][6:]
     input_array = []
     print '\nEnter list of inputs (^D or empty string to finish) of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False) + ':\n'
+    try:
+        if in_class in dx_data_classes:
+            readline.set_completer(DXPathCompleter(classes=[in_class]))
+        else:
+            readline.set_completer()
+    except:
+        pass
     try:
         while True:
             user_input = raw_input(param_desc['name'] + '[' + str(len(input_array)) + "]: ")
@@ -1348,6 +1395,13 @@ def get_input_array(param_desc):
 def get_input_single(param_desc):
     in_class = param_desc['class']
     print '\nEnter input of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ':'
+    try:
+        if in_class in dx_data_classes:
+            readline.set_completer(DXPathCompleter(classes=[in_class]))
+        else:
+            readline.set_completer()
+    except:
+        pass
     try:
         while True:
             user_input = raw_input(param_desc['name'] + ': ')
@@ -1568,9 +1622,10 @@ def run(args):
                 readline.parse_and_bind("tab: complete")
 
                 readline.set_completer_delims("")
-                # We don't want to assume that the line will start with
-                # commands, so make sure the completer is set correctly
-                readline.set_completer(DXObjectCompleter())
+
+                readline.write_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
+                readline.clear_history()
+                readline.set_completer()
             except:
                 pass
 
@@ -1580,9 +1635,11 @@ def run(args):
                     get_input(input_json, param)
             if len(optional_inputs) > 0:
                 get_optional_inputs(input_json, optional_inputs)
-            # Reset the completer once we're done grabbing input
+
+            # Set no completer
             try:
-                readline.set_completer(DXCLICompleter())
+                readline.set_completer()
+                readline.clear_history()
             except:
                 pass
     elif required_inputs is not None:
@@ -1651,6 +1708,14 @@ def shell(orig_args):
         pass
 
     while True:
+        # Reset the completer once we're done grabbing input
+        try:
+            if readline.get_completer() is None:
+                readline.set_completer(DXCLICompleter())
+                readline.clear_history()
+                readline.read_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
+        except:
+            pass
         try:
             cmd = raw_input('> ')
         except EOFError:

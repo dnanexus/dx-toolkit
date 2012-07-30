@@ -8,8 +8,54 @@ For more details, see external documentation [TODO: Put link here].
 '''
 
 import dxpy
-from dxpy.utils.interactive import pick
 import re, os, sys
+
+def pick(choices, default=None, str_choices=None, prompt=None):
+    '''
+    :param choices: Strings between which the user will make a choice
+    :type choices: list of strings
+    :param default: Number the index to be used as the default
+    :type default: int or None
+    :param str_choices: Strings to be used as aliases for the choices; must be of the same length as choices and each string must be unique
+    :type str_choices: list of strings
+    :param prompt: A custom prompt to be used
+    :type prompt: string
+    :returns: The user's choice as a numbered index of choices (e.g. 0 for the first item)
+    :rtype: int
+    :raises: :exc:`EOFError` to signify quitting the process
+    '''
+    for i in range(len(choices)):
+        print str(i) + ') ' + choices[i]
+    print ''
+    if prompt is None:
+        if default is not None:
+            prompt = 'Pick a numbered choice [' + str(default) + ']: '
+        else:
+            prompt = 'Pick a numbered choice: '
+    while True:
+        try: 
+            value = raw_input(prompt)
+        except KeyboardInterrupt:
+            print ''
+            continue
+        except EOFError:
+            print ''
+            raise EOFError()
+        if default is not None and value == '':
+            return default
+        try:
+            choice = str_choices.index(value)
+            return choice
+        except:
+            pass
+        try:
+            choice = int(value)
+            if choice not in range(len(choices)):
+                raise IndexError()
+            return choice
+        except BaseException as details:
+            print str(details)
+            print 'Not a valid selection'
 
 # The following caches project names to project IDs because they are
 # unlikely to change.
@@ -154,13 +200,13 @@ def clean_folder_path(path, expected=None):
 
     return newpath, entity_name
 
-def resolve_container_id_or_name(raw_string, is_error=False, unescape=True):
+def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, multi=False):
     '''
     :param raw_string: A potential project or container ID or name
     :type raw_string: string
     :param is_error: Whether to raise an exception if the project or container ID cannot be resolved
     :type is_error: boolean
-    :param unescape: Whether to unescape the string  (TODO: External link to section on escaping characters.)
+    :param unescape: Whether to unescaping the string is required (TODO: External link to section on escaping characters.)
     :type unescape: boolean
     :returns: Project or container ID if found or else None
     :rtype: string or None
@@ -172,10 +218,10 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True):
     if unescape:
         string = unescape_name_str(raw_string)
     if is_container_id(string):
-        return string
+        return ([string] if multi else string)
 
     if string in cached_project_names:
-        return cached_project_names[string]
+        return ([cached_project_names[string]] if multi else cached_project_names[string])
 
     try:
         results = list(dxpy.find_projects(name=string, describe=True))
@@ -184,17 +230,20 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True):
 
     if len(results) == 1:
         cached_project_names[string] = results[0]['id']
-        return results[0]['id']
-    elif len(results) > 1:
+        return ([results[0]['id']] if multi else results[0]['id'])
+    elif len(results) == 0:
+        if is_error:
+            raise ResolutionError('Could not resolve container ID or name')
+        return ([] if multi else None)
+    elif not multi:
         print 'Found multiple projects with name \"' + string + '\"'
         choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
         return results[choice]['id']
     else:
-        if is_error:
-            raise ResolutionError('Could not resolve container ID or name')
-        return None
+        # len(results) > 1 and multi
+        return map(lambda result: result['id'], results)
 
-def resolve_path_with_project(path, expected=None, expected_classes=None):
+def resolve_path_with_project(path, expected=None, expected_classes=None, multi_projects=False):
     '''
     :param path: A path to a data object to attempt to resolve
     :type path: string
@@ -217,14 +266,21 @@ def resolve_path_with_project(path, expected=None, expected_classes=None):
     if path == ':':
         if dxpy.WORKSPACE_ID is None:
             raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set.')
-        return dxpy.WORKSPACE_ID, '/', None
-    # Second easy case: hash ID
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
+    # Second easy case: empty string
+    if path == '':
+        if dxpy.WORKSPACE_ID is None:
+            raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set.')
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), os.environ.get('DX_CLI_WD', '/'), None
+    # Third easy case: hash ID
     if is_container_id(path):
-        return path, '/', None
+        return ([path] if multi_projects else path), '/', None
     elif is_hashid(path):
-        return dxpy.WORKSPACE_ID, None, path
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path
 
     project = None
+    folderpath = None
+    entity_name = None
     wd = None
 
     # Test for multiple colons
@@ -238,7 +294,10 @@ def resolve_path_with_project(path, expected=None, expected_classes=None):
 
     if len(substrings) == 2:
         # project-name-or-id:folderpath/to/possible/entity
-        project = resolve_container_id_or_name(substrings[0], is_error=True)
+        if multi_projects:
+            project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
+        else:
+            project = resolve_container_id_or_name(substrings[0], is_error=True)
         wd = '/'
     elif get_last_pos_of_char(':', path) >= 0:
         # :folderpath/to/possible/entity OR project-name-or-id:
@@ -251,7 +310,7 @@ def resolve_path_with_project(path, expected=None, expected_classes=None):
         else:
             # One nonempty string to the left of a colon
             project = resolve_container_id_or_name(substrings[0], is_error=True)
-            return project, '/', None
+            folderpath = '/'
     else:
         # One nonempty string, no colon present, do NOT interpret as
         # project
@@ -261,10 +320,14 @@ def resolve_path_with_project(path, expected=None, expected_classes=None):
         wd = os.environ.get('DX_CLI_WD', '/')
 
     # Determine folderpath and entity_name if necessary
-    folderpath = substrings[-1]
-    folderpath, entity_name = clean_folder_path(wd + '/' + folderpath, expected)
+    if folderpath is None:
+        folderpath = substrings[-1]
+        folderpath, entity_name = clean_folder_path(wd + '/' + folderpath, expected)
 
-    return project, folderpath, entity_name
+    if multi_projects:
+        return (project_ids if project is None else [project]), folderpath, entity_name
+    else:
+        return project, folderpath, entity_name
 
 def resolve_existing_path(path, expected=None, only_one=True, expected_classes = None):
     '''
