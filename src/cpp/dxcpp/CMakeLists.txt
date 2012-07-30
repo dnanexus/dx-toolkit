@@ -11,6 +11,6 @@ add_subdirectory(../SimpleHttpLib SimpleHttpLib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../SimpleHttpLib)
 
-add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxprogram.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc)
+add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc)
 set_target_properties(dxcpp PROPERTIES COMPILE_FLAGS -fPIC)
 target_link_libraries(dxcpp dxjson curl dxhttp)

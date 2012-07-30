@@ -21,7 +21,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       describe=None, limit=None, level=None,
                       return_handler=False, **kwargs):
     """
-    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "program"
+    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet"
     :type classname: string
     :param state: State of the object ("open", "closing", "closed", "any")
     :type state: string
@@ -176,7 +176,7 @@ def find_one_data_object(classname=None, state=None, visibility=None,
                          created_after=None, created_before=None,
                          describe=None, return_handler=None, **kwargs):
     """
-    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "program"
+    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet"
     :type classname: string
     :param state: State of the object ("open", "closing", "closed", "any")
     :type state: string
@@ -294,20 +294,20 @@ def find_one_data_object(classname=None, state=None, visibility=None,
         else:
             return resp['results'][0]
 
-def find_jobs(launched_by=None, program=None, project=None, state=None,
+def find_jobs(launched_by=None, applet=None, project=None, state=None,
               origin_job=None, parent_job=None,
               created_after=None, created_before=None, describe=False,
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
     :type launched_by: string
-    :param program: ID of the program which spawned this job
-    :type program: string
+    :param applet: ID of the applet which spawned this job
+    :type applet: string
     :param project: ID of the project context for the job
     :type project: string
     :param state: State of the job (e.g. "failed", "done")
     :type state: string
-    :param origin_job: ID of the original job initiated by a user running a program which eventually spawned this job
+    :param origin_job: ID of the original job initiated by a user running an applet which eventually spawned this job
     :type origin_job: string
     :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
     :type parent_job: string
@@ -340,11 +340,11 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     query = {}
     if launched_by is not None:
         query["launchedBy"] = launched_by
-    if program is not None:
-        if isinstance(program, DXProgram):
-            query["program"] = program.get_id()
+    if applet is not None:
+        if isinstance(applet, DXApplet):
+            query["applet"] = applet.get_id()
         else:
-            query["program"] = program
+            query["applet"] = applet
     if project is not None:
         query["project"] = project
     if state is not None:

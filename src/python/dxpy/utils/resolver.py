@@ -73,8 +73,8 @@ class ResolutionError(Exception):
     def __str__(self):
         return self.msg
 
-data_obj_pattern = re.compile('^(record|table|gtable|program|file)-[0-9A-Za-z]{24}$')
-hash_pattern = re.compile('^(record|table|gtable|app|program|job|project|workspace|container|file)-[0-9A-Za-z]{24}$')
+data_obj_pattern = re.compile('^(record|table|gtable|program|applet|file)-[0-9A-Za-z]{24}$')
+hash_pattern = re.compile('^(record|table|gtable|app|program|applet|job|project|workspace|container|file)-[0-9A-Za-z]{24}$')
 nohash_pattern = re.compile('^(user|org|app|team)-')
 
 def is_hashid(string):

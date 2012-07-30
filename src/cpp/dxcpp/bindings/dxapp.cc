@@ -70,6 +70,6 @@ DXJob DXApp::run(const JSON &app_input,
   if (g_JOB_ID == "")
     input_params["project"] = project_context;
   input_params["folder"] = output_folder;
-  const JSON resp = programRun(dxid_, input_params);
+  const JSON resp = appRun(dxid_, input_params);
   return DXJob(resp["id"].get<string>());
 }
