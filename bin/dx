@@ -598,12 +598,12 @@ def mv(args):
             parser.exit(1, 'The destination folder does not exist\n')
 
         # Either rename the data object or rename the folder
-        src_proj, src_path, src_result = try_call(resolve_existing_path, args.sources[0])
+        src_proj, src_path, src_results = try_call(resolve_existing_path, args.sources[0], allow_mult=True)
 
         if src_proj != dest_proj:
             parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.\n')
 
-        if src_result is None:
+        if src_results is None:
             if src_path == '/':
                 parser.exit(1, fill('Cannot rename root folder; to rename the project, use the "dx rename" subcommand.') + '\n')
             try:
@@ -615,13 +615,16 @@ def mv(args):
                 parser.exit(1, fill(str(details)) + '\n')
         else:
             try:
-                if src_result['describe']['folder'] != dest_folder:
+                if src_results[0]['describe']['folder'] != dest_folder:
                     dxpy.DXHTTPRequest('/' + src_proj + '/move',
-                                       {"objects": [src_result['id']],
+                                       {"objects": map(lambda result:
+                                                           result['id'],
+                                                       src_results),
                                         "destination": dest_folder})
-                dxpy.DXHTTPRequest('/' + src_result['id'] + '/rename',
-                                   {"project": src_proj,
-                                    "name": dest_name})
+                for result in src_results:
+                    dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
+                                       {"project": src_proj,
+                                        "name": dest_name})
                 return
             except BaseException as details:
                 parser.exit(1, fill(str(details)) + '\n')
@@ -629,14 +632,14 @@ def mv(args):
     src_objects = []
     src_folders = []
     for source in args.sources:
-        src_proj, src_folderpath, src_result = try_call(resolve_existing_path, source)
+        src_proj, src_folderpath, src_results = try_call(resolve_existing_path, source, allow_mult=True)
         if src_proj != dest_proj:
             parser.exit(1, fill('Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".') + '\n')
 
-        if src_result is None:
+        if src_results is None:
             src_folders.append(src_folderpath)
         else:
-            src_objects.append(src_result['id'])
+            src_objects += map(lambda result: result['id'], src_results)
     try:
         dxpy.DXHTTPRequest('/' + src_proj + '/move',
                            {"objects": src_objects,
@@ -669,12 +672,12 @@ def cp(args):
 
         # Clone and rename either the data object or the folder
         # src_result is None if it could not be resolved to an object
-        src_proj, src_path, src_result = try_call(resolve_existing_path, args.sources[0])
+        src_proj, src_path, src_results = try_call(resolve_existing_path, args.sources[0], allow_mult=True)
 
         if src_proj == dest_proj:
             parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
-        if src_result is None:
+        if src_results is None:
             contents = dxpy.DXHTTPRequest('/' + src_proj + '/listFolder',
                                           {"folder": src_path,
                                            "includeHidden": True})
@@ -689,12 +692,14 @@ def cp(args):
         else:
             try:
                 dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                   {"objects": [src_result['id']],
+                                   {"objects": map(lambda result: result['id'],
+                                                   src_results),
                                     "project": dest_proj,
                                     "destination": dest_folder})
-                dxpy.DXHTTPRequest('/' + src_result['id'] + '/rename',
-                                   {"project": dest_proj,
-                                    "name": dest_name})
+                for result in src_results:
+                    dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
+                                       {"project": dest_proj,
+                                        "name": dest_name})
                 return
             except BaseException as details:
                 parser.exit(1, fill(str(details)) + '\n')
@@ -702,14 +707,14 @@ def cp(args):
     src_objects = []
     src_folders = []
     for source in args.sources:
-        src_proj, src_folderpath, src_result = try_call(resolve_existing_path, source)
+        src_proj, src_folderpath, src_results = try_call(resolve_existing_path, source, allow_mult=True)
         if src_proj == dest_proj:
             parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
-        if src_result is None:
+        if src_results is None:
             src_folders.append(src_folderpath)
         else:
-            src_objects.append(src_result['id'])
+            src_objects += map(lambda result: result['id'], src_results)
     try:
         dxpy.DXHTTPRequest('/' + src_proj + '/clone',
                            {"objects": src_objects,
@@ -733,7 +738,7 @@ def describe(args):
             json_input['project'] = dxpy.WORKSPACE_ID
 
     # Otherwise, attempt to look for it as a data object.
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', ask_to_resolve=False)
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', ask_to_resolve=False, describe=json_input)
 
     found_match = False
 
@@ -892,16 +897,17 @@ def new_gtable(args):
 
 def set_visibility(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None:
+    if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID'), + '\n')
 
-    try:
-        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setVisibility',
-                           {"hidden": (args.visibility == 'hidden')})
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+    for result in entity_results:
+        try:
+            dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
+                               {"hidden": (args.visibility == 'hidden')})
+        except dxpy.DXAPIError as details:
+            print fill(str(details))
 
 def get_details(args):
     # Attempt to resolve name
@@ -917,91 +923,104 @@ def get_details(args):
 
 def set_details(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None:
+    if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
     try:
         args.details = json.loads(args.details)
-        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setDetails',
-                           args.details)
     except ValueError:
-        print 'Error: details could not be parsed as JSON'
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, 'Error: details could not be parsed as JSON')
+
+    for result in entity_results:
+        try:
+            dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
+                               args.details)
+        except dxpy.DXAPIError as details:
+            print(fill(str(details)))
 
 def add_types(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None:
+    if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
-    try:
-        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/addTypes',
-                           {"types": args.types})
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+    for result in entity_results:
+        try:
+            dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
+                               {"types": args.types})
+        except dxpy.DXAPIError as details:
+            print fill(str(details))
 
 def remove_types(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None:
+    if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
-    try:
-        dxpy.DXHTTPRequest('/' + entity_result['id'] + '/removeTypes',
-                           {"types": args.types})
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+    for result in entity_results:
+        try:
+            dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
+                               {"types": args.types})
+        except dxpy.DXAPIError as details:
+            print fill(str(details))
 
 def add_tags(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None and project is None:
+    if entity_results is None and project is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
 
-    try:
-        if entity_result is not None:
-            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/addTags',
-                               {"project": project,
-                                "tags": args.tags})
-        elif not project.startswith('project-'):
-            raise TypeError ('Cannot add tags to a non-project data container\n')
-        else:
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
+                                   {"project": project,
+                                    "tags": args.tags})
+            except BaseException as details:
+                print fill(str(details))
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot add tags to a non-project data container\n')
+    else:
+        try:
             dxpy.DXHTTPRequest('/' + project + '/addTags',
                                {"tags": args.tags})
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def remove_tags(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None and project is None:
+    if entity_results is None and project is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
-    try:
-        if entity_result is not None:
-            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/removeTags',
-                               {"project": project,
-                                "tags": args.tags})
-        elif not project.startswith('project-'):
-            raise TypeError ('Cannot remove tags from a non-project data container\n')
-        else:
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
+                                   {"project": project,
+                                    "tags": args.tags})
+            except BaseException as details:
+                print fill(str(details))
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot remove tags from a non-project data container\n')
+    else:
+        try:
             dxpy.DXHTTPRequest('/' + project + '/removeTags',
                                {"tags": args.tags})
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def rename(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity')
 
-    if entity_result is None and not is_container_id(args.path):
+    if entity_results is None and not is_container_id(args.path):
         if project is None:
             parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
         elif folderpath != None and folderpath != '/':
@@ -1011,64 +1030,74 @@ def rename(args):
 were attempting to refer to a project, append a colon ":" to indicate that it
 is a project.\n''')
 
-    try:
-        if entity_result is not None:
-            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/rename',
-                               {"project": project,
-                                "name": args.name})
-        elif not project.startswith('project-'):
-            raise TypeError ('Cannot rename a non-project data container\n')
-        else:
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
+                                   {"project": project,
+                                    "name": args.name})
+            except BaseException as details:
+                print fill(str(details))
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot rename a non-project data container\n')
+    else:
+        try:
             dxpy.DXHTTPRequest('/' + project + '/update',
                                {"name": args.name})
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def set_properties(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None and project is None:
+    if entity_results is None and project is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     properties = get_properties_from_args(args.properties)
-    try:
-        if entity_result is not None:
-            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setProperties',
-                               {"project": project,
-                                "properties": properties})
-        elif not project.startswith('project-'):
-            raise TypeError ('Cannot set properties on a non-project data container\n')
-        else:
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
+                                   {"project": project,
+                                    "properties": properties})
+            except BaseException as details:
+                print fill(str(details))
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot set properties on a non-project data container\n')
+    else:
+        try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
-        dxpy.get_handler(entity_result['id']).set_properties(properties)
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def unset_properties(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None and project is None:
+    if entity_results is None and project is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
     properties = {}
     for prop in args.properties:
         properties[prop] = None
-    try:
-        if entity_result is not None:
-            dxpy.DXHTTPRequest('/' + entity_result['id'] + '/setProperties',
-                               {"project": project,
-                                "properties": properties})
-        elif not project.startswith('project-'):
-            raise TypeError ('Cannot unset properties on a non-project data container\n')
-        else:
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
+                                   {"project": project,
+                                    "properties": properties})
+            except BaseException as details:
+                print fill(str(details))
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot unset properties on a non-project data container\n')
+    else:
+        try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
-        dxpy.get_handler(entity_result['id']).set_properties(properties)
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(str(details)) + '\n')
 
 def head(args):
     # Attempt to resolve name
@@ -1249,7 +1278,7 @@ def find_data(args):
                                               recurse=args.recurse,
                                               modified_after=args.mod_after, modified_before=args.mod_before,
                                               created_after=args.created_after, created_before=args.created_before,
-                                              describe=args.describe))
+                                              describe=(args.describe or sys.stdout.isatty())))
         if args.json:
             print json.dumps(results, indent=4)
             return
@@ -1257,9 +1286,10 @@ def find_data(args):
             if args.describe is True:
                 print ""
                 print_data_obj_desc(result["describe"])
+            elif not sys.stdout.isatty():
+                print result['id']
             else:
-                print result["id"]
-        print ""
+                print_ls_l_desc(result["describe"])
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(str(details)) + '\n')
 
@@ -1301,18 +1331,22 @@ def find_apps(args):
 
 def close(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
-    if entity_result is None:
+    if entity_results is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
-    try:
-        obj = dxpy.get_handler(entity_result['id'], project=project)
-        obj.close()
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+    handlers = []
+    for result in entity_results:
+        try:
+            obj = dxpy.get_handler(result['id'], project=project)
+            obj.close()
+            handlers.append(obj)
+        except dxpy.DXAPIError as details:
+            print fill(str(details))
     if args.wait:
-        obj._wait_on_close()
+        for handler in handlers:
+            handler._wait_on_close()
 
 def build(args):
     parser.exit(1, 'Not yet implemented\n')
@@ -1692,6 +1726,16 @@ def kill(args):
         parser.exit(1, fill(str(details)) + '\n')
 
 def shell(orig_args):
+    if orig_args.filename is not None:
+        try:
+            with open(orig_args.filename, 'r') as script:
+                for line in script:
+                    args = parser.parse_args(shlex.split(line))
+                    args.func(args)
+            exit(0)
+        except BaseException as details:
+            parser.exit(1, fill(str(details)))
+
     if state['interactive']:
         return
     state['interactive'] = True

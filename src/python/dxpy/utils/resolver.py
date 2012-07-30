@@ -332,7 +332,7 @@ def resolve_path_with_project(path, expected=None, expected_classes=None, multi_
     else:
         return project, folderpath, entity_name
 
-def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False):
+def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}):
     '''
     :param ask_to_resolve: Whether picking may be necessary
     :type ask_to_resolve: boolean
@@ -382,7 +382,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                                               folder=folderpath,
                                               name=entity_name,
                                               recurse=False,
-                                              describe=True))
+                                              describe=describe,
+                                              visibility='either'))
         if len(results) == 0:
             # Could not find it as a data object.  If anything, it's a
             # folder.
