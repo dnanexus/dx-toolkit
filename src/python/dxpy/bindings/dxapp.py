@@ -2,7 +2,7 @@
 DXApp Handler
 +++++++++++++
 
-Apps are data objects which provide a way for programs to be distributed to users in the system.
+Apps are data objects which provide a way for applets to be distributed to users in the system.
 They store an executable and specifications for input, output, execution, access, and billing. 
 They can be run by calling the :func:`DXApp.run` method.
 
@@ -72,8 +72,8 @@ class DXApp(DXObject):
         '''
         :param initializeFrom: ID of an app object from which to initialize the app
         :type initializeFrom: string
-        :param program: ID of the program which the app will be created from
-        :type program: string
+        :param applet: ID of the applet which the app will be created from
+        :type applet: string
         :param name: Name of the app (optional; inherited from name if not given)
         :type name: string
         :param title: Title or brand name of the app (optional)
@@ -93,15 +93,15 @@ class DXApp(DXObject):
         :param resources: Contents to be put into the app's resources container (existing project ID or list of object IDs)
         :type resources: string or list
 
-        It is highly recommended that :mod:`dxpy.program_builder` is used for program and app creation.
+        It is highly recommended that :mod:`dxpy.app_builder` is used for applet and app creation.
 
         Creates an app with the given parameters (see API documentation for the correct syntax).  The app is only
         available to its developers until :meth:`publish()` is called, and is not run until :meth:`run()` is called.
 
         '''
         dx_hash = {}
-        if 'program' not in kwargs and 'initializeFrom' not in kwargs:
-            raise DXError("%s: One of the keyword arguments %s and %s is required" % (self.__class__.__name__, 'program', 'initializeFrom'))
+        if 'applet' not in kwargs and 'initializeFrom' not in kwargs:
+            raise DXError("%s: One of the keyword arguments %s and %s is required" % (self.__class__.__name__, 'applet', 'initializeFrom'))
 
         for field in ['version']:
             if field not in kwargs:
@@ -109,7 +109,7 @@ class DXApp(DXObject):
             dx_hash[field] = kwargs[field]
             del kwargs[field]
 
-        for field in 'initializeFrom', 'program', 'name', 'title', 'summary', 'description', 'billing', 'access', 'resources':
+        for field in 'initializeFrom', 'applet', 'name', 'title', 'summary', 'description', 'billing', 'access', 'resources':
             if field in kwargs:
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]
@@ -129,8 +129,8 @@ class DXApp(DXObject):
 
     def update(self, **kwargs):
         '''
-        :param program: ID of the program to replace the app's contents with
-        :type program: string
+        :param applet: ID of the applet to replace the app's contents with
+        :type applet: string
         :param details: Metadata to store with the app
         :type details: dict or list
         :param billing: billing specification (optional)
@@ -144,7 +144,7 @@ class DXApp(DXObject):
 
         '''
         updates = {}
-        for field in 'program', 'billing', 'access', 'resources', 'details':
+        for field in 'applet', 'billing', 'access', 'resources', 'details':
             if field in kwargs:
                 updates[field] = kwargs[field]
                 del kwargs[field]

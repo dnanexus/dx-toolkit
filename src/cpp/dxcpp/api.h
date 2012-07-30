@@ -109,6 +109,66 @@ dx::JSON appNew(const std::string &input_params="{}");
 dx::JSON appNew(const dx::JSON &input_params);
 
 
+dx::JSON appletAddTags(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletAddTags(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletAddTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletAddTypes(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletClose(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletClose(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletDescribe(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletDescribe(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletGet(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletGet(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletGetDetails(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletGetDetails(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletListProjects(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletListProjects(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletRemoveTags(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletRename(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletRename(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletRun(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletRun(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletSetDetails(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletSetDetails(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletSetProperties(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletSetProperties(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletSetVisibility(const std::string &object_id, const std::string &input_params="{}");
+dx::JSON appletSetVisibility(const std::string &object_id, const dx::JSON &input_params);
+
+
+dx::JSON appletNew(const std::string &input_params="{}");
+dx::JSON appletNew(const dx::JSON &input_params);
+
+
 dx::JSON containerClone(const std::string &object_id, const std::string &input_params="{}");
 dx::JSON containerClone(const std::string &object_id, const dx::JSON &input_params);
 
@@ -319,66 +379,6 @@ dx::JSON notificationsGet(const dx::JSON &input_params);
 
 dx::JSON notificationsMarkRead(const std::string &input_params="{}");
 dx::JSON notificationsMarkRead(const dx::JSON &input_params);
-
-
-dx::JSON programAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programAddTags(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programAddTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programAddTypes(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programClose(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programClose(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programDescribe(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programGet(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programGet(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programGetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programGetDetails(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programListProjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programListProjects(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programRemoveTags(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programRename(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programRename(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programRun(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programRun(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programSetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programSetDetails(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programSetProperties(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programSetVisibility(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON programSetVisibility(const std::string &object_id, const dx::JSON &input_params);
-
-
-dx::JSON programNew(const std::string &input_params="{}");
-dx::JSON programNew(const dx::JSON &input_params);
 
 
 dx::JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}");

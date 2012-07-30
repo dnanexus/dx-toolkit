@@ -95,7 +95,7 @@ bool ObjectInfo::IsObjectId(const string &s)
 {
   vector<string> pieces  = Split(s, '-');
   return ((pieces.size() == 2) &&
-          (pieces[0] == "record" || pieces[0] == "gtable" || pieces[0] == "file" || pieces[0] == "table" || pieces[0] == "program") &&
+          (pieces[0] == "record" || pieces[0] == "gtable" || pieces[0] == "file" || pieces[0] == "table" || pieces[0] == "applet") &&
           (IsId(pieces[1])));
 }
 

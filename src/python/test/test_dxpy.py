@@ -771,10 +771,10 @@ class TestDXRecord(unittest.TestCase):
 class TestDXTable(unittest.TestCase):
     pass
 
-class TestDXProgramJob(unittest.TestCase):
-    def test_run_dxprogram(self):
-        dxprogram = dxpy.DXProgram()
-        dxprogram.new(name="test_program",
+class TestDXAppletJob(unittest.TestCase):
+    def test_run_dxapplet(self):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
                       dxapi="1.04",
                       inputSpec=[{"name": "chromosomes", "class": "record"},
                                  {"name": "rowFetchChunk", "class": "int"}
@@ -787,15 +787,15 @@ class TestDXProgramJob(unittest.TestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxjob = dxprogram.run(program_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input)
         jobdesc = dxjob.describe()
         self.assertEqual(jobdesc["class"], "job")
         self.assertEqual(jobdesc["function"], "main")
         self.assertEqual(jobdesc["originalInput"], prog_input)
         self.assertEqual(jobdesc["originJob"], jobdesc["id"])
         self.assertEqual(jobdesc["parentJob"], None)
-        self.assertEqual(jobdesc["program"], dxprogram.get_id())
-        self.assertEqual(jobdesc["project"], dxprogram.get_proj_id())
+        self.assertEqual(jobdesc["applet"], dxapplet.get_id())
+        self.assertEqual(jobdesc["project"], dxapplet.get_proj_id())
         self.assertTrue("state" in jobdesc)
         self.assertTrue("created" in jobdesc)
         self.assertTrue("modified" in jobdesc)
@@ -805,8 +805,8 @@ class TestDXProgramJob(unittest.TestCase):
 
 class TestDXApp(unittest.TestCase):
     def test_create_app(self):
-        dxprogram = dxpy.DXProgram()
-        dxprogram.new(name="test_program",
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
                       dxapi="1.04",
                       inputSpec=[{"name": "chromosomes", "class": "record"},
                                  {"name": "rowFetchChunk", "class": "int"}
@@ -816,7 +816,7 @@ class TestDXApp(unittest.TestCase):
                                "interpreter": "python2.7",
                                "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
-        dxapp.new(program=dxprogram.get_id(), version="0.0.1",
+        dxapp.new(applet=dxapplet.get_id(), version="0.0.1",
                   bill_to="user-000000000000000000000000", name="app_name")
         appdesc = dxapp.describe()
         self.assertEqual(appdesc["name"], "app_name")
@@ -835,10 +835,10 @@ class TestDXJob(unittest.TestCase):
     def test_job_from_app(self):
         test_json = dxpy.new_dxrecord({"details": {"jobsuccess": False} })
         job_id_json = dxpy.new_dxrecord({"details": {"jobid": None} })
-        dxprogram = dxpy.new_dxprogram(codefile='test_dxjob.py')
-        dxprogramjob = dxprogram.run({"json_dxid": test_json.get_id(),
+        dxapplet = dxpy.new_dxapplet(codefile='test_dxjob.py')
+        dxappletjob = dxapplet.run({"json_dxid": test_json.get_id(),
                                       "job_id_json": job_id_json.get_id()})
-        dxprogramjob.wait_on_done()
+        dxappletjob.wait_on_done()
 
         dxjob_id = job_id_json.get_details()["jobid"]
         self.assertIsNotNone(dxjob_id)
@@ -848,7 +848,7 @@ class TestDXJob(unittest.TestCase):
         self.assertEqual(test_json.get_details(), {"jobsuccess":True})
 
         test_json.remove()
-        dxprogram.remove()
+        dxapplet.remove()
 
 class TestDXSearch(unittest.TestCase):
     def find_data_objs(self):
@@ -887,23 +887,23 @@ class TestDXSearch(unittest.TestCase):
         self.assertTrue(found_proj)
 
     def find_jobs(self):
-        dxprogram = dxpy.DXProgram()
-        dxprogram.new(name="test_program",
-                      inputSpec=[{"name": "chromosomes", "class": "record"},
-                                 {"name": "rowFetchChunk", "class": "int"}
-                                 ],
-                      outputSpec=[{"name": "mappings", "class": "record"}],
-                      runSpec={"code": "def main(): pass",
-                               "interpreter": "python2.7",
-                               "execDepends": [{"name": "python-numpy"}]})
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                                ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxjob = dxprogram.run(program_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input)
         results = list(dxpy.find_jobs(launched_by='user-000000000000000000000000',
-                                      program=dxprogram,
-                                      project=dxprogram.get_proj_id(),
+                                      applet=dxapplet,
+                                      project=dxapplet.get_proj_id(),
                                       origin_job=dxjob.get_id(),
                                       parent_job=None,
                                       modified_after=0,
@@ -914,8 +914,8 @@ class TestDXSearch(unittest.TestCase):
         self.assertTrue("describe" in result)
         self.assertEqual(result["describe"]["id"], dxjob.get_id())
         self.assertEqual(result["describe"]["class"], "job")
-        self.assertEqual(result["describe"]["program"], dxprogram.get_id())
-        self.assertEqual(result["describe"]["project"], dxprogram.get_proj_id())
+        self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
+        self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
         self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
         self.assertEqual(result["describe"]["parentJob"], None)
     

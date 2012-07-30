@@ -90,6 +90,66 @@ def appNew(input_params={}, **kwargs):
     return DXHTTPRequest('/app/new', input_params, **kwargs)
 
 
+def appletAddTags(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, **kwargs)
+
+
+def appletAddTypes(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, **kwargs)
+
+
+def appletClose(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/close' % object_id, input_params, **kwargs)
+
+
+def appletDescribe(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
+
+
+def appletGet(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/get' % object_id, input_params, **kwargs)
+
+
+def appletGetDetails(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, **kwargs)
+
+
+def appletListProjects(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/listProjects' % object_id, input_params, **kwargs)
+
+
+def appletRemoveTags(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, **kwargs)
+
+
+def appletRemoveTypes(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, **kwargs)
+
+
+def appletRename(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/rename' % object_id, input_params, **kwargs)
+
+
+def appletRun(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/run' % object_id, input_params, **kwargs)
+
+
+def appletSetDetails(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, **kwargs)
+
+
+def appletSetProperties(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, **kwargs)
+
+
+def appletSetVisibility(object_id, input_params={}, **kwargs):
+    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, **kwargs)
+
+
+def appletNew(input_params={}, **kwargs):
+    return DXHTTPRequest('/applet/new', input_params, **kwargs)
+
+
 def containerClone(object_id, input_params={}, **kwargs):
     return DXHTTPRequest('/%s/clone' % object_id, input_params, **kwargs)
 
@@ -300,66 +360,6 @@ def notificationsGet(input_params={}, **kwargs):
 
 def notificationsMarkRead(input_params={}, **kwargs):
     return DXHTTPRequest('/notifications/markRead', input_params, **kwargs)
-
-
-def programAddTags(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/addTags' % object_id, input_params, **kwargs)
-
-
-def programAddTypes(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, **kwargs)
-
-
-def programClose(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/close' % object_id, input_params, **kwargs)
-
-
-def programDescribe(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, **kwargs)
-
-
-def programGet(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/get' % object_id, input_params, **kwargs)
-
-
-def programGetDetails(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, **kwargs)
-
-
-def programListProjects(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/listProjects' % object_id, input_params, **kwargs)
-
-
-def programRemoveTags(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, **kwargs)
-
-
-def programRemoveTypes(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, **kwargs)
-
-
-def programRename(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/rename' % object_id, input_params, **kwargs)
-
-
-def programRun(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/run' % object_id, input_params, **kwargs)
-
-
-def programSetDetails(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, **kwargs)
-
-
-def programSetProperties(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, **kwargs)
-
-
-def programSetVisibility(object_id, input_params={}, **kwargs):
-    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, **kwargs)
-
-
-def programNew(input_params={}, **kwargs):
-    return DXHTTPRequest('/program/new', input_params, **kwargs)
 
 
 def projectAddTags(object_id, input_params={}, **kwargs):

@@ -1,7 +1,7 @@
 """
 This module contains useful Python bindings for interacting with the
 Platform API. Data objects (such as records, files, GenomicTables,
-tables, and programs) can be represented locally by a handler that
+tables, and applets) can be represented locally by a handler that
 inherits from the abstract class :class:`DXDataObject`.  This abstract
 base class supports functionality common to all of the data object
 classes--for example, setting properties and types, as well as
@@ -492,7 +492,7 @@ from dxgtable_functions import *
 from dxrecord import *
 from dxproject import *
 from dxjob import *
-from dxprogram import *
+from dxapplet import *
 from dxapp import *
 from search import *
 from dxdataobject_functions import *

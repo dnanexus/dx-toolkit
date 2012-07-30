@@ -287,6 +287,141 @@ dx::JSON appNew(const dx::JSON &input_params) {
 }
 
 
+dx::JSON appletAddTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
+}
+
+dx::JSON appletAddTags(const std::string &object_id, const dx::JSON &input_params) {
+  return appletAddTags(object_id, input_params.toString());
+}
+
+
+dx::JSON appletAddTypes(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
+}
+
+dx::JSON appletAddTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return appletAddTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON appletClose(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
+}
+
+dx::JSON appletClose(const std::string &object_id, const dx::JSON &input_params) {
+  return appletClose(object_id, input_params.toString());
+}
+
+
+dx::JSON appletDescribe(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
+}
+
+dx::JSON appletDescribe(const std::string &object_id, const dx::JSON &input_params) {
+  return appletDescribe(object_id, input_params.toString());
+}
+
+
+dx::JSON appletGet(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/get"), input_params);
+}
+
+dx::JSON appletGet(const std::string &object_id, const dx::JSON &input_params) {
+  return appletGet(object_id, input_params.toString());
+}
+
+
+dx::JSON appletGetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
+}
+
+dx::JSON appletGetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return appletGetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON appletListProjects(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
+}
+
+dx::JSON appletListProjects(const std::string &object_id, const dx::JSON &input_params) {
+  return appletListProjects(object_id, input_params.toString());
+}
+
+
+dx::JSON appletRemoveTags(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
+}
+
+dx::JSON appletRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
+  return appletRemoveTags(object_id, input_params.toString());
+}
+
+
+dx::JSON appletRemoveTypes(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
+}
+
+dx::JSON appletRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
+  return appletRemoveTypes(object_id, input_params.toString());
+}
+
+
+dx::JSON appletRename(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
+}
+
+dx::JSON appletRename(const std::string &object_id, const dx::JSON &input_params) {
+  return appletRename(object_id, input_params.toString());
+}
+
+
+dx::JSON appletRun(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params);
+}
+
+dx::JSON appletRun(const std::string &object_id, const dx::JSON &input_params) {
+  return appletRun(object_id, input_params.toString());
+}
+
+
+dx::JSON appletSetDetails(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
+}
+
+dx::JSON appletSetDetails(const std::string &object_id, const dx::JSON &input_params) {
+  return appletSetDetails(object_id, input_params.toString());
+}
+
+
+dx::JSON appletSetProperties(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
+}
+
+dx::JSON appletSetProperties(const std::string &object_id, const dx::JSON &input_params) {
+  return appletSetProperties(object_id, input_params.toString());
+}
+
+
+dx::JSON appletSetVisibility(const std::string &object_id, const std::string &input_params) {
+  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
+}
+
+dx::JSON appletSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
+  return appletSetVisibility(object_id, input_params.toString());
+}
+
+
+dx::JSON appletNew(const std::string &input_params) {
+  return DXHTTPRequest("/applet/new", input_params);
+}
+
+dx::JSON appletNew(const dx::JSON &input_params) {
+  return appletNew(input_params.toString());
+}
+
+
 dx::JSON containerClone(const std::string &object_id, const std::string &input_params) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params);
 }
@@ -761,141 +896,6 @@ dx::JSON notificationsMarkRead(const std::string &input_params) {
 
 dx::JSON notificationsMarkRead(const dx::JSON &input_params) {
   return notificationsMarkRead(input_params.toString());
-}
-
-
-dx::JSON programAddTags(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params);
-}
-
-dx::JSON programAddTags(const std::string &object_id, const dx::JSON &input_params) {
-  return programAddTags(object_id, input_params.toString());
-}
-
-
-dx::JSON programAddTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params);
-}
-
-dx::JSON programAddTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return programAddTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON programClose(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params);
-}
-
-dx::JSON programClose(const std::string &object_id, const dx::JSON &input_params) {
-  return programClose(object_id, input_params.toString());
-}
-
-
-dx::JSON programDescribe(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params);
-}
-
-dx::JSON programDescribe(const std::string &object_id, const dx::JSON &input_params) {
-  return programDescribe(object_id, input_params.toString());
-}
-
-
-dx::JSON programGet(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/get"), input_params);
-}
-
-dx::JSON programGet(const std::string &object_id, const dx::JSON &input_params) {
-  return programGet(object_id, input_params.toString());
-}
-
-
-dx::JSON programGetDetails(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params);
-}
-
-dx::JSON programGetDetails(const std::string &object_id, const dx::JSON &input_params) {
-  return programGetDetails(object_id, input_params.toString());
-}
-
-
-dx::JSON programListProjects(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params);
-}
-
-dx::JSON programListProjects(const std::string &object_id, const dx::JSON &input_params) {
-  return programListProjects(object_id, input_params.toString());
-}
-
-
-dx::JSON programRemoveTags(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params);
-}
-
-dx::JSON programRemoveTags(const std::string &object_id, const dx::JSON &input_params) {
-  return programRemoveTags(object_id, input_params.toString());
-}
-
-
-dx::JSON programRemoveTypes(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params);
-}
-
-dx::JSON programRemoveTypes(const std::string &object_id, const dx::JSON &input_params) {
-  return programRemoveTypes(object_id, input_params.toString());
-}
-
-
-dx::JSON programRename(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params);
-}
-
-dx::JSON programRename(const std::string &object_id, const dx::JSON &input_params) {
-  return programRename(object_id, input_params.toString());
-}
-
-
-dx::JSON programRun(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params);
-}
-
-dx::JSON programRun(const std::string &object_id, const dx::JSON &input_params) {
-  return programRun(object_id, input_params.toString());
-}
-
-
-dx::JSON programSetDetails(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params);
-}
-
-dx::JSON programSetDetails(const std::string &object_id, const dx::JSON &input_params) {
-  return programSetDetails(object_id, input_params.toString());
-}
-
-
-dx::JSON programSetProperties(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params);
-}
-
-dx::JSON programSetProperties(const std::string &object_id, const dx::JSON &input_params) {
-  return programSetProperties(object_id, input_params.toString());
-}
-
-
-dx::JSON programSetVisibility(const std::string &object_id, const std::string &input_params) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params);
-}
-
-dx::JSON programSetVisibility(const std::string &object_id, const dx::JSON &input_params) {
-  return programSetVisibility(object_id, input_params.toString());
-}
-
-
-dx::JSON programNew(const std::string &input_params) {
-  return DXHTTPRequest("/program/new", input_params);
-}
-
-dx::JSON programNew(const dx::JSON &input_params) {
-  return programNew(input_params.toString());
 }
 
 

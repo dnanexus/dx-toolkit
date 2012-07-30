@@ -210,7 +210,7 @@ dx::JSON DXLink(const std::string &dxid, const std::string &proj="");
 #include "bindings/dxfile.h"
 #include "bindings/dxgtable.h"
 #include "bindings/dxjob.h"
-#include "bindings/dxprogram.h"
+#include "bindings/dxapplet.h"
 #include "bindings/dxapp.h"
 #include "bindings/dxproject.h"
 
