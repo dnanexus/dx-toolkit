@@ -128,7 +128,7 @@ def print_project_desc(desc):
             print_json_field(field, desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary']
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary', 'applet']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -144,6 +144,8 @@ def print_app_desc(desc):
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "program" in desc:
         print_field("Created from", desc["program"])
+    elif "applet" in desc:
+        print_field("Created from", desc["applet"])
     print_json_field('Installed', desc['installed'])
     print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc['deleted'])
@@ -152,13 +154,13 @@ def print_app_desc(desc):
             print_field("Published", "-")
         else:
             print_field("Published", datetime.datetime.fromtimestamp(desc['published']/1000).ctime())
-        if "title" in desc:
+        if "title" in desc and desc['title'] is not None:
             print_field("Title", desc["title"])
-        if "subtitle" in desc:
+        if "subtitle" in desc and desc['subtitle'] is not None:
             print_field("Subtitle", desc["subtitle"])
-        if 'summary' in desc:
+        if 'summary' in desc and desc['summary'] is not None:
             print_field("Summary", desc['summary'])
-        if "description" in desc:
+        if "description" in desc and desc['description'] is not None:
             print_field("Description", desc["description"])
         print_list_field("Categories", desc["categories"])
         print_json_field("Access", desc["access"])
@@ -284,7 +286,7 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -300,6 +302,8 @@ def print_job_desc(desc):
         print_field("Program", desc["program"])
     elif "app" in desc:
         print_field("App", desc["app"])
+    elif "applet" in desc:
+        print_field("Applet", desc["applet"])
     if desc['state'] in JOB_STATES:
         print_field("State", JOB_STATES[desc["state"]])
     else:

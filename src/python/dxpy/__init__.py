@@ -252,11 +252,12 @@ from dxpy.utils.exec_utils import run, entry_point
 
 # This should be in exec_utils but fails because of circular imports
 # TODO: fix the imports
-current_job, current_program, current_app = None, None, None
+current_job, current_applet, current_app = None, None, None
 if JOB_ID is not None:
     current_job = DXJob(JOB_ID)
     job_desc = current_job.describe()
-    if 'program' in job_desc:
-        current_program = DXProgram(job_desc['program'])
+    print job_desc
+    if 'applet' in job_desc:
+        current_applet = DXApplet(job_desc['applet'])
     else:
         current_app = DXApp(job_desc['app'])

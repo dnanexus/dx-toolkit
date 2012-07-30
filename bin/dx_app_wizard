@@ -100,7 +100,7 @@ def prompt_for_yn(prompt_str, default=None):
         elif default is not None:
             return default
 
-parser = OptionParser(usage="%prog [options] program_dir", description="Create a source code directory for a DNAnexus program/app.")
+parser = OptionParser(usage="%prog [options] app_dir", description="Create a source code directory for a DNAnexus app.")
 parser.add_option("-f", "--overwrite", help="Overwrite files that are in the way", action='store_true', default=False)
 (opts, args) = parser.parse_args()
 
@@ -110,12 +110,12 @@ print ''
 print BOLD + 'Basic Metadata' + ENDC
 print ''
 print textwrap.fill('''Please enter basic metadata fields that will be used to
-describe your program/app.  Optional fields are denoted by options with square
+describe your app.  Optional fields are denoted by options with square
 brackets.  At the end of this wizard, the files necessary for building your
-program or app will be generated from the answers you provide.''')
+app will be generated from the answers you provide.''')
 print ''
 
-name = prompt_for_var('Program/App Name')
+name = prompt_for_var('App Name')
 
 #if os.path.exists(name) and not opts.overwrite:
 #    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
@@ -126,7 +126,7 @@ if os.path.exists(name):
 try:
     os.mkdir(name)
 except:
-    sys.stderr.write('''Unable to create a directory for %s, please check that it is a valid program name and the
+    sys.stderr.write('''Unable to create a directory for %s, please check that it is a valid app name and the
 working directory exists and is writable.\n''' % name)
     sys.exit(1)
 
@@ -141,20 +141,10 @@ use_completer(Completer(interpreter_choices))
 interpreter = prompt_for_var('Interpreter', 'python2.7', interpreter_choices)
 use_completer()
 
-program_json = {
+app_json = {
     "name": name,
     "dxapi": API_VERSION,
-    "runSpec": {"interpreter": interpreter}
-}
-
-if title != '':
-    program_json["title"] = title
-if summary != '':
-    program_json['summary'] = summary
-if description != '':
-    program_json['description'] = description
-
-app_json = {
+    "runSpec": {"interpreter": interpreter},
     "version": version,
     "details": {
         "contactUrl": "http://develop.dnanexus.com/Apps/" + name
@@ -162,35 +152,48 @@ app_json = {
     "resources": []
 }
 
+if title != '':
+    app_json["title"] = title
+if summary != '':
+    app_json['summary'] = summary
+if description != '':
+    app_json['description'] = description
+
 class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
                              'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
-                             'record', 'file', 'gtable', 'table', 'program',
-                             'array:record', 'array:file', 'array:gtable', 'array:table', 'array:program'])
+                             'record', 'file', 'gtable', 'table', 'applet',
+                             'array:record', 'array:file', 'array:gtable', 'array:table', 'array:applet'])
 
 print ''
 print BOLD + 'Input Specification' + ENDC
 print ''
-print textwrap.fill('Specifying the inputs to your program is optional but is required if you would like to publish it as an app.')
+print textwrap.fill('Specifying the inputs to your app is optional but is required if you would like to publish it as an app.')
 print ''
 
 input_spec = prompt_for_yn('Specify inputs', True)
+input_names = []
 if input_spec:
-    program_json['inputSpec'] = []
+    app_json['inputSpec'] = []
     print ''
-    print textwrap.fill('You will now be prompted for each input parameter to your program.  Each parameter should have a unique name that is valid as a variable name in your programming language of choice.')
+    print textwrap.fill('You will now be prompted for each input parameter to your app.  Each parameter should have a unique name that is valid as a variable name in your programming language of choice.')
 
     while True:
         print ''
         input_name = prompt_for_var('Variable name (leave empty to finish entering input parameters)', allow_empty=True)
+        if input_name in input_names:
+            print textwrap.fill('Error: Cannot use the same input variable name twice.  Please choose again.')
+            continue
+        else:
+            input_names.append(input_name)
         if input_name == '':
             break
         input_label = prompt_for_var('Label', '')
 
         use_completer(class_completer)
         print 'Your input variable must be of one of the following classes:'
-        print '''array:boolean  array:hash     array:string   float          program
+        print '''array:boolean  array:hash     array:string   float          applet
 array:file     array:int      array:table    gtable         record
-array:float    array:program  boolean        hash           string
+array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
 '''
         input_class = prompt_for_var('Choose a class')
@@ -226,32 +229,38 @@ array:gtable   array:record   file           int            table
             parameter_json['label'] = input_label
         if default_val is not None:
             parameter_json['default'] = default_val
-        program_json['inputSpec'].append(parameter_json)
+        app_json['inputSpec'].append(parameter_json)
 
 print ''
 print BOLD + 'Output Specification' + ENDC
 print ''
-print textwrap.fill('Specifying the outputs to your program is optional but is required if you would like to publish it as an app.')
+print textwrap.fill('Specifying the outputs to your app is optional but is required if you would like to publish it as an app.')
 print ''
 
 output_spec = prompt_for_yn('Specify outputs', True)
+output_names = []
 if output_spec:
-    program_json['outputSpec'] = []
+    app_json['outputSpec'] = []
     print ''
-    print textwrap.fill('You will now be prompted for each output parameter of your program.')
+    print textwrap.fill('You will now be prompted for each output parameter of your app.')
 
     while True:
         print ''
         output_name = prompt_for_var('Variable name (leave empty to finish entering output parameters)', allow_empty=True)
+        if output_name in output_names:
+            print textwrap.fill('Error: Cannot use the same input variable name twice.  Please choose again.')
+            continue
+        else:
+            output_names.append(output_name)
         if output_name == '':
             break
         output_label = prompt_for_var('Label (optional)', '')
 
         use_completer(class_completer)
         print 'Your input variable must be of one of the following classes:'
-        print '''array:boolean  array:hash     array:string   float          program
+        print '''array:boolean  array:hash     array:string   float          applet
 array:file     array:int      array:table    gtable         record
-array:float    array:program  boolean        hash           string
+array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
 '''
         output_class = prompt_for_var('Class')
@@ -262,38 +271,27 @@ array:gtable   array:record   file           int            table
             "name": output_name,
             "class": output_class
             }
-        program_json['outputSpec'].append(parameter_json)
+        app_json['outputSpec'].append(parameter_json)
 
 if interpreter == 'python2.7':
-    program_json['runSpec']['file'] = 'src/code.py'
+    app_json['runSpec']['file'] = 'src/code.py'
 
 print ''
 print BOLD + '*** Generating DNAne' + CYAN + BOLD + 'x' + ENDC + BOLD + 'us App... ***' + ENDC
 
-with open(os.path.join(name, 'dxprogram.json'), 'w') as prog_file:
-    prog_file.write(json.dumps(program_json, indent=4) + '\n')
-manifest.append(os.path.join(name, 'dxprogram.json'))
+with open(os.path.join(name, 'dxapp.json'), 'w') as prog_file:
+    prog_file.write(json.dumps(app_json, indent=4) + '\n')
+manifest.append(os.path.join(name, 'dxapp.json'))
 
 print ''
-print textwrap.fill('''Your program specification has been written to the
-dxprogram.json file. You can specify more program options by editing this file
+print textwrap.fill('''Your app specification has been written to the
+dxapp.json file. You can specify more app options by editing this file
 directly (see http://develop.dnanexus.com/Developer-Portal for complete
-documentation).''')
+documentation).''' + ('''  Note that without an input and output specification,
+your app can only be built as an APPLET on the system.  To publish it to
+the DNAnexus community, you must first specify your inputs and outputs.
+''' if not (input_spec and output_spec) else ""))
 print ''
-if input_spec and output_spec:
-    with open(os.path.join(name, 'dxapp.json'), 'w') as app_file:
-        app_file.write(json.dumps(app_json, indent=4) + '\n')
-    manifest.append(os.path.join(name, 'dxapp.json'))
-
-    print textwrap.fill('''Your app specification has been written to the
-dxapp.json file. You can specify more app options by editing this file directly
-(see http://develop.dnanexus.com/Developer-Portal for complete
-documentation).''')
-else:
-    print textwrap.fill('''To auto-generate the app specification file
-(dxapp.json), please re-run this wizard and provide specifications for your
-app's inputs and outputs.''')
-    print ''
 
 for subdir in 'src', 'test', 'resources':
     try:
@@ -325,7 +323,7 @@ dxpy.run()
 
 import os, sys, unittest, json, subprocess
 
-import dxpy, dxpy.program_builder
+import dxpy, dxpy.app_builder
 from dxpy.exceptions import *
 
 src_dir = os.path.join(os.path.dirname(__file__), "..")
@@ -339,8 +337,8 @@ class Test{app_name}(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.base_input = makeInputs()
-        bundled_resources = dxpy.program_builder.upload_resources(src_dir)
-        cls.program_id = dxpy.program_builder.upload_program(src_dir, bundled_resources, overwrite=True)
+        bundled_resources = dxpy.app_builder.upload_resources(src_dir)
+        cls.app_id = dxpy.app_builder.upload_app(src_dir, bundled_resources, overwrite=True)
     
     def setUp(self):
         pass
@@ -349,7 +347,7 @@ class Test{app_name}(unittest.TestCase):
         pass
 
     def test_base_input(self):
-        job = dxpy.DXProgram(self.program_id).run(self.base_input)        
+        job = dxpy.DXApp(self.app_id).run(self.base_input)        
         print "Waiting for job to complete"
         job.wait_on_done()
         print json.dumps(job.describe()["output"])
@@ -358,15 +356,15 @@ class Test{app_name}(unittest.TestCase):
     inputs = []
     inputs_str = ''
 
-    if "inputSpec" in program_json:
+    if "inputSpec" in app_json:
         # First, add all non-keyword args
-        for input_param in program_json["inputSpec"]:
+        for input_param in app_json["inputSpec"]:
             if ("optional" in input_param and input_param['optional']) or "default" in input_param:
                 continue
             inputs.append(input_param["name"]) 
 
         # Then, add keyword args
-        for input_param in program_json["inputSpec"]:
+        for input_param in app_json["inputSpec"]:
             if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
                 continue
             if "default" in input_param:
@@ -378,8 +376,8 @@ class Test{app_name}(unittest.TestCase):
     else:
         inputs_str = "**kwargs"
 
-    if "outputSpec" in program_json:
-        outputs = {output["name"]: None for output in program_json["outputSpec"]}
+    if "outputSpec" in app_json:
+        outputs = {output["name"]: None for output in app_json["outputSpec"]}
     else:
         outputs = {}
 
@@ -397,4 +395,4 @@ print "Created files:"
 for filename in manifest:
     print "\t", filename
 print textwrap.fill('''App directory created! See http://develop.dnanexus.com/Building-Your-First-DNAnexus-App for
-next steps, or run "dx_build_program %s".''' % name)
+next steps, or run "dx_build_app %s".''' % name)

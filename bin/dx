@@ -142,7 +142,7 @@ class DXCLICompleter():
             else:
                 if words[0] == 'run':
                     path_matches = path_completer(words[-1],
-                                                  classes=['program'])
+                                                  classes=['applet'])
                 elif words[0] in ['cd', 'rmdir', 'mkdir']:
                     path_matches = path_completer(words[-1],
                                                   expected='folder')
@@ -506,7 +506,7 @@ def ls(args):
                     if args.l:
                         print_ls_l_desc(resp['objects'][i]['describe'])
                     else:
-                        if resp['objects'][i]['describe']['class'] == 'program':
+                        if resp['objects'][i]['describe']['class'] == 'applet':
                             print BOLD + GREEN + resp['objects'][i]['describe']['name'] + ENDC + addendum
                         else:
                             print resp['objects'][i]['describe']['name'] + addendum
@@ -1201,10 +1201,10 @@ def get(args):
                     fd.write(json.dumps(details, indent=4))
             except BaseException as details:
                 parser.exit(1, fill(str(details)) + '\n')
-    elif entity_result['describe']['class'] == 'program':
+    elif entity_result['describe']['class'] == 'applet':
         parser.exit(1, 'Not implemented yet\n')
     else:
-        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or program was expected\n')
+        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or applet was expected\n')
 
 def head(args):
     # Attempt to resolve name
@@ -1312,7 +1312,7 @@ def find_jobs(args):
     try:
         describe = {"io": False} if args.summary else args.verbose
         results = list(dxpy.find_jobs(launched_by=args.user,
-                                      program=args.program,
+                                      applet=args.applet,
                                       project=args.project,
                                       state=args.state,
                                       origin_job=args.origin,
@@ -1531,7 +1531,7 @@ def parse_obj(string, klass):
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
     return {'$dnanexus_link': entity_result['id']}
 
-dx_data_classes = ['record', 'gtable', 'file', 'program', 'table']
+dx_data_classes = ['record', 'gtable', 'file', 'applet', 'table']
 
 parse_input = {'boolean': parse_bool,
                'string': (lambda string: string),
@@ -1541,7 +1541,7 @@ parse_input = {'boolean': parse_bool,
                'record': (lambda string: parse_obj(string, 'record')),
                'gtable': (lambda string: parse_obj(string, 'gtable')),
                'file': (lambda string: parse_obj(string, 'file')),
-               'program': (lambda string: parse_obj(string, 'program')),
+               'applet': (lambda string: parse_obj(string, 'applet')),
                'job': (lambda string: {'$dnanexus_link': string}),
                'app': (lambda string: {'$dnanexus_link': string}),
                'table': (lambda string: parse_obj(string, 'table'))}
@@ -1723,15 +1723,15 @@ def run(args):
     handler = None
     desc = None
     if args.alias is None:
-        # Attempt to resolve name (and only look for programs)
+        # Attempt to resolve name (and only look for applets)
         project, folderpath, entity_results = try_call(resolve_existing_path,
                                                        args.path,
                                                        expected='entity',
                                                        ask_to_resolve=False,
-                                                       expected_classes=['program'])
+                                                       expected_classes=['applet'])
         app_desc = get_app_from_path(args.path)
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
-            handler = dxpy.DXProgram(entity_results[0]['id'])
+            handler = dxpy.DXApplet(entity_results[0]['id'])
             desc = entity_results[0]['describe']
         elif entity_results is None and app_desc is not None:
             handler = dxpy.DXApp(dxid=app_desc['id'])
@@ -1836,10 +1836,10 @@ def run(args):
                 pass
     elif required_inputs is not None:
         if sys.stdout.isatty():        
-            print fill('No input given, and program/app takes in no inputs.  Skipping interactive mode for input selection.')
+            print fill('No input given, and applet/app takes in no inputs.  Skipping interactive mode for input selection.')
     else:
         if sys.stdout.isatty():
-            print fill('No input given, and program has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
+            print fill('No input given, and applet has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
 
     if sys.stdout.isatty():
         print ''
@@ -1851,7 +1851,7 @@ def run(args):
     # single JSON.
     if args.input_json is None and args.filename is None and not args.stdin and sys.stdout.isatty():
         try:
-            value = raw_input('Confirm running the program/app with this input [Y/n]: ')
+            value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
         except KeyboardInterrupt:
             print ''
             print 'Received keyboard interrupt, exiting...'
@@ -2097,7 +2097,7 @@ parser_cp.set_defaults(func=cp)
 parser_map['cp'] = parser_cp
 
 parser_get = subparsers.add_parser('get', help='Download a data object',
-                                   description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading a program will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
+                                   description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file or gtable\'s name will be used')
 parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
@@ -2152,12 +2152,12 @@ parser_close.set_defaults(func=close)
 parser_map['close'] = parser_close
 
 parser_build = subparsers.add_parser('build', help='Build an applet/app',
-                                     description='Takes in a local directory containing your source code and a dxprogram.json file, and converts it into a program object in the current project.  With the "-a" flag, it can optionally be further packaged into an app object',
+                                     description='Takes in a local directory containing your source code and a dxapp.json file, and converts it into an applet object in the current project.  With the "-a" flag, it can optionally be further packaged into an app object',
                                      prog='dx build')
 parser_build.add_argument('directory', help='Path to your local directory')
-parser_build.add_argument('-f', '--overwrite', help='Remove existing programs of the same name', action='store_true')
-parser_build.add_argument('-a', '--create-app', help='Create an app from the program (requires dxapp.json to be present)', action='store_true')
-parser_build.add_argument("-p", "--destination_project", help="Insert the program into the project with the specified project ID.")
+parser_build.add_argument('-f', '--overwrite', help='Remove existing applets of the same name', action='store_true')
+parser_build.add_argument('-a', '--create-app', help='Create an app from the applet (requires dxapp.json to be present)', action='store_true')
+parser_build.add_argument("-p", "--destination_project", help="Insert the applet into the project with the specified project ID.")
 parser_build.add_argument('--publish', help='Publish the app after it has been created.', action='store_true')
 parser_build.add_argument("-b", "--bill-to", help="Owner (username or organization) to set for the app.")
 parser_build.set_defaults(func=build)
@@ -2173,11 +2173,11 @@ parser_uninstall.add_argument('app', help='ID or name of app to uninstall')
 parser_uninstall.set_defaults(func=uninstall)
 parser_map['uninstall'] = parser_uninstall
 
-parser_run = subparsers.add_parser('run', help='Run a program or app', description=(fill('Run a program or app.  If no inputs are specified, an interactive mode for selecting inputs will be launched.') + '''
+parser_run = subparsers.add_parser('run', help='Run an applet or app', description=(fill('Run an applet or app.  If no inputs are specified, an interactive mode for selecting inputs will be launched.') + '''
 
 SPECIFYING INPUTS
 
-''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('To use the "-i" flag to specify each input field name and value, using the syntax "-i<input name>=<input value>".  For example, the following runs the program called "mapper" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable):', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('To use the "-i" flag to specify each input field name and value, using the syntax "-i<input name>=<input value>".  For example, the following runs the applet called "mapper" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable):', initial_indent='  ', subsequent_indent='  ') + '''
 
     dx run mapper -inum=34 -istr=\'"foo"\' -igtables=reads1 -igtables=reads2
 
@@ -2190,7 +2190,7 @@ SPECIFYING INPUTS
   JOB-BASED OBJECT REFERENCES
 
   ''' + fill('For now, job-based object references can only be used if provided as part of a full input JSON.', subsequent_indent='  ') + '\n'), prog='dx run', formatter_class=argparse.RawTextHelpFormatter)
-parser_run.add_argument('path', help='Name or ID of program or app to run')
+parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias', help=fill('Tag or version of the app to run (default: \"default\" if an app)', width=56))
 parser_run.add_argument('--folder', help=fill('The folder in which to output the results.  By default, the current working directory will be used.', width=56))
 parser_run_input = parser_run.add_mutually_exclusive_group()
@@ -2217,7 +2217,7 @@ parser_map['find'] = parser_find
 
 parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args], prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
-parser_find_jobs.add_argument('--program', help='Program ID that job is running')
+parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
@@ -2228,7 +2228,7 @@ parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
 parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args], prog='dx find data')
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'program', 'table'], help='Data object class')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')

@@ -155,6 +155,81 @@ exports.appNew = function(input_params) {
 };
 
 
+exports.appletAddTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
+};
+
+
+exports.appletAddTypes = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addTypes', input_params);
+};
+
+
+exports.appletClose = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/close', input_params);
+};
+
+
+exports.appletDescribe = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
+};
+
+
+exports.appletGet = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/get', input_params);
+};
+
+
+exports.appletGetDetails = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/getDetails', input_params);
+};
+
+
+exports.appletListProjects = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/listProjects', input_params);
+};
+
+
+exports.appletRemoveTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeTags', input_params);
+};
+
+
+exports.appletRemoveTypes = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeTypes', input_params);
+};
+
+
+exports.appletRename = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/rename', input_params);
+};
+
+
+exports.appletRun = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/run', input_params);
+};
+
+
+exports.appletSetDetails = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setDetails', input_params);
+};
+
+
+exports.appletSetProperties = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
+};
+
+
+exports.appletSetVisibility = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setVisibility', input_params);
+};
+
+
+exports.appletNew = function(input_params) {
+  return dx.DXHTTPRequest('/applet/new', input_params);
+};
+
+
 exports.containerClone = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/clone', input_params);
 };
@@ -417,81 +492,6 @@ exports.notificationsGet = function(input_params) {
 
 exports.notificationsMarkRead = function(input_params) {
   return dx.DXHTTPRequest('/notifications/markRead', input_params);
-};
-
-
-exports.programAddTags = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
-};
-
-
-exports.programAddTypes = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addTypes', input_params);
-};
-
-
-exports.programClose = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/close', input_params);
-};
-
-
-exports.programDescribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
-};
-
-
-exports.programGet = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/get', input_params);
-};
-
-
-exports.programGetDetails = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/getDetails', input_params);
-};
-
-
-exports.programListProjects = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/listProjects', input_params);
-};
-
-
-exports.programRemoveTags = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeTags', input_params);
-};
-
-
-exports.programRemoveTypes = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeTypes', input_params);
-};
-
-
-exports.programRename = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/rename', input_params);
-};
-
-
-exports.programRun = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/run', input_params);
-};
-
-
-exports.programSetDetails = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setDetails', input_params);
-};
-
-
-exports.programSetProperties = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
-};
-
-
-exports.programSetVisibility = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setVisibility', input_params);
-};
-
-
-exports.programNew = function(input_params) {
-  return dx.DXHTTPRequest('/program/new', input_params);
 };
 
 
