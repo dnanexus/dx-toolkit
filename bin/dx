@@ -763,6 +763,8 @@ def describe(args):
 
     found_match = False
 
+    json_output = []
+
     get_result_str = ResultCounter()
 
     # Could be a project
@@ -772,16 +774,22 @@ def describe(args):
             try:
                 desc = dxpy.DXHTTPRequest('/' + project + '/describe', json_input)
                 found_match = True
-                print get_result_str()
-                print_desc(desc)
+                if args.json:
+                    json_output.append(desc)
+                else:
+                    print get_result_str()
+                    print_desc(desc)
             except:
                 pass
         elif is_container_id(args.path):
             try:
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', json_input)
                 found_match = True
-                print get_result_str()
-                print_desc(desc)
+                if args.json:
+                    json_output.append(desc)
+                else:
+                    print get_result_str()
+                    print_desc(desc)
             except:
                 pass
 
@@ -790,8 +798,11 @@ def describe(args):
         if len(entity_results) > 0:
             found_match = True
         for result in entity_results:
-            print get_result_str()
-            print_desc(result['describe'])
+            if args.json:
+                json_output.append(result['describe'])
+            else:
+                print get_result_str()
+                print_desc(result['describe'])
 
     if not is_hashid(args.path):
 
@@ -799,15 +810,21 @@ def describe(args):
         if args.path.startswith('app-'):
             try:
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
-                print get_result_str()
-                print_desc(desc)
+                if args.json:
+                    json_output.append(desc)
+                else:
+                    print get_result_str()
+                    print_desc(desc)
                 found_match = True
             except:
                 pass
         else:
             for result in dxpy.find_apps(name=args.path, describe=True):
-                print get_result_str()
-                print_desc(result['describe'])
+                if args.json:
+                    json_output.append(result['describe'])
+                else:
+                    print get_result_str()
+                    print_desc(result['describe'])
                 found_match = True
 
         # Could be a user
@@ -815,8 +832,11 @@ def describe(args):
             try:
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
                 found_match = True
-                print get_result_str()
-                print_desc(desc)
+                if args.json:
+                    json_output.append(desc)
+                else:
+                    print get_result_str()
+                    print_desc(desc)
             except dxpy.DXAPIError as details:
                 pass
 
@@ -825,12 +845,24 @@ def describe(args):
             try:
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
                 found_match = True
-                print get_result_str()
-                print_desc(desc)
+                if args.json:
+                    json_output.append(desc)
+                else:
+                    print get_result_str()
+                    print_desc(desc)
             except dxpy.DXAPIError as details:
                 pass
 
-    if not found_match:
+    if args.json:
+        if args.multi:
+            print json.dumps(json_output, indent=4)
+        elif len(json_output) > 1:
+            parser.exit(1, fill('More than one match found for ' + args.path + '; to get all of them in JSON format, also provide the --multi flag.') + '\n')
+        elif len(json_output) == 0:
+            parser.exit(1, fill('No match found for ' + args.path) + '\n')
+        else:
+            print json.dumps(json_output[0], indent=4)
+    elif not found_match:
         print "No matches found for " + args.path
 
 def get_properties_from_args(args_properties):
@@ -1908,7 +1940,7 @@ parser_map['invite'] = parser_invite
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
                                   description='List folders and/or objects in a folder',
-                                  parents=[global_args], prog='dx ls')
+                                  prog='dx ls')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
@@ -2010,12 +2042,12 @@ parser_gtable_get.set_defaults(func=gtable_get)
 parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
-                                        description='Describe a remote object',
+                                        description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
                                         parents=[global_args],
                                         prog='dx describe')
-parser_describe.add_argument('--project', help='Specify hint for which project to access, default is default project')
 parser_describe.add_argument('--properties', help='Include properties', action='store_true')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
+parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
 parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
 parser_describe.set_defaults(func=describe)
 parser_map['describe'] = parser_describe
