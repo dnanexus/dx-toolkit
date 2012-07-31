@@ -457,7 +457,9 @@ def ls(args):
                 print UNDERLINE + 'Folder :' + ENDC + ' ' + folderpath
 
             if not args.obj:
-                for folder in ['/.', '/..'] + resp["folders"]:
+                folders_to_print = ['/.', '/..'] if args.all else []
+                folders_to_print += resp['folders']
+                for folder in folders_to_print:
                     if args.full:
                         print BOLD + BLUE + folder + ENDC
                     else:
