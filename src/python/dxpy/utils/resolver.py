@@ -227,7 +227,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([cached_project_names[string]] if multi else cached_project_names[string])
 
     try:
-        results = list(dxpy.find_projects(name=string, describe=True))
+        results = list(dxpy.find_projects(name=string, describe=True, level='LIST'))
     except BaseException as details:
         raise ResolutionError(str(details))
 
