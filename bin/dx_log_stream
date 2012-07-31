@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import os, sys, logging
+from optparse import OptionParser
+import dxpy
+
+logging.basicConfig(level=logging.DEBUG, format="%(message)s")
+
+parser = OptionParser(usage="%prog [options]", description="Redirects stdin to a DNAnexus log socket in the execution environment.")
+parser.add_option("-p", "--prefix", help="Prefix lines from the stream with this tag", default='')
+(opts, args) = parser.parse_args()
+
+try:
+    logging.getLogger().addHandler(dxpy.DXLogHandler())
+except:
+    print >> sys.stderr, "Error while initializing logging"
+    sys.exit(1)
+
+for line in sys.stdin:
+    print "Logging line:", line.rstrip("\n"), "to log handler w/prefix", opts.prefix
+    logging.error(opts.prefix + line.rstrip("\n"))
