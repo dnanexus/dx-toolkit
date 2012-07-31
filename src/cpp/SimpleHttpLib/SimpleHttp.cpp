@@ -99,12 +99,12 @@ void HttpRequest::assertLibCurlFunctions(CURLcode retVal, const std::string &msg
   if (retVal != CURLE_OK) {
     // See http://curl.haxx.se/libcurl/c/libcurl-errors.html to interpret error code (if positive)
     // If error code is negative, then see SimpleHttp.h
-    std::string exceptionStr = "\n*******\nERROR while using a libcurl functionality.\nError code = " + itos(retVal) + "\nError Buffer: '";
+    std::string exceptionStr = "\n*******";
+    if (msg.size() > 0u)
+      exceptionStr += "\n" + msg;
+    exceptionStr += "\nError code (CURLcode) = " + itos(retVal) + "\nError Message: '";
     errorBuffer[CURL_ERROR_SIZE] = 0;
     exceptionStr += std::string(errorBuffer) + "'";
-    if (msg.size() > 0u) {
-      exceptionStr += "\nUser Message: '" + msg + "'";
-    }
     exceptionStr += "\n********\n";
     throw HttpRequestException(exceptionStr, retVal);
   }
@@ -221,7 +221,7 @@ void HttpRequest::send() {
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData) );
 
     /* Perform the actual request */
-    assertLibCurlFunctions( curl_easy_perform(curl), "Error while performing curl request: curl_easy_perform.");
+    assertLibCurlFunctions( curl_easy_perform(curl), "Error in using curl_easy_perform.");
 
     assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode) );
 

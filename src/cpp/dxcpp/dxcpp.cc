@@ -130,7 +130,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       if (reqCompleted)
         std::cerr << "\nWARNING: POST " << url << ": returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'";
       else
-        std::cerr << "\nWARNING: Unable to complete request POST " << url << " . HttpRequestException::err = '" << hre.what() << "'";
+        std::cerr << "\nWARNING: Unable to complete request -> POST " << url << " . Details: '" << hre.what() << "'";
   
       std::cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << countTries + 1 << " of " << NUM_MAX_RETRIES << " ...";
 
@@ -153,8 +153,8 @@ JSON DXHTTPRequest(const string &resource, const string &data,
              respJSON["error"]["message"].get<string>(),
              req.responseCode);
   } else {
-    std::cerr << "\nERROR: Unable to complete request POST " << url << " in " << countTries << " attempts. Will throw DXError.\n";
-    throw DXError("HttpRequestException::err = '" + hre.err + "'. ");
+    std::cerr << "\nERROR: Unable to complete request -> POST " << url << " in " << countTries << " attempts. Will throw DXError.\n";
+    throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
   }
   // Unreachable line
 }
