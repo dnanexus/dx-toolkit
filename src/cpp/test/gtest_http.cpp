@@ -52,6 +52,26 @@ TEST(HttpRequestTest, Test_HTTP_HEAD_AND_GET) {
   ASSERT_TRUE(h2.isPresent("Date"));
 }
 
+TEST(HttpRequestTest, Test_HTTPS_HEAD_AND_GET) {
+  HttpRequest hr = HttpRequest::request(HTTP_HEAD, "https://www.google.com");
+  
+  ASSERT_EQ(hr.respData.length(), 0u);
+  ASSERT_EQ(hr.responseCode, 200);
+  const HttpHeaders h = hr.getRespHeaders();
+  // Date header is present in google's page
+  ASSERT_TRUE(h.isPresent("Date"));
+
+  hr.buildRequest(HTTP_GET, "https://www.google.com");
+  hr.send();
+  ASSERT_EQ(hr.responseCode, 200);
+  // "<html" is present in google homepage
+  ASSERT_NE(hr.respData.find("<html"), string::npos);
+  const HttpHeaders h2 = hr.getRespHeaders();
+  // Date header is present in google's page
+  ASSERT_TRUE(h2.isPresent("Date"));
+}
+
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
       return RUN_ALL_TESTS();

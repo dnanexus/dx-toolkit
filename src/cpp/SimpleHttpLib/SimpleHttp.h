@@ -121,10 +121,12 @@ public:
 
 class HttpRequestException : public std::exception {
 public:
-  const static int UNSUPPORTED_HTTP_METHOD = -1;
-  const static int INIT_FAILED = -2;
-  const static int ALREADY_IN_USE = -3;
-
+  enum {
+    UNSUPPORTED_HTTP_METHOD = -1,
+    INIT_FAILED = -2,
+    ALREADY_IN_USE = -3,
+    DEFAULT_VALUE = -100 // Used just for default constructor (never actually set by any function)
+  };
   std::string err;
   
   /** errorCode is either integer equivalent (always positive) of CURLcode
@@ -133,19 +135,18 @@ public:
     */
   int errorCode;
   
+  HttpRequestException(): errorCode(DEFAULT_VALUE) {
+  }
+
   HttpRequestException(const std::string &err, const int &code)
     : err(err), errorCode(code) {
   }
-
   virtual const char* what() const throw() {
     return (const char*) err.c_str();
   }
 
   virtual ~HttpRequestException() throw() {
   }
-private:
-  // Disallow default constructor, so as not to throw exceptions without error message/code
-  HttpRequestException() {}
 };
 
 #endif

@@ -26,7 +26,23 @@ string g_WORKSPACE_ID;
 string g_PROJECT_CONTEXT_ID;
 string g_APISERVER_PROTOCOL;
 
+const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
+
+static bool isRetriableHttpCode(int c) {
+  // Ref: Python bindings
+  return (c == 500 || c == 502 || c == 503 || c == 504);
+}
+
+static bool isRetriableCurlError(int c) {
+  // Return true, iff it is always safe to retry on given CURLerror.
+
+  // Ref: http://curl.haxx.se/libcurl/c/libcurl-errors.html
+  // TODO: Add more retriable errors to this list (and sanity check existing ones)
+  return (c == 2 || c == 5 || c == 6 || c == 7 || c == 35);
+}
+
 JSON DXHTTPRequest(const string &resource, const string &data,
+       const bool alwaysRetry,
 		   const map<string, string> &headers) {
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
     loadFromEnvironment();
@@ -62,22 +78,85 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
   if (!content_type_set)
     req_headers["Content-Type"] = "application/json";
+  
+  // TODO: Load retry parameteres (wait time, max number of retries, etc) from some config file
 
-  // Attempt a POST request
-  HttpRequest req = HttpRequest::request(HTTP_POST,
-					 url,
-					 req_headers,
-					 data.data(),
-					 data.size());
+  unsigned int countTries;
+  HttpRequest req;
+  unsigned int sec_to_wait = 2; // number of seconds to wait before retrying first time. will keep on doubling the wait time for each subsequent retry.
+  bool reqCompleted; // did last request actually went through (i.e., some response was recieved)
+  HttpRequestException hre;
 
-  if (req.responseCode != 200) {
+  // The HTTP Request is always executed at least once,
+  // a maximum of NUM_MAX_RETRIES number of subsequent tries are made, if required and feasible.
+  for (countTries = 0u; countTries <= NUM_MAX_RETRIES; ++countTries, sec_to_wait *= 2u) {
+    bool toRetry = alwaysRetry; // whether or not the request should be retried on failure
+    reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
+    try {
+      // Attempt a POST request
+      req = HttpRequest::request(HTTP_POST,
+               url,
+               req_headers,
+               data.data(),
+               data.size());
+    } catch(HttpRequestException &e) {
+      toRetry = toRetry || (e.errorCode < 0) || isRetriableCurlError(e.errorCode);
+      reqCompleted = false;
+      hre = e;
+    }
+
+    if (reqCompleted) {
+      if (req.responseCode != 200) {
+        toRetry = toRetry || isRetriableHttpCode(req.responseCode);
+      }
+      else {
+        // Everything is fine, the request went through (and 200 recieved)
+        // So return back the response now
+        if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
+          std::cerr << "\nRequest completed succesfuly in Retry #" << countTries;
+
+        try {
+          return JSON::parse(req.respData); // we always return json output
+        } 
+        catch (JSONException &je) {
+          string errStr = "ERROR: Unable to parse output returned by APIServer as JSON";
+          errStr += "\nHttpRequest url: " + url + " , response code = " + boost::lexical_cast<string>(req.responseCode) + ", response body: '" + req.respData + "'";
+          errStr += "\nJSONException: " + std::string(je.what());
+          throw DXError(errStr);
+        }
+      }
+    }
+    if (toRetry && countTries < NUM_MAX_RETRIES) {
+      if (reqCompleted)
+        std::cerr << "\nWARNING: POST " << url << ": returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'";
+      else
+        std::cerr << "\nWARNING: Unable to complete request POST " << url << " . HttpRequestException::err = '" << hre.what() << "'";
+  
+      std::cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << countTries + 1 << " of " << NUM_MAX_RETRIES << " ...";
+
+      // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
+      // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
+      // Also we do not check for buffer overflow while doubling sec_to_wait, since we would have to sleep ~6537year before hitting the limit!
+      sleep(sec_to_wait);
+    }
+    else {
+      countTries++;
+      break;
+    }
+  }
+  // We are here, implies, All retries were exhausted (or not made) with failure.
+  
+  if (reqCompleted) {
+    std::cerr << "\nERROR: POST " << url << " returned non-200 http code in (at least) last of " << countTries << " attempt. Will throw DXAPIError.\n"; 
     JSON respJSON = JSON::parse(req.respData);
     throw DXAPIError(respJSON["error"]["type"].get<string>(),
-    		     respJSON["error"]["message"].get<string>(),
-    		     req.responseCode);
+             respJSON["error"]["message"].get<string>(),
+             req.responseCode);
+  } else {
+    std::cerr << "\nERROR: Unable to complete request POST " << url << " in " << countTries << " attempts. Will throw DXError.\n";
+    throw DXError("HttpRequestException::err = '" + hre.err + "'. ");
   }
-
-  return JSON::parse(req.respData);
+  // Unreachable line
 }
 
 void setAPIServerInfo(const string &host,

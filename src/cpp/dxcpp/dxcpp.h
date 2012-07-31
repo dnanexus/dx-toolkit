@@ -31,10 +31,12 @@ extern std::string g_PROJECT_CONTEXT_ID;
  *
  * @param resource API server route to access, e.g. "/file/new"
  * @param data Data to send in the request
+ * @param alwaysRetry If true, then a failed request is <b>always</b> retried. Should be set to true for <b>only</b> idempotent requests. Default value = false.
  * @param headers Additional HTTP headers to include in the request
  * @return The response from the API server, parsed as a JSON
  */
 dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
+                       const bool alwaysRetry = false,
                        const std::map<std::string, std::string> &headers=
                        std::map<std::string, std::string>());
 

@@ -97,12 +97,13 @@ static std::string itos(int i)  {
 
 void HttpRequest::assertLibCurlFunctions(CURLcode retVal, const std::string &msg = "") {
   if (retVal != CURLE_OK) {
-    // See http://curl.haxx.se/libcurl/c/libcurl-errors.html to interpret error code
-    std::string exceptionStr = "\n*******\nERROR while using a libcurl functionality.\nError code = " + itos(retVal) + "\nError Buffer: ";
+    // See http://curl.haxx.se/libcurl/c/libcurl-errors.html to interpret error code (if positive)
+    // If error code is negative, then see SimpleHttp.h
+    std::string exceptionStr = "\n*******\nERROR while using a libcurl functionality.\nError code = " + itos(retVal) + "\nError Buffer: '";
     errorBuffer[CURL_ERROR_SIZE] = 0;
-    exceptionStr += std::string(errorBuffer);
+    exceptionStr += std::string(errorBuffer) + "'";
     if (msg.size() > 0u) {
-      exceptionStr += "\nUser Message: " + msg;
+      exceptionStr += "\nUser Message: '" + msg + "'";
     }
     exceptionStr += "\n********\n";
     throw HttpRequestException(exceptionStr, retVal);
@@ -113,6 +114,13 @@ void HttpRequest::assertLibCurlFunctions(CURLcode retVal, const std::string &msg
 /////////// Class method defintions //////////////
 //////////////////////////////////////////////////
 
+// This function makes the actual http request.
+// Throws HttpRequestException in case of an error
+// HttpRequestException::errorCode 
+//    - is positive if error is due to a failed libcurl function (and is == returned curl_code by function)
+//    - is never 0 (since 0 = CURLE_OK)
+//    - is negative (one of static const value defined in HttpRequestException class)
+//      if error is due to some other reason.
 void HttpRequest::send() {
   // TODO: Not call curl_easy_cleanup() always at end of send()
   //       Instead allow to reuse the same curl handle for subsequent requests
@@ -213,16 +221,7 @@ void HttpRequest::send() {
     assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData) );
 
     /* Perform the actual request */
-    // Retry 5 times before giving up
-    CURLcode retVal;
-    for (int tries = 0; tries < 5; ++tries) {
-      retVal = curl_easy_perform(curl);
-      if (retVal != CURLE_OK)
-        sleep(2); // retry after 2 seconds;
-      else
-        break;
-    }
-    assertLibCurlFunctions(retVal, "Error while performing curl request: curl_easy_perform.");
+    assertLibCurlFunctions( curl_easy_perform(curl), "Error while performing curl request: curl_easy_perform.");
 
     assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode) );
 
