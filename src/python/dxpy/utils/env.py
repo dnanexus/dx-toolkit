@@ -39,7 +39,8 @@ def get_env():
         'DX_APISERVER_PROTOCOL': os.environ.get('DX_APISERVER_PROTOCOL', None),
         'DX_PROJECT_CONTEXT_ID': os.environ.get('DX_PROJECT_CONTEXT_ID', None),
         'DX_WORKSPACE_ID': os.environ.get('DX_WORKSPACE_ID', None),
-        'DX_CLI_WD': os.environ.get('DX_CLI_WD', None)
+        'DX_CLI_WD': os.environ.get('DX_CLI_WD', None),
+        'DX_SECURITY_CONTEXT': os.environ.get('DX_SECURITY_CONTEXT', None)
         }
 
     user_file_env_vars = parse_user_env_file()
