@@ -258,8 +258,12 @@ def print_data_obj_desc(desc):
                 print_field("Media type", desc['media'])
             elif field == "size":
                 if desc["class"] == "file" or desc["class"] == "gtable":
-                    magnitude = math.floor(math.log(desc['size'], 10))
-                    level = int(min(math.floor(magnitude / 3), 4))
+                    if desc['size'] == 0:
+                        magnitude = 0
+                        level = 0
+                    else:
+                        magnitude = math.floor(math.log(desc['size'], 10))
+                        level = int(min(math.floor(magnitude / 3), 4))
                     print_field("Size", ('%d' if level == 0 else '%.2f') % (float(desc['size']) / 10**(level*3)) + ' ' + SIZE_LEVEL[level])
                 else:
                     print_field("Size", str(desc['size']))
