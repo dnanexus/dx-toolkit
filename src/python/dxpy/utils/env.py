@@ -60,7 +60,8 @@ def get_env():
                 already_set.append(var)
 
         if len(already_set) > 0:
-            print textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx.  To use the values stored by dx, run \"source ~/.dnanexus_config/environment\" to set your environment variables in your shell.  To clear the dx-stored values, run \"dx clearenv\"")
-            print '  ' + '\n  '.join(already_set) + '\n'
+            print textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx:")
+            print '  ' + '\n  '.join(already_set)
+            print textwrap.fill("To use the values stored by dx, run \"source ~/.dnanexus_config/environment\" to set your environment variables in your shell.  To clear the dx-stored values, run \"dx clearenv\"")
 
     return env_vars
