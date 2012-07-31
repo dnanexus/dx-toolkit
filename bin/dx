@@ -1456,7 +1456,7 @@ def get_input_array(param_desc):
 
 def get_input_single(param_desc):
     in_class = param_desc['class']
-    print '\nEnter input of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ':'
+    print '\nEnter input of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ' (press Tab twice to see choices):'
     try:
         if in_class in dx_data_classes:
             readline.set_completer(DXPathCompleter(classes=[in_class]))
