@@ -227,7 +227,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([cached_project_names[string]] if multi else cached_project_names[string])
 
     try:
-        results = list(dxpy.find_projects(name=string, describe=True))
+        results = list(dxpy.find_projects(name=string, describe=True, level='LIST'))
     except BaseException as details:
         raise ResolutionError(str(details))
 
@@ -325,7 +325,7 @@ def resolve_path_with_project(path, expected=None, expected_classes=None, multi_
     # Determine folderpath and entity_name if necessary
     if folderpath is None:
         folderpath = substrings[-1]
-        folderpath, entity_name = clean_folder_path(wd + '/' + folderpath, expected)
+        folderpath, entity_name = clean_folder_path(('' if len(folderpath) > 0 and folderpath[0] == '/' else wd + '/') + folderpath, expected)
 
     if multi_projects:
         return (project_ids if project is None else [project]), folderpath, entity_name
@@ -352,6 +352,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     NOTE: if expected_classes is provided and conflicts with the class
     of the hash ID, it will return None for all fields.
     '''
+
     project, folderpath, entity_name = resolve_path_with_project(path, expected)
     if entity_name is None:
         # Definitely a folder (or project)

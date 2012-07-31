@@ -92,19 +92,21 @@ def path_completer(text, expected=None, classes=None, perm_level=None, include_c
     requested parameters.
     '''
 
-    # First get projects if necessary
     colon_pos = get_last_pos_of_char(':', text)
     slash_pos = get_last_pos_of_char('/', text)
     delim_pos = max(colon_pos, slash_pos)
 
+    # First get projects if necessary
     matches = []
     if colon_pos < 0 and slash_pos < 0:
         # Might be tab-completing a project, but don't ever include
         # whatever's set as dxpy.WORKSPACE_ID unless expected == "project"
-        results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
-                         list(dxpy.find_projects(describe=True, level=perm_level)))
-        matches += filter(startswith(text),
-                          map(lambda result: escape_name_str(result['describe']['name']) + ':', results))
+        # Also, don't bother if text=="" and expected is NOT "project"
+        if text != "" or expected == 'project':
+            results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
+                             list(dxpy.find_projects(describe=True, level=perm_level)))
+            matches += filter(startswith(text),
+                              map(lambda result: escape_name_str(result['describe']['name']) + ':', results))
 
     if expected == 'project':
         return matches
