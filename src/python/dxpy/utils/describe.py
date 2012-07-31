@@ -31,6 +31,16 @@ DATA_STATES = {'open': YELLOW + 'open' + ENDC,
 
 SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
 
+def parse_typespec(thing):
+    if isinstance(thing, basestring):
+        return thing
+    elif '$and' in thing:
+        return '(' + ' AND '.join(map(parse_typespec, thing['$and'])) + ')'
+    elif '$or' in thing:
+        return '(' + ' OR '.join(map(parse_typespec, thing['$or'])) + ')'
+    else:
+        return 'Type spec could not be parsed'
+
 def get_io_desc(parameter, include_class=True, show_opt=True):
     desc = ""
     is_optional = False;
@@ -51,10 +61,7 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
             desc += ", "
         else:
             is_first = False
-        if isinstance(parameter["type"], dict):
-            desc += "type satisfying " + json.dumps(parameter["type"])
-        else:
-            desc += "type " + parameter["type"]
+        desc += "type " + parse_typespec(parameter["type"])
     if "default" in parameter:
         if not is_first:
             desc += ', '
@@ -66,7 +73,11 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
     return desc
 
 def get_io_spec(spec):
-    return ('\n' + ' '*16).join(map(get_io_desc, spec))
+    return ('\n' + ' '*16).join(map(lambda param:
+                                        textwrap.fill(get_io_desc(param),
+                                                      subsequent_indent=' '*16,
+                                                      width=64),
+                                    spec))
 
 def print_field(label, value):
     print label + " " * (16-len(label)) + textwrap.fill(value, subsequent_indent=' '*16, width=64)
@@ -127,7 +138,6 @@ def print_app_desc(desc):
         print_field("Billed to", desc['billTo'])
     print_field("Name", desc["name"])
     print_field("Version", desc["version"])
-    print_field("Aliases", ', '.join(desc["version"]))
     print_list_field("Aliases", desc["aliases"])
     print_field("Created by", desc["createdBy"])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
@@ -211,7 +221,7 @@ def print_data_obj_desc(desc):
         print_list_field("Outgoing links", desc['links'])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     if 'createdBy' in desc:
-        print_field("Created by", desc['createdBy']['user'][5:])
+        print_field("Created by", desc['createdBy']['user'])
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "title" in desc:
         print_field("Title", desc["title"])
