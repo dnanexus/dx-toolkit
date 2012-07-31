@@ -53,6 +53,13 @@ def get_env():
             elif var in installed_file_env_vars:
                 env_vars[var] = installed_file_env_vars[var]
 
+    if env_vars['DX_CLI_WD'] is None:
+        try:
+            with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD')) as fd:
+                env_vars['DX_CLI_WD'] = fd.read()
+        except:
+            pass
+
     if sys.stdout.isatty():
         already_set = []
         for var in user_file_env_vars:

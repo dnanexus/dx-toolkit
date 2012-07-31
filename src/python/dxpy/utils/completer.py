@@ -36,11 +36,12 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
                               text[:delim_pos + 1] + \
                               escape_folder_str(folder_name) + \
                               '/',
-                          folder_names))
+                          folder_names + ['.', '..']))
     except:
         return []
 
-def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None):
+def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
+                     typespec=None):
     '''
     :param text: String to be tab-completed; still in escaped form
     :type text: string
@@ -66,7 +67,8 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None):
                                               visibility='either',
                                               classname=classname,
                                               limit=100,
-                                              describe=True))
+                                              describe=True,
+                                              typename=(typespec if isinstance(typespec, basestring) else None)))
         names = map(lambda result: result['describe']['name'], results)
         return filter(startswith(text),
                       map(lambda name:
@@ -75,7 +77,8 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None):
     except:
         return []
 
-def path_completer(text, expected=None, classes=None, perm_level=None, include_current_proj=False):
+def path_completer(text, expected=None, classes=None, perm_level=None,
+                   include_current_proj=False, typespec=None):
     '''
     :param text: String to tab-complete to a path matching the syntax project-name:folder/entity_or_folder_name
     :type text: string
@@ -92,19 +95,21 @@ def path_completer(text, expected=None, classes=None, perm_level=None, include_c
     requested parameters.
     '''
 
-    # First get projects if necessary
     colon_pos = get_last_pos_of_char(':', text)
     slash_pos = get_last_pos_of_char('/', text)
     delim_pos = max(colon_pos, slash_pos)
 
+    # First get projects if necessary
     matches = []
     if colon_pos < 0 and slash_pos < 0:
         # Might be tab-completing a project, but don't ever include
         # whatever's set as dxpy.WORKSPACE_ID unless expected == "project"
-        results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
-                         list(dxpy.find_projects(describe=True, level=perm_level)))
-        matches += filter(startswith(text),
-                          map(lambda result: escape_name_str(result['describe']['name']) + ':', results))
+        # Also, don't bother if text=="" and expected is NOT "project"
+        if text != "" or expected == 'project':
+            results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
+                             list(dxpy.find_projects(describe=True, level=perm_level)))
+            matches += filter(startswith(text),
+                              map(lambda result: escape_name_str(result['describe']['name']) + ':', results))
 
     if expected == 'project':
         return matches
@@ -121,10 +126,11 @@ def path_completer(text, expected=None, classes=None, perm_level=None, include_c
                 if classes is not None:
                     for classname in classes:
                         matches += get_data_matches(text, slash_pos, dxproj,
-                                                    folderpath, classname)
+                                                    folderpath, classname,
+                                                    typespec)
                 else:
                     matches += get_data_matches(text, slash_pos, dxproj,
-                                                folderpath)
+                                                folderpath, typespec=typespec)
     else:
         # project is ambiguous, but attempt to resolve to an object or folder
         proj_ids, folderpath, entity_name = resolve_path_with_project(text, multi_projects=True)
@@ -135,10 +141,11 @@ def path_completer(text, expected=None, classes=None, perm_level=None, include_c
                 if classes is not None:
                     for classname in classes:
                         matches += get_data_matches(text, delim_pos, dxproj,
-                                                    folderpath, classname)
+                                                    folderpath, classname,
+                                                    typespec)
                 else:
                     matches += get_data_matches(text, delim_pos, dxproj,
-                                                folderpath)
+                                                folderpath, typespec=typespec)
     return matches
 
 class DXPathCompleter():
@@ -148,14 +155,16 @@ class DXPathCompleter():
     names with spaces, the delimiters set for the completer must not
     include spaces.
     '''
-    def __init__(self, expected=None, classes=None):
+    def __init__(self, expected=None, classes=None, typespec=None):
         self.matches = []
         self.expected = expected
         self.classes = classes
+        self.typespec = typespec
 
     def __call__(self, text, state):
         if state == 0:
-            self.matches = path_completer(text, self.expected, self.classes)
+            self.matches = path_completer(text, self.expected, self.classes,
+                                          typespec=self.typespec)
 
         if state < len(self.matches):
             return self.matches[state]
