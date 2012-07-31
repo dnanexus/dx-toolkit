@@ -38,7 +38,7 @@ contigset2fasta:
 clean:
 	$(MAKE) -C contigset2fasta clean
 
-install:
+install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
 
 .PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl
