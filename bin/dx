@@ -457,7 +457,7 @@ def ls(args):
                 print UNDERLINE + 'Folder :' + ENDC + ' ' + folderpath
 
             if not args.obj:
-                for folder in resp["folders"]:
+                for folder in ['/.', '/..'] + resp["folders"]:
                     if args.full:
                         print BOLD + BLUE + folder + ENDC
                     else:
@@ -1423,11 +1423,13 @@ parse_input = {'boolean': parse_bool,
 
 def get_input_array(param_desc):
     in_class = param_desc['class'][6:]
+    typespec = param_desc.get('type', None)
     input_array = []
     print '\nEnter list of inputs (^D or empty string to finish) of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False) + ':\n'
     try:
         if in_class in dx_data_classes:
-            readline.set_completer(DXPathCompleter(classes=[in_class]))
+            readline.set_completer(DXPathCompleter(classes=[in_class],
+                                                   typespec=typespec))
         else:
             readline.set_completer()
     except:
@@ -1456,10 +1458,13 @@ def get_input_array(param_desc):
 
 def get_input_single(param_desc):
     in_class = param_desc['class']
+    typespec = param_desc.get('type', None)
     print '\nEnter input of class ' + BOLD + in_class + ENDC + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ' (press Tab twice to see choices):'
+
     try:
         if in_class in dx_data_classes:
-            readline.set_completer(DXPathCompleter(classes=[in_class]))
+            readline.set_completer(DXPathCompleter(classes=[in_class],
+                                                   typespec=typespec))
         else:
             readline.set_completer()
     except:
