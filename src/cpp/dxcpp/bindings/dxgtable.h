@@ -227,6 +227,10 @@ public:
    * server periodically using automatically generated part ID
    * numbers.
    *
+   * For speed efficiency, this function uses multiple threads to addRows.
+   * It will block only if MAX_WRITE_THREADS number of threads (i.e., all the workers)
+   * are already busy completing previous HTTP request(s), else it will pass on 
+   * the task to one of the free worker thread and return.
    * @param data A JSON array of row data (each row represented as JSON arrays).
    */
   void addRows(const dx::JSON &data); // For automatic part ID generation
@@ -242,7 +246,10 @@ public:
   int getUnusedPartID();
 
   /**
-   * Pushes rows stored in the internal buffer to the remote table.
+   * Ensures that all pending addRows request (including the ones in buffer)
+   * are completed by worker threads. Blocks until it is done.
+   * 
+   * All worker threads are terminated after the flush.
    */
   void flush();
 

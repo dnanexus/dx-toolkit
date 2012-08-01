@@ -761,6 +761,7 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
  
   EXPECT_EQ(countRows, getRowCount(desc));
   EXPECT_EQ(countRows, getRowCount(dxgtable2.describe()));
+  // TODO: Add test checking row order
 }
 
 TEST_F(DXGTableTest, InvalidSpecTest) {

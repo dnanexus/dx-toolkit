@@ -5,6 +5,15 @@
 using namespace std;
 using namespace dx;
 
+// Sleeps for specified number of milliseconds (NOTE: wakes if a signal is recieved)
+// A quick hack (uses nanosleep() internally)
+void sleep_ms(unsigned long ms) {
+  timespec req, rem;
+  req.tv_nsec = (ms % 1000ul) * 1000000ul;
+  req.tv_sec = ms/1000ul;
+  nanosleep(&req, &rem);
+}
+
 void DXGTable::reset_buffer_() {
   row_buffer_.str("");
   row_buffer_ << "{\"data\": [";
@@ -125,6 +134,9 @@ void DXGTable::addRows(const JSON &data, int part_id) {
 }
 
 void DXGTable::finalizeRequestBuffer_() {
+  /* This function "closes" the stringified JSON array we are keeping for
+   * for buffering requests. It also creates the worker thread if not done previously
+   */
   int64_t pos = row_buffer_.tellp();
   if (pos > 10) {
     row_buffer_.seekp(pos - 1); // Erase the trailing comma
@@ -133,19 +145,29 @@ void DXGTable::finalizeRequestBuffer_() {
   // We need to create thread pool only once (i.e., if it doesn't exist already)
   if (writeThreads.size() == 0)
     createWriteThreads_();
- 
-}
-
-// Sleeps for specified number of milliseconds (NOTE: wakes if a signal is recieved)
-// A quick hack (uses nanosleep() internally)
-void sleepms(long ms) {
-  timespec req, rem;
-  req.tv_nsec = (ms % 1000) * 1000000;
-  req.tv_sec = ms/1000l;
-  nanosleep(&req, &rem);
 }
 
 void DXGTable::joinAllWriteThreads_() {
+  /* This function ensures that all pending requests are executed and all
+   * worker thread are closed after that
+   * Brief notes about functioning:
+   * --> addRowRequestsQueue.size() == 0, ensures that request queue is empty, i.e.,
+   *     some worker has picked the last request (note we use term "pick", because 
+   *     the request might still be executing the request).
+   * --> Once we know that request queue is empty, we issue interrupt() to all threads
+   *     Note: interrupt() will only terminate threads, which are waiting on new request.
+   *           So only threads which are blocked by .consume() operation will be terminated
+   *           immediatly.
+   * --> Now we use a condition based on two interleaved counters to wait until all the 
+   *     threads have finished the execution. (see writeChunk_() for understanding their usage)
+   * --> Once we are sure that all threads have finished the requests, we join() them.
+   *     Since interrupt() was already issued, thus join() terminates them instantly.
+   *     Note: Most of them would have been already terminated (since after issuing 
+   *           interrupt(), they will be terminated when they start waiting on consume()). 
+   *           It's ok to join() terminated threads.
+   * --> We clear the thread pool (vector), and reset the counters.
+   */
+
   if (writeThreads.size() == 0)
     return; // Nothing to do (no thread has been started)
   
@@ -153,7 +175,7 @@ void DXGTable::joinAllWriteThreads_() {
   // particularly the case when produce() has been called, but thread is still waiting on consume()
   // we don't want to incorrectly issue interrupt() that time
   while(addRowRequestsQueue.size() != 0) {
-    sleepms(200);
+    sleep_ms(300);
   }
 
   for (unsigned i = 0; i < writeThreads.size(); ++i)
@@ -162,7 +184,7 @@ void DXGTable::joinAllWriteThreads_() {
   while(true) {
     if (countThreadsNotWaitingOnConsume.load() == 0 && countThreadsWaitingOnConsume.load() == writeThreads.size())
       break;
-    sleepms(300);
+    sleep_ms(300);
   }
   
   for (unsigned i = 0; i < writeThreads.size(); ++i)
@@ -170,17 +192,25 @@ void DXGTable::joinAllWriteThreads_() {
   
   writeThreads.clear();
   // Reset the counts
-  countThreadsWaitingOnConsume = 0;
-  countThreadsNotWaitingOnConsume = 0;
+  countThreadsWaitingOnConsume.store(0);
+  countThreadsNotWaitingOnConsume.store(0);
 }
 
-// TODO: Exception handling in threads (capture boost_interrupted..., but rethrow all others to parent).
-
+// This function is what each of the worker thread executes
 void DXGTable::writeChunk_(string gtableId) {
-  using namespace boost;
-  // TODO: Add comment explaining this function
+  /* This function is executed throughtout the lifetime of an addRows worker thread
+   * Brief note about various constructs used in the function:
+   * --> addRowRequestsQueue.consume() will block if no pending requests to be
+   *     excuted are available.
+   * --> gtableAddRows() does the actual upload of rows.
+   * --> We use two interleaved counters (countThread{NOT}WaitingOnConsume) to
+   *     know when it is safe to terminate the threads (see joinAllWriteThreads_()).
+   *     We want to terminate only when thread is waiting on .consume(), and not
+   *     when gtableAddRows() is being executed.
+   */
+   // See C++11 working draft for details about atomics (used for counterS)
+   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
   while(true) {
-    // See C++11 working draft: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
     countThreadsWaitingOnConsume++;
     std::string req = addRowRequestsQueue.consume();
     countThreadsNotWaitingOnConsume++;
@@ -190,6 +220,11 @@ void DXGTable::writeChunk_(string gtableId) {
   }
 }
 
+/* This function creates new worker thread for addRows
+ * Usually it wil be called once for a series of addRows() and then close() request
+ * However, if we call flush() in between, then we destroy any existing threads, thus 
+ * threads will be recreated for any further addRows() request
+ */
 void DXGTable::createWriteThreads_() {
   if (writeThreads.size() == 0) {
     for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
@@ -198,7 +233,6 @@ void DXGTable::createWriteThreads_() {
   }
 }
 
-// For automatic index generation
 void DXGTable::addRows(const JSON &data) {
   for (JSON::const_array_iterator iter = data.array_begin();
        iter != data.array_end();
