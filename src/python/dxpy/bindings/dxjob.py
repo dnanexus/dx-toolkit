@@ -46,6 +46,11 @@ class DXJob(object):
         if dxid is not None:
             self.set_id(dxid)
 
+    def __str__(self):
+        return "<{module}.{classname} object: {id}>".format(module=self.__module__,
+                                                            classname=self.__class__.__name__,
+                                                            id=self.get_id())
+
     def new(self, fn_input, fn_name, **kwargs):
         '''
         :param fn_input: Function input
