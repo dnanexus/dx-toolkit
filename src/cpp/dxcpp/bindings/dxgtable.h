@@ -2,8 +2,11 @@
 #define DXCPP_BINDINGS_DXGTABLE_H
 
 #include <sstream>
+#include <atomic>
+#include <boost/thread.hpp>
 #include "../bindings.h"
 #include "../api.h"
+#include "bqueue.h"
 
 /**
  * @brief Remote table handler
@@ -24,28 +27,43 @@ private:
   void close_(const std::string &s)const{gtableClose(dxid_,s);}
   dx::JSON listProjects_(const std::string &s)const{return gtableListProjects(dxid_,s);}
 
+  // Added for multi-threading in addRows
+  void finalizeRequestBuffer_();
+  void joinAllWriteThreads_();
+  void writeChunk_(std::string);
+  void createWriteThreads_();
+  ///////////////////////////////////////
+
   std::stringstream row_buffer_;
 
   int64_t row_buffer_maxsize_;
 
   void reset_buffer_();
+  
+  // To allow interleaving (without compiler optimization possily changing order)
+  // we use std::atomic (a c++11 feature)
+  // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
+  std::atomic<int> countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
+  std::vector<boost::thread> writeThreads;
+  static const int MAX_WRITE_THREADS = 5;
+  BlockingQueue<std::string> addRowRequestsQueue;
 
 public:
 
   DXGTable()
-    : DXDataObject(), row_buffer_maxsize_(104857600)
+    : DXDataObject(), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
     reset_buffer_();
   }
 
   DXGTable(const DXGTable &to_copy)
-    : DXDataObject(to_copy), row_buffer_maxsize_(104857600)
+    : DXDataObject(to_copy), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
     reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_);
   }
 
   DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID)
-    : row_buffer_maxsize_(104857600)
+    : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
     reset_buffer_(); setIDs(dxid, proj);
   }
@@ -240,7 +258,10 @@ public:
    * Waits until the remote table is in the "closed" state.
    */
   void waitOnClose() const;
-
+  
+  ~DXGTable() {
+    flush();
+  }
   /**
    * Clones the associated object into the specified project and folder.
    *

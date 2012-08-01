@@ -1,5 +1,6 @@
 #include "dxgtable.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 
 using namespace std;
 using namespace dx;
@@ -123,6 +124,80 @@ void DXGTable::addRows(const JSON &data, int part_id) {
   gtableAddRows(dxid_, input_params);
 }
 
+void DXGTable::finalizeRequestBuffer_() {
+  int64_t pos = row_buffer_.tellp();
+  if (pos > 10) {
+    row_buffer_.seekp(pos - 1); // Erase the trailing comma
+    row_buffer_ << "], \"part\": " << getUnusedPartID() << "}"; 
+  }
+  // We need to create thread pool only once (i.e., if it doesn't exist already)
+  if (writeThreads.size() == 0)
+    createWriteThreads_();
+ 
+}
+
+// Sleeps for specified number of milliseconds (NOTE: wakes if a signal is recieved)
+// A quick hack (uses nanosleep() internally)
+void sleepms(long ms) {
+  timespec req, rem;
+  req.tv_nsec = (ms % 1000) * 1000000;
+  req.tv_sec = ms/1000l;
+  nanosleep(&req, &rem);
+}
+
+void DXGTable::joinAllWriteThreads_() {
+  if (writeThreads.size() == 0)
+    return; // Nothing to do (no thread has been started)
+  
+  // To avoid race condition
+  // particularly the case when produce() has been called, but thread is still waiting on consume()
+  // we don't want to incorrectly issue interrupt() that time
+  while(addRowRequestsQueue.size() != 0) {
+    sleepms(200);
+  }
+
+  for (unsigned i = 0; i < writeThreads.size(); ++i)
+    writeThreads[i].interrupt();
+
+  while(true) {
+    if (countThreadsNotWaitingOnConsume.load() == 0 && countThreadsWaitingOnConsume.load() == writeThreads.size())
+      break;
+    sleepms(300);
+  }
+  
+  for (unsigned i = 0; i < writeThreads.size(); ++i)
+    writeThreads[i].join();
+  
+  writeThreads.clear();
+  // Reset the counts
+  countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0;
+}
+
+// TODO: Exception handling in threads (capture boost_interrupted..., but rethrow all others to parent).
+
+void DXGTable::writeChunk_(string gtableId) {
+  using namespace boost;
+  // TODO: Add comment explaining this function
+  while(true) {
+    // See C++11 working draft: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
+    countThreadsWaitingOnConsume++;
+    std::string req = addRowRequestsQueue.consume();
+    countThreadsNotWaitingOnConsume++;
+    countThreadsWaitingOnConsume--;
+    gtableAddRows(gtableId, req);
+    countThreadsNotWaitingOnConsume--;
+  }
+}
+
+void DXGTable::createWriteThreads_() {
+  if (writeThreads.size() == 0) {
+    for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
+      writeThreads.push_back(boost::thread(boost::bind(&DXGTable::writeChunk_, this, _1), dxid_));
+    }
+  }
+}
+
 // For automatic index generation
 void DXGTable::addRows(const JSON &data) {
   for (JSON::const_array_iterator iter = data.array_begin();
@@ -130,8 +205,11 @@ void DXGTable::addRows(const JSON &data) {
        iter++) {
     row_buffer_ << (*iter).toString() << ",";
 
-    if (row_buffer_.tellp() >= row_buffer_maxsize_)
-      flush();
+    if (row_buffer_.tellp() >= row_buffer_maxsize_) {
+      finalizeRequestBuffer_();
+      addRowRequestsQueue.produce(row_buffer_.str());
+      reset_buffer_();  
+    }
   }
 }
 
@@ -143,13 +221,11 @@ int DXGTable::getUnusedPartID() {
 void DXGTable::flush() {
   int64_t pos = row_buffer_.tellp();
   if (pos > 10) {
-    row_buffer_.seekp(pos - 1); // Erase the trailing comma
-    row_buffer_ << "], \"part\": " << getUnusedPartID() << "}";
-
-    gtableAddRows(dxid_, row_buffer_.str());
-
-    reset_buffer_();
+    finalizeRequestBuffer_();
+    addRowRequestsQueue.produce(row_buffer_.str());
+    joinAllWriteThreads_();
   }
+  reset_buffer_();
 }
 
 void DXGTable::close(const bool block) {

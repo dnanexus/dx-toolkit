@@ -711,7 +711,6 @@ TEST_F(DXGTableTest, AddRowsTest) {
 
 TEST_F(DXGTableTest, AddRowsNoIndexTest) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
-
   for (int i = 0; i < 64; i++) {
     string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
       "\", " + boost::lexical_cast<string>(i+1) + "]]";
@@ -725,6 +724,43 @@ TEST_F(DXGTableTest, AddRowsNoIndexTest) {
 
   desc = dxgtable.describe();
   EXPECT_EQ(64, desc["length"].get<int>());
+}
+
+// Given output of describe (called on "open" table), returns total number of rows
+int getRowCount(JSON desc) {
+  int totalRows = 0;
+  for (JSON::object_iterator it = desc["parts"].object_begin(); it != desc["parts"].object_end(); ++it)
+    totalRows += it->second["length"].get<int>();
+  return totalRows;
+}
+
+TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  DXGTable dxgtable2 = DXGTable::newDXGTable(DXGTableTest::columns);
+  
+  JSON data(JSON_ARRAY);
+  JSON temp(JSON_ARRAY);
+  
+  data.push_back(std::string(10000, 'X'));
+  data.push_back(0);
+  int countRows = 0;
+  for (int i = 0; i < 100000; i++) {
+    temp = JSON::parse("[]");
+    data[1] = i;
+    temp.push_back(data);
+    dxgtable.addRows(temp);
+    dxgtable2.addRows(temp);
+    countRows++;
+    if (i % 10001 == 0)
+      dxgtable.flush();
+  }
+  dxgtable.flush();
+  dxgtable2.flush();
+
+  JSON desc = dxgtable.describe();
+ 
+  EXPECT_EQ(countRows, getRowCount(desc));
+  EXPECT_EQ(countRows, getRowCount(dxgtable2.describe()));
 }
 
 TEST_F(DXGTableTest, InvalidSpecTest) {
