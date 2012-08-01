@@ -15,7 +15,7 @@ from dxpy.bindings import *
 # DXApp #
 #########
 
-class DXApp(object):
+class DXApp(DXObject):
     '''
     Remote app object handler
 

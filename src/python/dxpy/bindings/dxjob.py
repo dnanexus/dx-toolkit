@@ -36,7 +36,7 @@ def new_dxjob(fn_input, fn_name, **kwargs):
     dxjob.new(fn_input, fn_name, **kwargs)
     return dxjob
 
-class DXJob(object):
+class DXJob(DXObject):
     '''Remote job object handler'''
 
     _class = "job"
@@ -45,11 +45,6 @@ class DXJob(object):
         self._test_harness_result = None
         if dxid is not None:
             self.set_id(dxid)
-
-    def __str__(self):
-        return "<{module}.{classname} object: {id}>".format(module=self.__module__,
-                                                            classname=self.__class__.__name__,
-                                                            id=self.get_id())
 
     def new(self, fn_input, fn_name, **kwargs):
         '''

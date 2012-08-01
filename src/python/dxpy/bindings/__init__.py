@@ -62,8 +62,33 @@ import copy
 
 NUM_HTTP_THREADS = 4
 
-class DXDataObject(object):
+
+class DXObject(object):
     """Abstract base class for all remote object handlers"""
+    def __init__(self, dxid=None, project=None):
+        raise NotImplementedError("DXObject is an abstract class; a subclass should be initialized instead.")
+
+    def __str__(self):
+        dxid, dxproj_id = "no ID stored", ""
+        try:
+            dxid = self._dxid
+            if isinstance(self, DXDataObject):
+                try:
+                    dxproj_id = " (%s)" % self._proj
+                except:
+                    dxproj_id = " (no project ID stored)"
+        except:
+            pass
+
+        desc = "<{module}.{classname} object: {dxid}{dxproj_id}>".format(module=self.__module__,
+                                                                         classname=self.__class__.__name__,
+                                                                         dxid=dxid,
+                                                                         dxproj_id = dxproj_id)
+        return desc
+
+
+class DXDataObject(DXObject):
+    """Abstract base class for all remote data object handlers"""
 
     def __init__(self, dxid=None, project=None):
         try:
@@ -74,18 +99,6 @@ class DXDataObject(object):
                     "be initialized instead.")
 
         self.set_ids(dxid, project)
-
-    def __str__(self):
-        desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "
-        try:
-            desc += self._dxid
-            try:
-                desc += ", in " + self._proj
-            except:
-                desc += ", no project ID stored"
-        except:
-            desc += "no ID stored"
-        return desc
 
     @staticmethod
     def _get_creation_params(kwargs):

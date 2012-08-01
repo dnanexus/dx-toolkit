@@ -18,7 +18,7 @@ from dxpy.bindings import *
 # DXContainer #
 ###############
 
-class DXContainer(object):
+class DXContainer(DXObject):
     '''Remote container handler'''
 
     def __init__(self, dxid=None):
@@ -26,15 +26,6 @@ class DXContainer(object):
             self.set_id(dxid)
         else:
             self.set_id(dxpy.WORKSPACE_ID)
-
-    def __str__(self):
-        desc = "dxpy." + self.__class__.__name__ + " (" + self._class + ") object: "
-        try:
-            desc += self.get_id()
-        except:
-            desc += "no ID stored"
-        return desc
-
 
     def set_id(self, dxid):
         '''
