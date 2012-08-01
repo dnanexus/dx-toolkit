@@ -249,11 +249,15 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
+            if isinstance(modified_after, basestring):
+                modified_after = dxpy.utils.normalize_timedelta(modified_after)
             if modified_after >= 0:
                 query["modified"]["after"] = modified_after
             else:
                 query["modified"]["after"] = now() + modified_after
         if modified_before is not None:
+            if isinstance(modified_before, basestring):
+                modified_before = dxpy.utils.normalize_timedelta(modified_before)
             if modified_before >= 0:
                 query["modified"]["before"] = modified_before
             else:
@@ -261,11 +265,15 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
+            if isinstance(created_after, basestring):
+                created_after = dxpy.utils.normalize_timedelta(created_after)
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
                 query["created"]["after"] = now() + created_after
         if created_before is not None:
+            if isinstance(created_before, basestring):
+                created_before = dxpy.utils.normalize_timedelta(created_before)
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
@@ -351,11 +359,15 @@ def find_jobs(launched_by=None, program=None, project=None, state=None,
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
+            if isinstance(created_after, basestring):
+                created_after = dxpy.utils.normalize_timedelta(created_after)
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
                 query["created"]["after"] = now() + created_after
         if created_before is not None:
+            if isinstance(created_before, basestring):
+                created_before = dxpy.utils.normalize_timedelta(created_before)
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
@@ -436,8 +448,10 @@ def find_apps(name=None, category=None, all_versions=None, published=None,
     This is a generator function which returns the search results over
     apps and handles fetching of future chunks if necessary.  The
     search is not restricted by any fields which are omitted and
-    otherwise imposes the restrictions requested.  All timestamps are
-    in milliseconds since the Epoch.
+    otherwise imposes the restrictions requested.
+
+    All timestamps are in milliseconds since the Epoch. Timestamps can also be given as strings with suffixes "s", "m",
+    "d", "w", or "y" (for seconds, minutes, days, weeks, or years).
 
     """
 
@@ -459,11 +473,15 @@ def find_apps(name=None, category=None, all_versions=None, published=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
+            if isinstance(modified_after, basestring):
+                modified_after = dxpy.utils.normalize_timedelta(modified_after)
             if modified_after >= 0:
                 query["modified"]["after"] = modified_after
             else:
                 query["modified"]["after"] = now() + modified_after
         if modified_before is not None:
+            if isinstance(modified_before, basestring):
+                modified_before = dxpy.utils.normalize_timedelta(modified_before)
             if modified_before >= 0:
                 query["modified"]["before"] = modified_before
             else:
