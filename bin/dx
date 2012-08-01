@@ -2130,8 +2130,8 @@ parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", 
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--nodesc', help='Only return job IDs', action='store_false') # flag stored as true = use describe
-parser_find_jobs.add_argument('--created-after', type=int, help='Timestamp after which the job was last created (negative number means ms in the past)')
-parser_find_jobs.add_argument('--created-before', type=int, help='Timestamp before which the job was last created (negative number means ms in the past)')
+parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, d, w, M, y')
+parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
@@ -2147,10 +2147,10 @@ parser_find_data.add_argument('--link', help='Object ID that the data object lin
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
 parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
-parser_find_data.add_argument('--mod-after', type=int, help='Timestamp after which the object was last modified (negative number means ms in the past)')
-parser_find_data.add_argument('--mod-before', type=int, help='Timestamp before which the object was last modified (negative number means ms in the past)')
-parser_find_data.add_argument('--created-after', type=int, help='Timestamp after which the object was created (negative number means ms in the past)')
-parser_find_data.add_argument('--created-before', type=int, help='Timestamp before which the object was created (negative number means ms in the past)')
+parser_find_data.add_argument('--mod-after', help='Timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
+parser_find_data.add_argument('--mod-before', help='Timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
+parser_find_data.add_argument('--created-after', help='Timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
+parser_find_data.add_argument('--created-before', help='Timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
 parser_find_data.add_argument('--describe', help='Also return descriptions of objects', action='store_true')
 parser_find_data.set_defaults(func=find_data)
 parser_map['find data'] = parser_find_data
@@ -2170,10 +2170,10 @@ parser_find_apps.add_argument('--installed', help='Whether to restrict the list 
 parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
-parser_find_apps.add_argument('--created-after', type=int, help='Timestamp after which the app version was created (negative number means ms in the past)')
-parser_find_apps.add_argument('--created-before', type=int, help='Timestamp before which the app version was created (negative number means ms in the past)')
-parser_find_apps.add_argument('--mod-after', type=int, help='Timestamp after which the app was last modified (negative number means ms in the past)')
-parser_find_apps.add_argument('--mod-before', type=int, help='Timestamp before which the app was last modified (negative number means ms in the past)')
+parser_find_apps.add_argument('--created-after', help='Timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
+parser_find_apps.add_argument('--created-before', help='Timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
+parser_find_apps.add_argument('--mod-after', help='Timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
+parser_find_apps.add_argument('--mod-before', help='Timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, d, w, M, y)')
 parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = parser_find_apps
 
