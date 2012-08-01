@@ -43,14 +43,14 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type folder: string
     :param recurse: If *project* is given, whether to look in subfolders as well
     :type recurse: boolean
-    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
-    :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
-    :type modified_before: integer
-    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
-    :type created_after: integer
-    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
-    :type created_before: integer
+    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past; can be given as string with suffixes)
+    :type modified_after: int or string
+    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past; can be given as string with suffixes)
+    :type modified_before: int or string
+    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past; can be given as string with suffixes)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past; can be given as string with suffixes)
+    :type created_before: int or string
     :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
     :type describe: boolean
     :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
@@ -64,10 +64,15 @@ def find_data_objects(classname=None, state=None, visibility=None,
     This is a generator function which returns the search results and
     handles fetching of future chunks if necessary.  The search is not
     restricted by any fields which are omitted and otherwise imposes
-    the restrictions requested.  All timestamps are in milliseconds
-    since the Epoch.
+    the restrictions requested.
+    
+    All timestamps are in milliseconds since the Epoch. Timestamps can also be given as strings with suffixes "s", "m",
+    "d", "w", or "y" (for seconds, minutes, days, weeks, or years). The following example finds all items which were
+    created more than 1 week ago:
+    
+        items = list(find_data_objects(created_before="-1w"))
 
-    These two examples iterates through all gtables with property
+    These two examples iterate through all gtables with property
     "project" set to "cancer project" and prints their object IDs::
 
         for result in find_data_objects(classname="gtable", properties={"project": "cancer project"}):
@@ -107,11 +112,15 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
+            if isinstance(modified_after, basestring):
+                modified_after = dxpy.utils.normalize_timedelta(modified_after)
             if modified_after >= 0:
                 query["modified"]["after"] = modified_after
             else:
                 query["modified"]["after"] = now() + modified_after
         if modified_before is not None:
+            if isinstance(modified_before, basestring):
+                modified_before = dxpy.utils.normalize_timedelta(modified_before)
             if modified_before >= 0:
                 query["modified"]["before"] = modified_before
             else:
@@ -119,11 +128,15 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
+            if isinstance(created_after, basestring):
+                created_after = dxpy.utils.normalize_timedelta(created_after)
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
                 query["created"]["after"] = now() + created_after
         if created_before is not None:
+            if isinstance(created_before, basestring):
+                created_before = dxpy.utils.normalize_timedelta(created_before)
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
