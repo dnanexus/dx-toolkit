@@ -103,8 +103,7 @@ from dxpy.utils.describe import *
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():    
-    subcommands = {'file': ['get ', 'put '],
-                   'gtable': ['get '],
+    subcommands = {'gtable': ['get '],
                    'find': ['jobs ', 'data ', 'projects ', 'apps '],
                    'new': ['record ', 'gtable ', 'project ']}
 
@@ -600,9 +599,13 @@ def rmproject(args):
 def mv(args):
     try:
         dest_proj, dest_path, none = try_call(resolve_path_with_project, args.destination, 'folder')
+        if dest_path is None:
+            raise ValueError()
         dx_dest = dxpy.get_handler(dest_proj)
         dx_dest.list_folder(folder=dest_path, only='folders')
     except:
+        if dest_path is None:
+            parser.exit(1, 'Cannot move to a hash ID\n')
         # Destination folder path is new => renaming
         if len(args.sources) != 1:
             # Can't rename more than one object
@@ -673,9 +676,13 @@ def mv(args):
 def cp(args):
     try:
         dest_proj, dest_path, none = try_call(resolve_path_with_project, args.destination, 'folder')
+        if dest_path is None:
+            raise ValueError()
         dx_dest = dxpy.get_handler(dest_proj)
         dx_dest.list_folder(folder=dest_path, only='folders')
     except:
+        if dest_path is None:
+            parser.exit(1, 'Cannot copy to a hash ID\n')
         # Destination folder path is new => renaming
         if len(args.sources) != 1:
             # Can't rename more than one object
@@ -1053,7 +1060,7 @@ def remove_tags(args):
 
 def rename(args):
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
     if entity_results is None and not is_container_id(args.path):
         if project is None:
@@ -1134,6 +1141,51 @@ def unset_properties(args):
         except dxpy.DXAPIError as details:
             parser.exit(1, fill(str(details)) + '\n')
 
+def get(args):
+    # Attempt to resolve name
+    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+
+    if entity_result is None:
+        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+
+    filename = args.output
+    if filename is None:
+        filename = entity_result['describe']['name'].replace('/', '%2F')
+
+    if entity_result['describe']['class'] == 'file':
+        if args.stdout:
+            try:
+                dxfile = dxpy.DXFile(entity_result['id'])
+                for line in dxfile:
+                    print line
+            except dxpy.DXAPIError as details:
+                parser.exit(1, fill(str(details)) + '\n')
+        else:
+            try:
+                dxpy.download_dxfile(entity_result['id'], filename)
+            except dxpy.DXAPIError as details:
+                parser.exit(1, fill(str(details)) + '\n')
+    elif entity_result['describe']['class'] in ['gtable', 'table']:
+        parser.exit(1, 'Not implemented yet\n')
+    elif entity_result['describe']['class'] == 'record':
+        try:
+            details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
+                                         {})
+        except BaseException as details:
+            parser.exit(1, fill(str(details)) + '\n')
+        if args.stdout:
+            print json.dumps(details, indent=4)
+        else:
+            try:
+                with open(filename, 'w') as fd:
+                    fd.write(json.dumps(details, indent=4))
+            except BaseException as details:
+                parser.exit(1, fill(str(details)) + '\n')
+    elif entity_result['describe']['class'] == 'program':
+        parser.exit(1, 'Not implemented yet\n')
+    else:
+        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or program was expected\n')
+
 def head(args):
     # Attempt to resolve name
     project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
@@ -1153,6 +1205,9 @@ def head(args):
                     if counter == args.lines:
                         break
             else:
+                # print fill(', '.join(map(lambda coldesc:
+                #                              coldesc['name'],
+                #                          entity_result['describe']['columns'])))
                 for line in handler.iterate_rows(end=args.lines):
                     print BOLD + BLUE + str(line[0]) + ': ' + ENDC + json.dumps(line[1:])
                     counter += 1
@@ -1170,21 +1225,6 @@ def file_get(args):
     if entity_result is None or entity_result['describe']['class'] != 'file':
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a file object\n')
 
-    if args.stdout:
-        try:
-            dxfile = dxpy.DXFile(entity_result['id'])
-            for line in dxfile:
-                print line
-        except dxpy.DXAPIError as details:
-            parser.exit(1, fill(str(details)) + '\n')
-    else:
-        filename = args.output
-        if filename is None:
-            filename = entity_result['describe']['name'].replace('/', '%2F')
-        try:
-            dxpy.download_dxfile(entity_result['id'], filename)
-        except dxpy.DXAPIError as details:
-            parser.exit(1, fill(str(details)) + '\n')
 
 def upload(args):
     hidden = (args.visibility == 'hidden')
@@ -1324,7 +1364,7 @@ def find_data(args):
             elif not sys.stdout.isatty():
                 print result['id']
             else:
-                print_ls_l_desc(result["describe"])
+                print_ls_l_desc(result["describe"], include_folder=True)
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(str(details)) + '\n')
 
@@ -2003,6 +2043,17 @@ parser_cp.add_argument('destination', help='Folder into which to copy the source
 parser_cp.set_defaults(func=cp)
 parser_map['cp'] = parser_cp
 
+parser_get = subparsers.add_parser('get', help='Download a data object',
+                                   description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading a program will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
+parser_get.add_argument('path', help='Data object ID or name to access')
+parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file or gtable\'s name will be used')
+parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
+parser_get.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
+parser_get.add_argument('--tsv', help='Save the gtable in tab-separated format', action='store_true')
+parser_get.add_argument('--vcf', help='Save a Simplevar gtable as a VCF file', action='store_true')
+parser_get.set_defaults(func=get)
+parser_map['get'] = parser_get
+
 parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable', prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
 parser_head.add_argument('path', help='File or gtable ID or name to access')
@@ -2013,17 +2064,6 @@ parser_cat = subparsers.add_parser('cat', help='Print a file to stdout', prog='d
 parser_cat.add_argument('path', help='File ID or name to print to stdout')
 parser_cat.set_defaults(func=file_get, output=None, stdout=True)
 parser_map['cat'] = parser_cat
-
-parser_file = subparsers.add_parser('file', help='Interact with remote files', prog='dx file')
-subparsers_file = parser_file.add_subparsers()
-parser_map['file'] = parser_file
-
-parser_file_get = subparsers_file.add_parser('get', help='Download a file', prog='dx file get')
-parser_file_get.add_argument('path', help='File ID or name to download')
-parser_file_get.add_argument('--stdout', help='Print the file to stdout', action='store_true')
-parser_file_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file\'s name or ID will be used')
-parser_file_get.set_defaults(func=file_get)
-parser_map['file get'] = parser_file_get
 
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
 subparsers_gtable = parser_gtable.add_subparsers()

@@ -366,7 +366,7 @@ def print_desc(desc):
     else:
         print_data_obj_desc(desc)
 
-def get_ls_l_desc(desc):
+def get_ls_l_desc(desc, include_folder=False):
     if 'state' in desc:
         state_len = len(desc['state'])
         if desc['state'] != 'closed':
@@ -377,12 +377,15 @@ def get_ls_l_desc(desc):
         state_str = ''
         state_len = 0
 
-    if desc['class'] == 'program':
-        name_str = BOLD + GREEN + desc['name'] + ENDC
+    if include_folder:
+        name_str = desc['folder'] + ('/' if desc['folder'] != '/' else '') + desc['name']
     else:
         name_str = desc['name']
 
+    if desc['class'] == 'program':
+        name_str = BOLD + GREEN + name_str + ENDC
+
     return state_str + ' '*(8 - state_len) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
 
-def print_ls_l_desc(desc):
-    print get_ls_l_desc(desc)
+def print_ls_l_desc(desc, include_folder=False):
+    print get_ls_l_desc(desc, include_folder)
