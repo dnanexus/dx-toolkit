@@ -1705,7 +1705,7 @@ def run(args):
     elif args.input is not None:
         input_inputs = []
         try:
-            for i in args.input:
+            for keyeqval in args.input:
                 name, value = split_unescaped('=', keyeqval)
                 input_inputs.append([name, value])
         except:
