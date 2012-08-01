@@ -58,7 +58,7 @@ def normalize_timedelta(timedelta):
     except ValueError:
         t, suffix = timedelta[:-1], timedelta[-1:]
         suffix_multipliers = {'s': 1000, 'm': 1000*60, 'h': 1000*60*60, 'd': 1000*60*60*24, 'w': 1000*60*60*24*7,
-                              'm': 1000*60*60*24*30, 'y': 1000*60*60*24*365}
+                              'M': 1000*60*60*24*30, 'y': 1000*60*60*24*365}
         if suffix not in suffix_multipliers:
             raise ValueError("Unrecognized timedelta "+str(timedelta))
         return int(t) * suffix_multipliers[suffix]
