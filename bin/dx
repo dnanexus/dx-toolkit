@@ -664,6 +664,8 @@ def mv(args):
             except BaseException as details:
                 parser.exit(1, fill(str(details)) + '\n')
 
+    if len(args.sources) == 0:
+        parser.exit(1, 'No sources provided to move\n')
     src_objects = []
     src_folders = []
     for source in args.sources:
@@ -743,6 +745,8 @@ def cp(args):
             except BaseException as details:
                 parser.exit(1, fill(str(details)) + '\n')
 
+    if len(args.sources) == 0:
+        parser.exit(1, 'No sources provided to copy to another project\n')
     src_objects = []
     src_folders = []
     for source in args.sources:
@@ -1872,7 +1876,7 @@ def run(args):
     else:
         print dxjob.get_id()
 
-def kill(args):
+def terminate(args):
     try:
         dxpy.api.jobTerminate(args.jobid)
     except BaseException as details:
@@ -2201,10 +2205,10 @@ parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
 
-parser_kill = subparsers.add_parser('kill', help='Terminate a job that has not yet finished', prog='dx kill')
-parser_kill.add_argument('jobid', help='ID of the job to terminate')
-parser_kill.set_defaults(func=kill)
-parser_map['kill'] = parser_kill
+parser_terminate = subparsers.add_parser('terminate', help='Terminate a job that has not yet finished', prog='dx terminate')
+parser_terminate.add_argument('jobid', help='ID of the job to terminate')
+parser_terminate.set_defaults(func=terminate)
+parser_map['terminate'] = parser_terminate
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
                                     description='Search functionality over data objects, projects, and jobs', prog='dx find')
