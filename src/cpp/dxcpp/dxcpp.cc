@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <boost/thread.hpp>
+#include <atomic>
 #include "dxcpp.h"
 #include "SimpleHttp.h"
 
@@ -28,6 +30,9 @@ string g_APISERVER_PROTOCOL;
 
 const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 
+boost::mutex loadFromEnvironment_mutex_g;
+std::atomic<bool> loadFromEnvironment_finished_g(false);
+
 static bool isRetriableHttpCode(int c) {
   // Ref: Python bindings
   return (c == 500 || c == 502 || c == 503 || c == 504);
@@ -44,7 +49,14 @@ static bool isRetriableCurlError(int c) {
 JSON DXHTTPRequest(const string &resource, const string &data,
        const bool alwaysRetry,
 		   const map<string, string> &headers) {
-  if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
+
+  // We use an atomic variable (C++11 feature) to avoid acquiring a lock
+  // every time in DXHTTPRequest(). Lock is instead acquired in loadFromEnvironment().
+  // By checking loadFromEnvironment_finished_g value, we avoid calling
+  // loadFromEnvironment() every time (and acquiring the expensive lock)
+  // Note: In this case a regular variable instead of atomic, will also work correctly.
+  //       (except can result in few extra short-circuited calls to loadFromEnvironment()).
+  if (loadFromEnvironment_finished_g.load() == false) {
     loadFromEnvironment();
   }
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
@@ -190,6 +202,16 @@ void setProjectContext(const string &project_id) {
 }
 
 void loadFromEnvironment() {
+  // Mutex's aim: To ensure that enviornment variable are loaded only once.
+  //              All other calls to loadFromEnvironment() must be short circuited.
+  boost::mutex::scoped_lock glock(loadFromEnvironment_mutex_g);
+  
+  // It is important to acquire lock before checking loadFromEnvironment_finished_g == true 
+  // condition, since other instance of the function might be running in parallel thread, 
+  // we must wait for it to finish (and set loadFromEnvironment_finished_g = true)
+  if (loadFromEnvironment_finished_g.load() == true)
+    return; // Short circuit this call - env variables already loaded
+
   if (!g_APISERVER_SET &&
       (getenv("DX_APISERVER_HOST") != NULL) &&
       (getenv("DX_APISERVER_PORT") != NULL)) {
@@ -211,11 +233,12 @@ void loadFromEnvironment() {
     if (getenv("DX_JOB_ID") != NULL) {
       setJobID(getenv("DX_JOB_ID"));
       if (getenv("DX_WORKSPACE_ID") != NULL)
-	setWorkspaceID(getenv("DX_WORKSPACE_ID"));
+	      setWorkspaceID(getenv("DX_WORKSPACE_ID"));
       if (getenv("DX_PROJECT_CONTEXT_ID") != NULL)
-	setProjectContext(getenv("DX_PROJECT_CONTEXT_ID"));
+	      setProjectContext(getenv("DX_PROJECT_CONTEXT_ID"));
     } else if (getenv("DX_PROJECT_CONTEXT_ID") != NULL) {
       setWorkspaceID(getenv("DX_PROJECT_CONTEXT_ID"));
     }
   }
+  loadFromEnvironment_finished_g.store(true);
 }
