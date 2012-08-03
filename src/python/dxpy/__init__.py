@@ -256,7 +256,6 @@ current_job, current_applet, current_app = None, None, None
 if JOB_ID is not None:
     current_job = DXJob(JOB_ID)
     job_desc = current_job.describe()
-    print job_desc
     if 'applet' in job_desc:
         current_applet = DXApplet(job_desc['applet'])
     else:
