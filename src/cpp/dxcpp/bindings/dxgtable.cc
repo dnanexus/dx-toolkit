@@ -5,15 +5,6 @@
 using namespace std;
 using namespace dx;
 
-// Sleeps for specified number of milliseconds (NOTE: wakes if a signal is recieved)
-// A quick hack (uses nanosleep() internally)
-void sleep_ms(unsigned long ms) {
-  timespec req, rem;
-  req.tv_nsec = (ms % 1000ul) * 1000000ul;
-  req.tv_sec = ms/1000ul;
-  nanosleep(&req, &rem);
-}
-
 void DXGTable::reset_buffer_() {
   row_buffer_.str("");
   row_buffer_ << "{\"data\": [";
@@ -126,6 +117,83 @@ JSON DXGTable::getRows(const JSON &query, const JSON &column_names,
   return gtableGet(dxid_, input_params);
 }
 
+
+void DXGTable::startLinearQuery(const dx::JSON &column_names,
+                      const int64_t start_row,
+                      const int64_t num_rows,
+                      const int64_t chunk_size,
+                      const unsigned max_chunks,
+                      const unsigned thread_count) {
+  stopLinearQuery(); // Stop any previously running linear query
+  
+  lq_columns_ = column_names;
+  lq_query_start_ = (start_row == -1) ? 0 : start_row;
+  lq_query_end_ = (num_rows == -1) ? describe()["length"].get<int64_t>() : lq_query_start_ + num_rows;
+  lq_chunk_limit_ = chunk_size;
+  lq_max_chunks_ = max_chunks;
+  lq_next_result_ = lq_query_start_;
+
+  for (unsigned i = 0; i < thread_count; ++i)
+    lq_readThreads_.push_back(boost::thread(boost::bind(&DXGTable::readChunk_, this)));
+}
+
+void DXGTable::readChunk_() {
+  int64_t start;
+  while (true) {
+    boost::mutex::scoped_lock qs_lock(lq_query_start_mutex_);
+    if (lq_query_start_ >= lq_query_end_)
+      break; // We are done fetching all chunks
+
+    start = lq_query_start_;
+    lq_query_start_ += lq_chunk_limit_;
+    qs_lock.unlock();
+
+    int64_t limit_for_req = std::min(lq_chunk_limit_, (lq_query_end_ - start));
+
+    // Perform the actual query
+    JSON ret = getRows(JSON(JSON_NULL), lq_columns_, start, limit_for_req);
+    boost::mutex::scoped_lock r_lock(lq_results_mutex_);
+    while(lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
+      r_lock.unlock();
+      usleep(100);
+      r_lock.lock();
+    }
+    lq_results_[start] = ret["data"];
+    r_lock.unlock();
+  }
+}
+
+bool DXGTable::getNextChunk(JSON &chunk) {
+  if (lq_readThreads_.size() == 0) // Linear query was not called
+    return false;
+
+  boost::mutex::scoped_lock r_lock(lq_results_mutex_);
+  if (lq_next_result_ >= lq_query_end_)
+    return false;
+  while(lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
+    r_lock.unlock();
+    usleep(100);
+    r_lock.lock();
+  }
+  chunk = lq_results_.begin()->second;
+  lq_results_.erase(lq_results_.begin());
+  lq_next_result_ += chunk.size();
+  r_lock.unlock();
+  return true;
+}
+
+void DXGTable::stopLinearQuery() {
+  if (lq_readThreads_.size() == 0)
+    return;
+  for (unsigned i = 0; i < lq_readThreads_.size(); ++i) {
+    lq_readThreads_[i].interrupt();
+    lq_readThreads_[i].join();
+  }
+  lq_readThreads_.clear();
+
+  //TODO: Ensure that all locks are released at this point
+}
+
 void DXGTable::addRows(const JSON &data, int part_id) {
   JSON input_params(JSON_OBJECT);
   input_params["data"] = data;
@@ -175,7 +243,7 @@ void DXGTable::joinAllWriteThreads_() {
   // particularly the case when produce() has been called, but thread is still waiting on consume()
   // we don't want to incorrectly issue interrupt() that time
   while(addRowRequestsQueue.size() != 0) {
-    sleep_ms(300);
+    usleep(100);
   }
 
   for (unsigned i = 0; i < writeThreads.size(); ++i)
@@ -184,7 +252,7 @@ void DXGTable::joinAllWriteThreads_() {
   while(true) {
     if (countThreadsNotWaitingOnConsume.load() == 0 && countThreadsWaitingOnConsume.load() == writeThreads.size())
       break;
-    sleep_ms(300);
+    usleep(100);
   }
   
   for (unsigned i = 0; i < writeThreads.size(); ++i)

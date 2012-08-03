@@ -743,14 +743,13 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
   
   data.push_back(std::string(10000, 'X'));
   data.push_back(0);
-  int countRows = 0;
-  for (int i = 0; i < 100000; i++) {
+  int numRows = 100000;
+  for (int i = 0; i < numRows; i++) {
     temp = JSON::parse("[]");
     data[1] = i;
     temp.push_back(data);
     dxgtable.addRows(temp);
     dxgtable2.addRows(temp);
-    countRows++;
     if (i % 10001 == 0)
       dxgtable.flush();
   }
@@ -759,9 +758,63 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
 
   JSON desc = dxgtable.describe();
  
-  EXPECT_EQ(countRows, getRowCount(desc));
-  EXPECT_EQ(countRows, getRowCount(dxgtable2.describe()));
+  EXPECT_EQ(numRows, getRowCount(desc));
+  EXPECT_EQ(numRows, getRowCount(dxgtable2.describe()));
   // TODO: Add test checking row order
+}
+
+TEST_F(DXGTableTest, GetRowsLinearQueryTest) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  
+  JSON data(JSON_ARRAY);
+  JSON temp(JSON_ARRAY);
+  
+  int str_size = 10;
+  int numRows = 1000000; // should be > limit+start
+  
+  // These parameters will be used in second Linear query
+  int start = 100;
+  int limit = 10000;
+  int chunk_size = 10;
+
+  data.push_back(std::string(str_size, 'X'));
+  data.push_back(0);
+  for (int i = 0; i < numRows; i++) {
+    temp = JSON::parse("[]");
+    data[1] = i;
+    temp.push_back(data);
+    dxgtable.addRows(temp);
+  }
+  dxgtable.flush();
+  JSON desc = dxgtable.describe();
+  EXPECT_EQ(numRows, getRowCount(desc));
+  dxgtable.close(true);
+  
+  dxgtable.startLinearQuery();
+  JSON chunk;
+  int lq_row_count=0;
+  while (dxgtable.getNextChunk(chunk)) {
+    for (int i = 0; i < chunk.size(); ++i, lq_row_count++) {
+//      std::cerr<<"\nchunk = "<<chunk[i].toString();
+      EXPECT_EQ(chunk[i][1].get<std::string>().length(), str_size);
+      EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
+    }
+  }
+  EXPECT_EQ(lq_row_count, numRows);
+  dxgtable.startLinearQuery(JSON(JSON_NULL), start, limit, chunk_size);
+  lq_row_count = start;
+  int shorter_chunks = 0;
+  while (dxgtable.getNextChunk(chunk)) {
+    if (chunk.size() < chunk_size)
+      shorter_chunks++;
+    else
+      EXPECT_EQ(chunk.size(), chunk_size);
+    for (int i = 0; i < chunk.size(); ++i, lq_row_count++) {
+      EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
+    }
+  }
+  EXPECT_LE(shorter_chunks, 1);
+  EXPECT_EQ(lq_row_count-start, limit);
 }
 
 TEST_F(DXGTableTest, InvalidSpecTest) {
