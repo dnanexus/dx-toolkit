@@ -65,17 +65,17 @@ def run(function_name=None, function_input=None):
 
     try:
         result = ENTRY_POINT_TABLE[job['function']](**job['input'])
-    except dxpy.ProgramError as e:
+    except dxpy.AppError as e:
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)           
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "ProgramError", "message": str(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": str(e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)           
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "ProgramInternalError", "message": str(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": str(e)}}) + "\n")
         raise
 
     if dxpy.JOB_ID is not None:
