@@ -60,6 +60,7 @@ def run(function_name=None, function_input=None):
         if function_input is None:
             function_input = json.loads(os.environ.get('DX_JOB_INPUT', '{}'))
         job = {'function': function_name, 'input': function_input}
+    job['input'] = resolve_job_refs_in_test(job['input'])
     print "Invoking", job.get('function'), "with", job.get('input')
 
     try:
