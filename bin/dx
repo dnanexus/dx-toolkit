@@ -1272,16 +1272,6 @@ def head(args):
                         pipe.close()
                         return
                 print table_text
-                # print fill(', '.join(map(lambda coldesc:
-                #                              coldesc['name'],
-                #                          entity_result['describe']['columns'])))
-                '''
-                for line in handler.iterate_rows(end=args.lines):
-                    print BOLD + BLUE + str(line[0]) + ': ' + ENDC + json.dumps(line[1:])
-                    counter += 1
-                    if counter == args.lines:
-                        break
-                '''
         except StopIteration:
             pass
         except BaseException as details:
