@@ -3,6 +3,7 @@
 
 import re
 import collections
+from dxpy.utils.describe import *
 
 def format_tree(tree):
     ''' Tree pretty printer.
@@ -71,17 +72,34 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
             my_row.append(my_item)
             col_widths[i] = max(col_widths[i], len(my_item))
         my_table.append(my_row)
+    
+    def BLU(i):
+        return BOLD + BLUE + i + ENDC
 
-    formatted_table = [u'┌' + u'┬'.join(u'─'*i for i in col_widths) + u'┐']
+    type_colormap = {'boolean': BLUE,
+                     'integer': YELLOW,
+                     'float': WHITE,
+                     'string': GREEN}
+    for i in 'uint8', 'int16', 'uint16', 'int32', 'uint32', 'int64':
+        type_colormap[i] = type_colormap['integer']
+    type_colormap['double'] = type_colormap['float']
+
+    def col_head(i):
+        if column_specs is not None:
+            return BOLD + type_colormap[column_specs[i-1]['type']] + column_names[i]
+        else:
+            return BOLD + WHITE + column_names[i] + ENDC
+
+    formatted_table = [BLU(u'┌') + BLU(u'┬').join(BLU(u'─')*i for i in col_widths) + BLU(u'┐')]
     if len(my_column_names) > 0:
-        padded_column_names = [my_column_names[i] + ' '*(col_widths[i]-len(my_column_names[i])) for i in range(len(my_column_names))]
-        formatted_table.append(u'│' + u'│'.join(padded_column_names) + u'│')
-        formatted_table.append(u'│' + u'┼'.join(u'─'*i for i in col_widths) + u'│')
+        padded_column_names = [col_head(i) + ' '*(col_widths[i]-len(my_column_names[i])) for i in range(len(my_column_names))]
+        formatted_table.append(BLU(u'│') + BLU(u'│').join(padded_column_names) + BLU(u'│'))
+        formatted_table.append(BLU(u'│') + BLU(u'┼').join(BLU(u'─')*i for i in col_widths) + BLU(u'│'))
 
     for row in my_table:
         padded_row = [row[i] + ' '*(col_widths[i]-len(row[i])) for i in range(len(row))]
-        formatted_table.append(u'│' + u'│'.join(padded_row) + u'│')
-    formatted_table.append(u'└' + u'┴'.join(u'─'*i for i in col_widths) + u'┘')
+        formatted_table.append(BLU(u'│') + BLU(u'│').join(padded_row) + BLU(u'│'))
+    formatted_table.append(BLU(u'└') + BLU(u'┴').join(BLU(u'─')*i for i in col_widths) + BLU(u'┘'))
 
     if report_dimensions:
         return '\n'.join(formatted_table), len(formatted_table), len(formatted_table[0])

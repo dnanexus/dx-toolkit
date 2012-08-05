@@ -1267,7 +1267,7 @@ def head(args):
                 if sys.stdout.isatty():
                     tty_rows, tty_cols = map(int, os.popen('stty size', 'r').read().split())
                     if tty_rows <= table_rows or tty_cols <= table_cols:
-                        pipe = os.popen('less -S', 'w')
+                        pipe = os.popen('less -RS', 'w')
                         pipe.write(table_text.encode('utf-8'))
                         pipe.close()
                         return
