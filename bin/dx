@@ -7,7 +7,7 @@ import shlex # respects quotes substrings when splitting
 import textwrap
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
-from dxpy.utils.tree import print_tree
+from dxpy.utils.pretty_print import format_tree, format_table
 
 try:
     import readline
@@ -799,7 +799,7 @@ def tree(args):
 
         # TODO: how do I resolve relative paths? (dx tree ../..)
 
-        print_tree(tree)
+        print format_tree(tree)
     except BaseException as details:
         parser.exit(1, fill(str(details)) + '\n')
 
