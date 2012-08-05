@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, datetime, urlparse, requests, base64, getpass
+import sys, os, datetime, urlparse, requests, base64, getpass, collections
 import urllib
 import argparse
 import shlex # respects quotes substrings when splitting
@@ -8,6 +8,7 @@ import textwrap
 import re
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
+from dxpy.utils.tree import print_tree
 
 import json
 
@@ -764,6 +765,44 @@ def cp(args):
                             "folders": src_folders,
                             "project": dest_proj,
                             "destination": dest_path})
+    except BaseException as details:
+        parser.exit(1, fill(str(details)) + '\n')
+
+def tree(args):
+    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, ask_to_resolve=False)
+
+    if project is None:
+        parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
+    dxproj = dxpy.get_handler(project)
+
+    tree = collections.OrderedDict()
+    try:
+        folders = sorted(dxproj.describe(input_params={"folders": True})['folders'])
+        for folder in folders:
+            subtree = tree
+            for path_element in folder.split("/"):
+                if path_element == "":
+                    continue
+                path_element_desc = BOLD + BLUE + path_element + ENDC
+                subtree.setdefault(path_element_desc, {})
+                subtree = subtree[path_element_desc]
+
+        for item in dxpy.find_data_objects(project=project, describe=True):
+            subtree = tree
+            for path_element in item['describe']['folder'].split("/"):
+                if path_element == "":
+                    continue
+                path_element_desc = BOLD + BLUE + path_element + ENDC
+                subtree = subtree[path_element_desc]
+            if args.l:
+                item_desc = get_ls_l_desc(item['describe'])
+            else:
+                item_desc = item['describe']['name']
+            subtree[item_desc] = None
+
+        # TODO: how do I resolve relative paths? (dx tree ../..)
+
+        print_tree(tree)
     except BaseException as details:
         parser.exit(1, fill(str(details)) + '\n')
 
@@ -2095,6 +2134,15 @@ parser_cp.add_argument('sources', help='Objects and/or folder names to copy', na
 parser_cp.add_argument('destination', help='Folder into which to copy the sources')
 parser_cp.set_defaults(func=cp)
 parser_map['cp'] = parser_cp
+
+parser_tree = subparsers.add_parser('tree', help='List folders and objects in a tree',
+                                    description='List folders and objects in a tree',
+                                    prog='dx tree')
+parser_tree.add_argument('-a', '--all', help='show hidden files', action='store_true')
+parser_tree.add_argument('-l', help='use a long listing format', action='store_true')
+parser_tree.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
+parser_tree.set_defaults(func=tree)
+parser_map['tree'] = parser_tree
 
 parser_get = subparsers.add_parser('get', help='Download a data object',
                                    description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
