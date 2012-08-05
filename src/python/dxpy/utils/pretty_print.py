@@ -94,7 +94,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
     if len(my_column_names) > 0:
         padded_column_names = [col_head(i) + ' '*(col_widths[i]-len(my_column_names[i])) for i in range(len(my_column_names))]
         formatted_table.append(BLU(u'│') + BLU(u'│').join(padded_column_names) + BLU(u'│'))
-        formatted_table.append(BLU(u'│') + BLU(u'┼').join(BLU(u'─')*i for i in col_widths) + BLU(u'│'))
+        formatted_table.append(BLU(u'├') + BLU(u'┼').join(BLU(u'─')*i for i in col_widths) + BLU(u'┤'))
 
     for row in my_table:
         padded_row = [row[i] + ' '*(col_widths[i]-len(row[i])) for i in range(len(row))]
