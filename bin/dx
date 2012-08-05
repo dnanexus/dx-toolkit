@@ -1261,14 +1261,27 @@ def head(args):
                     if counter == args.lines:
                         break
             else:
+                table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(end=args.lines)),
+                                                                  column_specs = entity_result['describe']['columns'],
+                                                                  report_dimensions=True)
+                if sys.stdout.isatty():
+                    tty_rows, tty_cols = map(int, os.popen('stty size', 'r').read().split())
+                    if tty_rows <= table_rows or tty_cols <= table_cols:
+                        pipe = os.popen('less -S', 'w')
+                        pipe.write(table_text.encode('utf-8'))
+                        pipe.close()
+                        return
+                print table_text
                 # print fill(', '.join(map(lambda coldesc:
                 #                              coldesc['name'],
                 #                          entity_result['describe']['columns'])))
+                '''
                 for line in handler.iterate_rows(end=args.lines):
                     print BOLD + BLUE + str(line[0]) + ': ' + ENDC + json.dumps(line[1:])
                     counter += 1
                     if counter == args.lines:
                         break
+                '''
         except StopIteration:
             pass
         except BaseException as details:

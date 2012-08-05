@@ -40,7 +40,7 @@ def format_tree(tree):
     _format(tree)
     return '\n'.join(formatted_tree)
 
-def format_table(table, column_names=None, max_col_width=32):
+def format_table(table, column_names=None, column_specs=None, max_col_width=32, report_dimensions=False):
     ''' Table pretty printer.
     Expects tables to be given as arrays of arrays.
 
@@ -51,6 +51,9 @@ def format_table(table, column_names=None, max_col_width=32):
     '''
     col_widths = [0] * len(table[0])
     my_column_names = []
+    if column_specs is not None:
+        column_names = ['Row']
+        column_names.extend([col['name'] for col in column_specs])
     if column_names is not None:
         for i in range(len(column_names)):
             my_col = str(column_names[i])
@@ -79,6 +82,8 @@ def format_table(table, column_names=None, max_col_width=32):
         padded_row = [row[i] + ' '*(col_widths[i]-len(row[i])) for i in range(len(row))]
         formatted_table.append(u'│' + u'│'.join(padded_row) + u'│')
     formatted_table.append(u'└' + u'┴'.join(u'─'*i for i in col_widths) + u'┘')
-    return '\n'.join(formatted_table)
-    
 
+    if report_dimensions:
+        return '\n'.join(formatted_table), len(formatted_table), len(formatted_table[0])
+    else:
+        return '\n'.join(formatted_table)
