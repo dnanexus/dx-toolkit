@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
-import sys, os, datetime, urlparse, requests, base64, getpass, collections
+import sys, os, datetime, urlparse, requests, base64, getpass, collections, re, json
 import urllib
 import argparse
 import shlex # respects quotes substrings when splitting
 import textwrap
-import re
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.tree import print_tree
-
-import json
 
 try:
     import readline
@@ -1976,6 +1973,22 @@ def shell(orig_args):
             if str(details) != '1' and str(details) != '0':
                 print str(details) + '\n'
 
+def watch(args):
+    try:
+        from dxpy.utils.job_log_client import DXJobLogStreamClient
+        streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
+        response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
+        hskey = response.content.split(':')[0]
+        ws = DXJobLogStreamClient(dxpy.APISERVER + '/socket.io/1/websocket/' + hskey)
+
+        print "Watching job %s%s. Press Ctrl+C to stop." % (job_id, ("" if opts.no_recurse else " and sub-jobs"))
+        ws.connect()
+        while not ws.terminated:
+            # See also https://dnanexus.jira.com/browse/PTFM-2692
+            time.sleep(5)
+    except KeyboardInterrupt:
+        ws.close()
+
 def print_help(args):
     if args.command is None:
         parser.print_help()
@@ -2252,6 +2265,13 @@ parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=f
 parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width=56), action='store_true')
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
+
+parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch')
+parser_watch.add_argument('jobid', help='ID of the job to watch')
+parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', default=9999999999)
+parser_watch.add_argument('--no-subjobs', help='Do not watch messages from subjobs')
+parser_watch.set_defaults(func=watch)
+parser_map['watch'] = parser_watch
 
 parser_terminate = subparsers.add_parser('terminate', help='Terminate a job that has not yet finished', prog='dx terminate')
 parser_terminate.add_argument('jobid', help='ID of the job to terminate')
