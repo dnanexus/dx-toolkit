@@ -1,7 +1,7 @@
 SHELL=/bin/bash -e
 DESTDIR="$$DNANEXUS_HOME"
 
-all: api_wrappers src_libs python contigset2fasta
+all: src_libs python contigset2fasta
 
 api_wrappers:
 	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
@@ -11,6 +11,8 @@ api_wrappers:
 	cat ../build/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
 	cat ../build/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
 	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
+	touch --reference="../build/list_of_all_routes.txt" python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc \
+		javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm
 	rm ../bin/generateWrapperTable
 
 src_libs:
