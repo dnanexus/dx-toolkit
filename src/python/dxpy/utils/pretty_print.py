@@ -75,7 +75,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
     formatted_table = [u'┌' + u'┬'.join(u'─'*i for i in col_widths) + u'┐']
     if len(my_column_names) > 0:
         padded_column_names = [my_column_names[i] + ' '*(col_widths[i]-len(my_column_names[i])) for i in range(len(my_column_names))]
-        formatted_table.append(u'│' + u'┼'.join(padded_column_names) + u'│')
+        formatted_table.append(u'│' + u'│'.join(padded_column_names) + u'│')
         formatted_table.append(u'│' + u'┼'.join(u'─'*i for i in col_widths) + u'│')
 
     for row in my_table:
