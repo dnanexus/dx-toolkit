@@ -1,7 +1,7 @@
 SHELL=/bin/bash -e
 DESTDIR="$$DNANEXUS_HOME"
 
-all: src_libs python contigset2fasta
+all: api_wrappers src_libs python contigset2fasta
 
 api_wrappers:
 	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
