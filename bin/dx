@@ -793,6 +793,8 @@ def tree(args):
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
+                if item['describe']['class'] == 'applet':
+                    item_desc = BOLD + GREEN + item_desc + ENDC
             subtree[item_desc] = None
 
         # TODO: how do I resolve relative paths? (dx tree ../..)

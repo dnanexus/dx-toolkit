@@ -21,11 +21,11 @@ def format_tree(tree):
         for i in range(len(nodes)):
             node = nodes[i]
             if i == len(nodes)-1 and len(prefix) > 1:
-                my_prefix = prefix[:-2] + u'└─'
-                my_multiline_prefix = prefix[:-2] + u'  '
+                my_prefix = prefix[:-2] + u'└─ '
+                my_multiline_prefix = prefix[:-2] + u'   '
             else:
-                my_prefix = prefix[:-2] + u'├─'
-                my_multiline_prefix = prefix[:-2] + u'│ '
+                my_prefix = prefix[:-2] + u'├─ '
+                my_multiline_prefix = prefix[:-2] + u'│  '
             n = 0
             for line in node.splitlines():
                 if n == 0:
