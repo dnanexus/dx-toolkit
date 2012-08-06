@@ -13,9 +13,9 @@ parser.add_option("-p", "--prefix", help="Prefix lines from the stream with this
 try:
     logging.getLogger().addHandler(dxpy.DXLogHandler())
 except:
-    print >> sys.stderr, "Error while initializing logging"
+    print >> sys.stderr, "dx_log_stream: Error while initializing logging"
     sys.exit(1)
 
 for line in sys.stdin:
-    print "Logging line:", line.rstrip("\n"), "to log handler w/prefix", opts.prefix
+    # print "Logging line:", line.rstrip("\n"), "to log handler w/prefix", opts.prefix
     logging.error(opts.prefix + line.rstrip("\n"))

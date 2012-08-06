@@ -2,8 +2,11 @@ import os, sys, json, re
 from ws4py.client.threadedclient import WebSocketClient
 
 class DXJobLogStreamClient(WebSocketClient):
+    def set_dx_streaming_id(self, dx_streaming_id):
+        self.dx_streaming_id = dx_streaming_id
+
     def opened(self):
-        self.send('5:1::' + json.dumps({"name": "streamingId", "args": [streaming_id]}))
+        self.send('5:1::' + json.dumps({"name": "streamingId", "args": [self.dx_streaming_id]}))
 
     def closed(self, code, reason):
         print "Log socket closed:", code, reason

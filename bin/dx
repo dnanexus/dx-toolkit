@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-import sys, os, datetime, urlparse, requests, base64, getpass, collections, re, json
-import urllib
-import argparse
+import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
 import shlex # respects quotes substrings when splitting
-import textwrap
+import requests
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.pretty_print import format_tree, format_table
@@ -1983,8 +1981,9 @@ def watch(args):
         response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
         hskey = response.content.split(':')[0]
         ws = DXJobLogStreamClient(dxpy.APISERVER + '/socket.io/1/websocket/' + hskey)
+        ws.set_dx_streaming_id(streaming_id)
 
-        print "Watching job %s%s. Press Ctrl+C to stop." % (job_id, ("" if opts.no_recurse else " and sub-jobs"))
+        print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
         ws.connect()
         while not ws.terminated:
             # See also https://dnanexus.jira.com/browse/PTFM-2692
