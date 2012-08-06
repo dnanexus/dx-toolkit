@@ -55,6 +55,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
     if column_specs is not None:
         column_names = ['Row']
         column_names.extend([col['name'] for col in column_specs])
+        column_specs = [{'name': 'Row', 'type': 'float'}] + column_specs
     if column_names is not None:
         for i in range(len(column_names)):
             my_col = str(column_names[i])
@@ -74,7 +75,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
         my_table.append(my_row)
     
     def BLU(i):
-        return BOLD + BLUE + i + ENDC
+        return WHITE + i + ENDC
 
     type_colormap = {'boolean': BLUE,
                      'integer': YELLOW,
@@ -86,7 +87,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
 
     def col_head(i):
         if column_specs is not None:
-            return BOLD + type_colormap[column_specs[i-1]['type']] + column_names[i]
+            return BOLD + type_colormap[column_specs[i]['type']] + column_names[i] + ENDC
         else:
             return BOLD + WHITE + column_names[i] + ENDC
 
