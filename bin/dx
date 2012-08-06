@@ -1261,7 +1261,8 @@ def head(args):
             else:
                 table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(end=args.lines)),
                                                                   column_specs = entity_result['describe']['columns'],
-                                                                  report_dimensions=True)
+                                                                  report_dimensions=True,
+                                                                  max_col_width=args.max_col_width)
                 if sys.stdout.isatty():
                     tty_rows, tty_cols = map(int, os.popen('stty size', 'r').read().split())
                     if tty_rows <= table_rows or tty_cols <= table_cols:
@@ -2172,6 +2173,7 @@ parser_map['get'] = parser_get
 
 parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable', prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
+parser_head.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
 parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
 parser_map['head'] = parser_head
@@ -2467,3 +2469,4 @@ else:
     else:
         parser.print_help()
         sys.exit(1)
+
