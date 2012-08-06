@@ -10,7 +10,13 @@ parser.add_option("-1", "--only_this_job", help="Do not recurse into subjobs' ou
 parser.add_option("-f", "--print_to_files", help="Instead of printing a summary, print each stream into a file <job_id>.stdout, etc. in the working directory", action='store_true', default=False)
 parser.add_option("-q", "--quiet", help="Do not print banners when using summary format", action='store_true', default=False)
 parser.add_option("-n", "--no_tag", help="Do not prepend job tag to every line", action='store_true', default=False)
+parser.add_option("--force", help="Force to run", action='store_true', default=False)
 (opts, args) = parser.parse_args()
+
+if not opts.force:
+    print >>sys.stderr, "dx_getJobStreams is deprecated. Please use `dx watch` instead."
+    print >>sys.stderr, "To run dx_getJobStreams anyway, add the --force option."
+    exit(1)
 
 if len(args) != 1:
     parser.print_help()
@@ -49,13 +55,13 @@ def print_streams(job_id, indent_level):
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     desc = job_descriptions[job_id]
-    program_or_app = desc['program'] if 'program' in desc else desc['app']
+    applet_or_app = desc['applet'] if 'applet' in desc else desc['app']
 
     status = desc['state']
     if status == 'failed':
         status = FAIL + 'FAILED' + OKGREEN
     if not opts.quiet:
-        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + program_or_app + ':' + HEADER + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC
+        print INDENT + OKGREEN + '==== Job', desc['id'], '(' + applet_or_app + ':' + HEADER + desc['function'] + OKGREEN + ') (' + status + ')', 'stdout', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stdouts[job_id] != None:
         for line in dxpy.DXFile(stdouts[job_id]):
@@ -65,7 +71,7 @@ def print_streams(job_id, indent_level):
     if status == 'failed':
         status = FAIL + 'FAILED' + WARN
     if not opts.quiet:
-        print INDENT + WARN + '==== Job', desc['id'], '(' + program_or_app + ':' + HEADER + desc['function'] + WARN + ') (' + status + ')', 'stderr', '====', ENDC
+        print INDENT + WARN + '==== Job', desc['id'], '(' + applet_or_app + ':' + HEADER + desc['function'] + WARN + ') (' + status + ')', 'stderr', '====', ENDC
     tag = '' if opts.no_tag else OKBLUE + '%(id)s:%(function)s> ' % job_descriptions[job_id] + ENDC
     if stderrs[job_id] != None:
         for line in dxpy.DXFile(stderrs[job_id]):
