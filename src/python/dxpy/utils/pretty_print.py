@@ -103,6 +103,6 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
     formatted_table.append(BLU(u'└') + BLU(u'┴').join(BLU(u'─')*i for i in col_widths) + BLU(u'┘'))
 
     if report_dimensions:
-        return '\n'.join(formatted_table), len(formatted_table), len(formatted_table[0])
+        return '\n'.join(formatted_table), len(formatted_table), sum(col_widths) + len(col_widths) + 1
     else:
         return '\n'.join(formatted_table)
