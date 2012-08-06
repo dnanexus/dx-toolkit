@@ -43,4 +43,17 @@ clean:
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
 
-.PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl
+setup_doc_build_virtualenv: doc_build_env/.setup_virtualenv
+
+doc_build_env/.setup_virtualenv: ../build/doc_build_requirements.txt
+	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
+	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
+	virtualenv doc_build_env
+	(unset PYTHONPATH; source doc_build_env/bin/activate; pip install --requirement=../build/doc_build_requirements.txt)
+	virtualenv --relocatable doc_build_env
+	touch doc_build_env/.setup_virtualenv
+
+doc: python setup_doc_build_virtualenv
+	source doc_build_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; sphinx-apidoc --force --full --maxdepth=9 --output-dir=doc --doc-project="Execution Server" ../lib; $(MAKE) -C doc html
+
+.PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl setup_doc_build_virtualenv
