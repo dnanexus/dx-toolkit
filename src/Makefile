@@ -53,7 +53,17 @@ doc_build_env/.setup_virtualenv: ../build/doc_build_requirements.txt
 	virtualenv --relocatable doc_build_env
 	touch doc_build_env/.setup_virtualenv
 
-doc: python setup_doc_build_virtualenv
-	source doc_build_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; sphinx-apidoc --force --full --maxdepth=9 --output-dir=doc --doc-project="Execution Server" ../lib; $(MAKE) -C doc html
+doc: doc_python doc_dxcpp doc_dxjson
 
-.PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl setup_doc_build_virtualenv
+doc_python: python setup_doc_build_virtualenv
+	source doc_build_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
+
+doc_dxcpp:
+	mkdir -p ../doc/cpp/dxcpp
+	doxygen cpp/dxcpp/Doxyfile
+
+doc_dxjson:
+	mkdir -p ../doc/cpp/dxjson
+	doxygen cpp/dxjson/Doxyfile
+
+.PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson

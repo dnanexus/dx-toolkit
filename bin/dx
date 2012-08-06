@@ -142,7 +142,7 @@ class DXCLICompleter():
                 elif words[0] in ['cd', 'rmdir', 'mkdir']:
                     path_matches = path_completer(words[-1],
                                                   expected='folder')
-                elif words[0] in ['get', 'head']:
+                elif words[0] in ['head']:
                     path_matches = path_completer(words[-1],
                                                   classes=['gtable', 'file'])
                 elif words[0] in ['cat', 'upload']:
@@ -150,7 +150,7 @@ class DXCLICompleter():
                                                   classes=['file'])
                 elif words[0] in ['ls', 'rm', 'mv', 'cp']:
                     path_matches = path_completer(words[-1])
-                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close']:
+                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close', 'get']:
                     path_matches = path_completer(words[-1])
                 elif words[0] in ['describe', 'add_tags', 'remove_tags', 'rename', 'set_properties', 'unset_properties']:
                     path_matches = path_completer(words[-1], include_current_proj=True)
