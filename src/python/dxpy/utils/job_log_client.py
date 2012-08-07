@@ -12,6 +12,10 @@ class DXJobLogStreamClient(WebSocketClient):
         print "Log socket closed:", code, reason
 
     def received_message(self, message):
+        if (str(message) == '2::'):
+            self.send('2::')
+            return
+
         if not re.match("^([^:]+):([^:]*):([^:]*):(.+)", str(message)):
             return
 
