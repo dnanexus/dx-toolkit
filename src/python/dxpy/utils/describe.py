@@ -6,28 +6,20 @@ containers, dataobjects, apps, and jobs).
 
 import datetime, json, textwrap, math
 
-CYAN = '\033[36m'
-BLUE = '\033[34m'
-YELLOW = '\033[33m'
-GREEN = '\033[32m'
-RED = '\033[31m'
-WHITE = '\033[37m'
-UNDERLINE = '\033[4m'
-BOLD = '\033[1m'
-ENDC = '\033[0m'
+from dxpy.utils.printing import *
 
-JOB_STATES = {'failed': BOLD + RED + 'failed' + ENDC,
-              'done': BOLD + GREEN + 'done' + ENDC,
-              'running': GREEN + 'running' + ENDC,
-              'idle': YELLOW + 'idle' + ENDC,
-              'runnable': YELLOW + 'runnable' + ENDC,
-              'waiting_on_inputs': YELLOW + 'waiting_on_inputs' + ENDC,
-              'waiting_on_outputs': YELLOW + 'waiting_on_outputs' + ENDC
+JOB_STATES = {'failed': BOLD() + RED() + 'failed' + ENDC(),
+              'done': BOLD() + GREEN() + 'done' + ENDC(),
+              'running': GREEN() + 'running' + ENDC(),
+              'idle': YELLOW() + 'idle' + ENDC(),
+              'runnable': YELLOW() + 'runnable' + ENDC(),
+              'waiting_on_inputs': YELLOW() + 'waiting_on_inputs' + ENDC(),
+              'waiting_on_outputs': YELLOW() + 'waiting_on_outputs' + ENDC()
               }
 
-DATA_STATES = {'open': YELLOW + 'open' + ENDC,
-               'closing': YELLOW + 'open' + ENDC,
-               'closed': GREEN + 'closed' + ENDC
+DATA_STATES = {'open': YELLOW() + 'open' + ENDC(),
+               'closing': YELLOW() + 'open' + ENDC(),
+               'closed': GREEN() + 'closed' + ENDC()
                }
 
 SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
@@ -375,9 +367,9 @@ def get_ls_l_desc(desc, include_folder=False):
     if 'state' in desc:
         state_len = len(desc['state'])
         if desc['state'] != 'closed':
-            state_str = YELLOW + desc['state'] + ENDC
+            state_str = YELLOW() + desc['state'] + ENDC()
         else:
-            state_str = GREEN + desc['state'] + ENDC
+            state_str = GREEN() + desc['state'] + ENDC()
     else:
         state_str = ''
         state_len = 0
@@ -388,7 +380,7 @@ def get_ls_l_desc(desc, include_folder=False):
         name_str = desc['name']
 
     if desc['class'] == 'program':
-        name_str = BOLD + GREEN + name_str + ENDC
+        name_str = BOLD() + GREEN() + name_str + ENDC()
 
     return state_str + ' '*(8 - state_len) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
 
