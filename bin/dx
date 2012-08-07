@@ -4,6 +4,7 @@ import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time
 import shlex # respects quoted substrings when splitting
 import requests
 import csv, codecs
+import hashlib
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.printing import *
@@ -255,7 +256,22 @@ def login(args):
     setenv(args)
 
 def logout(args):
-    write_env_var('DX_SECURITY_CONTEXT', '')
+    if dxpy.AUTH_HELPER is not None:
+        if args.host is not None or args.port is not None:
+            authserver = 'http://' + args.host
+            authserver += ':' + str(args.port)
+            print 'Deleting credentials from ' + authserver
+        else:
+            authserver = 'https://auth.dnanexus.com'
+        session = requests.session()
+        token = dxpy.AUTH_HELPER.security_context['auth_token']
+        try:
+            response = session.delete(authserver + '/authorizations/' + hashlib.sha256(token).hexdigest()[:7], auth=dxpy.AUTH_HELPER)
+            response.raise_for_status()
+        except BaseException as details:
+            parser.exit(1, fill(str(details)) + '\n')
+    else:
+        parser.exit(1, 'No current auth token found\n')
 
 def set_api(protocol, host, port, write):
     os.environ['DX_APISERVER_PROTOCOL'] = protocol
@@ -2128,9 +2144,12 @@ parser_login.add_argument('--save', help='Save token and other environment varia
 parser_login.set_defaults(func=login)
 parser_map['login'] = parser_login
 
-parser_logout = subparsers.add_parser('logout', help='Log out and remove credentials',
+parser_logout = subparsers.add_parser('logout',
+                                      help='Log out and remove credentials',
                                       description='Log out and remove credentials',
                                       prog='dx logout')
+parser_logout.add_argument('--host', help='Log out of the given auth server host (port must also be given)')
+parser_logout.add_argument('--port', type=int, help='Log out of the given auth server port (host must also be given)')
 parser_logout.set_defaults(func=logout)
 parser_map['logout'] = parser_logout
 
