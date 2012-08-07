@@ -6,7 +6,7 @@
 #include <boost/thread.hpp>
 #include "../bindings.h"
 #include "../api.h"
-#include "bqueue.h"
+#include "../bqueue.h"
 
 /**
  * @brief Remote table handler

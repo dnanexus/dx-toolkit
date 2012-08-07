@@ -48,9 +48,9 @@ dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
  * @param port Port number
  * @param protocol Protocol to use, e.g. "http"
  */
-void setAPIServerInfo(const std::string &host="localhost",
-		      int port=8124,
-		      const std::string &protocol="http");
+void setAPIServerInfo(const std::string &host,
+		      int port,
+		      const std::string &protocol);
 
 /**
  * Sets the security context for constructing the necessary headers in

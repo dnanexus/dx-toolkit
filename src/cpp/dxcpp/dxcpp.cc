@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <boost/thread.hpp>
+#include <boost/regex.hpp>
 #include <atomic>
+#include <pwd.h>
 #include "dxcpp.h"
 #include "SimpleHttp.h"
 
@@ -17,7 +19,7 @@ const string g_API_VERSION = "1.0.0";
 
 bool g_APISERVER_SET = false;
 bool g_SECURITY_CONTEXT_SET = false;
-bool g_WORKSPACE_ID_SET = false;
+//bool g_WORKSPACE_ID_SET = false;
 
 string g_APISERVER_HOST;
 string g_APISERVER_PORT;
@@ -28,10 +30,12 @@ string g_WORKSPACE_ID;
 string g_PROJECT_CONTEXT_ID;
 string g_APISERVER_PROTOCOL;
 
+map<string, string> g_config_file_contents;
+
 const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 
-boost::mutex loadFromEnvironment_mutex_g;
-std::atomic<bool> loadFromEnvironment_finished_g(false);
+boost::mutex g_loadFromEnvironment_mutex;
+std::atomic<bool> g_loadFromEnvironment_finished(false);
 
 static bool isRetriableHttpCode(int c) {
   // Ref: Python bindings
@@ -52,11 +56,11 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
   // We use an atomic variable (C++11 feature) to avoid acquiring a lock
   // every time in DXHTTPRequest(). Lock is instead acquired in loadFromEnvironment().
-  // By checking loadFromEnvironment_finished_g value, we avoid calling
+  // By checking g_loadFromEnvironment_finished value, we avoid calling
   // loadFromEnvironment() every time (and acquiring the expensive lock)
   // Note: In this case a regular variable instead of atomic, will also work correctly.
   //       (except can result in few extra short-circuited calls to loadFromEnvironment()).
-  if (loadFromEnvironment_finished_g.load() == false) {
+  if (g_loadFromEnvironment_finished.load() == false) {
     loadFromEnvironment();
   }
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
@@ -201,44 +205,144 @@ void setProjectContext(const string &project_id) {
   g_PROJECT_CONTEXT_ID = project_id;
 }
 
+// This function populates input param "val" with the value of particular 
+// field "key" in the config file.
+// If the key is not found (or file does not exist) then "false" is returned (else "true")
+// Note: Reads the config file only the first time (save contents in a global variable)
+// Note: If key is not found in config file, then "val" remain unchanged
+bool getVariableFromConfigFile(string fname, string key, string &val) {
+  
+  // Read file only if it hasn't been succesfuly read before
+  if (g_config_file_contents[fname].size() == 0) {  
+    // Try reading in the contents of config file
+    ifstream fp(fname);
+    if (!fp.is_open()) // file could not be opened
+      return false;
+    // Reserve memory for string upfront (to avoid having reallocation multiple time)
+    fp.seekg(0, ios::end);   
+    g_config_file_contents[fname].reserve(fp.tellg());
+    fp.seekg(0, ios::beg);
+
+    // copy the contents of file into the string
+    // Note: the extra parantheses around first parameter
+    //       are required (due to "most vexing parsing" problem in C++)
+    g_config_file_contents[fname].assign((istreambuf_iterator<char>(fp)), 
+      istreambuf_iterator<char>());
+    fp.close();
+  }
+  // Since regex (C++11 feature) are not implemented in g++ yet,
+  // we use boost::regex
+  boost::regex expression(string("^\\s*export\\s*") + key + string("\\s*=\\s*'([^'\\r\\n]+)'$"), boost::regex::perl);
+  boost::match_results<std::string::const_iterator> what;
+  if(!boost::regex_search(g_config_file_contents[fname].cbegin(), g_config_file_contents[fname].cend(), what, expression, boost::match_default)) {
+    return false;
+  }
+  if (what.size() < 2) {
+    return false;
+  }
+  val = what[what.size() - 1];
+  return true;
+}
+
+// Return path to user's home directory
+string getUserHomeDirectory() {
+  // see if HOME env variable is set
+  if (getenv("HOME") != NULL)
+    return getenv("HOME");
+  
+  // else get from password database
+  struct passwd *pw = getpwuid(getuid());
+  return pw->pw_dir;
+}
+
+// First look in env variable to find the value
+// If not found, then look into user's config file (in home directory) for the value
+// If still not found, then look into /opt/dnanexus/enviornment
+// 
+// Returns false if not found in either of the 3 places, else true
+// "val" contain the value of variable if function returned "true", unchanged otherwise
+bool getFromEnvOrConfig(string key, string &val) {
+  if (getenv(key.c_str()) != NULL) {
+    val = getenv(key.c_str());
+    return true;
+  }
+
+  const std::string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
+  if (getVariableFromConfigFile(user_config_file_path, key, val))
+    return true;
+  
+  const std::string default_config_file_path = "/opt/dnanexus/enviornment";
+  if (getVariableFromConfigFile(default_config_file_path, key, val))
+    return true;
+
+  return false;
+}
+
+string getVariableForPrinting(string s) {
+  if (s == "")
+    return "NOT SET";
+  else
+    return string("'") + s + string("'");
+}
+
+string getVariableForPrinting(const JSON &j) {
+  if (j.type() == JSON_UNDEFINED)
+    return "NOT SET";
+  else
+    return string("'") + j.toString() + string("'");
+}
+
 void loadFromEnvironment() {
   // Mutex's aim: To ensure that enviornment variable are loaded only once.
   //              All other calls to loadFromEnvironment() must be short circuited.
-  boost::mutex::scoped_lock glock(loadFromEnvironment_mutex_g);
-  
-  // It is important to acquire lock before checking loadFromEnvironment_finished_g == true 
+  boost::mutex::scoped_lock glock(g_loadFromEnvironment_mutex);
+
+  // It is important to acquire lock before checking g_loadFromEnvironment_finished == true 
   // condition, since other instance of the function might be running in parallel thread, 
-  // we must wait for it to finish (and set loadFromEnvironment_finished_g = true)
-  if (loadFromEnvironment_finished_g.load() == true)
+  // we must wait for it to finish (and set g_loadFromEnvironment_finished = true)
+  if (g_loadFromEnvironment_finished.load() == true)
     return; // Short circuit this call - env variables already loaded
+  
+  // intiialized with default values, will be overridden by env variable/config file (if present)
+  string apiserver_host = "localhost";
+  string apiserver_port = "8124";
+  string apiserver_protocol = "http";
+  
+  getFromEnvOrConfig("DX_APISERVER_HOST", apiserver_host);
+  getFromEnvOrConfig("DX_APISERVER_PORT", apiserver_port);
+  getFromEnvOrConfig("DX_APISERVER_PROTOCOL", apiserver_protocol);
 
-  if (!g_APISERVER_SET &&
-      (getenv("DX_APISERVER_HOST") != NULL) &&
-      (getenv("DX_APISERVER_PORT") != NULL)) {
-    if (getenv("DX_APISERVER_PROTOCOL") != NULL) {
-      setAPIServerInfo(getenv("DX_APISERVER_HOST"),
-                       atoi(getenv("DX_APISERVER_PORT")),
-                       getenv("DX_APISERVER_PROTOCOL"));
-    } else {
-      setAPIServerInfo(getenv("DX_APISERVER_HOST"),
-                       atoi(getenv("DX_APISERVER_PORT")));
-    }
+  setAPIServerInfo(apiserver_host, boost::lexical_cast<int>(apiserver_port), apiserver_protocol);
+  
+  string tmp;
+  if (getFromEnvOrConfig("DX_SECURITY_CONTEXT", tmp)) {
+    setSecurityContext(JSON::parse(tmp));
+  }
+  
+  if (getFromEnvOrConfig("DX_JOB_ID", tmp)) {
+    setJobID(tmp);
+    if (getFromEnvOrConfig("DX_WORKSPACE_ID", tmp))
+      setWorkspaceID(tmp);
+    if (getFromEnvOrConfig("DX_PROJECT_CONTEXT_ID", tmp))
+      setProjectContext(tmp);
+  }
+  else {
+    if (getFromEnvOrConfig("DX_PROJECT_CONTEXT_ID", tmp))
+      setWorkspaceID(tmp);
   }
 
-  if (!g_SECURITY_CONTEXT_SET &&
-      getenv("DX_SECURITY_CONTEXT") != NULL)
-    setSecurityContext(JSON::parse(getenv("DX_SECURITY_CONTEXT")));
+/*
+  cerr<<"These values will be used by DXHTTPRequest():";
+  cerr<<"\n1. APISERVER_HOST: " + getVariableForPrinting(g_APISERVER_HOST);
+  cerr<<"\n2. APISERVER_PORT: " + getVariableForPrinting(g_APISERVER_PORT);
+  cerr<<"\n3. APISERVER_PROTOCOL: " + getVariableForPrinting(g_APISERVER_PROTOCOL);
+  cerr<<"\n4. SECURITY_CONTEXT: " + getVariableForPrinting(g_SECURITY_CONTEXT);
+  cerr<<"\n5. JOB_ID: " + getVariableForPrinting(g_JOB_ID);
+  cerr<<"\n6. WORKSPACE_ID: " + getVariableForPrinting(g_WORKSPACE_ID);
+  cerr<<"\n7. PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
+  cerr<<"\n";
+*/
+  g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
 
-  if (!g_WORKSPACE_ID_SET) {
-    if (getenv("DX_JOB_ID") != NULL) {
-      setJobID(getenv("DX_JOB_ID"));
-      if (getenv("DX_WORKSPACE_ID") != NULL)
-	      setWorkspaceID(getenv("DX_WORKSPACE_ID"));
-      if (getenv("DX_PROJECT_CONTEXT_ID") != NULL)
-	      setProjectContext(getenv("DX_PROJECT_CONTEXT_ID"));
-    } else if (getenv("DX_PROJECT_CONTEXT_ID") != NULL) {
-      setWorkspaceID(getenv("DX_PROJECT_CONTEXT_ID"));
-    }
-  }
-  loadFromEnvironment_finished_g.store(true);
+  g_loadFromEnvironment_finished.store(true);
 }
