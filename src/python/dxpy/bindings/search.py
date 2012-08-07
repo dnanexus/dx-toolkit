@@ -106,9 +106,15 @@ def find_data_objects(classname=None, state=None, visibility=None,
             query["scope"]["folder"] = folder
         if recurse is not None:
             query["scope"]["recurse"] = recurse
-    else:
-        query["scope"] = {}
-        query["scope"]["project"] = dxpy.WORKSPACE_ID
+    elif folder is not None or recurse is not None:
+        if dxpy.WORKSPACE_ID is not None:
+            query['scope'] = {'project': dxpy.WORKSPACE_ID}
+            if folder is not None:
+                query['scope']['folder'] = folder
+            if recurse is not None:
+                query['scope']['recurse'] = recurse
+        else:
+            raise DXError("Cannot search within a folder or recurse if a project is not specified")
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
@@ -243,9 +249,15 @@ def find_one_data_object(classname=None, state=None, visibility=None,
             query["scope"]["folder"] = folder
         if recurse is not None:
             query["scope"]["recurse"] = recurse
-    else:
-        query["scope"] = {}
-        query["scope"]["project"] = dxpy.WORKSPACE_ID
+    elif folder is not None or recurse is not None:
+        if dxpy.WORKSPACE_ID is not None:
+            query['scope'] = {'project': dxpy.WORKSPACE_ID}
+            if folder is not None:
+                query['scope']['folder'] = folder
+            if recurse is not None:
+                query['scope']['recurse'] = recurse
+        else:
+            raise DXError("Cannot search within a folder or recurse if a project is not specified")
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
