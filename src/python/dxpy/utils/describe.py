@@ -4,23 +4,29 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-import datetime, json, textwrap, math
+import datetime, json, textwrap, math, sys
 
 from dxpy.utils.printing import *
 
-JOB_STATES = {'failed': BOLD() + RED() + 'failed' + ENDC(),
-              'done': BOLD() + GREEN() + 'done' + ENDC(),
-              'running': GREEN() + 'running' + ENDC(),
-              'idle': YELLOW() + 'idle' + ENDC(),
-              'runnable': YELLOW() + 'runnable' + ENDC(),
-              'waiting_on_inputs': YELLOW() + 'waiting_on_inputs' + ENDC(),
-              'waiting_on_outputs': YELLOW() + 'waiting_on_outputs' + ENDC()
-              }
+def JOB_STATES(state):
+    if state == 'failed':
+        return BOLD() + RED() + state + ENDC()
+    elif state == 'done':
+        return BOLD() + GREEN() + state + ENDC()
+    elif state == 'running':
+        return GREEN() + state + ENDC()
+    else:
+        return YELLOW() + state + ENDC()
 
-DATA_STATES = {'open': YELLOW() + 'open' + ENDC(),
-               'closing': YELLOW() + 'open' + ENDC(),
-               'closed': GREEN() + 'closed' + ENDC()
-               }
+def DATA_STATES(state):
+    if state == 'open':
+        return YELLOW() + state + ENDC()
+    elif state == 'closing':
+        return YELLOW() + state + ENDC()
+    elif state == 'closed':
+        return GREEN() + state + ENDC()
+    else:
+        return state
 
 SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
 
@@ -73,13 +79,13 @@ def get_io_spec(spec):
                                     spec))
 
 def print_field(label, value):
-    print label + " " * (16-len(label)) + textwrap.fill(value, subsequent_indent=' '*16, width=64)
+    sys.stdout.write(label + " " * (16-len(label)) + textwrap.fill(value.encode('utf-8'), subsequent_indent=' '*16, width=64) + '\n')
 
 def print_list_field(label, values):
     print_field(label, ('-' if len(values) == 0 else ', '.join(values)))
 
 def print_json_field(label, json_value):
-    print_field(label, json.dumps(json_value))
+    print_field(label, json.dumps(json_value, ensure_ascii=False))
 
 def print_project_desc(desc):
     recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces', 'appCaches', 'billTo']
@@ -197,10 +203,7 @@ def print_data_obj_desc(desc):
         print_field("Folder", desc["folder"])
     print_field("Name", desc["name"])
     if 'state' in desc:
-        if desc['state'] in DATA_STATES:
-            print_field("State", DATA_STATES[desc['state']])
-        else:
-            print_field("State", desc["state"])
+        print_field("State", DATA_STATES(desc['state']))
     if 'hidden' in desc:
         print_field("Visibility", ("hidden" if desc["hidden"] else "visible"))
     if 'types' in desc:
@@ -297,10 +300,7 @@ def print_job_desc(desc):
         print_field("App", desc["app"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
-    if desc['state'] in JOB_STATES:
-        print_field("State", JOB_STATES[desc["state"]])
-    else:
-        print_field("State", desc['state'])
+    print_field("State", JOB_STATES(desc["state"]))
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
     else:

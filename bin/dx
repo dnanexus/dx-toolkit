@@ -15,7 +15,8 @@ try:
 except ImportError:
     print 'readline module not available'
 
-state = {"interactive": False}
+state = {"interactive": False,
+         "colors": "auto"}
 parser_map = {}
 
 class ResultCounter():
@@ -33,7 +34,7 @@ def try_call(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def get_bash_export_cmds(env_vars):
     string = ''
@@ -77,6 +78,14 @@ def get_json_from_stdin():
         parser.exit(1, 'Error: user input could not be parsed as JSON\n')
         return None
     return user_json
+
+def set_cli_colors(args=argparse.Namespace()):
+    if 'color' in args:
+        state['colors'] = args.color
+    if state['colors'] == 'auto':
+        set_colors(sys.stdout.isatty())
+    else:
+        set_colors(state['colors'] == 'on')
 
 # Loading environment
 
@@ -212,7 +221,7 @@ def login(args):
             response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
             response.raise_for_status()
         except requests.exceptions.RequestException as details:
-            print 'Error contacting the auth server: ' + str(details)
+            print 'Error contacting the auth server: ' + unicode(details)
             parser.exit(1)
         token = json.loads(response.content)["access_token"]
         sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
@@ -269,7 +278,7 @@ def logout(args):
             response = session.delete(authserver + '/authorizations/' + hashlib.sha256(token).hexdigest()[:7], auth=dxpy.AUTH_HELPER)
             response.raise_for_status()
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
     else:
         parser.exit(1, 'No current auth token found\n')
 
@@ -325,7 +334,7 @@ def pick_and_set_project(args):
     try:
         results = list(dxpy.find_projects(describe=True))
     except BaseException as details:
-        parser.exit(1, fill('Error when listing available projects: ' + str(details)) + '\n')
+        parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
 
     projects = map(lambda result: result['id'], results)
     if len(projects) == 0:
@@ -416,7 +425,7 @@ def api(args):
                                   json_input)
         print json.dumps(resp, indent=4)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def invite(args):
     project, none, none = resolve_existing_path(args.project, 'project')
@@ -425,7 +434,7 @@ def invite(args):
                                   {"invitee": args.user, "level": args.level})
         print 'Invited ' + args.user + ' to ' + project + ' (' + resp['state'] + ')'
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def cd(args):
     # entity_result should be None because expected='folder'
@@ -530,7 +539,7 @@ def ls(args):
 
                     last_name = current_name
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
     else:
         # We have results to describe
         for result in entity_results:
@@ -543,7 +552,7 @@ def mkdir(args):
     try:
         dxproj.new_folder(folder=folderpath, parents=args.parents)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def rmdir(args):
     project, folderpath, none = try_call(resolve_path_with_project, args.path, expected='folder')
@@ -552,7 +561,7 @@ def rmdir(args):
     try:
         dxproj.remove_folder(folder=folderpath)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def rm(args):
     projects = {}
@@ -583,13 +592,13 @@ def rm(args):
                                     "recurse": True})
             except BaseException as details:
                 print "Error while removing " + folder + " from " + project
-                print "  " + str(details)
+                print "  " + unicode(details)
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeObjects',
                                {"objects": projects[project]['objects']})
         except BaseException as details:
             print "Error while removing " + json.dumps(projects[project]['objects']) + " from " + project
-            print "  " + str(details)
+            print "  " + unicode(details)
 
 def rmproject(args):
     for project in args.projects:
@@ -621,7 +630,7 @@ def rmproject(args):
             print ''
             continue
         except BaseException as details:
-            print fill('Was unable to remove ' + project + ', ' + str(details))
+            print fill('Was unable to remove ' + project + ', ' + unicode(details))
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
@@ -664,7 +673,7 @@ def mv(args):
                                     "newpath": dest_path})
                 return
             except BaseException as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
         else:
             try:
                 if src_results[0]['describe']['folder'] != dest_folder:
@@ -679,7 +688,7 @@ def mv(args):
                                         "name": dest_name})
                 return
             except BaseException as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
 
     if len(args.sources) == 0:
         parser.exit(1, 'No sources provided to move\n')
@@ -700,7 +709,7 @@ def mv(args):
                             "folders": src_folders,
                             "destination": dest_path})
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
@@ -760,7 +769,7 @@ def cp(args):
                                         "name": dest_name})
                 return
             except BaseException as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
 
     if len(args.sources) == 0:
         parser.exit(1, 'No sources provided to copy to another project\n')
@@ -782,7 +791,7 @@ def cp(args):
                             "project": dest_proj,
                             "destination": dest_path})
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def tree(args):
     project, folderpath, none = try_call(resolve_existing_path, args.path, expected='folder')
@@ -824,7 +833,7 @@ def tree(args):
 
         print format_tree(tree, root=args.path)
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def describe(args):
     # Attempt to resolve name
@@ -969,7 +978,7 @@ def new_project(args):
                                   {"name": args.name})
         print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def new_record(args):
     hidden = (args.visibility == 'hidden')
@@ -994,7 +1003,7 @@ def new_record(args):
                                      parents=args.parents, init_from=init_from)
         print dxrecord.get_id()
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def new_gtable(args):
     hidden = (args.visibility == 'hidden')
@@ -1032,7 +1041,7 @@ def new_gtable(args):
                                      indices=args.indices)
         print dxgtable.get_id()
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_visibility(args):
     # Attempt to resolve name
@@ -1046,7 +1055,7 @@ def set_visibility(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
                                {"hidden": (args.visibility == 'hidden')})
         except dxpy.DXAPIError as details:
-            print fill(str(details))
+            print fill(unicode(details))
 
 def get_details(args):
     # Attempt to resolve name
@@ -1058,7 +1067,7 @@ def get_details(args):
     try:
         print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_details(args):
     # Attempt to resolve name
@@ -1077,7 +1086,7 @@ def set_details(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
                                args.details)
         except dxpy.DXAPIError as details:
-            print(fill(str(details)))
+            print(fill(unicode(details)))
 
 def add_types(args):
     # Attempt to resolve name
@@ -1091,7 +1100,7 @@ def add_types(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
                                {"types": args.types})
         except dxpy.DXAPIError as details:
-            print fill(str(details))
+            print fill(unicode(details))
 
 def remove_types(args):
     # Attempt to resolve name
@@ -1105,7 +1114,7 @@ def remove_types(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
                                {"types": args.types})
         except dxpy.DXAPIError as details:
-            print fill(str(details))
+            print fill(unicode(details))
 
 def add_tags(args):
     # Attempt to resolve name
@@ -1120,7 +1129,7 @@ def add_tags(args):
                                {"project": project,
                                 "tags": args.tags})
         except BaseException as details:
-            print fill(str(details))
+            print fill(unicode(details))
 
 def remove_tags(args):
     # Attempt to resolve name
@@ -1135,7 +1144,7 @@ def remove_tags(args):
                                {"project": project,
                                 "tags": args.tags})
         except BaseException as details:
-            print fill(str(details))
+            print fill(unicode(details))
 
 def rename(args):
     # Attempt to resolve name
@@ -1158,7 +1167,7 @@ is a project.\n''')
                                    {"project": project,
                                     "name": args.name})
             except BaseException as details:
-                print fill(str(details))
+                print fill(unicode(details))
     elif not project.startswith('project-'):
         parser.exit(1, 'Cannot rename a non-project data container\n')
     else:
@@ -1166,7 +1175,7 @@ is a project.\n''')
             dxpy.DXHTTPRequest('/' + project + '/update',
                                {"name": args.name})
         except dxpy.DXAPIError as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_properties(args):
     # Attempt to resolve name
@@ -1183,7 +1192,7 @@ def set_properties(args):
                                    {"project": project,
                                     "properties": properties})
             except BaseException as details:
-                print fill(str(details))
+                print fill(unicode(details))
     elif not project.startswith('project-'):
         parser.exit(1, 'Cannot set properties on a non-project data container\n')
     else:
@@ -1191,7 +1200,7 @@ def set_properties(args):
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
         except dxpy.DXAPIError as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def unset_properties(args):
     # Attempt to resolve name
@@ -1210,7 +1219,7 @@ def unset_properties(args):
                                    {"project": project,
                                     "properties": properties})
             except BaseException as details:
-                print fill(str(details))
+                print fill(unicode(details))
     elif not project.startswith('project-'):
         parser.exit(1, 'Cannot unset properties on a non-project data container\n')
     else:
@@ -1218,7 +1227,7 @@ def unset_properties(args):
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
         except dxpy.DXAPIError as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def get(args):
     # Attempt to resolve name
@@ -1238,12 +1247,12 @@ def get(args):
                 for line in dxfile:
                     print line
             except dxpy.DXAPIError as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
         else:
             try:
                 dxpy.download_dxfile(entity_result['id'], filename)
             except dxpy.DXAPIError as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
     elif entity_result['describe']['class'] in ['gtable', 'table']:
         if not args.tsv and not args.csv and not args.vcf:
             args.tsv = True
@@ -1269,7 +1278,7 @@ def get(args):
             details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
                                          {})
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
         if args.stdout:
             print json.dumps(details, indent=4)
         else:
@@ -1277,7 +1286,7 @@ def get(args):
                 with open(filename, 'w') as fd:
                     fd.write(json.dumps(details, indent=4))
             except BaseException as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
     elif entity_result['describe']['class'] == 'applet':
         dxapplet = dxpy.DXApplet(entity_result['id'])
         try:
@@ -1289,7 +1298,7 @@ def get(args):
             else:
                 raise Exception('No run specification found')
         except BaseExceptions as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
         if args.stdout:
             print run_spec['code']
             return
@@ -1304,7 +1313,7 @@ def get(args):
             with open(filename, 'w') as fd:
                 fd.write(run_spec['code'])
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
     else:
         parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or applet was expected\n')
 
@@ -1347,7 +1356,7 @@ def head(args):
         except StopIteration:
             pass
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def file_get(args):
     # Attempt to resolve name
@@ -1387,7 +1396,7 @@ def upload(args):
         else:
             print_desc(dxfile.describe(incl_properties=True, incl_details=True))
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def gtable_get(args):
     # Attempt to resolve name
@@ -1416,7 +1425,7 @@ def gtable_get(args):
         for row in result["data"]:
             print json.dumps(row, indent=4)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_jobs(args):
     get_output_flag(args)
@@ -1462,10 +1471,7 @@ def find_jobs(args):
                     str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
                     ' ('
                 state = results[ job_ids[parent_id] ]['describe']['state']
-                if state in JOB_STATES:
-                    print_string += JOB_STATES[state]
-                else:
-                    print_string += state
+                print_string += JOB_STATES(state)
                 print_string += ')'
                 print print_string
 
@@ -1477,7 +1483,7 @@ def find_jobs(args):
                 orig_id = results[origin_job]["id"]
                 print_children(orig_id, 0)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_data(args):
     get_output_flag(args)
@@ -1512,7 +1518,7 @@ def find_data(args):
                 else:
                     print_ls_l_desc(result["describe"], include_folder=True)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_projects(args):
     get_output_flag(args)
@@ -1533,7 +1539,7 @@ def find_projects(args):
         print ""
         return map(lambda result: result["id"], results)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_apps(args):
     get_output_flag(args)
@@ -1568,7 +1574,7 @@ def find_apps(args):
             for result in results:
                 print result["describe"]["name"] + " (v" + result["describe"]["version"] + ")"
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def close(args):
     # Attempt to resolve name
@@ -1584,7 +1590,7 @@ def close(args):
             obj.close()
             handlers.append(obj)
         except dxpy.DXAPIError as details:
-            print fill(str(details))
+            print fill(unicode(details))
     if args.wait:
         for handler in handlers:
             handler._wait_on_close()
@@ -1601,7 +1607,7 @@ def install(args):
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
             print 'Installed the ' + app_desc['name'] + ' app'
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
@@ -1612,7 +1618,7 @@ def uninstall(args):
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/uninstall', {})
             print 'Uninstalled the ' + app_desc['name'] + ' app'
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def get_exec_inputs(inputs):
     required_inputs = []
@@ -1678,10 +1684,10 @@ def get_input_array(param_desc):
             try:
                 input_array.append(parse_input[in_class](user_input))
             except ValueError as details:
-                print str(details)
+                print unicode(details)
                 continue
             except TypeError as details:
-                print str(details)
+                print unicode(details)
                 continue
     except KeyboardInterrupt:
         print ''
@@ -1690,7 +1696,7 @@ def get_input_array(param_desc):
     except EOFError:
         return input_array
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def get_input_single(param_desc):
     in_class = param_desc['class']
@@ -1711,10 +1717,10 @@ def get_input_single(param_desc):
             try:
                 value = parse_input[in_class](user_input)
             except ValueError as details:
-                print str(details)
+                print unicode(details)
                 continue
             except TypeError as details:
-                print str(details)
+                print unicode(details)
                 continue
             return value
     except KeyboardInterrupt:
@@ -1722,7 +1728,7 @@ def get_input_single(param_desc):
         print 'Received keyboard interrupt, exiting...'
         parser.exit(0)
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def get_input(input_hash, param):
     if param['class'].startswith('array:'):
@@ -1754,7 +1760,7 @@ def get_optional_inputs(input_hash, optional_inputs):
                         raise ValueError('Error: Selection is out of range')
                     break
                 except ValueError as details:
-                    print str(details)
+                    print unicode(details)
                     continue
             get_input(input_hash, optional_inputs[opt_num])
         except KeyboardInterrupt:
@@ -1764,7 +1770,7 @@ def get_optional_inputs(input_hash, optional_inputs):
         except EOFError:
             return
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def add_input_to_json(inputs, input_json, input_specs):
     '''
@@ -1794,7 +1800,7 @@ def add_input_to_json(inputs, input_json, input_specs):
             try:
                 parsed = parse_input[input_class](i[1])
             except BaseException as details:
-                parser.exit(1, fill(str(details)) + '\n')
+                parser.exit(1, fill(unicode(details)) + '\n')
 
             if i[0] not in input_json:
                 if is_array:
@@ -1894,7 +1900,7 @@ def run(args):
             data = fd.read()
             fd.close()
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
         try:
             input_json = json.loads(data)
         except:
@@ -1903,7 +1909,7 @@ def run(args):
         try:
             input_json = json.loads(raw_input('Input JSON > '))
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
     elif args.input is not None:
         input_inputs = []
         try:
@@ -1972,7 +1978,7 @@ def run(args):
             print 'Received ^D, exiting...'
             parser.exit(0)
         except BaseException as details:
-            parser.exit(1, fill(str(details)) + '\n')
+            parser.exit(1, fill(unicode(details)) + '\n')
         if value != '' and not value.lower().startswith('y'):
             parser.exit(0)
 
@@ -1981,7 +1987,7 @@ def run(args):
     try:
         dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
     except dxpy.DXAPIError as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
     if sys.stdout.isatty():
         print "Job ID: " + dxjob.get_id()
     else:
@@ -1991,7 +1997,7 @@ def terminate(args):
     try:
         dxpy.api.jobTerminate(args.jobid)
     except BaseException as details:
-        parser.exit(1, fill(str(details)) + '\n')
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def shell(orig_args):
     if orig_args.filename is not None:
@@ -1999,10 +2005,11 @@ def shell(orig_args):
             with open(orig_args.filename, 'r') as script:
                 for line in script:
                     args = parser.parse_args(shlex.split(line))
+                    set_cli_colors(args)
                     args.func(args)
             exit(0)
         except BaseException as details:
-            parser.exit(1, fill(str(details)))
+            parser.exit(1, fill(unicode(details)))
 
     if state['interactive']:
         return
@@ -2041,12 +2048,13 @@ def shell(orig_args):
             continue
         try:
             args = parser.parse_args(shlex.split(cmd))
+            set_cli_colors(args)
             args.func(args)
         except StopIteration:
             exit(0)
         except BaseException as details:
-            if str(details) != '1' and str(details) != '0':
-                print str(details) + '\n'
+            if unicode(details) != '1' and unicode(details) != '0':
+                print unicode(details) + '\n'
 
 def watch(args):
     try:
@@ -2086,7 +2094,7 @@ def exit_shell(args):
 no_color_arg = argparse.ArgumentParser(add_help=False)
 no_color_arg.add_argument('--color',
                           help='Set when color is used (auto=color is used when stdout is a TTY)',
-                          choices=['never', 'always', 'auto'], default='auto')
+                          choices=['off', 'on', 'auto'], default='auto')
 
 global_args = argparse.ArgumentParser(add_help=False)
 global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
@@ -2169,6 +2177,7 @@ parser_map['invite'] = parser_invite
 
 parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
                                   description='List folders and/or objects in a folder',
+                                  parents=[no_color_arg],
                                   prog='dx ls')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
@@ -2234,6 +2243,7 @@ parser_map['cp'] = parser_cp
 
 parser_tree = subparsers.add_parser('tree', help='List folders and objects in a tree',
                                     description='List folders and objects in a tree',
+                                    parents=[no_color_arg],
                                     prog='dx tree')
 parser_tree.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_tree.add_argument('-l', help='use a long listing format', action='store_true')
@@ -2255,7 +2265,10 @@ get_gtable_args.add_argument('--no-header', help='Do not print a header in the C
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
 
-parser_head = subparsers.add_parser('head', help='Print the first 10 lines of a file or first 10 rows of a gtable', prog='dx head')
+parser_head = subparsers.add_parser('head',
+                                    help='Print the first 10 lines of a file or first 10 rows of a gtable',
+                                    parents=[no_color_arg],
+                                    prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
 parser_head.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
 parser_head.add_argument('path', help='File or gtable ID or name to access')
@@ -2285,7 +2298,7 @@ parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
                                         description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
-                                        parents=[global_args],
+                                        parents=[global_args, no_color_arg],
                                         prog='dx describe')
 parser_describe.add_argument('--properties', help='Include properties', action='store_true')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
@@ -2372,7 +2385,7 @@ parser_find = subparsers.add_parser('find', help='Search functionality over data
 subparsers_find = parser_find.add_subparsers()
 parser_map['find'] = parser_find
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args], prog='dx find jobs')
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args, no_color_arg], prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -2384,7 +2397,7 @@ parser_find_jobs.add_argument('--created-before', help='Timestamp before which t
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
-parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args], prog='dx find data')
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args, no_color_arg], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
@@ -2545,11 +2558,13 @@ if not sys.stdin.isatty():
     for line in sys.stdin.read().splitlines():
         if len(line) > 0:
             args = parser.parse_args(args_list + shlex.split(line))
+            set_cli_colors(args)
             args.func(args)
     
 else:
     if len(args_list) > 0:
         args = parser.parse_args(args_list)
+        set_cli_colors(args)
         args.func(args)
     else:
         parser.print_help()

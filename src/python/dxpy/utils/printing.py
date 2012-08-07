@@ -10,6 +10,7 @@ try:
 
     color_state = True
 except:
+    std_width = 80
     color_state = False
 
 def CYAN():
