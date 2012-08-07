@@ -1244,7 +1244,32 @@ def get(args):
             except BaseException as details:
                 parser.exit(1, fill(str(details)) + '\n')
     elif entity_result['describe']['class'] == 'applet':
-        parser.exit(1, 'Not implemented yet\n')
+        dxapplet = dxpy.DXApplet(entity_result['id'])
+        try:
+            resp = dxapplet.get()
+            if 'run' in resp:
+                run_spec = resp['run']
+            elif 'runSpec' in resp:
+                run_spec = resp['runSpec']
+            else:
+                raise Exception('No run specification found')
+        except BaseExceptions as details:
+            parser.exit(1, fill(str(details)) + '\n')
+        if args.stdout:
+            print run_spec['code']
+            return
+        elif args.output is None:
+            if run_spec['interpreter'] == 'python2.7':
+                filename += '.py'
+            elif run_spec['interpreter'] == 'v8cgi':
+                filename += '.js'
+            elif run_spec['interpreter'] == 'bash':
+                filename += '.sh'
+        try:
+            with open(filename, 'w') as fd:
+                fd.write(run_spec['code'])
+        except BaseException as details:
+            parser.exit(1, fill(str(details)) + '\n')
     else:
         parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or applet was expected\n')
 
