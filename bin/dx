@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
-import shlex # respects quotes substrings when splitting
+import shlex # respects quoted substrings when splitting
 import requests
+import csv, codecs
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.printing import *
@@ -1228,7 +1229,25 @@ def get(args):
             except dxpy.DXAPIError as details:
                 parser.exit(1, fill(str(details)) + '\n')
     elif entity_result['describe']['class'] in ['gtable', 'table']:
-        parser.exit(1, 'Not implemented yet\n')
+        if not args.tsv and not args.csv and not args.vcf:
+            args.tsv = True
+        dxtable = dxpy.get_handler(entity_result['id'])
+        if args.tsv or args.csv:
+            delimiter = '\t' if args.tsv else ','
+            if args.stdout:
+                writer = csv.writer(sys.stdout, delimiter=delimiter)
+            else:
+                if args.output is None:
+                    filename += '.tsv' if args.tsv else '.csv'
+                writer = csv.writer(open(filename, 'wb'),
+                                    delimiter=delimiter)
+            if not args.no_header:
+                writer.writerow(['__id__'] + [col['name'] for col in dxtable.describe()['columns']])
+
+            for row in dxtable:
+                writer.writerow([unicode(item).encode('utf-8') for item in row])
+        else:
+            parser.exit(1, 'Not implemented yet\n')
     elif entity_result['describe']['class'] == 'record':
         try:
             details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
@@ -1308,7 +1327,7 @@ def head(args):
                             return
                         except:
                             pass
-                print table_text
+                sys.stdout.write(table_text.encode('utf-8') + '\n')
         except StopIteration:
             pass
         except BaseException as details:
@@ -2208,9 +2227,12 @@ parser_get = subparsers.add_parser('get', help='Download a data object',
 parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file or gtable\'s name will be used')
 parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
-parser_get.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
-parser_get.add_argument('--tsv', help='Save the gtable in tab-separated format', action='store_true')
-parser_get.add_argument('--vcf', help='Save a Simplevar gtable as a VCF file', action='store_true')
+get_gtable_args = parser_get.add_argument_group(title='GTable-specific options')
+get_gtable_format_args = get_gtable_args.add_mutually_exclusive_group()
+get_gtable_format_args.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
+get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separated format (default if no format is specified)', action='store_true')
+get_gtable_format_args.add_argument('--vcf', help='Save a Simplevar gtable as a VCF file', action='store_true')
+get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file')
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
 

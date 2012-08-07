@@ -42,7 +42,8 @@ def format_tree(tree, root=None):
     _format(tree)
     return '\n'.join(formatted_tree)
 
-def format_table(table, column_names=None, column_specs=None, max_col_width=32, report_dimensions=False):
+def format_table(table, column_names=None, column_specs=None, max_col_width=32,
+                 report_dimensions=False):
     ''' Table pretty printer.
     Expects tables to be given as arrays of arrays.
 
@@ -59,7 +60,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
         column_specs = [{'name': 'Row', 'type': 'float'}] + column_specs
     if column_names is not None:
         for i in range(len(column_names)):
-            my_col = str(column_names[i])
+            my_col = unicode(column_names[i])
             if len(my_col) > max_col_width:
                 my_col = my_col[:max_col_width-1] + u'…'
             my_column_names.append(my_col)
@@ -68,7 +69,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32, 
     for row in table:
         my_row = []
         for i in range(len(row)):
-            my_item = str(row[i])
+            my_item = unicode(row[i])
             if len(my_item) > max_col_width:
                 my_item = my_item[:max_col_width-1] + u'…'
             my_row.append(my_item)
