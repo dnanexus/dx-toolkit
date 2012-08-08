@@ -1267,10 +1267,10 @@ def get(args):
                 writer = csv.writer(open(filename, 'wb'),
                                     delimiter=delimiter)
             if not args.no_header:
-                writer.writerow(['__id__'] + [col['name'] for col in dxtable.describe()['columns']])
+                writer.writerow(([] if args.no_rowid else ['__id__']) + [col['name'] for col in dxtable.describe()['columns']])
 
             for row in dxtable:
-                writer.writerow([unicode(item).encode('utf-8') for item in row])
+                writer.writerow([unicode(item).encode('utf-8') for item in row[1 if args.no_rowid else 0:]])
         else:
             parser.exit(1, 'Not implemented yet\n')
     elif entity_result['describe']['class'] == 'record':
@@ -1343,7 +1343,6 @@ def head(args):
                                                                   report_dimensions=True,
                                                                   max_col_width=args.max_col_width)
                 if sys.stdout.isatty():
-                    tty_rows, tty_cols = map(int, os.popen('stty size', 'r').read().split())
                     if tty_rows <= table_rows or tty_cols <= table_cols:
                         try:
                             pipe = os.popen('less -RS', 'w')
@@ -1357,14 +1356,6 @@ def head(args):
             pass
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
-
-def file_get(args):
-    # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
-
-    if entity_result is None or entity_result['describe']['class'] != 'file':
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a file object\n')
-
 
 def upload(args):
     hidden = (args.visibility == 'hidden')
@@ -1397,6 +1388,106 @@ def upload(args):
             print_desc(dxfile.describe(incl_properties=True, incl_details=True))
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
+
+def parse_item(item, item_type):
+    if item_type == 'string':
+        return item
+    elif item_type == 'int':
+        return int(item)
+    elif item_type == 'float':
+        return float(item)
+    elif item_type == 'boolean':
+        if item == '0' or item.lower().startswith('f'):
+            return False
+        else:
+            return True
+    else:
+        parser.exit(1, 'Unrecognized column type: ' + item_type + '\n')
+
+def dximport(args):
+    hidden = (args.visibility == 'hidden')
+    properties = get_properties_from_args(args.properties)
+    details = None
+    if args.details is not None:
+        try:
+            details = json.loads(args.details)
+        except:
+            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    if args.filename == '-':
+        fd = sys.stdin
+    else:
+        try:
+            fd = open(args.filename, 'rb')
+        except:
+            parser.exit(1, fill(unicode('Could not open ' + args.filename + ' for reading')) + '\n')
+        if args.name is None:
+            args.name = os.path.basename(args.filename)
+
+    if not args.vcf:
+        firstrow = fd.readline()
+
+        if args.csv:
+            delimiter = ','
+            dialect = 'excel'
+        elif args.tsv:
+            delimiter = '\t'
+            dialect = 'excel'
+        else:
+            # Try to sniff the file format
+            dialect = csv.Sniffer().sniff(firstrow)
+            delimiter = dialect.delimiter
+        firstrow_reader = csv.reader([firstrow], dialect=dialect,
+                                     delimiter=delimiter)
+        firstrow_data = firstrow_reader.next()
+        reader = csv.reader(fd, dialect=dialect,
+                            delimiter=delimiter)
+
+        column_specs = []
+        types = []
+        if args.column_names is not None:
+            specs = args.column_names.split(",")
+        else:
+            specs = firstrow_data
+        for spec in specs:
+            if ':' in spec:
+                col_type = spec[spec.find(':') + 1:]
+                column_specs.append({'name': spec[:spec.find(':')],
+                                     'type': col_type})
+                if 'int' in col_type:
+                    types.append('int')
+                elif col_type == 'boolean':
+                    types.append('boolean')
+                elif col_type in ['float', 'double']:
+                    types.append('float')
+                elif col_type == 'string':
+                    types.append('string')
+                else:
+                    parser.exit(1, 'Unrecognized column type: ' + col_type + '\n')
+            else:
+                column_specs.append({'name': spec,
+                                     'type': 'string'})
+                types.append('string')
+        try:
+            dxgtable = dxpy.new_dxgtable(project=args.project, name=args.name,
+                                         tags=args.tags, types=args.types, 
+                                         hidden=hidden, properties=properties,
+                                         details=details,
+                                         folder=args.folder,
+                                         parents=args.parents,
+                                         columns=column_specs)
+            if args.column_names is not None:
+                dxgtable.add_row([ parse_item(firstrow_data[i], types[i]) for i in range(len(types))])
+            for row in reader:
+                dxgtable.add_row([ parse_item(row[i], types[i]) for i in range(len(types))])
+            dxgtable.close(block=args.wait)
+            if args.brief or not sys.stdout.isatty():
+                print dxgtable.get_id()
+            else:
+                print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
+        except BaseException as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
+    else:
+        parser.exit(1, 'Not yet implemented\n')
 
 def gtable_get(args):
     # Attempt to resolve name
@@ -2010,6 +2101,13 @@ def shell(orig_args):
             exit(0)
         except BaseException as details:
             parser.exit(1, fill(unicode(details)))
+    elif not sys.stdin.isatty():
+        for line in sys.stdin.read().splitlines():
+            if len(line) > 0:
+                args = parser.parse_args(shlex.split(line))
+                set_cli_colors(args)
+                args.func(args)
+        exit(0)
 
     if state['interactive']:
         return
@@ -2257,11 +2355,12 @@ parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file or gtable\'s name will be used')
 parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
 get_gtable_args = parser_get.add_argument_group(title='GTable-specific options')
+get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file', action='store_true')
+get_gtable_args.add_argument('--no-rowid', help='Do not include the row ID column', action='store_true')
 get_gtable_format_args = get_gtable_args.add_mutually_exclusive_group()
 get_gtable_format_args.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
 get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separated format (default if no format is specified)', action='store_true')
 get_gtable_format_args.add_argument('--vcf', help='Save a Simplevar gtable as a VCF file', action='store_true')
-get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file')
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
 
@@ -2277,7 +2376,7 @@ parser_map['head'] = parser_head
 
 parser_cat = subparsers.add_parser('cat', help='Print a file to stdout', prog='dx cat')
 parser_cat.add_argument('path', help='File ID or name to print to stdout')
-parser_cat.set_defaults(func=file_get, output=None, stdout=True)
+parser_cat.set_defaults(func=get, output=None, stdout=True)
 parser_map['cat'] = parser_cat
 
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
@@ -2439,15 +2538,16 @@ parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = parser_find_apps
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
-parser_dataobject_args.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
-parser_dataobject_args.add_argument('--name', help='Name of the object')
-parser_dataobject_args.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
-parser_dataobject_args.add_argument('--types', nargs='+', help='Types of the data object')
-parser_dataobject_args.add_argument('--tags', nargs='+', help='Tags of the data object')
-parser_dataobject_args.add_argument('--project', help='Project (if not using the default project)')
-parser_dataobject_args.add_argument('--details', help='JSON to store as details')
-parser_dataobject_args.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
-parser_dataobject_args.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
+parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
+parser_dataobject_args_gp.add_argument('--name', help='Name of the object')
+parser_dataobject_args_gp.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
+parser_dataobject_args_gp.add_argument('--types', nargs='+', help='Types of the data object')
+parser_dataobject_args_gp.add_argument('--tags', nargs='+', help='Tags of the data object')
+parser_dataobject_args_gp.add_argument('--project', help='Project (if not using the default project)')
+parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
+parser_dataobject_args_gp.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
+parser_dataobject_args_gp.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 
 parser_upload = subparsers.add_parser('upload', help='Upload a file', parents=[parser_dataobject_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
@@ -2455,6 +2555,22 @@ parser_upload.add_argument('--brief', help='Print ID of the file object instead 
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 parser_map['upload'] = parser_upload
+
+parser_import = subparsers.add_parser('import',
+                                      help='Import a table or genomic file',
+                                      description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
+                                      parents=[global_args, no_color_arg, parser_dataobject_args],
+                                      prog='dx import')
+parser_import.add_argument('filename', help='local filename to import')
+parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
+import_format_args = parser_import.add_argument_group('input format arguments')
+import_format_args_gp = import_format_args.add_mutually_exclusive_group()
+import_format_args_gp.add_argument('--csv', help='Interpret the file as a comma-separated format', action='store_true')
+import_format_args_gp.add_argument('--tsv', help='Interpret the file as a tab-separated format (default if no format is specified and a file extension is not recognized)', action='store_true')
+import_format_args_gp.add_argument('--vcf', help='Interpret the file as a VCF file', action='store_true')
+import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; types (if not string) can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
+parser_import.set_defaults(func=dximport)
+parser_map['import'] = parser_import
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
@@ -2554,19 +2670,10 @@ parser_map['api'] = parser_api
 # "Execution" starts here
 
 # Take in things from the pipe, respecting quoted substrings
-if not sys.stdin.isatty():
-    for line in sys.stdin.read().splitlines():
-        if len(line) > 0:
-            args = parser.parse_args(args_list + shlex.split(line))
-            set_cli_colors(args)
-            args.func(args)
-    
+if len(args_list) > 0:
+    args = parser.parse_args(args_list)
+    set_cli_colors(args)
+    args.func(args)
 else:
-    if len(args_list) > 0:
-        args = parser.parse_args(args_list)
-        set_cli_colors(args)
-        args.func(args)
-    else:
-        parser.print_help()
-        sys.exit(1)
-
+    parser.print_help()
+    sys.exit(1)

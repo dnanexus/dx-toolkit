@@ -2,15 +2,21 @@
 This submodule gives basic utilities for printing to the terminal.
 '''
 
-import os, platform, textwrap
+import textwrap, subprocess, sys
 
-try:
-    tty_rows, tty_cols = map(int, os.popen('stty size', 'r').read().split())
-    std_width = min(tty_cols - 2, 100)
-
+if sys.stdout.isatty():
+    try:
+        p = subprocess.Popen(['stty', 'size'],
+                             stdin=sys.stdout,
+                             stdout=subprocess.PIPE)
+        tty_rows, tty_cols = map(int, p.stdout.read().split())
+        std_width = min(tty_cols - 2, 100)
+    except:
+        std_width = 78
     color_state = True
-except:
-    std_width = 80
+else:
+    tty_rows, tty_cols = 24, 80
+    std_width = 78
     color_state = False
 
 def CYAN():
@@ -46,7 +52,7 @@ def set_colors(state=True):
 
 def fill(string, width_adjustment=0, **kwargs):
     if "width" not in kwargs:
-        kwargs['width'] = std_width + width_adjustment
+        kwargs['width'] = max(std_width + width_adjustment, 20)
     if "break_on_hyphens" not in kwargs:
         kwargs["break_on_hyphens"] = False
     return textwrap.fill(string, **kwargs)
