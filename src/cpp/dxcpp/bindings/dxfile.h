@@ -103,7 +103,10 @@ class DXFile: public DXDataObject {
     this->setIDs(to_copy.dxid_, to_copy.proj_);
     return *this;
   }
-
+  
+  ~DXFile() {
+    stopLinearQuery();
+  }
   // File-specific functions
 
   /**
