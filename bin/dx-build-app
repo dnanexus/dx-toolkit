@@ -12,9 +12,10 @@ import dxpy, dxpy.app_builder
 parser = OptionParser(usage="%prog [options] applet_dir", description="Upload a DNAnexus applet.")
 parser.add_option("-f", "--overwrite", help="Remove existing applets of the same name", action='store_true', default=False)
 parser.add_option("-a", "--create_app", help="Create an app from the applet (requires dxapp.json to be present)", action='store_true', default=False)
-parser.add_option("-p", "--destination_project", help="Insert the applet into the project with the specified project ID.", default=None)
+parser.add_option("-p", "--destination_project", help="Insert the applet into the project with the specified project ID", default=None)
 parser.add_option("--publish", help="Publish the app after it has been created.", action='store_true', default=False)
-parser.add_option("-b", "--bill-to", help="Owner (username or organization) to bill for the app.", default=None)
+parser.add_option("-b", "--bill-to", help="Owner (username or organization) to bill for the app", default=None)
+parser.add_option("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec", action='store_true', default=False)
 (opts, args) = parser.parse_args()
 
 def get_timestamp_version_suffix():
@@ -48,7 +49,10 @@ if opts.create_app and not os.path.exists(os.path.join(src_dir, "dxapp.json")):
 dxpy.app_builder.build(src_dir)
 bundled_resources = dxpy.app_builder.upload_resources(src_dir)
 
-applet_id = dxpy.app_builder.upload_applet(src_dir, bundled_resources, overwrite=opts.overwrite, project=opts.destination_project)
+applet_id = dxpy.app_builder.upload_applet(src_dir, bundled_resources,
+                                           overwrite=opts.overwrite,
+                                           project=opts.destination_project,
+                                           dx_toolkit_autodep = (not opts.no_dx_toolkit_autodep))
 
 print >> sys.stderr, "Created applet " + applet_id + " successfully"
 
@@ -59,7 +63,11 @@ if opts.create_app:
     version = app_json['version']
     try_versions = [version, version + get_version_suffix(src_dir)]
 
-    app_id = dxpy.app_builder.create_app(applet_id, src_dir, publish=opts.publish, set_default=opts.publish, billTo=opts.bill_to, try_versions=try_versions)
+    app_id = dxpy.app_builder.create_app(applet_id, src_dir,
+                                         publish=opts.publish,
+                                         set_default=opts.publish,
+                                         billTo=opts.bill_to,
+                                         try_versions=try_versions)
     print >> sys.stderr, "Created app " + app_id + " successfully"
     print json.dumps(dxpy.api.appDescribe(app_id))
 else:

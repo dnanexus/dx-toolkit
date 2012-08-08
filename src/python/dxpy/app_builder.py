@@ -81,7 +81,7 @@ def upload_resources(src_dir, project=None):
     else:
         return None
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
     applet_spec = get_applet_spec(src_dir)
 
     dest_project = project or applet_spec['project']
@@ -121,6 +121,21 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if uploaded_resources is not None:
         applet_spec["runSpec"].setdefault("bundledDepends", [])
         applet_spec["runSpec"]["bundledDepends"].extend(uploaded_resources)
+    
+    # Include the DNAnexus client libraries as an execution dependency, if they are not already there
+    dx_toolkit_dep = {"name": "dx-toolkit",
+                      "package_manager": "git",
+                      "url": "git@github.com:dnanexus/dx-toolkit.git",
+                      "tag": "master",
+                      "build_commands": "make -C src install DESTDIR=/opt/dnanexus"}
+    if dx_toolkit_autodep:
+        applet_spec["runSpec"].setdefault("execDepends", [])
+        dx_toolkit_dep_found = False
+        for dep in applet_spec["runSpec"]["execDepends"]:
+            if dep.get('name') == 'dx-toolkit' or dep.get('url') == "git@github.com:dnanexus/dx-toolkit.git":
+                dx_toolkit_dep_found = True
+        if not dx_toolkit_dep_found:
+            applet_spec["runSpec"]["execDepends"].append(dx_toolkit_dep)
 
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 
