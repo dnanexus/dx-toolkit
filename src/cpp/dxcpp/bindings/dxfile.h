@@ -3,6 +3,9 @@
 
 #include <fstream>
 #include <sstream>
+#include <atomic>
+#include <boost/thread.hpp>
+#include "../bqueue.h"
 #include "../bindings.h"
 
 /**
@@ -23,6 +26,11 @@ class DXFile: public DXDataObject {
   void removeTags_(const std::string &s)const{fileRemoveTags(dxid_,s);}
   void close_(const std::string &s)const{fileClose(dxid_,s);}
   dx::JSON listProjects_(const std::string &s)const{return fileListProjects(dxid_,s);}
+ 
+  // For linear query ///////////////////////////////////////////////
+  void readChunk_();
+  void getChunkHttp_(int64_t start, int64_t end, std::string& result);
+  ///////////////////////////////////////////////////////////////////
 
   /**
    * For use when reading closed remote files; stores the current
@@ -64,6 +72,17 @@ class DXFile: public DXDataObject {
 
   // TODO: Determine if this should be user-defined.
   static const int64_t max_buf_size_;
+  
+  // For linear query
+  std::map<int64_t, std::string> lq_results_;
+  int64_t lq_chunk_limit_;
+  int64_t lq_query_start_;
+  int64_t lq_query_end_;
+  unsigned lq_max_chunks_;
+  int64_t lq_next_result_;
+  std::string lq_url;
+  std::vector<boost::thread> lq_readThreads_;
+  boost::mutex lq_results_mutex_, lq_query_start_mutex_;
 
  public:
 
@@ -118,6 +137,8 @@ class DXFile: public DXDataObject {
    * @param ptr Location to which data should be written
    * @param n The maximum number of bytes to retrieve
    */
+   // TODO: Make clear that it's user's responsibility to allocate memory
+   //       before calling this function
   void read(char* ptr, int64_t n);
 
   /**
@@ -216,11 +237,54 @@ class DXFile: public DXDataObject {
    */
   void waitOnClose() const;
 
+  /** 
+   * Start fetching data in chunks of specified bytes from the file in background.
+   * After calling this function, getNextChunk() can be use to access chunks in a
+   * linear manner.
+   * 
+   * Note: Calling this function, invalidates any previous call to the function.
+   * @param start_byte Location (0-indexed) starting from which
+   * data will be fetched.
+   * @param num_bytes Number of bytes to be fetched
+   * @param chunk_size Number of bytes to be fetched in each chunk
+   * (except possibly the last one, which can be shorter)
+   * @param max_chunks An indicative number for chunks to be kept in memory
+   * at any time. Note number of real chunks in memory would be < (max_chunks + thread_count)
+   * @param thread_count Number of threads to be used for fetching data.
+   */
+  void startLinearQuery(const int64_t start_byte=-1,
+                        const int64_t num_bytes=-1,
+                        const int64_t chunk_size=1*1024*1024,
+                        const unsigned max_chunks=20,
+                        const unsigned thread_count=5);
+  
+  /**
+   * Invalidates previous call to startLinearQuery() (if any).
+   * All processing is stopped, and threads terminated.
+   * Idempotent.
+   */
+  void stopLinearQuery();
+  
+  /**
+   * This function is used after calling startLinearQuery() to get next chunk of bytes
+   * (in order). If startLinearQuery() was not called, then it returns "false"
+   * 
+   * @param chunk If function returns with "true", then this string will be populated
+   * with data from next chunk. If "false" is returned, then
+   * this object remain untouched.
+   *
+   * @return "true" if another chunk is available for processing (value of chunk is
+   * copied to string passed in as input param "chunk"). "false" if all chunks
+   * have exhausted, or no call to startLinearQuery() was made.
+   */
+  bool getNextChunk(std::string &chunk);
+
+  
   // TODO: Provide streaming operators for all reasonable types
   /**
    * Streaming operator for writing
    */
-  template<typename T>
+/*  template<typename T>
     DXFile & operator<<(const T& x) {
     buffer_ << x;
     if (buffer_.tellp() >= max_buf_size_)
@@ -236,7 +300,7 @@ class DXFile: public DXDataObject {
       flush();
     return *this;
   }
-
+*/
   /**
    * Things that need figuring out: 1) Would need to buffer reading.
    * pos_ would have to be managed carefully between uses of >> and
@@ -244,10 +308,11 @@ class DXFile: public DXDataObject {
    * In any case, we'd want a read buffer.  And maybe to store the
    * entire thing as a stringstream??
    */
-  template<typename T>
+/*  template<typename T>
     DXFile & operator>>(const T& x) {
     throw DXNotImplementedError();
   }
+*/
 
   /**
    * Shorthand for creating a DXFile remote file handler with the

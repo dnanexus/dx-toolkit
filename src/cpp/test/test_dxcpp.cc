@@ -535,6 +535,43 @@ protected:
 
 const string DXFileTest::foostr = "foo\n";
 
+TEST(DXFileTest_Async, UploadAndDownloadLargeFile) {
+  char fname[L_tmpnam];
+  const int file_size = 10 * 1024 * 1024;
+  tmpnam(fname);
+  ofstream lf(fname);
+  for (int i = 0; i < file_size; ++i)
+    lf<<"$";
+  lf.close();
+  DXFile dxf = DXFile::uploadLocalFile(fname);
+  dxf.waitOnClose();
+  
+  char fname2[L_tmpnam];
+  tmpnam(fname2);
+  DXFile::downloadDXFile(dxf.getID(), fname2, 99999);
+
+  // Read the local file contents in a string
+  string df_content;
+  ifstream fp(fname);
+  ASSERT_TRUE(fp.is_open());
+  // Reserve memory for string upfront (to avoid having reallocation multiple time)
+  fp.seekg(0, ios::end);   
+  ASSERT_EQ(file_size, fp.tellg());
+  fp.seekg(0, ios::beg);
+  int count = 0;
+  while(fp.good()) {
+    char ch = fp.get();
+    if (fp.eof())
+      break;
+    count++;
+    ASSERT_EQ('$', ch);
+  }
+  fp.close();
+  ASSERT_EQ(count, file_size);
+  remove(fname);
+  remove(fname2);
+}
+
 TEST_F(DXFileTest, SimpleCloneTest) {
   DXFile dxfile = DXFile::newDXFile();
   dxfile.write("foo");
@@ -581,6 +618,7 @@ TEST_F(DXFileTest, WriteReadFile) {
   ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
 }
 
+/*
 TEST_F(DXFileTest, StreamingOperators) {
   dxfile = DXFile::newDXFile();
   stringstream samestr;
@@ -597,7 +635,7 @@ TEST_F(DXFileTest, StreamingOperators) {
   ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
 
   // TODO: Test >> if/when implemented
-}
+}*/
 
 //////////////
 // DXGTable //

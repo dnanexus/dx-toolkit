@@ -1,5 +1,6 @@
 #include <vector>
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 #include "dxfile.h"
 #include "SimpleHttp.h"
 
@@ -74,6 +75,113 @@ void DXFile::read(char* ptr, int64_t n) {
   memcpy(ptr, resp.respData.data(), resp.respData.length());
   gcount_ = resp.respData.length();
 }
+
+/////////////////////////////////////////////////////////////////////////////////
+void DXFile::startLinearQuery(const int64_t start_byte,
+                      const int64_t num_bytes,
+                      const int64_t chunk_size,
+                      const unsigned max_chunks,
+                      const unsigned thread_count) {
+  stopLinearQuery(); // Stop any previously running linear query
+  
+  lq_query_start_ = (start_byte == -1) ? 0 : start_byte;
+  lq_query_end_ = (num_bytes == -1) ? describe()["size"].get<int64_t>() : lq_query_start_ + num_bytes;
+  lq_chunk_limit_ = chunk_size;
+  lq_max_chunks_ = max_chunks;
+  lq_next_result_ = lq_query_start_;
+
+  const JSON get_DL_url = fileDownload(dxid_);
+  lq_url = get_DL_url["url"].get<string>();
+
+  for (unsigned i = 0; i < thread_count; ++i)
+    lq_readThreads_.push_back(boost::thread(boost::bind(&DXFile::readChunk_, this)));
+}
+
+// Do *NOT* call this function with value of "end" past the (last - 1) byte of file, i.e.,
+// the Range: [start,end] should be a valid byte range in file (shouldn't be past the end of file)
+void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) {
+  int64_t last_byte_in_result = start - 1;
+  while(last_byte_in_result < end) {
+    HttpHeaders headers;
+    string range = boost::lexical_cast<string>(last_byte_in_result + 1) + "-" + boost::lexical_cast<string>(end);
+    headers["Range"] = "bytes=" + range;
+    HttpRequest resp = HttpRequest::request(HTTP_GET, lq_url, headers);
+    if (resp.responseCode < 200 || resp.responseCode >= 300) {
+      throw DXFileError("HTTP Response code: " +
+            boost::lexical_cast<string>(resp.responseCode) +
+            " when trying to download Range: [" + range + "] from remote file (url: '" + lq_url + "')");
+    }
+    if (resp.respData.size() == 0) {
+      throw new DXFileError("Unable to download Range: [" + range + "] from url: '" + lq_url + "'. Server returned 200 status code, but response size = 0 bytes (unexpected)");
+    }
+    if (result == "")
+      result = resp.respData;
+    else
+      result.append(resp.respData);
+
+    last_byte_in_result += resp.respData.size();
+  }
+  assert(result.size() == (end - start + 1));
+}
+
+void DXFile::readChunk_() {
+  int64_t start;
+  while (true) {
+    boost::mutex::scoped_lock qs_lock(lq_query_start_mutex_);
+    if (lq_query_start_ >= lq_query_end_)
+      break; // We are done fetching all chunks
+
+    start = lq_query_start_;
+    lq_query_start_ += lq_chunk_limit_;
+    qs_lock.unlock();
+
+    int64_t end = std::min((start + lq_chunk_limit_ - 1), lq_query_end_ - 1);
+    
+    std::string tmp;
+    getChunkHttp_(start, end, tmp);
+       
+    boost::mutex::scoped_lock r_lock(lq_results_mutex_);
+    while(lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
+      r_lock.unlock();
+      usleep(100);
+      r_lock.lock();
+    }
+    lq_results_[start] = tmp;
+    r_lock.unlock();
+  }
+}
+
+bool DXFile::getNextChunk(string &chunk) {
+  if (lq_readThreads_.size() == 0) // Linear query was not called
+    return false;
+
+  boost::mutex::scoped_lock r_lock(lq_results_mutex_);
+  if (lq_next_result_ >= lq_query_end_)
+    return false;
+  while(lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
+    r_lock.unlock();
+    usleep(100);
+    r_lock.lock();
+  }
+  chunk = lq_results_.begin()->second;
+  lq_results_.erase(lq_results_.begin());
+  lq_next_result_ += chunk.size();
+  r_lock.unlock();
+  return true;
+}
+
+void DXFile::stopLinearQuery() {
+  if (lq_readThreads_.size() == 0)
+    return;
+  for (unsigned i = 0; i < lq_readThreads_.size(); ++i) {
+    lq_readThreads_[i].interrupt();
+    lq_readThreads_[i].join();
+  }
+  lq_readThreads_.clear();
+
+  //TODO: Ensure that all locks are released at this point
+}
+/////////////////////////////////////////////////////////////////////////////////
 
 int64_t DXFile::gcount() const {
   return gcount_;
@@ -176,12 +284,11 @@ void DXFile::downloadDXFile(const string &dxid, const string &filename,
                             int64_t chunksize) {
   DXFile dxfile(dxid);
   ofstream localfile(filename.c_str());
-  vector<char> chunkbuf(chunksize);
-  while (!dxfile.eof()) {
-    dxfile.read(&(chunkbuf[0]), chunksize);
-    int64_t num_bytes = dxfile.gcount();
-    localfile.write(&(chunkbuf[0]), num_bytes);
-  }
+  dxfile.startLinearQuery(-1, -1, chunksize);
+  std::string chunk;
+  while (dxfile.getNextChunk(chunk))
+    localfile.write(chunk.data(), chunk.size());
+
   localfile.close();
 }
 

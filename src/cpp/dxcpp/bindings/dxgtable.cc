@@ -117,6 +117,7 @@ JSON DXGTable::getRows(const JSON &query, const JSON &column_names,
   return gtableGet(dxid_, input_params);
 }
 
+/////////////////////////////////////////////////////////////
 
 void DXGTable::startLinearQuery(const dx::JSON &column_names,
                       const int64_t start_row,
@@ -193,6 +194,8 @@ void DXGTable::stopLinearQuery() {
 
   //TODO: Ensure that all locks are released at this point
 }
+
+///////////////////////////////////////////////////////////////////////////
 
 void DXGTable::addRows(const JSON &data, int part_id) {
   JSON input_params(JSON_OBJECT);
