@@ -2057,7 +2057,7 @@ def run(args):
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
-    if args.input_json is None and args.filename is None and not args.stdin and sys.stdout.isatty():
+    if args.confirm and (args.input_json is None and args.filename is None and not args.stdin and sys.stdout.isatty()):
         try:
             value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
         except KeyboardInterrupt:
@@ -2455,6 +2455,7 @@ parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
 parser_run.add_argument('--folder', help=fill('The folder in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run_input = parser_run.add_mutually_exclusive_group()
 parser_run_input.add_argument('-i', '--input', help='''An input to be added using "<input name>=<input value>"
 Examples:
