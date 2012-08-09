@@ -9,8 +9,12 @@
 #include "../bindings.h"
 
 /**
- * TODO: Talk about how "open" is only for writing, "closed" is only
- * for reading, and "closing" is a useless state.
+ * @brief Remote file handler
+ * Three important rules to remember:
+ * - A file in <b>"open"</b> state can only be used for writing (no "reads"). See: is_open()
+ * - A file in <b>"closed"</b> state can only be used for reading data (no "writes"). See: is_closed()
+ * - A file in <b>"closing"</b> state is unusable, and it must move into "closed" state
+ *   for any meaningful operation (only "read") to be performed over it. See: waitOnClose()
  */
 class DXFile: public DXDataObject {
  private:
@@ -177,7 +181,7 @@ class DXFile: public DXDataObject {
   int64_t gcount() const;
 
   /**
-   * When reading a remote file, returns whether the end of the file
+   * When reading a remote file using read(), returns whether the end of the file
    * has been reached.  If the end of the file has been reached but
    * seek() has been called to set the cursor to appear before the end
    * of the file, then the flag is unset.
@@ -188,18 +192,26 @@ class DXFile: public DXDataObject {
   bool eof() const;
 
   /**
-   * Changes the position of the reading cursor to the specified byte
+   * Changes the position of the reading cursor (for read()) to the specified byte
    * location.  Note that writing is append-only. So calling this function
    * is file is not in "closed" state will throw object of class DXFileError.
    *
+   * @note This function does not affect reading via startLinearQuery(), getNextChunk()
+   * @see read()
    * \throw DXFileError
    * @param pos New byte position of the read cursor
    */
   void seek(const int64_t pos);
 
   /**
-   * Appends the contents of the internal buffer to the remote file.
-   * 
+   * Ensures that all the data send to preceding write() calls is flushed from buffer uploaded
+   * to remote file. As a result write Buffer is empty after the call finishes, and all write
+   * threads are terminated (after finishing pending uploads). Blocks until then. Idempotent.
+   *
+   * @note Since this function terminates the thread pool at the end. Thus it is wise to
+   * use it less frequently (for ex: at the end of all write() requests, to ensure that
+   * data is actually uploaded to remote file).
+   * @see write(const char*, int64_t)
    */
   void flush();
 
@@ -214,25 +226,27 @@ class DXFile: public DXDataObject {
    * the free worker thread and return immediatly.
    *
    * @warning Do *NOT* mix and match with uploadPart()
+   * @see flush()
    * @param ptr Location of data to be written
    * @param n Number of bytes to write
    */
   void write(const char* ptr, int64_t n);
 
   /**
-   * Appends data to the file. Same functionality as DXFile::write(const char*, int)
-   * See DXFile::write(const char*, int) for details about internal functioning
+   * Appends data to the file. Same functionality as write(const char*, int64_t).
+   * See write(const char*, int64_t) for more details.
    *
-   * @see DXFile::write(const char*, int)
-   *
+   * @see write(const char*, int64_t)
+   * @see flush() 
    * @param data String to write to the file
    */
   void write(const std::string &data);
 
   /**
-   * Uploads data as a part. Same functionality as uploadPart(const char*, int, int)
+   * Uploads data as a part. Same functionality as uploadPart(const char*, int64_t, const int).
+   * See uploadPart(const char*, int64_t, const int) for details.
    *
-   * @see DXFile::uploadPart(const char*, int, int)
+   * @see uploadPart(const char*, int64_t, const int)
    *
    * @param data String containing the data to append
    * @param index Number with which to label the uploaded part
@@ -266,7 +280,7 @@ class DXFile: public DXDataObject {
   bool is_closed() const;
 
   /**
-   * Flushes the buffer and closes the remote file to further writes.
+   * Calls flush() and issue request for closing the remote file.
    *
    * @param block Boolean indicating whether the process should block
    * until the remote file is in the "closed" state (true), or not
@@ -284,7 +298,9 @@ class DXFile: public DXDataObject {
    * After calling this function, getNextChunk() can be use to access chunks in a
    * linear manner.
    * 
-   * Note: Calling this function, invalidates any previous call to the function.
+   * @note - Calling this function, invalidates any previous call to the function
+   * (all previously started fetching of chunks is stopped).
+   * @note - The queries performed by this function will *NOT* update eof() status.
    * @param start_byte Location (0-indexed) starting from which
    * data will be fetched.
    * @param num_bytes Number of bytes to be fetched
@@ -293,6 +309,7 @@ class DXFile: public DXDataObject {
    * @param max_chunks An indicative number for chunks to be kept in memory
    * at any time. Note number of real chunks in memory would be < (max_chunks + thread_count)
    * @param thread_count Number of threads to be used for fetching data.
+   * @see stopLinearQuery(), getNextChunk()
    */
   void startLinearQuery(const int64_t start_byte=-1,
                         const int64_t num_bytes=-1,
@@ -301,61 +318,31 @@ class DXFile: public DXDataObject {
                         const unsigned thread_count=5);
   
   /**
-   * Invalidates previous call to startLinearQuery() (if any).
-   * All processing is stopped, and threads terminated.
-   * Idempotent.
+   * All fetching of chunks in background is stopped, and read threads terminated.
+   * - Invalidates previous call to startLinearQuery() (if any).
+   * - Idempotent.
+   * @see startLinearQuery(), getNextChunk()
    */
   void stopLinearQuery();
   
   /**
    * This function is used after calling startLinearQuery() to get next chunk of bytes
-   * (in order). If startLinearQuery() was not called, then it returns "false"
-   * 
+   * (in order). If startLinearQuery() was not called, or all chunks asked for
+   * have been exhausted then it returns "false".
+   *
+   * @note - The queries performed by this function will *NOT* update eof() status.
+   * @note - Calling seek() will not affect this function.
    * @param chunk If function returns with "true", then this string will be populated
    * with data from next chunk. If "false" is returned, then
-   * this object remain untouched.
+   * this variable remain untouched.
    *
    * @return "true" if another chunk is available for processing (value of chunk is
    * copied to string passed in as input param "chunk"). "false" if all chunks
    * have exhausted, or no call to startLinearQuery() was made.
+   * @see startLinearQuery(), stopLinearQuery()
    */
   bool getNextChunk(std::string &chunk);
-
-  
-  // TODO: Provide streaming operators for all reasonable types
-  /**
-   * Streaming operator for writing
-   */
-/*  template<typename T>
-    DXFile & operator<<(const T& x) {
-    buffer_ << x;
-    if (buffer_.tellp() >= max_buf_size_)
-      flush();
-    return *this;
-  }
-
-  typedef std::basic_ostream<char, std::char_traits<char> > couttype;
-  typedef couttype& (*stdendline)(couttype&);
-  DXFile & operator<<(stdendline manipulator) {
-    buffer_ << manipulator;
-    if (buffer_.tellp() >= max_buf_size_)
-      flush();
-    return *this;
-  }
-*/
-  /**
-   * Things that need figuring out: 1) Would need to buffer reading.
-   * pos_ would have to be managed carefully between uses of >> and
-   * read().  2) How many bytes are necessary to grab the next thing?
-   * In any case, we'd want a read buffer.  And maybe to store the
-   * entire thing as a stringstream??
-   */
-/*  template<typename T>
-    DXFile & operator>>(const T& x) {
-    throw DXNotImplementedError();
-  }
-*/
-
+ 
   /**
    * Shorthand for creating a DXFile remote file handler with the
    * given object id.
@@ -381,7 +368,12 @@ class DXFile: public DXDataObject {
 
   /**
    * Shorthand for downloading a remote file to a local location.
-   *
+   * 
+   * File is downloaded using startLinearQuery() and getNextChunk() 
+   * semantics. Thus effectively multiple threads fetch data from remote
+   * file at the same time for faster download.
+   * @note Should be called only after the remote file is in "closed" state,
+   * else an error of type DXFileError will be thrown. 
    * @param dxfile Object handler or id of the file to download.
    * @param filename Local path for writing the downloaded data.
    * @param chunksize Size of the chunks with which to divide up the
@@ -393,9 +385,7 @@ class DXFile: public DXDataObject {
 
   /**
    * Shorthand for uploading a local file and closing it when done.
-   * 
-   * TODO: Decide whether to provide blocking.
-   *
+   *  
    * @param filename Local path for the file to upload.
    * @param media_type String representing the media type of the file.
    * @param data_obj_fields JSON containing the optional fields with

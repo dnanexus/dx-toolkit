@@ -366,22 +366,18 @@ void DXFile::write(const string &data) {
 }
 
 void DXFile::flush() {
-//  std::cerr<<"\nflush() started, buffer size = "<<buffer_.tellp()<<" , threadpool size = "<<writeThreads.size()<<", cur_part = "<<cur_part_<<endl;
   if (buffer_.tellp() > 0) {
     // We have some data to flush before joining all the threads
     // Create thread pool (if not already created)
     if (writeThreads.size() == 0)
        createWriteThreads_();
-//    std::cerr<<"\nflush(): calling upload request, write threads = "<<writeThreads.size()<<" , part = "<<cur_part_;
     uploadPartRequestsQueue.produce(make_pair(buffer_.str(), cur_part_));
     cur_part_++;
   }
-//  std::cerr<<"\nflush(): joining all threads, pool size = "<<writeThreads.size()<<", queue size = "<<uploadPartRequestsQueue.size()<<" , part = "<<cur_part_;
 
   // Now join all write threads
   joinAllWriteThreads_();
   buffer_.str(string());
-//  std::cerr<<"\nflush() exiting, buffer size = "<<buffer_.tellp()<<" , threadpool size = "<<writeThreads.size()<<", cur_part = "<<cur_part_<<endl;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -454,6 +450,9 @@ DXFile DXFile::newDXFile(const string &media_type,
 void DXFile::downloadDXFile(const string &dxid, const string &filename,
                             int64_t chunksize) {
   DXFile dxfile(dxid);
+  if (!dxfile.is_closed())
+    throw DXFileError("Error: Remote file must be in 'closed' state before it can be downloaded");
+
   ofstream localfile(filename.c_str());
   dxfile.startLinearQuery(-1, -1, chunksize);
   std::string chunk;

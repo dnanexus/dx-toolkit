@@ -231,7 +231,7 @@ public:
    * After calling this function, getNextChunk() can be use to access chunks in a
    * linear manner.
    * 
-   * Note: Calling this function, invalidates any previous call to the function.
+   * @note - Calling this function, invalidates any previous call to the function.
    * @param column_names A JSON array listing the column names to be
    * returned; the order of the column names will be respected in the
    * output.  (Use the JSON null value to indicate all columns.)
@@ -243,6 +243,7 @@ public:
    * @param max_chunks An indicative number for chunks to be kept in memory
    * at any time. Note number of real chunks in memory would be < (max_chunks + thread_count)
    * @param thread_count Number of threads to be used for fetching rows.
+   * @see stopLinearQuery(), getNextChunk()
    */
   void startLinearQuery(const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
                         const int64_t start_row=-1,
@@ -252,9 +253,10 @@ public:
                         const unsigned thread_count=5);
   
   /**
-   * Invalidates previous call to startLinearQuery() (if any).
-   * All processing is stopped, and threads terminated.
-   * Idempotent.
+   * All fetching of chunks in background is stopped, and read threads terminated.
+   * - Invalidates previous call to startLinearQuery() (if any).
+   * - Idempotent.
+   * @see startLinearQuery(), getNextChunk()
    */
   void stopLinearQuery();
   
@@ -269,6 +271,7 @@ public:
    * @return "true" if another chunk is available for processing (value of chunk is
    * copied to object passed in as input param "chunk"). "false" if all chunks
    * have exhausted, or no call to startLinearQuery() was made.
+   * @see startLinearQuery(), stopLinearQuery()
    */
   bool getNextChunk(dx::JSON &chunk);
 
@@ -277,6 +280,12 @@ public:
    * Adds the rows listed in data to the current table using the given
    * number as the part ID.
    *
+   * @note This function works quite differently from it's overloaded counterpart
+   * addRows(const dx::JSON&).
+   * - It is not multi threaded, and do not use any internal buffer.
+   * - It is always blocking, and returns only after http request finishes.
+   * @warning In general you should never mix and match between calls to
+   * addRows(const dx::JSON&, int) and addRows(const dx::JSON&)
    * @param data A JSON array of row data (each row represented as
    * JSON arrays).
    * @param part_id An integer representing the part that the given
@@ -296,7 +305,9 @@ public:
    * previous HTTP request(s), else it will pass on the task to one of 
    * the free worker thread and return.
    *
-   * If any of the thread fails then std::terminate() would be called.
+    * If any of the thread fails then std::terminate() would be called.
+   * @warning In general you should never mix and match between calls to
+   * addRows(const dx::JSON&, int) and addRows(const dx::JSON&)
    * @param data A JSON array of row data (each row represented as JSON arrays).
    */
   void addRows(const dx::JSON &data); // For automatic part ID generation
@@ -312,15 +323,17 @@ public:
   int getUnusedPartID();
 
   /**
-   * Ensures that all pending addRows request (including the ones in buffer)
-   * are completed by worker threads. Blocks until it is done.
+   * Ensures that all pending addRows request (including the ones in internal buffer)
+   * are completed by worker threads. Blocks until then. Terminates all worker threads.
    * 
-   * All worker threads are terminated after the flush.
+   * @note Since this function terminates the thread pool at the end. Thus it is wise 
+   * to use it less frequently (for ex: at the end of all addRows(const dx::JSON&) requests, 
+   * to ensure that data is actually uploaded to remote file).
    */
   void flush();
 
   /**
-   * Attempts to close the remote table.
+   * Calls flush() and issue request for closing the remote table.
    *
    * @param block If true, waits until the table has finished closing
    * before returning.  Otherwise, it returns immediately.
