@@ -1,5 +1,10 @@
 SHELL=/bin/bash -e
-DESTDIR="$$DNANEXUS_HOME"
+
+ifdef DNANEXUS_HOME
+	DESTDIR=DNANEXUS_HOME
+else
+	DESTDIR=$(CURDIR)/".."
+endif
 
 all: api_wrappers src_libs python contigset2fasta
 
