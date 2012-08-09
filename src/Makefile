@@ -1,7 +1,7 @@
 SHELL=/bin/bash -e
 
 ifdef DNANEXUS_HOME
-	DESTDIR=DNANEXUS_HOME
+	DESTDIR=$(DNANEXUS_HOME)
 else
 	DESTDIR=$(CURDIR)/".."
 endif
