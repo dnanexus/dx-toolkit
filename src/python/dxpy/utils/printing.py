@@ -47,6 +47,9 @@ def BOLD():
 def ENDC():
     return '\033[0m' if color_state else ''
 
+def DNANEXUS_LOGO():
+    return BOLD() + WHITE() + 'DNAne' + CYAN() + 'x' + WHITE() + 'us' + ENDC()
+
 def set_colors(state=True):
     global color_state
     color_state = state

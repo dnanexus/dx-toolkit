@@ -4,16 +4,9 @@ import sys, os, subprocess
 import textwrap
 import json
 from optparse import OptionParser
+from dxpy.utils.printing import *
 
 API_VERSION = '1.0.0'
-
-CYAN = '\033[36m'
-BLUE = '\033[34m'
-YELLOW = '\033[33m'
-GREEN = '\033[32m'
-RED = '\033[31m'
-BOLD = '\033[1m'
-ENDC = '\033[0m'
 
 USING_COMPLETER = False
 manifest = []
@@ -104,10 +97,10 @@ parser = OptionParser(usage="%prog [options] app_dir", description="Create a sou
 parser.add_option("-f", "--overwrite", help="Overwrite files that are in the way", action='store_true', default=False)
 (opts, args) = parser.parse_args()
 
-print 'DNAne' + CYAN + BOLD + 'x' + ENDC + 'us App Wizard, API v' + API_VERSION
+print DNANEXUS_LOGO() + ' App Wizard, API v' + API_VERSION
 print ''
 
-print BOLD + 'Basic Metadata' + ENDC
+print BOLD() + 'Basic Metadata' + ENDC()
 print ''
 print textwrap.fill('''Please enter basic metadata fields that will be used to
 describe your app.  Optional fields are denoted by options with square
@@ -165,7 +158,7 @@ class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
                              'array:record', 'array:file', 'array:gtable', 'array:table', 'array:applet'])
 
 print ''
-print BOLD + 'Input Specification' + ENDC
+print BOLD() + 'Input Specification' + ENDC()
 print ''
 print textwrap.fill('Specifying the inputs to your app is optional but is required if you would like to publish it as an app.')
 print ''
@@ -232,7 +225,7 @@ array:gtable   array:record   file           int            table
         app_json['inputSpec'].append(parameter_json)
 
 print ''
-print BOLD + 'Output Specification' + ENDC
+print BOLD() + 'Output Specification' + ENDC()
 print ''
 print textwrap.fill('Specifying the outputs to your app is optional but is required if you would like to publish it as an app.')
 print ''
@@ -277,7 +270,7 @@ if interpreter == 'python2.7':
     app_json['runSpec']['file'] = 'src/code.py'
 
 print ''
-print BOLD + '*** Generating DNAne' + CYAN + BOLD + 'x' + ENDC + BOLD + 'us App... ***' + ENDC
+print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App... ***' + ENDC()
 
 with open(os.path.join(name, 'dxapp.json'), 'w') as prog_file:
     prog_file.write(json.dumps(app_json, indent=4) + '\n')
