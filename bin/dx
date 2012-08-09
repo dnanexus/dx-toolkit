@@ -840,7 +840,7 @@ def describe(args):
     # First, if it looks like a hash id, do that.
     json_input = {}
     json_input["properties"] = True
-    if args.verbose:
+    if args.verbose or args.details:
         json_input["details"] = True
     if is_data_obj_id(args.path):
         # Should prefer the current project's version if possible
@@ -1931,6 +1931,7 @@ def add_input_to_json(inputs, input_json, input_specs):
                 input_json[key] = input_json[key][0]
 
 def run(args):
+    get_output_flag(args)
     handler = None
     desc = None
     if args.alias is None:
@@ -2046,13 +2047,13 @@ def run(args):
             except:
                 pass
     elif required_inputs is not None:
-        if sys.stdout.isatty():        
+        if not args.brief:
             print fill('No input given, and applet/app takes in no inputs.  Skipping interactive mode for input selection.')
     else:
-        if sys.stdout.isatty():
+        if not args.brief:
             print fill('No input given, and applet has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
 
-    if sys.stdout.isatty():
+    if not args.brief:
         print ''
         print 'Using input JSON:'
         print json.dumps(input_json, indent=4)
@@ -2076,18 +2077,18 @@ def run(args):
         if value != '' and not value.lower().startswith('y'):
             parser.exit(0)
 
-    if sys.stdout.isatty():
+    if not args.brief:
         print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
         dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
+        if not args.brief:
+            print "Job ID: " + dxjob.get_id()
+        else:
+            print dxjob.get_id()
         if args.wait:
             dxjob.wait_on_done()
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
-    if sys.stdout.isatty():
-        print "Job ID: " + dxjob.get_id()
-    else:
-        print dxjob.get_id()
 
 def terminate(args):
     try:
@@ -2199,13 +2200,15 @@ no_color_arg.add_argument('--color',
                           help='Set when color is used (auto=color is used when stdout is a TTY)',
                           choices=['off', 'on', 'auto'], default='auto')
 
-global_args = argparse.ArgumentParser(add_help=False)
-global_args.add_argument('--json', help='Display return value in JSON', action='store_true')
-output_args = global_args.add_mutually_exclusive_group()
-output_args.add_argument('--brief', help='Display a brief version of the return value (default if stdout is not a TTY).  For most commands, prints a DNAnexus ID per line.', action='store_true')
-output_args.add_argument('--summary', help='Display summary output (default if stdout is a TTY).', action='store_true')
-output_args.add_argument('--verbose', help='Display extra verbose output',
-                         action='store_true')
+json_arg = argparse.ArgumentParser(add_help=False)
+json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
+
+stdout_args = argparse.ArgumentParser(add_help=False)
+stdout_args_gp = stdout_args.add_mutually_exclusive_group()
+stdout_args_gp.add_argument('--brief', help='Display a brief version of the return value (default if stdout is not a TTY).  For most commands, prints a DNAnexus ID per line.', action='store_true')
+stdout_args_gp.add_argument('--summary', help='Display summary output (default if stdout is a TTY).', action='store_true')
+stdout_args_gp.add_argument('--verbose', help='Display extra verbose output',
+                            action='store_true')
 
 parser = argparse.ArgumentParser(description='DNAne' + CYAN() + BOLD() + 'x' + ENDC() + 'us Command-Line Client, API v1.0.0',
 usage='dx subcommand [options]')
@@ -2389,7 +2392,7 @@ subparsers_gtable = parser_gtable.add_subparsers()
 parser_map['gtable'] = parser_gtable
 
 parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable',
-                                                 parents=[global_args],
+                                                 parents=[stdout_args, json_arg],
                                                  prog='dx gtable get')
 parser_gtable_get.add_argument('--starting', type=int, help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
 parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the number of rows returned')
@@ -2402,9 +2405,8 @@ parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
                                         description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
-                                        parents=[global_args, no_color_arg],
+                                        parents=[stdout_args, json_arg, no_color_arg],
                                         prog='dx describe')
-parser_describe.add_argument('--properties', help='Include properties', action='store_true')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
 parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
 parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
@@ -2455,7 +2457,7 @@ SPECIFYING INPUTS
 
   JOB-BASED OBJECT REFERENCES
 
-''' + fill('For now, job-based object references can only be used if provided as part of a full input JSON.', initial_indent='  ', subsequent_indent='  ') + '\n'), prog='dx run', formatter_class=argparse.RawTextHelpFormatter)
+''' + fill('For now, job-based object references can only be used if provided as part of a full input JSON.', initial_indent='  ', subsequent_indent='  ') + '\n'), prog='dx run', formatter_class=argparse.RawTextHelpFormatter, parents=[stdout_args])
 parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
@@ -2491,7 +2493,7 @@ parser_find = subparsers.add_parser('find', help='Search functionality over data
 subparsers_find = parser_find.add_subparsers()
 parser_map['find'] = parser_find
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[global_args, no_color_arg], prog='dx find jobs')
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[stdout_args, json_arg, no_color_arg], prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -2503,7 +2505,7 @@ parser_find_jobs.add_argument('--created-before', help='Timestamp before which t
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
-parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[global_args, no_color_arg], prog='dx find data')
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[stdout_args, json_arg, no_color_arg], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
@@ -2522,13 +2524,13 @@ parser_find_data.add_argument('--created-before', help='Timestamp before which t
 parser_find_data.set_defaults(func=find_data)
 parser_map['find data'] = parser_find_data
 
-parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[global_args], prog='dx find projects')
+parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[stdout_args, json_arg], prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
 parser_find_projects.set_defaults(func=find_projects)
 parser_map['find projects'] = parser_find_projects
 
-parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[global_args], prog='dx find apps')
+parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[stdout_args, json_arg], prog='dx find apps')
 parser_find_apps.add_argument('--name', help='Name of the app')
 parser_find_apps.add_argument('--category', help='Category of the app')
 parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
@@ -2566,7 +2568,7 @@ parser_map['upload'] = parser_upload
 parser_import = subparsers.add_parser('import',
                                       help='Import a table or genomic file',
                                       description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
-                                      parents=[global_args, no_color_arg, parser_dataobject_args],
+                                      parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
                                       prog='dx import')
 parser_import.add_argument('filename', help='local filename to import')
 parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')

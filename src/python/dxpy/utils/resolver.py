@@ -368,7 +368,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if not found_valid_class:
             return None, None, None
         try:
-            desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', {})
+            desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
         except BaseException as details:
             raise ResolutionError(str(details))
         result = {"id": entity_name, "describe": desc}
