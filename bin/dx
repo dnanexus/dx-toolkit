@@ -2210,7 +2210,7 @@ stdout_args_gp.add_argument('--summary', help='Display summary output (default i
 stdout_args_gp.add_argument('--verbose', help='Display extra verbose output',
                             action='store_true')
 
-parser = argparse.ArgumentParser(description='DNAne' + CYAN() + BOLD() + 'x' + ENDC() + 'us Command-Line Client, API v1.0.0',
+parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
 usage='dx subcommand [options]')
 parser.add_argument('--version', action='version', version='dxclient 0.0.1')
 
