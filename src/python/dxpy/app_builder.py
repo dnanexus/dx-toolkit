@@ -67,8 +67,8 @@ def upload_resources(src_dir, project=None):
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         logging.debug("Uploading in " + src_dir)
 
-        with tempfile.NamedTemporaryFile(suffix=".tar.xz") as tar_fh:
-            subprocess.check_call(['tar', '-C', resources_dir, '-cJf', tar_fh.name, '.'])
+        with tempfile.NamedTemporaryFile(suffix=".tar.gz") as tar_fh:
+            subprocess.check_call(['tar', '-C', resources_dir, '-czf', tar_fh.name, '.'])
             if 'folder' in applet_spec:
                 try:
                     dxpy.DXProject(dest_project).new_folder(applet_spec['folder'], parents=True)
@@ -77,7 +77,7 @@ def upload_resources(src_dir, project=None):
             target_folder = applet_spec['folder'] if 'folder' in applet_spec else '/'
             dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True, folder=target_folder, hidden=True)
             archive_link = dxpy.dxlink(dx_resource_archive.get_id())
-            return [{'name': 'resources.tar.xz', 'id': archive_link}]
+            return [{'name': 'resources.tar.gz', 'id': archive_link}]
     else:
         return None
 
