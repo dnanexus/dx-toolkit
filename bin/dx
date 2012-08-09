@@ -2605,7 +2605,7 @@ parser_new_gtable.add_argument('--input', help='a filename containing the JSON i
 parser_new_gtable.set_defaults(func=new_gtable)
 parser_map['new gtable'] = parser_new_gtable
 
-parser_get_details = subparsers.add_parser('get_details', help='Get details of an object', prog="dx set_details")
+parser_get_details = subparsers.add_parser('get_details', help='Get details of an object', prog="dx get_details")
 parser_get_details.add_argument('path', help='Data object to get details for')
 parser_get_details.set_defaults(func=get_details)
 parser_map['get_details'] = parser_get_details
