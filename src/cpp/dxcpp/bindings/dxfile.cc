@@ -18,8 +18,8 @@ void DXFile::init_internals_() {
   cur_part_ = 1;
   eof_ = false;
   is_closed_ = false;
-  countThreadsWaitingOnConsume.store(0);
-  countThreadsNotWaitingOnConsume.store(0); 
+  countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0; 
 }
 
 void DXFile::setIDs(const string &dxid, const string &proj) {
@@ -285,7 +285,7 @@ void DXFile::joinAllWriteThreads_() {
     writeThreads[i].interrupt();
 
   while(true) {
-    if (countThreadsNotWaitingOnConsume.load() == 0 && countThreadsWaitingOnConsume.load() == writeThreads.size())
+    if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
       break;
     usleep(100);
   }
@@ -295,8 +295,8 @@ void DXFile::joinAllWriteThreads_() {
   
   writeThreads.clear();
   // Reset the counts
-  countThreadsWaitingOnConsume.store(0);
-  countThreadsNotWaitingOnConsume.store(0);
+  countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0;
 }
 
 // This function is what each of the worker thread executes

@@ -14,8 +14,8 @@ void DXGTable::setIDs(const string &dxid,
 		      const string &proj) {
   flush();
   stopLinearQuery();
-  countThreadsNotWaitingOnConsume.store(0);
-  countThreadsWaitingOnConsume.store(0);
+  countThreadsNotWaitingOnConsume = 0;
+  countThreadsWaitingOnConsume = 0;
   DXDataObject::setIDs(dxid, proj);
 }
 
@@ -256,7 +256,7 @@ void DXGTable::joinAllWriteThreads_() {
     writeThreads[i].interrupt();
 
   while(true) {
-    if (countThreadsNotWaitingOnConsume.load() == 0 && countThreadsWaitingOnConsume.load() == writeThreads.size())
+    if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
       break;
     usleep(100);
   }
@@ -266,8 +266,8 @@ void DXGTable::joinAllWriteThreads_() {
   
   writeThreads.clear();
   // Reset the counts
-  countThreadsWaitingOnConsume.store(0);
-  countThreadsNotWaitingOnConsume.store(0);
+  countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0;
 }
 
 // This function is what each of the worker thread executes

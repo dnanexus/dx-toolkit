@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
-#include <atomic>
 #include <pwd.h>
 #include "dxcpp.h"
 #include "SimpleHttp.h"
@@ -35,7 +34,8 @@ map<string, string> g_config_file_contents;
 const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 
 boost::mutex g_loadFromEnvironment_mutex;
-std::atomic<bool> g_loadFromEnvironment_finished(false);
+volatile bool g_loadFromEnvironment_finished = false;
+//std::atomic<bool> g_loadFromEnvironment_finished(false);
 
 static bool isRetriableHttpCode(int c) {
   // Ref: Python bindings
@@ -60,7 +60,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // loadFromEnvironment() every time (and acquiring the expensive lock)
   // Note: In this case a regular variable instead of atomic, will also work correctly.
   //       (except can result in few extra short-circuited calls to loadFromEnvironment()).
-  if (g_loadFromEnvironment_finished.load() == false) {
+  if (g_loadFromEnvironment_finished == false) {
     loadFromEnvironment();
   }
   // General Note: We try and use a single call to operator <<() while outputting to std::cerr.
@@ -221,7 +221,7 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
   // Read file only if it hasn't been succesfuly read before
   if (g_config_file_contents[fname].size() == 0) {  
     // Try reading in the contents of config file
-    ifstream fp(fname);
+    ifstream fp(fname.c_str());
     if (!fp.is_open()) // file could not be opened
       return false;
     // Reserve memory for string upfront (to avoid having reallocation multiple time)
@@ -240,7 +240,10 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
   // we use boost::regex
   boost::regex expression(string("^\\s*export\\s*") + key + string("\\s*=\\s*'([^'\\r\\n]+)'$"), boost::regex::perl);
   boost::match_results<std::string::const_iterator> what;
-  if(!boost::regex_search(g_config_file_contents[fname].cbegin(), g_config_file_contents[fname].cend(), what, expression, boost::match_default)) {
+  string::const_iterator itb = g_config_file_contents[fname].begin();
+  string::const_iterator ite = g_config_file_contents[fname].end();
+  
+  if(!boost::regex_search(itb, ite, what, expression, boost::match_default)) {
     return false;
   }
   if (what.size() < 2) {
@@ -306,7 +309,7 @@ void loadFromEnvironment() {
   // It is important to acquire lock before checking g_loadFromEnvironment_finished == true 
   // condition, since other instance of the function might be running in parallel thread, 
   // we must wait for it to finish (and set g_loadFromEnvironment_finished = true)
-  if (g_loadFromEnvironment_finished.load() == true)
+  if (g_loadFromEnvironment_finished == true)
     return; // Short circuit this call - env variables already loaded
   
   // intiialized with default values, will be overridden by env variable/config file (if present)
@@ -350,5 +353,5 @@ void loadFromEnvironment() {
 */
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
 
-  g_loadFromEnvironment_finished.store(true);
+  g_loadFromEnvironment_finished = true;
 }

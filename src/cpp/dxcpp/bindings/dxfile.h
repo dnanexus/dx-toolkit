@@ -3,7 +3,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <atomic>
 #include <boost/thread.hpp>
 #include "../bqueue.h"
 #include "../bindings.h"
@@ -98,7 +97,7 @@ class DXFile: public DXDataObject {
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
   // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
-  std::atomic<int> countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
+  volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
   std::vector<boost::thread> writeThreads;
   static const int MAX_WRITE_THREADS = 5;
   BlockingQueue<std::pair<std::string, int> > uploadPartRequestsQueue;

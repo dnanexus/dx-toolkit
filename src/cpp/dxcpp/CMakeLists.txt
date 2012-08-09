@@ -4,7 +4,16 @@ cmake_policy(VERSION 2.6)
 project(dxcpp)
 set(CMAKE_BUILD_TYPE, Release)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -std=c++0x -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated")
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+  add_definitions("-std=c++0x")
+endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  add_definitions("-std=c++11")
+endif()
 
 add_subdirectory(../dxjson dxjson)
 add_subdirectory(../SimpleHttpLib SimpleHttpLib)
