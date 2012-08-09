@@ -1,9 +1,11 @@
 SHELL=/bin/bash -e
 
-ifdef DNANEXUS_HOME
-	DESTDIR=$(DNANEXUS_HOME)
-else
-	DESTDIR=$(CURDIR)/".."
+ifndef DNANEXUS_HOME
+	export DNANEXUS_HOME=$(CURDIR)/..
+endif
+
+ifndef DESTDIR
+	export DESTDIR=$(DNANEXUS_HOME)
 endif
 
 all: api_wrappers src_libs python contigset2fasta
@@ -21,15 +23,15 @@ api_wrappers:
 	rm ../bin/generateWrapperTable
 
 src_libs:
-	mkdir -p "$(DESTDIR)/lib"
-	cp -a bash perl javascript "$(DESTDIR)/lib"
+	mkdir -p "$(DNANEXUS_HOME)/lib"
+	cp -a bash perl javascript "$(DNANEXUS_HOME)/lib"
 
 python:
-	mkdir -p "$(DESTDIR)/lib/python"
-	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python" --install-scripts="$(DESTDIR)/bin")
+	mkdir -p "$(DNANEXUS_HOME)/lib/python"
+	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DNANEXUS_HOME)/lib/python" --install-scripts="$(DNANEXUS_HOME)/bin")
 
 perl:
-	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DESTDIR)/lib/perl" DESTINSTALLSITELIB="$(DESTDIR)/lib/perl")
+	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl")
 
 test: test_python test_perl
 
@@ -47,6 +49,10 @@ clean:
 
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
+	mkdir -p $(DESTDIR)
+	if [[ $(DNANEXUS_HOME) != $(DESTDIR) ]]; then \
+		cp -a $(DNANEXUS_HOME)/* $(DESTDIR); \
+	fi
 
 setup_doc_virtualenv: build/doc_env/.setup_virtualenv
 
