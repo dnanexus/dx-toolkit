@@ -4,13 +4,15 @@ import os, sys, glob
 from setuptools import setup, find_packages
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
+# Replace underscores with dashes.
 # See Readme.md for details.
 scripts = []
-for script in os.listdir('dxpy/scripts'):
-    if script == '__init__.py' or script[-3:] != '.py':
+for module in os.listdir('dxpy/scripts'):
+    if module == '__init__.py' or module[-3:] != '.py':
         continue
-    script = script[:-3]
-    scripts.append("{s} = dxpy.scripts.{s}:main".format(s=script))
+    module = module[:-3]
+    script = module.replace('_', '-')
+    scripts.append("{s} = dxpy.scripts.{m}:main".format(s=script, m=module))
 
 setup(
     name='dxpy',

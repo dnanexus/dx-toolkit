@@ -18,6 +18,9 @@ We have the following convention for these scripts:
   will find the script and install a launcher for it into the executable path automatically. This is done using the
   ```entry_points``` facility of setuptools/distribute.
 
+* Note: the install script will replace underscores in the name of your module with dashes in the name of the launcher
+  script.
+
 ___
 
 TODO: intro, link to docserver; this file should also show up on pypi
