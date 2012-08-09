@@ -840,7 +840,7 @@ def describe(args):
     # First, if it looks like a hash id, do that.
     json_input = {}
     json_input["properties"] = True
-    if args.verbose or args.details:
+    if args.details:
         json_input["details"] = True
     if is_data_obj_id(args.path):
         # Should prefer the current project's version if possible
@@ -2405,7 +2405,7 @@ parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
                                         description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
-                                        parents=[stdout_args, json_arg, no_color_arg],
+                                        parents=[json_arg, no_color_arg],
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
 parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')

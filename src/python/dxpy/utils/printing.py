@@ -12,6 +12,7 @@ if sys.stdout.isatty():
         tty_rows, tty_cols = map(int, p.stdout.read().split())
         std_width = min(tty_cols - 2, 100)
     except:
+        tty_rows, tty_cols = 24, 80
         std_width = 78
     color_state = True
 else:
