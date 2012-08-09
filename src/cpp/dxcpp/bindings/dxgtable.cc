@@ -13,7 +13,9 @@ void DXGTable::reset_buffer_() {
 void DXGTable::setIDs(const string &dxid,
 		      const string &proj) {
   flush();
-
+  stopLinearQuery();
+  countThreadsNotWaitingOnConsume.store(0);
+  countThreadsWaitingOnConsume.store(0);
   DXDataObject::setIDs(dxid, proj);
 }
 
@@ -133,6 +135,7 @@ void DXGTable::startLinearQuery(const dx::JSON &column_names,
   lq_chunk_limit_ = chunk_size;
   lq_max_chunks_ = max_chunks;
   lq_next_result_ = lq_query_start_;
+  lq_results_.clear();
 
   for (unsigned i = 0; i < thread_count; ++i)
     lq_readThreads_.push_back(boost::thread(boost::bind(&DXGTable::readChunk_, this)));
@@ -156,11 +159,12 @@ void DXGTable::readChunk_() {
     boost::mutex::scoped_lock r_lock(lq_results_mutex_);
     while(lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
       r_lock.unlock();
-      usleep(100);
+      boost::this_thread::sleep(boost::posix_time::milliseconds(1));
       r_lock.lock();
     }
     lq_results_[start] = ret["data"];
     r_lock.unlock();
+    boost::this_thread::interruption_point();
   }
 }
 
@@ -191,8 +195,7 @@ void DXGTable::stopLinearQuery() {
     lq_readThreads_[i].join();
   }
   lq_readThreads_.clear();
-
-  //TODO: Ensure that all locks are released at this point
+  lq_results_.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////

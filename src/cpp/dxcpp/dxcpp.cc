@@ -53,7 +53,7 @@ static bool isRetriableCurlError(int c) {
 JSON DXHTTPRequest(const string &resource, const string &data,
        const bool alwaysRetry,
 		   const map<string, string> &headers) {
-
+  
   // We use an atomic variable (C++11 feature) to avoid acquiring a lock
   // every time in DXHTTPRequest(). Lock is instead acquired in loadFromEnvironment().
   // By checking g_loadFromEnvironment_finished value, we avoid calling
@@ -63,8 +63,14 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   if (g_loadFromEnvironment_finished.load() == false) {
     loadFromEnvironment();
   }
+  // General Note: We try and use a single call to operator <<() while outputting to std::cerr.
+  //               (so that output in multi-threading env) has less "chance" of being garbled
+  //               Not sure if a single call to operator <<() is thread safe from C++11, but 
+  //               certainyl multiple calls can mix output of various threads.
+  //               For some relevant commentary see -> dxfile.cc: getChunkHttp_()
+  
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
-    std::cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set." << std::endl;
+    std::cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set.\n";
     throw;
   }
 
@@ -129,7 +135,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
         // Everything is fine, the request went through (and 200 recieved)
         // So return back the response now
         if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
-          std::cerr << "\nRequest completed succesfuly in Retry #" << countTries;
+          std::cerr << ("\nRequest completed succesfuly in Retry #" + boost::lexical_cast<string>(countTries));
 
         try {
           return JSON::parse(req.respData); // we always return json output
@@ -144,11 +150,11 @@ JSON DXHTTPRequest(const string &resource, const string &data,
     }
     if (toRetry && countTries < NUM_MAX_RETRIES) {
       if (reqCompleted)
-        std::cerr << "\nWARNING: POST " << url << ": returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'";
+        std::cerr << ("\nWARNING: POST " + url + ": returned with HTTP code " + boost::lexical_cast<string>(req.responseCode) + " and body: '" + req.respData + "'");
       else
-        std::cerr << "\nWARNING: Unable to complete request -> POST " << url << " . Details: '" << hre.what() << "'";
+        std::cerr << ("\nWARNING: Unable to complete request -> POST " + url + " . Details: '" + hre.what() + "'");
   
-      std::cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << countTries + 1 << " of " << NUM_MAX_RETRIES << " ...";
+      std::cerr << ("\n... Waiting " + boost::lexical_cast<string>(sec_to_wait) + " seconds before retry " + boost::lexical_cast<string>(countTries + 1) + " of " + boost::lexical_cast<string>(NUM_MAX_RETRIES) + " ...");
 
       // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
       // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
@@ -163,13 +169,13 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // We are here, implies, All retries were exhausted (or not made) with failure.
   
   if (reqCompleted) {
-    std::cerr << "\nERROR: POST " << url << " returned non-200 http code in (at least) last of " << countTries << " attempt. Will throw DXAPIError.\n"; 
+    std::cerr << ("\nERROR: POST " + url + " returned non-200 http code in (at least) last of " + boost::lexical_cast<string>(countTries) + " attempt. Will throw DXAPIError.\n"); 
     JSON respJSON = JSON::parse(req.respData);
     throw DXAPIError(respJSON["error"]["type"].get<string>(),
              respJSON["error"]["message"].get<string>(),
              req.responseCode);
   } else {
-    std::cerr << "\nERROR: Unable to complete request -> POST " << url << " in " << countTries << " attempts. Will throw DXError.\n";
+    std::cerr << ("\nERROR: Unable to complete request -> POST " + url + " in " + boost::lexical_cast<string>(countTries) + " attempts. Will throw DXError.\n");
     throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
   }
   // Unreachable line

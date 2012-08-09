@@ -535,9 +535,12 @@ protected:
 
 const string DXFileTest::foostr = "foo\n";
 
-TEST(DXFileTest_Async, UploadAndDownloadLargeFile) {
+TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
+  // Upload a file with "file_size" number of '$' in it
+  // and download it, check that it is same.
+  
   char fname[L_tmpnam];
-  const int file_size = 10 * 1024 * 1024;
+  const int file_size = 25 * 1024 * 1024;
   tmpnam(fname);
   ofstream lf(fname);
   for (int i = 0; i < file_size; ++i)
@@ -545,10 +548,11 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile) {
   lf.close();
   DXFile dxf = DXFile::uploadLocalFile(fname);
   dxf.waitOnClose();
-  
+
   char fname2[L_tmpnam];
   tmpnam(fname2);
   DXFile::downloadDXFile(dxf.getID(), fname2, 99999);
+
 
   // Read the local file contents in a string
   string df_content;
@@ -567,9 +571,47 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile) {
     ASSERT_EQ('$', ch);
   }
   fp.close();
+
+
   ASSERT_EQ(count, file_size);
   remove(fname);
   remove(fname2);
+
+  dxf.flush();
+  dxf.remove();
+}
+
+TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
+  const int64_t file_size = 25.211 * 1024 * 1024;
+
+  DXFile dxfile = DXFile::newDXFile();
+  int64_t chunkSize = 5*1024*1024 + 1; // minimum chunk size allowed by api
+  for (int64_t i = 0; i < file_size; i += chunkSize) {
+    string toWrite = string(std::min(chunkSize, (file_size - i)), '#');
+    dxfile.write(toWrite);
+    if (random() % 2 == 0) {
+      // Randomly flush sometime
+      dxfile.flush();
+    }
+  }
+  dxfile.close(true);
+  ASSERT_EQ(dxfile.is_closed(), true);
+
+  dxfile.startLinearQuery();
+  std::string chunk;
+  int64_t bytes_read = 0;
+  while(dxfile.getNextChunk(chunk)) {
+    for (int i = 0; i < chunk.size(); ++i)
+      ASSERT_EQ(chunk[i], '#');
+    bytes_read += chunk.size();
+    if (random() % 10 == 0) {
+      // ~1 in 10 time, stop the linear query and restart from current position
+      dxfile.stopLinearQuery();
+      dxfile.startLinearQuery(bytes_read);
+    }
+  }
+  ASSERT_EQ(bytes_read, file_size);
+  dxfile.remove();
 }
 
 TEST_F(DXFileTest, SimpleCloneTest) {
@@ -772,7 +814,7 @@ int getRowCount(JSON desc) {
   return totalRows;
 }
 
-TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
+TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1_SLOW) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
   DXGTable dxgtable2 = DXGTable::newDXGTable(DXGTableTest::columns);
   
@@ -788,7 +830,7 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
     temp.push_back(data);
     dxgtable.addRows(temp);
     dxgtable2.addRows(temp);
-    if (i % 10001 == 0)
+    if (random()%100 == 0)
       dxgtable.flush();
   }
   dxgtable.flush();
@@ -798,23 +840,24 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1) {
  
   EXPECT_EQ(numRows, getRowCount(desc));
   EXPECT_EQ(numRows, getRowCount(dxgtable2.describe()));
-  // TODO: Add test checking row order
+  dxgtable.remove();
+  dxgtable2.remove();
 }
 
-TEST_F(DXGTableTest, GetRowsLinearQueryTest) {
+TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
   
   JSON data(JSON_ARRAY);
   JSON temp(JSON_ARRAY);
   
   int str_size = 10;
-  int numRows = 1000000; // should be > limit+start
   
   // These parameters will be used in second Linear query
   int start = 100;
   int limit = 10000;
   int chunk_size = 10;
-
+  int numRows = 1000000; // should be > limit+start
+  
   data.push_back(std::string(str_size, 'X'));
   data.push_back(0);
   for (int i = 0; i < numRows; i++) {
@@ -833,12 +876,18 @@ TEST_F(DXGTableTest, GetRowsLinearQueryTest) {
   int lq_row_count=0;
   while (dxgtable.getNextChunk(chunk)) {
     for (int i = 0; i < chunk.size(); ++i, lq_row_count++) {
-//      std::cerr<<"\nchunk = "<<chunk[i].toString();
       EXPECT_EQ(chunk[i][1].get<std::string>().length(), str_size);
       EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
     }
+    if (random() % 10 == 0) {
+      // Randomly stop the linear query, and cotinue from that point onwards
+      dxgtable.stopLinearQuery();
+      dxgtable.startLinearQuery(JSON(JSON_NULL), lq_row_count);
+    }
   }
   EXPECT_EQ(lq_row_count, numRows);
+
+  // Try linear query with different chunk_size, etc than default
   dxgtable.startLinearQuery(JSON(JSON_NULL), start, limit, chunk_size);
   lq_row_count = start;
   int shorter_chunks = 0;
@@ -853,6 +902,7 @@ TEST_F(DXGTableTest, GetRowsLinearQueryTest) {
   }
   EXPECT_LE(shorter_chunks, 1);
   EXPECT_EQ(lq_row_count-start, limit);
+  dxgtable.remove();
 }
 
 TEST_F(DXGTableTest, InvalidSpecTest) {
