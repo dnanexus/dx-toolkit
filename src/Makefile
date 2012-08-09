@@ -26,7 +26,7 @@ src_libs:
 
 python:
 	mkdir -p "$(DESTDIR)/lib/python"
-	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python" --install-scripts="$(DESTDIR)/bin")
+	(source ../environment; export PYTHONPATH="$$PYTHONPATH:$(DESTDIR)/lib/python"; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DESTDIR)/lib/python" --install-scripts="$(DESTDIR)/bin")
 
 perl:
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DESTDIR)/lib/perl" DESTINSTALLSITELIB="$(DESTDIR)/lib/perl")
