@@ -17,8 +17,7 @@
  * are no chunks in the queue.
  */
 
-class Chunk;  // forward declaration, so we don't need to include chunk.h
-
+template<typename T>
 class BlockingQueue {
 public:
 
@@ -26,8 +25,8 @@ public:
   }
 
   void setCapacity(int capacity_);
-  void produce(Chunk * chunk);
-  Chunk * consume();
+  void produce(T chunk);
+  T consume();
 
   size_t size();
 
@@ -37,11 +36,45 @@ private:
   int capacity;
 
   /* The underlying queue. */
-  std::queue<Chunk *> chunks;
+  std::queue<T> chunks;
 
   boost::mutex mut;
   boost::condition_variable canProduce;
   boost::condition_variable canConsume;
 };
 
+template<typename T> void BlockingQueue<T>::setCapacity(int capacity_) {
+  capacity = capacity_;
+}
+
+template<typename T> void BlockingQueue<T>::produce(T chunk) {
+  {
+    boost::unique_lock<boost::mutex> lock(mut);
+    if (capacity != -1) {
+      while (chunks.size() == capacity) {
+        canProduce.wait(lock);
+      }
+    }
+    chunks.push(chunk);
+  }
+  canConsume.notify_all();
+}
+
+template<typename T> T BlockingQueue<T>::consume() {
+  T chunk;
+  {
+    boost::unique_lock<boost::mutex> lock(mut);
+    while (chunks.empty()) {
+      canConsume.wait(lock);
+    }
+    chunk = chunks.front();
+    chunks.pop();
+  }
+  canProduce.notify_all();
+  return chunk;
+}
+
+template<typename T> size_t BlockingQueue<T>::size() {
+  return chunks.size();
+}
 #endif

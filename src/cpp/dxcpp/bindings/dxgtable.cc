@@ -1,5 +1,6 @@
 #include "dxgtable.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/bind.hpp>
 
 using namespace std;
 using namespace dx;
@@ -12,7 +13,9 @@ void DXGTable::reset_buffer_() {
 void DXGTable::setIDs(const string &dxid,
 		      const string &proj) {
   flush();
-
+  stopLinearQuery();
+  countThreadsNotWaitingOnConsume = 0;
+  countThreadsWaitingOnConsume = 0;
   DXDataObject::setIDs(dxid, proj);
 }
 
@@ -116,6 +119,87 @@ JSON DXGTable::getRows(const JSON &query, const JSON &column_names,
   return gtableGet(dxid_, input_params);
 }
 
+/////////////////////////////////////////////////////////////
+
+void DXGTable::startLinearQuery(const dx::JSON &column_names,
+                      const int64_t start_row,
+                      const int64_t num_rows,
+                      const int64_t chunk_size,
+                      const unsigned max_chunks,
+                      const unsigned thread_count) {
+  stopLinearQuery(); // Stop any previously running linear query
+  
+  lq_columns_ = column_names;
+  lq_query_start_ = (start_row == -1) ? 0 : start_row;
+  lq_query_end_ = (num_rows == -1) ? describe()["length"].get<int64_t>() : lq_query_start_ + num_rows;
+  lq_chunk_limit_ = chunk_size;
+  lq_max_chunks_ = max_chunks;
+  lq_next_result_ = lq_query_start_;
+  lq_results_.clear();
+
+  for (unsigned i = 0; i < thread_count; ++i)
+    lq_readThreads_.push_back(boost::thread(boost::bind(&DXGTable::readChunk_, this)));
+}
+
+void DXGTable::readChunk_() {
+  int64_t start;
+  while (true) {
+    boost::mutex::scoped_lock qs_lock(lq_query_start_mutex_);
+    if (lq_query_start_ >= lq_query_end_)
+      break; // We are done fetching all chunks
+
+    start = lq_query_start_;
+    lq_query_start_ += lq_chunk_limit_;
+    qs_lock.unlock();
+
+    int64_t limit_for_req = std::min(lq_chunk_limit_, (lq_query_end_ - start));
+
+    // Perform the actual query
+    JSON ret = getRows(JSON(JSON_NULL), lq_columns_, start, limit_for_req);
+    boost::mutex::scoped_lock r_lock(lq_results_mutex_);
+    while(lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
+      r_lock.unlock();
+      boost::this_thread::sleep(boost::posix_time::milliseconds(1));
+      r_lock.lock();
+    }
+    lq_results_[start] = ret["data"];
+    r_lock.unlock();
+    boost::this_thread::interruption_point();
+  }
+}
+
+bool DXGTable::getNextChunk(JSON &chunk) {
+  if (lq_readThreads_.size() == 0) // Linear query was not called
+    return false;
+
+  boost::mutex::scoped_lock r_lock(lq_results_mutex_);
+  if (lq_next_result_ >= lq_query_end_)
+    return false;
+  while(lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
+    r_lock.unlock();
+    usleep(100);
+    r_lock.lock();
+  }
+  chunk = lq_results_.begin()->second;
+  lq_results_.erase(lq_results_.begin());
+  lq_next_result_ += chunk.size();
+  r_lock.unlock();
+  return true;
+}
+
+void DXGTable::stopLinearQuery() {
+  if (lq_readThreads_.size() == 0)
+    return;
+  for (unsigned i = 0; i < lq_readThreads_.size(); ++i) {
+    lq_readThreads_[i].interrupt();
+    lq_readThreads_[i].join();
+  }
+  lq_readThreads_.clear();
+  lq_results_.clear();
+}
+
+///////////////////////////////////////////////////////////////////////////
+
 void DXGTable::addRows(const JSON &data, int part_id) {
   JSON input_params(JSON_OBJECT);
   input_params["data"] = data;
@@ -123,15 +207,117 @@ void DXGTable::addRows(const JSON &data, int part_id) {
   gtableAddRows(dxid_, input_params);
 }
 
-// For automatic index generation
+void DXGTable::finalizeRequestBuffer_() {
+  /* This function "closes" the stringified JSON array we are keeping for
+   * for buffering requests. It also creates the worker thread if not done previously
+   */
+  int64_t pos = row_buffer_.tellp();
+  if (pos > 10) {
+    row_buffer_.seekp(pos - 1); // Erase the trailing comma
+    row_buffer_ << "], \"part\": " << getUnusedPartID() << "}"; 
+  }
+  // We need to create thread pool only once (i.e., if it doesn't exist already)
+  if (writeThreads.size() == 0)
+    createWriteThreads_();
+}
+
+void DXGTable::joinAllWriteThreads_() {
+  /* This function ensures that all pending requests are executed and all
+   * worker thread are closed after that
+   * Brief notes about functioning:
+   * --> addRowRequestsQueue.size() == 0, ensures that request queue is empty, i.e.,
+   *     some worker has picked the last request (note we use term "pick", because 
+   *     the request might still be executing the request).
+   * --> Once we know that request queue is empty, we issue interrupt() to all threads
+   *     Note: interrupt() will only terminate threads, which are waiting on new request.
+   *           So only threads which are blocked by .consume() operation will be terminated
+   *           immediatly.
+   * --> Now we use a condition based on two interleaved counters to wait until all the 
+   *     threads have finished the execution. (see writeChunk_() for understanding their usage)
+   * --> Once we are sure that all threads have finished the requests, we join() them.
+   *     Since interrupt() was already issued, thus join() terminates them instantly.
+   *     Note: Most of them would have been already terminated (since after issuing 
+   *           interrupt(), they will be terminated when they start waiting on consume()). 
+   *           It's ok to join() terminated threads.
+   * --> We clear the thread pool (vector), and reset the counters.
+   */
+
+  if (writeThreads.size() == 0)
+    return; // Nothing to do (no thread has been started)
+  
+  // To avoid race condition
+  // particularly the case when produce() has been called, but thread is still waiting on consume()
+  // we don't want to incorrectly issue interrupt() that time
+  while(addRowRequestsQueue.size() != 0) {
+    usleep(100);
+  }
+
+  for (unsigned i = 0; i < writeThreads.size(); ++i)
+    writeThreads[i].interrupt();
+
+  while(true) {
+    if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
+      break;
+    usleep(100);
+  }
+  
+  for (unsigned i = 0; i < writeThreads.size(); ++i)
+    writeThreads[i].join();
+  
+  writeThreads.clear();
+  // Reset the counts
+  countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0;
+}
+
+// This function is what each of the worker thread executes
+void DXGTable::writeChunk_(string gtableId) {
+  /* This function is executed throughtout the lifetime of an addRows worker thread
+   * Brief note about various constructs used in the function:
+   * --> addRowRequestsQueue.consume() will block if no pending requests to be
+   *     excuted are available.
+   * --> gtableAddRows() does the actual upload of rows.
+   * --> We use two interleaved counters (countThread{NOT}WaitingOnConsume) to
+   *     know when it is safe to terminate the threads (see joinAllWriteThreads_()).
+   *     We want to terminate only when thread is waiting on .consume(), and not
+   *     when gtableAddRows() is being executed.
+   */
+   // See C++11 working draft for details about atomics (used for counterS)
+   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
+  while(true) {
+    countThreadsWaitingOnConsume++;
+    std::string req = addRowRequestsQueue.consume();
+    countThreadsNotWaitingOnConsume++;
+    countThreadsWaitingOnConsume--;
+    gtableAddRows(gtableId, req);
+    countThreadsNotWaitingOnConsume--;
+  }
+}
+
+/* This function creates new worker thread for addRows
+ * Usually it wil be called once for a series of addRows() and then close() request
+ * However, if we call flush() in between, then we destroy any existing threads, thus 
+ * threads will be recreated for any further addRows() request
+ */
+void DXGTable::createWriteThreads_() {
+  if (writeThreads.size() == 0) {
+    for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
+      writeThreads.push_back(boost::thread(boost::bind(&DXGTable::writeChunk_, this, _1), dxid_));
+    }
+  }
+}
+
 void DXGTable::addRows(const JSON &data) {
   for (JSON::const_array_iterator iter = data.array_begin();
        iter != data.array_end();
        iter++) {
     row_buffer_ << (*iter).toString() << ",";
 
-    if (row_buffer_.tellp() >= row_buffer_maxsize_)
-      flush();
+    if (row_buffer_.tellp() >= row_buffer_maxsize_) {
+      finalizeRequestBuffer_();
+      addRowRequestsQueue.produce(row_buffer_.str());
+      reset_buffer_();  
+    }
   }
 }
 
@@ -143,13 +329,11 @@ int DXGTable::getUnusedPartID() {
 void DXGTable::flush() {
   int64_t pos = row_buffer_.tellp();
   if (pos > 10) {
-    row_buffer_.seekp(pos - 1); // Erase the trailing comma
-    row_buffer_ << "], \"part\": " << getUnusedPartID() << "}";
-
-    gtableAddRows(dxid_, row_buffer_.str());
-
-    reset_buffer_();
+    finalizeRequestBuffer_();
+    addRowRequestsQueue.produce(row_buffer_.str());
+    joinAllWriteThreads_();
   }
+  reset_buffer_();
 }
 
 void DXGTable::close(const bool block) {

@@ -535,6 +535,85 @@ protected:
 
 const string DXFileTest::foostr = "foo\n";
 
+TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
+  // Upload a file with "file_size" number of '$' in it
+  // and download it, check that it is same.
+  
+  char fname[L_tmpnam];
+  const int file_size = 25 * 1024 * 1024;
+  tmpnam(fname);
+  ofstream lf(fname);
+  for (int i = 0; i < file_size; ++i)
+    lf<<"$";
+  lf.close();
+  DXFile dxf = DXFile::uploadLocalFile(fname);
+  dxf.waitOnClose();
+
+  char fname2[L_tmpnam];
+  tmpnam(fname2);
+  DXFile::downloadDXFile(dxf.getID(), fname2, 99999);
+
+
+  // Read the local file contents in a string
+  string df_content;
+  ifstream fp(fname);
+  ASSERT_TRUE(fp.is_open());
+  // Reserve memory for string upfront (to avoid having reallocation multiple time)
+  fp.seekg(0, ios::end);   
+  ASSERT_EQ(file_size, fp.tellg());
+  fp.seekg(0, ios::beg);
+  int count = 0;
+  while(fp.good()) {
+    char ch = fp.get();
+    if (fp.eof())
+      break;
+    count++;
+    ASSERT_EQ('$', ch);
+  }
+  fp.close();
+
+
+  ASSERT_EQ(count, file_size);
+  remove(fname);
+  remove(fname2);
+
+  dxf.flush();
+  dxf.remove();
+}
+
+TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
+  const int64_t file_size = 25.211 * 1024 * 1024;
+
+  DXFile dxfile = DXFile::newDXFile();
+  int64_t chunkSize = 5*1024*1024 + 1; // minimum chunk size allowed by api
+  for (int64_t i = 0; i < file_size; i += chunkSize) {
+    string toWrite = string(std::min(chunkSize, (file_size - i)), '#');
+    dxfile.write(toWrite);
+    if (random() % 2 == 0) {
+      // Randomly flush sometime
+      dxfile.flush();
+    }
+  }
+  dxfile.close(true);
+  ASSERT_EQ(dxfile.is_closed(), true);
+
+  dxfile.startLinearQuery();
+  std::string chunk;
+  int64_t bytes_read = 0;
+  while(dxfile.getNextChunk(chunk)) {
+    for (int i = 0; i < chunk.size(); ++i)
+      ASSERT_EQ(chunk[i], '#');
+    bytes_read += chunk.size();
+    if (random() % 10 == 0) {
+      // ~1 in 10 time, stop the linear query and restart from current position
+      dxfile.stopLinearQuery();
+      dxfile.startLinearQuery(bytes_read);
+    }
+  }
+  ASSERT_EQ(bytes_read, file_size);
+  dxfile.remove();
+}
+
 TEST_F(DXFileTest, SimpleCloneTest) {
   DXFile dxfile = DXFile::newDXFile();
   dxfile.write("foo");
@@ -581,6 +660,7 @@ TEST_F(DXFileTest, WriteReadFile) {
   ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
 }
 
+/*
 TEST_F(DXFileTest, StreamingOperators) {
   dxfile = DXFile::newDXFile();
   stringstream samestr;
@@ -597,7 +677,7 @@ TEST_F(DXFileTest, StreamingOperators) {
   ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
 
   // TODO: Test >> if/when implemented
-}
+}*/
 
 //////////////
 // DXGTable //
@@ -711,7 +791,6 @@ TEST_F(DXGTableTest, AddRowsTest) {
 
 TEST_F(DXGTableTest, AddRowsNoIndexTest) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
-
   for (int i = 0; i < 64; i++) {
     string rowstr = "[[\"Row " + boost::lexical_cast<string>(i) +
       "\", " + boost::lexical_cast<string>(i+1) + "]]";
@@ -725,6 +804,105 @@ TEST_F(DXGTableTest, AddRowsNoIndexTest) {
 
   desc = dxgtable.describe();
   EXPECT_EQ(64, desc["length"].get<int>());
+}
+
+// Given output of describe (called on "open" table), returns total number of rows
+int getRowCount(JSON desc) {
+  int totalRows = 0;
+  for (JSON::object_iterator it = desc["parts"].object_begin(); it != desc["parts"].object_end(); ++it)
+    totalRows += it->second["length"].get<int>();
+  return totalRows;
+}
+
+TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1_SLOW) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  DXGTable dxgtable2 = DXGTable::newDXGTable(DXGTableTest::columns);
+  
+  JSON data(JSON_ARRAY);
+  JSON temp(JSON_ARRAY);
+  
+  data.push_back(std::string(10000, 'X'));
+  data.push_back(0);
+  int numRows = 100000;
+  for (int i = 0; i < numRows; i++) {
+    temp = JSON::parse("[]");
+    data[1] = i;
+    temp.push_back(data);
+    dxgtable.addRows(temp);
+    dxgtable2.addRows(temp);
+    if (random()%100 == 0)
+      dxgtable.flush();
+  }
+  dxgtable.flush();
+  dxgtable2.flush();
+
+  JSON desc = dxgtable.describe();
+ 
+  EXPECT_EQ(numRows, getRowCount(desc));
+  EXPECT_EQ(numRows, getRowCount(dxgtable2.describe()));
+  dxgtable.remove();
+  dxgtable2.remove();
+}
+
+TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  
+  JSON data(JSON_ARRAY);
+  JSON temp(JSON_ARRAY);
+  
+  int str_size = 10;
+  
+  // These parameters will be used in second Linear query
+  int start = 100;
+  int limit = 10000;
+  int chunk_size = 10;
+  int numRows = 1000000; // should be > limit+start
+  
+  data.push_back(std::string(str_size, 'X'));
+  data.push_back(0);
+  for (int i = 0; i < numRows; i++) {
+    temp = JSON::parse("[]");
+    data[1] = i;
+    temp.push_back(data);
+    dxgtable.addRows(temp);
+  }
+  dxgtable.flush();
+  JSON desc = dxgtable.describe();
+  EXPECT_EQ(numRows, getRowCount(desc));
+  dxgtable.close(true);
+  
+  dxgtable.startLinearQuery();
+  JSON chunk;
+  int lq_row_count=0;
+  while (dxgtable.getNextChunk(chunk)) {
+    for (int i = 0; i < chunk.size(); ++i, lq_row_count++) {
+      EXPECT_EQ(chunk[i][1].get<std::string>().length(), str_size);
+      EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
+    }
+    if (random() % 10 == 0) {
+      // Randomly stop the linear query, and cotinue from that point onwards
+      dxgtable.stopLinearQuery();
+      dxgtable.startLinearQuery(JSON(JSON_NULL), lq_row_count);
+    }
+  }
+  EXPECT_EQ(lq_row_count, numRows);
+
+  // Try linear query with different chunk_size, etc than default
+  dxgtable.startLinearQuery(JSON(JSON_NULL), start, limit, chunk_size);
+  lq_row_count = start;
+  int shorter_chunks = 0;
+  while (dxgtable.getNextChunk(chunk)) {
+    if (chunk.size() < chunk_size)
+      shorter_chunks++;
+    else
+      EXPECT_EQ(chunk.size(), chunk_size);
+    for (int i = 0; i < chunk.size(); ++i, lq_row_count++) {
+      EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
+    }
+  }
+  EXPECT_LE(shorter_chunks, 1);
+  EXPECT_EQ(lq_row_count-start, limit);
+  dxgtable.remove();
 }
 
 TEST_F(DXGTableTest, InvalidSpecTest) {
@@ -809,6 +987,65 @@ TEST_F(DXGTableTest, GRITest) {
   ASSERT_EQ(result["length"].get<int>(), 3);
 
   // TODO: Test with > 1 index
+}
+
+TEST(DXSearchTest, findDataObjects) {
+  // Note: Due to network delays, some of these test might fail.
+  //       Be aware of this fact while debugging.
+  usleep(1 * 1000000); // Sleep for 1s
+  int64_t ts1 = std::time(NULL) * 1000; // in ms => Time of object creation
+  usleep(10000); // Sleep for 10ms
+  DXRecord dxrecord = DXRecord::newDXRecord();
+  JSON q1(JSON_OBJECT);
+  q1["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<std::string>(ts1) + "}");
+  JSON res = findDataObjects(q1);
+//  std::cout<<endl<<res.toString()<<endl;
+  ASSERT_EQ(res["results"].size(), 1);
+  ASSERT_EQ(res["next"], JSON(JSON_NULL));
+  
+  ASSERT_EQ(res["results"][0], findOneDataObject(q1));
+
+  // Sleep for .5 sec, and then find all objects modified in last .25 second
+  // should be zero
+  usleep(0.5 * 1000000); // Sleep for .5sec
+  q1 = JSON::parse("{\"modified\": {\"after\": \"-0.25s\"}}");
+  res = findDataObjects(q1);
+  ASSERT_EQ(res["results"].size(), 0);
+  ASSERT_EQ(res["next"], JSON(JSON_NULL));
+  
+  // find all objects modified after (ts1 - 1) seconds
+  q1["modified"]["after"] = boost::lexical_cast<std::string>(ts1/1000 - 1) + "s";
+  res = findDataObjects(q1);
+  ASSERT_EQ(res["results"].size(), 1);
+  ASSERT_EQ(res["next"], JSON(JSON_NULL));
+  
+  // find all objects in open state, and created after (ts1 - 1) seconds
+  q1 = JSON::parse("{\"state\": \"open\", \"created\":{\"after\":-" + boost::lexical_cast<std::string>(std::time(NULL)*1000 - ts1 + 1000) + "}}");
+  res = findDataObjects(q1);
+  ASSERT_EQ(res["results"].size(), 1);
+
+  // Remove test data
+  dxrecord.remove();
+}
+
+TEST(DXSearchTest, findJobs) {
+  // TODO
+}
+
+TEST(DXSearchTest, findProjects) {
+  JSON q = JSON::parse("{}");
+  JSON res = findProjects(q);
+  int len = res["results"].size();
+
+  std::string id = projectNew(std::string("{\"name\": \"test_prj\"}"))["id"].get<std::string>();
+
+  ASSERT_EQ(findProjects(q)["results"].size(), (len == 1000) ? len : len + 1);
+  DXProject dxprj(id);
+  dxprj.destroy();
+}
+
+TEST(DXSearchTest, findApps) {
+  // TODO
 }
 
 ///////////

@@ -38,6 +38,8 @@ public:
 
   dx::JSON describe() const;
 
+  void update(const dx::JSON &to_update) const;
+
   void addCategories(const dx::JSON &categories) const;
 
   void removeCategories(const dx::JSON &categories) const;
@@ -45,6 +47,16 @@ public:
   void addTags(const dx::JSON &tags) const;
 
   void removeTags(const dx::JSON &tags) const;
+  
+  void install() const;
+
+  void uninstall() const;
+  
+  void get() const;
+
+  void publish(bool makeDefault=false) const;
+
+  void remove() const;
 
   DXJob run(const dx::JSON &app_input,
             const std::string &project_context=g_WORKSPACE_ID,

@@ -2,8 +2,10 @@
 #define DXCPP_BINDINGS_DXGTABLE_H
 
 #include <sstream>
+#include <boost/thread.hpp>
 #include "../bindings.h"
 #include "../api.h"
+#include "../bqueue.h"
 
 /**
  * @brief Remote table handler
@@ -24,28 +26,58 @@ private:
   void close_(const std::string &s)const{gtableClose(dxid_,s);}
   dx::JSON listProjects_(const std::string &s)const{return gtableListProjects(dxid_,s);}
 
+  // Added for multi-threading in addRows
+  void finalizeRequestBuffer_();
+  void joinAllWriteThreads_();
+  void writeChunk_(std::string);
+  void createWriteThreads_();
+  ///////////////////////////////////////
+  
+  // For get rows
+  void readChunk_();
+  /////////////////////////////////////
+  
   std::stringstream row_buffer_;
 
   int64_t row_buffer_maxsize_;
 
   void reset_buffer_();
+  
+  // To allow interleaving (without compiler optimization possibly changing order)
+  // we use std::atomic (a c++11 feature)
+  // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
+  volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
+  std::vector<boost::thread> writeThreads;
+  static const int MAX_WRITE_THREADS = 5;
+  BlockingQueue<std::string> addRowRequestsQueue;
+  
+  // For linear query
+  std::map<int64_t, dx::JSON> lq_results_;
+  dx::JSON lq_columns_;
+  int64_t lq_chunk_limit_;
+  int64_t lq_query_start_;
+  int64_t lq_query_end_;
+  unsigned lq_max_chunks_;
+  int64_t lq_next_result_;
+  std::vector<boost::thread> lq_readThreads_;
+  boost::mutex lq_results_mutex_, lq_query_start_mutex_;
 
 public:
 
   DXGTable()
-    : DXDataObject(), row_buffer_maxsize_(104857600)
+    : DXDataObject(), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
     reset_buffer_();
   }
 
   DXGTable(const DXGTable &to_copy)
-    : DXDataObject(to_copy), row_buffer_maxsize_(104857600)
+    : DXDataObject(to_copy), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
     reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_);
   }
 
   DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID)
-    : row_buffer_maxsize_(104857600)
+    : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
     reset_buffer_(); setIDs(dxid, proj);
   }
@@ -192,10 +224,67 @@ public:
                    const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
                    const int64_t starting=-1, const int64_t limit=-1) const;
 
+  
+  /** 
+   * Start fetching rows in chunks of specified size from the gtable in background.
+   * After calling this function, getNextChunk() can be use to access chunks in a
+   * linear manner.
+   * 
+   * @note - Calling this function, invalidates any previous call to the function.
+   * @param column_names A JSON array listing the column names to be
+   * returned; the order of the column names will be respected in the
+   * output.  (Use the JSON null value to indicate all columns.)
+   * @param start_row Row number (0-indexed) starting from which
+   * rows will be fetched.
+   * @param num_rows Number of rows to be fetched
+   * @param chunk_size Number of rows to be fetched in each chunk
+   * (except possibly the last one, which can be shorter)
+   * @param max_chunks An indicative number for chunks to be kept in memory
+   * at any time. Note number of real chunks in memory would be < (max_chunks + thread_count)
+   * @param thread_count Number of threads to be used for fetching rows.
+   * @see stopLinearQuery(), getNextChunk()
+   */
+  void startLinearQuery(const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
+                        const int64_t start_row=-1,
+                        const int64_t num_rows=-1,
+                        const int64_t chunk_size=10000,
+                        const unsigned max_chunks=20,
+                        const unsigned thread_count=5);
+  
+  /**
+   * All fetching of chunks in background is stopped, and read threads terminated.
+   * - Invalidates previous call to startLinearQuery() (if any).
+   * - Idempotent.
+   * @see startLinearQuery(), getNextChunk()
+   */
+  void stopLinearQuery();
+  
+  /**
+   * This function is used after calling startLinearQuery() to get next row chunk
+   * in order. If startLinearQuery() was not called, then it returns "false"
+   * 
+   * @param chunk If function returns with "true", then this object will be populated
+   * with rows from next chunk (an array of arrays). If "false" is returned, then
+   * this object remain untouched.
+   *
+   * @return "true" if another chunk is available for processing (value of chunk is
+   * copied to object passed in as input param "chunk"). "false" if all chunks
+   * have exhausted, or no call to startLinearQuery() was made.
+   * @see startLinearQuery(), stopLinearQuery()
+   */
+  bool getNextChunk(dx::JSON &chunk);
+
+
   /**
    * Adds the rows listed in data to the current table using the given
    * number as the part ID.
    *
+   * @note This function works quite differently from it's overloaded counterpart
+   * addRows(const dx::JSON&).
+   * - It is not multi threaded, and do not use any internal buffer.
+   * - It is always blocking, and returns only after http request finishes.
+   * @warning In general you should never mix and match between calls to
+   * addRows(const dx::JSON&, int) and addRows(const dx::JSON&)
    * @param data A JSON array of row data (each row represented as
    * JSON arrays).
    * @param part_id An integer representing the part that the given
@@ -209,6 +298,15 @@ public:
    * server periodically using automatically generated part ID
    * numbers.
    *
+   * For increasing throughput, this function uses multiple threads 
+   * for adding rows in background. It will block only if MAX_WRITE_THREADS 
+   * number of threads (i.e., all the workers) are already busy completing 
+   * previous HTTP request(s), else it will pass on the task to one of 
+   * the free worker thread and return.
+   *
+    * If any of the thread fails then std::terminate() would be called.
+   * @warning In general you should never mix and match between calls to
+   * addRows(const dx::JSON&, int) and addRows(const dx::JSON&)
    * @param data A JSON array of row data (each row represented as JSON arrays).
    */
   void addRows(const dx::JSON &data); // For automatic part ID generation
@@ -224,12 +322,17 @@ public:
   int getUnusedPartID();
 
   /**
-   * Pushes rows stored in the internal buffer to the remote table.
+   * Ensures that all pending addRows request (including the ones in internal buffer)
+   * are completed by worker threads. Blocks until then. Terminates all worker threads.
+   * 
+   * @note Since this function terminates the thread pool at the end. Thus it is wise 
+   * to use it less frequently (for ex: at the end of all addRows(const dx::JSON&) requests, 
+   * to ensure that data is actually uploaded to remote file).
    */
   void flush();
 
   /**
-   * Attempts to close the remote table.
+   * Calls flush() and issue request for closing the remote table.
    *
    * @param block If true, waits until the table has finished closing
    * before returning.  Otherwise, it returns immediately.
@@ -240,7 +343,11 @@ public:
    * Waits until the remote table is in the "closed" state.
    */
   void waitOnClose() const;
-
+  
+  ~DXGTable() {
+    flush();
+    stopLinearQuery();
+  }
   /**
    * Clones the associated object into the specified project and folder.
    *

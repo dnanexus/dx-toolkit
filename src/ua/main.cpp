@@ -14,7 +14,7 @@ namespace fs = boost::filesystem;
 
 #include "options.h"
 #include "chunk.h"
-#include "bqueue.h"
+#include "dxcpp/bqueue.h"
 #include "log.h"
 
 using namespace std;
@@ -36,11 +36,11 @@ Options opt;
 
 unsigned int totalChunks;
 
-BlockingQueue chunksToRead;
-BlockingQueue chunksToCompress;
-BlockingQueue chunksToUpload;
-BlockingQueue chunksFinished;
-BlockingQueue chunksFailed;
+BlockingQueue<Chunk*> chunksToRead;
+BlockingQueue<Chunk*> chunksToCompress;
+BlockingQueue<Chunk*> chunksToUpload;
+BlockingQueue<Chunk*> chunksFinished;
+BlockingQueue<Chunk*> chunksFailed;
 
 unsigned int createChunks(const string &filename, const string &fileID) {
   LOG << "Creating chunks:" << endl;
@@ -320,7 +320,7 @@ int main(int argc, char * argv[]) {
   LOG << opt;
   opt.validate();
 
-  setAPIServerInfo(opt.apiserverHost, opt.apiserverPort);
+  setAPIServerInfo(opt.apiserverHost, opt.apiserverPort, "http");
   setSecurityContext(securityContext(opt.authToken));
   setProjectContext(opt.project);
 

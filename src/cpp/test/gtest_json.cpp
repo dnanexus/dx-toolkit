@@ -117,8 +117,10 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   m["0"] = 0;
   m["1"] = 1;
   JSON j6 = m;
+  j6["1"] = j6["1"].get<int>() + 1;
   ASSERT_EQ(j6.size(), 2);
   ASSERT_EQ(j6["0"], 0);
+  ASSERT_EQ(j6["1"], 2);
 
   // Invalid cases:
   ASSERT_JSONEXCEPTION(JSON::parse("[\"\\x15\"]"));
@@ -135,6 +137,7 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   ASSERT_JSONEXCEPTION(JSON::parse("{\"f\" 12}"));
 }
 
+//TEST(JSONTest, "ArithmeticOnJSON")
 TEST(JSONTest, JSONEquality) {
   JSON j1(JSON_NULL);
   ASSERT_EQ(j1, JSON_NULL);
