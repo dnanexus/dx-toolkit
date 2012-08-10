@@ -126,7 +126,7 @@ void DXGTable::startLinearQuery(const dx::JSON &column_names,
                       const int64_t num_rows,
                       const int64_t chunk_size,
                       const unsigned max_chunks,
-                      const unsigned thread_count) {
+                      const unsigned thread_count) const {
   stopLinearQuery(); // Stop any previously running linear query
   
   lq_columns_ = column_names;
@@ -137,11 +137,12 @@ void DXGTable::startLinearQuery(const dx::JSON &column_names,
   lq_next_result_ = lq_query_start_;
   lq_results_.clear();
 
-  for (unsigned i = 0; i < thread_count; ++i)
+  for (unsigned i = 0; i < thread_count; ++i) {
     lq_readThreads_.push_back(boost::thread(boost::bind(&DXGTable::readChunk_, this)));
+  }
 }
 
-void DXGTable::readChunk_() {
+void DXGTable::readChunk_() const {
   int64_t start;
   while (true) {
     boost::mutex::scoped_lock qs_lock(lq_query_start_mutex_);
@@ -168,7 +169,7 @@ void DXGTable::readChunk_() {
   }
 }
 
-bool DXGTable::getNextChunk(JSON &chunk) {
+bool DXGTable::getNextChunk(JSON &chunk) const {
   if (lq_readThreads_.size() == 0) // Linear query was not called
     return false;
 
@@ -187,7 +188,7 @@ bool DXGTable::getNextChunk(JSON &chunk) {
   return true;
 }
 
-void DXGTable::stopLinearQuery() {
+void DXGTable::stopLinearQuery() const {
   if (lq_readThreads_.size() == 0)
     return;
   for (unsigned i = 0; i < lq_readThreads_.size(); ++i) {
@@ -256,8 +257,10 @@ void DXGTable::joinAllWriteThreads_() {
     writeThreads[i].interrupt();
 
   while(true) {
+    boost::mutex::scoped_lock cl(countThreadsMutex);
     if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
       break;
+    cl.unlock();
     usleep(100);
   }
   
@@ -285,12 +288,18 @@ void DXGTable::writeChunk_(string gtableId) {
    // See C++11 working draft for details about atomics (used for counterS)
    // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
   while(true) {
+    boost::mutex::scoped_lock cl(countThreadsMutex);
     countThreadsWaitingOnConsume++;
+    cl.unlock();
     std::string req = addRowRequestsQueue.consume();
+    cl.lock();
     countThreadsNotWaitingOnConsume++;
     countThreadsWaitingOnConsume--;
+    cl.unlock();
     gtableAddRows(gtableId, req);
+    cl.lock();
     countThreadsNotWaitingOnConsume--;
+    cl.unlock();
   }
 }
 
@@ -302,7 +311,7 @@ void DXGTable::writeChunk_(string gtableId) {
 void DXGTable::createWriteThreads_() {
   if (writeThreads.size() == 0) {
     for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
-      writeThreads.push_back(boost::thread(boost::bind(&DXGTable::writeChunk_, this, _1), dxid_));
+      writeThreads.push_back(boost::move(boost::thread(boost::bind(&DXGTable::writeChunk_, this, _1), dxid_)));
     }
   }
 }

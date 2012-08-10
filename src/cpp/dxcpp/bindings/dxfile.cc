@@ -84,7 +84,7 @@ void DXFile::startLinearQuery(const int64_t start_byte,
                       const int64_t num_bytes,
                       const int64_t chunk_size,
                       const unsigned max_chunks,
-                      const unsigned thread_count) {
+                      const unsigned thread_count) const {
   if (is_closed() == false)
     throw DXFileError("ERROR: Cannot call DXFile::startLinearQuery() on a file in non-closed state");
   stopLinearQuery(); // Stop any previously running linear query
@@ -104,7 +104,7 @@ void DXFile::startLinearQuery(const int64_t start_byte,
 
 // Do *NOT* call this function with value of "end" past the (last - 1) byte of file, i.e.,
 // the Range: [start,end] should be a valid byte range in file (shouldn't be past the end of file)
-void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) {
+void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) const {
   int64_t last_byte_in_result = start - 1;
   
   const int MAX_TRIES = 5;
@@ -170,7 +170,7 @@ void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) {
   assert(result.size() == (end - start + 1));
 }
 
-void DXFile::readChunk_() {
+void DXFile::readChunk_() const {
   int64_t start;
   while (true) {
     boost::mutex::scoped_lock qs_lock(lq_query_start_mutex_);
@@ -198,7 +198,7 @@ void DXFile::readChunk_() {
   }
 }
 
-bool DXFile::getNextChunk(string &chunk) {
+bool DXFile::getNextChunk(string &chunk) const{
   if (lq_readThreads_.size() == 0) // Linear query was not called
     return false;
 
@@ -218,7 +218,7 @@ bool DXFile::getNextChunk(string &chunk) {
   return true;
 }
 
-void DXFile::stopLinearQuery() {
+void DXFile::stopLinearQuery() const{
   if (lq_readThreads_.size() == 0)
     return;
   for (unsigned i = 0; i < lq_readThreads_.size(); ++i) {
@@ -285,8 +285,10 @@ void DXFile::joinAllWriteThreads_() {
     writeThreads[i].interrupt();
 
   while(true) {
+    boost::mutex::scoped_lock cl(countThreadsMutex);
     if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
       break;
+    cl.unlock();
     usleep(100);
   }
   
@@ -314,12 +316,18 @@ void DXFile::writeChunk_() {
    // See C++11 working draft for details about atomics (used for counterS)
    // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
   while(true) {
+    boost::mutex::scoped_lock cl(countThreadsMutex);
     countThreadsWaitingOnConsume++;
+    cl.unlock();
     pair<string, int> elem = uploadPartRequestsQueue.consume();
+    cl.lock();
     countThreadsNotWaitingOnConsume++;
     countThreadsWaitingOnConsume--;
+    cl.unlock();
     uploadPart(elem.first.data(), elem.first.size(), elem.second);
+    cl.lock();
     countThreadsNotWaitingOnConsume--;
+    cl.unlock();
   }
 }
 
@@ -330,9 +338,8 @@ void DXFile::writeChunk_() {
  */
 void DXFile::createWriteThreads_() {
   if (writeThreads.size() == 0) {
-    for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
-      writeThreads.push_back(boost::thread(boost::bind(&DXFile::writeChunk_, this)));
-    }
+    for (int i = 0; i < MAX_WRITE_THREADS; ++i)
+      writeThreads.push_back(boost::move(boost::thread(boost::bind(&DXFile::writeChunk_, this))));
   }
 }
 

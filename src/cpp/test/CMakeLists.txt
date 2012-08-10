@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE, Release)
 set(GTEST_DIR /opt/chef-gtest-1.6.0)
 include_directories(../ ./ ${GTEST_DIR} ${GTEST_DIR}/include ../SimpleHttpLib ../dxjson ../dxcpp ../dxlog)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated -fopenmp")
 
 add_subdirectory(../dxcpp dxcpp)
 add_subdirectory(../dxlog dxlog)

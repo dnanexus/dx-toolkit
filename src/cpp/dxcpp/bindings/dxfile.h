@@ -6,6 +6,7 @@
 #include <boost/thread.hpp>
 #include "../bqueue.h"
 #include "../bindings.h"
+#include <boost/container/vector.hpp>
 
 /**
  * @brief Remote file handler
@@ -37,8 +38,8 @@ class DXFile: public DXDataObject {
   ///////////////////////////////////////
  
   // For linear query ///////////////////////////////////////////////
-  void readChunk_();
-  void getChunkHttp_(int64_t start, int64_t end, std::string& result);
+  void readChunk_() const;
+  void getChunkHttp_(int64_t start, int64_t end, std::string& result) const;
   ///////////////////////////////////////////////////////////////////
 
   /**
@@ -96,22 +97,26 @@ class DXFile: public DXDataObject {
   
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
-  // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
+  // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7) 
+  // Update: Since not all compilers support atomic yet
+  //         we use volatile and locking to ensure atomicity
+  boost::mutex countThreadsMutex;
   volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
-  std::vector<boost::thread> writeThreads;
+  // boost::container::vector is used because it supports move semantics
+  boost::container::vector<boost::thread> writeThreads;
   static const int MAX_WRITE_THREADS = 5;
   BlockingQueue<std::pair<std::string, int> > uploadPartRequestsQueue;
   
   // For linear query
-  std::map<int64_t, std::string> lq_results_;
-  int64_t lq_chunk_limit_;
-  int64_t lq_query_start_;
-  int64_t lq_query_end_;
-  unsigned lq_max_chunks_;
-  int64_t lq_next_result_;
-  std::string lq_url;
-  std::vector<boost::thread> lq_readThreads_;
-  boost::mutex lq_results_mutex_, lq_query_start_mutex_;
+  mutable std::map<int64_t, std::string> lq_results_;
+  mutable int64_t lq_chunk_limit_;
+  mutable int64_t lq_query_start_;
+  mutable int64_t lq_query_end_;
+  mutable unsigned lq_max_chunks_;
+  mutable int64_t lq_next_result_;
+  mutable std::string lq_url;
+  mutable boost::container::vector<boost::thread> lq_readThreads_;
+  mutable boost::mutex lq_results_mutex_, lq_query_start_mutex_;
 
  public:
 
@@ -314,7 +319,7 @@ class DXFile: public DXDataObject {
                         const int64_t num_bytes=-1,
                         const int64_t chunk_size=10*1024*1024,
                         const unsigned max_chunks=20,
-                        const unsigned thread_count=5);
+                        const unsigned thread_count=5) const;
   
   /**
    * All fetching of chunks in background is stopped, and read threads terminated.
@@ -322,7 +327,7 @@ class DXFile: public DXDataObject {
    * - Idempotent.
    * @see startLinearQuery(), getNextChunk()
    */
-  void stopLinearQuery();
+  void stopLinearQuery() const;
   
   /**
    * This function is used after calling startLinearQuery() to get next chunk of bytes
@@ -340,7 +345,7 @@ class DXFile: public DXDataObject {
    * have exhausted, or no call to startLinearQuery() was made.
    * @see startLinearQuery(), stopLinearQuery()
    */
-  bool getNextChunk(std::string &chunk);
+  bool getNextChunk(std::string &chunk) const;
  
   /**
    * Shorthand for creating a DXFile remote file handler with the
