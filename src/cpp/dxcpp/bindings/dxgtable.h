@@ -34,7 +34,7 @@ private:
   ///////////////////////////////////////
   
   // For get rows
-  void readChunk_();
+  void readChunk_() const;
   /////////////////////////////////////
   
   std::stringstream row_buffer_;
@@ -46,21 +46,24 @@ private:
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
   // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
+  // Update: Since CLang does not support atomics yet, we are using locking 
+  //         mechanism with alongwith volatile
   volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
+  boost::mutex countThreadsMutex;
   std::vector<boost::thread> writeThreads;
   static const int MAX_WRITE_THREADS = 5;
   BlockingQueue<std::string> addRowRequestsQueue;
   
   // For linear query
-  std::map<int64_t, dx::JSON> lq_results_;
-  dx::JSON lq_columns_;
-  int64_t lq_chunk_limit_;
-  int64_t lq_query_start_;
-  int64_t lq_query_end_;
-  unsigned lq_max_chunks_;
-  int64_t lq_next_result_;
-  std::vector<boost::thread> lq_readThreads_;
-  boost::mutex lq_results_mutex_, lq_query_start_mutex_;
+  mutable std::map<int64_t, dx::JSON> lq_results_;
+  mutable dx::JSON lq_columns_;
+  mutable int64_t lq_chunk_limit_;
+  mutable int64_t lq_query_start_;
+  mutable int64_t lq_query_end_;
+  mutable unsigned lq_max_chunks_;
+  mutable int64_t lq_next_result_;
+  mutable std::vector<boost::thread> lq_readThreads_;
+  mutable boost::mutex lq_results_mutex_, lq_query_start_mutex_;
 
 public:
 
@@ -249,7 +252,7 @@ public:
                         const int64_t num_rows=-1,
                         const int64_t chunk_size=10000,
                         const unsigned max_chunks=20,
-                        const unsigned thread_count=5);
+                        const unsigned thread_count=5) const;
   
   /**
    * All fetching of chunks in background is stopped, and read threads terminated.
@@ -257,7 +260,7 @@ public:
    * - Idempotent.
    * @see startLinearQuery(), getNextChunk()
    */
-  void stopLinearQuery();
+  void stopLinearQuery() const;
   
   /**
    * This function is used after calling startLinearQuery() to get next row chunk
@@ -272,7 +275,7 @@ public:
    * have exhausted, or no call to startLinearQuery() was made.
    * @see startLinearQuery(), stopLinearQuery()
    */
-  bool getNextChunk(dx::JSON &chunk);
+  bool getNextChunk(dx::JSON &chunk) const;
 
 
   /**
