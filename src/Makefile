@@ -28,10 +28,13 @@ src_libs:
 
 python:
 	mkdir -p "$(DNANEXUS_HOME)/lib/python"
-	(source ../environment; cd python; ./setup.py build; ./setup.py install --user --install-purelib="$(DNANEXUS_HOME)/lib/python" --install-scripts="$(DNANEXUS_HOME)/bin")
+	(source ../environment; cd python; ./setup.py build; ./setup.py install --prefix="$(DNANEXUS_HOME)")
 
 perl:
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl")
+
+java:
+	(cd java; ant)
 
 test: test_python test_perl
 
