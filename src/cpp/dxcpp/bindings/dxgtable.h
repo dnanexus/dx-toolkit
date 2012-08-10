@@ -6,7 +6,7 @@
 #include "../bindings.h"
 #include "../api.h"
 #include "../bqueue.h"
-#include <boost/container/vector.hpp>
+
 /**
  * @brief Remote table handler
  *
@@ -34,7 +34,7 @@ private:
   ///////////////////////////////////////
   
   // For get rows
-  void readChunk_() const;
+  void readChunk_();
   /////////////////////////////////////
   
   std::stringstream row_buffer_;
@@ -42,31 +42,25 @@ private:
   int64_t row_buffer_maxsize_;
 
   void reset_buffer_();
- 
+  
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
-  // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7) 
-  // Update: Since not all compilers support atomic yet
-  //         we use volatile and locking to ensure atomicity
- 
-  boost::mutex countThreadsMutex;
+  // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
   volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
-  // we use boost::container::vector, because it supports move semantics
-  boost::container::vector<boost::thread> writeThreads;
+  std::vector<boost::thread> writeThreads;
   static const int MAX_WRITE_THREADS = 5;
   BlockingQueue<std::string> addRowRequestsQueue;
   
   // For linear query
-  
-  mutable std::map<int64_t, dx::JSON> lq_results_;
-  mutable dx::JSON lq_columns_;
-  mutable int64_t lq_chunk_limit_;
-  mutable int64_t lq_query_start_;
-  mutable int64_t lq_query_end_;
-  mutable unsigned lq_max_chunks_;
-  mutable int64_t lq_next_result_;
-  mutable boost::container::vector<boost::thread> lq_readThreads_;
-  mutable boost::mutex lq_results_mutex_, lq_query_start_mutex_;
+  std::map<int64_t, dx::JSON> lq_results_;
+  dx::JSON lq_columns_;
+  int64_t lq_chunk_limit_;
+  int64_t lq_query_start_;
+  int64_t lq_query_end_;
+  unsigned lq_max_chunks_;
+  int64_t lq_next_result_;
+  std::vector<boost::thread> lq_readThreads_;
+  boost::mutex lq_results_mutex_, lq_query_start_mutex_;
 
 public:
 
@@ -255,7 +249,7 @@ public:
                         const int64_t num_rows=-1,
                         const int64_t chunk_size=10000,
                         const unsigned max_chunks=20,
-                        const unsigned thread_count=5) const;
+                        const unsigned thread_count=5);
   
   /**
    * All fetching of chunks in background is stopped, and read threads terminated.
@@ -263,7 +257,7 @@ public:
    * - Idempotent.
    * @see startLinearQuery(), getNextChunk()
    */
-  void stopLinearQuery() const;
+  void stopLinearQuery();
   
   /**
    * This function is used after calling startLinearQuery() to get next row chunk
@@ -278,7 +272,7 @@ public:
    * have exhausted, or no call to startLinearQuery() was made.
    * @see startLinearQuery(), stopLinearQuery()
    */
-  bool getNextChunk(dx::JSON &chunk) const;
+  bool getNextChunk(dx::JSON &chunk);
 
 
   /**
