@@ -27,7 +27,7 @@ src_libs:
 	cp -a bash perl javascript "$(DNANEXUS_HOME)/lib"
 
 python:
-	mkdir -p "$(DNANEXUS_HOME)/lib/python"
+	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
 	(source ../environment; cd python; ./setup.py build; ./setup.py install --prefix="$(DNANEXUS_HOME)")
 
 perl:
