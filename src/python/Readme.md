@@ -27,13 +27,13 @@ We have the following convention for these scripts:
   when imported as a module, the arguments need to instead be passed as inputs to a function. The following is a
   suggestion for how to accommodate both styles simultaneously with just one entry point (```main```):
 
-      def main(**kwargs):
-          if len(kwargs) == 0:
-              kwargs = vars(arg_parser.parse_args(sys.argv[1:]))
-          ...
+        def main(**kwargs):
+            if len(kwargs) == 0:
+                kwargs = vars(arg_parser.parse_args(sys.argv[1:]))
+            ...
 
-      if __name__ == '__main__':
-          main()
+        if __name__ == '__main__':
+            main()
 
 
 ___
