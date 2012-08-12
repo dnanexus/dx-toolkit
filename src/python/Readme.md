@@ -13,8 +13,10 @@ We have the following convention for these scripts:
 * Include in the script a top-level function called ```main()```, which should be the entry point processor, and
   conclude the script with the following stanza:
 
-        if __name__ == '__main__':
-             main()
+  ```python
+  if __name__ == '__main__':
+      main()
+  ```
 
 * The dxpy installation process (invoked through ```setup.py``` or with ```make -C src python``` at the top level)
   will find the script and install a launcher for it into the executable path automatically. This is done using the
