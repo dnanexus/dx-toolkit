@@ -1,7 +1,7 @@
 DNAnexus Python API
 ===================
 
-The Python library is called ```dxpy```.
+The Python library is called ```dxpy```. The autodocs are available at http://autodoc.dnanexus.com/.
 
 # Convention for Python scripts that are also modules
 
