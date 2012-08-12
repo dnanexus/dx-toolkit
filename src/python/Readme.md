@@ -3,7 +3,7 @@ DNAnexus Python API
 
 The Python library is called ```dxpy```.
 
-# Convention for python scripts that are also modules
+# Convention for Python scripts that are also modules
 
 Some scripts, such as format converters, are useful both as standalone executables and as importable modules.
 
@@ -22,6 +22,19 @@ We have the following convention for these scripts:
 
     * Note: the install script will replace underscores in the name of your module with dashes in the name of the launcher
       script.
+
+* Typically, when called on the command line, *main()* will first parse the command line arguments (sys.argv). However,
+  when imported as a module, the arguments need to instead be passed as inputs to a function. The following is a
+  suggestion for how to accommodate both styles simultaneously with just one entry point (```main```):
+
+      def main(**kwargs):
+          if len(kwargs) == 0:
+              kwargs = vars(arg_parser.parse_args(sys.argv[1:]))
+          ...
+
+     if __name__ == '__main__':
+         main()
+
 
 ___
 
