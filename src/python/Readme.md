@@ -32,8 +32,8 @@ We have the following convention for these scripts:
               kwargs = vars(arg_parser.parse_args(sys.argv[1:]))
           ...
 
-     if __name__ == '__main__':
-         main()
+      if __name__ == '__main__':
+          main()
 
 
 ___
