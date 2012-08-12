@@ -1,6 +1,8 @@
 DNAnexus Python API
 ===================
 
+The Python library is called ```dxpy```.
+
 # Convention for python scripts that are also modules
 
 Some scripts, such as format converters, are useful both as standalone executables and as importable modules.
@@ -18,8 +20,8 @@ We have the following convention for these scripts:
   will find the script and install a launcher for it into the executable path automatically. This is done using the
   ```entry_points``` facility of setuptools/distribute.
 
-* Note: the install script will replace underscores in the name of your module with dashes in the name of the launcher
-  script.
+    * Note: the install script will replace underscores in the name of your module with dashes in the name of the launcher
+      script.
 
 ___
 
