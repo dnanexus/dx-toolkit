@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, subprocess
-import json
+import json, re
 from optparse import OptionParser
 from dxpy.utils.printing import *
 
@@ -51,7 +51,7 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
             value = raw_input(prompt)
         except KeyboardInterrupt:
             print ''
-            continue
+            exit(1)
         except EOFError:
             print ''
             exit(1)
@@ -78,7 +78,7 @@ def prompt_for_yn(prompt_str, default=None):
             value = raw_input(prompt)
         except KeyboardInterrupt:
             print ''
-            continue
+            exit(1)
         except EOFError:
             print ''
             exit(1)
@@ -108,7 +108,13 @@ app will be generated from the answers you provide.''')
 print ''
 
 print fill('The ' + BOLD() + 'name' + ENDC() + ' of your app must be unique on the DNAnexus platform.  After creating your app for the first time, you will be able to publish new versions using the same app name.  App names are restricted to alphanumeric characters (a-z, A-Z, 0-9), and the characters ".", "_", and "-".')
-name = prompt_for_var('App Name')
+name_pattern = re.compile('^[a-zA-Z0-9._-]+$')
+while True:
+    name = prompt_for_var('App Name')
+    if name_pattern.match(name) is None:
+        print fill('The name of your app must match /^[a-zA-Z0-9._-]+$/')
+    else:
+        break
 
 #if os.path.exists(name) and not opts.overwrite:
 #    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
@@ -171,6 +177,7 @@ class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
                              'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
                              'record', 'file', 'gtable', 'table', 'applet',
                              'array:record', 'array:file', 'array:gtable', 'array:table', 'array:applet'])
+bool_completer = Completer(['true', 'false'])
 
 print ''
 print BOLD() + 'Input Specification' + ENDC()
@@ -204,7 +211,14 @@ array:file     array:int      array:table    gtable         record
 array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
 '''
-        input_class = prompt_for_var('Choose a class')
+
+        while True:
+            input_class = prompt_for_var('Choose a class')
+            if input_class in class_completer.choices:
+                break
+            else:
+                print fill('Not a recognized class; please choose again.')
+
         use_completer()
 
         optional = prompt_for_yn('This is an optional parameter')
@@ -213,17 +227,24 @@ array:gtable   array:record   file           int            table
         if optional and input_class in ['int', 'float', 'string', 'boolean']:
             default_val = prompt_for_yn('A default value should be provided')
             if default_val:
-                if input_class == 'boolean':
-                    default_val = prompt_for_var('  Default value', None, ['true', 'false'])
-                else:
-                    default_val = prompt_for_var('  Default value')
+                while True:
+                    if input_class == 'boolean':
+                        use_completer(bool_completer)
+                        default_val = prompt_for_var('  Default value', choices=['true', 'false'])
+                        use_completer()
+                    else:
+                        default_val = prompt_for_var('  Default value')
 
-                if input_class == 'boolean':
-                    default_val = (default_val == 'true')
-                elif input_class == 'int':
-                    default_val = int(default_val)
-                elif input_class == 'float':
-                    default_val = float(default_val)
+                    try:
+                        if input_class == 'boolean':
+                            default_val = (default_val == 'true')
+                        elif input_class == 'int':
+                            default_val = int(default_val)
+                        elif input_class == 'float':
+                            default_val = float(default_val)
+                        break
+                    except:
+                        print 'Not a valid default value for the given class ' + input_class
             else:
                 default_val = None
 
@@ -271,7 +292,13 @@ array:file     array:int      array:table    gtable         record
 array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
 '''
-        output_class = prompt_for_var('Class')
+        while True:
+            output_class = prompt_for_var('Choose a class')
+            if output_class in class_completer.choices:
+                break
+            else:
+                print fill('Not a recognized class; please choose again.')
+
         use_completer()
 
         # Fill in the output parameter's JSON
