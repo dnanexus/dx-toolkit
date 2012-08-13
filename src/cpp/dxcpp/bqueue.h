@@ -5,16 +5,15 @@
 #include <boost/thread.hpp>
 
 /*
- * A synchronized, blocking queue of chunks. This provides a way for
- * chunks to be passed between worker threads.
+ * A synchronized, blocking queue of chunks. This provides a way for chunks
+ * to be passed between worker threads.
  *
- * The 'produce' operation is used to insert a chunk into the
- * queue. This operation blocks if the capacity of the queue has been
- * reached.
+ * The 'produce' operation is used to insert a chunk into the queue. This
+ * operation blocks if the capacity of the queue has been reached.
  *
  * The 'consume' operation is used to obtain a remove a chunk from the
- * queue, returning it to the consumer. This operation blocks if there
- * are no chunks in the queue.
+ * queue, returning it to the consumer. This operation blocks if there are
+ * no chunks in the queue.
  */
 
 template<typename T>
@@ -77,4 +76,5 @@ template<typename T> T BlockingQueue<T>::consume() {
 template<typename T> size_t BlockingQueue<T>::size() {
   return chunks.size();
 }
+
 #endif
