@@ -398,7 +398,7 @@ def find_jobs(launched_by=None, applet=None, project=None, state=None,
         else:
             raise StopIteration()
 
-def find_projects(name=None, level=None, describe=None, **kwargs):
+def find_projects(name=None, level=None, describe=None, public=None, **kwargs):
     """
     :param name: Name of the project
     :type name: string
@@ -406,6 +406,8 @@ def find_projects(name=None, level=None, describe=None, **kwargs):
     :type level: string
     :param describe: Either false or the input to the describe call for the project
     :type describe: boolean or dict
+    :param public: Whether to include public projects in the results
+    :type public: boolean
     :rtype: generator
 
     Queries for the user's accessible projects with the specified
@@ -419,11 +421,16 @@ def find_projects(name=None, level=None, describe=None, **kwargs):
         query["level"] = level
     if describe is not None:
         query["describe"] = describe
+    if public is not None:
+        query['public'] = public
 
     resp = dxpy.api.systemFindProjects(query, **kwargs)
 
     for i in resp["results"]:
         yield i
+    if "public" in resp:
+        for i in resp["public"]:
+            yield i
 
 def find_apps(name=None, category=None, all_versions=None, published=None,
               billed_to=None, created_by=None, developer=None,
