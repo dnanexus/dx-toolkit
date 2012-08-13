@@ -206,6 +206,10 @@ def login(args):
 
     # TODO: Remove this and replace with actual logic and interaction
     # when implemented
+    if args.emtest:
+        args.host = 'api.emtest.dev.dnanexus.com'
+        args.port = 8081
+
     if args.host is not None or args.port is not None:
         authserver = 'http://' + args.host
         authserver += ':' + str(args.port)
@@ -2251,7 +2255,7 @@ parser_map['env'] = parser_env
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
-parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
+parser_login.add_argument('--emtest', help='Log into emtest', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
