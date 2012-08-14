@@ -8,7 +8,7 @@ import os, sys, json, fileinput, re, subprocess, argparse
 from datetime import datetime
 import dxpy, dxpy.app_builder
 
-parser = argparse.ArgumentParser(description="Upload a DNAnexus applet.")
+parser = argparse.ArgumentParser(prog="dx-build-app", description="Upload a DNAnexus applet")
 parser.add_argument("src_dir", help="App or applet source directory")
 parser.add_argument("-f", "--overwrite", help="Remove existing applets of the same name", action='store_true', default=False)
 parser.add_argument("-a", "--create-app", help="Create an app from the applet (requires dxapp.json to be present)", action='store_true', default=False)
