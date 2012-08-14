@@ -116,12 +116,8 @@ JSON DXHTTPRequest(const string &resource, const string &data,
     reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
     try {
       // Attempt a POST request
-      req = HttpRequest::request(HTTP_POST,
-               url,
-               req_headers,
-               data.data(),
-               data.size());
-    } catch(HttpRequestException &e) {
+      req = HttpRequest::request(HTTP_POST, url, req_headers, data.data(), data.size());
+    } catch (HttpRequestException &e) {
       toRetry = toRetry || (e.errorCode < 0) || isRetriableCurlError(e.errorCode);
       reqCompleted = false;
       hre = e;
@@ -130,8 +126,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
     if (reqCompleted) {
       if (req.responseCode != 200) {
         toRetry = toRetry || isRetriableHttpCode(req.responseCode);
-      }
-      else {
+      } else {
         // Everything is fine, the request went through (and 200 recieved)
         // So return back the response now
         if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
@@ -139,8 +134,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
         try {
           return JSON::parse(req.respData); // we always return json output
-        } 
-        catch (JSONException &je) {
+        } catch (JSONException &je) {
           string errStr = "ERROR: Unable to parse output returned by APIServer as JSON";
           errStr += "\nHttpRequest url: " + url + " , response code = " + boost::lexical_cast<string>(req.responseCode) + ", response body: '" + req.respData + "'";
           errStr += "\nJSONException: " + std::string(je.what());
@@ -149,19 +143,18 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       }
     }
     if (toRetry && countTries < NUM_MAX_RETRIES) {
-      if (reqCompleted)
+      if (reqCompleted) {
         std::cerr << ("\nWARNING: POST " + url + ": returned with HTTP code " + boost::lexical_cast<string>(req.responseCode) + " and body: '" + req.respData + "'");
-      else
+      } else {
         std::cerr << ("\nWARNING: Unable to complete request -> POST " + url + " . Details: '" + hre.what() + "'");
-  
+      }
       std::cerr << ("\n... Waiting " + boost::lexical_cast<string>(sec_to_wait) + " seconds before retry " + boost::lexical_cast<string>(countTries + 1) + " of " + boost::lexical_cast<string>(NUM_MAX_RETRIES) + " ...");
 
       // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
       // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
       // Also we do not check for buffer overflow while doubling sec_to_wait, since we would have to sleep ~6537year before hitting the limit!
       sleep(sec_to_wait);
-    }
-    else {
+    } else {
       countTries++;
       break;
     }
