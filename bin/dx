@@ -499,7 +499,7 @@ def ls(args):
                     if args.full:
                         print BOLD() + BLUE() + folder + ENDC()
                     else:
-                        print BOLD() + BLUE() + os.path.basename(folder) + '/' + ENDC()
+                        print BOLD() + BLUE() + os.path.basename(folder).encode('utf-8') + '/' + ENDC()
             if not args.folders:
                 # if project not in cached_project_paths:
                 #     cached_project_paths[project] = {}
@@ -1489,6 +1489,15 @@ def dximport(args):
                 print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
+    else:
+        parser.exit(1, 'Not yet implemented\n')
+
+def dxexport(args):
+    if args.format == 'fastq':
+        from dxpy.scripts import dx_reads_to_fastq
+        sys.argv = [sys.argv[0]] + args.exporter_args
+        dx_reads_to_fastq.main()
+#    elif args.format == 'csv':
     else:
         parser.exit(1, 'Not yet implemented\n')
 
@@ -2566,7 +2575,7 @@ parser_upload.set_defaults(func=upload)
 parser_map['upload'] = parser_upload
 
 parser_import = subparsers.add_parser('import',
-                                      help='Import a table or genomic file',
+                                      help='Import (convert and upload) a table or genomic file',
                                       description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
                                       parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
                                       prog='dx import')
@@ -2580,6 +2589,24 @@ import_format_args_gp.add_argument('--vcf', help='Interpret the file as a VCF fi
 import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; types (if not string) can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
 parser_import.set_defaults(func=dximport)
 parser_map['import'] = parser_import
+
+parser_export = subparsers.add_parser('export',
+                                      help='Export a GenomicTable into a local file',
+                                      description='Export a GenomicTable into a local file.',
+                                      parents=[],
+                                      prog='dx export')
+
+#export_format_args = parser_export.add_argument_group('Format to export to')
+#export_format_args_gp = export_format_args.add_mutually_exclusive_group()
+#export_format_args_gp.add_argument('--csv', help='Comma-separated values (default)', action='store_true')
+#export_format_args_gp.add_argument('--tsv', help='Tab-separated values', action='store_true')
+#export_format_args_gp.add_argument('--fasta', help='FASTA format', action='store_true')
+#export_format_args_gp.add_argument('--fastq', help='FASTQ format', action='store_true')
+parser_export.add_argument('format', help='Format to export to')
+#export_format_args.add_argument('--columns', help='Comma-separated list of columns to output (only for formats which use all columns)')
+parser_export.add_argument('exporter_args', help='Arguments passed to the exporter', nargs=argparse.REMAINDER)
+parser_export.set_defaults(func=dxexport)
+parser_map['export'] = parser_export
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
