@@ -11,7 +11,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  if ("${CMAKE_SYSTEM_NAME}" MATCHES "APPLE")
+  if (APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   endif()
   add_definitions("-std=c++11")
