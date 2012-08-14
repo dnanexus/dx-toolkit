@@ -1,7 +1,6 @@
 all:
 	mkdir -pv build
-	cd build && GITVERSION=$(shell git describe) cmake ..
-	make -C build
+	make -C build -f ../Makefile.static all
 
 clean:
 	rm -rvf build

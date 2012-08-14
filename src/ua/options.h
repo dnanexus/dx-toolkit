@@ -16,6 +16,7 @@ public:
   void parse(int argc, char * argv[]);
 
   bool help();
+  bool version();
   void printHelp();
   void validate();
 

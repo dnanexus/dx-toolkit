@@ -48,7 +48,7 @@ void Chunk::compress() {
     throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
   }
 
-  if (destLen < dest.size()) {
+  if (destLen < (int64_t) dest.size()) {
     dest.resize(destLen);
   }
 
@@ -120,10 +120,13 @@ void Chunk::upload() {
   }
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist));
 
+  log("Starting curl_easy_perform...");
+
   checkPerformCURLcode(curl_easy_perform(curl));
 
   long responseCode;
   checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode));
+  log("Returned from curl_easy_perform; responseCode is " + boost::lexical_cast<string>(responseCode));
   if ((responseCode < 200) && (responseCode >= 300)) {
     ostringstream msg;
     msg << "Request failed with HTTP status code " << responseCode;

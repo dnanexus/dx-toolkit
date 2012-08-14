@@ -24,6 +24,7 @@ Options::Options() {
   visible_opts = new po::options_description("Allowed options");
   visible_opts->add_options()
     ("help,h", "Produce a help message")
+    ("version", "Print the version")
     ("auth-token,a", po::value<string>(&authToken), "Specify the authentication token")
     ("project,p", po::value<string>(&project), "Name or ID of the destination project")
     ("folder,f", po::value<string>(&folder)->default_value("/"), "Name of the destination folder")
@@ -81,6 +82,10 @@ void Options::parse(int argc, char * argv[]) {
 
 bool Options::help() {
   return vm.count("help");
+}
+
+bool Options::version() {
+  return vm.count("version");
 }
 
 void Options::printHelp() {

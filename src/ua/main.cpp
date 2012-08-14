@@ -17,6 +17,8 @@ namespace fs = boost::filesystem;
 #include "dxcpp/bqueue.h"
 #include "log.h"
 
+#include "SSLThreads.h"
+
 using namespace std;
 using namespace dx;
 
@@ -330,9 +332,6 @@ void curlCleanup() {
 }
 
 int main(int argc, char * argv[]) {
-//  LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
-  LOG << "DNAnexus Upload Agent" << endl;
-
   try {
     opt.parse(argc, argv);
   } catch (exception &e) {
@@ -341,10 +340,15 @@ int main(int argc, char * argv[]) {
     return 1;
   }
 
-  if (opt.help() || opt.file.empty()) {
+  if (opt.version()) {
+    cout << GITVERSION << endl;
+    return 0;
+  } else if (opt.help() || opt.file.empty()) {
     opt.printHelp();
     return 1;
   }
+
+  LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
 
   LOG << opt;
   opt.validate();
@@ -357,6 +361,7 @@ int main(int argc, char * argv[]) {
   chunksToUpload.setCapacity(opt.uploadThreads);
 
   try {
+    SSLThreadsSetup();
     curlInit();
 
     testServerConnection();
@@ -400,6 +405,7 @@ int main(int argc, char * argv[]) {
     fileClose(fileID);
 
     curlCleanup();
+    SSLThreadsCleanup();
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
