@@ -91,11 +91,29 @@ void uploadChunks() {
 
     c->log("Uploading...");
 
-    c->upload();
-    c->clear();
+    bool uploaded = false;
+    try {
+      c->upload();
+      uploaded = true;
+    } catch (exception &e) {
+      ostringstream msg;
+      msg << "Upload failed: " << e.what();
+      c->log(msg.str());
+    }
 
-    c->log("Finished uploading.");
-    chunksFinished.produce(c);
+    if (uploaded) {
+      c->log("Upload succeeded!");
+      c->clear();
+      chunksFinished.produce(c);
+    } else if (c->triesLeft > 0) {
+      c->log("Retrying");
+      --(c->triesLeft);
+      chunksToUpload.produce(c);
+    } else {
+      c->log("Not retrying");
+      c->clear();
+      chunksFailed.produce(c);
+    }
   }
 }
 
@@ -103,11 +121,11 @@ void monitor() {
   while (true) {
     boost::this_thread::sleep(boost::posix_time::milliseconds(300));
     {
-      LOG << "In monitor thread." << endl
-          << "  to read: " << chunksToRead.size() << endl
-          << "  to compress: " << chunksToCompress.size() << endl
-          << "  to upload: " << chunksToUpload.size() << endl
-          << "  finished: " << chunksFinished.size() << endl
+      LOG << "[monitor]"
+          << "  to read: " << chunksToRead.size()
+          << "  to compress: " << chunksToCompress.size()
+          << "  to upload: " << chunksToUpload.size()
+          << "  finished: " << chunksFinished.size()
           << "  failed: " << chunksFailed.size() << endl;
 
       if (finished()) {
@@ -297,7 +315,7 @@ void curlInit() {
   CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
   if (code != 0) {
     ostringstream msg;
-    msg << "An error occurred when initializing the HTTP library (code " << code << ")" << endl;
+    msg << "An error occurred when initializing the HTTP library (" << curl_easy_strerror(code) << ")" << endl;
     throw runtime_error(msg.str());
   }
   LOG << " done." << endl;
@@ -368,7 +386,7 @@ int main(int argc, char * argv[]) {
     interruptWorkerThreads(readThread, uploadThreads, compressThreads);
     joinWorkerThreads(readThread, uploadThreads, compressThreads);
 
-    // fileClose(fileID);
+    fileClose(fileID);
 
     curlCleanup();
 
