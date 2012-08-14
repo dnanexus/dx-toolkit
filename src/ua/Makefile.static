@@ -12,25 +12,37 @@ dxhttp_dir = $(cpp_dir)/SimpleHttpLib
 dxcpp_dir = $(cpp_dir)/dxcpp
 ua_dir = $(DNANEXUS_HOME)/src/ua
 
-CXXFLAGS = -Wall -std=c++0x -O3 -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir)
+VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
+
+CXXFLAGS = -Wall -std=c++0x -O3 -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir)
 LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -lcurl -lcares -lssl -lcrypto -lrt -lssl -lcrypto -lz -ldl -lboost_program_options-mt -lboost_filesystem -lboost_system -lboost_thread-mt -lboost_regex -lcares
 
-dxjson: $(dxjson_dir)/dxjson.cpp
-	g++ $(CXXFLAGS) -c $(dxjson_dir)/dxjson.cpp
+dxjson_objs = dxjson.o
+dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
+dxcpp_objs = api.o bindings.o dxcpp.o
+ua_objs = chunk.o main.o options.o
 
-dxhttp: $(dxhttp_dir)/*.cpp
-	g++ $(CXXFLAGS) -c $(dxhttp_dir)/*.cpp
+dxjson: $(dxjson_objs)
+dxhttp: $(dxhttp_objs)
+dxcpp: $(dxcpp_objs)
+ua: $(ua_objs)
 
-dxcpp: $(dxcpp_dir)/*.cc $(dxcpp_dir)/bindings/*.cc
-	g++ $(CXXFLAGS) -c $(dxcpp_dir)/*.cc $(dxcpp_dir)/bindings/*.cc
+# dxjson: $(dxjson_dir)/dxjson.cpp
+# 	g++ $(CXXFLAGS) -c $(dxjson_dir)/dxjson.cpp
 
-ua: $(ua_dir)/*.cpp
-	g++ $(CXXFLAGS) -c $(ua_dir)/*.cpp
+# dxhttp: $(dxhttp_dir)/*.cpp
+# 	g++ $(CXXFLAGS) -c $(dxhttp_dir)/*.cpp
+
+# dxcpp: $(dxcpp_dir)/*.cc $(dxcpp_dir)/bindings/*.cc
+# 	g++ $(CXXFLAGS) -c $(dxcpp_dir)/*.cc $(dxcpp_dir)/bindings/*.cc
+
+# ua: $(ua_dir)/*.cpp
+# 	g++ $(CXXFLAGS) -c $(ua_dir)/*.cpp
 
 all: dxjson dxhttp dxcpp ua
 	g++ *.o $(LDFLAGS) -o ua 
 
 clean:
-	rm -v *.o
+	rm -v *.o ua
 
-.PHONY: all
+.PHONY: all dxjson dxhttp dxcpp ua

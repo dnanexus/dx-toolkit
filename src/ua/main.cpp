@@ -123,7 +123,7 @@ void uploadChunks() {
 
 void monitor() {
   while (true) {
-    boost::this_thread::sleep(boost::posix_time::milliseconds(300));
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     {
       LOG << "[monitor]"
           << "  to read: " << chunksToRead.size()
@@ -289,11 +289,11 @@ void interruptWorkerThreads(boost::thread &readThread, vector<boost::thread> &co
   LOG << " read...";
   readThread.interrupt();
   LOG << " compress...";
-  for (int i = 0; i < compressThreads.size(); ++i) {
+  for (int i = 0; i < (int) compressThreads.size(); ++i) {
     compressThreads[i].interrupt();
   }
   LOG << " upload...";
-  for (int i = 0; i < uploadThreads.size(); ++i) {
+  for (int i = 0; i < (int) uploadThreads.size(); ++i) {
     uploadThreads[i].interrupt();
   }
   LOG << endl;
@@ -304,11 +304,11 @@ void joinWorkerThreads(boost::thread &readThread, vector<boost::thread> &compres
   LOG << " read...";
   readThread.join();
   LOG << " compress...";
-  for (int i = 0; i < compressThreads.size(); ++i) {
+  for (int i = 0; i < (int) compressThreads.size(); ++i) {
     compressThreads[i].join();
   }
   LOG << " upload...";
-  for (int i = 0; i < uploadThreads.size(); ++i) {
+  for (int i = 0; i < (int) uploadThreads.size(); ++i) {
     uploadThreads[i].join();
   }
   LOG << endl;
