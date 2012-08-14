@@ -77,9 +77,23 @@ class DXGTable(DXDataObject):
         # TODO: if the user is using initFrom, we don't know what the schema looks like
         # (self._columns is None). In that case we can't do any local checks of the data's
         # validity.
-        if self._columns is not None and len(row) != len(self._columns):
+        if self._columns is None:
+            return
+        if len(row) != len(self._columns):
             raise ValueError("Row has wrong number of columns (expected %d, got %d)" % (len(self._columns), len(row)))
-        # TODO: check the types against the schema, too.
+        for index, (value, column) in enumerate(zip(row, self._columns)):
+            if column['type'] == 'string':
+                if type(value) is not str:
+                    raise ValueError("Expected value in column %d to be a string, got %r instead" % (index, value))
+            elif column['type'] == 'boolean':
+                if value != True and value != False:
+                    raise ValueError("Expected value in column %d to be a boolean, got %r instead" % (index, value))
+            elif column['type'] == 'float' or column['type'] == 'double':
+                if type(value) is not int and type(value) is not float:
+                    raise ValueError("Expected value in column %d to be a number (int or float), got %r instead" % (index, value))
+            elif column['type'].startswith('int') or column['type'].startswith('uint'):
+                if type(value) is not int:
+                    raise ValueError("Expected value in column %d to be an int, got %r instead" % (index, value))
 
     def _new(self, dx_hash, **kwargs):
         '''
