@@ -852,11 +852,13 @@ def describe(args):
             json_input['project'] = dxpy.WORKSPACE_ID
 
     # Otherwise, attempt to look for it as a data object.
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   ask_to_resolve=False,
-                                                   describe=json_input)
+    try:
+        project, folderpath, entity_results = resolve_existing_path(args.path,
+                                                                    expected='entity',
+                                                                    ask_to_resolve=False,
+                                                                    describe=json_input)
+    except:
+        project, folderpath, entity_results = None, None, None
 
     found_match = False
 
@@ -1678,9 +1680,12 @@ def find_apps(args):
         if args.brief:
             for result in results:
                 print result['id']
-        else:
+        elif args.summary:
             for result in results:
                 print result["describe"]["name"] + " (v" + result["describe"]["version"] + ")"
+        else:
+            for result in results:
+                print result["id"] + " " + result["describe"]["name"] + ' v' + result['describe']['version'] + (" (published)" if result["describe"]["published"] > 0 else " (unpublished)")
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 

@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE, Release)
 set(GTEST_DIR /opt/chef-gtest-1.6.0)
 include_directories(../ ./ ${GTEST_DIR} ${GTEST_DIR}/include ../SimpleHttpLib ../dxjson ../dxcpp ../dxlog)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-overloaded-virtual -Wno-sign-compare -Werror=return-type -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-overloaded-virtual -Wno-sign-compare -Werror=return-type -Wno-unused-result -Wno-deprecated")
 
 add_subdirectory(../dxcpp dxcpp)
 
@@ -18,7 +18,7 @@ add_executable(test_simple_http gtest_http.cpp ${GTEST_DIR}/src/gtest-all.cc)
 target_link_libraries(test_simple_http pthread curl dxhttp)
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-  #add_definitions("-std=c++0x")
+  add_definitions("-std=c++0x")
   
   # compile dxlog and dxjson tests iff compiler is g++  
   add_executable(test_json gtest_json.cpp ${GTEST_DIR}/src/gtest-all.cc)
@@ -37,6 +37,5 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-#  add_definitions("-std=c++11")
+  add_definitions("-std=c++11")
 endif()
