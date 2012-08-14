@@ -1680,9 +1680,12 @@ def find_apps(args):
         if args.brief:
             for result in results:
                 print result['id']
-        else:
+        elif args.summary:
             for result in results:
                 print result["describe"]["name"] + " (v" + result["describe"]["version"] + ")"
+        else:
+            for result in results:
+                print result["id"] + " " + result["describe"]["name"] + ' v' + result['describe']['version'] + (" (published)" if result["describe"]["published"] > 0 else " (unpublished)")
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
