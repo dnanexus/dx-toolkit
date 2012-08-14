@@ -11,6 +11,9 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  if (APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  endif()
   add_definitions("-std=c++11")
 endif()
 
@@ -27,4 +30,4 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/.
 
 add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc)
 set_target_properties(dxcpp PROPERTIES COMPILE_FLAGS -fPIC)
-target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex)
+target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex-mt)

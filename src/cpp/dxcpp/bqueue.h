@@ -50,7 +50,7 @@ template<typename T> void BlockingQueue<T>::produce(T chunk) {
   {
     boost::unique_lock<boost::mutex> lock(mut);
     if (capacity != -1) {
-      while (chunks.size() == capacity) {
+      while (chunks.size() == (size_t) capacity) {
         canProduce.wait(lock);
       }
     }

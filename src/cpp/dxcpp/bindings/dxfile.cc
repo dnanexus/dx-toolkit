@@ -112,7 +112,7 @@ void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) const {
   bool someThingWentWrong = false;
   string wrongThingDescription = "";
   
-  while(last_byte_in_result < end) {
+  while (last_byte_in_result < end) {
     HttpHeaders headers;
     string range = boost::lexical_cast<string>(last_byte_in_result + 1) + "-" + boost::lexical_cast<string>(end);
     headers["Range"] = "bytes=" + range;
@@ -187,7 +187,7 @@ void DXFile::readChunk_() const {
     getChunkHttp_(start, end, tmp);
      
     boost::mutex::scoped_lock r_lock(lq_results_mutex_);
-    while(lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
+    while (lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
       r_lock.unlock();
       boost::this_thread::sleep(boost::posix_time::milliseconds(1));
       r_lock.lock();
@@ -206,7 +206,7 @@ bool DXFile::getNextChunk(string &chunk) const {
   if (lq_next_result_ >= lq_query_end_)
     return false;
   
-  while(lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
+  while (lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
     r_lock.unlock();
     usleep(100);
     r_lock.lock();
@@ -277,17 +277,19 @@ void DXFile::joinAllWriteThreads_() {
   // To avoid race condition
   // particularly the case when produce() has been called, but thread is still waiting on consume()
   // we don't want to incorrectly issue interrupt() that time
-  while(uploadPartRequestsQueue.size() != 0) {
+  while (uploadPartRequestsQueue.size() != 0) {
     usleep(100);
   }
 
   for (unsigned i = 0; i < writeThreads.size(); ++i)
     writeThreads[i].interrupt();
 
-  while(true) {
+  while (true) {
     boost::mutex::scoped_lock cl(countThreadsMutex); 
-    if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
+    if ((countThreadsNotWaitingOnConsume == 0) &&
+        (countThreadsWaitingOnConsume == (int) writeThreads.size())) {
       break;
+    }
     cl.unlock();
     usleep(100);
   }
@@ -315,7 +317,7 @@ void DXFile::writeChunk_() {
    */
    // See C++11 working draft for details about atomics (used for counterS)
    // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
-  while(true) {
+  while (true) {
     boost::mutex::scoped_lock cl(countThreadsMutex); 
     countThreadsWaitingOnConsume++;
     cl.unlock();
