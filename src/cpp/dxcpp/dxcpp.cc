@@ -266,14 +266,14 @@ string getUserHomeDirectory() {
 
 // First look in env variable to find the value
 // If not found, then look into user's config file (in home directory) for the value
-// If still not found, then look into /opt/dnanexus/enviornment
+// If still not found, then look into /opt/dnanexus/environment
 // 
 // Returns false if not found in either of the 3 places, else true
 // "val" contain the value of variable if function returned "true", unchanged otherwise
 bool getFromEnvOrConfig(string key, string &val) {
   if (getenv(key.c_str()) != NULL) {
     val = getenv(key.c_str());
-    std::cerr<<"\nReading '" + key + "' value from enviornment variables. Value = '" + val + "'";
+    std::cerr<<"\nReading '" + key + "' value from environment variables. Value = '" + val + "'";
     return true;
   }
 
@@ -283,7 +283,7 @@ bool getFromEnvOrConfig(string key, string &val) {
     return true;
   }
   
-  const std::string default_config_file_path = "/opt/dnanexus/enviornment";
+  const std::string default_config_file_path = "/opt/dnanexus/environment";
   if (getVariableFromConfigFile(default_config_file_path, key, val)) {
     std::cerr<<"\nReading '" + key + "' value from file: '" + default_config_file_path + "'. Value = '" + val + "'";
     return true;
@@ -307,7 +307,7 @@ string getVariableForPrinting(const JSON &j) {
 }
 
 void loadFromEnvironment() {
-  // Mutex's aim: To ensure that enviornment variable are loaded only once.
+  // Mutex's aim: To ensure that environment variable are loaded only once.
   //              All other calls to loadFromEnvironment() must be short circuited.
   boost::mutex::scoped_lock glock(g_loadFromEnvironment_mutex);
 

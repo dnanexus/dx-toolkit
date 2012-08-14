@@ -8,7 +8,7 @@ var DNAnexus = {};
 
   var security_context = system.env.SECURITY_CONTEXT;
   if (security_context === undefined) {
-    throw new Error("DNAnexus.js: SECURITY_CONTEXT enviornment variable not set");
+    throw new Error("DNAnexus.js: SECURITY_CONTEXT environment variable not set");
   }
   security_context = JSON.parse(security_context);
 

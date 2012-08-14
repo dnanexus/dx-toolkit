@@ -144,7 +144,7 @@ void HttpRequest::send() {
     /* Set the user agent - optional */
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_USERAGENT, "DNAnexus: libcurl-C++ wrapper"));
 
-    /* Setting this option, since libcurl fails in multi-threaded enviornment otherwise */
+    /* Setting this option, since libcurl fails in multi-threaded environment otherwise */
     /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l));
 
