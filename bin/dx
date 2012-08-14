@@ -852,11 +852,13 @@ def describe(args):
             json_input['project'] = dxpy.WORKSPACE_ID
 
     # Otherwise, attempt to look for it as a data object.
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   ask_to_resolve=False,
-                                                   describe=json_input)
+    try:
+        project, folderpath, entity_results = resolve_existing_path(args.path,
+                                                                    expected='entity',
+                                                                    ask_to_resolve=False,
+                                                                    describe=json_input)
+    except:
+        project, folderpath, entity_results = None, None, None
 
     found_match = False
 
