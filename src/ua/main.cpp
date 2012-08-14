@@ -330,7 +330,7 @@ void curlCleanup() {
 }
 
 int main(int argc, char * argv[]) {
-  LOG << "DNAnexus Upload Agent" << endl;
+  LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
 
   try {
     opt.parse(argc, argv);

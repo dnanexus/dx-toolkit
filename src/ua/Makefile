@@ -1,6 +1,6 @@
 all:
 	mkdir -pv build
-	cd build && cmake ..
+	cd build && GITVERSION=$(shell git describe) cmake ..
 	make -C build
 
 clean:
