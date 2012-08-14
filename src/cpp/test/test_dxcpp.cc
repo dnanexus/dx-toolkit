@@ -563,7 +563,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   ASSERT_EQ(file_size, fp.tellg());
   fp.seekg(0, ios::beg);
   int count = 0;
-  while(fp.good()) {
+  while (fp.good()) {
     char ch = fp.get();
     if (fp.eof())
       break;
@@ -600,7 +600,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
   dxfile.startLinearQuery();
   std::string chunk;
   int64_t bytes_read = 0;
-  while(dxfile.getNextChunk(chunk)) {
+  while (dxfile.getNextChunk(chunk)) {
     for (int i = 0; i < chunk.size(); ++i)
       ASSERT_EQ(chunk[i], '#');
     bytes_read += chunk.size();

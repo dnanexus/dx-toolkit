@@ -42,7 +42,7 @@ TEST(UNIXDGRAMTest, Integration) {
 
     #pragma omp section
     {
-      while(! test.isActive()) { usleep(100); }
+      while (! test.isActive()) { usleep(100); }
       ret_val[1] = SendMessage2UnixDGRAMSocket(socketPath, "msg1", errMsg2);
       ret_val[2] = SendMessage2UnixDGRAMSocket(socketPath, "msg2", errMsg2);
       ret_val[3] = SendMessage2UnixDGRAMSocket(socketPath, "msg3", errMsg2);
@@ -219,7 +219,7 @@ TEST(DXLOGTest, Rsyslog_Byte_Seq) {
 
     #pragma omp section
     {
-      while(! test.isActive()) { usleep(100); }
+      while (! test.isActive()) { usleep(100); }
 
       string msg, errMsg;
       for (int i = 0; i < n; i++) {
@@ -304,7 +304,7 @@ TEST(DXLOGTest, logger) {
 
     #pragma omp section
     {
-      while(! test.isActive()) { usleep(100); }
+      while (!test.isActive()) { usleep(100); }
 
       string msg, errMsg;
       for (int i = 0; i < n; i++) {
@@ -376,7 +376,7 @@ void verifyAppLogData(const dx::JSON &data, const string &msg, int level, int64_
 }
 
 void writeLog(const string &msg, const vector<bool> &desired) {
-  for(int i=0; i<10; i++)
+  for (int i = 0; i < 10; i++)
     ASSERT_EQ(desired[i], AppLog::log(msg, i-1));
 }
 
@@ -405,7 +405,7 @@ TEST(AppLogTest, High_Priority_Socket_Only) {
     
     #pragma omp section
     {
-      while(! test.isActive()) { usleep(100); }
+      while (!test.isActive()) { usleep(100); }
      
       writeLog(testMsg, desired);
       SendMessage2UnixDGRAMSocket(socketPath + "1", "Done", errMsg2);
@@ -442,7 +442,7 @@ TEST(AppLogTest, Low_Priority_Socket_Only) {
     
     #pragma omp section
     {
-      while(! test.isActive()) { usleep(100); }
+      while (!test.isActive()) { usleep(100); }
      
       writeLog(testMsg, desired);
       SendMessage2UnixDGRAMSocket(socketPath + "2", "Done", errMsg2);
@@ -485,8 +485,8 @@ TEST(AppLogTest, Write_Log) {
     
     #pragma omp section
     {
-      while(! test1.isActive()) { usleep(100); }
-      while (! test2.isActive()) { usleep(100); }
+      while (!test1.isActive()) { usleep(100); }
+      while (!test2.isActive()) { usleep(100); }
      
       writeLog(testMsg, desired);
       SendMessage2UnixDGRAMSocket(socketPath + "1", "Done", errMsg3);
@@ -529,7 +529,7 @@ TEST(AppLogTest, AppLog_Done) {
     
     #pragma omp section
     {
-      while(! test1.isActive()) { usleep(100); }
+      while (!test1.isActive()) { usleep(100); }
       ret_val = AppLog::done(errMsg2);
     }
   }
@@ -546,7 +546,7 @@ TEST(AppLogTest, AppLog_Done) {
     
     #pragma omp section
     {
-      while(! test2.isActive()) { usleep(100); }
+      while (!test2.isActive()) { usleep(100); }
       ret_val = AppLog::done(errMsg2);
     }
   }
@@ -567,8 +567,8 @@ TEST(AppLogTest, AppLog_Done) {
     
     #pragma omp section
     {
-      while(! test1.isActive()) { usleep(100); }
-      while(! test2.isActive()) { usleep(100); }
+      while (!test1.isActive()) { usleep(100); }
+      while (!test2.isActive()) { usleep(100); }
 
       ret_val = AppLog::done(errMsg2);
     }
@@ -609,7 +609,7 @@ TEST(AppLogTest, AppLog_Done_SingleSocket) {
     
     #pragma omp section
     {
-      while(! test.isActive()) { usleep(100); }
+      while (!test.isActive()) { usleep(100); }
       ret_val = AppLog::done(errMsg2);
     }
   }

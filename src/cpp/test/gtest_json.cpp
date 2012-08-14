@@ -16,7 +16,7 @@ bool exceptionflag;
 // This function is useful for debuggin purposes (utf-8 cases)
 void printStringAsIntegers(string str) {
   std::cout<<"\nString = "<<str<<"\nInteger version = ";
-  for(int i=0;i<str.length();i++) {
+  for (int i = 0; i < str.length(); i++) {
     cout<<int(str[i])<<" ";
   }
   cout<<"\n";
@@ -614,20 +614,20 @@ TEST(JSONTest, Iterators) {
   j1["3"] = 3;
   j1["4"] = 4;
   int i=0;
-  for(JSON::object_iterator it = j1.object_begin(); it != j1.object_end(); ++i, ++it)
+  for (JSON::object_iterator it = j1.object_begin(); it != j1.object_end(); ++i, ++it)
     ASSERT_EQ(it->second, i);
 
   i = 4;
-  for(JSON::object_reverse_iterator it = j1.object_rbegin(); it != j1.object_rend(); --i, ++it)
+  for (JSON::object_reverse_iterator it = j1.object_rbegin(); it != j1.object_rend(); --i, ++it)
     ASSERT_EQ(it->second, i);
 
   const JSON j1_const = j1;
-  i=0;
-  for(JSON::const_object_iterator it = j1_const.object_begin(); it != j1_const.object_end(); ++i, ++it)
+  i = 0;
+  for (JSON::const_object_iterator it = j1_const.object_begin(); it != j1_const.object_end(); ++i, ++it)
     ASSERT_EQ(it->second, i);
 
   i = 4;
-  for(JSON::const_object_reverse_iterator it = j1_const.object_rbegin(); it != j1_const.object_rend(); --i, ++it)
+  for (JSON::const_object_reverse_iterator it = j1_const.object_rbegin(); it != j1_const.object_rend(); --i, ++it)
     ASSERT_EQ(it->second, i);
 
   JSON j2(JSON_ARRAY);
@@ -638,20 +638,20 @@ TEST(JSONTest, Iterators) {
   j2[3] = 3;
   j2[4] = 4;
   i=0;
-  for(JSON::array_iterator it = j2.array_begin(); it != j2.array_end(); ++i, ++it)
+  for (JSON::array_iterator it = j2.array_begin(); it != j2.array_end(); ++i, ++it)
     ASSERT_EQ(*it, i);
 
   i = 4;
-  for(JSON::array_reverse_iterator it = j2.array_rbegin(); it != j2.array_rend(); --i, ++it)
+  for (JSON::array_reverse_iterator it = j2.array_rbegin(); it != j2.array_rend(); --i, ++it)
     ASSERT_EQ(*it, i);
 
   const JSON j2_const = j2;
   i=0;
-  for(JSON::const_array_iterator it = j2_const.array_begin(); it != j2_const.array_end(); ++i, ++it)
+  for (JSON::const_array_iterator it = j2_const.array_begin(); it != j2_const.array_end(); ++i, ++it)
     ASSERT_EQ(*it, i);
 
   i = 4;
-  for(JSON::const_array_reverse_iterator it = j2_const.array_rbegin(); it != j2_const.array_rend(); --i, ++it)
+  for (JSON::const_array_reverse_iterator it = j2_const.array_rbegin(); it != j2_const.array_rend(); --i, ++it)
     ASSERT_EQ(*it, i);
 
   // TODO: Add more iterators test, specially those which use stl algorithms heavily

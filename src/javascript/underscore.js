@@ -458,7 +458,7 @@
     var idx = 0;
     var range = new Array(len);
 
-    while(idx < len) {
+    while (idx < len) {
       range[idx++] = start;
       start += step;
     }

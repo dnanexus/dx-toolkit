@@ -401,7 +401,7 @@ var DNAnexus = {};
     var path = "/tables/" + id + "/rows?";
     var ampersandRequired = false;
     for (var key in body) {
-      if(hasOwnProperty.call(body, key)) {
+      if (hasOwnProperty.call(body, key)) {
         path += (ampersandRequired ? "&" : "") + key + "=" + body[key];
         ampersandRequired = true;
       }
@@ -537,8 +537,8 @@ var DNAnexus = {};
   DNAnexus.getRowsFromCoordsTable = function(id, body) {
     var path = "/coords_tables/" + id + "/rows?";
     var ampersandRequired = false;
-    for(var key in body) {
-      if(hasOwnProperty.call(body, key)) {
+    for (var key in body) {
+      if (hasOwnProperty.call(body, key)) {
         path += (ampersandRequired ? "&" : "") + key + "=" + body[key];
         ampersandRequired = true;
       }
@@ -654,12 +654,12 @@ var DNAnexus = {};
     var tempFile_stdout = null, tempFile_stderr = null;
     var finalCmd = "(" + cmd + ")";
     var f;
-    if(options === undefined) {
+    if (options === undefined) {
       options = {};
     }
-    if(options["capture_stdout"] === true) {
+    if (options["capture_stdout"] === true) {
       tempFile_stdout = p.exec("mktemp");
-      if(tempFile_stdout == null) {
+      if (tempFile_stdout == null) {
         throw new Error("Unable to execute command mktemp");
       }
       // Remove \n at end of string - since "mktemp" return with a "\n" at the end
@@ -670,9 +670,9 @@ var DNAnexus = {};
       // If output is not required, redirect it to /dev/null
       finalCmd += " > /dev/null";
     }
-    if(options["capture_stderr"]=== true) {
+    if (options["capture_stderr"]=== true) {
       tempFile_stderr = p.exec("mktemp");
-      if(tempFile_stderr == null) {
+      if (tempFile_stderr == null) {
         throw new Error("Unable to execute command mktemp");
       }
       tempFile_stderr = tempFile_stderr.replace(/\n$/g, '');
@@ -686,12 +686,12 @@ var DNAnexus = {};
     // An internal function - just for use by DNAnexus.system()
     function clearResources() {
       // Remove temp files for stdout and stderr (if they are created in first place)
-      if(tempFile_stdout !== null) {
+      if (tempFile_stdout !== null) {
         f = new fs.File(tempFile_stdout);
         f.remove();
         delete f;
       }
-      if(tempFile_stderr !== null) {
+      if (tempFile_stderr !== null) {
         f= new fs.File(tempFile_stderr);
         f.remove();
         delete f;
@@ -702,12 +702,12 @@ var DNAnexus = {};
     system.stderr("Running " + finalCmd + "\n");
     exitCode = p.system(finalCmd);
 
-    if(exitCode !== 0) {
+    if (exitCode !== 0) {
       clearResources();
       throw new Error("The command " + cmd + " exited with non-zero exit code");
     }
     var return_hash = {"exitCode": exitCode};
-    if(options["capture_stdout"] === true) {
+    if (options["capture_stdout"] === true) {
      f = new fs.File(tempFile_stdout);
      f.open("r");
      return_hash.stdout = f.read().toString("utf-8");
@@ -715,7 +715,7 @@ var DNAnexus = {};
      delete f;
     }
     
-    if(options["capture_stderr"] === true) {
+    if (options["capture_stderr"] === true) {
       f = new fs.File(tempFile_stderr);
       f.open("r");
       return_hash.stderr = f.read().toString("utf-8");
@@ -859,7 +859,7 @@ var DNAnexus = {};
   DNAnexus.createFile = function(body) {
     var resp = httpReq(buildReq("/files" , "POST", buildHeader(true, true), body));
     verifyStatusCode(resp.status, 201, "POST /files");
-    if(resp.header("Location") == undefined) {
+    if (resp.header("Location") == undefined) {
       throw new Error("No location header present in response from POST /files");
     }
     return resp.header("Location");

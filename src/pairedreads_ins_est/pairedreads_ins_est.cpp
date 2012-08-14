@@ -69,7 +69,7 @@ void hashIncrease(map<int, int> &hash, int k) {
 void simpleHistStat(map<int, int> &hash, double &avg, double &std) {
   map<int, int>::iterator it;
   double v1 = 0, v2 = 0, count = 0;
-  for(it = hash.begin(); it != hash.end(); it++) {
+  for (it = hash.begin(); it != hash.end(); it++) {
     double f1 = double (it->first), f2 = double(it->second);
     v1 += f1 * f2;
     v2 += f1 * f1 *f2;
@@ -83,7 +83,7 @@ void simpleHistStat(map<int, int> &hash, double &avg, double &std) {
 dx::JSON hist2JSON(map<int, int> &hash) {
   map<int, int>::iterator it;
   dx::JSON ret_val(dx::JSON_OBJECT);
-  for(it = hash.begin(); it != hash.end(); it++)
+  for (it = hash.begin(); it != hash.end(); it++)
     ret_val[boost::lexical_cast<string>(it->first)] = it->second;
 
   return ret_val;
@@ -121,7 +121,7 @@ class RandomReadsReader {
         offset = samples[i] * chunkSize;
         data = table.getRows(dx::JSON_NULL, columns, offset, chunkSize);
 
-        for(j = 0; j < data["data"].size(); j++) {
+        for (j = 0; j < data["data"].size(); j++) {
           s1 = data["data"][j][0].get<string>();
           s2 = data["data"][j][1].get<string>();
           n1 = s1.size(); n2 = s2.size();
@@ -219,7 +219,7 @@ class GenomeDivider {
       count = 0;
       string line;
 
-      while(! in.eof()) {
+      while (!in.eof()) {
         getline(in, line);
         if (line.size() == 0) return false;
         if (line.at(0) == '>') {
@@ -242,7 +242,7 @@ class GenomeDivider {
       ifstream in(inputF.c_str());
       ofstream out((getFilename(outputF + "_", 0) + ".fa").c_str());
 
-      while(getSeq(in, out, head, count)) {
+      while (getSeq(in, out, head, count)) {
         cerr << head << endl;
         chromLen.push_back(count);
         out.close();
@@ -360,7 +360,7 @@ class LastZMappReader {
 
     bool Get(MappedReads &r) {
       if (! in.is_open()) return false;
-      while(! in.eof()) {
+      while (!in.eof()) {
         getline(in, line);
         if (line.size() == 0) return false;
         if (line.at(0) == '#') continue;
@@ -389,7 +389,7 @@ class ReadsDistEst {
       orientation[0] = orientation[1] = orientation[2] = orientation[3] = 0;
       defaultOrientation = -1;
  
-      for(int i = 0; i < numReads; i++) {
+      for (int i = 0; i < numReads; i++) {
         if ((counter[0][i] != 1) || (counter[1][i] != 1)) continue;
         if (reads[0][i].chr.compare(reads[1][i].chr) != 0) continue;
         //cerr << i << endl;
@@ -399,7 +399,7 @@ class ReadsDistEst {
         orientation[r.orientation] ++;
       }
 
-      for(int i = 0; i < 4; i++) {
+      for (int i = 0; i < 4; i++) {
         if ((orientation[i] * 10) > (paired.size() * 9)) defaultOrientation = i;
       }
     }
@@ -520,7 +520,7 @@ bool getLastZEst(int numReads, const string filename, int nPart, dx::JSON &info,
       errMsg = "Cannot open alignment file " + fname;
       return false;
     }
-    while(reader.Get(r)) { est.Add(r); }
+    while (reader.Get(r)) { est.Add(r); }
     reader.Close();
   }
 
@@ -529,7 +529,7 @@ bool getLastZEst(int numReads, const string filename, int nPart, dx::JSON &info,
 }
 
 void mergeJSON(dx::JSON &source, dx::JSON &target) {
-  for(dx::JSON::object_iterator it = source.object_begin(); it != source.object_end(); it++)
+  for (dx::JSON::object_iterator it = source.object_begin(); it != source.object_end(); it++)
     target[it->first] = it->second;
 }
 

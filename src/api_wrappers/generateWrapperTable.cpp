@@ -44,7 +44,7 @@ int main (int argc, char **argv) {
   string line;
   cout<<"[\n";
   bool firstLoop = true;
-  while(file.good()) {
+  while (file.good()) {
     getline(file, line);
 
     //Treat the case of blank lines at end differently

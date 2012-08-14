@@ -80,21 +80,21 @@ int main() {
     j10["key4"] = j8;
 
     std::cout<<"\nChecking forward iterators now ... j10 = "<<j10.toString()<<"\n";
-    for(JSON::array_iterator it = j8.array_begin();it != j8.array_end(); ++it, ++i) {
+    for (JSON::array_iterator it = j8.array_begin();it != j8.array_end(); ++it, ++i) {
       assert(j8[i] == *(it));
     }
 
-    for(JSON::object_iterator it = j10.object_begin();it != j10.object_end(); ++it) {
+    for (JSON::object_iterator it = j10.object_begin();it != j10.object_end(); ++it) {
       assert(j10[it->first] == it->second);
       std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
     }
     std::cout<<"\nChecking reverse now ...\n";
     i = j8.size() - 1;
-    for(JSON::array_reverse_iterator it = j8.array_rbegin();it != j8.array_rend(); ++it, --i) {
+    for (JSON::array_reverse_iterator it = j8.array_rbegin();it != j8.array_rend(); ++it, --i) {
       assert(j8[i] == *(it));
     }
 
-    for(JSON::object_reverse_iterator it = j10.object_rbegin();it != j10.object_rend(); ++it) {
+    for (JSON::object_reverse_iterator it = j10.object_rbegin();it != j10.object_rend(); ++it) {
       assert(j10[it->first] == it->second);
       std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
     }

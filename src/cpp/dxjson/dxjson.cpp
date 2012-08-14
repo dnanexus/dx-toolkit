@@ -55,7 +55,7 @@ namespace JSON_Utility
 
     for (unsigned i = 0; i < s.length(); ++i)
     {
-      if(s[i] >= 0x0000 && s[i] <= 0x001f)
+      if (s[i] >= 0x0000 && s[i] <= 0x001f)
       {
         // Control character case, should be escaped
         // http://stackoverflow.com/questions/4901133/json-and-escaping-characters
@@ -197,7 +197,7 @@ namespace JSON_Utility
       if (isdigit(ch) || ch == '+' || ch == '-') // All integer characters
         toParse += ch;
       else {
-        if(ch == '.' || ch == 'e' || ch == 'E') { // All floating point characters
+        if (ch == '.' || ch == 'e' || ch == 'E') { // All floating point characters
           isDouble = true;
           toParse += ch;
         }
@@ -207,7 +207,7 @@ namespace JSON_Utility
           break;
         }
       }
-    }while(true);
+    } while (true);
 
     // Validate number now
     // TODO: Rather than parsing string again add logic of isValidJsonNumber() to the
@@ -337,18 +337,18 @@ namespace JSON_Utility
             i += 4;
             first16bit = string4_to_hex(hex);
             codepoint = first16bit;
-            if(0xD800 <= first16bit && first16bit <= 0xDBFF) {
+            if (0xD800 <= first16bit && first16bit <= 0xDBFF) {
               // Surrogate pair case
               // Must have next 6 characters of the form: \uxxxx as well
 
-              if( (i + 6) >= inplength || inp[i + 1] != '\\' || inp[i + 2] != 'u')
+              if ( (i + 6) >= inplength || inp[i + 1] != '\\' || inp[i + 2] != 'u')
                 throw JSONException("Missing surrogate pair in unicode sequence");
               i += 2;
               copy(inp.begin() + i + 1, inp.begin() + i + 1 + 5, hex);
               i += 4;
               second16bit = string4_to_hex(hex);
 
-              if(0xDC00 <= second16bit && second16bit <= 0xDFFF) {
+              if (0xDC00 <= second16bit && second16bit <= 0xDFFF) {
                 /* valid second surrogate */
                 codepoint = ((first16bit - 0xD800) << 10) + (second16bit - 0xDC00) + 0x10000;
               }
@@ -386,7 +386,7 @@ namespace JSON_Utility
         break;
       str += char(ch);
       prev = (prev == '\\') ? 0 : ch;
-    }while(1);
+    } while (1);
     return parseUtf8JsonString(str);
   }
 }
@@ -412,7 +412,7 @@ void Object::write(std::ostream &out) const {
 void Array::write(std::ostream &out) const {
   out<<"[";
   bool firstElem = true;
-  for(unsigned i = 0; i < val.size(); ++i, firstElem = false) {
+  for (unsigned i = 0; i < val.size(); ++i, firstElem = false) {
     if (!firstElem)
       out<<",";
     val[i].write(out);
@@ -484,7 +484,7 @@ const JSON& JSON::operator[](const JSON &j) const {
     return (*this)[size_t(j)];
   }
   if (this->type() == JSON_OBJECT) {
-    if(j.type() != JSON_STRING)
+    if (j.type() != JSON_STRING)
       throw JSONException("Cannot use a non-string value to index JSON_OBJECT using []");
 
     String *ptr = static_cast<String*>(j.val);
@@ -513,7 +513,7 @@ JSON::JSON(const JSONValue &rhs) {
 }
 
 JSON::JSON(const JSON &rhs) {
-  if(rhs.type() != JSON_UNDEFINED)
+  if (rhs.type() != JSON_UNDEFINED)
     val = rhs.val->returnMyNewCopy();
   else
     val = NULL;
@@ -568,7 +568,7 @@ size_t JSON::size() const {
   JSONValue t = type();
   if (t != JSON_ARRAY && t != JSON_OBJECT && t != JSON_STRING)
     throw JSONException("size()/length() can only be called for JSON_ARRAY/JSON_OBJECT/JSON_STRING");
-  if(t == JSON_ARRAY) {
+  if (t == JSON_ARRAY) {
     Array *tmp = static_cast<Array*>(this->val);
     return tmp->val.size();
   }
@@ -599,14 +599,14 @@ std::string JSON::toString(bool onlyTopLevel) const {
 }
 
 bool JSON::has(const size_t &indx) const {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Illegal call to has(size_t) for non JSON_ARRAY object");
   size_t size = ((Array*)(this->val))->val.size();
   return (indx < size);
 }
 
 bool JSON::has(const std::string &key) const {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Illegal call to has(size_t) for non JSON_OBJECT object");
   return (((Object*)(this->val))->val.count(key) > 0u);
 }
@@ -694,7 +694,7 @@ void Object::read(std::istream &in) {
   do {
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
-    if(in.eof() || in.fail())
+    if (in.eof() || in.fail())
       throw JSONException("Unexpected EOF while parsing object. ch = " + std::string(1,ch));
 
     // End of parsing for this JSON object
@@ -724,7 +724,7 @@ void Object::read(std::istream &in) {
     JSON_Utility::SkipWhiteSpace(in);
     JSON_Utility::ReadJSONValue(in, val[key], false);
     firstKey = false;
-  } while(true);
+  } while (true);
 }
 
 void Array::read(std::istream &in) {
@@ -738,7 +738,7 @@ void Array::read(std::istream &in) {
   do {
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
-    if(in.eof() || in.fail())
+    if (in.eof() || in.fail())
       throw JSONException("Unexpected EOF while parsing array");
 
     // End of parsing this array
@@ -759,16 +759,16 @@ void Array::read(std::istream &in) {
     val.push_back(tmpValue); // Append a blank json object. We will fill it soon
     JSON_Utility::ReadJSONValue(in, val[val.size() - 1u], false);
     firstKey = false;
-  }while(true);
+  } while (true);
 }
 
 void Object::erase(const std::string &key) {
-  if(val.erase(key) == 0)
+  if (val.erase(key) == 0)
     throw JSONException("Cannot erase non-existent key from a JSON_OBJECT. Key supplied = " + key);
 }
 
 void Array::erase(const size_t &indx) {
-  if(indx >= val.size())
+  if (indx >= val.size())
     throw JSONException("Cannot erase out of bound element in a JSON_ARRAY. indx supplied = " + indx);
   val.erase(val.begin() + indx);
 }
@@ -845,98 +845,98 @@ bool JSON::operator ==(const JSON& other) const {
 }
 
 JSON::const_object_iterator JSON::object_begin() const {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.begin();
 }
 
 JSON::const_array_iterator JSON::array_begin() const {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.begin();
 }
 
 JSON::object_iterator JSON::object_begin() {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.begin();
 }
 
 JSON::array_iterator JSON::array_begin() {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.begin();
 }
 
 JSON::const_object_iterator JSON::object_end() const {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.end();
 }
 
 JSON::const_array_iterator JSON::array_end() const {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.end();
 }
 
 JSON::object_iterator JSON::object_end() {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.end();
 }
 
 JSON::array_iterator JSON::array_end() {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.end();
 }
 
 // Reverse iterators
 JSON::const_object_reverse_iterator JSON::object_rbegin() const {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rbegin();
 }
 
 JSON::const_array_reverse_iterator JSON::array_rbegin() const {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rbegin();
 }
 
 JSON::object_reverse_iterator JSON::object_rbegin() {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rbegin();
 }
 
 JSON::array_reverse_iterator JSON::array_rbegin() {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rbegin();
 }
 
 JSON::const_object_reverse_iterator JSON::object_rend() const {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rend();
 }
 
 JSON::const_array_reverse_iterator JSON::array_rend() const {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rend();
 }
 
 JSON::object_reverse_iterator JSON::object_rend() {
-  if(this->type() != JSON_OBJECT)
+  if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rend();
 }
 
 JSON::array_reverse_iterator JSON::array_rend() {
-  if(this->type() != JSON_ARRAY)
+  if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rend();
 }

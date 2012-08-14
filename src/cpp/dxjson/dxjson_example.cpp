@@ -90,7 +90,7 @@ void iterateArraysAndObjects() {
   j2["a"] = 97;
   j2["b"] = 98;
   j2["c"] = 99;
-  for(JSON::object_iterator it = j2.object_begin(); it != j2.object_end(); ++it) {
+  for (JSON::object_iterator it = j2.object_begin(); it != j2.object_end(); ++it) {
     // Key = it->first, value = it->second
     assert(int(it->first[0]) == it->second.get<int>());
   }

@@ -232,8 +232,7 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
     // copy the contents of file into the string
     // Note: the extra parantheses around first parameter
     //       are required (due to "most vexing parsing" problem in C++)
-    g_config_file_contents[fname].assign((istreambuf_iterator<char>(fp)), 
-      istreambuf_iterator<char>());
+    g_config_file_contents[fname].assign((istreambuf_iterator<char>(fp)), istreambuf_iterator<char>());
     fp.close();
   }
   // Since regex (C++11 feature) are not implemented in g++ yet,
@@ -243,7 +242,7 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
   string::const_iterator itb = g_config_file_contents[fname].begin();
   string::const_iterator ite = g_config_file_contents[fname].end();
   
-  if(!boost::regex_search(itb, ite, what, expression, boost::match_default)) {
+  if (!boost::regex_search(itb, ite, what, expression, boost::match_default)) {
     return false;
   }
   if (what.size() < 2) {
