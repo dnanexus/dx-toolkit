@@ -1505,7 +1505,7 @@ def dximport(args):
     else:
         parser.exit(1, 'Not yet implemented\n')
 
-def dxexport(args):
+def export(args):
     if args.format == 'fastq':
         from dxpy.scripts import dx_reads_to_fastq
         sys.argv = [sys.argv[0]] + args.exporter_args
@@ -1716,7 +1716,14 @@ def close(args):
             handler._wait_on_close()
 
 def build(args):
-    parser.exit(1, 'Not yet implemented\n')
+    '''
+    FIXME: Warning: a limitation/bug in argparse requires the first argument in args.builder_args to be positional.
+    This means that despite the usage that dx-build-app prints (dx-build-app [options] build_dir),
+    when called through dx, it must instead be called as "dx build build_dir [options]".
+    '''
+    from dxpy.scripts import dx_build_app
+    sys.argv = [sys.argv[0]] + args.builder_args
+    dx_build_app.main()
 
 def install(args):
     app_desc = get_app_from_path(args.app)
@@ -2457,14 +2464,11 @@ parser_close.set_defaults(func=close)
 parser_map['close'] = parser_close
 
 parser_build = subparsers.add_parser('build', help='Build an applet/app',
-                                     description='Takes in a local directory containing your source code and a dxapp.json file, and converts it into an applet object in the current project.  With the "-a" flag, it can optionally be further packaged into an app object',
-                                     prog='dx build')
-parser_build.add_argument('directory', help='Path to your local directory')
-parser_build.add_argument('-f', '--overwrite', help='Remove existing applets of the same name', action='store_true')
-parser_build.add_argument('-a', '--create-app', help='Create an app from the applet (requires dxapp.json to be present)', action='store_true')
-parser_build.add_argument("-p", "--destination_project", help="Insert the applet into the project with the specified project ID.")
-parser_build.add_argument('--publish', help='Publish the app after it has been created.', action='store_true')
-parser_build.add_argument("-b", "--bill-to", help="Owner (username or organization) to set for the app.")
+                                     description='Build an applet or app object from a local source directory',
+                                     prog='dx build',
+                                     add_help=False
+)
+parser_build.add_argument('builder_args', help='Arguments passed to the app builder', nargs=argparse.REMAINDER)
 parser_build.set_defaults(func=build)
 parser_map['build'] = parser_build
 
@@ -2627,7 +2631,7 @@ parser_export = subparsers.add_parser('export',
 
 parser_export.add_argument('format', help='Format to export to')
 parser_export.add_argument('exporter_args', help='Arguments passed to the exporter', nargs=argparse.REMAINDER)
-parser_export.set_defaults(func=dxexport)
+parser_export.set_defaults(func=export)
 parser_map['export'] = parser_export
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
