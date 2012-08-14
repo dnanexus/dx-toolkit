@@ -1,0 +1,36 @@
+# -*- mode: Makefile -*-
+
+# curl_build_dir := $(shell mktemp -d --tmpdir=/tmp curl-build-XXXXXX)
+
+# curl:
+# 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
+
+curl_dir = /home/jdale/sw/local
+cpp_dir = $(DNANEXUS_HOME)/src/cpp
+dxjson_dir = $(cpp_dir)/dxjson
+dxhttp_dir = $(cpp_dir)/SimpleHttpLib
+dxcpp_dir = $(cpp_dir)/dxcpp
+ua_dir = $(DNANEXUS_HOME)/src/ua
+
+CXXFLAGS = -Wall -std=c++0x -O3 -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir)
+LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -lcurl -lcares -lssl -lcrypto -lrt -lssl -lcrypto -lz -ldl -lboost_program_options-mt -lboost_filesystem -lboost_system -lboost_thread-mt -lboost_regex -lcares
+
+dxjson: $(dxjson_dir)/dxjson.cpp
+	g++ $(CXXFLAGS) -c $(dxjson_dir)/dxjson.cpp
+
+dxhttp: $(dxhttp_dir)/*.cpp
+	g++ $(CXXFLAGS) -c $(dxhttp_dir)/*.cpp
+
+dxcpp: $(dxcpp_dir)/*.cc $(dxcpp_dir)/bindings/*.cc
+	g++ $(CXXFLAGS) -c $(dxcpp_dir)/*.cc $(dxcpp_dir)/bindings/*.cc
+
+ua: $(ua_dir)/*.cpp
+	g++ $(CXXFLAGS) -c $(ua_dir)/*.cpp
+
+all: dxjson dxhttp dxcpp ua
+	g++ *.o $(LDFLAGS) -o ua 
+
+clean:
+	rm -v *.o
+
+.PHONY: all
