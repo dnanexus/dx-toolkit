@@ -2602,14 +2602,7 @@ parser_export = subparsers.add_parser('export',
                                       parents=[],
                                       prog='dx export')
 
-#export_format_args = parser_export.add_argument_group('Format to export to')
-#export_format_args_gp = export_format_args.add_mutually_exclusive_group()
-#export_format_args_gp.add_argument('--csv', help='Comma-separated values (default)', action='store_true')
-#export_format_args_gp.add_argument('--tsv', help='Tab-separated values', action='store_true')
-#export_format_args_gp.add_argument('--fasta', help='FASTA format', action='store_true')
-#export_format_args_gp.add_argument('--fastq', help='FASTQ format', action='store_true')
 parser_export.add_argument('format', help='Format to export to')
-#export_format_args.add_argument('--columns', help='Comma-separated list of columns to output (only for formats which use all columns)')
 parser_export.add_argument('exporter_args', help='Arguments passed to the exporter', nargs=argparse.REMAINDER)
 parser_export.set_defaults(func=dxexport)
 parser_map['export'] = parser_export
