@@ -4,8 +4,10 @@
 #include <fstream>
 #include <sstream>
 
+#include <zlib.h>
 #include <curl/curl.h>
 #include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
@@ -31,8 +33,26 @@ void Chunk::read() {
 }
 
 void Chunk::compress() {
-  // TODO: compress the data into a new buffer, then swap that with the
-  // uncompressed data
+  int64_t sourceLen = data.size();
+  int64_t destLen = compressBound(sourceLen);
+  vector<char> dest(destLen);
+
+  int compressStatus = ::compress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
+                                  (const Bytef *) (&(data[0])), (uLong) sourceLen);
+
+  if (compressStatus == Z_MEM_ERROR) {
+    throw runtime_error("compression failed: not enough memory");
+  } else if (compressStatus == Z_BUF_ERROR) {
+    throw runtime_error("compression failed: output buffer too small");
+  } else if (compressStatus != Z_OK) {
+    throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
+  }
+
+  if (destLen < dest.size()) {
+    dest.resize(destLen);
+  }
+
+  data.swap(dest);
 }
 
 void checkConfigCURLcode(CURLcode code) {
@@ -59,7 +79,7 @@ void checkPerformCURLcode(CURLcode code) {
  */
 size_t curlReadFunction(void * ptr, size_t size, size_t nmemb, void * userdata) {
   Chunk * chunk = (Chunk *) userdata;
-  int64_t bytesLeft = chunk->size() - chunk->uploadOffset;
+  int64_t bytesLeft = chunk->data.size() - chunk->uploadOffset;
   size_t bytesToCopy = min<size_t>(bytesLeft, size * nmemb);
 
   if (bytesToCopy > 0) {
@@ -71,7 +91,6 @@ size_t curlReadFunction(void * ptr, size_t size, size_t nmemb, void * userdata) 
 }
 
 void Chunk::upload() {
-  // TODO: get the upload URL for this chunk; upload the data
   string url = uploadURL();
   LOG << "Upload URL: " << url << endl;
 
@@ -96,7 +115,7 @@ void Chunk::upload() {
    */
   {
     ostringstream clen;
-    clen << "Content-Length: " << size();
+    clen << "Content-Length: " << data.size();
     slist = curl_slist_append(slist, clen.str().c_str());
   }
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist));
@@ -134,10 +153,6 @@ string Chunk::uploadURL() const {
  */
 void Chunk::log(const string &message) const {
   LOG << "Thread " << boost::this_thread::get_id() << ": " << "Chunk " << (*this) << ": " << message << endl;
-}
-
-int64_t Chunk::size() const {
-  return end - start;
 }
 
 ostream &operator<<(ostream &out, const Chunk &chunk) {

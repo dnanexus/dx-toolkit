@@ -34,6 +34,7 @@ public:
   int uploadThreads;
   int chunkSize;
   int tries;
+  bool compress;
   bool progress;
 
 private:

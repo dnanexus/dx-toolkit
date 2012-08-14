@@ -49,8 +49,6 @@ public:
 
   void log(const std::string &message) const;
 
-  int64_t size() const;
-
   friend std::ostream &operator<<(std::ostream &out, const Chunk &opt);
 
 private:

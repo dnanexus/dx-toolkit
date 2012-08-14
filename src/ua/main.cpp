@@ -68,7 +68,7 @@ void readChunks() {
     c->log("Reading...");
     c->read();
 
-    c->log("Finished reading.");
+    c->log("Finished reading");
     chunksToCompress.produce(c);
   }
 }
@@ -77,10 +77,14 @@ void compressChunks() {
   while (true) {
     Chunk * c = chunksToCompress.consume();
 
-    c->log("Compressing...");
-    c->compress();
+    if (opt.compress) {
+      c->log("Compressing...");
+      c->compress();
+      c->log("Finished compressing");
+    } else {
+      c->log("Not compressing");
+    }
 
-    c->log("Finished compressing.");
     chunksToUpload.produce(c);
   }
 }
@@ -328,7 +332,13 @@ void curlCleanup() {
 int main(int argc, char * argv[]) {
   LOG << "DNAnexus Upload Agent" << endl;
 
-  opt.parse(argc, argv);
+  try {
+    opt.parse(argc, argv);
+  } catch (exception &e) {
+    LOG << "Error processing arguments: " << e.what() << endl;
+    opt.printHelp();
+    return 1;
+  }
 
   if (opt.help() || opt.file.empty()) {
     opt.printHelp();

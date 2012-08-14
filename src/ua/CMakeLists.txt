@@ -18,7 +18,6 @@ set(CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
 add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
-add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/resolver" resolver EXCLUDE_FROM_ALL)
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(ua main.cpp options.cpp chunk.cpp)

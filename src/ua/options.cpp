@@ -2,7 +2,6 @@
 
 using namespace std;
 
-#include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
 
 namespace fs = boost::filesystem;
@@ -33,6 +32,7 @@ Options::Options() {
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
+    ("compress,z", po::bool_switch(&compress), "Compress chunks before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
     ;
 
@@ -145,6 +145,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  upload threads: " << opt.uploadThreads << endl
         << "  chunkSize: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl
+        << "  compress: " << opt.compress << endl
         << "  progress: " << opt.progress << endl
       ;
   }
