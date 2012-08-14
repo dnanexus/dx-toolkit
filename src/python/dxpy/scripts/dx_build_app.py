@@ -11,7 +11,7 @@ import dxpy, dxpy.app_builder
 parser = argparse.ArgumentParser(prog="dx-build-app", description="Upload a DNAnexus applet")
 parser.add_argument("src_dir", help="App or applet source directory")
 parser.add_argument("-f", "--overwrite", help="Remove existing applets of the same name", action='store_true', default=False)
-parser.add_argument("-a", "--create-app", help="Create an app from the applet (requires dxapp.json to be present)", action='store_true', default=False)
+parser.add_argument("-a", "--create-app", help="Create an app from the applet", action='store_true', default=False)
 parser.add_argument("-p", "--destination-project", help="Insert the applet into the project with the specified project ID", default=None)
 parser.add_argument("--publish", help="Publish the app after it has been created.", action='store_true', default=False)
 parser.add_argument("-b", "--bill-to", help="Owner (username or organization) to bill for the app", default=None)
