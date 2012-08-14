@@ -5,7 +5,7 @@ import dxpy
 
 arg_parser = argparse.ArgumentParser(prog="dx-reads-to-fastq", description="Download a reads table into a FASTQ file")
 arg_parser.add_argument("reads_table", help="ID of the reads GTable object")
-arg_parser.add_argument("--output", help="Name of the output file")
+arg_parser.add_argument("--output", help="Name of the output file", required=True)
 arg_parser.add_argument("--output2", help="Name of the second output file (for paired reads)")
 arg_parser.add_argument("--discard_names", help="Discard read names", type=bool, default=False)
 arg_parser.add_argument("--output_FASTA", help="Output FASTA instead of FASTQ", type=bool, default=False)
