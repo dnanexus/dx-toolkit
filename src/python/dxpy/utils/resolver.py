@@ -38,10 +38,10 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
             value = raw_input(prompt)
         except KeyboardInterrupt:
             print ''
-            continue
+            raise
         except EOFError:
             print ''
-            raise EOFError()
+            raise
         if default is not None and value == '':
             return default
         if allow_mult and value == '*':

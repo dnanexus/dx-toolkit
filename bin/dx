@@ -313,6 +313,7 @@ def set_wd(folder, write):
     if write:
         write_env_var("DX_CLI_WD", folder)
 
+# Will raise KeyboardInterrupt, EOFError
 def prompt_for_var(prompt_str, env_var_str):
     prompt = prompt_str
     default = None
@@ -322,14 +323,7 @@ def prompt_for_var(prompt_str, env_var_str):
     else:
         prompt += ': '
     while True:
-        try: 
-            value = raw_input(prompt)
-        except KeyboardInterrupt:
-            print ''
-            continue
-        except EOFError:
-            print ''
-            raise EOFError()
+        value = raw_input(prompt)
         if value != '':
             return value
         elif default is not None:
@@ -353,11 +347,11 @@ def pick_and_set_project(args):
 
     print ""
     print "Available projects:"
-    choice = pick(
-        map(lambda result:
-                result['describe']['name'] + ' (' + result['level'] + ')',
-            results),
-        default)
+    choice = try_call(pick,
+                      map(lambda result:
+                              result['describe']['name'] + ' (' + result['level'] + ')',
+                          results),
+                      default)
 
     print 'Setting current project to: ' + results[choice]['describe']['name']
     set_project(projects[choice], not state['interactive'])
@@ -373,10 +367,13 @@ def setenv(args):
             if var in os.environ:
                 write_env_var(var, os.environ[var])
     else:
-        api_protocol = prompt_for_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
-        api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
-        api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
-        set_api(api_protocol, api_host, api_port, args.save)
+        try:
+            api_protocol = prompt_for_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
+            api_host = prompt_for_var('API server host', 'DX_APISERVER_HOST')
+            api_port = prompt_for_var('API server port', 'DX_APISERVER_PORT')
+            set_api(api_protocol, api_host, api_port, args.save)
+        except:
+            parser.exit(1, '\n')
 
     if args.projects:
         pick_and_set_project(args)
@@ -557,40 +554,75 @@ def ls(args):
             print_ls_l_desc(result['describe'])
 
 def mkdir(args):
-    project, folderpath, none = try_call(resolve_path_with_project, args.path, expected='folder')
-
-    dxproj = dxpy.get_handler(project)
-    try:
-        dxproj.new_folder(folder=folderpath, parents=args.parents)
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+    had_error = False
+    for path in args.paths:
+        # Resolve the path and add it to the list
+        try:
+            project, folderpath, none = resolve_path_with_project(path, expected='folder')
+        except BaseException as details:
+            print fill('Could not resolve \"' + path + '\": ' + unicode(details))
+            had_error = True
+            continue
+        if project is None:
+            print fill('Could not resolve the project of \"' + path + '\"')
+        try:
+            dxpy.DXHTTPRequest('/' + project + '/newFolder', {"folder": folderpath})
+        except BaseException as details:
+            print "Error while creating " + folderpath + " in " + project
+            print "  " + unicode(details)
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def rmdir(args):
-    project, folderpath, none = try_call(resolve_path_with_project, args.path, expected='folder')
-
-    dxproj = dxpy.get_handler(project)
-    try:
-        dxproj.remove_folder(folder=folderpath)
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+    had_error = False
+    for path in args.paths:
+        try:
+            project, folderpath, none = resolve_path_with_project(path, expected='folder')
+        except BaseException as details:
+            print fill('Could not resolve \"' + path + '\": ' + unicode(details))
+            had_error = True
+            continue
+        if project is None:
+            print fill('Could not resolve the project of \"' + path + '\"')
+        try:
+            dxpy.DXHTTPRequest('/' + project + '/removeFolder', {"folder": folderpath})
+        except BaseException as details:
+            print "Error while removing " + folderpath + " in " + project
+            print "  " + unicode(details)
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def rm(args):
+    had_error = False
     projects = {}
     for path in args.paths:
         # Resolve the path and add it to the list
-        project, folderpath, entity_results = try_call(resolve_existing_path, path, allow_mult=True)
+        try:
+            project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True)
+        except BaseException as details:
+            print fill('Could not resolve \"' + path + '\": ' + unicode(details))
+            had_error = True
+            continue
         if project is None:
-            parser.exit(1, fill('Could not resolve \"' + path + '\" to a project') + '\n')
+            had_error = True
+            print fill('Could not resolve \"' + path + '\" to a project')
+            continue
         if project not in projects:
             projects[project] = {"folders": [], "objects": []}
         if entity_results is None:
             if folderpath is not None:
                 if not args.recursive:
-                    parser.exit(1, 'Cannot remove a folder without setting the \"-r\" flag\n')
+                    print fill('Did not find \"' + path + '\" as a data object; if it is a folder, cannot remove it without setting the \"-r\" flag')
+                    had_error = True
+                    continue
                 else:
                     projects[project]['folders'].append(folderpath)
             else:
-                parser.exit(1, 'Cannot remove a project using \"rm\"')
+                print fill('Path ' + path + ' resolved to a project; cannot remove a project using \"rm\"')
+                had_error = True
+                continue
         else:
             projects[project]['objects'] += map(lambda result: result['id'],
                                                 entity_results)
@@ -604,27 +636,35 @@ def rm(args):
             except BaseException as details:
                 print "Error while removing " + folder + " from " + project
                 print "  " + unicode(details)
+                had_error = True
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeObjects',
                                {"objects": projects[project]['objects']})
         except BaseException as details:
             print "Error while removing " + json.dumps(projects[project]['objects']) + " from " + project
             print "  " + unicode(details)
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def rmproject(args):
+    had_error = False
     for project in args.projects:
         # Be forgiving if they offer an extraneous colon
         substrings = split_unescaped(':', project)
         if len(substrings) > 1 or (len(substrings) == 1 and project[0] == ':'):
             print fill('Was unable to remove \"' + project + '\": a nonempty string was found to the right of an unescaped colon')
+            had_error = True
             continue
         if len(substrings) == 0:
             if project[0] == ':':
                 print fill('Unable to remove \":\": to remove the current project, use its name or ID')
+                had_error = True
                 continue
         proj_id = resolve_container_id_or_name(substrings[0])
         if proj_id is None:
             print fill('Was unable to remove \"' + project + '\": could not resolve to a project ID')
+            had_error = True
             continue
         try:
             proj_desc = dxpy.DXHTTPRequest('/' + proj_id + '/describe', {})
@@ -639,9 +679,12 @@ def rmproject(args):
             parser.exit(1)
         except KeyboardInterrupt:
             print ''
-            continue
+            parser.exit(1)
         except BaseException as details:
             print fill('Was unable to remove ' + project + ', ' + unicode(details))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
@@ -1057,6 +1100,7 @@ def new_gtable(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_visibility(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1069,6 +1113,9 @@ def set_visibility(args):
                                {"hidden": (args.visibility == 'hidden')})
         except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def get_details(args):
     # Attempt to resolve name
@@ -1083,6 +1130,7 @@ def get_details(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_details(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1100,8 +1148,12 @@ def set_details(args):
                                args.details)
         except dxpy.DXAPIError as details:
             print(fill(unicode(details)))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def add_types(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1114,8 +1166,12 @@ def add_types(args):
                                {"types": args.types})
         except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def remove_types(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1128,8 +1184,12 @@ def remove_types(args):
                                {"types": args.types})
         except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def add_tags(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1143,8 +1203,12 @@ def add_tags(args):
                                 "tags": args.tags})
         except BaseException as details:
             print fill(unicode(details))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def remove_tags(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1158,8 +1222,12 @@ def remove_tags(args):
                                 "tags": args.tags})
         except BaseException as details:
             print fill(unicode(details))
+            had_error = True
+    if had_error:
+        parser.exit(1)
 
 def rename(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1181,6 +1249,9 @@ is a project.\n''')
                                     "name": args.name})
             except BaseException as details:
                 print fill(unicode(details))
+                had_error = True
+        if had_error:
+            parser.exit(1)
     elif not project.startswith('project-'):
         parser.exit(1, 'Cannot rename a non-project data container\n')
     else:
@@ -1191,6 +1262,7 @@ is a project.\n''')
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_properties(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1206,6 +1278,9 @@ def set_properties(args):
                                     "properties": properties})
             except BaseException as details:
                 print fill(unicode(details))
+                had_error = True
+        if had_error:
+            parser.exit(1)
     elif not project.startswith('project-'):
         parser.exit(1, 'Cannot set properties on a non-project data container\n')
     else:
@@ -1216,6 +1291,7 @@ def set_properties(args):
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def unset_properties(args):
+    had_error = False
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
 
@@ -1233,6 +1309,9 @@ def unset_properties(args):
                                     "properties": properties})
             except BaseException as details:
                 print fill(unicode(details))
+                had_error = True
+        if had_error:
+            parser.exit(1)
     elif not project.startswith('project-'):
         parser.exit(1, 'Cannot unset properties on a non-project data container\n')
     else:
@@ -1816,10 +1895,6 @@ def get_input_array(param_desc):
             except TypeError as details:
                 print unicode(details)
                 continue
-    except KeyboardInterrupt:
-        print ''
-        print 'Received keyboard interrupt, exiting...'
-        parser.exit(0)
     except EOFError:
         return input_array
     except BaseException as details:
@@ -1850,10 +1925,10 @@ def get_input_single(param_desc):
                 print unicode(details)
                 continue
             return value
+    except EOFError:
+        parser.exit(1, '\n')
     except KeyboardInterrupt:
-        print ''
-        print 'Received keyboard interrupt, exiting...'
-        parser.exit(0)
+        parser.exit(1, '\n')
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -1889,15 +1964,11 @@ def get_optional_inputs(input_hash, optional_inputs):
                 except ValueError as details:
                     print unicode(details)
                     continue
-            get_input(input_hash, optional_inputs[opt_num])
-        except KeyboardInterrupt:
-            print ''
-            print 'Received keyboard interrupt, exiting...'
-            parser.exit(0)
         except EOFError:
             return
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
+        get_input(input_hash, optional_inputs[opt_num])
 
 def add_input_to_json(inputs, input_json, input_specs):
     '''
@@ -1985,8 +2056,8 @@ def run(args):
             if not sys.stdout.isatty():
                 parser.exit(1, 'Found multiple executables with the path ' + args.path + '\n')
             print 'Found multiple executables with the path ' + args.path
-            choice = pick(map(lambda result: get_ls_l_desc(result['describe']),
-                              entity_results) + ['app-' + app_desc['name'] + ', version ' + app_desc['version']])
+            choice = try_call(pick, map(lambda result: get_ls_l_desc(result['describe']),
+                                        entity_results) + ['app-' + app_desc['name'] + ', version ' + app_desc['version']])
             if choice < len(entity_results):
                 handler = dxpy.get_handler(entity_results[choice]['id'], project)
                 desc = entity_results[choice]['describe']
@@ -2097,14 +2168,6 @@ def run(args):
     if args.confirm and (args.input_json is None and args.filename is None and not args.stdin and sys.stdout.isatty()):
         try:
             value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
-        except KeyboardInterrupt:
-            print ''
-            print 'Received keyboard interrupt, exiting...'
-            parser.exit(0)
-        except EOFError:
-            print ''
-            print 'Received ^D, exiting...'
-            parser.exit(0)
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
         if value != '' and not value.lower().startswith('y'):
@@ -2352,19 +2415,19 @@ parser_map['pwd'] = parser_pwd
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder', prog='dx mkdir')
 parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
-parser_mkdir.add_argument('path', help='Path to a folder to create; full path is required')
+parser_mkdir.add_argument('paths', help='Paths to folders to create', nargs='+')
 parser_mkdir.set_defaults(func=mkdir)
 parser_map['mkdir'] = parser_mkdir
 
 parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
                                      description='Remove a folder', prog='dx rmdir')
-parser_rmdir.add_argument('path', help='Path to a folder to remove; full path is required')
+parser_rmdir.add_argument('paths', help='Paths to folders to remove', nargs='+')
 parser_rmdir.set_defaults(func=rmdir)
 parser_map['rmdir'] = parser_rmdir
 
 parser_rm = subparsers.add_parser('rm', help='Remove objects',
                                   description='Remove objects', prog='dx rm')
-parser_rm.add_argument('paths', help='Paths to remove', nargs='*')
+parser_rm.add_argument('paths', help='Paths to remove', nargs='+')
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
 parser_map['rm'] = parser_rm
@@ -2372,21 +2435,21 @@ parser_map['rm'] = parser_rm
 parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
                                          description='Delete projects and all their associated data',
                                          prog='dx rmproject')
-parser_rmproject.add_argument('projects', help='Projects to remove', nargs='*')
+parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
 parser_rmproject.set_defaults(func=rmproject)
 parser_map['rmproject'] = parser_rmproject
 
 parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside a single project',
                                   description='Move objects and/or folders inside a single project.',
                                   prog='dx mv')
-parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='*')
+parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='+')
 parser_mv.add_argument('destination', help='Folder into which to move the sources')
 parser_mv.set_defaults(func=mv)
 parser_map['mv'] = parser_mv
 
 parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders between different projects',
                                   description='Copy objects and/or folders between different projects.  Folders will automatically be copied recursively.', prog='dx cp')
-parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='*')
+parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='+')
 parser_cp.add_argument('destination', help='Folder into which to copy the sources')
 parser_cp.set_defaults(func=cp)
 parser_map['cp'] = parser_cp
