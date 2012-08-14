@@ -84,7 +84,11 @@ def upload_resources(src_dir, project=None):
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
     applet_spec = get_applet_spec(src_dir)
 
-    dest_project = project or applet_spec['project']
+    if project is None:
+        dest_project = applet_spec['project']
+    else:
+        dest_project = project
+        applet_spec['project'] = project
 
     if 'description' not in applet_spec:
         readme_filename = None
