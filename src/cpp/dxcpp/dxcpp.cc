@@ -273,16 +273,21 @@ string getUserHomeDirectory() {
 bool getFromEnvOrConfig(string key, string &val) {
   if (getenv(key.c_str()) != NULL) {
     val = getenv(key.c_str());
+    std::cerr<<"\nReading '" + key + "' value from enviornment variables. Value = '" + val + "'";
     return true;
   }
 
   const std::string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
-  if (getVariableFromConfigFile(user_config_file_path, key, val))
+  if (getVariableFromConfigFile(user_config_file_path, key, val)) {
+    std::cerr<<"\nReading '" + key + "' value from file: '" + user_config_file_path + "'. Value = '" + val + "'";
     return true;
+  }
   
   const std::string default_config_file_path = "/opt/dnanexus/enviornment";
-  if (getVariableFromConfigFile(default_config_file_path, key, val))
+  if (getVariableFromConfigFile(default_config_file_path, key, val)) {
+    std::cerr<<"\nReading '" + key + "' value from file: '" + default_config_file_path + "'. Value = '" + val + "'";
     return true;
+  }
 
   return false;
 }
