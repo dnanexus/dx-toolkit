@@ -286,8 +286,10 @@ void DXFile::joinAllWriteThreads_() {
 
   while (true) {
     boost::mutex::scoped_lock cl(countThreadsMutex); 
-    if (countThreadsNotWaitingOnConsume == 0 && countThreadsWaitingOnConsume == writeThreads.size())
+    if ((countThreadsNotWaitingOnConsume == 0) &&
+        (countThreadsWaitingOnConsume == (int) writeThreads.size())) {
       break;
+    }
     cl.unlock();
     usleep(100);
   }
