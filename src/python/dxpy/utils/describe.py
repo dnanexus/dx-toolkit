@@ -30,6 +30,15 @@ def DATA_STATES(state):
 
 SIZE_LEVEL = ['bytes', 'KB', 'MB', 'GB', 'TB']
 
+def get_size_str(size):
+    if size == 0:
+        magnitude = 0
+        level = 0
+    else:
+        magnitude = math.floor(math.log(size, 10))
+        level = int(min(math.floor(magnitude / 3), 4))
+    return ('%d' if level == 0 else '%.2f') % (float(size) / 10**(level*3)) + ' ' + SIZE_LEVEL[level]
+
 def parse_typespec(thing):
     if isinstance(thing, basestring):
         return thing
@@ -256,13 +265,7 @@ def print_data_obj_desc(desc):
                 print_field("Media type", desc['media'])
             elif field == "size":
                 if desc["class"] == "file" or desc["class"] == "gtable":
-                    if desc['size'] == 0:
-                        magnitude = 0
-                        level = 0
-                    else:
-                        magnitude = math.floor(math.log(desc['size'], 10))
-                        level = int(min(math.floor(magnitude / 3), 4))
-                    print_field("Size", ('%d' if level == 0 else '%.2f') % (float(desc['size']) / 10**(level*3)) + ' ' + SIZE_LEVEL[level])
+                    print_field("Size", get_size_str(desc['size']))
                 else:
                     print_field("Size", str(desc['size']))
             elif field == "length":
@@ -379,10 +382,18 @@ def get_ls_l_desc(desc, include_folder=False):
     else:
         name_str = desc['name']
 
+    if 'size' in desc and desc['class'] == 'file':
+        size_str = get_size_str(desc['size'])
+    elif 'length' in desc:
+        size_str = str(desc['length']) + ' rows'
+    else:
+        size_str = '        '
+    size_str += ' '*(max(0, 8 - len(size_str)))
+
     if desc['class'] == 'program':
         name_str = BOLD() + GREEN() + name_str + ENDC()
 
-    return state_str + ' '*(8 - state_len) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + '  ' + name_str + ' (' + desc['id'] + ')'
+    return state_str + ' '*(8 - state_len) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + ' ' + size_str + ' ' + name_str + ' (' + desc['id'] + ')'
 
 def print_ls_l_desc(desc, include_folder=False):
     print get_ls_l_desc(desc, include_folder)

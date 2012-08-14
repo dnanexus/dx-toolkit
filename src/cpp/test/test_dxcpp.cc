@@ -229,7 +229,7 @@ TEST_F(DXProjectTest, CloneRemoveObjectsTest) {
   listf = dxproject.listFolder();
   ASSERT_EQ(listf["objects"], JSON(JSON_ARRAY));
   JSON desc = dxrecord.describe();
-  ASSERT_EQ(desc["folder"], "/a");
+  ASSERT_EQ(desc["folder"].get<string>(), "/a");
 }
 
 //////////////
@@ -291,13 +291,13 @@ TEST_F(DXRecordTest, DescribeTest) {
   JSON desc = dxrecord.describe();
   ASSERT_EQ(desc["project"], proj_id);
   ASSERT_EQ(desc["id"], dxrecord.getID());
-  ASSERT_EQ(desc["class"], "record");
+  ASSERT_EQ(desc["class"].get<string>(), "record");
   ASSERT_EQ(desc["types"], JSON(JSON_ARRAY));
-  ASSERT_EQ(desc["state"], "open");
+  ASSERT_EQ(desc["state"].get<string>(), "open");
   ASSERT_FALSE(desc["hidden"].get<bool>());
   ASSERT_EQ(desc["links"], JSON(JSON_ARRAY));
   ASSERT_EQ(desc["name"], dxrecord.getID());
-  ASSERT_EQ(desc["folder"], "/");
+  ASSERT_EQ(desc["folder"].get<string>(), "/");
   ASSERT_EQ(desc["tags"], JSON(JSON_ARRAY));
   ASSERT_TRUE(desc.has("created"));
   ASSERT_TRUE(desc.has("modified"));
@@ -332,13 +332,13 @@ TEST_F(DXRecordTest, DescribeTest) {
   desc = second_dxrecord.describe(true);
   ASSERT_EQ(desc["project"], proj_id);
   ASSERT_EQ(desc["id"].get<string>(), second_dxrecord.getID());
-  ASSERT_EQ(desc["class"], "record");
+  ASSERT_EQ(desc["class"].get<string>(), "record");
   ASSERT_EQ(desc["types"], types);
-  ASSERT_EQ(desc["state"], "open");
+  ASSERT_EQ(desc["state"].get<string>(), "open");
   ASSERT_TRUE(desc["hidden"].get<bool>());
   ASSERT_EQ(desc["links"], links_to_expect);
-  ASSERT_EQ(desc["name"], "Name");
-  ASSERT_EQ(desc["folder"], "/a");
+  ASSERT_EQ(desc["name"].get<string>(), "Name");
+  ASSERT_EQ(desc["folder"].get<string>(), "/a");
   ASSERT_EQ(desc["tags"], tags);
   ASSERT_TRUE(desc.has("created"));
   ASSERT_TRUE(desc.has("modified"));

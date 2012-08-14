@@ -227,7 +227,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([cached_project_names[string]] if multi else cached_project_names[string])
 
     try:
-        results = list(dxpy.find_projects(name=string, describe=True, level='LIST'))
+        results = list(dxpy.find_projects(name=string, describe=True, level='LIST', public=True))
     except BaseException as details:
         raise ResolutionError(str(details))
 
@@ -377,7 +377,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         else:
             return project, folderpath, [result]
     else:
-        msg = 'Object of name ' + entity_name + ' could not be resolved in folder ' + folderpath + ' of project ID ' + project
+        msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object
         results = list(dxpy.find_data_objects(project=project,
                                               folder=folderpath,

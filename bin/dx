@@ -206,6 +206,10 @@ def login(args):
 
     # TODO: Remove this and replace with actual logic and interaction
     # when implemented
+    if args.emtest:
+        args.host = 'api.emtest.dev.dnanexus.com'
+        args.port = 8081
+
     if args.host is not None or args.port is not None:
         authserver = 'http://' + args.host
         authserver += ':' + str(args.port)
@@ -510,7 +514,7 @@ def ls(args):
                 next_name = None
                 if args.l:
                     if len(resp['objects']) > 0:
-                        print BOLD() + 'State\tLast modified\t     Name (ID)' + ENDC()
+                        print BOLD() + 'State\tLast modified       Size     Name (ID)' + ENDC()
                     else:
                         print "No data objects found in the folder"
                 for i in range(len(resp["objects"])):
@@ -1627,7 +1631,8 @@ def find_projects(args):
     get_output_flag(args)
     try:
         results = list(dxpy.find_projects(name=args.name, level=args.level,
-                                          describe=(not args.brief)))
+                                          describe=(not args.brief),
+                                          public=args.public))
         if args.json:
             print json.dumps(results, indent=4)
             return
@@ -2259,7 +2264,7 @@ parser_map['env'] = parser_env
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
-parser_login.add_argument('--demo', help='Log into nucleusdemo.dev.dnanexus.com', action='store_true')
+parser_login.add_argument('--emtest', help='Log into emtest', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
@@ -2519,7 +2524,7 @@ parser_find_data.add_argument('--class', dest='classname', choices=['record', 'f
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')
-parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key property_value another_property_key another_property_value\'')
+parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--tag', help='Tag of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
@@ -2536,6 +2541,7 @@ parser_map['find data'] = parser_find_data
 parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[stdout_args, json_arg], prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
+parser_find_projects.add_argument('--public', help='Include public projects', action='store_true')
 parser_find_projects.set_defaults(func=find_projects)
 parser_map['find projects'] = parser_find_projects
 
