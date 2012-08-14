@@ -49,6 +49,7 @@ class DXGTable(DXDataObject):
         self._row_buffer_size = DEFAULT_TABLE_ROW_BUFFER_SIZE
         self._string_row_buf = None
         self._http_threadpool_futures = set()
+        self._columns = None
 
         if dxid is not None:
             self.set_ids(dxid, project)
@@ -71,6 +72,14 @@ class DXGTable(DXDataObject):
         Also, neither this nor context managers are compatible with kwargs pass-through (so e.g. no custom auth).
         '''
         self.flush(multithread=False)
+
+    def _check_row_is_valid(self, row):
+        # TODO: if the user is using initFrom, we don't know what the schema looks like
+        # (self._columns is None). In that case we can't do any local checks of the data's
+        # validity.
+        if self._columns is not None and len(row) != len(self._columns):
+            raise ValueError("Row has wrong number of columns (expected %d, got %d)" % (len(self._columns), len(row)))
+        # TODO: check the types against the schema, too.
 
     def _new(self, dx_hash, **kwargs):
         '''
@@ -112,6 +121,8 @@ class DXGTable(DXDataObject):
 
         resp = dxpy.api.gtableNew(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
+        if "columns" in dx_hash:
+            self._columns = dx_hash["columns"]
 
     def set_ids(self, dxid, project=None):
         '''
@@ -284,6 +295,8 @@ class DXGTable(DXDataObject):
 
         '''
 
+        for row in data:
+            self._check_row_is_valid(row)
         if part is None:
             for row in data:
                 self._row_buf.append(row)

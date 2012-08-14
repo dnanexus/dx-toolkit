@@ -305,13 +305,14 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable.close(block=True)
         col_names = self.dxgtable.get_col_names()
         self.assertEqual(col_names, ["__id__", "a", "b"])
- 
+
     def test_add_rows(self):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
         self.dxgtable.add_rows(data=[], part=9999)
-        with self.assertRaises(DXAPIError):
+        # Wrong number of columns
+        with self.assertRaises(ValueError):
             self.dxgtable.add_rows(data=[[]], part=9997)
 
         for i in range(64):
