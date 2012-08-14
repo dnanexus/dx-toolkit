@@ -199,7 +199,7 @@ TEST(DXLOGTest, Log_Input_Default_Value) {
   ASSERT_TRUE(ValidateLogData(data, errMsg));
   
   ASSERT_EQ(errMsg, "");
-  ASSERT_EQ(data["level"], 6);
+  ASSERT_EQ(data["level"].get<int>(), 6);
   ASSERT_EQ(data["hostname"].type(), dx::JSON_STRING);
   ASSERT_EQ(data["timestamp"].type(), dx::JSON_INTEGER);
 }
