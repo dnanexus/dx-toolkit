@@ -155,7 +155,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if not keep_open:
         dxfile.close(block=wait_on_close, **remaining_kwargs)
 
-    if 'name' not in kwargs:
+    if 'name' not in kwargs and not use_existing_dxfile:
         if filename is not None:
             dxfile.rename(os.path.basename(filename), **remaining_kwargs)
         else:
