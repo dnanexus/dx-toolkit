@@ -257,6 +257,9 @@ TEST_F(DXRecordTest, CreateRemoveTest) {
   ASSERT_EQ(first_record.getProjectID(), proj_id);
   string firstID = first_record.getID();
 
+  // Check describe call with "details": true
+  ASSERT_EQ(DXRecordTest::example_JSON, first_record.describe(false, true)["details"]);
+
   DXRecord second_record(firstID);
   ASSERT_EQ(first_record.getID(), second_record.getID());
   ASSERT_EQ(first_record.getDetails(), second_record.getDetails());
@@ -267,6 +270,7 @@ TEST_F(DXRecordTest, CreateRemoveTest) {
   ASSERT_NE(first_record.getID(), second_record.getID());
   ASSERT_EQ(second_record.getProjectID(), second_proj_id);
   ASSERT_EQ(first_record.getDetails(), second_record.getDetails());
+  ASSERT_EQ(first_record.describe(false, true)["details"], second_record.describe(false, true)["details"]);
 
   ASSERT_NO_THROW(first_record.describe());
 
@@ -319,7 +323,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   details["$dnanexus_link"] = dxrecord.getID();
   JSON links_to_expect = JSON(JSON_ARRAY);
   links_to_expect.push_back(dxrecord.getID());
-
+  
   settings["types"] = types;
   settings["tags"] = tags;
   settings["properties"] = properties;
@@ -329,7 +333,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   settings["parents"] = true;
   settings["name"] = "Name";
   DXRecord second_dxrecord = DXRecord::newDXRecord(settings);
-  desc = second_dxrecord.describe(true);
+  desc = second_dxrecord.describe(true, true);
   ASSERT_EQ(desc["project"], proj_id);
   ASSERT_EQ(desc["id"].get<string>(), second_dxrecord.getID());
   ASSERT_EQ(desc["class"].get<string>(), "record");
@@ -343,6 +347,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   ASSERT_TRUE(desc.has("created"));
   ASSERT_TRUE(desc.has("modified"));
   ASSERT_EQ(desc["properties"], properties);
+  ASSERT_EQ(desc["details"], details);
 }
 
 TEST_F(DXRecordTest, TypesTest) {

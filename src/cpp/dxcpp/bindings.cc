@@ -26,12 +26,13 @@ void DXDataObject::waitOnState(const string &state,
   } while (elapsed <= timeout);
 }
 
-JSON DXDataObject::describe(bool incl_properties) const {
+JSON DXDataObject::describe(bool incl_properties, bool incl_details) const {
   stringstream input_hash;
   input_hash << "{";
   if (proj_ != "")
     input_hash << "\"project\": \"" << proj_ << "\",";
-  input_hash << "\"properties\": " << (incl_properties ? "true" : "false") << "}";
+  input_hash << "\"properties\": " << (incl_properties ? "true" : "false")<<",";
+  input_hash << "\"details\": " << ((incl_details) ? "true" : "false")<< "}";
   return describe_(input_hash.str());
 }
 
