@@ -38,9 +38,6 @@ def main():
         parser.error("%s is not a directory" % args.src_dir)
 
     if not os.path.exists(os.path.join(args.src_dir, "dxapp.json")):
-        parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus applet source directory" % args.src_dir)
-
-    if args.create_app and not os.path.exists(os.path.join(args.src_dir, "dxapp.json")):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % args.src_dir)
 
     dxpy.app_builder.build(args.src_dir)
