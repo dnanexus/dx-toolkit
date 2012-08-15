@@ -4,6 +4,8 @@
 #include "unixDGRAM.h"
 #include <sys/stat.h>
 #include <iostream>
+#include <cstring>
+#include <unistd.h>
 
 bool DXLog::SendMessage2UnixDGRAMSocket(const string &sockPath, const string &msg, string &errMsg) {
   int sock;
