@@ -302,14 +302,17 @@ void interruptWorkerThreads(boost::thread &readThread, vector<boost::thread> &co
 
 void joinWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
   LOG << "Joining worker threads:";
-  LOG << " read...";
+  LOG << " read..." << endl;
+  LOG << "*** read thread joinable? " << (readThread.joinable() ? "true" : "false") << endl;
   readThread.join();
-  LOG << " compress...";
+  LOG << " compress..." << endl;
   for (int i = 0; i < (int) compressThreads.size(); ++i) {
+    LOG << "*** compress thread " << i << " joinable? " << (compressThreads[i].joinable() ? "true" : "false") << endl;
     compressThreads[i].join();
   }
-  LOG << " upload...";
+  LOG << " upload..." << endl;
   for (int i = 0; i < (int) uploadThreads.size(); ++i) {
+    LOG << "*** upload thread " << i << " joinable? " << (uploadThreads[i].joinable() ? "true" : "false") << endl;
     uploadThreads[i].join();
   }
   LOG << endl;
