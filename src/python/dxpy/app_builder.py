@@ -91,6 +91,9 @@ def upload_resources(src_dir, project=None):
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
     applet_spec = get_applet_spec(src_dir)
 
+    # -----
+    # Override various fields from the pristine dxapp.json
+
     if project is None:
         dest_project = applet_spec['project']
     else:
@@ -147,6 +150,18 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 dx_toolkit_dep_found = True
         if not dx_toolkit_dep_found:
             applet_spec["runSpec"]["execDepends"].append(dx_toolkit_dep)
+
+    # Supply a contactUrl if one is not provided
+    if "details" not in applet_spec:
+        applet_spec["details"] = {}
+    if "contactUrl" not in applet_spec["details"]:
+        new_contact_url = "http://wiki.dev.dnanexus.com/Apps/%s" % (applet_spec["name"],)
+        logging.info("Setting contactUrl to %s" % (new_contact_url,))
+        logging.info('You can override this in your dxapp.json: {details: {contactUrl: "%s", ...}, ...' % (new_contact_url,))
+        applet_spec["details"]["contactUrl"] = new_contact_url
+
+    # -----
+    # Now actually create the applet
 
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 
