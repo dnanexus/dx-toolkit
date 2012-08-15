@@ -272,11 +272,11 @@ void createFolder(const string &projectID, const string &folder) {
  * specified in opt, and with the specified name. The folder and any parent
  * folders are created if they do not exist.
  */
-string createFileObject() {
+string createFileObject(const string &project, const string &folder, const string &name) {
   JSON params(JSON_OBJECT);
-  params["project"] = opt.project;
-  params["folder"] = opt.folder;
-  params["name"] = opt.name;
+  params["project"] = project;
+  params["folder"] = folder;
+  params["name"] = name;
   params["parents"] = true;
   LOG << "Creating new file with parameters " << params.toString() << endl;
 
@@ -336,7 +336,7 @@ int main(int argc, char * argv[]) {
     opt.parse(argc, argv);
   } catch (exception &e) {
     cerr << "Error processing arguments: " << e.what() << endl;
-    opt.printHelp();
+    opt.printHelp(argv[0]);
     return 1;
   }
 
@@ -344,7 +344,7 @@ int main(int argc, char * argv[]) {
     cout << GITVERSION << endl;
     return 0;
   } else if (opt.help() || opt.file.empty()) {
-    opt.printHelp();
+    opt.printHelp(argv[0]);
     return 1;
   }
 
@@ -373,7 +373,7 @@ int main(int argc, char * argv[]) {
 
     testFileExists(opt.file);
 
-    string fileID = createFileObject();
+    string fileID = createFileObject(opt.project, opt.folder, opt.name);
     LOG << "fileID is " << fileID << endl;
 
     cerr << endl

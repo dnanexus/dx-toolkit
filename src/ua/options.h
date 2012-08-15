@@ -17,7 +17,7 @@ public:
 
   bool help();
   bool version();
-  void printHelp();
+  void printHelp(char * programName);
   void validate();
 
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);

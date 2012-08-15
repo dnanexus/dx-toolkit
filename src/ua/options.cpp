@@ -89,8 +89,10 @@ bool Options::version() {
   return vm.count("version");
 }
 
-void Options::printHelp() {
-  cerr << (*visible_opts) << endl;
+void Options::printHelp(char * programName) {
+  cerr << "Usage: " << programName << " [options] <file>" << endl
+       << endl
+       << (*visible_opts) << endl;
 }
 
 void Options::validate() {
