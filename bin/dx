@@ -2611,7 +2611,7 @@ parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-in
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
 parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_jobs.add_argument('-n', '--num_results', type=int, help='Max number of origin jobs to return')
+parser_find_jobs.add_argument('-n', '--num-results', type=int, help='Max number of origin jobs to return')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
