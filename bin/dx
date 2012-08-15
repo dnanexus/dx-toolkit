@@ -2580,9 +2580,9 @@ SPECIFYING INPUTS
 
 ''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('To use the "-i" flag to specify each input field name and value, using the syntax "-i<input name>=<input value>".  For example, the following runs the applet called "mapper" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable):', initial_indent='  ', subsequent_indent='  ') + '''
 
-    dx run mapper -inum=34 -istr=\'"foo"\' -igtables=reads1 -igtables=reads2
+    dx run mapper -inum=34 -istr=foo -igtables=reads1 -igtables=reads2
 
-''' + fill('Note that non-name values are parsed as JSON, so strings must be quoted with double quotes.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('Note that the applet MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
 
     1) -j/--input_json INPUT_JSON
     2) -f/--input_json_file FILENAME
