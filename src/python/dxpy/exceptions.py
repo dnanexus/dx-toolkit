@@ -53,6 +53,10 @@ class AppError(DXError):
     API.'''
     pass
 
+class ProgramError(AppError):
+    '''Deprecated. Use AppError instead.'''
+    pass
+
 class AppInternalError(DXError):
     '''Base class for fatal exceptions to be raised while using dxpy inside DNAnexus execution containers.                                                     
     This exception is intended for internal App errors, whose message goes to the App developer.
