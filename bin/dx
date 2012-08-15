@@ -1655,14 +1655,14 @@ def find_jobs(args):
     try:
         describe = {"io": False} if args.summary else args.verbose
         results = list(dxpy.find_jobs(launched_by=args.user,
-                                             applet=args.applet,
-                                             project=args.project,
-                                             state=args.state,
-                                             origin_job=args.origin,
-                                             parent_job=args.parent,
-                                             describe=describe,
-                                             created_after=args.created_after,
-                                             created_before=args.created_before))
+                                      applet=args.applet,
+                                      project=args.project,
+                                      state=args.state,
+                                      origin_job=args.origin,
+                                      parent_job=args.parent,
+                                      describe=describe,
+                                      created_after=args.created_after,
+                                      created_before=args.created_before))
 
         if args.json:
             print json.dumps(results, indent=4)
@@ -1690,6 +1690,9 @@ def find_jobs(args):
                 print_string = ""
                 for j in range(num_tabs):
                     print_string += '\t'
+                if 'name' in results[job_ids[parent_id]]['describe'] and results[job_ids[parent_id]]['describe']['name'] is not None:
+                    print_string += results[job_ids[parent_id]]['describe']['name'] + ' '
+                        
                 print_string += parent_id + ' ' + \
                     str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
                     ' ('
@@ -2072,11 +2075,13 @@ def run(args):
     desc = None
     if args.alias is None:
         # Attempt to resolve name (and only look for applets)
-        project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                       args.path,
-                                                       expected='entity',
-                                                       ask_to_resolve=False,
-                                                       expected_classes=['applet'])
+        try:
+            project, folderpath, entity_results = resolve_existing_path(args.path,
+                                                                        expected='entity',
+                                                                        ask_to_resolve=False,
+                                                                        expected_classes=['applet'])
+        except:
+            entity_results = None
         app_desc = get_app_from_path(args.path)
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
             handler = dxpy.DXApplet(entity_results[0]['id'])

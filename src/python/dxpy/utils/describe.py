@@ -285,10 +285,12 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
+    if "name" in desc and desc['name'] is not None:
+        print_field("Name", desc['name'])
     print_field("Project context", desc["project"])
     print_field("Workspace", desc["workspace"])
     if 'projectWorkspace' in desc:
