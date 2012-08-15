@@ -2278,7 +2278,8 @@ def watch(args):
         streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
         response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
         hskey = response.content.split(':')[0]
-        ws = DXJobLogStreamClient(dxpy.APISERVER + '/socket.io/1/websocket/' + hskey)
+        server = dxpy.APISERVER.replace("http", "ws")
+        ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey)
         ws.set_dx_streaming_id(streaming_id)
 
         print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
