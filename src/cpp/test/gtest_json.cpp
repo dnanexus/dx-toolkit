@@ -461,6 +461,9 @@ TEST(JSONTest, UnicodeAndEscapeSequences) {
   ASSERT_TRUE(j13.has(j13_keys[1]));
   ASSERT_FALSE(j13.has(j13_Invalidkeys[0]));
   ASSERT_FALSE(j13.has(j13_Invalidkeys[1]));
+
+  JSON j14 = JSON::parse("{\"\\n\": 2}");
+  ASSERT_EQ(j14.object_begin()->first, "\n");
 }
 
 
@@ -614,6 +617,7 @@ TEST(JSONTest, Iterators) {
   j1["3"] = 3;
   j1["4"] = 4;
   int i=0;
+  ASSERT_EQ(j1.object_begin()->first, "0");
   for (JSON::object_iterator it = j1.object_begin(); it != j1.object_end(); ++i, ++it)
     ASSERT_EQ(it->second, i);
 
