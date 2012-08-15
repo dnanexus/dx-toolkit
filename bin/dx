@@ -2,9 +2,10 @@
 
 import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
 import shlex # respects quoted substrings when splitting
-import requests
 import csv, codecs
 import hashlib
+
+import requests
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.printing import *
@@ -90,7 +91,7 @@ def set_cli_colors(args=argparse.Namespace()):
 
 # Loading environment
 
-args_list = sys.argv[1:]
+args_list = [unicode(arg, 'utf-8') for arg in sys.argv[1:]]
 
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
@@ -114,7 +115,7 @@ else:
 # first word is always a subcommand and that if the first word is a
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
-class DXCLICompleter():    
+class DXCLICompleter():
     subcommands = {'gtable': ['get '],
                    'find': ['jobs ', 'data ', 'projects ', 'apps '],
                    'new': ['record ', 'gtable ', 'project ']}
@@ -1627,14 +1628,14 @@ def find_jobs(args):
     try:
         describe = {"io": False} if args.summary else args.verbose
         results = list(dxpy.find_jobs(launched_by=args.user,
-                                      applet=args.applet,
-                                      project=args.project,
-                                      state=args.state,
-                                      origin_job=args.origin,
-                                      parent_job=args.parent,
-                                      describe=describe,
-                                      created_after=args.created_after,
-                                      created_before=args.created_before))
+                                             applet=args.applet,
+                                             project=args.project,
+                                             state=args.state,
+                                             origin_job=args.origin,
+                                             parent_job=args.parent,
+                                             describe=describe,
+                                             created_after=args.created_after,
+                                             created_before=args.created_before))
 
         if args.json:
             print json.dumps(results, indent=4)
@@ -1674,9 +1675,13 @@ def find_jobs(args):
                     for child in job_children[parent_id]:
                         print_children(results[child]['id'], num_tabs + 1)
 
+            n = 0
             for origin_job in origin_jobs:
                 orig_id = results[origin_job]["id"]
                 print_children(orig_id, 0)
+                n += 1
+                if args.num_results is not None and n >= args.num_results:
+                    break
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2606,6 +2611,7 @@ parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-in
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
 parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_jobs.add_argument('-n', '--num_results', type=int, help='Max number of origin jobs to return')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
