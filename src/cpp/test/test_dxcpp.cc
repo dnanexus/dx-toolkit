@@ -257,6 +257,9 @@ TEST_F(DXRecordTest, CreateRemoveTest) {
   ASSERT_EQ(first_record.getProjectID(), proj_id);
   string firstID = first_record.getID();
 
+  // Check describe call with "details": true
+  ASSERT_EQ(DXRecordTest::example_JSON, first_record.describe(false, true)["details"]);
+
   DXRecord second_record(firstID);
   ASSERT_EQ(first_record.getID(), second_record.getID());
   ASSERT_EQ(first_record.getDetails(), second_record.getDetails());
@@ -267,6 +270,7 @@ TEST_F(DXRecordTest, CreateRemoveTest) {
   ASSERT_NE(first_record.getID(), second_record.getID());
   ASSERT_EQ(second_record.getProjectID(), second_proj_id);
   ASSERT_EQ(first_record.getDetails(), second_record.getDetails());
+  ASSERT_EQ(first_record.describe(false, true)["details"], second_record.describe(false, true)["details"]);
 
   ASSERT_NO_THROW(first_record.describe());
 
@@ -319,7 +323,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   details["$dnanexus_link"] = dxrecord.getID();
   JSON links_to_expect = JSON(JSON_ARRAY);
   links_to_expect.push_back(dxrecord.getID());
-
+  
   settings["types"] = types;
   settings["tags"] = tags;
   settings["properties"] = properties;
@@ -329,7 +333,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   settings["parents"] = true;
   settings["name"] = "Name";
   DXRecord second_dxrecord = DXRecord::newDXRecord(settings);
-  desc = second_dxrecord.describe(true);
+  desc = second_dxrecord.describe(true, true);
   ASSERT_EQ(desc["project"], proj_id);
   ASSERT_EQ(desc["id"].get<string>(), second_dxrecord.getID());
   ASSERT_EQ(desc["class"].get<string>(), "record");
@@ -343,6 +347,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   ASSERT_TRUE(desc.has("created"));
   ASSERT_TRUE(desc.has("modified"));
   ASSERT_EQ(desc["properties"], properties);
+  ASSERT_EQ(desc["details"], details);
 }
 
 TEST_F(DXRecordTest, TypesTest) {
@@ -998,30 +1003,30 @@ TEST(DXSearchTest, findDataObjects) {
   DXRecord dxrecord = DXRecord::newDXRecord();
   JSON q1(JSON_OBJECT);
   q1["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<std::string>(ts1) + "}");
-  JSON res = findDataObjects(q1);
+  JSON res = DXSystem::findDataObjects(q1);
 //  std::cout<<endl<<res.toString()<<endl;
   ASSERT_EQ(res["results"].size(), 1);
   ASSERT_EQ(res["next"], JSON(JSON_NULL));
   
-  ASSERT_EQ(res["results"][0], findOneDataObject(q1));
+  ASSERT_EQ(res["results"][0], DXSystem::findOneDataObject(q1));
 
   // Sleep for .5 sec, and then find all objects modified in last .25 second
   // should be zero
   usleep(0.5 * 1000000); // Sleep for .5sec
   q1 = JSON::parse("{\"modified\": {\"after\": \"-0.25s\"}}");
-  res = findDataObjects(q1);
+  res = DXSystem::findDataObjects(q1);
   ASSERT_EQ(res["results"].size(), 0);
   ASSERT_EQ(res["next"], JSON(JSON_NULL));
   
   // find all objects modified after (ts1 - 1) seconds
   q1["modified"]["after"] = boost::lexical_cast<std::string>(ts1/1000 - 1) + "s";
-  res = findDataObjects(q1);
+  res = DXSystem::findDataObjects(q1);
   ASSERT_EQ(res["results"].size(), 1);
   ASSERT_EQ(res["next"], JSON(JSON_NULL));
   
   // find all objects in open state, and created after (ts1 - 1) seconds
   q1 = JSON::parse("{\"state\": \"open\", \"created\":{\"after\":-" + boost::lexical_cast<std::string>(std::time(NULL)*1000 - ts1 + 1000) + "}}");
-  res = findDataObjects(q1);
+  res = DXSystem::findDataObjects(q1);
   ASSERT_EQ(res["results"].size(), 1);
 
   // Remove test data
@@ -1034,12 +1039,12 @@ TEST(DXSearchTest, findJobs) {
 
 TEST(DXSearchTest, findProjects) {
   JSON q = JSON::parse("{}");
-  JSON res = findProjects(q);
+  JSON res = DXSystem::findProjects(q);
   int len = res["results"].size();
 
   std::string id = projectNew(std::string("{\"name\": \"test_prj\"}"))["id"].get<std::string>();
 
-  ASSERT_EQ(findProjects(q)["results"].size(), (len == 1000) ? len : len + 1);
+  ASSERT_EQ(DXSystem::findProjects(q)["results"].size(), (len == 1000) ? len : len + 1);
   DXProject dxprj(id);
   dxprj.destroy();
 }

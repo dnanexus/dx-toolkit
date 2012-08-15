@@ -45,7 +45,7 @@ JSON getTimestampAdjustedField(const JSON &j) {
   return to_ret;
 }
 
-JSON findDataObjects(const JSON &query) {
+JSON DXSystem::findDataObjects(const JSON &query) {
   JSON newQuery(JSON_NULL);
   if (query.has("modified")) {
     if (newQuery.type() == JSON_NULL)
@@ -61,7 +61,7 @@ JSON findDataObjects(const JSON &query) {
   return systemFindDataObjects(newQuery); 
 }
 
-JSON findOneDataObject(const JSON &query) {
+JSON DXSystem::findOneDataObject(const JSON &query) {
   JSON newQuery = query;
   newQuery["limit"] = 1;
   JSON res = findDataObjects(query);
@@ -71,7 +71,7 @@ JSON findOneDataObject(const JSON &query) {
   return JSON(JSON_NULL);
 }
 
-JSON findJobs(const JSON &query) {
+JSON DXSystem::findJobs(const JSON &query) {
   JSON newQuery(JSON_NULL);
   if (query.has("created")) {
     if (newQuery.type() == JSON_NULL)
@@ -81,11 +81,11 @@ JSON findJobs(const JSON &query) {
   return systemFindJobs(newQuery); 
 }
 
-JSON findProjects(const JSON &query) {
+JSON DXSystem::findProjects(const JSON &query) {
   return systemFindProjects(query);
 }
 
-JSON findApps(const JSON &query) {
+JSON DXSystem::findApps(const JSON &query) {
   JSON newQuery(JSON_NULL);
   if (query.has("modified")) {
     if (newQuery.type() == JSON_NULL)

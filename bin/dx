@@ -2,9 +2,10 @@
 
 import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
 import shlex # respects quoted substrings when splitting
-import requests
 import csv, codecs
 import hashlib
+
+import requests
 from requests.auth import HTTPBasicAuth
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.printing import *
@@ -90,7 +91,7 @@ def set_cli_colors(args=argparse.Namespace()):
 
 # Loading environment
 
-args_list = sys.argv[1:]
+args_list = [unicode(arg, 'utf-8') for arg in sys.argv[1:]]
 
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
@@ -114,7 +115,7 @@ else:
 # first word is always a subcommand and that if the first word is a
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
-class DXCLICompleter():    
+class DXCLICompleter():
     subcommands = {'gtable': ['get '],
                    'find': ['jobs ', 'data ', 'projects ', 'apps '],
                    'new': ['record ', 'gtable ', 'project ']}
@@ -397,8 +398,25 @@ def env(args):
         print "Current workspace\t" + str(dxpy.WORKSPACE_ID)
         print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
 
+def get_pwd():
+    pwd_str = None
+    if dxpy.WORKSPACE_ID is not None:
+        if state['currentproj'] is None:
+            try:
+                proj_name = dxpy.DXHTTPRequest('/' + dxpy.WORKSPACE_ID + '/describe', {})['name']
+                state['currentproj'] = proj_name
+            except:
+                pass
+    if state['currentproj'] is not None:
+        pwd_str = state['currentproj'] + ':' + os.environ.get('DX_CLI_WD', '/')
+    return pwd_str
+
 def pwd(args):
-    print os.environ['DX_CLI_WD']
+    pwd_str = get_pwd()
+    if pwd_str is not None:
+        print pwd_str
+    else:
+        parser.exit(1, 'Current project is not set\n')
 
 def get_output_flag(args):
     if args.brief or args.summary or args.verbose:
@@ -496,7 +514,7 @@ def ls(args):
 
             # Listing the folder was successful
 
-            if args.l:
+            if args.long:
                 print UNDERLINE() + 'Project:' + ENDC() + ' ' + dxproj.describe()['name'] + ' (' + project + ')'
                 print UNDERLINE() + 'Folder :' + ENDC() + ' ' + folderpath
 
@@ -516,42 +534,48 @@ def ls(args):
                 resp["objects"].sort(cmp=cmp_names)
                 last_name = None
                 next_name = None
-                if args.l:
+                if args.long:
                     if len(resp['objects']) > 0:
                         print BOLD() + 'State\tLast modified       Size     Name (ID)' + ENDC()
                     else:
                         print "No data objects found in the folder"
                 for i in range(len(resp["objects"])):
-                    current_name = resp['objects'][i]['describe']['name']
-                    if i < len(resp['objects']) - 1:
-                        next_name = resp['objects'][i + 1]['describe']['name']
+                    if args.brief:
+                        print resp['objects'][i]['id']
                     else:
-                        next_name = None
-                    addendum = ''
-
-                    if last_name is not None and last_name == current_name:
-                        addendum = ' : ' + resp['objects'][i]['id']
-                    #     cached_project_paths[project][folderpath][current_name].append(resp['objects'][i]['id'])
-                    else:
-                    #     cached_project_paths[project][folderpath][current_name] = [resp['objects'][i]['id']]
-                        if next_name is not None and current_name == next_name:
-                            addendum = ' : ' + resp['objects'][i]['id']
-
-                    if args.l:
-                        print_ls_l_desc(resp['objects'][i]['describe'])
-                    else:
-                        if resp['objects'][i]['describe']['class'] == 'applet':
-                            print BOLD() + GREEN() + resp['objects'][i]['describe']['name'] + ENDC() + addendum
+                        current_name = resp['objects'][i]['describe']['name']
+                        if i < len(resp['objects']) - 1:
+                            next_name = resp['objects'][i + 1]['describe']['name']
                         else:
-                            print resp['objects'][i]['describe']['name'] + addendum
+                            next_name = None
+                        addendum = ''
 
-                    last_name = current_name
+                        if last_name is not None and last_name == current_name:
+                            addendum = ' : ' + resp['objects'][i]['id']
+                        #     cached_project_paths[project][folderpath][current_name].append(resp['objects'][i]['id'])
+                        else:
+                            #     cached_project_paths[project][folderpath][current_name] = [resp['objects'][i]['id']]
+                            if next_name is not None and current_name == next_name:
+                                addendum = ' : ' + resp['objects'][i]['id']
+
+                        if args.long:
+                            print_ls_l_desc(resp['objects'][i]['describe'])
+                        else:
+                            if resp['objects'][i]['describe']['class'] == 'applet':
+                                print BOLD() + GREEN() + resp['objects'][i]['describe']['name'] + ENDC() + addendum
+                            else:
+                                print resp['objects'][i]['describe']['name'] + addendum
+
+                        last_name = current_name
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
     else:
         # We have results to describe
         for result in entity_results:
-            print_ls_l_desc(result['describe'])
+            if args.brief:
+                print result['id']
+            else:
+                print_ls_l_desc(result['describe'])
 
 def mkdir(args):
     had_error = False
@@ -877,7 +901,7 @@ def tree(args):
                     continue
                 path_element_desc = BOLD() + BLUE() + path_element + ENDC()
                 subtree = subtree[path_element_desc]
-            if args.l:
+            if args.long:
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
@@ -1029,10 +1053,14 @@ def get_properties_from_args(args_properties):
     return properties
 
 def new_project(args):
+    get_output_flag(args)
     try:
         resp = dxpy.DXHTTPRequest('/project/new',
                                   {"name": args.name})
-        print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
+        if args.brief:
+            print resp['id']
+        else:
+            print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -1627,14 +1655,14 @@ def find_jobs(args):
     try:
         describe = {"io": False} if args.summary else args.verbose
         results = list(dxpy.find_jobs(launched_by=args.user,
-                                      applet=args.applet,
-                                      project=args.project,
-                                      state=args.state,
-                                      origin_job=args.origin,
-                                      parent_job=args.parent,
-                                      describe=describe,
-                                      created_after=args.created_after,
-                                      created_before=args.created_before))
+                                             applet=args.applet,
+                                             project=args.project,
+                                             state=args.state,
+                                             origin_job=args.origin,
+                                             parent_job=args.parent,
+                                             describe=describe,
+                                             created_after=args.created_after,
+                                             created_before=args.created_before))
 
         if args.json:
             print json.dumps(results, indent=4)
@@ -1674,9 +1702,13 @@ def find_jobs(args):
                     for child in job_children[parent_id]:
                         print_children(results[child]['id'], num_tabs + 1)
 
+            n = 0
             for origin_job in origin_jobs:
                 orig_id = results[origin_job]["id"]
                 print_children(orig_id, 0)
+                n += 1
+                if args.num_results is not None and n >= args.num_results:
+                    break
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2238,15 +2270,8 @@ def shell(orig_args):
             pass
         try:
             prompt = '> '
-            if dxpy.WORKSPACE_ID is not None:
-                if state['currentproj'] is None:
-                    try:
-                        proj_name = dxpy.DXHTTPRequest('/' + dxpy.WORKSPACE_ID + '/describe', {})['name']
-                        state['currentproj'] = proj_name
-                    except:
-                        pwd_str = ''
-                if state['currentproj'] is not None:
-                    pwd_str = state['currentproj'] + ':' + os.environ.get('DX_CLI_WD', '/')
+            pwd_str = get_pwd()
+            if pwd_str is not None:
                 prompt = pwd_str + prompt
             cmd = raw_input(prompt)
         except EOFError:
@@ -2273,7 +2298,9 @@ def watch(args):
         streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
         response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
         hskey = response.content.split(':')[0]
-        ws = DXJobLogStreamClient(dxpy.APISERVER + '/socket.io/1/websocket/' + hskey)
+        ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
+        server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
+        ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey)
         ws.set_dx_streaming_id(streaming_id)
 
         print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
@@ -2393,7 +2420,9 @@ parser_ls = subparsers.add_parser('ls', help='List folders and objects in a fold
                                   parents=[no_color_arg],
                                   prog='dx ls')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
-parser_ls.add_argument('-l', help='use a long listing format', action='store_true')
+ls_output_args = parser_ls.add_mutually_exclusive_group()
+ls_output_args.add_argument('-l', '--long', help='use a long listing format', action='store_true')
+ls_output_args.add_argument('-i', '--id-only', dest='brief', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
 parser_ls.add_argument('--folders', help='show only folders', action='store_true')
 parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
@@ -2459,7 +2488,7 @@ parser_tree = subparsers.add_parser('tree', help='List folders and objects in a 
                                     parents=[no_color_arg],
                                     prog='dx tree')
 parser_tree.add_argument('-a', '--all', help='show hidden files', action='store_true')
-parser_tree.add_argument('-l', help='use a long listing format', action='store_true')
+parser_tree.add_argument('-l', '--long', help='use a long listing format', action='store_true')
 parser_tree.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
 parser_tree.set_defaults(func=tree)
 parser_map['tree'] = parser_tree
@@ -2565,7 +2594,7 @@ SPECIFYING INPUTS
 parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
-parser_run.add_argument('--folder', help=fill('The folder in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--folder', help=fill('The project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run_input = parser_run.add_mutually_exclusive_group()
@@ -2606,6 +2635,7 @@ parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-in
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
 parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_jobs.add_argument('-n', '--num-results', type=int, help='Max number of origin jobs to return')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 
@@ -2702,6 +2732,7 @@ subparsers_new = parser_new.add_subparsers()
 parser_map['new'] = parser_new
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
+                                               parents=[stdout_args],
                                                prog='dx new project')
 parser_new_project.add_argument('name', help='Name of the new project')
 parser_new_project.set_defaults(func=new_project)

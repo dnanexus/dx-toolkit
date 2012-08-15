@@ -426,10 +426,16 @@ def find_projects(name=None, level=None, describe=None, public=None, **kwargs):
 
     resp = dxpy.api.systemFindProjects(query, **kwargs)
 
-    for i in resp["results"]:
-        yield i
-    if "public" in resp:
+    if 'public' in resp:
+        found_projects = {}
+        for i in resp["results"]:
+            found_projects[i['id']] = True
+            yield i
         for i in resp["public"]:
+            if i['id'] not in found_projects:
+                yield i
+    else:
+        for i in resp["results"]:
             yield i
 
 def find_apps(name=None, category=None, all_versions=None, published=None,
