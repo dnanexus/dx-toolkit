@@ -449,7 +449,8 @@ def api(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def invite(args):
-    project, none, none = resolve_existing_path(args.project, 'project')
+    project, none, none = try_call(resolve_existing_path,
+                                   args.project, 'project')
     try:
         resp = dxpy.DXHTTPRequest('/' + project + '/invite',
                                   {"invitee": args.user, "level": args.level})
@@ -459,7 +460,8 @@ def invite(args):
 
 def cd(args):
     # entity_result should be None because expected='folder'
-    project, folderpath, none = resolve_existing_path(args.path, 'folder')
+    project, folderpath, none = try_call(resolve_existing_path,
+                                         args.path, 'folder')
 
     if project is not None:
         # It is obvious what the project is
