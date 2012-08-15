@@ -155,14 +155,17 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if not keep_open:
         dxfile.close(block=wait_on_close, **remaining_kwargs)
 
-    if 'name' not in kwargs and not use_existing_dxfile:
-        if filename is not None:
-            dxfile.rename(os.path.basename(filename), **remaining_kwargs)
-        else:
+    if 'name' in kwargs or use_existing_dxfile:
+        pass # File has already been named
+    else:
+        if filename is None:
+            # Try to get filename from file-like object
             try:
                 dxfile.rename(os.path.basename(file.name), **remaining_kwargs)
             except AttributeError:
                 pass
+        else:
+            dxfile.rename(os.path.basename(filename), **remaining_kwargs)
 
     return dxfile
 
