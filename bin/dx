@@ -493,7 +493,9 @@ def cmp_names(x, y):
     return cmp(x['describe']['name'].lower(), y['describe']['name'].lower())
 
 def ls(args):
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, ask_to_resolve=False)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   ask_to_resolve=False)
 
     if project is None:
         parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
@@ -715,7 +717,8 @@ def rmproject(args):
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
     try:
-        dest_proj, dest_path, none = try_call(resolve_path_with_project, args.destination, 'folder')
+        dest_proj, dest_path, none = try_call(resolve_path_with_project,
+                                              args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
         dx_dest = dxpy.get_handler(dest_proj)
@@ -739,7 +742,9 @@ def mv(args):
             parser.exit(1, 'The destination folder does not exist\n')
 
         # Either rename the data object or rename the folder
-        src_proj, src_path, src_results = try_call(resolve_existing_path, args.sources[0], allow_mult=True)
+        src_proj, src_path, src_results = try_call(resolve_existing_path,
+                                                   args.sources[0],
+                                                   allow_mult=True)
 
         if src_proj != dest_proj:
             parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.\n')
@@ -775,7 +780,9 @@ def mv(args):
     src_objects = []
     src_folders = []
     for source in args.sources:
-        src_proj, src_folderpath, src_results = try_call(resolve_existing_path, source, allow_mult=True)
+        src_proj, src_folderpath, src_results = try_call(resolve_existing_path,
+                                                         source,
+                                                         allow_mult=True)
         if src_proj != dest_proj:
             parser.exit(1, fill('Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".') + '\n')
 
@@ -794,7 +801,8 @@ def mv(args):
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
     try:
-        dest_proj, dest_path, none = try_call(resolve_path_with_project, args.destination, 'folder')
+        dest_proj, dest_path, none = try_call(resolve_path_with_project,
+                                              args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
         dx_dest = dxpy.get_handler(dest_proj)
@@ -819,34 +827,40 @@ def cp(args):
 
         # Clone and rename either the data object or the folder
         # src_result is None if it could not be resolved to an object
-        src_proj, src_path, src_results = try_call(resolve_existing_path, args.sources[0], allow_mult=True)
+        src_proj, src_path, src_results = try_call(resolve_existing_path,
+                                                   args.sources[0],
+                                                   allow_mult=True)
 
         if src_proj == dest_proj:
             parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
         if src_results is None:
-            contents = dxpy.DXHTTPRequest('/' + src_proj + '/listFolder',
-                                          {"folder": src_path,
-                                           "includeHidden": True})
-            dxpy.DXHTTPRequest('/' + dest_proj + '/newFolder',
-                               {"folder": dest_path})
-            dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                               {"folders": [contents['folders']],
-                                "objects": (lambda result: result['id'], contents),
-                                "project": dest_proj,
-                                "destination": dest_path})
-            return
+            try:
+                contents = dxpy.DXHTTPRequest('/' + src_proj + '/listFolder',
+                                              {"folder": src_path,
+                                               "includeHidden": True})
+                dxpy.DXHTTPRequest('/' + dest_proj + '/newFolder',
+                                   {"folder": dest_path})
+                dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                                   {"folders": [contents['folders']],
+                                    "objects": (lambda result: result['id'], contents),
+                                    "project": dest_proj,
+                                    "destination": dest_path})
+                return
+            except BaseException as details:
+                parser.exit(1, fill(unicode(details)) + '\n')
         else:
             try:
-                dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                   {"objects": map(lambda result: result['id'],
+                exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                                            {"objects": map(lambda result: result['id'],
                                                    src_results),
-                                    "project": dest_proj,
-                                    "destination": dest_folder})
+                                             "project": dest_proj,
+                                             "destination": dest_folder})['exists']
                 for result in src_results:
-                    dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
-                                       {"project": dest_proj,
-                                        "name": dest_name})
+                    if result['id'] not in exists:
+                        dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
+                                           {"project": dest_proj,
+                                            "name": dest_name})
                 return
             except BaseException as details:
                 parser.exit(1, fill(unicode(details)) + '\n')
@@ -856,7 +870,9 @@ def cp(args):
     src_objects = []
     src_folders = []
     for source in args.sources:
-        src_proj, src_folderpath, src_results = try_call(resolve_existing_path, source, allow_mult=True)
+        src_proj, src_folderpath, src_results = try_call(resolve_existing_path,
+                                                         source,
+                                                         allow_mult=True)
         if src_proj == dest_proj:
             parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
@@ -874,7 +890,8 @@ def cp(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def tree(args):
-    project, folderpath, none = try_call(resolve_existing_path, args.path, expected='folder')
+    project, folderpath, none = try_call(resolve_existing_path, args.path,
+                                         expected='folder')
 
     if project is None:
         parser.exit(1, fill('Current project must be set or specified before any data can be listed') + '\n')
@@ -1132,7 +1149,10 @@ def new_gtable(args):
 def set_visibility(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID'), + '\n')
@@ -1149,7 +1169,8 @@ def set_visibility(args):
 
 def get_details(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                  args.path, expected='entity')
 
     if entity_result is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
@@ -1162,7 +1183,9 @@ def get_details(args):
 def set_details(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path, expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
@@ -1185,7 +1208,10 @@ def set_details(args):
 def add_types(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
@@ -1203,7 +1229,10 @@ def add_types(args):
 def remove_types(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
@@ -1221,7 +1250,10 @@ def remove_types(args):
 def add_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
@@ -1240,7 +1272,10 @@ def add_tags(args):
 def remove_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
@@ -1259,7 +1294,10 @@ def remove_tags(args):
 def rename(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None and not is_container_id(args.path):
         if project is None:
@@ -1294,7 +1332,10 @@ is a project.\n''')
 def set_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None and project is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
@@ -1323,7 +1364,10 @@ def set_properties(args):
 def unset_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None and project is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
@@ -1353,7 +1397,8 @@ def unset_properties(args):
 
 def get(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                  args.path, expected='entity')
 
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
@@ -1441,7 +1486,8 @@ def get(args):
 
 def head(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                  args.path, expected='entity')
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
     if not entity_result['describe']['class'] in ['gtable', 'file', 'table']:
@@ -1625,7 +1671,8 @@ def export(args):
 
 def gtable_get(args):
     # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                  args.path, expected='entity')
 
     if entity_result is None or entity_result['describe']['class'] != 'gtable':
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a gtable object\n')
@@ -1814,7 +1861,10 @@ def find_apps(args):
 
 def close(args):
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path, args.path, expected='entity', allow_mult=True)
+    project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                   args.path,
+                                                   expected='entity',
+                                                   allow_mult=True)
 
     if entity_results is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
@@ -2060,7 +2110,9 @@ def add_input_to_json(inputs, input_json, input_specs):
                     input_json[i[0]].append(parsed)
             except:
                 # Not valid JSON, so resolve it as a name
-                project, folderpath, entity_result = try_call(resolve_existing_path, i[1], expected='entity')
+                project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                              i[1],
+                                                              expected='entity')
                 if entity_result is None:
                     parser.exit(1, 'Could not resolve ' + i[1] + ' to a value or object ID')
                 if i[0] not in input_json:
