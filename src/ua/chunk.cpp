@@ -18,7 +18,6 @@ extern "C" {
 #include "log.h"
 
 using namespace std;
-using namespace dx;
 
 void Chunk::read() {
   const int64_t len = end - start;
@@ -149,9 +148,9 @@ void Chunk::clear() {
 }
 
 string Chunk::uploadURL() const {
-  JSON params(JSON_OBJECT);
+  dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
-  JSON result = fileUpload(fileID, params);
+  dx::JSON result = fileUpload(fileID, params);
   return result["url"].get<string>();
 }
 

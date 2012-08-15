@@ -35,10 +35,8 @@ extern std::string g_PROJECT_CONTEXT_ID;
  * @param headers Additional HTTP headers to include in the request
  * @return The response from the API server, parsed as a JSON
  */
-dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
-                       const bool alwaysRetry = false,
-                       const std::map<std::string, std::string> &headers=
-                       std::map<std::string, std::string>());
+dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data, const bool alwaysRetry = false,
+                       const std::map<std::string, std::string> &headers = std::map<std::string, std::string>());
 
 /**
  * Sets the information used to contact the API server for use by
@@ -48,9 +46,7 @@ dx::JSON DXHTTPRequest(const std::string &resource, const std::string &data,
  * @param port Port number
  * @param protocol Protocol to use, e.g. "http"
  */
-void setAPIServerInfo(const std::string &host,
-		      int port,
-		      const std::string &protocol);
+void setAPIServerInfo(const std::string &host, int port, const std::string &protocol);
 
 /**
  * Sets the security context for constructing the necessary headers in
@@ -84,9 +80,9 @@ void setJobID(const std::string &job_id);
 void setProjectContext(const std::string &project_id);
 
 /**
- * Loads the data from environment variables and calls
- * setAPIServerInfo(), setSecurityContext(), setWorkspaceID(), and
- * setProjectContext() as appropriate.
+ * Loads the data from environment variables and calls setAPIServerInfo(),
+ * setSecurityContext(), setWorkspaceID(), and setProjectContext() as
+ * appropriate.
  */
 void loadFromEnvironment();
 

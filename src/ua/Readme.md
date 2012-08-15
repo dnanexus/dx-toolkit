@@ -14,11 +14,15 @@ subdirectory called `build/`, containing the `ua` executable.
 
 The UA depends on the following libraries:
 
-* [libcurl](http://curl.haxx.se/libcurl/) for HTTP requests
+* [libcurl](http://curl.haxx.se/libcurl/) for HTTP requests. In particular,
+  a custom statically-linked libcurl must be built, and this relies on:
+
+* c-ares, an asynchronous DNS library (Ubuntu package libc-ares-dev; Mac
+  port c-ares);
 
 * various [Boost](http://www.boost.org/) libraries, including Thread,
-  Lexical Cast, Program Options, and Filesystem.
+  Lexical Cast, Program Options, and Filesystem;
 
-* [zlib](http://zlib.net/) for compression
+* [zlib](http://zlib.net/) for compression;
 
-* the dxjson and dxcpp libraries for communicating with the platform API
+* the dxjson and dxcpp libraries for communicating with the platform API.
