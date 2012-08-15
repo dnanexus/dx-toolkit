@@ -107,7 +107,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 readme_filename = filename
                 break
         if readme_filename is None:
-            logging.warn("No description found")
+            logging.warn("No description found; you should supply one in README.md")
         else:
             with open(os.path.join(src_dir, readme_filename)) as fh:
                 applet_spec['description'] = fh.read()
