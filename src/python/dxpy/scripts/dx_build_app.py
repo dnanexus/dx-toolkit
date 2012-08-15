@@ -44,7 +44,8 @@ def main():
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % args.src_dir)
 
     dxpy.app_builder.build(args.src_dir)
-    bundled_resources = dxpy.app_builder.upload_resources(args.src_dir)
+    bundled_resources = dxpy.app_builder.upload_resources(args.src_dir,
+                                                          project=args.destination_project)
 
     applet_id = dxpy.app_builder.upload_applet(args.src_dir, bundled_resources,
                                                overwrite=args.overwrite,

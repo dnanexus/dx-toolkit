@@ -62,7 +62,13 @@ def build(src_dir):
 
 def upload_resources(src_dir, project=None):
     applet_spec = get_applet_spec(src_dir)
-    dest_project = project or applet_spec['project']
+
+    if project is None:
+        dest_project = applet_spec['project']
+    else:
+        dest_project = project
+        applet_spec['project'] = project
+
     resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         logging.debug("Uploading in " + src_dir)
@@ -75,7 +81,8 @@ def upload_resources(src_dir, project=None):
                 except dxpy.exceptions.DXAPIError:
                     pass # TODO: make this better
             target_folder = applet_spec['folder'] if 'folder' in applet_spec else '/'
-            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True, folder=target_folder, hidden=True)
+            dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True,
+                                                         project=dest_project, folder=target_folder, hidden=True)
             archive_link = dxpy.dxlink(dx_resource_archive.get_id())
             return [{'name': 'resources.tar.gz', 'id': archive_link}]
     else:
@@ -154,7 +161,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     dxpy.api.appletSetProperties(applet_id, {"project": dest_project, "properties": properties})
 
     if "categories" in applet_spec:
-        dxpy.DXApplet(applet_id).add_tags(applet_spec["categories"])
+        dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
 
     return applet_id
 
