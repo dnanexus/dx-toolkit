@@ -1,16 +1,37 @@
 '''
-Importing this package will set the security context appropriately for
-use with the :func:`dxpy.DXHTTPRequest` function, which will then set
-the headers appropriately when communicating with the API server.  In
-addition, it will set the default workspace according to
-DX_WORKSPACE_ID (if running inside an Execution Environment) or
-DX_PROJECT_CONTEXT_ID (otherwise).  This workspace will be used by
-default for any object handler methods that require a project ID.
+When importing this package, configuration values will be loaded from the following sources in order of decreasing priority:
 
-When importing the :mod:`dxpy.bindings` submodule, the methods for
-setting the security context etc. do not need to be used directly so
-long as the appropriate environment variables DX_APISERVER_HOST,
-DX_APISERVER_PORT, and DX_SECURITY_CONTEXT have been properly set.
+* Environment variables
+* Values stored in ~/.dnanexus-env/environment
+* Values stored in /opt/dnanexus/environment
+* Hardcoded defaults
+
+The relevant environment variables are the following:
+
+* DX_SECURITY_CONTEXT: stores a JSON containing your auth token
+* DX_APISERVER_PROTOCOL: either "http" or "https" (usually "https")
+* DX_APISERVER_HOST: hostname of the DNAnexus API server
+* DX_APISERVER_PORT: port of the DNAnexus API server
+* DX_JOB_ID: should only be present if run in an Execution Environment
+* DX_WORKSPACE_ID: should only be present if run in an Execution Environment; indicates the running job's temporary workspace ID
+* DX_PROJECT_CONTEXT_ID: indicates either the project context of a running job, or the default project to use for a user accessing the platfrom
+
+If the security context and API server variables are available, then
+upon importing the module, any method which relies on the
+:func:`dxpy.DXHTTPRequest` function will set the appropriate
+authentication headers for making API calls to the API server.  (Note:
+All methods in the :mod:`dxpy.api` use this function.)  In addition,
+it will set the default workspace according to DX_WORKSPACE_ID (if
+running inside an Execution Environment) or DX_PROJECT_CONTEXT_ID
+(otherwise).  This workspace will be used by default for any object
+handler methods that require a project ID.
+
+To override any of the settings from the environment for a particular
+session, the following functions can be used:
+
+* :func:`dxpy.set_security_context`: for using a different authentication token
+* :func:`dxpy.set_api_server_info`: for using a different API server
+* :func:`dxpy.set_workspace_id`: for overriding the default data container to use
 
 If an HTTP/HTTPS proxy is to be used, set the environment variables
 beforehand as applicable while using the format 'hostname:port'
@@ -167,6 +188,17 @@ class DXHTTPOAuth2(AuthBase):
         return r
 
 def set_api_server_info(host=None, port=None, protocol=None):
+    '''
+    :param host: API server hostname
+    :type host: string
+    :param port: API server port
+    :type port: int
+    :param protocol: either "http" or "https" for SSL
+    :type protocol: string
+
+    Overrides the current settings for which API server to communicate
+    with.
+    '''
     global APISERVER_PROTOCOL, APISERVER_HOST, APISERVER_PORT, APISERVER
     if host is not None:
         APISERVER_HOST = host
@@ -180,17 +212,22 @@ def set_api_server_info(host=None, port=None, protocol=None):
         APISERVER = APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + str(APISERVER_PORT)
 
 def set_security_context(security_context):
+    '''
+    :param security_context: Authentication hash, usually with keys "auth_token_type" set to "bearer" and "auth_token" set to the authentication token.
+    :type security_context: dict
+
+    Sets the security context to use the provided token.
+    '''
     global SECURITY_CONTEXT, AUTH_HELPER
     SECURITY_CONTEXT = security_context
     AUTH_HELPER = DXHTTPOAuth2(security_context)
 
 def set_job_id(dxid):
     """
-    :param id: ID of a job
-    :type id: string
+    :param dxid: ID of a job
+    :type dxid: string
 
-    Sets the ID of the running job.  TODO: Not clear yet that this is
-    necessary.
+    Sets the ID of the running job.
 
     """
     global JOB_ID
@@ -198,11 +235,11 @@ def set_job_id(dxid):
 
 def set_workspace_id(dxid):
     """
-    :param id: ID of a project or workspace
-    :type id: string
+    :param dxid: ID of a project or workspace
+    :type dxid: string
 
     Sets the default project or workspace for object creation and
-    modification to *id*.
+    modification to *dxid*.
     """
 
     global WORKSPACE_ID
@@ -210,10 +247,12 @@ def set_workspace_id(dxid):
 
 def set_project_context(dxid):
     """
-    :param id: Project ID
-    :type id: string
+    :param dxid: Project ID
+    :type dxid: string
 
-    Sets the project context for a running job.
+    Sets the project context for a running job.  This does not change
+    the default data container in which new objects are created or
+    name resolution is attempted.
 
     """
 
