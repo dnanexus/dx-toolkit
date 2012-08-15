@@ -1030,10 +1030,14 @@ def get_properties_from_args(args_properties):
     return properties
 
 def new_project(args):
+    get_output_flag(args)
     try:
         resp = dxpy.DXHTTPRequest('/project/new',
                                   {"name": args.name})
-        print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
+        if args.brief:
+            print resp['id']
+        else:
+            print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2710,6 +2714,7 @@ subparsers_new = parser_new.add_subparsers()
 parser_map['new'] = parser_new
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
+                                               parents=[stdout_args],
                                                prog='dx new project')
 parser_new_project.add_argument('name', help='Name of the new project')
 parser_new_project.set_defaults(func=new_project)
