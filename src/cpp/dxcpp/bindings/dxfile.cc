@@ -23,9 +23,9 @@ void DXFile::init_internals_() {
 }
 
 void DXFile::setIDs(const string &dxid, const string &proj) {
-  init_internals_();
   stopLinearQuery();
   flush();
+  init_internals_();
   DXDataObject::setIDs(dxid, proj);
 }
 

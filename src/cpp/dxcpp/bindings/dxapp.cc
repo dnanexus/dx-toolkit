@@ -92,11 +92,11 @@ void DXApp::uninstall() const {
   } 
 }
 
-void DXApp::get() const {
+JSON DXApp::get() const {
   if (dxid_ != "") {
-    appGet(dxid_);
+    return appGet(dxid_);
   } else if (name_ != "") {
-    appGetWithAlias(string("app-") + name_, alias_);
+    return appGetWithAlias(string("app-") + name_, alias_);
   } else {
     throw DXError("No ID is set for this DXApp handler");
   } 

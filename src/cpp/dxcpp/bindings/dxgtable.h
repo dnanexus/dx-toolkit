@@ -72,17 +72,17 @@ public:
   {
     reset_buffer_();
   }
-
+  
   DXGTable(const DXGTable &to_copy)
     : DXDataObject(to_copy), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
-    reset_buffer_(); setIDs(to_copy.dxid_, to_copy.proj_);
+    setIDs(to_copy.dxid_, to_copy.proj_);
   }
 
   DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID)
     : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
-    reset_buffer_(); setIDs(dxid, proj);
+    setIDs(dxid, proj);
   }
 
   DXGTable& operator=(const DXGTable& to_copy) {
@@ -90,7 +90,6 @@ public:
       return *this;
 
     this->row_buffer_maxsize_ = 104857600;
-    this->reset_buffer_();
     this->setIDs(to_copy.dxid_, to_copy.proj_);
     return *this;
   }
@@ -132,7 +131,7 @@ public:
    *
    * @param columns Vector of column descriptors; must be nonempty
    * @param indices Vector of index descriptors
-   * @param data_obj_fields JSON containing the optional fields with
+   * @param data_obj_fields JSON hash containing the optional fields with
    * which to create the object ("project", "types", "details",
    * "hidden", "name", "properties", "tags")
    */
@@ -144,7 +143,7 @@ public:
    * Creates a new GTable.
    *
    * @param columns Vector of column descriptors; must be nonempty
-   * @param data_obj_fields JSON containing the optional fields with
+   * @param data_obj_fields JSON hash containing the optional fields with
    * which to create the object ("project" if not using the default
    * project, "types", "details", "hidden", "name", "properties",
    * "tags")
@@ -163,7 +162,9 @@ public:
    *
    * @param init_from a GTable from which to initialize all metadata,
    * including column and index specs.
-   * @param data_obj_fields
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags") 
    */
   void create(const DXGTable &init_from,
 	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
@@ -176,7 +177,9 @@ public:
    * @param columns Vector of column descriptors with which to
    * override the defaults specified by init_from.  This should be a
    * nonempty.
-   * @param data_obj_fields
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags") 
    */
   void create(const DXGTable &init_from,
 	      const std::vector<dx::JSON> &columns,
@@ -194,17 +197,46 @@ public:
    * the defaults specified in init_from.  Unlike columns in this
    * method, an empty array will explicitly set the index specs to be
    * an empty list.
-   * @param data_obj_fields
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags") 
    */
   void create(const DXGTable &init_from,
 	      const std::vector<dx::JSON> &columns,
               const std::vector<dx::JSON> &indices,
 	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
+  /**
+   * Creates a new GTable by extending the current gtable
+   * with additional columns. Return the object handler
+   * for new gtable
+   *
+   * @param columns Vector of column descriptors representing columns
+   * which will be added after the existing columns
+   * @param indices Vector of index descriptors
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of extended gtable.
+   */
   DXGTable extend(const std::vector<dx::JSON> &columns,
                   const std::vector<dx::JSON> &indices,
                   const dx::JSON &data_obj_fields=
                   dx::JSON(dx::JSON_OBJECT)) const;
+  /**
+   * Creates a new GTable by extending the current gtable
+   * with additional columns. Return the object handler
+   * for new gtable
+   *
+   * @param columns Vector of column descriptors representing columns
+   * which will be added after the existing columns.
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of extended gtable.
+   */
   DXGTable extend(const std::vector<dx::JSON> &columns,
                   const dx::JSON &data_obj_fields=
                   dx::JSON(dx::JSON_OBJECT)) const {
@@ -221,6 +253,7 @@ public:
    * report.
    * @param limit An integer representing the limit on the number of
    * rows to be returned.
+   *
    * @return A JSON object with keys "length", "next", and "data".
    */
   dx::JSON getRows(const dx::JSON &query=dx::JSON(dx::JSON_NULL),
@@ -234,6 +267,7 @@ public:
    * linear manner.
    * 
    * @note - Calling this function, invalidates any previous call to the function.
+   *
    * @param column_names A JSON array listing the column names to be
    * returned; the order of the column names will be respected in the
    * output.  (Use the JSON null value to indicate all columns.)
@@ -290,6 +324,7 @@ public:
    * addRows(const dx::JSON&, int) and addRows(const dx::JSON&)
    * @param data A JSON array of row data (each row represented as
    * JSON arrays).
+   *
    * @param part_id An integer representing the part that the given
    * rows should be sent as.
    */
@@ -310,6 +345,7 @@ public:
     * If any of the thread fails then std::terminate() would be called.
    * @warning In general you should never mix and match between calls to
    * addRows(const dx::JSON&, int) and addRows(const dx::JSON&)
+   *
    * @param data A JSON array of row data (each row represented as JSON arrays).
    */
   void addRows(const dx::JSON &data); // For automatic part ID generation
@@ -358,44 +394,152 @@ public:
    * be cloned
    * @param dest_folder Folder route in which to put it in the
    * destination project.
+   *
    * @return New object handler with the associated project set to
    * dest_proj_id.
    */
   DXGTable clone(const std::string &dest_proj_id,
                  const std::string &dest_folder="/") const;
 
+  /**
+   * Returns a DXGtable handler for specified gtable id.
+   * @param dxid ID of the gtable to be opened
+   * @param project The project gtable exists within
+   * @return Object handler of the specified gtable
+   */
   static DXGTable openDXGTable(const std::string &dxid,
 			       const std::string &project="default");
 
+  /** 
+   * Creates a new Gtable and returns it's DXGtable handler
+   *
+   * @param columns Vector of column descriptors; must be nonempty
+   * @param indices Vector of index descriptors
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of newly created gtable
+   */
   static DXGTable newDXGTable(const std::vector<dx::JSON> &columns,
                               const std::vector<dx::JSON> &indices,
                               const dx::JSON &data_obj_fields=
                               dx::JSON(dx::JSON_OBJECT));
-
+  /** 
+   * Creates a new Gtable and returns it's DXGtable handler.
+   * Equivalent to: newDXGtable(columns, std::vector<dx::JSON>(), data_obj_fields).
+   *
+   * @param columns Vector of column descriptors; must be nonempty
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of newly created gtable
+   */ 
   static DXGTable newDXGTable(const std::vector<dx::JSON> &columns,
                               const dx::JSON &data_obj_fields=
                               dx::JSON(dx::JSON_OBJECT)) {
     return newDXGTable(columns, std::vector<dx::JSON>(), data_obj_fields);
   }
 
+  /** 
+   * Creates a new Gtable using the metadata from an existing gtable.
+   * an existing GTable.  Note that the default behavior of creating a
+   * new data object in the current workspace is still in effect and
+   * needs to be explicitly stated if the project of the object
+   * specified as init_from is to be used.
+
+   * @param init_from a GTable from which to initialize all metadata,
+   * including column and index specs.
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags") 
+   *
+   * @return Object handler of newly created gtable
+   */ 
   static DXGTable newDXGTable(const DXGTable &init_from,
 			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
+  /** 
+   * Creates a new Gtable using the metadata from an existing gtable.
+   * an existing GTable.  Note that the default behavior of creating a
+   * new data object in the current workspace is still in effect and
+   * needs to be explicitly stated if the project of the object
+   * specified as init_from is to be used.
+   *
+   * @param init_from a GTable from which to initialize all metadata,
+   * including column and index specs.
+   * @param columns Vector of column descriptors with which to
+   * override the defaults specified by init_from.  Use an empty array
+   * to avoid overriding it but to override the index specs.
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of newly created gtable
+   */ 
   static DXGTable newDXGTable(const DXGTable &init_from,
 			      const std::vector<dx::JSON> &columns,
 			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
-
+  /** 
+   * Creates a new Gtable using the metadata from an existing gtable.
+   * an existing GTable.  Note that the default behavior of creating a
+   * new data object in the current workspace is still in effect and
+   * needs to be explicitly stated if the project of the object
+   * specified as init_from is to be used.
+   *
+   * @param init_from a GTable from which to initialize all metadata,
+   * including column and index specs.
+   * @param columns Vector of column descriptors with which to
+   * override the defaults specified by init_from.  Use an empty array
+   * to avoid overriding it but to override the index specs.
+   * @param indices Vector of index descriptors with which to override
+   * the defaults specified in init_from.  Unlike columns in this
+   * method, an empty array will explicitly set the index specs to be
+   * an empty list. 
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of newly created gtable
+   */ 
   static DXGTable newDXGTable(const DXGTable &init_from,
 			      const std::vector<dx::JSON> &columns,
 			      const std::vector<dx::JSON> &indices,
 			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
+  /**
+   * Creates a new GTable by extending the given gtable
+   * with additional columns/indices. Returns the object handler
+   * for new gtable
+   *
+   * @param columns Vector of column descriptors representing columns
+   * which will be added after the existing columns in given gtable
+   * @param indices Vector of index descriptors
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of extended gtable.
+   */ 
   static DXGTable extendDXGTable(const DXGTable &dxgtable,
                                  const std::vector<dx::JSON> &columns,
                                  const std::vector<dx::JSON> &indices,
                                  const dx::JSON &data_obj_fields=
                                  dx::JSON(dx::JSON_OBJECT));
-
+  /**
+   * Creates a new GTable by extending the given gtable
+   * with additional columns. Returns the object handler
+   * for new gtable
+   *
+   * @param columns Vector of column descriptors representing columns
+   * which will be added after the existing columns in given gtable
+   * @param data_obj_fields JSON hash containing the optional fields with
+   * which to create the new object ("project", "types", "details",
+   * "hidden", "name", "properties", "tags")
+   *
+   * @return Object handler of extended gtable.
+   */ 
   static DXGTable extendDXGTable(const DXGTable &dxgtable,
                                  const std::vector<dx::JSON> &columns,
                                  const dx::JSON &data_obj_fields=
@@ -409,6 +553,7 @@ public:
    *
    * @param name Name of the column
    * @param type Data type to be stored in the column
+   *
    * @return A JSON object containing the column descriptor
    */
   static dx::JSON columnDesc(const std::string &name,
@@ -425,6 +570,7 @@ public:
    * @param hi Name of the column containing the high boundary of a
    * genomic interval; must be a column of type int32
    * @param name Name of the index
+   *
    * @return A JSON object containing the index descriptor
    */
   static dx::JSON genomicRangeIndex(const std::string &chr,
@@ -437,6 +583,7 @@ public:
    *
    * @param columns Vector of lists of the form [<column name>, "ASC"|"DESC"]
    * @param name Name of the index
+   *
    * @return A JSON object containing the index descriptor
    */
   static dx::JSON lexicographicIndex(const std::vector<std::vector<std::string> > &columns,
@@ -447,6 +594,7 @@ public:
    *
    * @param column Column name to index by
    * @param name Name of the index
+   *
    * @return A JSON object containing the index descriptor
    */
   static dx::JSON substringIndex(const std::string &column,
@@ -463,6 +611,7 @@ public:
    * @param hi High boundary of query interval
    * @param mode The type of query to perform ("overlap" or "enclose")
    * @param index Name of the genomic range index to use
+   *
    * @return A JSON object containing the query for use with getRows()
    */
   static dx::JSON genomicRangeQuery(const std::string &chr,
@@ -476,6 +625,7 @@ public:
    *
    * @param query MongoDB-style query
    * @param index Name of the lexicographic index to use
+   *
    * @return A JSON object containing the query for use with getRows()
    */
   static dx::JSON lexicographicQuery(const dx::JSON &query,
@@ -487,6 +637,7 @@ public:
    * @param match String to match
    * @param mode Mode in which to match the string ("equal", "substring", or "prefix")
    * @param index Name of the substring index to use
+   *
    * @return A JSON object containing the query for use with getRows()
    */
   static dx::JSON substringQuery(const std::string &match,
