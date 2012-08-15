@@ -97,7 +97,7 @@ class DXDataObject {
    * "types", and "createdAt".  Other fields may also be included,
    * depending on the class.
    * @param incl_properties If true, then properties are included in the output
-   * @param incl_detauks If true, then details are included in the output
+   * @param incl_details If true, then details are included in the output
    * @return JSON description
    */
   dx::JSON describe(bool incl_properties=false, bool incl_details=false) const;
