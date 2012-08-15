@@ -1003,30 +1003,30 @@ TEST(DXSearchTest, findDataObjects) {
   DXRecord dxrecord = DXRecord::newDXRecord();
   JSON q1(JSON_OBJECT);
   q1["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<std::string>(ts1) + "}");
-  JSON res = findDataObjects(q1);
+  JSON res = DXSystem::findDataObjects(q1);
 //  std::cout<<endl<<res.toString()<<endl;
   ASSERT_EQ(res["results"].size(), 1);
   ASSERT_EQ(res["next"], JSON(JSON_NULL));
   
-  ASSERT_EQ(res["results"][0], findOneDataObject(q1));
+  ASSERT_EQ(res["results"][0], DXSystem::findOneDataObject(q1));
 
   // Sleep for .5 sec, and then find all objects modified in last .25 second
   // should be zero
   usleep(0.5 * 1000000); // Sleep for .5sec
   q1 = JSON::parse("{\"modified\": {\"after\": \"-0.25s\"}}");
-  res = findDataObjects(q1);
+  res = DXSystem::findDataObjects(q1);
   ASSERT_EQ(res["results"].size(), 0);
   ASSERT_EQ(res["next"], JSON(JSON_NULL));
   
   // find all objects modified after (ts1 - 1) seconds
   q1["modified"]["after"] = boost::lexical_cast<std::string>(ts1/1000 - 1) + "s";
-  res = findDataObjects(q1);
+  res = DXSystem::findDataObjects(q1);
   ASSERT_EQ(res["results"].size(), 1);
   ASSERT_EQ(res["next"], JSON(JSON_NULL));
   
   // find all objects in open state, and created after (ts1 - 1) seconds
   q1 = JSON::parse("{\"state\": \"open\", \"created\":{\"after\":-" + boost::lexical_cast<std::string>(std::time(NULL)*1000 - ts1 + 1000) + "}}");
-  res = findDataObjects(q1);
+  res = DXSystem::findDataObjects(q1);
   ASSERT_EQ(res["results"].size(), 1);
 
   // Remove test data
@@ -1039,12 +1039,12 @@ TEST(DXSearchTest, findJobs) {
 
 TEST(DXSearchTest, findProjects) {
   JSON q = JSON::parse("{}");
-  JSON res = findProjects(q);
+  JSON res = DXSystem::findProjects(q);
   int len = res["results"].size();
 
   std::string id = projectNew(std::string("{\"name\": \"test_prj\"}"))["id"].get<std::string>();
 
-  ASSERT_EQ(findProjects(q)["results"].size(), (len == 1000) ? len : len + 1);
+  ASSERT_EQ(DXSystem::findProjects(q)["results"].size(), (len == 1000) ? len : len + 1);
   DXProject dxprj(id);
   dxprj.destroy();
 }
