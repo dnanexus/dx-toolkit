@@ -812,7 +812,7 @@ def cp(args):
             parser.exit(1, 'Cannot copy to a hash ID\n')
         # Destination folder path is new => renaming
         if len(args.sources) != 1:
-            # Can't rename more than one object
+            # Can't copy and rename more than one object
             parser.exit(1, 'The destination folder does not exist\n')
         last_slash_pos = get_last_pos_of_char('/', dest_path)
         if last_slash_pos == 0:
@@ -830,7 +830,6 @@ def cp(args):
         src_proj, src_path, src_results = try_call(resolve_existing_path,
                                                    args.sources[0],
                                                    allow_mult=True)
-
         if src_proj == dest_proj:
             parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
 
@@ -841,11 +840,13 @@ def cp(args):
                                                "includeHidden": True})
                 dxpy.DXHTTPRequest('/' + dest_proj + '/newFolder',
                                    {"folder": dest_path})
-                dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                                   {"folders": [contents['folders']],
-                                    "objects": (lambda result: result['id'], contents),
-                                    "project": dest_proj,
-                                    "destination": dest_path})
+                exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                                          {"folders": contents['folders'],
+                                           "objects": map(lambda result: result['id'], contents['objects']),
+                                           "project": dest_proj,
+                                           "destination": dest_path})['exists']
+                if len(exists) > 0:
+                    print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(json.dumps(exists))
                 return
             except BaseException as details:
                 parser.exit(1, fill(unicode(details)) + '\n')
@@ -853,9 +854,11 @@ def cp(args):
             try:
                 exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
                                             {"objects": map(lambda result: result['id'],
-                                                   src_results),
+                                                            src_results),
                                              "project": dest_proj,
                                              "destination": dest_folder})['exists']
+                if len(exists) > 0:
+                    print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(json.dumps(exists))
                 for result in src_results:
                     if result['id'] not in exists:
                         dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
@@ -881,11 +884,13 @@ def cp(args):
         else:
             src_objects += map(lambda result: result['id'], src_results)
     try:
-        dxpy.DXHTTPRequest('/' + src_proj + '/clone',
-                           {"objects": src_objects,
-                            "folders": src_folders,
-                            "project": dest_proj,
-                            "destination": dest_path})
+        exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
+                                    {"objects": src_objects,
+                                     "folders": src_folders,
+                                     "project": dest_proj,
+                                     "destination": dest_path})['exists']
+        if len(exists) > 0:
+            print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(exists)        
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
