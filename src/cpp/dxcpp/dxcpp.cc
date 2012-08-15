@@ -76,8 +76,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
   HttpHeaders req_headers;
   JSON secContext = g_SECURITY_CONTEXT;
-  req_headers["Authorization"] = secContext["auth_token_type"].get<string>() +
-    " " + secContext["auth_token"].get<string>();
+  req_headers["Authorization"] = secContext["auth_token_type"].get<string>() + " " + secContext["auth_token"].get<string>();
   req_headers["DNAnexus-API"] = g_API_VERSION;
 
   string headername;
@@ -85,21 +84,21 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // TODO: Reconsider this; would we rather just set the content-type
   // to json always?
   bool content_type_set = false;
-  for (map<string, string>::const_iterator iter = headers.begin();
-       iter != headers.end();
-       iter++) {
+  for (map<string, string>::const_iterator iter = headers.begin(); iter != headers.end(); iter++) {
     headername = iter->first;
     req_headers[headername] = iter->second;
 
     transform(headername.begin(), headername.end(), headername.begin(), ::tolower);
-    if (headername == "content-type")
+    if (headername == "content-type") {
       content_type_set = true;
+    }
   }
 
   if (!content_type_set)
     req_headers["Content-Type"] = "application/json";
 
-  // TODO: Load retry parameteres (wait time, max number of retries, etc) from some config file
+  // TODO: Load retry parameters (wait time, max number of retries, etc)
+  // from some config file
 
   unsigned int countTries;
   HttpRequest req;
@@ -172,9 +171,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // Unreachable line
 }
 
-void setAPIServerInfo(const string &host,
-		      int port,
-		      const string &protocol) {
+void setAPIServerInfo(const string &host, int port, const string &protocol) {
   g_APISERVER_HOST = host;
   char portstr[10];
   sprintf(portstr, "%d", port);

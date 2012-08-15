@@ -20,7 +20,6 @@ namespace fs = boost::filesystem;
 #include "SSLThreads.h"
 
 using namespace std;
-using namespace dx;
 
 Options opt;
 
@@ -141,8 +140,8 @@ void monitor() {
   }
 }
 
-JSON securityContext(const string &authToken) {
-  JSON ctx(JSON_OBJECT);
+dx::JSON securityContext(const string &authToken) {
+  dx::JSON ctx(dx::JSON_OBJECT);
   ctx["auth_token_type"] = "Bearer";
   ctx["auth_token"] = authToken;
   return ctx;
@@ -151,7 +150,7 @@ JSON securityContext(const string &authToken) {
 void testServerConnection() {
   LOG << "Testing connection to API server...";
   try {
-    JSON result = systemFindProjects();
+    dx::JSON result = systemFindProjects();
     LOG << " success." << endl;
   } catch (exception &e) {
     LOG << " failure." << endl;
@@ -177,7 +176,7 @@ string resolveProject(const string &projectSpec) {
   string projectID;
 
   try {
-    JSON desc = projectDescribe(projectSpec);
+    dx::JSON desc = projectDescribe(projectSpec);
     projectID = desc["id"].get<string>();
   } catch (DXAPIError &e) {
     if (e.name == "PermissionDenied") {
@@ -192,12 +191,12 @@ string resolveProject(const string &projectSpec) {
   }
 
   try {
-    JSON params(JSON_OBJECT);
+    dx::JSON params(dx::JSON_OBJECT);
     params["name"] = projectSpec;
     params["level"] = "CONTRIBUTE";
 
-    JSON findResult = systemFindProjects(params);
-    JSON projects = findResult["results"];
+    dx::JSON findResult = systemFindProjects(params);
+    dx::JSON projects = findResult["results"];
 
     if (projects.size() == 0) {
       LOG << " failure." << endl;
@@ -222,7 +221,7 @@ string resolveProject(const string &projectSpec) {
 void testProjectPermissions(const string &projectID) {
   LOG << "Testing permissions on project " << projectID << "...";
   try {
-    JSON desc = projectDescribe(projectID);
+    dx::JSON desc = projectDescribe(projectID);
     string level = desc["level"].get<string>();
 
     if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
@@ -256,7 +255,7 @@ void testFileExists(const string &filename) {
 void createFolder(const string &projectID, const string &folder) {
   LOG << "Creating folder " << folder << " and parents in project " << projectID << "...";
   try {
-    JSON params(JSON_OBJECT);
+    dx::JSON params(dx::JSON_OBJECT);
     params["folder"] = folder;
     params["parents"] = true;
     projectNewFolder(projectID, params);
@@ -273,14 +272,14 @@ void createFolder(const string &projectID, const string &folder) {
  * folders are created if they do not exist.
  */
 string createFileObject(const string &project, const string &folder, const string &name) {
-  JSON params(JSON_OBJECT);
+  dx::JSON params(dx::JSON_OBJECT);
   params["project"] = project;
   params["folder"] = folder;
   params["name"] = name;
   params["parents"] = true;
   LOG << "Creating new file with parameters " << params.toString() << endl;
 
-  JSON result = fileNew(params);
+  dx::JSON result = fileNew(params);
   LOG << "Got result " << result.toString() << endl;
 
   return result["id"].get<string>();
