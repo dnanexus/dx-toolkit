@@ -63,62 +63,77 @@ bool finished() {
 }
 
 void readChunks() {
-  while (true) {
-    Chunk * c = chunksToRead.consume();
+  try {
+    while (true) {
+      Chunk * c = chunksToRead.consume();
 
-    c->log("Reading...");
-    c->read();
+      c->log("Reading...");
+      c->read();
 
-    c->log("Finished reading");
-    chunksToCompress.produce(c);
+      c->log("Finished reading");
+      chunksToCompress.produce(c);
+    }
+  } catch (boost::thread_interrupted &ti) {
+    LOG << "Thread " << boost::this_thread::get_id() << " interrupted." << endl;
+    return;
   }
 }
 
 void compressChunks() {
-  while (true) {
-    Chunk * c = chunksToCompress.consume();
+  try {
+    while (true) {
+      Chunk * c = chunksToCompress.consume();
 
-    if (opt.compress) {
-      c->log("Compressing...");
-      c->compress();
-      c->log("Finished compressing");
-    } else {
-      c->log("Not compressing");
+      if (opt.compress) {
+        c->log("Compressing...");
+        c->compress();
+        c->log("Finished compressing");
+      } else {
+        c->log("Not compressing");
+      }
+
+      chunksToUpload.produce(c);
     }
-
-    chunksToUpload.produce(c);
+  } catch (boost::thread_interrupted &ti) {
+    LOG << "Thread " << boost::this_thread::get_id() << " interrupted." << endl;
+    return;
   }
 }
 
 void uploadChunks() {
-  while (true) {
-    Chunk * c = chunksToUpload.consume();
+  try {
+    while (true) {
+      Chunk * c = chunksToUpload.consume();
 
-    c->log("Uploading...");
+      c->log("Uploading...");
 
-    bool uploaded = false;
-    try {
-      c->upload();
-      uploaded = true;
-    } catch (exception &e) {
-      ostringstream msg;
-      msg << "Upload failed: " << e.what();
-      c->log(msg.str());
+      bool uploaded = false;
+      try {
+        c->upload();
+        uploaded = true;
+      } catch (exception &e) {
+        ostringstream msg;
+        msg << "Upload failed: " << e.what();
+        c->log(msg.str());
+      }
+
+      if (uploaded) {
+        c->log("Upload succeeded!");
+        c->clear();
+        chunksFinished.produce(c);
+      } else if (c->triesLeft > 0) {
+        c->log("Retrying");
+        --(c->triesLeft);
+        chunksToUpload.produce(c);
+      } else {
+        c->log("Not retrying");
+        c->clear();
+        chunksFailed.produce(c);
+      }
     }
-
-    if (uploaded) {
-      c->log("Upload succeeded!");
-      c->clear();
-      chunksFinished.produce(c);
-    } else if (c->triesLeft > 0) {
-      c->log("Retrying");
-      --(c->triesLeft);
-      chunksToUpload.produce(c);
-    } else {
-      c->log("Not retrying");
-      c->clear();
-      chunksFailed.produce(c);
-    }
+  } catch (boost::thread_interrupted &ti) {
+    LOG << "Thread " << boost::this_thread::get_id() << " interrupted." << endl;
+    return;
   }
 }
 
