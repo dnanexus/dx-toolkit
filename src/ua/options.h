@@ -37,6 +37,7 @@ public:
   int tries;
   bool compress;
   bool progress;
+  bool verbose;
 
 private:
 

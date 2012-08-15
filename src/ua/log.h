@@ -1,7 +1,6 @@
 #ifndef UA_LOG_H
 #define UA_LOG_H
 
-#include <iostream>
 #include <sstream>
 
 /*
@@ -14,16 +13,11 @@
 class Log {
 public:
 
-  Log() {
-  }
+  Log();
+  ~Log();
+  std::ostringstream& get();
 
-  ~Log() {
-    std::cerr << oss.str();
-  }
-
-  std::ostringstream& get() {
-    return oss;
-  }
+  static bool enabled;
 
 private:
 

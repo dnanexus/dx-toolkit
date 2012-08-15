@@ -28,6 +28,7 @@ public:
   T consume();
 
   size_t size();
+  bool empty();
 
 private:
 
@@ -75,6 +76,10 @@ template<typename T> T BlockingQueue<T>::consume() {
 
 template<typename T> size_t BlockingQueue<T>::size() {
   return chunks.size();
+}
+
+template<typename T> bool BlockingQueue<T>::empty() {
+  return chunks.empty();
 }
 
 #endif

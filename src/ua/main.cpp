@@ -335,7 +335,7 @@ int main(int argc, char * argv[]) {
   try {
     opt.parse(argc, argv);
   } catch (exception &e) {
-    LOG << "Error processing arguments: " << e.what() << endl;
+    cerr << "Error processing arguments: " << e.what() << endl;
     opt.printHelp();
     return 1;
   }
@@ -347,6 +347,8 @@ int main(int argc, char * argv[]) {
     opt.printHelp();
     return 1;
   }
+
+  Log::enabled = opt.verbose;
 
   LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
 
@@ -373,6 +375,9 @@ int main(int argc, char * argv[]) {
 
     string fileID = createFileObject();
     LOG << "fileID is " << fileID << endl;
+
+    cerr << endl
+         << "Uploading file " << opt.file << " to DNAnexus file object " << fileID << endl;
 
     totalChunks = createChunks(opt.file, fileID);
     LOG << "Created " << totalChunks << " chunks." << endl;
@@ -402,7 +407,15 @@ int main(int argc, char * argv[]) {
     interruptWorkerThreads(readThread, uploadThreads, compressThreads);
     joinWorkerThreads(readThread, uploadThreads, compressThreads);
 
-    fileClose(fileID);
+    if (chunksFailed.empty()) {
+      cerr << "Upload was successful! Closing file...";
+      fileClose(fileID);
+      cerr << endl;
+    } else {
+      int failed = chunksFailed.size();
+      cerr << "Upload failed. " << failed << " " << (failed == 1 ? "chunk" : "chunks")
+           << " could not be uploaded." << endl;
+    }
 
     curlCleanup();
     SSLThreadsCleanup();

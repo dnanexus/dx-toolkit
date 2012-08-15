@@ -51,9 +51,7 @@ static bool isRetriableCurlError(int c) {
 }
 
 JSON DXHTTPRequest(const string &resource, const string &data,
-       const bool alwaysRetry,
-		   const map<string, string> &headers) {
-  
+                   const bool alwaysRetry, const map<string, string> &headers) {
   // We use an atomic variable (C++11 feature) to avoid acquiring a lock
   // every time in DXHTTPRequest(). Lock is instead acquired in loadFromEnvironment().
   // By checking g_loadFromEnvironment_finished value, we avoid calling
@@ -65,12 +63,12 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   }
   // General Note: We try and use a single call to operator <<() while outputting to std::cerr.
   //               (so that output in multi-threading env) has less "chance" of being garbled
-  //               Not sure if a single call to operator <<() is thread safe from C++11, but 
+  //               Not sure if a single call to operator <<() is thread safe from C++11, but
   //               certainyl multiple calls can mix output of various threads.
   //               For some relevant commentary see -> dxfile.cc: getChunkHttp_()
-  
+
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
-    std::cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set.\n";
+    cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set.\n";
     throw;
   }
 
@@ -100,7 +98,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
   if (!content_type_set)
     req_headers["Content-Type"] = "application/json";
-  
+
   // TODO: Load retry parameteres (wait time, max number of retries, etc) from some config file
 
   unsigned int countTries;
@@ -130,25 +128,25 @@ JSON DXHTTPRequest(const string &resource, const string &data,
         // Everything is fine, the request went through (and 200 recieved)
         // So return back the response now
         if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
-          std::cerr << ("\nRequest completed succesfuly in Retry #" + boost::lexical_cast<string>(countTries));
+          cerr << ("\nRequest completed succesfuly in Retry #" + boost::lexical_cast<string>(countTries));
 
         try {
           return JSON::parse(req.respData); // we always return json output
         } catch (JSONException &je) {
           string errStr = "ERROR: Unable to parse output returned by APIServer as JSON";
           errStr += "\nHttpRequest url: " + url + " , response code = " + boost::lexical_cast<string>(req.responseCode) + ", response body: '" + req.respData + "'";
-          errStr += "\nJSONException: " + std::string(je.what());
+          errStr += "\nJSONException: " + string(je.what());
           throw DXError(errStr);
         }
       }
     }
     if (toRetry && countTries < NUM_MAX_RETRIES) {
       if (reqCompleted) {
-        std::cerr << ("\nWARNING: POST " + url + ": returned with HTTP code " + boost::lexical_cast<string>(req.responseCode) + " and body: '" + req.respData + "'");
+        cerr << ("\nWARNING: POST " + url + ": returned with HTTP code " + boost::lexical_cast<string>(req.responseCode) + " and body: '" + req.respData + "'");
       } else {
-        std::cerr << ("\nWARNING: Unable to complete request -> POST " + url + " . Details: '" + hre.what() + "'");
+        cerr << ("\nWARNING: Unable to complete request -> POST " + url + " . Details: '" + hre.what() + "'");
       }
-      std::cerr << ("\n... Waiting " + boost::lexical_cast<string>(sec_to_wait) + " seconds before retry " + boost::lexical_cast<string>(countTries + 1) + " of " + boost::lexical_cast<string>(NUM_MAX_RETRIES) + " ...");
+      cerr << ("\n... Waiting " + boost::lexical_cast<string>(sec_to_wait) + " seconds before retry " + boost::lexical_cast<string>(countTries + 1) + " of " + boost::lexical_cast<string>(NUM_MAX_RETRIES) + " ...");
 
       // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
       // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
@@ -160,15 +158,15 @@ JSON DXHTTPRequest(const string &resource, const string &data,
     }
   }
   // We are here, implies, All retries were exhausted (or not made) with failure.
-  
+
   if (reqCompleted) {
-    std::cerr << ("\nERROR: POST " + url + " returned non-200 http code in (at least) last of " + boost::lexical_cast<string>(countTries) + " attempt. Will throw DXAPIError.\n"); 
+    cerr << ("\nERROR: POST " + url + " returned non-200 http code in (at least) last of " + boost::lexical_cast<string>(countTries) + " attempt. Will throw DXAPIError.\n");
     JSON respJSON = JSON::parse(req.respData);
     throw DXAPIError(respJSON["error"]["type"].get<string>(),
              respJSON["error"]["message"].get<string>(),
              req.responseCode);
   } else {
-    std::cerr << ("\nERROR: Unable to complete request -> POST " + url + " in " + boost::lexical_cast<string>(countTries) + " attempts. Will throw DXError.\n");
+    cerr << ("\nERROR: Unable to complete request -> POST " + url + " in " + boost::lexical_cast<string>(countTries) + " attempts. Will throw DXError.\n");
     throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
   }
   // Unreachable line
@@ -204,21 +202,21 @@ void setProjectContext(const string &project_id) {
   g_PROJECT_CONTEXT_ID = project_id;
 }
 
-// This function populates input param "val" with the value of particular 
+// This function populates input param "val" with the value of particular
 // field "key" in the config file.
 // If the key is not found (or file does not exist) then "false" is returned (else "true")
 // Note: Reads the config file only the first time (save contents in a global variable)
 // Note: If key is not found in config file, then "val" remain unchanged
 bool getVariableFromConfigFile(string fname, string key, string &val) {
-  
+
   // Read file only if it hasn't been succesfuly read before
-  if (g_config_file_contents[fname].size() == 0) {  
+  if (g_config_file_contents[fname].size() == 0) {
     // Try reading in the contents of config file
     ifstream fp(fname.c_str());
     if (!fp.is_open()) // file could not be opened
       return false;
     // Reserve memory for string upfront (to avoid having reallocation multiple time)
-    fp.seekg(0, ios::end);   
+    fp.seekg(0, ios::end);
     g_config_file_contents[fname].reserve(fp.tellg());
     fp.seekg(0, ios::beg);
 
@@ -231,10 +229,10 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
   // Since regex (C++11 feature) are not implemented in g++ yet,
   // we use boost::regex
   boost::regex expression(string("^\\s*export\\s*") + key + string("\\s*=\\s*'([^'\\r\\n]+)'$"), boost::regex::perl);
-  boost::match_results<std::string::const_iterator> what;
+  boost::match_results<string::const_iterator> what;
   string::const_iterator itb = g_config_file_contents[fname].begin();
   string::const_iterator ite = g_config_file_contents[fname].end();
-  
+
   if (!boost::regex_search(itb, ite, what, expression, boost::match_default)) {
     return false;
   }
@@ -250,7 +248,7 @@ string getUserHomeDirectory() {
   // see if HOME env variable is set
   if (getenv("HOME") != NULL)
     return getenv("HOME");
-  
+
   // else get from password database
   struct passwd *pw = getpwuid(getuid());
   return pw->pw_dir;
@@ -259,25 +257,25 @@ string getUserHomeDirectory() {
 // First look in env variable to find the value
 // If not found, then look into user's config file (in home directory) for the value
 // If still not found, then look into /opt/dnanexus/environment
-// 
+//
 // Returns false if not found in either of the 3 places, else true
 // "val" contain the value of variable if function returned "true", unchanged otherwise
 bool getFromEnvOrConfig(string key, string &val) {
   if (getenv(key.c_str()) != NULL) {
     val = getenv(key.c_str());
-    std::cerr<<"\nReading '" + key + "' value from environment variables. Value = '" + val + "'";
+    cerr << "Reading '" << key << "' value from environment variables. Value = '" << val << "'" << endl;
     return true;
   }
 
-  const std::string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
+  const string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
   if (getVariableFromConfigFile(user_config_file_path, key, val)) {
-    std::cerr<<"\nReading '" + key + "' value from file: '" + user_config_file_path + "'. Value = '" + val + "'";
+    cerr << "Reading '" << key << "' value from file: '" << user_config_file_path << "'. Value = '" << val + "'" << endl;
     return true;
   }
-  
-  const std::string default_config_file_path = "/opt/dnanexus/environment";
+
+  const string default_config_file_path = "/opt/dnanexus/environment";
   if (getVariableFromConfigFile(default_config_file_path, key, val)) {
-    std::cerr<<"\nReading '" + key + "' value from file: '" + default_config_file_path + "'. Value = '" + val + "'";
+    cerr << "\nReading '" << key << "' value from file: '" << default_config_file_path << "'. Value = '" << val + "'" << endl;
     return true;
   }
 
@@ -285,17 +283,19 @@ bool getFromEnvOrConfig(string key, string &val) {
 }
 
 string getVariableForPrinting(string s) {
-  if (s == "")
+  if (s == "") {
     return "NOT SET";
-  else
+  } else {
     return string("'") + s + string("'");
+  }
 }
 
 string getVariableForPrinting(const JSON &j) {
-  if (j.type() == JSON_UNDEFINED)
+  if (j.type() == JSON_UNDEFINED) {
     return "NOT SET";
-  else
+  } else {
     return string("'") + j.toString() + string("'");
+  }
 }
 
 void loadFromEnvironment() {
@@ -303,36 +303,35 @@ void loadFromEnvironment() {
   //              All other calls to loadFromEnvironment() must be short circuited.
   boost::mutex::scoped_lock glock(g_loadFromEnvironment_mutex);
 
-  // It is important to acquire lock before checking g_loadFromEnvironment_finished == true 
-  // condition, since other instance of the function might be running in parallel thread, 
+  // It is important to acquire lock before checking g_loadFromEnvironment_finished == true
+  // condition, since other instance of the function might be running in parallel thread,
   // we must wait for it to finish (and set g_loadFromEnvironment_finished = true)
   if (g_loadFromEnvironment_finished == true)
     return; // Short circuit this call - env variables already loaded
-  
+
   // intiialized with default values, will be overridden by env variable/config file (if present)
   string apiserver_host = "localhost";
   string apiserver_port = "8124";
   string apiserver_protocol = "http";
-  
+
   getFromEnvOrConfig("DX_APISERVER_HOST", apiserver_host);
   getFromEnvOrConfig("DX_APISERVER_PORT", apiserver_port);
   getFromEnvOrConfig("DX_APISERVER_PROTOCOL", apiserver_protocol);
 
   setAPIServerInfo(apiserver_host, boost::lexical_cast<int>(apiserver_port), apiserver_protocol);
-  
+
   string tmp;
   if (getFromEnvOrConfig("DX_SECURITY_CONTEXT", tmp)) {
     setSecurityContext(JSON::parse(tmp));
   }
-  
+
   if (getFromEnvOrConfig("DX_JOB_ID", tmp)) {
     setJobID(tmp);
     if (getFromEnvOrConfig("DX_WORKSPACE_ID", tmp))
       setWorkspaceID(tmp);
     if (getFromEnvOrConfig("DX_PROJECT_CONTEXT_ID", tmp))
       setProjectContext(tmp);
-  }
-  else {
+  } else {
     if (getFromEnvOrConfig("DX_PROJECT_CONTEXT_ID", tmp))
       setWorkspaceID(tmp);
   }
@@ -348,7 +347,7 @@ void loadFromEnvironment() {
   cerr<<"\n7. PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
   cerr<<"\n";
 */
-  g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
 
+  g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
   g_loadFromEnvironment_finished = true;
 }

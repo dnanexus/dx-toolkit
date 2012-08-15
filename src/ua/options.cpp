@@ -35,6 +35,7 @@ Options::Options() {
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
     ("compress,z", po::bool_switch(&compress), "Compress chunks before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
+    ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ;
 
   hidden_opts = new po::options_description();
@@ -152,6 +153,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  tries: " << opt.tries << endl
         << "  compress: " << opt.compress << endl
         << "  progress: " << opt.progress << endl
+        << "  verbose: " << opt.verbose << endl
       ;
   }
   return out;

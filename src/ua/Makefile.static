@@ -22,7 +22,7 @@ LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -lcurl -lcares -lssl -l
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
 dxcpp_objs = api.o bindings.o dxcpp.o
-ua_objs = chunk.o main.o options.o SSLThreads.o
+ua_objs = chunk.o main.o options.o log.o SSLThreads.o
 
 dxjson: $(dxjson_objs)
 dxhttp: $(dxhttp_objs)
