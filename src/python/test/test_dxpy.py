@@ -305,13 +305,14 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable.close(block=True)
         col_names = self.dxgtable.get_col_names()
         self.assertEqual(col_names, ["__id__", "a", "b"])
- 
+
     def test_add_rows(self):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")])
         self.dxgtable.add_rows(data=[], part=9999)
-        with self.assertRaises(DXAPIError):
+        # Wrong number of columns
+        with self.assertRaises(ValueError):
             self.dxgtable.add_rows(data=[[]], part=9997)
 
         for i in range(64):
@@ -320,6 +321,24 @@ class TestDXGTable(unittest.TestCase):
 
         with self.assertRaises(DXAPIError):
             self.dxgtable.close(block=True)
+
+    def test_add_rows_bad_data(self):
+        self.dxgtable = dxpy.new_dxgtable([
+                dxpy.DXGTable.make_column_desc("a", "string"),
+                dxpy.DXGTable.make_column_desc("b", "float"),
+                dxpy.DXGTable.make_column_desc("c", "int32"),
+                dxpy.DXGTable.make_column_desc("d", "boolean"),
+                ])
+        # Wrong column types
+        with self.assertRaises(ValueError):
+            self.dxgtable.add_rows(data=[[303, 1.248, 123, True]], part=1) # Bad column 0
+        with self.assertRaises(ValueError):
+            self.dxgtable.add_rows(data=[["303", "1.248", 123, True]], part=2) # Bad column 1
+        with self.assertRaises(ValueError):
+            self.dxgtable.add_rows(data=[["303", 1.248, 123.5, True]], part=3) # Bad column 2
+        with self.assertRaises(ValueError):
+            self.dxgtable.add_rows(data=[["303", 1.248, 123, "True"]], part=4) # Bad column 3
+        self.dxgtable.close(block=True)
 
     def test_add_rows_no_index(self):
         self.dxgtable = dxpy.new_dxgtable(
