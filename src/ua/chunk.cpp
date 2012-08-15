@@ -4,13 +4,16 @@
 #include <fstream>
 #include <sstream>
 
-#include <zlib.h>
 #include <curl/curl.h>
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
+
+extern "C" {
+#include "compress.h"
+}
 
 #include "log.h"
 
@@ -34,11 +37,12 @@ void Chunk::read() {
 
 void Chunk::compress() {
   int64_t sourceLen = data.size();
-  int64_t destLen = compressBound(sourceLen);
+  int64_t destLen = gzCompressBound(sourceLen);
   vector<char> dest(destLen);
 
-  int compressStatus = ::compress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
-                                  (const Bytef *) (&(data[0])), (uLong) sourceLen);
+  int compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
+                                  (const Bytef *) (&(data[0])), (uLong) sourceLen,
+                                  3);  // 3 is the compression level -- fast, not good
 
   if (compressStatus == Z_MEM_ERROR) {
     throw runtime_error("compression failed: not enough memory");
