@@ -56,7 +56,6 @@ clean:
 
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
-	$(MAKE) -C reads_validator install
 	mkdir -p $(DESTDIR)
 	if [[ $(DNANEXUS_HOME) != $(DESTDIR) ]]; then \
 		cp -a $(DNANEXUS_HOME)/* $(DESTDIR); \
