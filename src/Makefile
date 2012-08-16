@@ -8,7 +8,7 @@ ifndef DESTDIR
 	export DESTDIR=$(DNANEXUS_HOME)
 endif
 
-all: api_wrappers src_libs python contigset2fasta
+all: api_wrappers src_libs python contigset2fasta reads_validator
 
 api_wrappers:
 	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
@@ -47,8 +47,12 @@ test_perl:
 contigset2fasta:
 	$(MAKE) -C contigset2fasta
 
+reads_validator:
+	$(MAKE) -C reads_validator
+
 clean:
 	$(MAKE) -C contigset2fasta clean
+	$(MAKE) -C reads_validator clean
 
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
@@ -80,4 +84,4 @@ doc_dxjson:
 	mkdir -p ../doc/cpp/dxjson
 	doxygen cpp/dxjson/Doxyfile
 
-.PHONY: api_wrappers python perl contigset2fasta src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
+.PHONY: api_wrappers python perl contigset2fasta reads_validator src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
