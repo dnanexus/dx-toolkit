@@ -6,6 +6,7 @@
 # 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 GITVERSION := $(shell git describe)
+VERSION = 0.0.1
 
 curl_dir = /home/jdale/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
@@ -41,6 +42,24 @@ ua: $(ua_objs)
 
 all: dxjson dxhttp dxcpp ua
 	g++ *.o $(LDFLAGS) -o ua
+ifeq ($(UNAME), Darwin)
+	cp -v /opt/local/lib/gcc47/libstdc++.6.dylib /opt/local/lib/gcc47/libgcc_s.1.dylib .
+	install_name_tool -change /opt/local/lib/gcc47/libstdc++.6.dylib @executable_path/libstdc++.6.dylib ua
+	install_name_tool -change /opt/local/lib/gcc47/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib ua
+	install_name_tool -change /opt/local/lib/gcc47/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib libstdc++.6.dylib
+endif
+
+dist: all
+ifeq ($(UNAME), Linux)
+	mv -v ua ua-$(VERSION)-linux
+	bzip2 -9v ua-$(VERSION)-linux
+else ifeq ($(UNAME), Darwin)
+	mkdir -v ua-$(VERSION)-mac
+	mv -v ua libstdc++.6.dylib libgcc_s.1.dylib ua-$(VERSION)-mac
+	tar jcvf ua-$(VERSION)-mac.tar.bz2 ua-$(VERSION)-mac
+else
+	$(error No dist recipe for system $(UNAME))
+endif
 
 clean:
 	rm -v *.o ua
