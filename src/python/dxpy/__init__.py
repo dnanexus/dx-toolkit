@@ -42,6 +42,14 @@ beforehand as applicable while using the format 'hostname:port'
 
 '''
 
+# Try to reset the encoding to utf-8.
+# (The alternative is to encode every single input and output as utf-8, which is unmaintainable.)
+try:
+    import sys, locale
+    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+except:
+    pass
+
 import os, json, requests, time
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
