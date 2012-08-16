@@ -1665,18 +1665,25 @@ def dximport(args):
     else:
         parser.exit(1, 'Not yet implemented\n')
 
+def export_fastq(args):
+    from dxpy.scripts import dx_reads_to_fastq
+    sys.argv = [sys.argv[0]] + args.exporter_args
+    dx_reads_to_fastq.main()
+
+def export_sam(args):
+    from dxpy.scripts import dx_mappings_to_sam
+    sys.argv = [sys.argv[0]] + args.exporter_args
+    dx_mappings_to_sam.main()
+
+exporters = {
+    "fastq": export_fastq,
+    "sam": export_sam
+}
+
 def export(args):
-    if args.format == 'fastq':
-        from dxpy.scripts import dx_reads_to_fastq
-        sys.argv = [sys.argv[0]] + args.exporter_args
-        dx_reads_to_fastq.main()
-    elif args.format == 'sam':
-        from dxpy.scripts import dx_mappings_to_sam
-        sys.argv = [sys.argv[0]] + args.exporter_args
-        dx_mappings_to_sam.main()
-#    elif args.format == 'csv':
-    else:
-        parser.exit(1, 'Not yet implemented\n')
+    if args.format.lower() not in exporters:
+        parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help export"') + '\n')
+    exporters[args.format.lower()](args)
 
 def gtable_get(args):
     # Attempt to resolve name
@@ -2786,12 +2793,13 @@ parser_map['import'] = parser_import
 
 parser_export = subparsers.add_parser('export',
                                       help='Export a GenomicTable into a local file',
-                                      description='Export a GenomicTable into a local file.',
+                                      description='Export a GenomicTable into a local file.\n\nSupported formats:\n\n  ' + '\n  '.join(exporters.keys()),
                                       parents=[],
+                                      formatter_class=argparse.RawTextHelpFormatter,
                                       prog='dx export')
 
 parser_export.add_argument('format', help='Format to export to')
-parser_export.add_argument('exporter_args', help='Arguments passed to the exporter', nargs=argparse.REMAINDER)
+parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24), nargs=argparse.REMAINDER)
 parser_export.set_defaults(func=export)
 parser_map['export'] = parser_export
 
