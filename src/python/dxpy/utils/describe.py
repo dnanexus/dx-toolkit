@@ -136,7 +136,8 @@ def print_project_desc(desc):
             print_json_field(field, desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary', 'applet']
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary', 'applet', 'installs', 'billing']
+    # NOTE: Hiding "billing" for now
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -197,6 +198,8 @@ def print_app_desc(desc):
             print_field("Resources", desc['resources'])
         elif 'globalWorkspace' in desc:
             print_field("GlobalWorkspace", desc["globalWorkspace"])
+    if 'installs' in desc:
+        print_field('# Installs', str(desc['installs']))
 
     for field in desc:
         if field not in recognized_fields:
@@ -285,7 +288,7 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -312,6 +315,8 @@ def print_job_desc(desc):
         print_json_field("Parent job", desc["parentJob"])
     print_field("Origin job", desc["originJob"])
     print_field("Function", desc["function"])
+    if 'runInput' in desc:
+        print_json_field("Run Input", desc["runInput"])
     if "originalInput" in desc:
         print_json_field("Original Input", desc["originalInput"])
         print_json_field("Input", desc["input"])

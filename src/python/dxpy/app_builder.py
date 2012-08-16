@@ -91,15 +91,26 @@ def upload_resources(src_dir, project=None):
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
     applet_spec = get_applet_spec(src_dir)
 
-    # -----
-    # Override various fields from the pristine dxapp.json
-
     if project is None:
         dest_project = applet_spec['project']
     else:
         dest_project = project
         applet_spec['project'] = project
 
+    if check_name_collisions:
+        logging.debug("Searching for applets with name " + applet_spec["name"])
+        for result in dxpy.find_data_objects(classname="applet", properties={"name": applet_spec["name"]}, project=dest_project):
+            if overwrite:
+                logging.info("Deleting applet %s" % (result['id']))
+                # TODO: test me
+                dxpy.DXProject(dest_project).remove_objects([result['id']])
+            else:
+                raise AppletBuilderException("A applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
+
+    # -----
+    # Override various fields from the pristine dxapp.json
+
+    # Inline description from a readme file
     if 'description' not in applet_spec:
         readme_filename = None
         for filename in 'README.md', 'Readme.md', 'readme.md':
@@ -112,16 +123,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             with open(os.path.join(src_dir, readme_filename)) as fh:
                 applet_spec['description'] = fh.read()
 
-    if check_name_collisions:
-        logging.debug("Searching for applets with name " + applet_spec["name"])
-        for result in dxpy.find_data_objects(classname="applet", properties={"name": applet_spec["name"]}, project=dest_project):
-            if overwrite:
-                logging.info("Deleting applet %s" % (result['id']))
-                # TODO: test me
-                dxpy.DXProject(dest_project).remove_objects([result['id']])
-            else:
-                raise AppletBuilderException("A applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
-
+    # Inline the code of the program
     if "runSpec" in applet_spec and "file" in applet_spec["runSpec"]:
         # Avoid using runSpec.file for now, it's not fully implemented
         #code_filename = os.path.join(src_dir, applet_spec["runSpec"]["file"])
@@ -132,11 +134,13 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             applet_spec["runSpec"]["code"] = code_fh.read()
             del applet_spec["runSpec"]["file"]
 
+    # Attach bundled resources to the app
     if uploaded_resources is not None:
         applet_spec["runSpec"].setdefault("bundledDepends", [])
         applet_spec["runSpec"]["bundledDepends"].extend(uploaded_resources)
-    
-    # Include the DNAnexus client libraries as an execution dependency, if they are not already there
+
+    # Include the DNAnexus client libraries as an execution dependency, if they are not already
+    # there
     dx_toolkit_dep = {"name": "dx-toolkit",
                       "package_manager": "git",
                       "url": "git@github.com:dnanexus/dx-toolkit.git",
@@ -180,6 +184,41 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     return applet_id
 
+def create_or_update_version(app_name, version, app_spec):
+    """
+    Creates a new version of the app. Returns an app_id, or None if the app has
+    already been created and published.
+    """
+    # This has a race condition since the app could have been created or
+    # published since we last looked.
+    try:
+        app_id = dxpy.api.appNew(app_spec)["id"]
+    except dxpy.exceptions.DXAPIError as e:
+        # TODO: detect this error more reliably
+        if e.name == 'InvalidInput' and e.msg == 'Specified name and version conflict with an existing alias':
+            print >> sys.stderr, 'App %s/%s already exists' % (app_spec["name"], version)
+            # The version number was already taken, so app/new doesn't work.
+            # However, maybe it hasn't been published yet, so we might be able
+            # to app-xxxx/update it.
+            app_describe = dxpy.api.appDescribe("app-" + app_name, alias=version)
+            if app_describe.get("published", 0) > 0:
+                return None
+            return update_version(app_name, version, app_spec)
+        raise e
+
+def update_version(app_name, version, app_spec):
+    """
+    Updates a version of the app in place. Returns an app_id, or None if the
+    app has already been published.
+    """
+    try:
+        return dxpy.api.appUpdate("app-" + app_name, version, app_spec)["id"]
+    except dxpy.exceptions.DXAPIError as e:
+        if e.name == 'InvalidState':
+            print >> sys.stderr, 'App %s/%s has already been published' % (app_spec["name"], version)
+            return None
+        raise e
+
 def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None, try_versions=None):
     app_spec = get_app_spec(src_dir)
     print >> sys.stderr, "Will create app with spec: ", app_spec
@@ -201,20 +240,48 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
         try_versions = [app_spec["version"]]
 
     for version in try_versions:
+        app_spec['version'] = version
+        app_describe = None
         try:
-            app_spec['version'] = version
-            app_id = dxpy.api.appNew(app_spec)["id"]
-            break
+            app_describe = dxpy.api.appDescribe("app-" + app_spec["name"], alias=version)
         except dxpy.exceptions.DXAPIError as e:
-            # TODO: detect this error more reliably
-            if e.name == 'InvalidInput' and e.msg == 'Specified name and version conflict with an existing alias':
-                # The version number was already taken, try the next alternative
-                print >> sys.stderr, '%s %s already exists' % (app_spec["name"], version)
+            if e.name == 'ResourceNotFound':
+                pass
+            else:
+                raise e
+        # Now app_describe is None if the app didn't exist, OR it contains the
+        # app describe content.
+
+        # The describe check does not eliminate race conditions since an app
+        # may always have been created, or published, since we last looked at
+        # it. So the describe that happens here is just to save time and avoid
+        # unnecessary API calls, but we always have to be prepared to recover
+        # from API errors.
+        if app_describe is None:
+            app_id = create_or_update_version(app_spec['name'], app_spec['version'], app_spec)
+            if app_id is None:
                 continue
-            raise e
+            print >> sys.stderr, "Created app " + app_id
+            # Success!
+            break
+        elif app_describe.get("published", 0) == 0:
+            print >> sys.stderr, 'App %s/%s already exists' % (app_spec["name"], version)
+            app_id = update_version(app_spec['name'], app_spec['version'], app_spec)
+            if app_id is None:
+                continue
+            print >> sys.stderr, "Updated existing app " + app_id
+            # Success!
+            break
+        else:
+            # App has already been published. Give up on this version.
+            continue
     else:
-        # All versions failed
-        raise EnvironmentError('Could not create any of the requested versions: ' + ', '.join(try_versions))
+        # All versions requested failed
+        if len(try_versions) != 1:
+            tried_versions = 'any of the requested versions: ' + ', '.join(try_versions)
+        else:
+            tried_versions = 'the requested version: ' + try_versions[0]
+        raise EnvironmentError('Could not create %s' % (tried_versions,))
 
     if "categories" in app_spec:
         dxpy.api.appAddCategories(app_id, input_params={'categories': app_spec["categories"]})

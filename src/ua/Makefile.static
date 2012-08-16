@@ -6,6 +6,7 @@
 # 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 GITVERSION := $(shell git describe)
+VERSION = 0.0.1
 
 curl_dir = /home/jdale/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
@@ -16,15 +17,15 @@ ua_dir = $(DNANEXUS_HOME)/src/ua
 
 VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 
-CFLAGS = -Wall -Wextra -O3
-CXXFLAGS = -D_FILE_OFFSET_BITS=64 -DGITVERSION=\"$(GITVERSION)\" -Wall -Wextra -Werror=return-type -O3 -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
+CFLAGS = -O3 -Wall -Wextra
+CXXFLAGS = -D_FILE_OFFSET_BITS=64 -DGITVERSION=\"$(GITVERSION)\" -O3 -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
 
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
 LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -lcurl -lcares -lssl -lcrypto -lrt -lz -ldl -lboost_program_options-mt -lboost_filesystem -lboost_system -lboost_thread-mt -lboost_regex
 else ifeq ($(UNAME), Darwin)
-LDFLAGS := -Bstatic -pthread -static-libgcc /usr/local/lib/libboost_program_options.a /usr/local/lib/libboost_thread.a /usr/local/lib/libboost_filesystem.a /usr/local/lib/libboost_regex.a /usr/local/lib/libcurl.a /opt/local/lib/libssl.a /opt/local/lib/libcrypto.a /opt/local/lib/libcares.a /opt/local/lib/libz.a /usr/local/lib/libboost_system.a
+LDFLAGS := /usr/local/lib/libboost_program_options.a /usr/local/lib/libboost_thread.a /usr/local/lib/libboost_filesystem.a /usr/local/lib/libboost_regex.a /usr/local/lib/libcurl.a /opt/local/lib/libssl.a /opt/local/lib/libcrypto.a /opt/local/lib/libcares.a /opt/local/lib/libz.a /usr/local/lib/libboost_system.a
 else
 $(error No LDFLAGS for system $(UNAME))
 endif
@@ -40,7 +41,25 @@ dxcpp: $(dxcpp_objs)
 ua: $(ua_objs)
 
 all: dxjson dxhttp dxcpp ua
-	g++ *.o $(LDFLAGS) -o ua 
+	g++ *.o $(LDFLAGS) -o ua
+ifeq ($(UNAME), Darwin)
+	cp -v /opt/local/lib/gcc47/libstdc++.6.dylib /opt/local/lib/gcc47/libgcc_s.1.dylib .
+	install_name_tool -change /opt/local/lib/gcc47/libstdc++.6.dylib @executable_path/libstdc++.6.dylib ua
+	install_name_tool -change /opt/local/lib/gcc47/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib ua
+	install_name_tool -change /opt/local/lib/gcc47/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib libstdc++.6.dylib
+endif
+
+dist: all
+ifeq ($(UNAME), Linux)
+	mv -v ua ua-$(VERSION)-linux
+	bzip2 -9v ua-$(VERSION)-linux
+else ifeq ($(UNAME), Darwin)
+	mkdir -v ua-$(VERSION)-mac
+	mv -v ua libstdc++.6.dylib libgcc_s.1.dylib ua-$(VERSION)-mac
+	tar jcvf ua-$(VERSION)-mac.tar.bz2 ua-$(VERSION)-mac
+else
+	$(error No dist recipe for system $(UNAME))
+endif
 
 clean:
 	rm -v *.o ua
