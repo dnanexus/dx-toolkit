@@ -19,14 +19,26 @@ private:
   dx::JSON listProjects_(const std::string &s)const{return appletListProjects(dxid_,s);}
 
 public:
+  // Note: We do not provide applet creation function .. since we want users
+  // to use applet_builder for that task.
+
   // Applet-specific functions
   DXApplet() { }
+  
   DXApplet(const std::string &dxid,
             const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
-  /* void createFromFile(const std::string &codefile) const; */
-  /* void createFromString(const std::string &codestring) const; */
-
+  /** 
+   * Creates a new job, to execute the function "main" of this applet
+   * with the given input.
+   *
+   * @param applet_input JSON Hash of the applet's input argument
+   * @param project_context Project context in which the applet would be run
+   * @param output_folder Folder inside current project (decided by context)
+   * where applet's output would be placed.
+   *
+   * @return Handler for the Job launched.
+   */
   DXJob run(const dx::JSON &applet_input,
             const std::string &project_context=g_WORKSPACE_ID,
             const std::string &output_folder="/") const;
@@ -43,6 +55,15 @@ public:
    */
   DXApplet clone(const std::string &dest_proj_id,
                   const std::string &dest_folder="/") const;
+
+  /**
+   * Returns the full specification of the applet as a JSON object.
+   * See route: /applet-xxxx/get for details.
+   *
+   * @return Full specification of the applet
+   */
+  dx::JSON get() const { return appletGet(dxid_); }
+
 };
 
 #endif

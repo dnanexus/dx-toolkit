@@ -3,12 +3,6 @@
 using namespace std;
 using namespace dx;
 
-// void DXApplet::createFromFile(const string &codefile) const {
-// }
-
-// void DXApplet::createFromString(const string &codestring) const {
-// }
-
 DXJob DXApplet::run(const JSON &applet_input,
                      const string &project_context,
                      const string &output_folder) const {
