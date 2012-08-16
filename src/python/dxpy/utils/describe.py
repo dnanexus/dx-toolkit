@@ -88,7 +88,7 @@ def get_io_spec(spec):
                                     spec))
 
 def print_field(label, value):
-    sys.stdout.write(label + " " * (16-len(label)) + textwrap.fill(value.encode('utf-8'), subsequent_indent=' '*16, width=64) + '\n')
+    sys.stdout.write(label + " " * (16-len(label)) + textwrap.fill(value, subsequent_indent=' '*16, width=64) + '\n')
 
 def print_list_field(label, values):
     print_field(label, ('-' if len(values) == 0 else ', '.join(values)))

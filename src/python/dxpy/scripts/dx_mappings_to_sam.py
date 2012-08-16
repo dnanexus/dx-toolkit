@@ -13,7 +13,7 @@ import math
 
 MAX_INT=2147483647
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="Export Mappings gtable to SAM format")
 parser.add_argument("mappings_id", help="Mappings table id to read from")
 parser.add_argument("--output", dest="file_name", default=None, help="Name of file to write SAM to.  If not given SAM file will be printed to stdout.")
 parser.add_argument("--start_row", dest="start_row", type=int, default=0, help="If restricting by the id of the gtable row, which id to start at. Selecting regions will override this option")
@@ -24,14 +24,13 @@ parser.add_argument("--output_ids", dest="output_ids", action="store_true", defa
 parser.add_argument("--discard_unmapped", dest="discard_unmapped", action="store_true", default=False, help="If set, do not write unmapped reads to SAM")
 parser.add_argument("--read_pair_aware", dest="read_pair_aware", action="store_true", default=False, help="If set, every time a paired read is encoutered, both reads will be included if the mate chr+lo+hi of the mate is above that of the enoutered read. If this is not the case, neither will be written. WARNING: read-pair-aware is not guaranteed to output a sorted SAM file.")
 parser.add_argument("--reference", dest="reference", default=None, help="Generating a SAM file requires information about the reference the reads were mapped to.  The Mappings SHOULD have a link to their reference, in the case they do not, or you wish to override that reference, you may optionally supply the ID of a ContigSet object to use instead.")
- 
 
 def main(**kwargs):
 
     if len(kwargs) == 0:
-        opts, args = parser.parse_args(sys.argv[1:])
+        opts = parser.parse_args(sys.argv[1:])
     else:
-        opts, args = parser.parse_args(kwargs)
+        opts = parser.parse_args(kwargs)
 
     if opts.mappings_id == None:
         parser.print_help()
@@ -110,6 +109,12 @@ def main(**kwargs):
     #unmappedFile = open("unmapped.txt", 'w')
         
     if len(regions) == 0:
+
+        if opts.start_row > mappingsTable.describe()['length']:
+            raise dxpy.AppError("Starting row is larger than number of rows in table")
+        elif opts.end_row < opts.start_row:
+            raise dxpy.AppError("Ending row is before Start")
+
         if opts.end_row > 0:
             generator = mappingsTable.iterate_rows(start=opts.start_row, end=opts.end_row)
         else:

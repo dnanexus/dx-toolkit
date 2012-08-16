@@ -33,6 +33,10 @@ parser.add_argument("-v", "--version", help="Override the version number supplie
 parser.set_defaults(version_autonumbering=True)
 parser.add_argument("--version-autonumbering", help="Attempt to create a unique version number e.g. 1.2.3+git.a1b1c1d if 1.2.3 already exists", action="store_true", dest="version_autonumbering")
 parser.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest", action="store_false", dest="version_autonumbering")
+# --[no-]update
+parser.set_defaults(update=True)
+parser.add_argument("--update", help="Attempt to update an existing unpublished app in place.", action="store_true", dest="update")
+parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]publish
 parser.set_defaults(publish=False)
 parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
@@ -88,7 +92,8 @@ def main():
                                              publish=args.publish,
                                              set_default=args.publish,
                                              billTo=args.bill_to,
-                                             try_versions=try_versions)
+                                             try_versions=try_versions,
+                                             try_update=args.update)
 
         app_describe = dxpy.api.appDescribe(app_id)
         print json.dumps(app_describe)
