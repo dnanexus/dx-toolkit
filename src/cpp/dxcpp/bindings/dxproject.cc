@@ -3,7 +3,7 @@
 using namespace std;
 using namespace dx;
 
-JSON DXWorkspace::describe(bool folders) const {
+JSON DXContainer::describe(bool folders) const {
   if (folders) {
     return DXHTTPRequest("/" + dxid_ + "/describe",
                          "{\"folders\": true}");
@@ -14,7 +14,7 @@ JSON DXWorkspace::describe(bool folders) const {
 }
 
 // Generic
-void DXWorkspace::move(const JSON &objects,
+void DXContainer::move(const JSON &objects,
                        const JSON &folders,
                        const string &dest_folder) const {
   JSON input_params(JSON_OBJECT);
@@ -25,7 +25,7 @@ void DXWorkspace::move(const JSON &objects,
                 input_params.toString());
 }
 
-void DXWorkspace::clone(const JSON &objects,
+void DXContainer::clone(const JSON &objects,
                         const JSON &folders,
                         const string &dest_proj,
                         const string &dest_folder) const {
@@ -39,7 +39,7 @@ void DXWorkspace::clone(const JSON &objects,
 }
 
 // Folder-specific
-void DXWorkspace::newFolder(const string &folder, bool parents) const {
+void DXContainer::newFolder(const string &folder, bool parents) const {
   stringstream input_hash;
   input_hash << "{\"folder\": \"" + folder + "\",";
   input_hash << "\"parents\": " << (parents ? "true" : "false") << "}";
@@ -47,19 +47,19 @@ void DXWorkspace::newFolder(const string &folder, bool parents) const {
                 input_hash.str());
 }
 
-JSON DXWorkspace::listFolder(const string &folder) const {
+JSON DXContainer::listFolder(const string &folder) const {
   return DXHTTPRequest("/" + dxid_ + "/listFolder",
                        "{\"folder\": \"" + folder + "\"}");
 }
 
-void DXWorkspace::moveFolder(const string &folder,
+void DXContainer::moveFolder(const string &folder,
                              const string &dest_folder) const {
   DXHTTPRequest("/" + dxid_ + "/move",
                 "{\"folders\": [\"" + folder + "\"]," +
                 "\"destination\": \"" + dest_folder + "\"}");
 }
 
-void DXWorkspace::removeFolder(const string &folder, const bool recurse) const {
+void DXContainer::removeFolder(const string &folder, const bool recurse) const {
   string input = recurse ?
     "{\"folder\": \"" + folder + "\", \"recurse\": true}" :
     "{\"folder\": \"" + folder + "\"}";
@@ -68,7 +68,7 @@ void DXWorkspace::removeFolder(const string &folder, const bool recurse) const {
 }
 
 // Objects-specific
-void DXWorkspace::removeObjects(const JSON &objects) const {
+void DXContainer::removeObjects(const JSON &objects) const {
   DXHTTPRequest("/" + dxid_ + "/removeObjects",
                 "{\"objects\":" + objects.toString() + "}");
 }

@@ -3,48 +3,83 @@
 
 #include "../bindings.h"
 
+/**
+ * This class contain static member functions corrosponding to
+ * /find* routes.
+ *
+ * For convenience of users, c++ bindings treat all "timestamp" fields in input hashes
+ * differently then apiserver (it is allowed to be either: an integer or a string):
+ * 
+ * - In case of integer, positive timestamp denote the usual, i.e., 
+ * number of milliseconds since unix epoch. But negative integer timestamps T, 
+ * represent (Current time - |T|), i.e., those many milliseconds
+ * before the current time.
+ *
+ * - In case of strings, we allow them to be of form: Number-Suffix. For ex:
+ * "1s" (denotes 1 second ahead from now), "-1s" (denotes 1 second before), etc.
+ * Suffixes allowed are: "s", "m", "d", "w", or "y" (for seconds, minutes, days, weeks, 
+ * or years). (Note year is defined as 365 days).
+ */
 class DXSystem {
 public:
   /**
-   * This function is an easy wrapper over /system/findDataObjects route.
-   * The input to this function is a JSON hash, whose fields determine constraints
-   * to be used while querying. The format of the input JSON hash is similar to the
-   * /system/findDataObjects input (TODO: Add link for api doc here)
+   * This function is an easy wrapper for route: /system/findDataObjects
    *
-   * For convenience of users, we treat "timestamp" fields in input hash
-   * slightly differently. We assume negative timestamps T, represent: 
-   * (Current time - |T|), i.e., those many milliseconds
-   * before the current time. We also allow strings in timestamp field with suffixes: 
-   * "s", "m", "d", "w", or "y" (for seconds, minutes, days, weeks, or years). For example,
-   * "-1w", represent timestamp one week before current time.
+   * @param query A JSON hash, as expected by the route: /system/findDataObjects
+   * @return A JSON hash, exactly as returned by the route: /system/findDataObjects
    *
-   * TODO: Add details about exceptions thrown (like invalid input for timestamp, etc
-   * TODO: Do we want to add a default project context ?
-   * @param query A JSON hash containing the query for /findDataObjects. For details
-   * on possible fields, please see API Doc.
-   * @return A JSON hash, as would be returned by the api route.
+   * @note 
+   * - Timestamp fields in input query are allowed to be more relaxed than what
+   * the api route expects: See documentation at top of DXSystem class for details.
+   * - If input query doesn't have field "scope", then all private objects are searched,
+   * but otherwise if query["scope"] doesn't have field "project", then it is set to 
+   * current Workspace ID (if available, else a DXError is thrown).
    */
-  static dx::JSON findDataObjects(const dx::JSON &query);
+  static dx::JSON findDataObjects(dx::JSON query);
 
-  /** 
-   * This function return the first data object matching the query
-   * The query language is same as for findDataObjects()
-   * TODO: Put the timestamp definition at a common place, and reference it everywhere
-   *
-   * @param query A JSON hash containing the query.
+  /**
+   * Exactly same as findDataObjects(), except that only
+   * top result is returned (or null if their are no results).
+   * 
+   * @see findDataObjects()
+   * 
+   * @param query A JSON hash, as expected by findDataObjects()
    * @return If at least one object matched the search criteria, then a JSON_HASH
    * containing following keys: "id", "project", "describe" (if asked for) will
    * be returned. If no object matched the search criteria, then JSON_NULL is returned.
    */
-  static dx::JSON findOneDataObject(const dx::JSON &query);
+  static dx::JSON findOneDataObject(dx::JSON query);
 
-  //TODO: Documentation
+  /**
+   * This function is an easy wrapper for route: /system/findJobs
+   *
+   * @param query A JSON hash, as expected by the route: /system/findJobs
+   * @return A JSON hash, exactly as returned by the route: /system/findJobs
+   *
+   * @note 
+   * - Timestamp fields in input query are allowed to be more relaxed than what
+   * the api route expects: See documentation at top of DXSystem class for details.
+   */
   static dx::JSON findJobs(const dx::JSON &query);
 
-  //TODO: Documentation
+  /**
+   * This function is an easy wrapper for route: /system/findProjects
+   *
+   * @param query A JSON hash, as expected by the route: /system/findProjects
+   * @return A JSON hash, exactly as returned by the route: /system/findProjects
+   */
   static dx::JSON findProjects(const dx::JSON &query);
 
-  //TODO: Documentation
+  /**
+   * This function is an easy wrapper for route: /system/findApps
+   *
+   * @param query A JSON hash, as expected by the route: /system/findApps
+   * @return A JSON hash, exactly as returned by the route: /system/findApps
+   *
+   * @note 
+   * - Timestamp fields in input query are allowed to be more relaxed than what
+   * the api route expects: See documentation at top of DXSystem class for details.
+   */
   static dx::JSON findApps(const dx::JSON &query);
 };
 #endif

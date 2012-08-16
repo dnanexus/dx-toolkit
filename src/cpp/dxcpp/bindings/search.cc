@@ -45,25 +45,26 @@ JSON getTimestampAdjustedField(const JSON &j) {
   return to_ret;
 }
 
-JSON DXSystem::findDataObjects(const JSON &query) {
-  JSON newQuery(JSON_NULL);
+JSON DXSystem::findDataObjects(JSON query) {
   if (query.has("modified")) {
-    if (newQuery.type() == JSON_NULL)
-      newQuery = query;
-    newQuery["modified"] = getTimestampAdjustedField(query["modified"]);
+    query["modified"] = getTimestampAdjustedField(query["modified"]);
   }
   if (query.has("created")) {
-    if (newQuery.type() == JSON_NULL)
-      newQuery = query;
-    newQuery["created"] = getTimestampAdjustedField(query["created"]);
+    query["created"] = getTimestampAdjustedField(query["created"]);
   }
-//  std::cerr<<"\nQuery = "<<newQuery.toString()<<std::endl;
-  return systemFindDataObjects(newQuery); 
+  if (query.has("scope")) {
+    if (!query["scope"].has("project")) {
+      if (g_WORKSPACE_ID == "")
+        throw DXError("g_WORKSPACE_ID is not set, but call to DXSystem::findDataObjects() is missing input['scope']['project']");
+      query["scope"]["project"] = g_WORKSPACE_ID;
+    }
+  }
+//  std::cerr<<"\nQuery = "<<query.toString()<<std::endl;
+  return systemFindDataObjects(query); 
 }
 
-JSON DXSystem::findOneDataObject(const JSON &query) {
-  JSON newQuery = query;
-  newQuery["limit"] = 1;
+JSON DXSystem::findOneDataObject(JSON query) {
+  query["limit"] = 1;
   JSON res = findDataObjects(query);
   if (res["results"].size() > 0)
     return res["results"][0];
