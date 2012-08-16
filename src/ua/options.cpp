@@ -3,6 +3,7 @@
 using namespace std;
 
 #include <boost/filesystem.hpp>
+#include <boost/thread.hpp>
 
 namespace fs = boost::filesystem;
 
@@ -21,6 +22,11 @@ string envVarMapper(const string &var) {
 }
 
 Options::Options() {
+  int defaultCompressThreads = int(boost::thread::hardware_concurrency()) - 1;
+  if (defaultCompressThreads < 1) {
+    defaultCompressThreads = 1;
+  }
+
   visible_opts = new po::options_description("Allowed options");
   visible_opts->add_options()
     ("help,h", "Produce a help message")
@@ -29,7 +35,7 @@ Options::Options() {
     ("project,p", po::value<string>(&project), "Name or ID of the destination project")
     ("folder,f", po::value<string>(&folder)->default_value("/"), "Name of the destination folder")
     ("name,n", po::value<string>(&name), "Name of the file to be created")
-    ("compress-threads,c", po::value<int>(&compressThreads)->default_value(2), "Number of parallel compression threads")
+    ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
