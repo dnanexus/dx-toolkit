@@ -1,5 +1,5 @@
 """
-This module is automatically generated from the list of available
+This module is automatically generated from a list of available
 routes on the API server.  Functions in this module will take a remote
 object ID (when appropriate) and an optional argument to set the
 request body.  The request must be a list or a dict, as it will be

@@ -1,5 +1,14 @@
 """
-TODO: Write something here.
+DXJob Handler
++++++++++++++
+
+Jobs are DNAnexus entities which capture an app or applet that is
+being run.  They can be created from either
+:func:`dxpy.bindings.dxapplet.DXApplet.run` or
+:func:`dxpy.bindings.dxapp.DXApp.run` if running an applet or app, or
+via :func:`new_dxjob` or :func:`DXJob.new` if a job is creating a
+subjob.
+
 """
 
 from dxpy.bindings import *

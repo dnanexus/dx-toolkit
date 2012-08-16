@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Python Library for Platform API
-===============================
+DNAnexus dxpy Python Library
+============================
 
 Contents:
 
@@ -12,6 +12,9 @@ Contents:
    :maxdepth: 9
 
    dxpy
+   dxpy_bindings_intro
+   dxpy_api
+   dxpy_exceptions
 
 Indices and tables
 ==================
