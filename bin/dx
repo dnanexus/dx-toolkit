@@ -1670,6 +1670,10 @@ def export(args):
         from dxpy.scripts import dx_reads_to_fastq
         sys.argv = [sys.argv[0]] + args.exporter_args
         dx_reads_to_fastq.main()
+    elif args.format == 'sam':
+        from dxpy.scripts import dx_mappings_to_sam
+        sys.argv = [sys.argv[0]] + args.exporter_args
+        dx_mappings_to_sam.main()
 #    elif args.format == 'csv':
     else:
         parser.exit(1, 'Not yet implemented\n')
