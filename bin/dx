@@ -2420,6 +2420,7 @@ usage='dx subcommand [options]')
 parser.add_argument('--version', action='version', version='dxclient 0.0.1')
 
 subparsers = parser.add_subparsers()
+subparsers.metavar = 'subcommand'
 
 parser_shell = subparsers.add_parser('sh', help='DX shell',
                                      description='When run with no arguments, this command launches an interactive shell.  Otherwise, it will load the filename provided and interpret each nonempty line as a command to execute.  In both cases, the "dx" is omitted.', prog='dx sh')
@@ -2695,6 +2696,7 @@ parser_map['terminate'] = parser_terminate
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
                                     description='Search functionality over data objects, projects, and jobs', prog='dx find')
 subparsers_find = parser_find.add_subparsers()
+subparsers_find.metavar = 'category'
 parser_map['find'] = parser_find
 
 parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[stdout_args, json_arg, no_color_arg], prog='dx find jobs')
@@ -2801,6 +2803,7 @@ parser_map['export'] = parser_export
 
 parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
+subparsers_new.metavar = 'class'
 parser_map['new'] = parser_new
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',

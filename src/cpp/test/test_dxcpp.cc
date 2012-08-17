@@ -1226,7 +1226,6 @@ TEST(DXAppTest, AllAppTests) {
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
-  loadFromEnvironment();
   JSON project_hash(JSON_OBJECT);
   project_hash["name"] = "test_project";
   JSON resp = projectNew(project_hash);
