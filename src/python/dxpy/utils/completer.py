@@ -10,6 +10,9 @@ from dxpy.utils.resolver import *
 def startswith(text):
     return (lambda string: string.startswith(text))
 
+def escape_completion_name_str(string):
+    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/')
+
 def get_folder_matches(text, delim_pos, dxproj, folderpath):
     '''
     :param text: String to be tab-completed; still in escaped form
@@ -72,7 +75,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
         names = map(lambda result: result['describe']['name'], results)
         return filter(startswith(text),
                       map(lambda name:
-                              ('' if text == '' else text[:delim_pos + 1]) + escape_name_str(name),
+                              ('' if text == '' else text[:delim_pos + 1]) + escape_completion_name_str(name),
                           names))
     except:
         return []
@@ -109,7 +112,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
             results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
                              list(dxpy.find_projects(describe=True, level=perm_level)))
             matches += filter(startswith(text),
-                              map(lambda result: escape_name_str(result['describe']['name']) + ':', results))
+                              map(lambda result: escape_completion_name_str(result['describe']['name']) + ':', results))
 
     if expected == 'project':
         return matches
