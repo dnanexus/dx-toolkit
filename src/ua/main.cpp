@@ -282,9 +282,9 @@ void createFolder(const string &projectID, const string &folder) {
 }
 
 /*
- * Create the file object. The object is created in the project and folder
- * specified in opt, and with the specified name. The folder and any parent
- * folders are created if they do not exist.
+ * Create the file object. The object is created in the given project and
+ * folder, and with the specified name. The folder and any parent folders
+ * are created if they do not exist.
  */
 string createFileObject(const string &project, const string &folder, const string &name) {
   dx::JSON params(dx::JSON_OBJECT);
@@ -360,7 +360,7 @@ int main(int argc, char * argv[]) {
   if (opt.version()) {
     cout << GITVERSION << endl;
     return 0;
-  } else if (opt.help() || opt.file.empty()) {
+  } else if (opt.help() || opt.files.empty()) {
     opt.printHelp(argv[0]);
     return 1;
   }
@@ -370,11 +370,17 @@ int main(int argc, char * argv[]) {
   LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
 
   LOG << opt;
-  opt.validate();
+  try {
+    opt.validate();
+  } catch (exception &e) {
+    LOG << "ERROR: " << e.what() << endl;
+    return 1;
+  }
 
-  setAPIServerInfo(opt.apiserverHost, opt.apiserverPort, "http");
+  setAPIServerInfo(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol);
   setSecurityContext(securityContext(opt.authToken));
-  setProjectContext(opt.project);
+  // I don't think we need this.
+  // setProjectContext(opt.project);
 
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
@@ -384,19 +390,20 @@ int main(int argc, char * argv[]) {
     curlInit();
 
     testServerConnection();
-    string projectID = resolveProject(opt.project);
+
+    string projectID = resolveProject(opt.projects[0]);
     testProjectPermissions(projectID);
-    createFolder(projectID, opt.folder);
+    createFolder(projectID, opt.folders[0]);
 
-    testFileExists(opt.file);
+    testFileExists(opt.files[0]);
 
-    string fileID = createFileObject(opt.project, opt.folder, opt.name);
+    string fileID = createFileObject(opt.projects[0], opt.folders[0], opt.names[0]);
     LOG << "fileID is " << fileID << endl;
 
     cerr << endl
-         << "Uploading file " << opt.file << " to DNAnexus file object " << fileID << endl;
+         << "Uploading file " << opt.files[0] << " to DNAnexus file object " << fileID << endl;
 
-    totalChunks = createChunks(opt.file, fileID);
+    totalChunks = createChunks(opt.files[0], fileID);
     LOG << "Created " << totalChunks << " chunks." << endl;
 
     LOG << "Creating read thread..." << endl;

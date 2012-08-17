@@ -10,7 +10,9 @@ namespace fs = boost::filesystem;
 #include "dxjson/dxjson.h"
 
 string envVarMapper(const string &var) {
-  if (var == "DX_APISERVER_HOST") {
+  if (var == "DX_APISERVER_PROTOCOL") {
+    return "apiserver-protocol";
+  } else if (var == "DX_APISERVER_HOST") {
     return "apiserver-host";
   } else if (var == "DX_APISERVER_PORT") {
     return "apiserver-port";
@@ -27,14 +29,17 @@ Options::Options() {
     defaultCompressThreads = 1;
   }
 
+  vector<string> defaultFolders;
+  defaultFolders.push_back("/");
+
   visible_opts = new po::options_description("Allowed options");
   visible_opts->add_options()
     ("help,h", "Produce a help message")
     ("version", "Print the version")
     ("auth-token,a", po::value<string>(&authToken), "Specify the authentication token")
-    ("project,p", po::value<string>(&project), "Name or ID of the destination project")
-    ("folder,f", po::value<string>(&folder)->default_value("/"), "Name of the destination folder")
-    ("name,n", po::value<string>(&name), "Name of the file to be created")
+    ("project,p", po::value<vector<string> >(&projects), "Name or ID of the destination project")
+    ("folder,f", po::value<vector<string> >(&folders)->default_value(defaultFolders, "/"), "Name of the destination folder")
+    ("name,n", po::value<vector<string> >(&names), "Name of the file to be created")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size of chunks in which the file should be uploaded")
@@ -46,7 +51,7 @@ Options::Options() {
 
   hidden_opts = new po::options_description();
   hidden_opts->add_options()
-    ("file", po::value<string>(&file), "File to upload")
+    ("file", po::value<vector<string> >(&files), "File to upload")
     ;
 
   command_line_opts = new po::options_description();
@@ -55,9 +60,10 @@ Options::Options() {
 
   env_opts = new po::options_description();
   env_opts->add_options()
-    ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
-    ("apiserver-port", po::value<int>(&apiserverPort), "API server port")
-    ("project", po::value<string>(&project), "ID of the destination project")
+    ("apiserver-protocol", po::value<string>(&apiserverProtocol)->default_value("https"), "API server protocol")
+    ("apiserver-host", po::value<string>(&apiserverHost)->default_value("emtest.dnanexus.com"), "API server host")
+    ("apiserver-port", po::value<int>(&apiserverPort)->default_value(443), "API server port")
+    ("project", po::value<vector<string> >(&projects), "ID of the destination project")
     ;
 
   pos_opts = new po::positional_options_description();
@@ -70,11 +76,6 @@ void Options::parse(int argc, char * argv[]) {
 
   po::store(parse_environment(*env_opts, envVarMapper), vm);
   po::notify(vm);
-
-  if (name.empty()) {
-    fs::path p(file);
-    name = p.filename().string();
-  }
 
   if (authToken.empty()) {
     char * dxSecurityContext = getenv("DX_SECURITY_CONTEXT");
@@ -102,11 +103,18 @@ void Options::printHelp(char * programName) {
 }
 
 void Options::validate() {
-  if (file.empty()) {
-    throw runtime_error("A file to upload must be specified");
+  if (files.empty()) {
+    throw runtime_error("Must specify at least one file to upload");
+  }
+  if (names.empty()) {
+    fs::path p(files[0]);
+    names.push_back(p.filename().string());
   }
   if (authToken.empty()) {
     throw runtime_error("An authentication token must be provided");
+  }
+  if (apiserverProtocol.empty()) {
+    throw runtime_error("API server protocol must be specified (\"http\" or \"https\")");
   }
   if (apiserverHost.empty()) {
     throw runtime_error("An API server must be specified");
@@ -116,7 +124,7 @@ void Options::validate() {
     msg << "Invalid API server port: " << apiserverPort;
     throw runtime_error(msg.str());
   }
-  if (project.empty()) {
+  if (projects.empty()) {
     throw runtime_error("A project must be specified");
   }
   if (compressThreads < 1) {
@@ -129,9 +137,9 @@ void Options::validate() {
     msg << "Number of upload threads must be positive: " << uploadThreads;
     throw runtime_error(msg.str());
   }
-  if (chunkSize < 1) {
+  if (chunkSize < 5 * 1024 * 1024) {
     ostringstream msg;
-    msg << "Chunk size must be positive: " << chunkSize;
+    msg << "Minimum chunk size is " << (5 * 1024 * 1024) << " (5 MB): " << chunkSize;
     throw runtime_error(msg.str());
   }
   if (tries < 1) {
@@ -147,15 +155,31 @@ ostream &operator<<(ostream &out, const Options &opt) {
   } else {
     out << "Options:" << endl
         << "  auth token: " << opt.authToken << endl
+        << "  API server protocol: " << opt.apiserverProtocol << endl
         << "  API server host: " << opt.apiserverHost << endl
-        << "  API server port: " << opt.apiserverPort << endl
+        << "  API server port: " << opt.apiserverPort << endl;
 
-        << "  project: " << opt.project << endl
-        << "  folder: " << opt.folder << endl
-        << "  name: " << opt.name << endl
-        << "  file: " << opt.file << endl
+    out << "  projects:";
+    for (unsigned int i = 0; i < opt.projects.size(); ++i)
+      out << " " << opt.projects[i];
+    out << endl;
 
-        << "  compression threads: " << opt.compressThreads << endl
+    out << "  folders:";
+    for (unsigned int i = 0; i < opt.folders.size(); ++i)
+      out << " " << opt.folders[i];
+    out << endl;
+
+    out << "  names:";
+    for (unsigned int i = 0; i < opt.names.size(); ++i)
+      out << " " << opt.names[i];
+    out << endl;
+
+    out << "  files:";
+    for (unsigned int i = 0; i < opt.files.size(); ++i)
+      out << " " << opt.files[i];
+    out << endl;
+
+    out << "  compression threads: " << opt.compressThreads << endl
         << "  upload threads: " << opt.uploadThreads << endl
         << "  chunkSize: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl

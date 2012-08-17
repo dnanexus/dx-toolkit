@@ -164,7 +164,7 @@ void Chunk::log(const string &message) const {
 ostream &operator<<(ostream &out, const Chunk &chunk) {
   out << "[" << chunk.localFile << ":" << chunk.start << "-" << chunk.end
       << " -> " << chunk.fileID << "[" << chunk.index << "]"
-      << ", tries=" << chunk.triesLeft << ", data_size=" << chunk.data.size()
+      << ", tries=" << chunk.triesLeft << ", data.size=" << chunk.data.size()
       << "]";
   return out;
 }

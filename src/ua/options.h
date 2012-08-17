@@ -22,14 +22,15 @@ public:
 
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);
 
-  std::string authToken;
+  std::string apiserverProtocol;
   std::string apiserverHost;
   int apiserverPort;
+  std::string authToken;
 
-  std::string project;
-  std::string folder;
-  std::string name;
-  std::string file;
+  std::vector<std::string> projects;
+  std::vector<std::string> folders;
+  std::vector<std::string> names;
+  std::vector<std::string> files;
 
   int compressThreads;
   int uploadThreads;
