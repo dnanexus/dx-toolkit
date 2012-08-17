@@ -192,7 +192,9 @@ def create_or_update_version(app_name, version, app_spec, try_update=True):
     # This has a race condition since the app could have been created or
     # published since we last looked.
     try:
-        return dxpy.api.appNew(app_spec)["id"]
+        app_id = dxpy.api.appNew(app_spec)["id"]
+        print >> sys.stderr, 'appNew => %r' % (app_id)
+        return app_id
     except dxpy.exceptions.DXAPIError as e:
         # TODO: detect this error more reliably
         if e.name == 'InvalidInput' and e.msg == 'Specified name and version conflict with an existing alias':
@@ -214,7 +216,9 @@ def update_version(app_name, version, app_spec, try_update=True):
     if not try_update:
         return None
     try:
-        return dxpy.api.appUpdate("app-" + app_name, version, app_spec)["id"]
+        app_id = dxpy.api.appUpdate("app-" + app_name, version, app_spec)["id"]
+        print >> sys.stderr, 'appUpdate => %r' % (app_id)
+        return app_id
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'InvalidState':
             print >> sys.stderr, 'App %s/%s has already been published' % (app_spec["name"], version)
@@ -242,6 +246,7 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
         try_versions = [app_spec["version"]]
 
     for version in try_versions:
+        print >> sys.stderr, "Attempting to create version %s..." % (version,)
         app_spec['version'] = version
         app_describe = None
         try:
@@ -260,6 +265,7 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
         # unnecessary API calls, but we always have to be prepared to recover
         # from API errors.
         if app_describe is None:
+            print >> sys.stderr, 'App %s/%s does not yet exist' % (app_spec["name"], version)
             app_id = create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
@@ -267,7 +273,7 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
             # Success!
             break
         elif app_describe.get("published", 0) == 0:
-            print >> sys.stderr, 'App %s/%s already exists' % (app_spec["name"], version)
+            print >> sys.stderr, 'App %s/%s already exists and has not been published' % (app_spec["name"], version)
             app_id = update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
@@ -275,6 +281,7 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
             # Success!
             break
         else:
+            print >> sys.stderr, 'App %s/%s already exists and has been published' % (app_spec["name"], version)
             # App has already been published. Give up on this version.
             continue
     else:
