@@ -29,13 +29,14 @@ class DXError: public std::exception {
 class DXAPIError: public DXError {
  public:
   std::string name;
-  int resp_code;
+  int resp_code; 
+  mutable std::string error_msg;
 
- DXAPIError(std::string name, std::string msg, int code) :
+  DXAPIError(std::string name, std::string msg, int code) :
   DXError(msg), name(name), resp_code(code) {}
 
   virtual const char* what() const throw() {
-    std::string error_msg = name + ": " + msg + ", " + boost::lexical_cast<std::string>(resp_code);
+    error_msg = name + std::string(": ") + msg + std::string(", HTTP code = ") + boost::lexical_cast<std::string>(resp_code);
     return (const char*)error_msg.c_str();
   }
 

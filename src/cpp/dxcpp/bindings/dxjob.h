@@ -73,6 +73,8 @@ class DXJob {
    * "done" state. (Default ~= Infinity ( > 60yrs)).
    *
    * Note: The actual timeout value in practise can be upto 2 seconds larger.
+   * @warning If the job reaches into failed state, and no timeout value was provided
+   * then this function will block forever. Use with caution.
    */
   void waitOnDone(const int timeout=std::numeric_limits<int>::max()) const;
 };

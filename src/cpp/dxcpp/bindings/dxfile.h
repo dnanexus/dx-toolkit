@@ -8,7 +8,8 @@
 #include "../bindings.h"
 
 /**
- * @brief Remote file handler
+ * Remote file handler class.
+ *
  * Three important rules to remember:
  * - A file in <b>"open"</b> state can only be used for writing (no "reads"). See: is_open()
  * - A file in <b>"closed"</b> state can only be used for reading data (no "writes"). See: is_closed()

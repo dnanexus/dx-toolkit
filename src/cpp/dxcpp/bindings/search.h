@@ -7,18 +7,21 @@
  * This class contain static member functions corrosponding to
  * /find* routes.
  *
- * For convenience of users, c++ bindings treat all "timestamp" fields in input hashes
- * differently then apiserver (it is allowed to be either: an integer or a string):
+ * For convenience of users, all methods of DXSystem class treat "timestamp" fields 
+ * in input hash differently then apiserver. Unlike apiserver they allow the
+ * field to be either of the two: integer or string (apiserver only allows
+ * integer fields). For all non-negative timestamp values, DXSystem
+ * methods behave exactly the way apiserver does. In general:
  * 
- * - In case of integer, positive timestamp denote the usual, i.e., 
- * number of milliseconds since unix epoch. But negative integer timestamps T, 
+ * - In case of integer, non-negative timestamp denote the usual, i.e., 
+ * number of milliseconds since unix epoch. But negative timestamp T, 
  * represent (Current time - |T|), i.e., those many milliseconds
  * before the current time.
  *
- * - In case of strings, we allow them to be of form: Number-Suffix. For ex:
+ * - In case of string, it must be of form: "Number-Suffix". For ex:
  * "1s" (denotes 1 second ahead from now), "-1s" (denotes 1 second before), etc.
  * Suffixes allowed are: "s", "m", "d", "w", or "y" (for seconds, minutes, days, weeks, 
- * or years). (Note year is defined as 365 days).
+ * or years). (Note: year is defined as 365 days).
  */
 class DXSystem {
 public:
@@ -60,7 +63,7 @@ public:
    * - Timestamp fields in input query are allowed to be more relaxed than what
    * the api route expects: See documentation at top of DXSystem class for details.
    */
-  static dx::JSON findJobs(const dx::JSON &query);
+  static dx::JSON findJobs(dx::JSON query);
 
   /**
    * This function is an easy wrapper for route: /system/findProjects
@@ -68,7 +71,7 @@ public:
    * @param query A JSON hash, as expected by the route: /system/findProjects
    * @return A JSON hash, exactly as returned by the route: /system/findProjects
    */
-  static dx::JSON findProjects(const dx::JSON &query);
+  static dx::JSON findProjects(dx::JSON query);
 
   /**
    * This function is an easy wrapper for route: /system/findApps
@@ -80,6 +83,6 @@ public:
    * - Timestamp fields in input query are allowed to be more relaxed than what
    * the api route expects: See documentation at top of DXSystem class for details.
    */
-  static dx::JSON findApps(const dx::JSON &query);
+  static dx::JSON findApps(dx::JSON query);
 };
 #endif

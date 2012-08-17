@@ -59,7 +59,6 @@ JSON DXSystem::findDataObjects(JSON query) {
       query["scope"]["project"] = g_WORKSPACE_ID;
     }
   }
-//  std::cerr<<"\nQuery = "<<query.toString()<<std::endl;
   return systemFindDataObjects(query); 
 }
 
@@ -72,31 +71,23 @@ JSON DXSystem::findOneDataObject(JSON query) {
   return JSON(JSON_NULL);
 }
 
-JSON DXSystem::findJobs(const JSON &query) {
-  JSON newQuery(JSON_NULL);
-  if (query.has("created")) {
-    if (newQuery.type() == JSON_NULL)
-      newQuery = query;
-    newQuery["created"] = getTimestampAdjustedField(query["created"]);
-  }
-  return systemFindJobs(newQuery); 
+JSON DXSystem::findJobs(JSON query) {
+  if (query.has("created"))
+    query["created"] = getTimestampAdjustedField(query["created"]);
+
+  return systemFindJobs(query); 
 }
 
-JSON DXSystem::findProjects(const JSON &query) {
+JSON DXSystem::findProjects(JSON query) {
   return systemFindProjects(query);
 }
 
-JSON DXSystem::findApps(const JSON &query) {
-  JSON newQuery(JSON_NULL);
-  if (query.has("modified")) {
-    if (newQuery.type() == JSON_NULL)
-      newQuery = query;
-    newQuery["modified"] = getTimestampAdjustedField(query["modified"]);
-  }
-  if (query.has("created")) {
-    if (newQuery.type() == JSON_NULL)
-      newQuery = query;
-    newQuery["created"] = getTimestampAdjustedField(query["created"]);
-  }
-  return systemFindApps(newQuery); 
+JSON DXSystem::findApps(JSON query) {
+  if (query.has("modified"))
+    query["modified"] = getTimestampAdjustedField(query["modified"]);
+
+  if (query.has("created"))
+    query["created"] = getTimestampAdjustedField(query["created"]);
+  
+  return systemFindApps(query); 
 }

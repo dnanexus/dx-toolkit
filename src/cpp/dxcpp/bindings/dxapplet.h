@@ -27,6 +27,18 @@ public:
   
   DXApplet(const std::string &dxid,
             const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+  
+  /**
+   * Create a new applet with specified input hash.
+   * For details about input see the route: /applet-xxx/new.
+   *
+   * If inp["project"] is missing, then g_WORKSPACE_ID is used as the
+   * inp["project"]
+   *
+   * @param inp JSON hash, which will be passed (after resolving missing project)
+   * to route: /applet-xxxx/new
+   */
+  void create(dx::JSON inp);
 
   /** 
    * Creates a new job, to execute the function "main" of this applet
