@@ -7,10 +7,16 @@ using namespace dx;
 void DXDataObject::setIDs(const std::string &dxid,
 			  const std::string &proj) {
   dxid_ = dxid;
-  if (proj == "default")
-    proj_ = g_WORKSPACE_ID;
+  bool noProjectSpecified = (proj.size() == 0);
+
+  if (proj == "default") {
+    noProjectSpecified = (g_WORKSPACE_ID.size() == 0);
+    proj_ = g_WORKSPACE_ID; 
+  }
   else
     proj_ = proj;
+  if (noProjectSpecified)
+    throw DXError("ERROR: g_WORKSPACE_ID is not set, and, no project is specified. Cannot setIDs() for this DataObject.");
 }
 
 void DXDataObject::waitOnState(const string &state,
@@ -76,6 +82,10 @@ void DXDataObject::setProperties(const dx::JSON &properties) const {
   input_hash << "{\"project\": \"" << proj_ << "\",";
   input_hash << "\"properties\": " << properties.toString() << "}";
   setProperties_(input_hash.str());
+}
+
+dx::JSON DXDataObject::getProperties() const {
+  return describe(true)["properties"];
 }
 
 void DXDataObject::addTags(const dx::JSON &tags) const {

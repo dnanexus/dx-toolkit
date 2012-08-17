@@ -27,6 +27,24 @@ void remove_all(const string &proj, const string &folder="/") {
   dxproject.removeFolder(folder, true);
 }
 
+
+// A helper function/global var for
+// creating an applet
+JSON applet_details(JSON_OBJECT);
+void createANewApplet(DXApplet &apl) {
+  applet_details.clear();
+  applet_details = JSON(JSON_OBJECT);
+  applet_details["name"] = "test_applet";
+  applet_details["inputSpec"] = JSON(JSON_ARRAY);
+  applet_details["inputSpec"].push_back(JSON::parse("{\"name\": \"rowFetchChunk\", \"class\": \"int\"}"));
+  applet_details["runSpec"] = JSON(JSON_OBJECT);
+  applet_details["outputSpec"] = JSON::parse("[{\"name\":\"message\", \"class\":\"string\"}]");
+  applet_details["runSpec"]["code"] = "#!/bin/bash\n\n#main() {\necho '{\"message\": \"hello world!\"}' > job_output.json \n#}";
+  applet_details["runSpec"]["interpreter"] = "bash";
+  applet_details["dxapi"] = "1.0.0";
+  apl.create(applet_details);
+}
+
 ////////////
 // DXLink //
 ////////////
@@ -347,6 +365,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   ASSERT_TRUE(desc.has("created"));
   ASSERT_TRUE(desc.has("modified"));
   ASSERT_EQ(desc["properties"], properties);
+  ASSERT_EQ(desc["properties"], second_dxrecord.getProperties());
   ASSERT_EQ(desc["details"], details);
 }
 
@@ -403,7 +422,7 @@ TEST_F(DXRecordTest, RenameTest) {
   ASSERT_EQ(dxrecord.describe()["name"].get<string>(), "secondname");
 }
 
-TEST_F(DXRecordTest, SetPropertiesTest) {
+TEST_F(DXRecordTest, SetAndGetPropertiesTest) {
   DXRecord dxrecord = DXRecord::newDXRecord();
   JSON properties(JSON_OBJECT);
   properties["project"] = "cancer project";
@@ -411,12 +430,13 @@ TEST_F(DXRecordTest, SetPropertiesTest) {
   dxrecord.setProperties(properties);
   JSON desc = dxrecord.describe(true);
   ASSERT_EQ(desc["properties"], properties);
+  ASSERT_EQ(dxrecord.getProperties(), properties);
 
   JSON unset_property(JSON_OBJECT);
   unset_property["project"] = JSON(JSON_NULL);
   dxrecord.setProperties(unset_property);
   properties.erase("project");
-  ASSERT_EQ(dxrecord.describe(true)["properties"], properties);
+  ASSERT_EQ(dxrecord.getProperties(), properties);
 }
 
 TEST_F(DXRecordTest, TagsTest) {
@@ -664,25 +684,6 @@ TEST_F(DXFileTest, WriteReadFile) {
   same_dxfile.read(stored, foostr.length());
   ASSERT_EQ(foostr.substr(1), string(stored, same_dxfile.gcount()));
 }
-
-/*
-TEST_F(DXFileTest, StreamingOperators) {
-  dxfile = DXFile::newDXFile();
-  stringstream samestr;
-  dxfile  << "foo" << 1 << " " << 2.5 << endl;
-  samestr << "foo" << 1 << " " << 2.5 << endl;
-  dxfile  << "bar" << endl;
-  samestr << "bar" << endl;
-  dxfile.close(true);
-
-  char stored[50];
-  DXFile::downloadDXFile(dxfile.getID(), tempfilename);
-  ifstream downloadedfile(tempfilename.c_str());
-  downloadedfile.read(stored, 50);
-  ASSERT_EQ(samestr.str(), string(stored, downloadedfile.gcount()));
-
-  // TODO: Test >> if/when implemented
-}*/
 
 //////////////
 // DXGTable //
@@ -994,7 +995,7 @@ TEST_F(DXGTableTest, GRITest) {
   // TODO: Test with > 1 index
 }
 
-TEST(DXSearchTest, findDataObjects) {
+TEST(DXSystemTest, findDataObjects) {
   // Note: Due to network delays, some of these test might fail.
   //       Be aware of this fact while debugging.
   usleep(1 * 1000000); // Sleep for 1s
@@ -1033,11 +1034,24 @@ TEST(DXSearchTest, findDataObjects) {
   dxrecord.remove();
 }
 
-TEST(DXSearchTest, findJobs) {
-  // TODO
+TEST(DXSystemTest, findJobs) {
+  int64_t ts = std::time(NULL);
+  DXApplet apl;
+  createANewApplet(apl);
+  DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
+  
+  JSON res = DXSystem::findJobs(JSON::parse("{\"project\": \"" + apl.getProjectID() + "\"}"));
+  ASSERT_TRUE(res["results"].size() > 0);
+  ASSERT_EQ(res["results"][0]["id"].get<string>(), job.getID());
+  
+  JSON res2 = DXSystem::findJobs(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}}"));
+  ASSERT_EQ(res2["results"].size(), 1);
+  ASSERT_EQ(res["results"][0]["id"].get<string>(), job.getID());
+  apl.remove();
+  job.terminate();
 }
 
-TEST(DXSearchTest, findProjects) {
+TEST(DXSystemTest, findProjects) {
   JSON q = JSON::parse("{}");
   JSON res = DXSystem::findProjects(q);
   int len = res["results"].size();
@@ -1049,8 +1063,147 @@ TEST(DXSearchTest, findProjects) {
   dxprj.destroy();
 }
 
-TEST(DXSearchTest, findApps) {
-  // TODO
+TEST(DXSystemTest, findApps) {
+  int64_t ts = std::time(NULL);
+  DXApplet apl;
+  createANewApplet(apl);
+  JSON inp(JSON_OBJECT);
+  inp["applet"] = apl.getID();
+  inp["version"] = "1";
+  inp["name"] = apl.getID() + "blah";
+  string appid = appNew(inp)["id"].get<string>();
+  DXApp app(appid);
+  
+  JSON res = DXSystem::findApps(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}, \"describe\": true}"));
+  ASSERT_EQ(res["results"].size(), 1);
+  ASSERT_EQ(res["results"][0]["describe"]["name"].get<string>(), apl.getID() + "blah");
+  
+  JSON res2 = DXSystem::findApps(JSON::parse("{\"modified\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}, \"describe\": true}"));
+  ASSERT_EQ(res2["results"].size(), 1);
+  ASSERT_EQ(res2["results"][0]["describe"]["name"].get<string>(), apl.getID() + "blah");
+  ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
+  
+  JSON res3 = DXSystem::findApps(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "},\"modified\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}}"));
+  ASSERT_EQ(res3["results"].size(), 1);
+  ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
+  
+  apl.remove();
+  app.remove();
+}
+
+
+TEST(DXAppletTest, AllAppletTests) {
+  DXApplet apl;
+  createANewApplet(apl);
+   
+  ASSERT_EQ(apl.get()["inputSpec"], applet_details["inputSpec"]);
+  ASSERT_EQ(apl.get()["runSpec"], applet_details["runSpec"]);
+  ASSERT_EQ(apl.describe()["name"].get<string>(), "test_applet");
+  
+  // Run the applet
+  DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
+  ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
+  job.terminate();
+
+
+  // Clone the applet
+  DXApplet apl2 = apl.clone(second_proj_id);
+  apl.remove();
+  ASSERT_EQ(apl2.get()["inputSpec"], applet_details["inputSpec"]);
+  apl2.remove(); 
+}
+
+// AllJobTests are slow because they wait for full execution
+// of an applet
+// For this reason they need executionserver and jobserver running as well
+TEST(DXJobTest, AllJobTests_SLOW) {
+  DXApplet apl;
+  createANewApplet(apl);
+  DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
+  ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
+  job.waitOnDone(3600);
+  // If state is not "done"i after even 1hr, that means job most prob "failed": 
+  // should not happen
+  ASSERT_EQ(job.getState(), "done");
+   
+  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
+  int64_t s1 = std::time(NULL); 
+  int timeout = 3;
+  job2.waitOnDone(timeout);
+  int64_t s2 = std::time(NULL);
+  ASSERT_TRUE((s1 + timeout + 2) >= s2);
+  job2.terminate();
+  apl.remove();
+}
+
+TEST(DXAppTest, AllAppTests) {
+  DXApplet apl;
+  createANewApplet(apl);
+  JSON inp(JSON_OBJECT);
+  inp["applet"] = apl.getID();
+  inp["version"] = "1";
+  inp["name"] = apl.getID() + "blah";
+  string appid = appNew(inp)["id"].get<string>();
+  DXApp app(appid);
+
+  ASSERT_EQ(app.get()["inputSpec"], applet_details["inputSpec"]);
+
+//  app.update(JSON::parse("{\"name\": \"\"}"));
+  ASSERT_EQ(app.describe()["name"].get<string>(), apl.getID() + "blah");
+  ASSERT_EQ(app.describe()["installed"].get<bool>(), true);
+
+  // Test addTags() and removeTags()
+  app.addTags(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+  JSON desc = app.describe();
+  int countTags = 0;
+  for (int i = 0; i < desc["aliases"].size(); ++i) {
+    if (desc["aliases"][i].get<string>() == "blah-1" || desc["aliases"][i].get<string>() == "blah-2")
+      countTags++;
+  }
+  ASSERT_EQ(countTags, 2);
+
+  app.removeTags(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+  countTags = 0;
+  desc = app.describe();
+  for (int i = 0; i < desc["aliases"].size(); ++i) {
+    if (desc["aliases"][i].get<string>() == "blah-1" || desc["aliases"][i].get<string>() == "blah-2")
+      countTags++;
+  }
+  ASSERT_EQ(countTags, 0);
+  
+  // Test addCategories() and removeCategories()
+  app.addCategories(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+  desc = app.describe();
+  int countCategories = 0;
+  for (int i = 0; i < desc["categories"].size(); ++i) {
+    if (desc["categories"][i].get<string>() == "blah-1" || desc["categories"][i].get<string>() == "blah-2")
+      countCategories++;
+  }
+  ASSERT_EQ(countCategories, 2);
+
+  app.removeCategories(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+  desc = app.describe();
+  countCategories = 0;
+  for (int i = 0; i < desc["categories"].size(); ++i) {
+    if (desc["categories"][i].get<string>() == "blah-1" || desc["categories"][i].get<string>() == "blah-2")
+      countCategories++;
+  }
+  ASSERT_EQ(countCategories, 0);
+  
+  //Test Install and uninstall
+  // TODO: We need to create another user to test uninstalltion
+  //       since a developer cannot uninstall the app
+  
+  // Test publish()
+  ASSERT_EQ(app.describe().has("published"), false);
+  app.publish();
+  ASSERT_EQ(app.describe().has("published"), true);
+
+  // Remove the app
+  app.remove();
+  ASSERT_EQ(app.describe()["deleted"].get<bool>(), true);
+
+  apl.remove();
 }
 
 ///////////

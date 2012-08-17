@@ -154,6 +154,14 @@ class DXDataObject {
    * as properties
    */
   void setProperties(const dx::JSON &properties) const;
+  
+  /**
+   * Retrieves all properties of the object
+   *
+   * @return JSON hash with each "key/value" pair corrsoponding
+   * to a distinct "property name/property value"
+   */
+  dx::JSON getProperties() const;
 
   /**
    * Adds the specified tags.

@@ -103,7 +103,7 @@ JSON DXApp::get() const {
 }
 
 void DXApp::publish(bool makeDefault) const {
-  string inp = string("{makeDefault: \"") + ((makeDefault) ? string("true") : string("false")) + string("\"}");
+  string inp = string("{\"makeDefault\": ") + ((makeDefault) ? string("true") : string("false")) + string("}");
   if (dxid_ != "") {
     appPublish(dxid_, inp);
   } else if (name_ != "") {

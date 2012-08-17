@@ -8,7 +8,7 @@
 #include "../bqueue.h"
 
 /**
- * @brief Remote table handler
+ * Remote GTable handler
  *
  */
 class DXGTable: public DXDataObject {

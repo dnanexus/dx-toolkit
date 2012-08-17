@@ -159,8 +159,15 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // We are here, implies, All retries were exhausted (or not made) with failure.
 
   if (reqCompleted) {
-    cerr << ("\nERROR: POST " + url + " returned non-200 http code in (at least) last of " + boost::lexical_cast<string>(countTries) + " attempt. Will throw DXAPIError.\n");
-    JSON respJSON = JSON::parse(req.respData);
+    cerr << ("\nERROR: POST " + url + " returned non-200 http code in (at least) last of " + boost::lexical_cast<string>(countTries) + " attempt. Will throw\n");
+    JSON respJSON;
+    try {
+      respJSON = JSON::parse(req.respData);
+    } catch (...) {
+      // If invalid json
+      throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + "'\n");
+    }
+//    throw DXError("\nServer returned : " + respJSON.toString());
     throw DXAPIError(respJSON["error"]["type"].get<string>(),
              respJSON["error"]["message"].get<string>(),
              req.responseCode);

@@ -3,6 +3,12 @@
 using namespace std;
 using namespace dx;
 
+void DXApplet::create(JSON inp) {
+  if (!inp.has("project")) 
+    inp["project"] = g_WORKSPACE_ID;
+  setIDs(appletNew(inp)["id"].get<string>(), inp["project"].get<string>());
+}
+
 DXJob DXApplet::run(const JSON &applet_input,
                      const string &project_context,
                      const string &output_folder) const {
