@@ -420,13 +420,8 @@ def pwd(args):
         parser.exit(1, 'Current project is not set\n')
 
 def get_output_flag(args):
-    if args.brief or args.summary or args.verbose:
-        return
-    if sys.stdout.isatty():
+    if not args.brief and not args.summary and not args.verbose:
         args.summary = True
-    else:
-        args.brief = True
-    return
 
 def api(args):
     json_input = json.loads(args.input_json)
@@ -1559,7 +1554,7 @@ def upload(args):
                                         parents=args.parents)
         if args.wait:
             dxfile._wait_on_close()
-        if args.brief or not sys.stdout.isatty():
+        if args.brief:
             print dxfile.get_id()
         else:
             print_desc(dxfile.describe(incl_properties=True, incl_details=True))
@@ -1657,7 +1652,7 @@ def dximport(args):
             for row in reader:
                 dxgtable.add_row([ parse_item(row[i], types[i]) for i in range(len(types))])
             dxgtable.close(block=args.wait)
-            if args.brief or not sys.stdout.isatty():
+            if args.brief:
                 print dxgtable.get_id()
             else:
                 print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
@@ -2415,9 +2410,9 @@ json_arg.add_argument('--json', help='Display return value in JSON', action='sto
 
 stdout_args = argparse.ArgumentParser(add_help=False)
 stdout_args_gp = stdout_args.add_mutually_exclusive_group()
-stdout_args_gp.add_argument('--brief', help='Display a brief version of the return value (default if stdout is not a TTY).  For most commands, prints a DNAnexus ID per line.', action='store_true')
-stdout_args_gp.add_argument('--summary', help='Display summary output (default if stdout is a TTY).', action='store_true')
-stdout_args_gp.add_argument('--verbose', help='Display extra verbose output',
+stdout_args_gp.add_argument('--brief', help='Display a brief version of the return value.  For most commands, prints a DNAnexus ID per line.', action='store_true')
+stdout_args_gp.add_argument('--summary', help='Display summary output (default).', action='store_true')
+stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
                             action='store_true')
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
