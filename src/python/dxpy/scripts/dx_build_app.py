@@ -27,7 +27,7 @@ parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-t
 parser.add_argument("-f", "--overwrite", help="Remove existing applets of the same name", action="store_true", default=False)
 
 # APPS ONLY
-parser.add_argument("-b", "--bill-to", help="Owner (username or organization) to bill for the app", default=None, dest="bill_to")
+parser.add_argument("-b", "--bill-to", help="Owner (of the form user-NAME or org-ORGNAME) to bill for the app", default=None, dest="bill_to")
 parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest", default=None, dest="version_override")
 # --[no-]version-autonumbering
 parser.set_defaults(version_autonumbering=True)
