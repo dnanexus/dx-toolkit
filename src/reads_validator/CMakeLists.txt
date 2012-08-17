@@ -20,12 +20,12 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 set (CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
-if (NOT DEFINED ENV{NUCLEUS_HOME})
-  message(FATAL_ERROR "Environment variable NUCLEUS_HOME not defined")
-endif (NOT DEFINED ENV{NUCLEUS_HOME})
+if (NOT DEFINED ENV{DNANEXUS_HOME})
+  message(FATAL_ERROR "Environment variable DNANEXUS_HOME not defined")
+endif (NOT DEFINED ENV{DNANEXUS_HOME})
 
-add_subdirectory("$ENV{NUCLEUS_HOME}/client/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
-include_directories("$ENV{NUCLEUS_HOME}/client/src/cpp")
+add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
+include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(reads_validator reads_validator.cpp)
 target_link_libraries(reads_validator dxjson dxcpp)

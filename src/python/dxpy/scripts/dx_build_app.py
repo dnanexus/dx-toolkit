@@ -83,6 +83,8 @@ def main():
     if args.mode == "app":
         with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
             app_json = json.load(app_desc)
+        if 'version' not in app_json:
+            parser.error("dxapp.json contains no \"version\" field, but it is required to build an app")
         version = app_json['version']
         try_versions = [args.version_override or version]
         if not args.version_override and args.version_autonumbering:
