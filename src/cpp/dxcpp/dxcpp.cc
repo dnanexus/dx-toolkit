@@ -61,6 +61,8 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // loadFromEnvironment() every time (and acquiring the expensive lock)
   // Note: In this case a regular variable instead of atomic, will also work correctly.
   //       (except can result in few extra short-circuited calls to loadFromEnvironment()).
+  //
+  // Update: Removed atomics from everywhere, because Clang do not support them yet :(
   if (g_loadFromEnvironment_finished == false) {
     loadFromEnvironment();
   }
@@ -187,7 +189,7 @@ void setAPIServerInfo(const string &host, int port, const string &protocol) {
   sprintf(portstr, "%d", port);
   g_APISERVER_PORT = string(portstr);
   g_APISERVER = protocol + "://" + host + ":" + g_APISERVER_PORT;
-
+  g_APISERVER_PROTOCOL = protocol; 
   g_APISERVER_SET = true;
 }
 
@@ -305,6 +307,8 @@ string getVariableForPrinting(const JSON &j) {
   }
 }
 
+// Returning a dummy value from this function (always true)
+// since 
 bool loadFromEnvironment() {
   // Mutex's aim: To ensure that environment variable are loaded only once.
   //              All other calls to loadFromEnvironment() must be short circuited.
@@ -343,14 +347,15 @@ bool loadFromEnvironment() {
       setWorkspaceID(tmp);
   }
 
-  cerr<<"These values will be used by DXHTTPRequest():";
-  cerr<<"\n1. APISERVER_HOST: " + getVariableForPrinting(g_APISERVER_HOST);
-  cerr<<"\n2. APISERVER_PORT: " + getVariableForPrinting(g_APISERVER_PORT);
-  cerr<<"\n3. APISERVER_PROTOCOL: " + getVariableForPrinting(g_APISERVER_PROTOCOL);
-  cerr<<"\n4. SECURITY_CONTEXT: " + getVariableForPrinting(g_SECURITY_CONTEXT);
-  cerr<<"\n5. JOB_ID: " + getVariableForPrinting(g_JOB_ID);
-  cerr<<"\n6. WORKSPACE_ID: " + getVariableForPrinting(g_WORKSPACE_ID);
-  cerr<<"\n7. PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
+  cerr<<"These values will be used by dxcpp library now:";
+  cerr<<"\n1. g_APISERVER_HOST: " + getVariableForPrinting(g_APISERVER_HOST);
+  cerr<<"\n2. g_APISERVER_PORT: " + getVariableForPrinting(g_APISERVER_PORT);
+  cerr<<"\n3. g_APISERVER_PROTOCOL: " + getVariableForPrinting(g_APISERVER_PROTOCOL);
+  cerr<<"\n4. g_APISERVER: " + getVariableForPrinting(g_APISERVER);
+  cerr<<"\n5. g_SECURITY_CONTEXT: " + getVariableForPrinting(g_SECURITY_CONTEXT);
+  cerr<<"\n6. g_JOB_ID: " + getVariableForPrinting(g_JOB_ID);
+  cerr<<"\n7. g_WORKSPACE_ID: " + getVariableForPrinting(g_WORKSPACE_ID);
+  cerr<<"\n8. g_PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
   cerr<<"\n";
 
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
