@@ -2,7 +2,11 @@
 #define DXCPP_BINDINGS_DXTABLE_H
 
 #include "../bindings.h"
-
+/**
+ *@brief NOT IMPLEMENTED
+ *
+ *Not implemented yet. DO NOT USE.
+ */
 class DXTable: public DXDataObject {
  private:
   dx::JSON describe_(const std::string &s)const{return tableDescribe(dxid_,s);}
@@ -29,6 +33,8 @@ class DXTable: public DXDataObject {
   static DXTable newDXTable();
 
   /**
+   * NOT IMPLEMENTED
+   *
    * Clones the associated object into the specified project and folder.
    *
    * @param dest_proj_id ID of the project to which the object should
