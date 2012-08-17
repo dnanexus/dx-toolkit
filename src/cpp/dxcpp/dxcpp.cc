@@ -51,6 +51,7 @@ static bool isRetriableCurlError(int c) {
   return (c == 2 || c == 5 || c == 6 || c == 7 || c == 35);
 }
 
+// load enviornment variables at very start
 bool dummy = loadFromEnvironment();
 
 JSON DXHTTPRequest(const string &resource, const string &data,
@@ -307,19 +308,18 @@ string getVariableForPrinting(const JSON &j) {
   }
 }
 
-// Returning a dummy value from this function (always true)
-// since 
+// Returns a dummy value from this function (always true)
 bool loadFromEnvironment() {
   // Mutex's aim: To ensure that environment variable are loaded only once.
-  //              All other calls to loadFromEnvironment() must be short circuited.
+  //              All other calls to loadFromEnvironment() will be short circuited.
   boost::mutex::scoped_lock glock(g_loadFromEnvironment_mutex);
-
   // It is important to acquire lock before checking g_loadFromEnvironment_finished == true
   // condition, since other instance of the function might be running in parallel thread,
   // we must wait for it to finish (and set g_loadFromEnvironment_finished = true)
   if (g_loadFromEnvironment_finished == true)
     return true; // Short circuit this call - env variables already loaded
 
+  std::cerr<<"\n***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****\n";
   // intiialized with default values, will be overridden by env variable/config file (if present)
   string apiserver_host = "localhost";
   string apiserver_port = "8124";
@@ -347,7 +347,7 @@ bool loadFromEnvironment() {
       setWorkspaceID(tmp);
   }
 
-  cerr<<"These values will be used by dxcpp library now:";
+  cerr<<"\nThese values will be used by dxcpp library now:";
   cerr<<"\n1. g_APISERVER_HOST: " + getVariableForPrinting(g_APISERVER_HOST);
   cerr<<"\n2. g_APISERVER_PORT: " + getVariableForPrinting(g_APISERVER_PORT);
   cerr<<"\n3. g_APISERVER_PROTOCOL: " + getVariableForPrinting(g_APISERVER_PROTOCOL);
@@ -356,9 +356,11 @@ bool loadFromEnvironment() {
   cerr<<"\n6. g_JOB_ID: " + getVariableForPrinting(g_JOB_ID);
   cerr<<"\n7. g_WORKSPACE_ID: " + getVariableForPrinting(g_WORKSPACE_ID);
   cerr<<"\n8. g_PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
-  cerr<<"\n";
+  cerr<<"\n9. g_API_VERSION: " + getVariableForPrinting(g_API_VERSION);
 
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
   g_loadFromEnvironment_finished = true;
+  cerr<<"\n***** Exiting dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****";
+  cerr<<"\n";
   return true;
 }
