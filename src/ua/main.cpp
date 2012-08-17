@@ -379,8 +379,6 @@ int main(int argc, char * argv[]) {
 
   setAPIServerInfo(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol);
   setSecurityContext(securityContext(opt.authToken));
-  // I don't think we need this.
-  // setProjectContext(opt.project);
 
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);

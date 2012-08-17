@@ -106,10 +106,62 @@ void Options::validate() {
   if (files.empty()) {
     throw runtime_error("Must specify at least one file to upload");
   }
-  if (names.empty()) {
-    fs::path p(files[0]);
-    names.push_back(p.filename().string());
+
+  if (names.size() == 0) {
+    // Get each file object name from the local name of the corresponding
+    // file.
+    for (int i = 0; i < files.size(); ++i) {
+      fs::path p(files[i]);
+      names.push_back(p.filename().string());
+    }
+  } else if (names.size() != files.size()) {
+    // If names were specified, there must be exactly as many names as
+    // files.
+    throw runtime_error("Must specify a name for each file; there are " +
+                        boost::lexical_cast<string>(files.size()) + " files, but only " +
+                        boost::lexical_cast<string>(names.size()) + " names were provided.");
   }
+
+  if (projects.empty()) {
+    throw runtime_error("A project must be specified");
+  } else if (projects.size() == 1) {
+    // If one project was specified, use that for all files.
+    while (projects.size() < files.size()) {
+      projects.push_back(projects[0]);
+    }
+  } else if (projects.size() != files.size()) {
+    // If (multiple) projects were specified, there must be exactly as many
+    // projects as files.
+    throw runtime_error("Must specify a project for each file; there are " +
+                        boost::lexical_cast<string>(files.size()) + " files, but only " +
+                        boost::lexical_cast<string>(projects.size()) + " projects were provided.");
+  }
+
+  if (folders.empty()) {
+    throw runtime_error("A folder must be specified");
+  } else if (folders.size() == 1) {
+    // If one folder was specified, use that for all files.
+    while (folders.size() < files.size()) {
+      folders.push_back(folders[0]);
+    }
+  } else if (folders.size() != files.size()) {
+    // If (multiple) folders were specified, there must be exactly as many
+    // folders as files.
+    throw runtime_error("Must specify a folder for each file; there are " +
+                        boost::lexical_cast<string>(files.size()) + " files, but only " +
+                        boost::lexical_cast<string>(folders.size()) + " folders were provided.");
+  }
+
+  // TODO: Here we need to assert the following:
+
+  // assert(names.size() == files.size());
+  // assert(folders.size() == files.size());
+  // assert(projects.size() == files.size());
+
+  // Note that this *is* an assertion failure, in the sense of an internal
+  // error -- something that should "never happen", not something that
+  // could be addressed by the user.
+
   if (authToken.empty()) {
     throw runtime_error("An authentication token must be provided");
   }
@@ -123,9 +175,6 @@ void Options::validate() {
     ostringstream msg;
     msg << "Invalid API server port: " << apiserverPort;
     throw runtime_error(msg.str());
-  }
-  if (projects.empty()) {
-    throw runtime_error("A project must be specified");
   }
   if (compressThreads < 1) {
     ostringstream msg;
