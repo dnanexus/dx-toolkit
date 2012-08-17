@@ -8,39 +8,37 @@ import os, sys, json, fileinput, re, subprocess, argparse
 from datetime import datetime
 import dxpy, dxpy.app_builder
 
-parser = argparse.ArgumentParser(prog="dx-build-app", description="Upload a DNAnexus app")
+parser = argparse.ArgumentParser(prog="dx-build-app", description="Uploads a DNAnexus App.")
 
 # COMMON OPTIONS
 parser.add_argument("src_dir", help="App or applet source directory")
 
 parser.set_defaults(mode="app")
-parser.add_argument("--create-applet", help="Create an applet", action="store_const", dest="mode", const="applet")
-parser.add_argument("--create-app", help="Create an app", action="store_const", dest="mode", const="app")
+parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
+parser.add_argument("--create-applet", help="Create an applet (default is to create an app).", action="store_const", dest="mode", const="applet")
+parser.add_argument("-p", "--destination-project", help="Insert the applet into the project with the specified project ID.", default=None)
 
-parser.add_argument("-p", "--destination-project", help="Insert the applet into the project with the specified project ID", default=None)
-# --[no-]dx-toolkit-autodep
-parser.set_defaults(dx_toolkit_autodep=True)
-parser.add_argument("--dx-toolkit-autodep", help="Auto-insert the dx-toolkit dependency if it's absent from the runSpec", action="store_true", dest="dx_toolkit_autodep")
-parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec", action="store_false", dest="dx_toolkit_autodep")
-
-# APPLETS
-parser.add_argument("-f", "--overwrite", help="Remove existing applets of the same name", action="store_true", default=False)
-
-# APPS ONLY
-parser.add_argument("-b", "--bill-to", help="Owner (of the form user-NAME or org-ORGNAME) to bill for the app", default=None, dest="bill_to")
-parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest", default=None, dest="version_override")
-# --[no-]version-autonumbering
-parser.set_defaults(version_autonumbering=True)
-parser.add_argument("--version-autonumbering", help="Attempt to create a unique version number e.g. 1.2.3+git.a1b1c1d if 1.2.3 already exists", action="store_true", dest="version_autonumbering")
-parser.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest", action="store_false", dest="version_autonumbering")
-# --[no-]update
-parser.set_defaults(update=True)
-parser.add_argument("--update", help="Attempt to update an existing unpublished app in place.", action="store_true", dest="update")
-parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]publish
 parser.set_defaults(publish=False)
 parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
-parser.add_argument("--no-publish", help="Do not publish the app.", action="store_false", dest="publish")
+parser.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+
+parser.add_argument("-f", "--overwrite", help="Remove existing applets of the same name.", action="store_true", default=False)
+parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None, dest="version_override", metavar='VERSION')
+parser.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.", default=None, dest="bill_to", metavar='USER_OR_ORG')
+
+# --[no-]version-autonumbering
+parser.set_defaults(version_autonumbering=True)
+parser.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
+parser.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
+# --[no-]update
+parser.set_defaults(update=True)
+parser.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
+parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
+# --[no-]dx-toolkit-autodep
+parser.set_defaults(dx_toolkit_autodep=True)
+parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
+parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. Only use this if you know what you are doing.", action="store_false", dest="dx_toolkit_autodep")
 
 
 def get_timestamp_version_suffix():

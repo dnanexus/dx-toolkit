@@ -44,6 +44,7 @@ beforehand as applicable while using the format 'hostname:port'
 
 # Try to reset the encoding to utf-8.
 # (The alternative is to encode every single input and output as utf-8, which is unmaintainable.)
+# TODO: consider using codecs.wrap/sys.stdout = codecs.getwriter('utf8')(sys.stdout) or PYTHONIOENCODING instead of this
 try:
     import sys, locale
     reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])

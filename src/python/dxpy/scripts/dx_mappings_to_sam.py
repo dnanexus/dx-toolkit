@@ -200,7 +200,11 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs):
         chromosome = "*"
         lo = 0
 
-    chromosome2 = values["chr2"]
+    if values["chr2"] == values["chr"]:
+        chromosome2 = "="
+    else:
+        chromosome2 = values["chr2"]
+
     lo2 = values["lo2"]+1
     if values["chr2"] == "":
         chromosome2 = "*"
@@ -223,7 +227,9 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs):
     if values["mate_id"] == -1 or values["chr"] != values["chr2"] or values["chr"] == '' or values["chr"] == '*':
         tlen = 0
     else:
-        tlen = str((max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])))*(1-2*values["mate_id"]))
+        tlen = (max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])) - 1)
+        if int(values["lo"]) > int(values["lo2"]):
+            tlen *= -1
 
     
     out_row += (readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
