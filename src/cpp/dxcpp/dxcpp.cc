@@ -33,6 +33,7 @@ map<string, string> g_config_file_contents;
 
 const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 
+
 boost::mutex g_loadFromEnvironment_mutex;
 volatile bool g_loadFromEnvironment_finished = false;
 //std::atomic<bool> g_loadFromEnvironment_finished(false);
@@ -49,6 +50,8 @@ static bool isRetriableCurlError(int c) {
   // TODO: Add more retriable errors to this list (and sanity check existing ones)
   return (c == 2 || c == 5 || c == 6 || c == 7 || c == 35);
 }
+
+bool dummy = loadFromEnvironment();
 
 JSON DXHTTPRequest(const string &resource, const string &data,
                    const bool alwaysRetry, const map<string, string> &headers) {
@@ -302,7 +305,7 @@ string getVariableForPrinting(const JSON &j) {
   }
 }
 
-void loadFromEnvironment() {
+bool loadFromEnvironment() {
   // Mutex's aim: To ensure that environment variable are loaded only once.
   //              All other calls to loadFromEnvironment() must be short circuited.
   boost::mutex::scoped_lock glock(g_loadFromEnvironment_mutex);
@@ -311,7 +314,7 @@ void loadFromEnvironment() {
   // condition, since other instance of the function might be running in parallel thread,
   // we must wait for it to finish (and set g_loadFromEnvironment_finished = true)
   if (g_loadFromEnvironment_finished == true)
-    return; // Short circuit this call - env variables already loaded
+    return true; // Short circuit this call - env variables already loaded
 
   // intiialized with default values, will be overridden by env variable/config file (if present)
   string apiserver_host = "localhost";
@@ -340,7 +343,6 @@ void loadFromEnvironment() {
       setWorkspaceID(tmp);
   }
 
-/*
   cerr<<"These values will be used by DXHTTPRequest():";
   cerr<<"\n1. APISERVER_HOST: " + getVariableForPrinting(g_APISERVER_HOST);
   cerr<<"\n2. APISERVER_PORT: " + getVariableForPrinting(g_APISERVER_PORT);
@@ -350,8 +352,8 @@ void loadFromEnvironment() {
   cerr<<"\n6. WORKSPACE_ID: " + getVariableForPrinting(g_WORKSPACE_ID);
   cerr<<"\n7. PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
   cerr<<"\n";
-*/
 
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
   g_loadFromEnvironment_finished = true;
+  return true;
 }

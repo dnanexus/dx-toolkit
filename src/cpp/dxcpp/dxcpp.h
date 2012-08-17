@@ -84,7 +84,7 @@ void setProjectContext(const std::string &project_id);
  * setSecurityContext(), setWorkspaceID(), and setProjectContext() as
  * appropriate.
  */
-void loadFromEnvironment();
+bool loadFromEnvironment();
 
 #include "api.h"
 #include "bindings.h"
