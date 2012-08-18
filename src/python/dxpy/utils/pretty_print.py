@@ -52,7 +52,12 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32,
         print format_table([[1, "2"], [3, "456"]], column_names=['A', 'B'])
 
     '''
-    col_widths = [0] * len(table[0])
+    if len(table) > 0:
+        col_widths = [0] * len(table[0])
+    elif column_specs is not None:
+        col_widths = [0] * (len(column_specs) + 1)
+    elif column_names is not None:
+        col_widths = [0] * len(column_names)
     my_column_names = []
     if column_specs is not None:
         column_names = ['Row']
