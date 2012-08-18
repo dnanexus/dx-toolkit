@@ -18,8 +18,24 @@ except ImportError:
 
 state = {"interactive": False,
          "colors": "auto",
+         "delimiter": None,
          "currentproj": None}
 parser_map = {}
+parser_categories_sorted = ["all", "session", "fs", "data", "metadata", "exec", "other"]
+parser_categories = {"all": {"desc": "\t\tAll commands",
+                             "cmds": []},
+                     "session": {"desc": "\tManage your login session",
+                                 "cmds": []},
+                     "fs": {"desc": "\t\tNavigate and organize your projects and files",
+                            "cmds": []},
+                     "data": {"desc": "\t\tView, download, and upload data",
+                              "cmds": []},
+                     "metadata": {"desc": "\tView and modify metadata for projects and data objects",
+                                 "cmds": []},
+                     "exec": {"desc": "\t\tManage and run your apps and applets",
+                              "cmds": []},
+                     "other": {"desc": "\t\tMiscellaneous advanced utilities",
+                               "cmds": []}}
 
 class ResultCounter():
     def __init__(self):
@@ -88,6 +104,13 @@ def set_cli_colors(args=argparse.Namespace()):
         set_colors(sys.stdout.isatty())
     else:
         set_colors(state['colors'] == 'on')
+
+def set_delim(args=argparse.Namespace()):
+    if 'delimiter' in args:
+        state['delimiter'] = args.delimiter
+    else:
+        state['delimiter'] = None
+    set_delimiter(state['delimiter'])
 
 # Loading environment
 
@@ -1765,16 +1788,16 @@ def find_jobs(args):
             def print_children(parent_id, num_tabs):
                 print_string = ""
                 for j in range(num_tabs):
-                    print_string += '\t'
+                    print_string += DELIMITER('\t')
                 if 'name' in results[job_ids[parent_id]]['describe'] and results[job_ids[parent_id]]['describe']['name'] is not None:
                     print_string += results[job_ids[parent_id]]['describe']['name'] + ' '
                         
-                print_string += parent_id + ' ' + \
+                print_string += parent_id + DELIMITER(' ') + \
                     str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
-                    ' ('
+                    DELIMITER(' (')
                 state = results[ job_ids[parent_id] ]['describe']['state']
                 print_string += JOB_STATES(state)
-                print_string += ')'
+                print_string += DELIMITER(')')
                 print print_string
 
                 if parent_id in job_children:
@@ -1842,7 +1865,7 @@ def find_projects(args):
         if args.summary or args.verbose:
             for result in results:
                 cached_project_names[result['describe']['name']] = result['id']
-                print result["id"] + " : " + result['describe']['name'] + ' (' + result["level"] + ')'
+                print result["id"] + DELIMITER(" : ") + result['describe']['name'] + DELIMITER(' (') + result["level"] + DELIMITER(')')
         print ""
         return map(lambda result: result["id"], results)
     except dxpy.DXAPIError as details:
@@ -1879,10 +1902,10 @@ def find_apps(args):
                 print result['id']
         elif args.summary:
             for result in results:
-                print result["describe"]["name"] + " (v" + result["describe"]["version"] + ")"
+                print result["describe"]["name"] + DELIMITER(" (v") + result["describe"]["version"] + DELIMITER(")")
         else:
             for result in results:
-                print result["id"] + " " + result["describe"]["name"] + ' v' + result['describe']['version'] + (" (published)" if result["describe"]["published"] > 0 else " (unpublished)")
+                print result["id"] + DELIMITER(" ") + result["describe"]["name"] + DELIMITER(' v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"]["published"] > 0 else "unpublished") + DELIMITER(")")
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2384,6 +2407,7 @@ def shell(orig_args):
         try:
             args = parser.parse_args(shlex.split(cmd))
             set_cli_colors(args)
+            set_delim(args)
             args.func(args)
         except StopIteration:
             exit(0)
@@ -2411,16 +2435,20 @@ def watch(args):
         ws.close()
 
 def print_help(args):
-    if args.command is None:
-        parser.print_help()
-    elif args.command not in parser_map:
-        parser.exit(1, 'Unrecognized command: ' + args.command + '\n')
+    if args.command_or_category is None:
+        parser_help.print_help()
+    elif args.command_or_category in parser_categories:
+        print args.command_or_category + ' commands of dx:\n'
+        for cmd in parser_categories[args.command_or_category]['cmds']:
+            print '  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20)
+    elif args.command_or_category not in parser_map:
+        parser.exit(1, 'Unrecognized command: ' + args.command_or_category + '\n')
     elif args.subcommand is None:
-        parser_map[args.command].print_help()
-    elif (args.command + ' ' + args.subcommand) not in parser_map:
-        parser.exit(1, 'Unrecognized command and subcommand combination: ' + args.command + ' ' + args.subcommand + '\n')
+        parser_map[args.command_or_category].print_help()
+    elif (args.command_or_category + ' ' + args.subcommand) not in parser_map:
+        parser.exit(1, 'Unrecognized command and subcommand combination: ' + args.command_or_category + ' ' + args.subcommand + '\n')
     else:
-        parser_map[args.command + ' ' + args.subcommand].print_help()
+        parser_map[args.command_or_category + ' ' + args.subcommand].print_help()
 
 def exit_shell(args):
     if state['interactive']:
@@ -2433,6 +2461,11 @@ no_color_arg.add_argument('--color',
                           help='Set when color is used (auto=color is used when stdout is a TTY)',
                           choices=['off', 'on', 'auto'], default='auto')
 
+delim_arg = argparse.ArgumentParser(add_help=False)
+delim_arg.add_argument('--delimiter', '--delim',
+                       dest='delimiter',
+                       help='Always use exactly one of DELIMITER to separate fields to be printed')
+
 json_arg = argparse.ArgumentParser(add_help=False)
 json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
 
@@ -2444,43 +2477,49 @@ stdout_args_gp.add_argument('--verbose', help='If available, displays extra verb
                             action='store_true')
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
-usage='dx subcommand [options]')
-parser.add_argument('--version', action='version', version='dxclient 0.0.1')
+                                 epilog='For a breakdown of dx commands by category, run \"dx help\"')
+parser.add_argument('--version', action='version', version='dx 0.0.1')
 
 subparsers = parser.add_subparsers()
-subparsers.metavar = 'subcommand'
+subparsers.metavar = 'command'
 
-parser_shell = subparsers.add_parser('sh', help='DX shell',
+parser_shell = subparsers.add_parser('sh', help='dx shell interpreter',
                                      description='When run with no arguments, this command launches an interactive shell.  Otherwise, it will load the filename provided and interpret each nonempty line as a command to execute.  In both cases, the "dx" is omitted.', prog='dx sh')
 parser_shell.add_argument('filename', help='File of dx commands to execute', nargs='?', default=None)
 parser_shell.set_defaults(func=shell)
 parser_map['sh'] = parser_shell
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_help = subparsers.add_parser('help', help='Display help message', prog='dx help')
-parser_help.add_argument('command', help='Display the help message for the given command', nargs='?', default=None)
-parser_help.add_argument('subcommand', help='Display the help message for the given subcommand of the command', nargs='?', default=None)
-parser_help.set_defaults(func=print_help)
-parser_map['help'] = parser_help
-
-parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', prog='dx exit')
+parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', description='Exit out of the interactive shell', prog='dx exit')
 parser_exit.set_defaults(func=exit_shell)
 parser_map['exit'] = parser_exit
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_setenv = subparsers.add_parser('setenv', help='Sets environment variables for communication with the API server',
+parser_setenv = subparsers.add_parser('setenv',
+                                      help='Sets environment variables for the session',
                                       description='Sets environment variables for communication with the API server')
 parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
 parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
 parser_setenv.set_defaults(func=setenv)
+parser_map['setenv'] = parser_setenv
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx', prog='dx clearenv')
 parser_clearenv.set_defaults(func=clearenv)
 parser_map['clearenv'] = parser_clearenv
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_env = subparsers.add_parser('env', help='Prints all environment variables set for the CLI', prog='dx env')
+parser_env = subparsers.add_parser('env', help='Prints all environment variables in use', description='Prints all environment variables in use', prog='dx env')
 parser_env.add_argument('--bash', help='Prints a list of bash commands to export the environment variables', action='store_true')
 parser_env.set_defaults(func=env)
 parser_map['env'] = parser_env
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
@@ -2491,6 +2530,8 @@ parser_login.add_argument('--noprojects', dest='projects', help='Do not print av
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.set_defaults(func=login)
 parser_map['login'] = parser_login
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_logout = subparsers.add_parser('logout',
                                       help='Log out and remove credentials',
@@ -2500,11 +2541,8 @@ parser_logout.add_argument('--host', help='Log out of the given auth server host
 parser_logout.add_argument('--port', type=int, help='Log out of the given auth server port (host must also be given)')
 parser_logout.set_defaults(func=logout)
 parser_map['logout'] = parser_logout
-
-parser_select = subparsers.add_parser('select', help='List and select and project to switch to',
-                                      prog='dx select')
-parser_select.set_defaults(func=pick_and_set_project, save=False)
-parser_map['select'] = parser_select
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_invite = subparsers.add_parser('invite',
                                       help='Invite another user to a project',
@@ -2514,10 +2552,12 @@ parser_invite.add_argument('project', help='Project to invite the user to')
 parser_invite.add_argument('level', help='Permissions level the new member should have', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'])
 parser_invite.set_defaults(func=invite)
 parser_map['invite'] = parser_invite
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_ls = subparsers.add_parser('ls', help='List folders and objects in a folder',
+parser_ls = subparsers.add_parser('ls', help='List folders and/or objects in a folder',
                                   description='List folders and/or objects in a folder',
-                                  parents=[no_color_arg],
+                                  parents=[no_color_arg, delim_arg],
                                   prog='dx ls')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 ls_output_args = parser_ls.add_mutually_exclusive_group()
@@ -2529,59 +2569,8 @@ parser_ls.add_argument('--full', help='show full paths of folders', action='stor
 parser_ls.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
 parser_ls.set_defaults(func=ls)
 parser_map['ls'] = parser_ls
-
-parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
-                                  description='Change the current working directory', prog='dx cd')
-parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
-parser_cd.set_defaults(func=cd)
-parser_map['cd'] = parser_cd
-
-parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
-                                   description='Print current working directory', prog='dx pwd')
-parser_pwd.set_defaults(func=pwd)
-parser_map['pwd'] = parser_pwd
-
-parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
-                                     description='Create a new folder', prog='dx mkdir')
-parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
-parser_mkdir.add_argument('paths', help='Paths to folders to create', nargs='+')
-parser_mkdir.set_defaults(func=mkdir)
-parser_map['mkdir'] = parser_mkdir
-
-parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
-                                     description='Remove a folder', prog='dx rmdir')
-parser_rmdir.add_argument('paths', help='Paths to folders to remove', nargs='+')
-parser_rmdir.set_defaults(func=rmdir)
-parser_map['rmdir'] = parser_rmdir
-
-parser_rm = subparsers.add_parser('rm', help='Remove objects',
-                                  description='Remove objects', prog='dx rm')
-parser_rm.add_argument('paths', help='Paths to remove', nargs='+')
-parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
-parser_rm.set_defaults(func=rm)
-parser_map['rm'] = parser_rm
-
-parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
-                                         description='Delete projects and all their associated data',
-                                         prog='dx rmproject')
-parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
-parser_rmproject.set_defaults(func=rmproject)
-parser_map['rmproject'] = parser_rmproject
-
-parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside a single project',
-                                  description='Move objects and/or folders inside a single project.',
-                                  prog='dx mv')
-parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='+')
-parser_mv.add_argument('destination', help='Folder into which to move the sources')
-parser_mv.set_defaults(func=mv)
-parser_map['mv'] = parser_mv
-
-parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders between different projects',
-                                  description='Copy objects and/or folders between different projects.  Folders will automatically be copied recursively.', prog='dx cp')
-parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='+')
-parser_cp.add_argument('destination', help='Folder into which to copy the sources')
-parser_cp.set_defaults(func=cp)
-parser_map['cp'] = parser_cp
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_tree = subparsers.add_parser('tree', help='List folders and objects in a tree',
                                     description='List folders and objects in a tree',
@@ -2592,6 +2581,86 @@ parser_tree.add_argument('-l', '--long', help='use a long listing format', actio
 parser_tree.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
 parser_tree.set_defaults(func=tree)
 parser_map['tree'] = parser_tree
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_pwd = subparsers.add_parser('pwd', help='Print current working directory',
+                                   description='Print current working directory', prog='dx pwd')
+parser_pwd.set_defaults(func=pwd)
+parser_map['pwd'] = parser_pwd
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_select = subparsers.add_parser('select', help='List and select a project to switch to',
+                                      description='Interactively list and select a project to switch to.  Only lists projects for which you have at least CONTRIBUTE permissions.',
+                                      prog='dx select')
+parser_select.set_defaults(func=pick_and_set_project, save=False)
+parser_map['select'] = parser_select
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
+                                  description='Change the current working directory', prog='dx cd')
+parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
+parser_cd.set_defaults(func=cd)
+parser_map['cd'] = parser_cd
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
+                                     description='Create a new folder', prog='dx mkdir')
+parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
+parser_mkdir.add_argument('paths', help='Paths to folders to create', nargs='+')
+parser_mkdir.set_defaults(func=mkdir)
+parser_map['mkdir'] = parser_mkdir
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
+                                     description='Remove a folder', prog='dx rmdir')
+parser_rmdir.add_argument('paths', help='Paths to folders to remove', nargs='+')
+parser_rmdir.set_defaults(func=rmdir)
+parser_map['rmdir'] = parser_rmdir
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_rm = subparsers.add_parser('rm', help='Remove objects',
+                                  description='Remove objects', prog='dx rm')
+parser_rm.add_argument('paths', help='Paths to remove', nargs='+')
+parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
+parser_rm.set_defaults(func=rm)
+parser_map['rm'] = parser_rm
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
+                                         description='Delete projects and all their associated data',
+                                         prog='dx rmproject')
+parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
+parser_rmproject.set_defaults(func=rmproject)
+parser_map['rmproject'] = parser_rmproject
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_mv = subparsers.add_parser('mv', help='Move objects and/or folders inside a single project',
+                                  description='Move objects and/or folders inside a single project.',
+                                  prog='dx mv')
+parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='+')
+parser_mv.add_argument('destination', help='Folder into which to move the sources')
+parser_mv.set_defaults(func=mv)
+parser_map['mv'] = parser_mv
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_cp = subparsers.add_parser('cp', help='Copy objects and/or folders between different projects',
+                                  description='Copy objects and/or folders between different projects.  Folders will automatically be copied recursively.', prog='dx cp')
+parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='+')
+parser_cp.add_argument('destination', help='Folder into which to copy the sources')
+parser_cp.set_defaults(func=cp)
+parser_map['cp'] = parser_cp
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_get = subparsers.add_parser('get', help='Download a data object',
                                    description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
@@ -2608,9 +2677,12 @@ get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separa
 get_gtable_format_args.add_argument('--vcf', help='Save a Simplevar gtable as a VCF file', action='store_true')
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_head = subparsers.add_parser('head',
-                                    help='Print the first 10 lines of a file or first 10 rows of a gtable',
+                                    help='Print part of a file or gtable',
+                                    description='Print the first 10 lines of a file or first 10 rows of a gtable',
                                     parents=[no_color_arg],
                                     prog='dx head')
 parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
@@ -2618,11 +2690,15 @@ parser_head.add_argument('-w', '--max-col-width', type=int, help='Maximum width 
 parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
 parser_map['head'] = parser_head
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat')
 parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
 parser_cat.set_defaults(func=cat, output=None, stdout=True)
 parser_map['cat'] = parser_cat
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
 subparsers_gtable = parser_gtable.add_subparsers()
@@ -2642,19 +2718,25 @@ parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
                                         description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
-                                        parents=[json_arg, no_color_arg],
+                                        parents=[json_arg, no_color_arg, delim_arg],
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details if available', action='store_true')
 parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
 parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
 parser_describe.set_defaults(func=describe)
 parser_map['describe'] = parser_describe
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object', prog='dx close')
 parser_close.add_argument('path', help='Path to data object to close')
 parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
 parser_map['close'] = parser_close
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_build = subparsers.add_parser('build', help='Build an applet/app',
                                      description='Build an applet or app object from a local source directory',
@@ -2664,16 +2746,23 @@ parser_build = subparsers.add_parser('build', help='Build an applet/app',
 parser_build.add_argument('builder_args', help='Arguments passed to the app builder', nargs=argparse.REMAINDER)
 parser_build.set_defaults(func=build)
 parser_map['build'] = parser_build
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_install = subparsers.add_parser('install', help='Install an app', description='Install an app by name.', prog='dx install')
 parser_install.add_argument('app', help='ID or name of app to install')
 parser_install.set_defaults(func=install)
 parser_map['install'] = parser_install
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_uninstall = subparsers.add_parser('uninstall', help='Uninstall an app', description='Uninstall an app by name.', prog='dx uninstall')
 parser_uninstall.add_argument('app', help='ID or name of app to uninstall')
 parser_uninstall.set_defaults(func=uninstall)
 parser_map['uninstall'] = parser_uninstall
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_run = subparsers.add_parser('run', help='Run an applet or app', description=(fill('Run an applet or app.  If no inputs are specified, an interactive mode for selecting inputs will be launched.') + '''
 
@@ -2710,6 +2799,8 @@ parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=f
 parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width_adjustment=-24), action='store_true')
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch')
 parser_watch.add_argument('jobid', help='ID of the job to watch')
@@ -2717,19 +2808,24 @@ parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent 
 parser_watch.add_argument('--no-subjobs', help='Do not watch messages from subjobs')
 parser_watch.set_defaults(func=watch)
 parser_map['watch'] = parser_watch
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_terminate = subparsers.add_parser('terminate', help='Terminate a job that has not yet finished', prog='dx terminate')
 parser_terminate.add_argument('jobid', help='ID of the job to terminate')
 parser_terminate.set_defaults(func=terminate)
 parser_map['terminate'] = parser_terminate
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_find = subparsers.add_parser('find', help='Search functionality over data objects, projects, and jobs',
                                     description='Search functionality over data objects, projects, and jobs', prog='dx find')
 subparsers_find = parser_find.add_subparsers()
 subparsers_find.metavar = 'category'
 parser_map['find'] = parser_find
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[stdout_args, json_arg, no_color_arg], prog='dx find jobs')
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job ID, the time at which the job was created, and its current state.', parents=[stdout_args, json_arg, no_color_arg, delim_arg], prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job')
 parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
@@ -2741,8 +2837,9 @@ parser_find_jobs.add_argument('--created-before', help='Timestamp before which t
 parser_find_jobs.add_argument('-n', '--num-results', type=int, help='Max number of origin jobs to return')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
+parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))
 
-parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[stdout_args, json_arg, no_color_arg], prog='dx find data')
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects', parents=[stdout_args, json_arg, no_color_arg, delim_arg], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
@@ -2760,15 +2857,20 @@ parser_find_data.add_argument('--created-after', help='Timestamp after which the
 parser_find_data.add_argument('--created-before', help='Timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.set_defaults(func=find_data)
 parser_map['find data'] = parser_find_data
+parser_categories['data']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
 
-parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects', parents=[stdout_args, json_arg], prog='dx find projects')
+parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects',
+                                                  parents=[stdout_args, json_arg, delim_arg],
+                                                  prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
 parser_find_projects.add_argument('--public', help='Include public projects', action='store_true')
 parser_find_projects.set_defaults(func=find_projects)
 parser_map['find projects'] = parser_find_projects
+parser_categories['data']['cmds'].append(('find projects', subparsers_find._choices_actions[-1].help))
 
-parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[stdout_args, json_arg], prog='dx find apps')
+parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps', parents=[stdout_args, json_arg, delim_arg], prog='dx find apps')
 parser_find_apps.add_argument('--name', help='Name of the app')
 parser_find_apps.add_argument('--category', help='Category of the app')
 parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
@@ -2783,6 +2885,7 @@ parser_find_apps.add_argument('--mod-after', help='Timestamp after which the app
 parser_find_apps.add_argument('--mod-before', help='Timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = parser_find_apps
+parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_actions[-1].help))
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
@@ -2802,6 +2905,8 @@ parser_upload.add_argument('--brief', help='Print ID of the file object instead 
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 parser_map['upload'] = parser_upload
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_import = subparsers.add_parser('import',
                                       help='Import (convert and upload) a table or genomic file',
@@ -2818,6 +2923,8 @@ import_format_args_gp.add_argument('--vcf', help='Interpret the file as a VCF fi
 import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; types (if not string) can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
 parser_import.set_defaults(func=dximport)
 parser_map['import'] = parser_import
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_export = subparsers.add_parser('export',
                                       help='Export a GenomicTable into a local file',
@@ -2830,11 +2937,15 @@ parser_export.add_argument('format', help='Format to export to')
 parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24), nargs=argparse.REMAINDER)
 parser_export.set_defaults(func=export)
 parser_map['export'] = parser_export
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_new = subparsers.add_parser('new', help='Create a new data object', prog="dx new")
+parser_new = subparsers.add_parser('new', help='Create a new project or data object', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
 subparsers_new.metavar = 'class'
 parser_map['new'] = parser_new
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_new_project = subparsers_new.add_parser('project', help='Create a new project',
                                                parents=[stdout_args],
@@ -2861,42 +2972,56 @@ parser_get_details = subparsers.add_parser('get_details', help='Get details of a
 parser_get_details.add_argument('path', help='Data object to get details for')
 parser_get_details.set_defaults(func=get_details)
 parser_map['get_details'] = parser_get_details
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_set_details = subparsers.add_parser('set_details', help='Set details on an object', prog="dx set_details")
 parser_set_details.add_argument('path', help='Data object to modify')
 parser_set_details.add_argument('details', help='JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
 parser_map['set_details'] = parser_set_details
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on an object', prog='dx set_visibility')
 parser_set_visibility.add_argument('path', help='Data object to modify')
 parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
 parser_set_visibility.set_defaults(func=set_visibility)
 parser_map['set_visibility'] = parser_set_visibility
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_add_types = subparsers.add_parser('add_types', help='Add types to an object', prog='dx add_types')
 parser_add_types.add_argument('path', help='Data object to modify')
 parser_add_types.add_argument('types', nargs='+', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
 parser_map['add_types'] = parser_add_types
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from an object', prog='dx remove_types')
 parser_remove_types.add_argument('path', help='Data object to modify')
 parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
 parser_map['remove_types'] = parser_remove_types
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_tag = subparsers.add_parser('tag', help='Tag an object', prog='dx tag')
 parser_tag.add_argument('path', help='Data object to modify')
 parser_tag.add_argument('tags', nargs='+', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
 parser_map['tag'] = parser_tag
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_untag = subparsers.add_parser('untag', help='Untag an object', prog='dx untag')
 parser_untag.add_argument('path', help='Data object to modify')
 parser_untag.add_argument('tags', nargs='+', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
 parser_map['untag'] = parser_untag
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_rename = subparsers.add_parser('rename',
                                       help='Rename a project, folder, or object',
@@ -2906,18 +3031,24 @@ parser_rename.add_argument('path', help='Path to project, folder, or object to r
 parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
 parser_map['rename'] = parser_rename
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of an object', prog='dx set_properties')
 parser_set_properties.add_argument('path', help='Data object to modify')
 parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'property_key=property_value another_property_key=another_property_value\'')
 parser_set_properties.set_defaults(func=set_properties)
 parser_map['set_properties'] = parser_set_properties
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of an object', prog='dx unset_properties')
 parser_unset_properties.add_argument('path', help='Data object to modify')
 parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
 parser_map['unset_properties'] = parser_unset_properties
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_api = subparsers.add_parser('api', help='Make an API call', prog='dx api')
 parser_api.add_argument('resource', help='is one of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\"')
@@ -2927,6 +3058,26 @@ parser_api.add_argument('--input', help='a filename containing the JSON input to
 parser_api.add_argument('--stdin', help='Indicate that JSON input will be provided with a prompt', action='store_true')
 parser_api.set_defaults(func=api)
 parser_map['api'] = parser_api
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_help = subparsers.add_parser('help', help='Displays help messages and lists commands for different categories', description=fill('Displays the help message for the given command (and subcommand if given), or displays the list of all commands in the given category.') + '\n\nCATEGORIES\n\n  ' + '\n  '.join([cat + parser_categories[cat]['desc'] for cat in parser_categories_sorted]) + '''
+
+EXAMPLE
+
+  ''' + fill('To find all commands related to running and monitoring a job and then display the help message for the command "run", run', subsequent_indent='  ') + '''
+
+  $ dx help exec
+    <list of all execution-related dx commands>
+  $ dx help run
+    <help message for dx run>
+''', formatter_class=argparse.RawTextHelpFormatter, prog='dx help')
+parser_help.add_argument('command_or_category', help=fill('Display the help message for the given command, or the list of all available commands for the given category', width_adjustment=-24), nargs='?', default=None)
+parser_help.add_argument('subcommand', help=fill('Display the help message for the given subcommand of the command', width_adjustment=-24), nargs='?', default=None)
+parser_help.set_defaults(func=print_help)
+parser_map['help'] = parser_help
+for cat in parser_categories:
+    parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 
 # "Execution" starts here
 
@@ -2934,6 +3085,7 @@ parser_map['api'] = parser_api
 if len(args_list) > 0:
     args = parser.parse_args(args_list)
     set_cli_colors(args)
+    set_delim(args)
     args.func(args)
 else:
     parser.print_help()
