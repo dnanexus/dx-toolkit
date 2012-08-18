@@ -1495,6 +1495,11 @@ def get(args):
     else:
         parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or applet was expected\n')
 
+def cat(args):
+    for path in args.path:
+        get_args = parser.parse_args(['get', '--stdout', path])
+        get(get_args)
+
 def head(args):
     # Attempt to resolve name
     project, folderpath, entity_result = try_call(resolve_existing_path,
@@ -2614,9 +2619,9 @@ parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
 parser_map['head'] = parser_head
 
-parser_cat = subparsers.add_parser('cat', help='Print a file to stdout', prog='dx cat')
-parser_cat.add_argument('path', help='File ID or name to print to stdout')
-parser_cat.set_defaults(func=get, output=None, stdout=True)
+parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat')
+parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
+parser_cat.set_defaults(func=cat, output=None, stdout=True)
 parser_map['cat'] = parser_cat
 
 parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
