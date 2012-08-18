@@ -1545,10 +1545,27 @@ def head(args):
                     if counter == args.lines:
                         break
             else:
-                table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(end=args.lines)),
+                if args.gri is not None:
+                    try:
+                        lo = int(args.gri[1])
+                        hi = int(args.gri[2])
+                    except:
+                        parser.exit(1, fill('Error: the LO and HI arguments to --gri must be integers') + '\n')
+                    gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
+                                                                  lo,
+                                                                  hi,
+                                                                  args.gri_mode,
+                                                                  args.gri_name)
+                    table_text, table_rows, table_cols = format_table(list(handler.iterate_query_rows(query=gri_query, limit=args.lines)),
                                                                   column_specs = entity_result['describe']['columns'],
                                                                   report_dimensions=True,
                                                                   max_col_width=args.max_col_width)
+                else:
+                    table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(start=args.starting,
+                                                                                                end=args.lines)),
+                                                                      column_specs = entity_result['describe']['columns'],
+                                                                      report_dimensions=True,
+                                                                      max_col_width=args.max_col_width)
                 if sys.stdout.isatty():
                     if tty_rows <= table_rows or tty_cols <= table_cols:
                         try:
@@ -2682,11 +2699,17 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 
 parser_head = subparsers.add_parser('head',
                                     help='Print part of a file or gtable',
-                                    description='Print the first 10 lines of a file or first 10 rows of a gtable',
+                                    description='Print the first first part of a file or a gtable.  By default, prints the first 10 lines or rows, respectively.  Additional query parameters can be provided in the case of gtables.',
                                     parents=[no_color_arg],
                                     prog='dx head')
-parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows', default=10)
-parser_head.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
+parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows (default 10)', default=10)
+head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
+head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
+head_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
+#head_gtable_args.add_argument('--columns', nargs='+', help='Specify a list of columns to display (default all columns)') TODO
+head_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
+head_gtable_args.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
+head_gtable_args.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
 parser_head.add_argument('path', help='File or gtable ID or name to access')
 parser_head.set_defaults(func=head)
 parser_map['head'] = parser_head
@@ -2699,22 +2722,6 @@ parser_cat.set_defaults(func=cat, output=None, stdout=True)
 parser_map['cat'] = parser_cat
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_gtable = subparsers.add_parser('gtable', help='Interact with remote gtables')
-subparsers_gtable = parser_gtable.add_subparsers()
-parser_map['gtable'] = parser_gtable
-
-parser_gtable_get = subparsers_gtable.add_parser('get', help='Retrieve rows from a gtable',
-                                                 parents=[stdout_args, json_arg],
-                                                 prog='dx gtable get')
-parser_gtable_get.add_argument('--starting', type=int, help='Specify starting row ID (provided by \'next\' if continuing a previous query) for the given query')
-parser_gtable_get.add_argument('--limit', type=int, help='Specify a limit to the number of rows returned')
-parser_gtable_get.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-parser_gtable_get.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
-parser_gtable_get.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
-parser_gtable_get.add_argument('path', help='GTable ID from which to fetch rows')
-parser_gtable_get.set_defaults(func=gtable_get)
-parser_map['gtable get'] = parser_gtable_get
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
                                         description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
