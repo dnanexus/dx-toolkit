@@ -2697,6 +2697,11 @@ parser_map['get'] = parser_get
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
+parser_download = subparsers.add_parser('download', parents=[parser_get], add_help=False, help='Alias for get (download a data object)')
+parser_map['download'] = parser_get
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
 parser_head = subparsers.add_parser('head',
                                     help='Print part of a file or gtable',
                                     description='Print the first first part of a file or a gtable.  By default, prints the first 10 lines or rows, respectively.  Additional query parameters can be provided in the case of gtables.',
