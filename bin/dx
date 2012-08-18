@@ -1417,6 +1417,8 @@ def get(args):
             except dxpy.DXAPIError as details:
                 parser.exit(1, fill(unicode(details)) + '\n')
         else:
+            if not args.overwrite and os.path.exists(filename):
+                parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
             try:
                 dxpy.download_dxfile(entity_result['id'], filename)
             except dxpy.DXAPIError as details:
@@ -1432,6 +1434,8 @@ def get(args):
             else:
                 if args.output is None:
                     filename += '.tsv' if args.tsv else '.csv'
+                if not args.overwrite and os.path.exists(filename):
+                    parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
                 writer = csv.writer(open(filename, 'wb'),
                                     delimiter=delimiter)
             if not args.no_header:
@@ -1450,6 +1454,10 @@ def get(args):
         if args.stdout:
             print json.dumps(details, indent=4)
         else:
+            if args.output is None:
+                filename += '.json'
+            if not args.overwrite and os.path.exists(filename):
+                parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
             try:
                 with open(filename, 'w') as fd:
                     fd.write(json.dumps(details, indent=4))
@@ -1477,6 +1485,8 @@ def get(args):
                 filename += '.js'
             elif run_spec['interpreter'] == 'bash':
                 filename += '.sh'
+        if not args.overwrite and os.path.exists(filename):
+            parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
         try:
             with open(filename, 'w') as fd:
                 fd.write(run_spec['code'])
@@ -2571,7 +2581,8 @@ parser_map['tree'] = parser_tree
 parser_get = subparsers.add_parser('get', help='Download a data object',
                                    description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
-parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the remote file or gtable\'s name will be used')
+parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
 get_gtable_args = parser_get.add_argument_group(title='GTable-specific options')
 get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file', action='store_true')
