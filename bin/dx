@@ -827,7 +827,7 @@ def cp(args):
                                                    args.sources[0],
                                                    allow_mult=True)
         if src_proj == dest_proj:
-            parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
+            parser.exit(1, fill('A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
 
         if src_results is None:
             try:
@@ -873,7 +873,7 @@ def cp(args):
                                                          source,
                                                          allow_mult=True)
         if src_proj == dest_proj:
-            parser.exit(1, fill('Using \"cp\" for copying something to a destination inside the same project is unsupported.') + '\n')
+            parser.exit(1, fill('A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
 
         if src_results is None:
             src_folders.append(src_folderpath)
@@ -1994,15 +1994,19 @@ def get_input_array(param_desc):
     try:
         while True:
             user_input = raw_input(param_desc['name'] + '[' + str(len(input_array)) + "]: ")
-            if user_input == '':
+            user_input = shlex.split(user_input)
+            if len(user_input) > 1:
+                print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
+                continue
+            elif len(user_input) == 0:
                 return input_array
             try:
-                input_array.append(parse_input[in_class](user_input))
+                input_array.append(parse_input[in_class](user_input[0]))
             except ValueError as details:
-                print unicode(details)
+                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
             except TypeError as details:
-                print unicode(details)
+                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
     except EOFError:
         return input_array
@@ -2025,13 +2029,19 @@ def get_input_single(param_desc):
     try:
         while True:
             user_input = raw_input(param_desc['name'] + ': ')
+            user_input = shlex.split(user_input)
+            if len(user_input) > 1:
+                print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
+                continue
+            elif len(user_input) == 0:
+                user_input = ['']
             try:
-                value = parse_input[in_class](user_input)
+                value = parse_input[in_class](user_input[0])
             except ValueError as details:
-                print unicode(details)
+                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
             except TypeError as details:
-                print unicode(details)
+                print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
             return value
     except EOFError:
