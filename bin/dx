@@ -1454,7 +1454,7 @@ def get(args):
             except dxpy.DXAPIError as details:
                 parser.exit(1, fill(unicode(details)) + '\n')
     elif entity_result['describe']['class'] in ['gtable', 'table']:
-        if not args.tsv and not args.csv and not args.vcf:
+        if not args.tsv and not args.csv:
             args.tsv = True
         dxtable = dxpy.get_handler(entity_result['id'])
         if args.tsv or args.csv:
@@ -1473,8 +1473,6 @@ def get(args):
 
             for row in dxtable:
                 writer.writerow([unicode(item).encode('utf-8') for item in row[1 if args.no_rowid else 0:]])
-        else:
-            parser.exit(1, 'Not implemented yet\n')
     elif entity_result['describe']['class'] == 'record':
         try:
             details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
@@ -2461,7 +2459,7 @@ def print_help(args):
             print '  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20)
     elif args.command_or_category not in parser_map:
         parser.exit(1, 'Unrecognized command: ' + args.command_or_category + '\n')
-    elif args.command_or_category == 'export':
+    elif args.command_or_category == 'export' and args.subcommand is not None:
         if args.subcommand not in exporters:
             parser.exit(1, 'Unsupported format for dx export: ' + args.subcommand + '\n')
         new_args = argparse.Namespace()
@@ -2737,7 +2735,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_get = subparsers.add_parser('get', help='Download a data object (alias: download)',
-                                   description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
+                                   description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, and --tsv.  For special file formats like fastq and sam, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
@@ -2748,7 +2746,6 @@ get_gtable_args.add_argument('--no-rowid', help='Do not include the row ID colum
 get_gtable_format_args = get_gtable_args.add_mutually_exclusive_group()
 get_gtable_format_args.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
 get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separated format (default if no format is specified)', action='store_true')
-get_gtable_format_args.add_argument('--vcf', help='Save a Simplevar gtable as a VCF file', action='store_true')
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -2805,7 +2802,7 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 
 parser_export = subparsers.add_parser('export',
                                       help='Export a GenomicTable into a local file',
-                                      description='Export a GenomicTable into a local file.\n\nSupported formats:\n\n  ' + '\n  '.join(exporters.keys()),
+                                      description=fill('Export a GenomicTable into a local file with a particular file format.  For csv and tsv, use "dx get".') + '\n\n' + fill('For more details on how to convert into a particular format, run ') + '\n  $ dx help export <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(exporters.keys()),
                                       parents=[],
                                       formatter_class=argparse.RawTextHelpFormatter,
                                       prog='dx export')
