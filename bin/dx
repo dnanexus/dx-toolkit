@@ -2500,53 +2500,24 @@ stdout_args_gp.add_argument('--summary', help='Display summary output (default).
 stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
                             action='store_true')
 
+parser_dataobject_args = argparse.ArgumentParser(add_help=False)
+parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
+parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
+parser_dataobject_args_gp.add_argument('--name', help='Name of the object')
+parser_dataobject_args_gp.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
+parser_dataobject_args_gp.add_argument('--types', nargs='+', help='Types of the data object')
+parser_dataobject_args_gp.add_argument('--tags', nargs='+', help='Tags of the data object')
+parser_dataobject_args_gp.add_argument('--project', help='Project (if not using the default project)')
+parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
+parser_dataobject_args_gp.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
+parser_dataobject_args_gp.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
                                  epilog='For a breakdown of dx commands by category, run \"dx help\"')
 parser.add_argument('--version', action='version', version='dx 0.0.1')
 
 subparsers = parser.add_subparsers()
 subparsers.metavar = 'command'
-
-parser_shell = subparsers.add_parser('sh', help='dx shell interpreter',
-                                     description='When run with no arguments, this command launches an interactive shell.  Otherwise, it will load the filename provided and interpret each nonempty line as a command to execute.  In both cases, the "dx" is expected to be omitted from the command or line.', prog='dx sh')
-parser_shell.add_argument('filename', help='File of dx commands to execute', nargs='?', default=None)
-parser_shell.set_defaults(func=shell)
-parser_map['sh'] = parser_shell
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', description='Exit out of the interactive shell', prog='dx exit')
-parser_exit.set_defaults(func=exit_shell)
-parser_map['exit'] = parser_exit
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_setenv = subparsers.add_parser('setenv',
-                                      help='Sets environment variables for the session',
-                                      description='Sets environment variables for communication with the API server')
-parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
-parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
-parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
-parser_setenv.set_defaults(func=setenv)
-parser_map['setenv'] = parser_setenv
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx', 
-                                        description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
-parser_clearenv.set_defaults(func=clearenv)
-parser_map['clearenv'] = parser_clearenv
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_env = subparsers.add_parser('env', help='Prints all environment variables in use',
-                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttp://wiki.dev.dnanexus.com/Using-the-Command-Line-Client#Advanced%3A-Environment-variables',
-                                   formatter_class=argparse.RawTextHelpFormatter, prog='dx env')
-parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14), action='store_true')
-parser_env.set_defaults(func=env)
-parser_map['env'] = parser_env
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
@@ -2568,6 +2539,47 @@ parser_logout.add_argument('--host', help='Log out of the given auth server host
 parser_logout.add_argument('--port', type=int, help='Log out of the given auth server port (host must also be given)')
 parser_logout.set_defaults(func=logout)
 parser_map['logout'] = parser_logout
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_shell = subparsers.add_parser('sh', help='dx shell interpreter',
+                                     description='When run with no arguments, this command launches an interactive shell.  Otherwise, it will load the filename provided and interpret each nonempty line as a command to execute.  In both cases, the "dx" is expected to be omitted from the command or line.', prog='dx sh')
+parser_shell.add_argument('filename', help='File of dx commands to execute', nargs='?', default=None)
+parser_shell.set_defaults(func=shell)
+parser_map['sh'] = parser_shell
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', description='Exit out of the interactive shell', prog='dx exit')
+parser_exit.set_defaults(func=exit_shell)
+parser_map['exit'] = parser_exit
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_env = subparsers.add_parser('env', help='Prints all environment variables in use',
+                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttp://wiki.dev.dnanexus.com/Using-the-Command-Line-Client#Advanced%3A-Environment-variables',
+                                   formatter_class=argparse.RawTextHelpFormatter, prog='dx env')
+parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14), action='store_true')
+parser_env.set_defaults(func=env)
+parser_map['env'] = parser_env
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_setenv = subparsers.add_parser('setenv',
+                                      help='Sets environment variables for the session',
+                                      description='Sets environment variables for communication with the API server')
+parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
+parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
+parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
+parser_setenv.set_defaults(func=setenv)
+parser_map['setenv'] = parser_setenv
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx', 
+                                        description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
+parser_clearenv.set_defaults(func=clearenv)
+parser_map['clearenv'] = parser_clearenv
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
@@ -2624,7 +2636,6 @@ parser_select = subparsers.add_parser('select', help='List and select a project 
 parser_select.set_defaults(func=pick_and_set_project, save=False)
 parser_map['select'] = parser_select
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
@@ -2632,53 +2643,6 @@ parser_cd = subparsers.add_parser('cd', help='Change the current working directo
 parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
 parser_cd.set_defaults(func=cd)
 parser_map['cd'] = parser_cd
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
-                                     description='Create a new folder', prog='dx mkdir')
-parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
-parser_mkdir.add_argument('paths', help='Paths to folders to create', nargs='+')
-parser_mkdir.set_defaults(func=mkdir)
-parser_map['mkdir'] = parser_mkdir
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
-                                     description='Remove a folder', prog='dx rmdir')
-parser_rmdir.add_argument('paths', help='Paths to folders to remove', nargs='+')
-parser_rmdir.set_defaults(func=rmdir)
-parser_map['rmdir'] = parser_rmdir
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_rm = subparsers.add_parser('rm', help='Remove objects',
-                                  description='Remove objects', prog='dx rm')
-parser_rm.add_argument('paths', help='Paths to remove', nargs='+')
-parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
-parser_rm.set_defaults(func=rm)
-parser_map['rm'] = parser_rm
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
-                                         description='Delete projects and all their associated data',
-                                         prog='dx rmproject')
-parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
-parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
-parser_rmproject.set_defaults(func=rmproject)
-parser_map['rmproject'] = parser_rmproject
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_mv = subparsers.add_parser('mv', help='Move or rename objects and/or folders inside a project',
-                                  formatter_class=argparse.RawTextHelpFormatter, 
-                                  description=fill('Move or rename data objects and/or folders inside a single project.  To copy data between different projects, use \'dx cp\' instead.'),
-                                  prog='dx mv')
-parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='+')
-parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
-parser_mv.set_defaults(func=mv)
-parser_map['mv'] = parser_mv
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
@@ -2700,7 +2664,79 @@ parser_map['cp'] = parser_cp
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_get = subparsers.add_parser('get', help='Download a data object',
+parser_mv = subparsers.add_parser('mv', help='Move or rename objects and/or folders inside a project',
+                                  formatter_class=argparse.RawTextHelpFormatter, 
+                                  description=fill('Move or rename data objects and/or folders inside a single project.  To copy data between different projects, use \'dx cp\' instead.'),
+                                  prog='dx mv')
+parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='+')
+parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
+parser_mv.set_defaults(func=mv)
+parser_map['mv'] = parser_mv
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
+                                     description='Create a new folder', prog='dx mkdir')
+parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
+parser_mkdir.add_argument('paths', help='Paths to folders to create', nargs='+')
+parser_mkdir.set_defaults(func=mkdir)
+parser_map['mkdir'] = parser_mkdir
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
+                                     description='Remove a folder', prog='dx rmdir')
+parser_rmdir.add_argument('paths', help='Paths to folders to remove', nargs='+')
+parser_rmdir.set_defaults(func=rmdir)
+parser_map['rmdir'] = parser_rmdir
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_rm = subparsers.add_parser('rm', help='Remove data objects and folders',
+                                  description='Remove data objects and folders.', prog='dx rm')
+parser_rm.add_argument('paths', help='Paths to remove', nargs='+')
+parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
+parser_rm.set_defaults(func=rm)
+parser_map['rm'] = parser_rm
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
+                                         description='Delete projects and all their associated data',
+                                         prog='dx rmproject')
+parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
+parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
+parser_rmproject.set_defaults(func=rmproject)
+parser_map['rmproject'] = parser_rmproject
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+# data
+
+parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
+                                        description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
+                                        parents=[json_arg, no_color_arg, delim_arg],
+                                        prog='dx describe')
+parser_describe.add_argument('--details', help='Include details if available', action='store_true')
+parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
+parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
+parser_describe.set_defaults(func=describe)
+parser_map['describe'] = parser_describe
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_upload = subparsers.add_parser('upload', help='Upload a file',
+                                      description='Upload a local file.  By default, the filename will be used as its new name.', parents=[parser_dataobject_args], prog="dx upload")
+parser_upload.add_argument('filename', help='local filename to upload')
+parser_upload.add_argument('--brief', help='Print ID of the file object instead of the full description', action='store_true')
+parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
+parser_upload.set_defaults(func=upload)
+parser_map['upload'] = parser_upload
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_get = subparsers.add_parser('get', help='Download a data object (alias: download)',
                                    description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, --json, --vcf (as applicable), etc.  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
@@ -2716,10 +2752,17 @@ get_gtable_format_args.add_argument('--vcf', help='Save a Simplevar gtable as a 
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+# parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_download = subparsers.add_parser('download', parents=[parser_get], add_help=False, help='Download a data object (alias: get)')
+parser_map['download'] = parser_get
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_download = subparsers.add_parser('download', parents=[parser_get], add_help=False, help='Alias for get (download a data object)')
-parser_map['download'] = parser_get
+parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat')
+parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
+parser_cat.set_defaults(func=cat, output=None, stdout=True)
+parser_map['cat'] = parser_cat
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
@@ -2742,34 +2785,37 @@ parser_map['head'] = parser_head
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat')
-parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
-parser_cat.set_defaults(func=cat, output=None, stdout=True)
-parser_map['cat'] = parser_cat
+parser_import = subparsers.add_parser('import',
+                                      help='Import (convert and upload) a table or genomic file',
+                                      description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
+                                      parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
+                                      prog='dx import')
+parser_import.add_argument('filename', help='local filename to import')
+parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
+import_format_args = parser_import.add_argument_group('input format arguments')
+import_format_args_gp = import_format_args.add_mutually_exclusive_group()
+import_format_args_gp.add_argument('--csv', help='Interpret the file as a comma-separated format', action='store_true')
+import_format_args_gp.add_argument('--tsv', help='Interpret the file as a tab-separated format (default if no format is specified and a file extension is not recognized)', action='store_true')
+import_format_args_gp.add_argument('--vcf', help='Interpret the file as a VCF file', action='store_true')
+import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
+parser_import.set_defaults(func=dximport)
+parser_map['import'] = parser_import
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
-                                        description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
-                                        parents=[json_arg, no_color_arg, delim_arg],
-                                        prog='dx describe')
-parser_describe.add_argument('--details', help='Include details if available', action='store_true')
-parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
-parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
-parser_describe.set_defaults(func=describe)
-parser_map['describe'] = parser_describe
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_export = subparsers.add_parser('export',
+                                      help='Export a GenomicTable into a local file',
+                                      description='Export a GenomicTable into a local file.\n\nSupported formats:\n\n  ' + '\n  '.join(exporters.keys()),
+                                      parents=[],
+                                      formatter_class=argparse.RawTextHelpFormatter,
+                                      prog='dx export')
 
-parser_close = subparsers.add_parser('close', help='Close a remote object', description='Close a remote object', prog='dx close')
-parser_close.add_argument('path', help='Path to data object to close')
-parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
-parser_close.set_defaults(func=close)
-parser_map['close'] = parser_close
+parser_export.add_argument('format', help='Format to export to')
+parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24), nargs=argparse.REMAINDER)
+parser_export.set_defaults(func=export)
+parser_map['export'] = parser_export
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_build = subparsers.add_parser('build', help='Build an applet/app',
                                      description='Build an applet or app object from a local source directory',
@@ -2780,7 +2826,6 @@ parser_build.add_argument('builder_args', help='Arguments passed to the app buil
 parser_build.set_defaults(func=build)
 parser_map['build'] = parser_build
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_install = subparsers.add_parser('install', help='Install an app', description='Install an app by name.', prog='dx install')
@@ -2851,138 +2896,8 @@ parser_map['terminate'] = parser_terminate
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_find = subparsers.add_parser('find', help='Search functionality over various DNAnexus entities',
-                                    description='Search functionality over various DNAnexus entities.', prog='dx find')
-subparsers_find = parser_find.add_subparsers()
-subparsers_find.metavar = 'category'
-parser_map['find'] = parser_find
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job name (if available), the job ID, the time at which the job was created, and its current state.',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg],
-                                              prog='dx find jobs')
-parser_find_jobs.add_argument('--user', help='User ID who launched the job')
-parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
-parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
-parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
-parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
-parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
-parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
-parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_jobs.add_argument('-n', '--num-results', type=int, help='Max number of origin jobs to return')
-parser_find_jobs.set_defaults(func=find_jobs)
-parser_map['find jobs'] = parser_find_jobs
-parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))
-
-parser_find_data = subparsers_find.add_parser('data', help='Finds data objects',
-                                              description='Finds data objects with the given search parameters.',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg], prog='dx find data')
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
-parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
-parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
-parser_find_data.add_argument('--name', help='Name of the object')
-parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
-parser_find_data.add_argument('--type', help='Type of the data object')
-parser_find_data.add_argument('--tag', help='Tag of the data object')
-parser_find_data.add_argument('--link', help='Object ID that the data object links to')
-parser_find_data.add_argument('--project', help='Project with which to restrict the results')
-parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
-parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
-parser_find_data.add_argument('--mod-after', help='Timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--mod-before', help='Timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--created-after', help='Timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--created-before', help='Timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.set_defaults(func=find_data)
-parser_map['find data'] = parser_find_data
-parser_categories['data']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
-parser_categories['metadata']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
-
-parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects',
-                                                  description='Finds projects with the given search parameters.',
-                                                  parents=[stdout_args, json_arg, delim_arg],
-                                                  prog='dx find projects')
-parser_find_projects.add_argument('--name', help='Name of the project')
-parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
-parser_find_projects.add_argument('--public', help='Include public projects', action='store_true')
-parser_find_projects.set_defaults(func=find_projects)
-parser_map['find projects'] = parser_find_projects
-parser_categories['data']['cmds'].append(('find projects', subparsers_find._choices_actions[-1].help))
-
-parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps',
-                                              description='Finds apps with the given search parameters.',
-                                              parents=[stdout_args, json_arg, delim_arg], prog='dx find apps')
-parser_find_apps.add_argument('--name', help='Name of the app')
-parser_find_apps.add_argument('--category', help='Category of the app')
-parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
-parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
-parser_find_apps.add_argument('--installed', help='Whether to restrict the list to installed apps only', action='store_true')
-parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
-parser_find_apps.add_argument('--creator', help='Creator of the app version')
-parser_find_apps.add_argument('--developer', help='Developer of the app')
-parser_find_apps.add_argument('--created-after', help='Timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--created-before', help='Timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--mod-after', help='Timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--mod-before', help='Timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.set_defaults(func=find_apps)
-parser_map['find apps'] = parser_find_apps
-parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_actions[-1].help))
-
-parser_dataobject_args = argparse.ArgumentParser(add_help=False)
-parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
-parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
-parser_dataobject_args_gp.add_argument('--name', help='Name of the object')
-parser_dataobject_args_gp.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
-parser_dataobject_args_gp.add_argument('--types', nargs='+', help='Types of the data object')
-parser_dataobject_args_gp.add_argument('--tags', nargs='+', help='Tags of the data object')
-parser_dataobject_args_gp.add_argument('--project', help='Project (if not using the default project)')
-parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
-parser_dataobject_args_gp.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
-parser_dataobject_args_gp.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
-
-parser_upload = subparsers.add_parser('upload', help='Upload a file',
-                                      description='Upload a local file.  By default, the filename will be used as its new name.', parents=[parser_dataobject_args], prog="dx upload")
-parser_upload.add_argument('filename', help='local filename to upload')
-parser_upload.add_argument('--brief', help='Print ID of the file object instead of the full description', action='store_true')
-parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
-parser_upload.set_defaults(func=upload)
-parser_map['upload'] = parser_upload
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_import = subparsers.add_parser('import',
-                                      help='Import (convert and upload) a table or genomic file',
-                                      description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
-                                      parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
-                                      prog='dx import')
-parser_import.add_argument('filename', help='local filename to import')
-parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
-import_format_args = parser_import.add_argument_group('input format arguments')
-import_format_args_gp = import_format_args.add_mutually_exclusive_group()
-import_format_args_gp.add_argument('--csv', help='Interpret the file as a comma-separated format', action='store_true')
-import_format_args_gp.add_argument('--tsv', help='Interpret the file as a tab-separated format (default if no format is specified and a file extension is not recognized)', action='store_true')
-import_format_args_gp.add_argument('--vcf', help='Interpret the file as a VCF file', action='store_true')
-import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
-parser_import.set_defaults(func=dximport)
-parser_map['import'] = parser_import
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_export = subparsers.add_parser('export',
-                                      help='Export a GenomicTable into a local file',
-                                      description='Export a GenomicTable into a local file.\n\nSupported formats:\n\n  ' + '\n  '.join(exporters.keys()),
-                                      parents=[],
-                                      formatter_class=argparse.RawTextHelpFormatter,
-                                      prog='dx export')
-
-parser_export.add_argument('format', help='Format to export to')
-parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24), nargs=argparse.REMAINDER)
-parser_export.set_defaults(func=export)
-parser_map['export'] = parser_export
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
 parser_new = subparsers.add_parser('new', help='Create a new project or data object',
-                                   description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch .  Not all data types are supported.  See \'dx upload\' for files and \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.', prog="dx new")
+                                   description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files, \'dx build\' for applets, and \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.', prog="dx new")
 subparsers_new = parser_new.add_subparsers()
 subparsers_new.metavar = 'class'
 parser_map['new'] = parser_new
@@ -3098,6 +3013,91 @@ parser_unset_properties.set_defaults(func=unset_properties)
 parser_map['unset_properties'] = parser_unset_properties
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_close = subparsers.add_parser('close', help='Close a remote data object', description='Close a remote data object.', prog='dx close')
+parser_close.add_argument('path', help='Path to data object to close')
+parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
+parser_close.set_defaults(func=close)
+parser_map['close'] = parser_close
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_find = subparsers.add_parser('find', help='Search functionality over various DNAnexus entities',
+                                    description='Search functionality over various DNAnexus entities.', prog='dx find')
+subparsers_find = parser_find.add_subparsers()
+subparsers_find.metavar = 'category'
+parser_map['find'] = parser_find
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps',
+                                              description='Finds apps with the given search parameters.',
+                                              parents=[stdout_args, json_arg, delim_arg], prog='dx find apps')
+parser_find_apps.add_argument('--name', help='Name of the app')
+parser_find_apps.add_argument('--category', help='Category of the app')
+parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
+parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
+parser_find_apps.add_argument('--installed', help='Whether to restrict the list to installed apps only', action='store_true')
+parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
+parser_find_apps.add_argument('--creator', help='Creator of the app version')
+parser_find_apps.add_argument('--developer', help='Developer of the app')
+parser_find_apps.add_argument('--created-after', help='Timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--created-before', help='Timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--mod-after', help='Timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--mod-before', help='Timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.set_defaults(func=find_apps)
+parser_map['find apps'] = parser_find_apps
+parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_actions[-1].help))
+
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job name (if available), the job ID, the time at which the job was created, and its current state.',
+                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg],
+                                              prog='dx find jobs')
+parser_find_jobs.add_argument('--user', help='User ID who launched the job')
+parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
+parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
+parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
+parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
+parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
+parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
+parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_jobs.add_argument('-n', '--num-results', type=int, help='Max number of origin jobs to return')
+parser_find_jobs.set_defaults(func=find_jobs)
+parser_map['find jobs'] = parser_find_jobs
+parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))
+
+parser_find_data = subparsers_find.add_parser('data', help='Finds data objects',
+                                              description='Finds data objects with the given search parameters.',
+                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg], prog='dx find data')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
+parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
+parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
+parser_find_data.add_argument('--name', help='Name of the object')
+parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
+parser_find_data.add_argument('--type', help='Type of the data object')
+parser_find_data.add_argument('--tag', help='Tag of the data object')
+parser_find_data.add_argument('--link', help='Object ID that the data object links to')
+parser_find_data.add_argument('--project', help='Project with which to restrict the results')
+parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
+parser_find_data.add_argument('--mod-after', help='Timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--mod-before', help='Timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--created-after', help='Timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--created-before', help='Timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.set_defaults(func=find_data)
+parser_map['find data'] = parser_find_data
+parser_categories['data']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
+
+parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects',
+                                                  description='Finds projects with the given search parameters.',
+                                                  parents=[stdout_args, json_arg, delim_arg],
+                                                  prog='dx find projects')
+parser_find_projects.add_argument('--name', help='Name of the project')
+parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
+parser_find_projects.add_argument('--public', help='Include public projects', action='store_true')
+parser_find_projects.set_defaults(func=find_projects)
+parser_map['find projects'] = parser_find_projects
+parser_categories['data']['cmds'].append(('find projects', subparsers_find._choices_actions[-1].help))
 
 parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,
