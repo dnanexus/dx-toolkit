@@ -375,7 +375,7 @@ def print_desc(desc):
     else:
         print_data_obj_desc(desc)
 
-def get_ls_l_desc(desc, include_folder=False):
+def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
         state_len = len(desc['state'])
         if desc['state'] != 'closed':
@@ -386,10 +386,11 @@ def get_ls_l_desc(desc, include_folder=False):
         state_str = ''
         state_len = 0
 
+    name_str = ''
     if include_folder:
-        name_str = desc['folder'] + ('/' if desc['folder'] != '/' else '') + desc['name']
-    else:
-        name_str = desc['name']
+        name_str += desc['folder'] + ('/' if desc['folder'] != '/' else '')
+
+    name_str += desc['name']
 
     size_str = ''
     if 'size' in desc and desc['class'] == 'file':
@@ -401,7 +402,7 @@ def get_ls_l_desc(desc, include_folder=False):
     if desc['class'] == 'program':
         name_str = BOLD() + GREEN() + name_str + ENDC()
 
-    return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + desc['id'] + DELIMITER(')')
+    return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + desc['project'] + DELIMITER(':') + desc['id'] + DELIMITER(')')
 
-def print_ls_l_desc(desc, include_folder=False):
-    print get_ls_l_desc(desc, include_folder)
+def print_ls_l_desc(desc, **kwargs):
+    print get_ls_l_desc(desc, **kwargs)

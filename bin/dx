@@ -145,8 +145,7 @@ else:
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
-    subcommands = {'gtable': ['get '],
-                   'find': ['jobs ', 'data ', 'projects ', 'apps '],
+    subcommands = {'find': ['jobs ', 'data ', 'projects ', 'apps '],
                    'new': ['record ', 'gtable ', 'project ']}
 
     def __init__(self):
@@ -1839,6 +1838,12 @@ def find_jobs(args):
 def find_data(args):
     get_output_flag(args)
     properties = get_properties_from_args(args.properties)
+    if args.allprojects:
+        args.project = None
+        args.folder = None
+        args.recurse = True
+    elif args.project is None:
+        args.project = dxpy.WORKSPACE_ID
     try:
         results = list(dxpy.find_data_objects(classname=args.classname,
                                               state=args.state,
@@ -1849,7 +1854,7 @@ def find_data(args):
                                               tag=args.tag, link=args.link,
                                               project=args.project,
                                               folder=args.folder,
-                                              recurse=args.recurse,
+                                              recurse=(args.recurse if not args.recurse else None),
                                               modified_after=args.mod_after,
                                               modified_before=args.mod_before,
                                               created_after=args.created_after,
@@ -1860,14 +1865,14 @@ def find_data(args):
             return
         if args.brief:
             for result in results:
-                print result['id']
+                print result['project'] + ':' + result['id']
         else:
             for result in results:
                 if args.verbose:
                     print ""
                     print_data_obj_desc(result["describe"])
                 else:
-                    print_ls_l_desc(result["describe"], include_folder=True)
+                    print_ls_l_desc(result["describe"], include_folder=True, include_project=args.allprojects)
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -3065,7 +3070,7 @@ parser_map['find jobs'] = parser_find_jobs
 parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))
 
 parser_find_data = subparsers_find.add_parser('data', help='Finds data objects',
-                                              description='Finds data objects with the given search parameters.',
+                                              description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects, use --allprojects (overrides --project, --folder, --norecurse).',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
@@ -3075,9 +3080,10 @@ parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs o
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--tag', help='Tag of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
+parser_find_data.add_argument('--allprojects', help='Extend search to all projects', action='store_true')
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
 parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
-parser_find_data.add_argument('--recurse', help='Recurse into subfolders', action='store_true')
+parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')
 parser_find_data.add_argument('--mod-after', help='Timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.add_argument('--mod-before', help='Timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.add_argument('--created-after', help='Timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
