@@ -55,8 +55,12 @@ def get_version_suffix(src_dir):
     return get_timestamp_version_suffix()
 
 
-def main():
-    args = parser.parse_args()
+def main(**kwargs):
+
+    if len(kwargs) == 0:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(kwargs)
 
     if not os.path.isdir(args.src_dir):
         parser.error("%s is not a directory" % args.src_dir)

@@ -1724,13 +1724,13 @@ def dximport(args):
         parser.exit(1, 'Not yet implemented\n')
 
 def export_fastq(args):
+    sys.argv = [sys.argv[0] + ' export fastq'] + args.exporter_args
     from dxpy.scripts import dx_reads_to_fastq
-    sys.argv = [sys.argv[0]] + args.exporter_args
     dx_reads_to_fastq.main()
 
 def export_sam(args):
+    sys.argv = [sys.argv[0] + ' export sam'] + args.exporter_args
     from dxpy.scripts import dx_mappings_to_sam
-    sys.argv = [sys.argv[0]] + args.exporter_args
     dx_mappings_to_sam.main()
 
 exporters = {
@@ -1956,14 +1956,8 @@ def close(args):
             handler._wait_on_close()
 
 def build(args):
-    '''
-    FIXME: Warning: a limitation/bug in argparse requires the first argument in args.builder_args to be positional.
-    This means that despite the usage that dx-build-app prints (dx-build-app [options] build_dir),
-    when called through dx, it must instead be called as "dx build build_dir [options]".
-    '''
     from dxpy.scripts import dx_build_app
-    sys.argv = [sys.argv[0]] + args.builder_args
-    dx_build_app.main()
+    dx_build_app.main(vars(args))
 
 def install(args):
     app_desc = get_app_from_path(args.app)
@@ -2467,6 +2461,12 @@ def print_help(args):
             print '  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20)
     elif args.command_or_category not in parser_map:
         parser.exit(1, 'Unrecognized command: ' + args.command_or_category + '\n')
+    elif args.command_or_category == 'export':
+        if args.subcommand not in exporters:
+            parser.exit(1, 'Unsupported format for dx export: ' + args.subcommand + '\n')
+        new_args = argparse.Namespace()
+        setattr(new_args, 'exporter_args', ['-h'])
+        exporters[args.subcommand](new_args)
     elif args.subcommand is None:
         parser_map[args.command_or_category].print_help()
     elif (args.command_or_category + ' ' + args.subcommand) not in parser_map:
@@ -2817,12 +2817,14 @@ parser_map['export'] = parser_export
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
+from dxpy.scripts.dx_build_app import parser as build_parser
+
 parser_build = subparsers.add_parser('build', help='Build an applet/app',
-                                     description='Build an applet or app object from a local source directory',
+                                     description='Build an applet or app object from a local source directory.',
                                      prog='dx build',
-                                     add_help=False
+                                     add_help=False,
+                                     parents=[build_parser]
 )
-parser_build.add_argument('builder_args', help='Arguments passed to the app builder', nargs=argparse.REMAINDER)
 parser_build.set_defaults(func=build)
 parser_map['build'] = parser_build
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
