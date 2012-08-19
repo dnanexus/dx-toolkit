@@ -564,7 +564,7 @@ def ls(args):
                 next_name = None
                 if args.long:
                     if len(resp['objects']) > 0:
-                        print BOLD() + 'State\tLast modified       Size     Name (ID)' + ENDC()
+                        print BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC()
                     else:
                         print "No data objects found in the folder"
                 for i in range(len(resp["objects"])):
