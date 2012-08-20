@@ -1811,7 +1811,7 @@ def find_jobs(args):
                 for j in range(num_tabs):
                     print_string += DELIMITER('\t')
                 if 'name' in results[job_ids[parent_id]]['describe'] and results[job_ids[parent_id]]['describe']['name'] is not None:
-                    print_string += results[job_ids[parent_id]]['describe']['name'] + ' '
+                    print_string += results[job_ids[parent_id]]['describe']['name'] + DELIMITER(' ')
                         
                 print_string += parent_id + DELIMITER(' ') + \
                     str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
