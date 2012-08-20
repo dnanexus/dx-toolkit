@@ -81,17 +81,26 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
     return desc
 
 def get_io_spec(spec):
-    return ('\n' + ' '*16).join(map(lambda param:
-                                        textwrap.fill(get_io_desc(param),
-                                                      subsequent_indent=' '*16,
-                                                      width=64),
-                                    spec))
+    if get_delimiter() is not None:
+        return ('\n' + get_delimiter()).join([get_io_desc(param) for param in spec])
+    else:
+        return ('\n' + ' '*16).join(map(lambda param:
+                                            fill(get_io_desc(param),
+                                                 subsequent_indent=' '*16,
+                                                 width_adjustment=-16),
+                                        spec))
 
 def print_field(label, value):
-    sys.stdout.write(label + " " * (16-len(label)) + textwrap.fill(value, subsequent_indent=' '*16, width=64) + '\n')
+    if get_delimiter() is not None:
+        sys.stdout.write(label + get_delimiter() + value + '\n')
+    else:
+        sys.stdout.write(label + " " * (16-len(label)) + fill(value, subsequent_indent=' '*16, width_adjustment=-16) + '\n')
+
+def print_nofill_field(label, value):
+    sys.stdout.write(label + DELIMITER(" " * (16-len(label))) + value + '\n')
 
 def print_list_field(label, values):
-    print_field(label, ('-' if len(values) == 0 else ', '.join(values)))
+    print_field(label, ('-' if len(values) == 0 else DELIMITER(', ').join(values)))
 
 def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
@@ -110,9 +119,9 @@ def print_project_desc(desc):
     elif 'billTo' in desc:
         print_field("Billed to", desc['billTo'])
     if 'protected' in desc:
-        print "Protected\t" + json.dumps(desc["protected"])
+        print_json_field("Protected", desc["protected"])
     if 'restricted' in desc:
-        print "Restricted\t" + json.dumps(desc["restricted"])
+        print_json_field("Restricted", desc["restricted"])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
@@ -136,7 +145,7 @@ def print_project_desc(desc):
             print_json_field(field, desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'inputs', 'outputs', 'run', 'summary', 'applet', 'installs', 'billing']
+    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing']
     # NOTE: Hiding "billing" for now
 
     print_field("ID", desc["id"])
@@ -175,8 +184,8 @@ def print_app_desc(desc):
         print_json_field("Access", desc["access"])
         print_field("API version", desc["dxapi"])
         if 'inputSpec' in desc:
-            print "Input Spec      " + get_io_spec(desc["inputSpec"])
-            print "Output Spec     " + get_io_spec(desc["outputSpec"])
+            print_nofill_field("Input Spec", get_io_spec(desc["inputSpec"]))
+            print_nofill_field("Output Spec", get_io_spec(desc["outputSpec"]))
             print_field("Interpreter", desc["runSpec"]["interpreter"])
             if "resources" in desc["runSpec"]:
                 print_json_field("Resources", desc["runSpec"]["resources"])
@@ -184,16 +193,6 @@ def print_app_desc(desc):
                 print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
             if "execDepends" in desc["runSpec"]:
                 print_json_field("execDepends", desc["runSpec"]["execDepends"])
-        elif 'inputs' in desc:
-            print "Input Spec      " + get_io_spec(desc['inputs'])
-            print "Output Spec     " + get_io_spec(desc['outputs'])
-            print_field("Interpreter", desc["run"]["interpreter"])
-            if "resources" in desc["run"]:
-                print_json_field("Resources", desc["run"]["resources"])
-            if "bundledDepends" in desc["run"]:
-                print_json_field("bundledDepends", desc["run"]["bundledDepends"])
-            if "execDepends" in desc["run"]:
-                print_json_field("execDepends", desc["run"]["execDepends"])
         if 'resources' in desc:
             print_field("Resources", desc['resources'])
         elif 'globalWorkspace' in desc:
@@ -204,6 +203,9 @@ def print_app_desc(desc):
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
+
+def get_col_str(col_desc):
+    return col_desc['name'] + DELIMITER(" (") + col_desc['type'] + DELIMITER(")")
 
 def print_data_obj_desc(desc):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary']
@@ -248,9 +250,9 @@ def print_data_obj_desc(desc):
     if 'dxapi' in desc:
         print_field("API version", desc["dxapi"])
     if "inputSpec" in desc:
-        print "Input Spec\t" + get_io_spec(desc['inputSpec'])
+        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec']))
     if "outputSpec" in desc:
-        print "Output Spec\t" + get_io_spec(desc['outputSpec'])
+        print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if 'runSpec' in desc:
         print_field("Interpreter", desc["runSpec"]["interpreter"])
         if "resources" in desc['runSpec']:
@@ -278,10 +280,10 @@ def print_data_obj_desc(desc):
                     print_field("Length", str(desc['length']))
             elif field == "columns":
                 if len(desc['columns']) > 0:
-                    coldescs = ""
-                    for column in desc["columns"]:
-                        coldescs += column["name"] + " (" + column["type"] + ")\n" + " "*16
-                    print "Columns" + " " *(16-len("Columns")) + coldescs[:-17]
+                    coldescs = "Columns" + DELIMITER(" " *(16-len("Columns"))) + get_col_str(desc["columns"][0])
+                    for column in desc["columns"][1:]:
+                        coldescs += '\n' + DELIMITER(" "*16) + get_col_str(column)
+                    print coldescs
                 else:
                     print_list_field("Columns", desc['columns'])
             else: # Unhandled prettifying
@@ -373,7 +375,7 @@ def print_desc(desc):
     else:
         print_data_obj_desc(desc)
 
-def get_ls_l_desc(desc, include_folder=False):
+def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
         state_len = len(desc['state'])
         if desc['state'] != 'closed':
@@ -384,23 +386,23 @@ def get_ls_l_desc(desc, include_folder=False):
         state_str = ''
         state_len = 0
 
+    name_str = ''
     if include_folder:
-        name_str = desc['folder'] + ('/' if desc['folder'] != '/' else '') + desc['name']
-    else:
-        name_str = desc['name']
+        name_str += desc['folder'] + ('/' if desc['folder'] != '/' else '')
 
+    name_str += desc['name']
+
+    size_str = ''
     if 'size' in desc and desc['class'] == 'file':
         size_str = get_size_str(desc['size'])
     elif 'length' in desc:
         size_str = str(desc['length']) + ' rows'
-    else:
-        size_str = '        '
-    size_str += ' '*(max(0, 8 - len(size_str)))
+    size_padding = ' '*(max(0, 8 - len(size_str)))
 
     if desc['class'] == 'program':
         name_str = BOLD() + GREEN() + name_str + ENDC()
 
-    return state_str + ' '*(8 - state_len) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + ' ' + size_str + ' ' + name_str + ' (' + desc['id'] + ')'
+    return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + desc['project'] + DELIMITER(':') + desc['id'] + DELIMITER(')')
 
-def print_ls_l_desc(desc, include_folder=False):
-    print get_ls_l_desc(desc, include_folder)
+def print_ls_l_desc(desc, **kwargs):
+    print get_ls_l_desc(desc, **kwargs)

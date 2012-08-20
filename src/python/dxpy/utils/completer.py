@@ -71,7 +71,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
                                               classname=classname,
                                               limit=100,
                                               describe=True,
-                                              typename=(typespec if isinstance(typespec, basestring) else None)))
+                                              typename=typespec))
         names = map(lambda result: result['describe']['name'], results)
         return filter(startswith(text),
                       map(lambda name:

@@ -229,12 +229,14 @@ class DXGTable(DXDataObject):
             for row in response['data']:
                 yield row
 
-    def iterate_query_rows(self, query=None, columns=None, **kwargs):
+    def iterate_query_rows(self, query=None, columns=None, limit=None, **kwargs):
         """
         :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
         :type query: dict
         :param columns: List of columns to be included; all columns will be included if not set
         :type columns: list of strings
+        :param limit: Limit to the number of rows to be returned (default is to return all results)
+        :type limit: int
         :rtype: generator
 
         Returns a generator which iterates through the rows of the
@@ -249,14 +251,19 @@ class DXGTable(DXDataObject):
 
         """
         cursor = 0
+        returned = 0
         while cursor is not None:
+            if limit is not None and returned == limit:
+                return
             resp = self.get_rows(query=query, columns=columns,
                                  starting=cursor,
-                                 limit=self._row_buffer_size)
+                                 limit=(self._row_buffer_size if limit is None else min(limit - returned, self._row_buffer_size)),
+                                 **kwargs)
             buffer = resp['data']
             cursor = resp['next']
             if len(buffer) < 1: break
             for row in buffer:
+                returned += 1
                 yield row
 
     def __iter__(self):

@@ -29,10 +29,12 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
         print str(i) + ') ' + choices[i]
     print ''
     if prompt is None:
+        prompt = 'Pick a numbered choice'
+        if allow_mult:
+            prompt += ' or \"*\" for all'
         if default is not None:
-            prompt = 'Pick a numbered choice [' + str(default) + ']: '
-        else:
-            prompt = 'Pick a numbered choice: '
+            prompt += ' [' + str(default) + ']'
+        prompt += ': '
     while True:
         try: 
             value = raw_input(prompt)

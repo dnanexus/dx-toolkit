@@ -20,6 +20,8 @@ else:
     std_width = 78
     color_state = False
 
+delimiter = None
+
 def CYAN():
     return '\033[36m' if color_state else ''
 
@@ -53,6 +55,18 @@ def DNANEXUS_LOGO():
 def set_colors(state=True):
     global color_state
     color_state = state
+
+def set_delimiter(delim=None):
+    global delimiter
+    delimiter = delim
+
+def get_delimiter(delim=None):
+    global delimiter
+    return delimiter
+
+def DELIMITER(alt_delim):
+    global delimiter
+    return alt_delim if delimiter is None else delimiter
 
 def fill(string, width_adjustment=0, **kwargs):
     if "width" not in kwargs:
