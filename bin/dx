@@ -2491,7 +2491,9 @@ no_color_arg.add_argument('--color',
 delim_arg = argparse.ArgumentParser(add_help=False)
 delim_arg.add_argument('--delimiter', '--delim',
                        dest='delimiter',
-                       help='Always use exactly one of DELIMITER to separate fields to be printed')
+                       help='Always use exactly one of DELIMITER to separate fields to be printed.  If no delimiter is provided with this flag, TAB will be used.',
+                       nargs='?',
+                       const="\t")
 
 json_arg = argparse.ArgumentParser(add_help=False)
 json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
