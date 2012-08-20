@@ -1654,7 +1654,7 @@ def dximport(args):
         if args.name is None:
             args.name = os.path.basename(args.filename)
 
-    if not args.vcf:
+    if True: # not args.vcf
         firstrow = fd.readline()
 
         if args.csv:
@@ -2459,7 +2459,8 @@ def print_help(args):
     if args.command_or_category is None:
         parser_help.print_help()
     elif args.command_or_category in parser_categories:
-        print args.command_or_category + ' commands of dx:\n'
+        print 'dx ' + args.command_or_category + ': ' + parser_categories[args.command_or_category]['desc'].lstrip()
+        print '\nCommands:\n'
         for cmd in parser_categories[args.command_or_category]['cmds']:
             print '  ' + cmd[0] + ' '*(18-len(cmd[0])) + fill(cmd[1], width_adjustment=-20, subsequent_indent=' '*20)
     elif args.command_or_category not in parser_map:
@@ -2800,7 +2801,6 @@ import_format_args = parser_import.add_argument_group('input format arguments')
 import_format_args_gp = import_format_args.add_mutually_exclusive_group()
 import_format_args_gp.add_argument('--csv', help='Interpret the file as a comma-separated format', action='store_true')
 import_format_args_gp.add_argument('--tsv', help='Interpret the file as a tab-separated format (default if no format is specified and a file extension is not recognized)', action='store_true')
-import_format_args_gp.add_argument('--vcf', help='Interpret the file as a VCF file', action='store_true')
 import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
 parser_import.set_defaults(func=dximport)
 parser_map['import'] = parser_import
