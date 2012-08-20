@@ -24,6 +24,18 @@ enum HttpMethod {
   HTTP_PUT = 4
 };
 
+inline std::string getHttpMethodName(const HttpMethod &m) {
+  switch(m) {
+    case HTTP_POST: return "POST";
+    case HTTP_HEAD: return "HEAD";
+    case HTTP_GET: return "GET";
+    case HTTP_DELETE: return "DELETE";
+    case HTTP_PUT: return "PUT";
+    default: break;
+  }
+  return "UNKNOWN_HTTP_METHOD";
+}
+
 class HttpRequest {
 private:
 
