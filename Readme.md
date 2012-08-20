@@ -8,7 +8,7 @@ Supported languages:
 * Python
 * C++
 * Perl
-* Java (FIXME)
+* Java
 * Ruby (FIXME)
 
 # Building the toolkit
