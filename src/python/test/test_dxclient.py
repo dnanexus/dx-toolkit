@@ -16,7 +16,7 @@ class TestDXClient(unittest.TestCase):
         run("dx help")
         proj_name = u"dxclient_test_pröject"
         folder_name = u"эксперимент 1"
-        project = run(u"dx new project '{p}'".format(p=proj_name)).strip()
+        project = run(u"dx new project '{p}' --brief".format(p=proj_name)).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = project
         run("dx cd /")
         run("dx ls")
@@ -48,7 +48,7 @@ class TestDXClient(unittest.TestCase):
             writer.writerows([['a:uint8', 'b:string', 'c:float'], [1, "x", 1.0], [2, "y", 4.0]])
             f.flush()
             run(u"dx import --name '{n}' --csv '{f}' --wait".format(n=table_name, f=f.name))
-            run(u"dx get '{n}' --csv --output {o}".format(n=table_name, o=f.name))
+            run(u"dx get '{n}' --csv --output {o} -f".format(n=table_name, o=f.name))
 
         run(u"dx get_details '{n}'".format(n=table_name))
 
