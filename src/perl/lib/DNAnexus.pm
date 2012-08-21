@@ -34,8 +34,8 @@ sub DXHTTPRequest($;$%) {
     $data ||= {};
     die("Expected data to be a hash") if ref($data) ne "HASH";
 
-    my $method = $kwargs{method} or 'POST';
-    my $headers = $kwargs{headers} or {};
+    my $method = $kwargs{method} || 'POST';
+    my $headers = $kwargs{headers} || {};
 
     my $request = HTTP::Request->new($method, $APISERVER.$resource);
     $request->header($headers);
