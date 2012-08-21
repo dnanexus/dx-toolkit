@@ -26,8 +26,7 @@ def validate_applet_spec(applet_spec):
         raise AppletBuilderException("Applet specification does not contain a name")
 
 def validate_app_spec(app_spec):
-    if "resources" not in app_spec:
-        raise AppletBuilderException("App specification does not contain a resources field")
+    pass
 
 def get_applet_spec(src_dir):
     applet_spec_file = os.path.join(src_dir, "dxapp.json")
