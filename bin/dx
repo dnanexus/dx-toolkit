@@ -609,7 +609,7 @@ def mkdir(args):
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
-            project, folderpath, none = resolve_path_with_project(path, expected='folder')
+            project, folderpath, none = resolve_path(path, expected='folder')
         except BaseException as details:
             print fill('Could not resolve \"' + path + '\": ' + unicode(details))
             had_error = True
@@ -629,7 +629,7 @@ def rmdir(args):
     had_error = False
     for path in args.paths:
         try:
-            project, folderpath, none = resolve_path_with_project(path, expected='folder')
+            project, folderpath, none = resolve_path(path, expected='folder')
         except BaseException as details:
             print fill('Could not resolve \"' + path + '\": ' + unicode(details))
             had_error = True
@@ -742,7 +742,7 @@ def rmproject(args):
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
     try:
-        dest_proj, dest_path, none = try_call(resolve_path_with_project,
+        dest_proj, dest_path, none = try_call(resolve_path,
                                               args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
@@ -826,7 +826,7 @@ def mv(args):
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
     try:
-        dest_proj, dest_path, none = try_call(resolve_path_with_project,
+        dest_proj, dest_path, none = try_call(resolve_path,
                                               args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
@@ -2165,8 +2165,7 @@ def add_input_to_json(inputs, input_json, input_specs):
                 is_array = False
 
             if isjobref:
-                if not is_hashid(i[1]) or not i[1].startswith('job-'):
-                    parser.exit(1, fill('A job-based object reference provided via -r/--job-ref did not give a valid job id in the format <input name>=<job id>:<output name>') + '\n')
+                # Already validated that i[1] is a job ID
                 parsed = {"job": i[1], "field": i[2]}
             else:
                 try:
@@ -2286,25 +2285,19 @@ def run(args):
             input_json = json.loads(raw_input('Input JSON > '))
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
-    elif args.input is not None or args.job_ref is not None:
+    elif args.input is not None:
         input_inputs = []
-        if args.input is not None:
-            try:
-                for keyeqval in args.input:
-                    name, value = split_unescaped('=', keyeqval)
+        try:
+            for keyeqval in args.input:
+                name, value = split_unescaped('=', keyeqval)
+                val_substrings = split_unescaped(':', value)
+                if len(val_substrings) == 2 and is_job_id(val_substrings[0]):
+                    input_inputs.append([name, val_substrings[0], val_substrings[1]])
+                else:
                     input_inputs.append([name, value])
-            except:
-                parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input name>=<input value>\n')
-        jobref_inputs = []
-        if args.job_ref is not None:
-            try:
-                for keyeqval in args.job_ref:
-                    name, value = split_unescaped('=', keyeqval)
-                    job_id, output_name = split_unescaped(':', value)
-                    jobref_inputs.append([name, job_id, output_name])
-            except:
-                parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -r<input name>=<job id>:<output name>\n')
-        add_input_to_json(input_inputs + jobref_inputs, input_json,
+        except:
+            parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input name>=<input value>\n')
+        add_input_to_json(input_inputs, input_json,
                           (required_inputs + optional_inputs) if required_inputs is not None else None)
 
     elif required_inputs is not None and (len(required_inputs) > 0 or len(optional_inputs) > 0):
@@ -2872,10 +2865,10 @@ SPECIFYING INPUTS
     Syntax :  -i<input name>=<input value>
     Example:  dx run foo -inum=34 -istr=foo -igtables=reads1 -igtables=reads2
 
-''' + fill('The example above runs an applet called "foo" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the applet MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided in conjunction with the -i/--input flags using the -r/--job-ref flag', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('The example above runs an applet called "foo" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the applet MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided using the <job id>:<output name> syntax', initial_indent='  ', subsequent_indent='  ') + '''
 
-    Syntax :  -r<input name>=<job id>:<output name>
-    Example:  dx run mapper -r reads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
+    Syntax :  -i<input name>=<job id>:<output name>
+    Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
 ''' + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
 
     1) -j/--input_json INPUT_JSON
@@ -2900,7 +2893,6 @@ Examples:
 parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file'))
 parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width_adjustment=-24), action='store_true')
-parser_run_input_gp.add_argument('-r', '--job-ref', help=fill('An input to be added as a job-based object reference using "<input name>=<job id>:<output name>".  NOTE: Only compatible with input specification with -i/--input; will be ignored if provided with a full input JSON.', width_adjustment=-24), action='append')
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
