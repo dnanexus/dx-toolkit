@@ -741,10 +741,9 @@ def rmproject(args):
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
-    dest_proj, dest_path, none = -1, -1, -1
+    dest_proj, dest_path, none = try_call(resolve_path,
+                                          args.destination, 'folder')
     try:
-        dest_proj, dest_path, none = try_call(resolve_path,
-                                              args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
         dx_dest = dxpy.get_handler(dest_proj)
@@ -826,10 +825,9 @@ def mv(args):
 
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
-    dest_proj, dest_path, none = -1, -1, -1
+    dest_proj, dest_path, none = try_call(resolve_path,
+                                          args.destination, 'folder')
     try:
-        dest_proj, dest_path, none = try_call(resolve_path,
-                                              args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
         dx_dest = dxpy.get_handler(dest_proj)

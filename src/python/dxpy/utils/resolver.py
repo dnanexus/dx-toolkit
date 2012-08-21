@@ -306,10 +306,15 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # 2) project-name-or-id:folderpath/to/possible/entity
         if is_job_id(substrings[0]):
             return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1]
+        
         if multi_projects:
-            project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
+            project_ids = resolve_container_id_or_name(substrings[0], multi=True)
+            if len(project_ids) == 0:
+                raise ResolutionError('Error: The project \"' + substrings[0] + '\" could not be found')
         else:
-            project = resolve_container_id_or_name(substrings[0], is_error=True)
+            project = resolve_container_id_or_name(substrings[0])
+            if project is None:
+                raise ResolutionError('Error: The project \"' + substrings[0] + '\" could not be found')
         wd = '/'
     elif get_last_pos_of_char(':', path) >= 0:
         # :folderpath/to/possible/entity OR project-name-or-id:
@@ -328,7 +333,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # project
         project = dxpy.WORKSPACE_ID
         if expected == 'folder' and project is None:
-            raise ResolutionError('Could not resolve a project name or ID')
+            raise ResolutionError('Error: a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in \"' + path + '\"')
         wd = os.environ.get('DX_CLI_WD', '/')
 
     # Determine folderpath and entity_name if necessary
