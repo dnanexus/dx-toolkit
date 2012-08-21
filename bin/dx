@@ -1133,7 +1133,10 @@ def new_record(args):
             parser.exit(1, 'Error: details could not be parsed as JSON\n')
     init_from = None
     if args.init is not None:
-        init_from = dxpy.DXRecord(args.init)
+        init_project, init_folder, init_result = try_call(resolve_existing_path,
+                                                          args.init,
+                                                          expected='entity')
+        init_from = dxpy.DXRecord(dxid=init_result['id'], project=init_project)
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
@@ -2075,7 +2078,7 @@ def get_input_array(param_desc):
     in_class = param_desc['class'][6:]
     typespec = param_desc.get('type', None)
     input_array = []
-    print '\nEnter list of inputs (^D or empty string to finish) of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False) + ':\n'
+    print '\n' + fill('Enter list of inputs (^D or empty string to finish) of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False) + ':') + '\n'
     try:
         if in_class in dx_data_classes:
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -2153,7 +2156,7 @@ def get_input(input_hash, param):
 def get_optional_inputs(input_hash, optional_inputs):
     names = map(lambda spec: spec['name'], optional_inputs)
     while True:
-        print '\nSelect an optional parameter to set by its # (^D or empty string to finish):\n'
+        print '\n' + fill('Select an optional parameter to set by its # (^D or empty string to finish):') + '\n'
         for i in range(len(optional_inputs)):
             opt_str = ' [' + str(i) + '] ' + \
                 get_io_desc(optional_inputs[i], show_opt=False)
@@ -2977,7 +2980,7 @@ parser_new_record = subparsers_new.add_parser('record', help='Create a new recor
                                               description='Create a new record',
                                               parents=[parser_dataobject_args],
                                               prog='dx new record')
-parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
+parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata')
 parser_new_record.set_defaults(func=new_record)
 parser_map['new record'] = parser_new_record
 
