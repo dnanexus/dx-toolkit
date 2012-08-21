@@ -10,3 +10,5 @@ export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export PATH="${DNANEXUS_HOME}/bin:$PATH"
 export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:$PYTHONPATH"
 export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
+
+export PYTHONIOENCODING=UTF-8
