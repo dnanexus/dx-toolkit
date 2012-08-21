@@ -9,6 +9,8 @@
 .DS_Store
 .coverage
 /bin/dx-build-app
+/bin/dx-build-applet
+/bin/dx-mappings-to-sam
 /bin/dx-reads-to-fastq
 /bin/dx-workflow-to-applet
 /bin/pyrsa-*
