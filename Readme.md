@@ -23,6 +23,15 @@ that doesn't require them.
 
 * TODO: list packages
 
+### Ubuntu 12.04
+
+### Ubuntu 10.04
+
+### Fedora/RHEL/CentOS
+
+### OS X
+* 
+
 ## Installing the toolkit on your system
 
 ```
