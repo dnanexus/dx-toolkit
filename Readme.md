@@ -3,6 +3,15 @@ DNAnexus Platform Toolkit
 
 Welcome to the `dx-toolkit` repository! This repository contains the DNAnexus API language bindings and utilities for interacting with the DNAnexus platform.
 
+## Using the toolkit on your system
+Initialize your environment by sourcing this file:
+
+```
+source dx-toolkit/environment
+```
+
+After initialization, you will be able to use ```dx``` (the [DNAnexus Command Line Client](http://wiki.dev.dnanexus.com/Command-Line-Client/Quickstart)) and other utilities; and you will be able to use DNAnexus API bindings in supported languages.
+
 Supported languages:
 
 * Python
@@ -34,10 +43,3 @@ that doesn't require them.
 * The following packages can be installed either from their respective websites or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/).
     * CMake (http://www.cmake.org/cmake/resources/software.html)
 
-## Installing the toolkit on your system
-
-```
-source dx-toolkit/environment
-```
-
-TODO: describe this
