@@ -1772,6 +1772,8 @@ def gtable_get(args):
 
 def find_jobs(args):
     get_output_flag(args)
+    if args.allusers:
+        args.user = None
     try:
         describe = {"io": args.verbose}
         results = list(dxpy.find_jobs(launched_by=args.user,
@@ -3069,7 +3071,8 @@ parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_
 parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job name (if available), the job ID, the time at which the job was created, and its current state.',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg],
                                               prog='dx find jobs')
-parser_find_jobs.add_argument('--user', help='User ID who launched the job')
+parser_find_jobs.add_argument('--user', help='User ID who launched the job, default is self', default='self')
+parser_find_jobs.add_argument('--allusers', help='Do not restrict search by who launched the job', action='store_true')
 parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
 parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
