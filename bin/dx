@@ -184,22 +184,25 @@ class DXCLICompleter():
                 if words[0] == 'run':
                     path_matches = path_completer(words[-1],
                                                   classes=['applet'])
-                elif words[0] in ['cd', 'rmdir', 'mkdir']:
+                elif words[0] in ['cd', 'rmdir', 'mkdir', 'tree']:
                     path_matches = path_completer(words[-1],
                                                   expected='folder')
+                elif words[0] in ['export']:
+                    path_matches = path_completer(words[-1],
+                                                  classes=['gtable'])
                 elif words[0] in ['head']:
                     path_matches = path_completer(words[-1],
                                                   classes=['gtable', 'file'])
-                elif words[0] in ['cat', 'upload']:
+                elif words[0] in ['cat']:
                     path_matches = path_completer(words[-1],
                                                   classes=['file'])
                 elif words[0] in ['ls', 'rm', 'mv', 'cp']:
                     path_matches = path_completer(words[-1])
-                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close', 'get']:
+                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close', 'get', 'download']:
                     path_matches = path_completer(words[-1])
-                elif words[0] in ['describe', 'add_tags', 'remove_tags', 'rename', 'set_properties', 'unset_properties']:
+                elif words[0] in ['describe', 'rename', 'set_properties', 'unset_properties']:
                     path_matches = path_completer(words[-1], include_current_proj=True)
-                elif words[0] in ['rmproject']:
+                elif words[0] in ['rmproject', 'invite']:
                     path_matches = path_completer(words[-1], expected='project', include_current_proj=True)
                 else:
                     path_matches = []
@@ -1131,14 +1134,20 @@ def new_record(args):
     init_from = None
     if args.init is not None:
         init_from = dxpy.DXRecord(args.init)
+    if args.output is None:
+        project = dxpy.WORKSPACE_ID
+        folder = os.environ.get('DX_CLI_WD', '/')
+        name = None
+    else:
+        project, folder, name = resolve_path(args.output)
 
     dxrecord = None
     try:
-        dxrecord = dxpy.new_dxrecord(project=args.project, name=args.name,
+        dxrecord = dxpy.new_dxrecord(project=project, name=name,
                                      tags=args.tags, types=args.types, 
                                      hidden=hidden, properties=properties,
                                      details=details,
-                                     folder=args.folder,
+                                     folder=folder,
                                      parents=args.parents, init_from=init_from)
         print dxrecord.get_id()
     except dxpy.DXAPIError as details:
@@ -1153,6 +1162,12 @@ def new_gtable(args):
             details = json.loads(args.details)
         except:
             parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    if args.output is None:
+        project = dxpy.WORKSPACE_ID
+        folder = os.environ.get('DX_CLI_WD', '/')
+        name = None
+    else:
+        project, folder, name = resolve_path(args.output)
 
     json_input = {}
     if args.input is not None:
@@ -1170,11 +1185,11 @@ def new_gtable(args):
         args.indices = json.loads(args.indices)
 
     try:
-        dxgtable = dxpy.new_dxgtable(project=args.project, name=args.name,
+        dxgtable = dxpy.new_dxgtable(project=project, name=name,
                                      tags=args.tags, types=args.types, 
                                      hidden=hidden, properties=properties,
                                      details=details,
-                                     folder=args.folder,
+                                     folder=folder,
                                      parents=args.parents,
                                      columns=args.columns,
                                      indices=args.indices)
@@ -1600,22 +1615,26 @@ def upload(args):
             details = json.loads(args.details)
         except:
             parser.exit(1, 'Error: details could not be parsed as JSON\n')
-    if args.name is None:
-        args.name = os.path.basename(args.filename)
 
-    # if args.folder is None and (args.project is None or args.project == dxpy.WORKSPACE_ID):
-    #     args.folder = os.environ.get('DX_CLI_WD', '/')
+    if args.output is None:
+        project = dxpy.WORKSPACE_ID
+        folder = os.environ.get('DX_CLI_WD', '/')
+        name = os.path.basename(args.filename)
+    else:
+        project, folder, name = resolve_path(args.output)
+        if name is None:
+            name = os.path.basename(args.filename)
 
     try:
         dxfile = dxpy.upload_local_file(args.filename,
-                                        name=args.name,
+                                        name=name,
                                         tags=args.tags,
                                         types=args.types,
                                         hidden=hidden,
-                                        project=args.project,
+                                        project=project,
                                         properties=properties,
                                         details=details,
-                                        folder=args.folder,
+                                        folder=folder,
                                         parents=args.parents)
         if args.wait:
             dxfile._wait_on_close()
@@ -1650,6 +1669,19 @@ def dximport(args):
             details = json.loads(args.details)
         except:
             parser.exit(1, 'Error: details could not be parsed as JSON\n')
+
+    if args.output is None:
+        project = dxpy.WORKSPACE_ID
+        folder = os.environ.get('DX_CLI_WD', '/')
+        if args.filename != '-':
+            name = os.path.basename(args.filename)
+        else:
+            name = None
+    else:
+        project, folder, name = resolve_path(args.output)
+        if name is None and args.filename != '-':
+            name = os.path.basename(args.filename)
+
     if args.filename == '-':
         fd = sys.stdin
     else:
@@ -1657,8 +1689,6 @@ def dximport(args):
             fd = open(args.filename, 'rb')
         except:
             parser.exit(1, fill(unicode('Could not open ' + args.filename + ' for reading')) + '\n')
-        if args.name is None:
-            args.name = os.path.basename(args.filename)
 
     if True: # not args.vcf
         firstrow = fd.readline()
@@ -1705,11 +1735,11 @@ def dximport(args):
                                      'type': 'string'})
                 types.append('string')
         try:
-            dxgtable = dxpy.new_dxgtable(project=args.project, name=args.name,
+            dxgtable = dxpy.new_dxgtable(project=project, name=name,
                                          tags=args.tags, types=args.types, 
                                          hidden=hidden, properties=properties,
                                          details=details,
-                                         folder=args.folder,
+                                         folder=folder,
                                          parents=args.parents,
                                          columns=column_specs)
             if args.column_names is not None:
@@ -1778,13 +1808,17 @@ def gtable_get(args):
 
 def find_jobs(args):
     get_output_flag(args)
+    project = dxpy.WORKSPACE_ID
+    if args.project is not None:
+        project, none, none = try_call(resolve_existing_path,
+                                       args.project, 'project')
     if args.allusers:
         args.user = None
     try:
         describe = {"io": args.verbose}
         results = list(dxpy.find_jobs(launched_by=args.user,
                                       applet=args.applet,
-                                      project=args.project,
+                                      project=project,
                                       state=args.state,
                                       origin_job=args.origin,
                                       parent_job=args.parent,
@@ -1851,6 +1885,9 @@ def find_data(args):
         args.recurse = True
     elif args.project is None:
         args.project = dxpy.WORKSPACE_ID
+    else:
+        args.project, none, none = try_call(resolve_existing_path,
+                                            args.project, 'project')
     try:
         results = list(dxpy.find_data_objects(classname=args.classname,
                                               state=args.state,
@@ -2523,15 +2560,13 @@ stdout_args_gp.add_argument('--verbose', help='If available, displays extra verb
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
+parser_dataobject_args_gp.add_argument('-o', '--output', help='DNAnexus path for the new object (default uses current project and folder if set)')
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
-parser_dataobject_args_gp.add_argument('--name', help='Name of the object')
 parser_dataobject_args_gp.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
 parser_dataobject_args_gp.add_argument('--types', nargs='+', help='Types of the data object')
 parser_dataobject_args_gp.add_argument('--tags', nargs='+', help='Tags of the data object')
-parser_dataobject_args_gp.add_argument('--project', help='Project (if not using the default project)')
 parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
-parser_dataobject_args_gp.add_argument('--parents', help='Create folder (and its parents) if necessary', action='store_true')
-parser_dataobject_args_gp.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
+parser_dataobject_args_gp.add_argument('-p', '--parents', help='Create any necessary folders if necessary', action='store_true')
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
                                  epilog='For a breakdown of dx commands by category, run \"dx help\"')
@@ -2748,7 +2783,7 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_upload = subparsers.add_parser('upload', help='Upload a file',
-                                      description='Upload a local file.  By default, the filename will be used as its new name.', parents=[parser_dataobject_args], prog="dx upload")
+                                      description='Upload a local file.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.', parents=[parser_dataobject_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
 parser_upload.add_argument('--brief', help='Print ID of the file object instead of the full description', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
@@ -3081,7 +3116,7 @@ parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', descrip
 parser_find_jobs.add_argument('--user', help='User ID who launched the job, default is self', default='self')
 parser_find_jobs.add_argument('--allusers', help='Do not restrict search by who launched the job', action='store_true')
 parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
-parser_find_jobs.add_argument('--project', help='Project context ID (output project)')
+parser_find_jobs.add_argument('--project', help='Project context (output project)')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
@@ -3171,6 +3206,7 @@ parser_help.set_defaults(func=print_help)
 parser_map['help'] = parser_help
 for cat in parser_categories:
     parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
+parser_categories['all']['cmds'].sort()
 
 # "Execution" starts here
 
