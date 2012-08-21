@@ -30,7 +30,7 @@ that doesn't require them.
 ### Fedora/RHEL/CentOS
 
 ### OS X
-* 
+* Command Line Tools for XCode (https://developer.apple.com/downloads/ - free registration required with Apple)
 
 ## Installing the toolkit on your system
 
