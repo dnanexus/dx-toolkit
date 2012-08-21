@@ -1773,7 +1773,7 @@ def gtable_get(args):
 def find_jobs(args):
     get_output_flag(args)
     try:
-        describe = {"io": False} if args.summary else args.verbose
+        describe = {"io": args.verbose}
         results = list(dxpy.find_jobs(launched_by=args.user,
                                       applet=args.applet,
                                       project=args.project,
@@ -1788,50 +1788,49 @@ def find_jobs(args):
             print json.dumps(results, indent=4)
             return
 
-        if args.brief:
-            for result in results:
-                print result['id']
-            return
-        else:
-            job_ids = {}
-            job_children = {}
-            origin_jobs = []
-            for i in range(len(results)):
-                job_ids[results[i]['id']] = i
-                parent = results[i]['describe']['parentJob']
-                if parent is None:
-                    origin_jobs.append(i)
-                elif parent in job_children:
-                    job_children[parent].append(i)
-                else:
-                    job_children[parent] = [i]
+        job_ids = {}
+        job_children = {}
+        origin_jobs = []
+        for i in range(len(results)):
+            job_ids[results[i]['id']] = i
+            parent = results[i]['describe']['parentJob']
+            if parent is None:
+                origin_jobs.append(i)
+            elif parent in job_children:
+                job_children[parent].append(i)
+            else:
+                job_children[parent] = [i]
 
-            def print_children(parent_id, num_tabs):
-                print_string = ""
+        def print_children(parent_id, num_tabs):
+            print_string = ""
+
+            if not args.brief:
                 for j in range(num_tabs):
                     print_string += DELIMITER('\t')
                 if 'name' in results[job_ids[parent_id]]['describe'] and results[job_ids[parent_id]]['describe']['name'] is not None:
                     print_string += results[job_ids[parent_id]]['describe']['name'] + DELIMITER(' ')
-                        
-                print_string += parent_id + DELIMITER(' ') + \
-                    str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + \
-                    DELIMITER(' (')
+
+            print_string += parent_id
+
+            if not args.brief:
+                print_string += DELIMITER(' ') + \
+                    str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + DELIMITER(' (')
                 state = results[ job_ids[parent_id] ]['describe']['state']
                 print_string += JOB_STATES(state)
                 print_string += DELIMITER(')')
-                print print_string
+            print print_string
 
-                if parent_id in job_children:
-                    for child in job_children[parent_id]:
-                        print_children(results[child]['id'], num_tabs + 1)
+            if parent_id in job_children:
+                for child in job_children[parent_id]:
+                    print_children(results[child]['id'], num_tabs + 1)
 
-            n = 0
-            for origin_job in origin_jobs:
-                orig_id = results[origin_job]["id"]
-                print_children(orig_id, 0)
-                n += 1
-                if args.num_results is not None and n >= args.num_results:
-                    break
+        n = 0
+        for origin_job in origin_jobs:
+            orig_id = results[origin_job]["id"]
+            print_children(orig_id, 0)
+            n += 1
+            if args.num_results is not None and n >= args.num_results:
+                break
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
