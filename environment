@@ -1,4 +1,7 @@
-# Source this file in a bash shell to initialize DNAnexus environment variables:
+# -*- Mode: shell-script -*-
+#
+# Source this file in a bash shell to initialize DNAnexus environment
+# variables:
 # $ source environment
 
 # Resolve the location of this file
@@ -8,5 +11,5 @@ while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 export PATH="${DNANEXUS_HOME}/bin:$PATH"
-export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:$PYTHONPATH"
+export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
 export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
