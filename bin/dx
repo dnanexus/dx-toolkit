@@ -741,6 +741,7 @@ def rmproject(args):
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
+    dest_proj, dest_path, none = -1, -1, -1
     try:
         dest_proj, dest_path, none = try_call(resolve_path,
                                               args.destination, 'folder')
@@ -825,6 +826,7 @@ def mv(args):
 
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
+    dest_proj, dest_path, none = -1, -1, -1
     try:
         dest_proj, dest_path, none = try_call(resolve_path,
                                               args.destination, 'folder')
@@ -1461,17 +1463,17 @@ def get(args):
             if args.stdout:
                 writer = csv.writer(sys.stdout, delimiter=delimiter)
             else:
-                if args.output is None:
+                if args.output is None and not args.no_ext:
                     filename += '.tsv' if args.tsv else '.csv'
                 if not args.overwrite and os.path.exists(filename):
                     parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
                 writer = csv.writer(open(filename, 'wb'),
                                     delimiter=delimiter)
             if not args.no_header:
-                writer.writerow(([] if args.no_rowid else ['__id__']) + [col['name'] for col in dxtable.describe()['columns']])
+                writer.writerow((['__id__:int'] if args.rowid else []) + [(col['name'] + ':' + col['type']) for col in dxtable.describe()['columns']])
 
             for row in dxtable:
-                writer.writerow([unicode(item).encode('utf-8') for item in row[1 if args.no_rowid else 0:]])
+                writer.writerow([unicode(item).encode('utf-8') for item in row[0 if args.rowid else 1:]])
     elif entity_result['describe']['class'] == 'record':
         try:
             details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
@@ -1481,7 +1483,7 @@ def get(args):
         if args.stdout:
             print json.dumps(details, indent=4)
         else:
-            if args.output is None:
+            if args.output is None and not args.no_ext:
                 filename += '.json'
             if not args.overwrite and os.path.exists(filename):
                 parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
@@ -1505,7 +1507,7 @@ def get(args):
         if args.stdout:
             print run_spec['code']
             return
-        elif args.output is None:
+        elif args.output is None and not args.no_ext:
             if run_spec['interpreter'] == 'python2.7':
                 filename += '.py'
             elif run_spec['interpreter'] == 'v8cgi':
@@ -2755,11 +2757,12 @@ parser_get = subparsers.add_parser('get', help='Download a data object (alias: d
                                    description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, and --tsv.  For special file formats like fastq and sam, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
 get_gtable_args = parser_get.add_argument_group(title='GTable-specific options')
 get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file', action='store_true')
-get_gtable_args.add_argument('--no-rowid', help='Do not include the row ID column', action='store_true')
+get_gtable_args.add_argument('--rowid', help='Include the row ID column', action='store_true')
 get_gtable_format_args = get_gtable_args.add_mutually_exclusive_group()
 get_gtable_format_args.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
 get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separated format (default if no format is specified)', action='store_true')
