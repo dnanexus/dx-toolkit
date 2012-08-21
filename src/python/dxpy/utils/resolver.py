@@ -241,7 +241,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([results[0]['id']] if multi else results[0]['id'])
     elif len(results) == 0:
         if is_error:
-            raise ResolutionError('Could not resolve container ID or name')
+            raise ResolutionError('Error: Could not find a project named \"' + string + '\"')
         return ([] if multi else None)
     elif not multi:
         print 'Found multiple projects with name \"' + string + '\"'
@@ -308,13 +308,9 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
             return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1]
         
         if multi_projects:
-            project_ids = resolve_container_id_or_name(substrings[0], multi=True)
-            if len(project_ids) == 0:
-                raise ResolutionError('Error: The project \"' + substrings[0] + '\" could not be found')
+            project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
         else:
-            project = resolve_container_id_or_name(substrings[0])
-            if project is None:
-                raise ResolutionError('Error: The project \"' + substrings[0] + '\" could not be found')
+            project = resolve_container_id_or_name(substrings[0], is_error=True)
         wd = '/'
     elif get_last_pos_of_char(':', path) >= 0:
         # :folderpath/to/possible/entity OR project-name-or-id:

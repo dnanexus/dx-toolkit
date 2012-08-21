@@ -972,7 +972,13 @@ def describe(args):
     if is_data_obj_id(args.path):
         # Should prefer the current project's version if possible
         if dxpy.WORKSPACE_ID is not None:
-            json_input['project'] = dxpy.WORKSPACE_ID
+            try:
+                # But only put it in the JSON if you still have
+                # access.
+                dxpy.api.projectListFolder(dxpy.WORKSPACE_ID)
+                json_input['project'] = dxpy.WORKSPACE_ID
+            except:
+                pass
 
     # Otherwise, attempt to look for it as a data object.
     try:
