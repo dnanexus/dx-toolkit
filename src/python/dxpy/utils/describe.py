@@ -86,9 +86,17 @@ def get_io_spec(spec):
     else:
         return ('\n' + ' '*16).join(map(lambda param:
                                             fill(get_io_desc(param),
-                                                 subsequent_indent=' '*16,
-                                                 width_adjustment=-16),
+                                                 subsequent_indent=' '*18,
+                                                 width_adjustment=-18),
                                         spec))
+
+def get_io_field(io_hash):
+    if get_delimiter() is not None:
+        return ('\n' + get_delimiter()).join([(key + '=' + json.dumps(value)) for key, value in io_hash.items()])
+    else:
+        return ('\n').join([fill(key + '=' + json.dumps(value),
+                                 initial_indent=' '*16,
+                                 subsequent_indent=' '*20) for key, value in io_hash.items()])[16:]
 
 def print_field(label, value):
     if get_delimiter() is not None:
@@ -314,15 +322,15 @@ def print_job_desc(desc):
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
     else:
-        print_json_field("Parent job", desc["parentJob"])
+        print_field("Parent job", desc["parentJob"])
     print_field("Origin job", desc["originJob"])
     print_field("Function", desc["function"])
     if 'runInput' in desc:
-        print_json_field("Run Input", desc["runInput"])
+        print_nofill_field("Run Input", get_io_field(desc["runInput"]))
     if "originalInput" in desc:
-        print_json_field("Original Input", desc["originalInput"])
-        print_json_field("Input", desc["input"])
-        print_json_field("Output", desc["output"])
+        print_nofill_field("Original Input", get_io_field(desc["originalInput"]))
+        print_nofill_field("Input", get_io_field(desc["input"]))
+        print_nofill_field("Output", get_io_field(desc["output"]))
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
     print_field("Launched by", desc["launchedBy"])
