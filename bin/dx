@@ -609,7 +609,7 @@ def mkdir(args):
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
-            project, folderpath, none = resolve_path_with_project(path, expected='folder')
+            project, folderpath, none = resolve_path(path, expected='folder')
         except BaseException as details:
             print fill('Could not resolve \"' + path + '\": ' + unicode(details))
             had_error = True
@@ -629,7 +629,7 @@ def rmdir(args):
     had_error = False
     for path in args.paths:
         try:
-            project, folderpath, none = resolve_path_with_project(path, expected='folder')
+            project, folderpath, none = resolve_path(path, expected='folder')
         except BaseException as details:
             print fill('Could not resolve \"' + path + '\": ' + unicode(details))
             had_error = True
@@ -742,7 +742,7 @@ def rmproject(args):
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
     try:
-        dest_proj, dest_path, none = try_call(resolve_path_with_project,
+        dest_proj, dest_path, none = try_call(resolve_path,
                                               args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
@@ -826,7 +826,7 @@ def mv(args):
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
     try:
-        dest_proj, dest_path, none = try_call(resolve_path_with_project,
+        dest_proj, dest_path, none = try_call(resolve_path,
                                               args.destination, 'folder')
         if dest_path is None:
             raise ValueError()
@@ -2140,7 +2140,7 @@ def get_optional_inputs(input_hash, optional_inputs):
 
 def add_input_to_json(inputs, input_json, input_specs):
     '''
-    :param inputs: list of [name, value] lists
+    :param inputs: list of [name, value] lists or [name, job id, output name] lists
     :param input_json: input JSON being built
     :param input_specs: list of all input specs
     '''
@@ -2151,6 +2151,7 @@ def add_input_to_json(inputs, input_json, input_specs):
         names = map(lambda spec: spec['name'], input_specs)
         found_duplicates = False
         for i in inputs:
+            isjobref = (len(i) == 3)
             try:
                 input_index = names.index(i[0])
             except:
@@ -2163,10 +2164,14 @@ def add_input_to_json(inputs, input_json, input_specs):
             else:
                 is_array = False
 
-            try:
-                parsed = parse_input[input_class](i[1])
-            except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+            if isjobref:
+                # Already validated that i[1] is a job ID
+                parsed = {"job": i[1], "field": i[2]}
+            else:
+                try:
+                    parsed = parse_input[input_class](i[1])
+                except BaseException as details:
+                    parser.exit(1, fill(unicode(details)) + '\n')
 
             if i[0] not in input_json:
                 if is_array:
@@ -2177,7 +2182,6 @@ def add_input_to_json(inputs, input_json, input_specs):
                 input_json[i[0]].append(parsed)
             else:
                  parser.exit(1, fill('Error: Found duplicate input field names for an input that does not expect an array of inputs') + '\n')
-
     else:
         # No input spec.  Make them all lists and then un-list them if
         # there's only one element at the end.  (Since arbitrary JSON
@@ -2286,9 +2290,13 @@ def run(args):
         try:
             for keyeqval in args.input:
                 name, value = split_unescaped('=', keyeqval)
-                input_inputs.append([name, value])
+                val_substrings = split_unescaped(':', value)
+                if len(val_substrings) == 2 and is_job_id(val_substrings[0]):
+                    input_inputs.append([name, val_substrings[0], val_substrings[1]])
+                else:
+                    input_inputs.append([name, value])
         except:
-            parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input_name>=<input value>\n')
+            parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input name>=<input value>\n')
         add_input_to_json(input_inputs, input_json,
                           (required_inputs + optional_inputs) if required_inputs is not None else None)
 
@@ -2563,7 +2571,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_env = subparsers.add_parser('env', help='Prints all environment variables in use',
-                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttp://wiki.dev.dnanexus.com/Using-the-Command-Line-Client#Advanced%3A-Environment-variables',
+                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttp://wiki.dev.dnanexus.com/Command-Line-Client/Environment-Variables',
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env')
 parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14), action='store_true')
 parser_env.set_defaults(func=env)
@@ -2852,19 +2860,22 @@ parser_run = subparsers.add_parser('run', help='Run an applet or app', descripti
 
 SPECIFYING INPUTS
 
-''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('To use the "-i" flag to specify each input field name and value, using the syntax "-i<input name>=<input value>".  For example, the following runs the applet called "mapper" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable):', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by name and value.', initial_indent='  ', subsequent_indent='  ') + '''
 
-    dx run mapper -inum=34 -istr=foo -igtables=reads1 -igtables=reads2
+    Syntax :  -i<input name>=<input value>
+    Example:  dx run foo -inum=34 -istr=foo -igtables=reads1 -igtables=reads2
 
-''' + fill('Note that the applet MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('The example above runs an applet called "foo" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the applet MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided using the <job id>:<output name> syntax', initial_indent='  ', subsequent_indent='  ') + '''
+
+    Syntax :  -i<input name>=<job id>:<output name>
+    Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
+''' + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
 
     1) -j/--input_json INPUT_JSON
     2) -f/--input_json_file FILENAME
     3) --stdin
 
-  JOB-BASED OBJECT REFERENCES
-
-''' + fill('For now, job-based object references can only be used if provided as part of a full input JSON.', initial_indent='  ', subsequent_indent='  ') + '\n'), prog='dx run', formatter_class=argparse.RawTextHelpFormatter, parents=[stdout_args])
+'''), prog='dx run', formatter_class=argparse.RawTextHelpFormatter, parents=[stdout_args])
 parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
@@ -2872,7 +2883,8 @@ parser_run.add_argument('--folder', help=fill('The project:folder path in which 
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
-parser_run_input = parser_run.add_mutually_exclusive_group()
+parser_run_input_gp = parser_run.add_argument_group('Input arguments')
+parser_run_input = parser_run_input_gp.add_mutually_exclusive_group()
 parser_run_input.add_argument('-i', '--input', help='''An input to be added using "<input name>=<input value>"
 Examples:
   -ichunkSize=250000     # Numerical input

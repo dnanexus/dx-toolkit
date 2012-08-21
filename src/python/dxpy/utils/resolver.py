@@ -88,6 +88,9 @@ def is_data_obj_id(string):
 def is_container_id(string):
     return is_hashid(string) and (string.startswith('project-') or string.startswith('workspace-') or string.startswith('container-'))
 
+def is_job_id(string):
+    return is_hashid(string) and string.startswith('job-')
+
 def is_nohash_id(string):
     return nohash_pattern.match(string) is not None
 
@@ -248,7 +251,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         # len(results) > 1 and multi
         return map(lambda result: result['id'], results)
 
-def resolve_path_with_project(path, expected=None, expected_classes=None, multi_projects=False):
+def resolve_path(path, expected=None, expected_classes=None, multi_projects=False):
     '''
     :param path: A path to a data object to attempt to resolve
     :type path: string
@@ -298,7 +301,21 @@ def resolve_path_with_project(path, expected=None, expected_classes=None, multi_
     substrings = split_unescaped(':', path)
 
     if len(substrings) == 2:
-        # project-name-or-id:folderpath/to/possible/entity
+        # One of the following:
+        # 1) job-id:fieldname
+        # 2) project-name-or-id:folderpath/to/possible/entity
+        if is_job_id(substrings[0]):
+            try:
+                job_desc = dxpy.DXHTTPRequest('/' + substrings[0] + '/describe', {})
+            except BaseException as details:
+                raise ResolutionError(str(details))
+            project = job_desc['project']
+            entity_name = job_desc['output'].get(substrings[1], None)
+            if entity_name is not None:
+                entity_name = entity_name['$dnanexus_link']
+            else:
+                raise ResolutionError('Error: Could not find \"' + substrings[1] + '\" as an output field name of ' + substrings[0] + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
+            return ([project] if multi_projects else project), None, entity_name
         if multi_projects:
             project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
         else:
@@ -355,7 +372,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     of the hash ID, it will return None for all fields.
     '''
 
-    project, folderpath, entity_name = resolve_path_with_project(path, expected)
+    project, folderpath, entity_name = resolve_path(path, expected)
     if entity_name is None:
         # Definitely a folder (or project)
         # FIXME? Should I check that the folder exists if expected="folder"?

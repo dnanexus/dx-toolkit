@@ -10,6 +10,60 @@ using namespace dx;
 
 const int64_t DXFile::max_buf_size_ = 104857600;
 
+// A helper function for making http requests with retry logic
+void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, const HttpHeaders &headers, const HttpMethod &method, const char *data = NULL, const size_t size=0u) {
+  const int MAX_TRIES = 5;
+  int retries = 0;
+  bool someThingWentWrong = false;
+  string wrongThingDescription = "";
+  while (true) { 
+    try {
+      resp = HttpRequest::request(method, url, headers, data, size);
+    } catch(HttpRequestException e) {
+      someThingWentWrong = true;
+      wrongThingDescription = e.what();
+    }
+   
+    if (!someThingWentWrong && (resp.responseCode < 200 || resp.responseCode >= 300)) {
+      someThingWentWrong = true;
+      wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode);
+    }
+/*    if (!someThingWentWrong && resp.respData.size() == 0) {
+      someThingWentWrong = true;
+      wrongThingDescription = "Server returned HTTP response code =  " + boost::lexical_cast<string>(resp.responseCode) + ". But response size = 0 (unexpected)";
+    }*/
+
+    if (someThingWentWrong) {
+      retries++;
+      if (retries >= MAX_TRIES) {
+        vector<string> hvec = headers.getAllHeadersAsVector();
+        string headerStr = "HTTP Headers sent with request:";
+        headerStr += (hvec.size() == 0) ? " None\n" : "\n";
+        for (int i = 0; i < hvec.size(); ++i) {
+          headerStr += "\t" + boost::lexical_cast<string>(i + 1) + ")" +  hvec[i] + "\n";
+        }
+        throw DXFileError(string("******\nERROR (Unrecoverable): while performing : '") + getHttpMethodName(method) + " " + url + "'" + ".\n" + headerStr + "Giving up after " + boost::lexical_cast<string>(retries) + " tries.\nError message: " + wrongThingDescription + "\n******\n");
+      }
+      
+      // TODO: Make printing to stderr thread safe someday ?
+      //       Though we are writing data to std::cerr in a single call to operator <<()
+      //       (rather than chaining <<). It is not clear if a single call is thread safe.
+      //       C++03 certainly did not provide any thread safe guarantees (it didn't
+      //       even recognize that "threads" exist at all!). 
+      //       Not sure if C++11 provides a thread safe guarantee for call to operator<<() 
+      //       (including the flush in case of std::cerr).
+      //       Anyway, *observed* behavior (when compiled in g++ 4.6.3) is that output is *NOT*
+      //       garbled, and work as if <<() was a thread safe call. :)
+      std::cerr<<("\nRetry #" + boost::lexical_cast<string>(retries) + ": Will start retrying '" + getHttpMethodName(method) + " " + url + "' in " + boost::lexical_cast<string>(1<<retries) + " seconds. Error in previous try: " + wrongThingDescription);
+      usleep((1<<retries) * 1000 * 1000);
+      someThingWentWrong = false;
+      wrongThingDescription.clear();
+      continue; // repeat the same request
+    }
+    return;
+  }
+}
+
 void DXFile::init_internals_() {
   pos_ = 0;
   file_length_ = -1;
@@ -66,14 +120,10 @@ void DXFile::read(char* ptr, int64_t n) {
   HttpHeaders headers;
   headers["Range"] = "bytes=" + boost::lexical_cast<string>(pos_) + "-" + boost::lexical_cast<string>(endbyte);
   pos_ = endbyte + 1;
-
-  HttpRequest resp = HttpRequest::request(HTTP_GET, url, headers);
-  if ((resp.responseCode < 200) ||
-      (resp.responseCode >= 300)) {
-    throw DXFileError("HTTP Response code: " +
-		      boost::lexical_cast<string>(resp.responseCode) +
-		      " when downloading.");
-  }
+  
+  
+  HttpRequest resp;
+  makeHTTPRequestForFileReadAndWrite(resp, url, headers, HTTP_GET);
 
   memcpy(ptr, resp.respData.data(), resp.respData.length());
   gcount_ = resp.respData.length();
@@ -106,66 +156,21 @@ void DXFile::startLinearQuery(const int64_t start_byte,
 // the Range: [start,end] should be a valid byte range in file (shouldn't be past the end of file)
 void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) const {
   int64_t last_byte_in_result = start - 1;
-  
-  const int MAX_TRIES = 5;
-  int retries = 0;
-  bool someThingWentWrong = false;
-  string wrongThingDescription = "";
-  
+ 
   while (last_byte_in_result < end) {
     HttpHeaders headers;
     string range = boost::lexical_cast<string>(last_byte_in_result + 1) + "-" + boost::lexical_cast<string>(end);
     headers["Range"] = "bytes=" + range;
     
     HttpRequest resp;
-    try {
-      resp = HttpRequest::request(HTTP_GET, lq_url, headers);
-    } catch(HttpRequestException e) {
-      someThingWentWrong = true;
-      wrongThingDescription = e.what();
-    }
-   
-    if (!someThingWentWrong && (resp.responseCode < 200 || resp.responseCode >= 300)) {
-      someThingWentWrong = true;
-      wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode);
-    }
-    if (!someThingWentWrong && resp.respData.size() == 0) {
-      someThingWentWrong = true;
-      wrongThingDescription = "Server returned HTTP response code =  " + boost::lexical_cast<string>(resp.responseCode) + ". But response size = 0 (unexpected)";
-    }
-
-    if (someThingWentWrong) {
-      retries++;
-      if (retries >= MAX_TRIES)
-        throw DXFileError("ERROR (Unrecoverable): while downloading byte range: [" + range + "] from url: '" + lq_url + "'. Giving up after total of " + boost::lexical_cast<string>(retries) + " number of tries. Error message: " + wrongThingDescription);
-      
-      // TODO: Make printing to stderr thread safe someday ?
-      //       Though we are writing data to std::cerr in a single call to operator <<()
-      //       (rather than chaining <<). It is not clear if a single call is thread safe.
-      //       C++03 certainly did not provide any thread safe guarantees (it didn't
-      //       even recognize that "threads" exist at all!). 
-      //       Not sure if C++11 provides a thread safe guarantee for call to operator<<() 
-      //       (including the flush in case of std::cerr).
-      //       Anyway, *observed* behavior (when compiled in g++ 4.6.3) is that output is *NOT*
-      //       garbled, and work as if <<() was a thread safe call. :)
-      std::cerr<<("\nRetry #" + boost::lexical_cast<string>(retries) + ": Will start retrying download for byte Range: [" + range + "] in " + boost::lexical_cast<string>(1<<retries) + " seconds. Error in previous try: " + wrongThingDescription);
-      usleep((1<<retries) * 1000 * 1000);
-      someThingWentWrong = false;
-      wrongThingDescription.clear();
-      continue; // repeat the same request
-    }
+    makeHTTPRequestForFileReadAndWrite(resp, lq_url, headers, HTTP_GET);
 
     if (result == "")
       result = resp.respData;
     else
       result.append(resp.respData);
 
-    last_byte_in_result += resp.respData.size();
-    
-    // reset error state variables
-    retries = 0;
-    someThingWentWrong = false;
-    wrongThingDescription.clear();
+    last_byte_in_result += resp.respData.size();   
   }
   assert(result.size() == (end - start + 1));
 }
@@ -404,15 +409,9 @@ void DXFile::uploadPart(const char *ptr, int64_t n, const int index) {
   const JSON resp = fileUpload(dxid_, input_params);
   HttpHeaders req_headers;
   req_headers["Content-Length"] = boost::lexical_cast<string>(n);
-
-  HttpRequest req = HttpRequest::request(HTTP_POST,
-					 resp["url"].get<string>(),
-					 req_headers,
-					 ptr, n);
-
-  if (req.responseCode != 200) {
-    throw DXFileError();
-  }
+  
+  HttpRequest resp2;
+  makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), HttpHeaders(), HTTP_POST, ptr, n);
 }
 
 bool DXFile::is_open() const {
