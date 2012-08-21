@@ -23,6 +23,17 @@ that doesn't require them.
 
 * TODO: list packages
 
+### Ubuntu 12.04
+
+### Ubuntu 10.04
+
+### Fedora/RHEL/CentOS
+
+### OS X
+* Command Line Tools for XCode (https://developer.apple.com/downloads/ - free registration required with Apple)
+* The following packages can be installed either from their respective websites or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/).
+    * CMake (http://www.cmake.org/cmake/resources/software.html)
+
 ## Installing the toolkit on your system
 
 ```

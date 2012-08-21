@@ -296,7 +296,7 @@ class DXGTable(DXDataObject):
         return DXGTable(resp["id"], dx_hash["project"],
                         keep_open)
 
-    def add_rows(self, data, part=None, **kwargs):
+    def add_rows(self, data, part=None, validate=True, **kwargs):
         '''
         :param data: List of rows to be added
         :type data: list of lists
@@ -316,8 +316,9 @@ class DXGTable(DXDataObject):
 
         '''
 
-        for row in data:
-            self._check_row_is_valid(row)
+        if validate:
+            for row in data:
+                self._check_row_is_valid(row)
         if part is None:
             for row in data:
                 self._row_buf.append(row)

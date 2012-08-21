@@ -241,7 +241,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([results[0]['id']] if multi else results[0]['id'])
     elif len(results) == 0:
         if is_error:
-            raise ResolutionError('Could not resolve container ID or name')
+            raise ResolutionError('Error: Could not find a project named \"' + string + '\"')
         return ([] if multi else None)
     elif not multi:
         print 'Found multiple projects with name \"' + string + '\"'
@@ -305,17 +305,8 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # 1) job-id:fieldname
         # 2) project-name-or-id:folderpath/to/possible/entity
         if is_job_id(substrings[0]):
-            try:
-                job_desc = dxpy.DXHTTPRequest('/' + substrings[0] + '/describe', {})
-            except BaseException as details:
-                raise ResolutionError(str(details))
-            project = job_desc['project']
-            entity_name = job_desc['output'].get(substrings[1], None)
-            if entity_name is not None:
-                entity_name = entity_name['$dnanexus_link']
-            else:
-                raise ResolutionError('Error: Could not find \"' + substrings[1] + '\" as an output field name of ' + substrings[0] + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
-            return ([project] if multi_projects else project), None, entity_name
+            return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1]
+        
         if multi_projects:
             project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
         else:
@@ -338,7 +329,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # project
         project = dxpy.WORKSPACE_ID
         if expected == 'folder' and project is None:
-            raise ResolutionError('Could not resolve a project name or ID')
+            raise ResolutionError('Error: a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in \"' + path + '\"')
         wd = os.environ.get('DX_CLI_WD', '/')
 
     # Determine folderpath and entity_name if necessary
@@ -351,9 +342,47 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     else:
         return project, folderpath, entity_name
 
+def resolve_job_ref(job_id, name, describe={}):
+    try:
+        job_desc = dxpy.DXHTTPRequest('/' + job_id + '/describe', {})
+    except BaseException as details:
+        raise ResolutionError(str(details))
+    project = job_desc['project']
+    describe['project'] = project
+    if job_desc['state'] != 'done':
+        raise ResolutionError('Error: the job ' + job_id + ' is ' + job_desc['state'] + ', and it must be in the done state for its outputs to be accessed')
+
+    output_field = job_desc['output'].get(name, None)
+    results = []
+    if output_field is not None:
+        if isinstance(output_field, list):
+            if len(output_field) > 0:
+                if not isinstance(output_field[0], dict) or '$dnanexus_link' not in output_field[0]:
+                    raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an array of non-data objects.')
+                ids = [link['$dnanexus_link'] for link in output_field]
+                try:
+                    results = [{"id": out_id,
+                                "describe": dxpy.DXHTTPRequest('/' + out_id + '/describe', describe)} for out_id in ids]
+                except BaseException as details:
+                    raise ResolutionError(str(details))
+            else:
+                raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an empty array.')
+        elif isinstance(output_field, dict) and '$dnanexus_link' in output_field:
+            obj_id = output_field['$dnanexus_link']
+            try:
+                results = [{"id": obj_id, "describe": dxpy.DXHTTPRequest('/' + obj_id + '/describe', describe)}]
+            except BaseException as details:
+                raise ResolutionError(str(details))
+        else:
+            raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is not of a data object class')        
+    else:
+        raise ResolutionError('Error: Could not find \"' + name + '\" as an output field name of ' + job_id + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
+
+    return results
+
 def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}):
     '''
-    :param ask_to_resolve: Whether picking may be necessary
+    :param ask_to_resolve: Whether picking may be necessary (if true, a list is returned; if false, only one result is returned)
     :type ask_to_resolve: boolean
     :param allow_mult: Whether to allow the user to select multiple results from the same path
     :type allow_mult: boolean
@@ -373,6 +402,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     '''
 
     project, folderpath, entity_name = resolve_path(path, expected)
+
     if entity_name is None:
         # Definitely a folder (or project)
         # FIXME? Should I check that the folder exists if expected="folder"?
@@ -398,12 +428,16 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     else:
         msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object
-        results = list(dxpy.find_data_objects(project=project,
-                                              folder=folderpath,
-                                              name=entity_name,
-                                              recurse=False,
-                                              describe=describe,
-                                              visibility='either'))
+        if is_job_id(project):
+            # The following will raise if no results could be found
+            results =  resolve_job_ref(project, entity_name, describe=describe)
+        else:
+            results = list(dxpy.find_data_objects(project=project,
+                                                  folder=folderpath,
+                                                  name=entity_name,
+                                                  recurse=False,
+                                                  describe=describe,
+                                                  visibility='either'))
         if len(results) == 0:
             # Could not find it as a data object.  If anything, it's a
             # folder.
