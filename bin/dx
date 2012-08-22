@@ -7,7 +7,7 @@ import hashlib
 
 import requests
 from requests.auth import HTTPBasicAuth
-from dxpy.utils.env import parse_user_env_file
+from dxpy.utils.env import parse_user_env_file, set_env_from_args, env_overrides_parser
 from dxpy.utils.printing import *
 from dxpy.utils.pretty_print import format_tree, format_table
 
@@ -2686,7 +2686,7 @@ parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest,
 
 parser_ls = subparsers.add_parser('ls', help='List folders and/or objects in a folder',
                                   description='List folders and/or objects in a folder',
-                                  parents=[no_color_arg, delim_arg],
+                                  parents=[no_color_arg, delim_arg, env_overrides_parser],
                                   prog='dx ls')
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 ls_output_args = parser_ls.add_mutually_exclusive_group()
@@ -3257,6 +3257,7 @@ if len(args_list) > 0:
     args = parser.parse_args(args_list)
     set_cli_colors(args)
     set_delim(args)
+    set_env_from_args(args)
     args.func(args)
 else:
     parser.print_help()

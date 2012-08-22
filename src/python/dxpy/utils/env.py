@@ -3,7 +3,7 @@ Logic for determining environment variable values.  See external
 documentation [TODO: put link here] for more details.
 '''
 
-import os, shlex, sys, textwrap
+import os, shlex, sys, textwrap, argparse, json
 
 def parse_env_file(filename):
     env_vars = {}
@@ -71,3 +71,37 @@ def get_env():
             print textwrap.fill("To use the values stored by dx, unset the environment variables in your shell by running \"source ~/.dnanexus_config/unsetenv\".  To clear the dx-stored values, run \"dx clearenv\".", width=80)
 
     return env_vars
+
+def set_env_from_args(args):
+    ''' Sets the environment variables for this process from arguments (argparse.Namespace)
+    and calls dxpy._initialize() to reset any values that it has already set.
+    '''
+    args = vars(args)
+    if args.get('apiserver_host') is not None:
+        os.environ['DX_APISERVER_HOST'] = args['apiserver_host']
+    if args.get('apiserver_port') is not None:
+        os.environ['DX_APISERVER_PORT'] = args['apiserver_port']
+    if args.get('apiserver_protocol') is not None:
+        os.environ['DX_APISERVER_PROTOCOL'] = args['apiserver_protocol']
+    if args.get('project_context_id') is not None:
+        os.environ['DX_PROJECT_CONTEXT_ID'] = args['project_context_id']
+    if args.get('workspace_id') is not None:
+        os.environ['DX_WORKSPACE_ID'] = args['workspace_id']
+    if args.get('cli_wd') is not None:
+        os.environ['DX_CLI_WD'] = args['cli_wd']
+    if args.get('security_context') is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = args['security_context']
+    if args.get('token') is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": args['token'],
+                                                        "auth_token_type": "Bearer"})
+    from dxpy import _initialize
+    _initialize()
+
+env_overrides_parser = argparse.ArgumentParser(add_help=False)
+env_overrides_parser.add_argument('--apiserver-host', help='API Server host')
+env_overrides_parser.add_argument('--apiserver-port', help='API Server port')
+env_overrides_parser.add_argument('--apiserver-protocol', help='API Server protocol')
+env_overrides_parser.add_argument('--project-context-id', help='Project Context ID')
+env_overrides_parser.add_argument('--workspace-id', help='Workspace ID')
+env_overrides_parser.add_argument('--security_context', help='Security Context')
+env_overrides_parser.add_argument('--token', help='Authentication Token')
