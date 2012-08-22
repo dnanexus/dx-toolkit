@@ -79,6 +79,34 @@ class TestDXClient(unittest.TestCase):
         run(u"dx find jobs --project :")
         run(u"dx find data --project :")
 
+        # new gtable
+        gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr mylo:int32 myhi:int32 --brief").strip()
+        # Add rows to it (?)
+        # TODO: make this better.
+        add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13], ["chr1", 5, 12]]}
+        run(u"dx api {gt} addRows '{rows}'".format(gt=gri_gtable_id, rows=json.dumps(add_rows_input)))
+        # close
+        run(u"dx close {gt} --wait".format(gt=gri_gtable_id))
+
+        # describe
+        desc = json.loads(run(u"dx describe {gt} --json".format(gt=gri_gtable_id)))
+        self.assertEqual(desc['types'], ['gri'])
+        self.assertEqual(desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+
+        # Download and re-import with gri
+        with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
+            run(u"dx get {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
+            fd.flush()
+            run(u"dx import {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
+
+        second_desc = json.loads(run(u"dx describe gritableimport --json"))
+        self.assertEqual(second_desc['types'], ['gri'])
+        self.assertEqual(second_desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+        self.assertEqual(desc['size'], second_desc['size'])
+        self.assertEqual(desc['length'], second_desc['length'])
+
+        # compare output of old and new
+
         run(u"yes|dx rmproject {p}".format(p=project))
 
 if __name__ == '__main__':
