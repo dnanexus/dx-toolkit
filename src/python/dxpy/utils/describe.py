@@ -81,6 +81,8 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
     return desc
 
 def get_io_spec(spec):
+    if len(spec) == 0:
+        return '-'
     if get_delimiter() is not None:
         return ('\n' + get_delimiter()).join([get_io_desc(param) for param in spec])
     else:
@@ -91,6 +93,8 @@ def get_io_spec(spec):
                                         spec))
 
 def get_io_field(io_hash):
+    if len(io_hash) == 0:
+        return '-'
     if get_delimiter() is not None:
         return ('\n' + get_delimiter()).join([(key + '=' + json.dumps(value)) for key, value in io_hash.items()])
     else:
