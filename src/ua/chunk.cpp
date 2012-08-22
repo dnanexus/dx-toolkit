@@ -95,7 +95,9 @@ size_t curlReadFunction(void * ptr, size_t size, size_t nmemb, void * userdata) 
 
 void Chunk::upload() {
   string url = uploadURL();
-  LOG << "Upload URL: " << url << endl;
+  log("Upload URL: " + url);
+
+  uploadOffset = 0;
 
   CURL * curl = curl_easy_init();
   if (curl == NULL) {
@@ -124,20 +126,22 @@ void Chunk::upload() {
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist));
 
   log("Starting curl_easy_perform...");
-
   checkPerformCURLcode(curl_easy_perform(curl));
 
   long responseCode;
   checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode));
   log("Returned from curl_easy_perform; responseCode is " + boost::lexical_cast<string>(responseCode));
-  if ((responseCode < 200) && (responseCode >= 300)) {
+
+  log("Performing curl cleanup");
+  curl_slist_free_all(slist);
+  curl_easy_cleanup(curl);
+
+  if ((responseCode < 200) || (responseCode >= 300)) {
+    log("Throwing runtime_error");
     ostringstream msg;
     msg << "Request failed with HTTP status code " << responseCode;
     throw runtime_error(msg.str());
   }
-
-  curl_slist_free_all(slist);
-  curl_easy_cleanup(curl);
 }
 
 void Chunk::clear() {
