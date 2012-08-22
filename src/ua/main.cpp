@@ -74,7 +74,6 @@ void readChunks() {
       chunksToCompress.produce(c);
     }
   } catch (boost::thread_interrupted &ti) {
-    LOG << "Thread " << boost::this_thread::get_id() << " interrupted." << endl;
     return;
   }
 }
@@ -95,7 +94,6 @@ void compressChunks() {
       chunksToUpload.produce(c);
     }
   } catch (boost::thread_interrupted &ti) {
-    LOG << "Thread " << boost::this_thread::get_id() << " interrupted." << endl;
     return;
   }
 }
@@ -132,7 +130,6 @@ void uploadChunks() {
       }
     }
   } catch (boost::thread_interrupted &ti) {
-    LOG << "Thread " << boost::this_thread::get_id() << " interrupted." << endl;
     return;
   }
 }
@@ -326,16 +323,13 @@ void interruptWorkerThreads(boost::thread &readThread, vector<boost::thread> &co
 void joinWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
   LOG << "Joining worker threads:";
   LOG << " read..." << endl;
-  LOG << "*** read thread joinable? " << (readThread.joinable() ? "true" : "false") << endl;
   readThread.join();
   LOG << " compress..." << endl;
   for (int i = 0; i < (int) compressThreads.size(); ++i) {
-    LOG << "*** compress thread " << i << " joinable? " << (compressThreads[i].joinable() ? "true" : "false") << endl;
     compressThreads[i].join();
   }
   LOG << " upload..." << endl;
   for (int i = 0; i < (int) uploadThreads.size(); ++i) {
-    LOG << "*** upload thread " << i << " joinable? " << (uploadThreads[i].joinable() ? "true" : "false") << endl;
     uploadThreads[i].join();
   }
   LOG << endl;
