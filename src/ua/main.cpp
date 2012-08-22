@@ -173,6 +173,14 @@ void testServerConnection() {
   }
 }
 
+string urlEscape(const string &str) {
+  const char * cStr = str.c_str();
+  char * cStrEsc = curl_easy_escape(NULL, cStr, str.length());
+  string strEsc(cStrEsc);
+  curl_free(cStrEsc);
+  return strEsc;
+}
+
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
  *
@@ -191,7 +199,7 @@ string resolveProject(const string &projectSpec) {
   string projectID;
 
   try {
-    dx::JSON desc = projectDescribe(projectSpec);
+    dx::JSON desc = projectDescribe(urlEscape(projectSpec));
     projectID = desc["id"].get<string>();
   } catch (DXAPIError &e) {
     if (e.name == "PermissionDenied") {
@@ -395,7 +403,7 @@ int main(int argc, char * argv[]) {
 
     testFileExists(opt.files[0]);
 
-    string fileID = createFileObject(opt.projects[0], opt.folders[0], opt.names[0]);
+    string fileID = createFileObject(projectID, opt.folders[0], opt.names[0]);
     LOG << "fileID is " << fileID << endl;
 
     cerr << endl
