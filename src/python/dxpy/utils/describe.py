@@ -93,6 +93,8 @@ def get_io_spec(spec):
                                         spec))
 
 def get_io_field(io_hash):
+    if io_hash is None:
+        return '-'
     if len(io_hash) == 0:
         return '-'
     if get_delimiter() is not None:

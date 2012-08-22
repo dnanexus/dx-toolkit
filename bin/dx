@@ -1502,7 +1502,22 @@ def get(args):
             if not args.no_header:
                 writer.writerow((['__id__:int'] if args.rowid else []) + [(col['name'] + ':' + col['type']) for col in dxtable.describe()['columns']])
 
-            for row in dxtable:
+            # Query stuff
+            if args.gri is not None:
+                try:
+                    lo = int(args.gri[1])
+                    hi = int(args.gri[2])
+                except:
+                    parser.exit(1, fill('Error: the LO and HI arguments to --gri must be integers') + '\n')
+                gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
+                                                              lo,
+                                                              hi,
+                                                              args.gri_mode,
+                                                              args.gri_name)
+                iterator = dxtable.iterate_query_rows(query=gri_query, limit=args.limit)
+            else:
+                iterator = dxtable.iterate_rows(start=args.starting, end=args.starting + args.limit)
+            for row in iterator:
                 writer.writerow([unicode(item).encode('utf-8') for item in row[0 if args.rowid else 1:]])
     elif entity_result['describe']['class'] == 'record':
         try:
@@ -2812,6 +2827,12 @@ parser_get.add_argument('--stdout', help='Print data to stdout', action='store_t
 get_gtable_args = parser_get.add_argument_group(title='GTable-specific options')
 get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file', action='store_true')
 get_gtable_args.add_argument('--rowid', help='Include the row ID column', action='store_true')
+get_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
+get_gtable_args.add_argument('--limit', type=int, help='Specify limit on # rows to return (by default, all results will be returned)')
+#get_gtable_args.add_argument('--columns', nargs='+', help='Specify a list of columns to display (default all columns)') TODO
+get_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
+get_gtable_args.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
+get_gtable_args.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
 get_gtable_format_args = get_gtable_args.add_mutually_exclusive_group()
 get_gtable_format_args.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
 get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separated format (default if no format is specified)', action='store_true')
