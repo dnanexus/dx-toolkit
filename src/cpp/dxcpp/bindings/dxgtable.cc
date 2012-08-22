@@ -255,16 +255,19 @@ void DXGTable::joinAllWriteThreads_() {
   for (unsigned i = 0; i < writeThreads.size(); ++i)
     writeThreads[i].interrupt();
 
+  boost::mutex::scoped_lock cl(countThreadsMutex); 
+  cl.unlock();
   while (true) {
-    boost::mutex::scoped_lock cl(countThreadsMutex); 
+    cl.lock();
     if ((countThreadsNotWaitingOnConsume == 0) &&
         (countThreadsWaitingOnConsume == (int) writeThreads.size())) {
+      cl.unlock();
       break;
     }
     cl.unlock();
     usleep(100);
   }
-  
+
   for (unsigned i = 0; i < writeThreads.size(); ++i)
     writeThreads[i].join();
   
@@ -276,31 +279,39 @@ void DXGTable::joinAllWriteThreads_() {
 
 // This function is what each of the worker thread executes
 void DXGTable::writeChunk_(string gtableId) {
-  /* This function is executed throughtout the lifetime of an addRows worker thread
-   * Brief note about various constructs used in the function:
-   * --> addRowRequestsQueue.consume() will block if no pending requests to be
-   *     excuted are available.
-   * --> gtableAddRows() does the actual upload of rows.
-   * --> We use two interleaved counters (countThread{NOT}WaitingOnConsume) to
-   *     know when it is safe to terminate the threads (see joinAllWriteThreads_()).
-   *     We want to terminate only when thread is waiting on .consume(), and not
-   *     when gtableAddRows() is being executed.
-   */
-   // See C++11 working draft for details about atomics (used for counterS)
-   // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
-  while (true) {
+  try {
     boost::mutex::scoped_lock cl(countThreadsMutex); 
-    countThreadsWaitingOnConsume++;
     cl.unlock();
-    std::string req = addRowRequestsQueue.consume();
-    cl.lock();
-    countThreadsNotWaitingOnConsume++;
-    countThreadsWaitingOnConsume--;
-    cl.unlock();
-    gtableAddRows(gtableId, req);
-    cl.lock();
-    countThreadsNotWaitingOnConsume--;
-    cl.unlock();
+    /* This function is executed throughtout the lifetime of an addRows worker thread
+     * Brief note about various constructs used in the function:
+     * --> addRowRequestsQueue.consume() will block if no pending requests to be
+     *     excuted are available.
+     * --> gtableAddRows() does the actual upload of rows.
+     * --> We use two interleaved counters (countThread{NOT}WaitingOnConsume) to
+     *     know when it is safe to terminate the threads (see joinAllWriteThreads_()).
+     *     We want to terminate only when thread is waiting on .consume(), and not
+     *     when gtableAddRows() is being executed.
+     */
+     // See C++11 working draft for details about atomics (used for counterS)
+     // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
+    while (true) {
+      cl.lock();
+      countThreadsWaitingOnConsume++;
+      cl.unlock();
+      std::string req = addRowRequestsQueue.consume();
+      cl.lock();
+      countThreadsNotWaitingOnConsume++;
+      countThreadsWaitingOnConsume--;
+      cl.unlock();
+      gtableAddRows(gtableId, req);
+      cl.lock();
+      countThreadsNotWaitingOnConsume--;
+      cl.unlock();
+    }
+  } 
+  catch (const boost::thread_interrupted &ti) 
+  {
+    return;
   }
 }
 
