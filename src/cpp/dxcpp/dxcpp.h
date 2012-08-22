@@ -24,6 +24,16 @@ extern std::string g_JOB_ID;
  */
 extern std::string g_PROJECT_CONTEXT_ID;
 
+extern std::string g_APISERVER_PROTOCOL;
+extern std::string g_APISERVER_HOST;
+extern std::string g_APISERVER_PORT;
+extern std::string g_APISERVER;
+
+extern dx::JSON g_SECURITY_CONTEXT;
+
+extern bool g_APISERVER_SET;
+extern bool g_SECURITY_CONTEXT_SET;
+
 /**
  * This is a low-level function for making an HTTP request to the API
  * server using the information that has been set by

@@ -18,7 +18,6 @@ const string g_API_VERSION = "1.0.0";
 
 bool g_APISERVER_SET = false;
 bool g_SECURITY_CONTEXT_SET = false;
-//bool g_WORKSPACE_ID_SET = false;
 
 string g_APISERVER_HOST;
 string g_APISERVER_PORT;
@@ -33,10 +32,8 @@ map<string, string> g_config_file_contents;
 
 const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 
-
 boost::mutex g_loadFromEnvironment_mutex;
 volatile bool g_loadFromEnvironment_finished = false;
-//std::atomic<bool> g_loadFromEnvironment_finished(false);
 
 static bool isRetriableHttpCode(int c) {
   // Ref: Python bindings

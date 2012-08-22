@@ -8,6 +8,7 @@ using namespace std;
 namespace fs = boost::filesystem;
 
 #include "dxjson/dxjson.h"
+#include "dxcpp/dxcpp.h"
 
 string envVarMapper(const string &var) {
   if (var == "DX_APISERVER_PROTOCOL") {
@@ -60,9 +61,9 @@ Options::Options() {
 
   env_opts = new po::options_description();
   env_opts->add_options()
-    ("apiserver-protocol", po::value<string>(&apiserverProtocol)->default_value("https"), "API server protocol")
-    ("apiserver-host", po::value<string>(&apiserverHost)->default_value("emtest.dnanexus.com"), "API server host")
-    ("apiserver-port", po::value<int>(&apiserverPort)->default_value(443), "API server port")
+    ("apiserver-protocol", po::value<string>(&apiserverProtocol), "API server protocol")
+    ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
+    ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
     ("project", po::value<vector<string> >(&projects), "ID of the destination project")
     ;
 
@@ -84,6 +85,43 @@ void Options::parse(int argc, char * argv[]) {
       if (secContext.has("auth_token")) {
         authToken = secContext["auth_token"].get<string>();
       }
+    }
+  }
+
+  /*
+   * Incorporate values read by loadFromEnvironment in dxcpp. This handles
+   * the contents of ~/.dnanexus_config/environment.
+   */
+  if (apiserverProtocol.empty()) {
+    cerr << "Setting apiServerProtocol from g_APISERVER_PROTOCOL: " << g_APISERVER_PROTOCOL << endl;
+    apiserverProtocol = g_APISERVER_PROTOCOL;
+  }
+  if (apiserverHost.empty()) {
+    cerr << "Setting apiServerHost from g_APISERVER_HOST: " << g_APISERVER_HOST << endl;
+    apiserverHost = g_APISERVER_HOST;
+  }
+  if (apiserverPort == -1) {
+    cerr << "Setting apiServerPort from g_APISERVER_PORT: " << g_APISERVER_PORT << endl;
+    apiserverPort = boost::lexical_cast<int>(g_APISERVER_PORT);
+  }
+  if (authToken.empty()) {
+    if (g_SECURITY_CONTEXT_SET) {
+      if (g_SECURITY_CONTEXT.has("auth_token")) {
+        cerr << "Setting authToken from g_SECURITY_CONTEXT: " << g_SECURITY_CONTEXT["auth_token"].get<string>() << endl;
+        authToken = g_SECURITY_CONTEXT["auth_token"].get<string>();
+      }
+    }
+  }
+  if (projects.empty()) {
+    if (!g_PROJECT_CONTEXT_ID.empty()) {
+      cerr << "Adding to projects from g_PROJECT_CONTEXT_ID: " << g_PROJECT_CONTEXT_ID << endl;
+      projects.push_back(g_PROJECT_CONTEXT_ID);
+    }
+  }
+  if (projects.empty()) {
+    if (!g_WORKSPACE_ID.empty()) {
+      cerr << "Adding to projects from g_WORKSPACE_ID: " << g_WORKSPACE_ID << endl;
+      projects.push_back(g_WORKSPACE_ID);
     }
   }
 }
@@ -110,7 +148,7 @@ void Options::validate() {
   if (names.size() == 0) {
     // Get each file object name from the local name of the corresponding
     // file.
-    for (int i = 0; i < files.size(); ++i) {
+    for (int i = 0; i < (int) files.size(); ++i) {
       fs::path p(files[i]);
       names.push_back(p.filename().string());
     }
