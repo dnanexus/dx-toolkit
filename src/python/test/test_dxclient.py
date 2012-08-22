@@ -34,7 +34,8 @@ class TestDXClient(unittest.TestCase):
             local_filename = f.name
             filename = folder_name
             run(u"echo xyzzt > {tf}".format(tf=local_filename))
-            run(u"dx upload {tf} -o '../{f}/{f}'".format(tf=local_filename, f=filename))
+            fileid = run(u"dx upload {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
+            self.assertEqual(fileid, run(u"dx ls '../{f}/{f}' -i".format(f=filename)))
         run(u'dx pwd')
         run(u"dx cd ..")
         run(u'dx pwd')
@@ -67,6 +68,12 @@ class TestDXClient(unittest.TestCase):
         run(u"dx rename '{n}'2 '{n}'".format(n=table_name))
         run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
+
+        run(u"dx new record -o :foo --verbose")
+        recordid = run(u"dx new record -o :foo2 --brief")
+        self.assertEqual(recordid, run(u"dx ls :foo2 -i"))
+        run(u"dx rm :foo")
+        run(u"dx rm :foo2")
 
         # Path resolution is used
         run(u"dx find jobs --project :")

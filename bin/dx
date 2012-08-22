@@ -1123,6 +1123,7 @@ def new_project(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def new_record(args):
+    get_output_flag(args)
     hidden = (args.visibility == 'hidden')
     properties = get_properties_from_args(args.properties)
     details = None
@@ -1133,7 +1134,10 @@ def new_record(args):
             parser.exit(1, 'Error: details could not be parsed as JSON\n')
     init_from = None
     if args.init is not None:
-        init_from = dxpy.DXRecord(args.init)
+        init_project, init_folder, init_result = try_call(resolve_existing_path,
+                                                          args.init,
+                                                          expected='entity')
+        init_from = dxpy.DXRecord(dxid=init_result['id'], project=init_project)
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
@@ -1149,11 +1153,15 @@ def new_record(args):
                                      details=details,
                                      folder=folder,
                                      parents=args.parents, init_from=init_from)
-        print dxrecord.get_id()
+        if args.brief:
+            print dxrecord.get_id()
+        else:
+            print_desc(dxrecord.describe(incl_properties=True, incl_details=True))
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def new_gtable(args):
+    get_output_flag(args)
     hidden = (args.visibility == 'hidden')
     properties = get_properties_from_args(args.properties)
     details = None
@@ -1193,7 +1201,10 @@ def new_gtable(args):
                                      parents=args.parents,
                                      columns=args.columns,
                                      indices=args.indices)
-        print dxgtable.get_id()
+        if args.brief:
+            print dxgtable.get_id()
+        else:
+            print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2075,7 +2086,7 @@ def get_input_array(param_desc):
     in_class = param_desc['class'][6:]
     typespec = param_desc.get('type', None)
     input_array = []
-    print '\nEnter list of inputs (^D or empty string to finish) of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False) + ':\n'
+    print '\n' + fill('Enter list of inputs (^D or empty string to finish) of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False) + ':') + '\n'
     try:
         if in_class in dx_data_classes:
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -2153,7 +2164,7 @@ def get_input(input_hash, param):
 def get_optional_inputs(input_hash, optional_inputs):
     names = map(lambda spec: spec['name'], optional_inputs)
     while True:
-        print '\nSelect an optional parameter to set by its # (^D or empty string to finish):\n'
+        print '\n' + fill('Select an optional parameter to set by its # (^D or empty string to finish):') + '\n'
         for i in range(len(optional_inputs)):
             opt_str = ' [' + str(i) + '] ' + \
                 get_io_desc(optional_inputs[i], show_opt=False)
@@ -2560,7 +2571,7 @@ stdout_args_gp.add_argument('--verbose', help='If available, displays extra verb
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
-parser_dataobject_args_gp.add_argument('-o', '--output', help='DNAnexus path for the new object (default uses current project and folder if set)')
+parser_dataobject_args_gp.add_argument('-o', '--output', help='DNAnexus path for the new object (default uses current project and folder if not provided)')
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
 parser_dataobject_args_gp.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
 parser_dataobject_args_gp.add_argument('--types', nargs='+', help='Types of the data object')
@@ -2657,7 +2668,7 @@ parser_ls = subparsers.add_parser('ls', help='List folders and/or objects in a f
 parser_ls.add_argument('-a', '--all', help='show hidden files', action='store_true')
 ls_output_args = parser_ls.add_mutually_exclusive_group()
 ls_output_args.add_argument('-l', '--long', help='use a long listing format', action='store_true')
-ls_output_args.add_argument('-i', '--id-only', dest='brief', action='store_true')
+ls_output_args.add_argument('-i', '--id-only', dest='brief', help='Only print the object ID for each data object result', action='store_true')
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
 parser_ls.add_argument('--folders', help='show only folders', action='store_true')
 parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
@@ -2783,9 +2794,8 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_upload = subparsers.add_parser('upload', help='Upload a file',
-                                      description='Upload a local file.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.', parents=[parser_dataobject_args], prog="dx upload")
+                                      description='Upload a local file.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.', parents=[parser_dataobject_args, stdout_args], prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload')
-parser_upload.add_argument('--brief', help='Print ID of the file object instead of the full description', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 parser_map['upload'] = parser_upload
@@ -2975,15 +2985,15 @@ parser_map['new project'] = parser_new_project
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
-                                              parents=[parser_dataobject_args],
+                                              parents=[parser_dataobject_args, stdout_args],
                                               prog='dx new record')
-parser_new_record.add_argument('--init', help='Record ID from which to initialize all metadata')
+parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata')
 parser_new_record.set_defaults(func=new_record)
 parser_map['new record'] = parser_new_record
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
-                                              parents=[parser_dataobject_args], prog='dx new gtable')
+                                              parents=[parser_dataobject_args, stdout_args], prog='dx new gtable')
 parser_new_gtable.add_argument('--columns', help='JSON for specifying the columns')
 parser_new_gtable.add_argument('--indices', help='JSON for specifying the indices')
 parser_new_gtable.add_argument('--input', help='a filename containing the JSON input to be used (currently only used for overriding --columns and --indices)')
