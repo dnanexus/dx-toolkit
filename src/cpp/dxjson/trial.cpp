@@ -1,5 +1,5 @@
 #include <cstdio>
-#include <dxjson/dxjson.h>
+#include "dxjson.h"
 
 int main() {
   using namespace dx;
@@ -118,16 +118,16 @@ int main() {
      j11["5"] = vector<int>(5,0);
      j11["6"] = "1";
 
-     assert(j11["5"][0.9] == 0);
-     assert(j11["5"][j11["1"]] == 0);
+     assert(j11["5"][0.9].get<int>() == 0);
+     assert(j11["5"][j11["1"]].get<int>() == 0);
 
      assert(j11.has("1"));
      assert(!j11.has("random"));
      assert(j11["5"].has(0));
      assert(j11["5"].has(1));
      assert(j11["5"].has(j11["5"][0]));
-     assert(j11.has(j11["6"]) && j11[j11["6"]] == 1);
-     assert(j11["5"][j11["1"]] == 0);
+     assert(j11.has(j11["6"]) && j11[j11["6"]].get<int>() == 1);
+     assert(j11["5"][j11["1"]].get<int>() == 0);
      assert(double(j11["1"]) == 1);
      assert(double(j11["2"]) == 12.33);
      assert(bool(j11["3"]) == true);
@@ -137,11 +137,11 @@ int main() {
 
      const JSON j12(j11);
 
-     assert(j12["5"][0.9] == 0);
-     assert(j12["5"][j11["1"]] == 0);
+     assert(j12["5"][0.9].get<int>() == 0);
+     assert(j12["5"][j11["1"]].get<int>() == 0);
 
 
-     assert(j12["5"][j11["1"]] == 0);
+     assert(j12["5"][j11["1"]].get<int>() == 0);
      assert(double(j12["1"]) == 1);
      assert(double(j12["2"]) == 12.33);
      assert(bool(j12["3"]) == true);
@@ -160,7 +160,7 @@ int main() {
      assert(j13["foo3"].get<bool>() == true);
 
      JSON j14(JSON_NULL);
-     assert(j14 == JSON_NULL);
+     assert(j14 == JSON(JSON_NULL));
 
      std::cout<<"\nAll assertions performed succesfully\n";
   }

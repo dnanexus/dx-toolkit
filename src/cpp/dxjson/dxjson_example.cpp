@@ -6,7 +6,7 @@
 //   2) Compile like this: g++ -Wall json_example.cpp -ldxjson -o ./json_example.o
 
 #include <iostream>
-#include <dxjson/dxjson.h>
+#include "dxjson.h"
 #include <cassert>
 
 using namespace std;
@@ -72,14 +72,14 @@ void iterateArraysAndObjects() {
   // Length of JSON array can be found out using size() method
   assert(j1.length() == 10u);
   for (unsigned i = 0; i < j1.size(); i++) {
-    assert(j1[i] == 0);
+    assert(j1[i].get<int>() == 0);
     j1[i] = i; // Update value in j[i]
   }
 
   // Erase 2nd element of array
   j1.erase(1);
   assert(j1.length() == 9);
-  assert(j1[1] == 2);
+  assert(j1[1].get<int>() == 2);
 
   // To iterate over objects you can use object_iterator
   // which is actually map<sting, JSON>::iterator
