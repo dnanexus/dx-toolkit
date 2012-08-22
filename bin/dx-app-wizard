@@ -34,6 +34,9 @@ try:
 except ImportError:
     print 'NOTE: readline module not available.  Install for tab-completion.'
 
+def clean(s):
+    return "\n".join(line.rstrip() for line in s.split("\n"))
+
 def use_completer(completer=None):
     if USING_COMPLETER:
         readline.set_completer(completer)
@@ -315,7 +318,7 @@ print ''
 print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App... ***' + ENDC()
 
 with open(os.path.join(name, 'dxapp.json'), 'w') as prog_file:
-    prog_file.write(json.dumps(app_json, indent=4) + '\n')
+    prog_file.write(clean(json.dumps(app_json, indent=2)) + '\n')
 manifest.append(os.path.join(name, 'dxapp.json'))
 
 print ''
