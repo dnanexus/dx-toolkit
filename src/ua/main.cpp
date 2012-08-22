@@ -305,33 +305,45 @@ string createFileObject(const string &project, const string &folder, const strin
   return result["id"].get<string>();
 }
 
-void interruptWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
+void interruptWorkerThreads(vector<boost::thread> &readThreads, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
   LOG << "Interrupting worker threads:";
+
   LOG << " read...";
-  readThread.interrupt();
+  for (int i = 0; i < (int) readThreads.size(); ++i) {
+    readThreads[i].interrupt();
+  }
+
   LOG << " compress...";
   for (int i = 0; i < (int) compressThreads.size(); ++i) {
     compressThreads[i].interrupt();
   }
+
   LOG << " upload...";
   for (int i = 0; i < (int) uploadThreads.size(); ++i) {
     uploadThreads[i].interrupt();
   }
+
   LOG << endl;
 }
 
-void joinWorkerThreads(boost::thread &readThread, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
+void joinWorkerThreads(vector<boost::thread> &readThreads, vector<boost::thread> &compressThreads, vector<boost::thread> &uploadThreads) {
   LOG << "Joining worker threads:";
+
   LOG << " read..." << endl;
-  readThread.join();
+  for (int i = 0; i < (int) readThreads.size(); ++i) {
+    readThreads[i].join();
+  }
+
   LOG << " compress..." << endl;
   for (int i = 0; i < (int) compressThreads.size(); ++i) {
     compressThreads[i].join();
   }
+
   LOG << " upload..." << endl;
   for (int i = 0; i < (int) uploadThreads.size(); ++i) {
     uploadThreads[i].join();
   }
+
   LOG << endl;
 }
 
@@ -406,17 +418,20 @@ int main(int argc, char * argv[]) {
     totalChunks = createChunks(opt.files[0], fileID);
     LOG << "Created " << totalChunks << " chunks." << endl;
 
-    LOG << "Creating read thread..." << endl;
-    boost::thread readThread(readChunks);
+    vector<boost::thread> readThreads;
+    LOG << "Creating read threads..." << endl;
+    for (int i = 0; i < opt.readThreads; ++i) {
+      readThreads.push_back(boost::thread(readChunks));
+    }
 
     vector<boost::thread> compressThreads;
-    LOG << "Creating compress threads.." << endl;
+    LOG << "Creating compress threads..." << endl;
     for (int i = 0; i < opt.compressThreads; ++i) {
       compressThreads.push_back(boost::thread(compressChunks));
     }
 
     vector<boost::thread> uploadThreads;
-    LOG << "Creating upload threads.." << endl;
+    LOG << "Creating upload threads..." << endl;
     for (int i = 0; i < opt.uploadThreads; ++i) {
       uploadThreads.push_back(boost::thread(uploadChunks));
     }
@@ -428,8 +443,8 @@ int main(int argc, char * argv[]) {
     monitorThread.join();
     LOG << "Monitor thread finished." << endl;
 
-    interruptWorkerThreads(readThread, uploadThreads, compressThreads);
-    joinWorkerThreads(readThread, uploadThreads, compressThreads);
+    interruptWorkerThreads(readThreads, uploadThreads, compressThreads);
+    joinWorkerThreads(readThreads, uploadThreads, compressThreads);
 
     if (chunksFailed.empty()) {
       cerr << "Upload was successful! Closing file...";

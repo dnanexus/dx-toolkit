@@ -41,6 +41,7 @@ Options::Options() {
     ("project,p", po::value<vector<string> >(&projects), "Name or ID of the destination project")
     ("folder,f", po::value<vector<string> >(&folders)->default_value(defaultFolders, "/"), "Name of the destination folder")
     ("name,n", po::value<vector<string> >(&names), "Name of the file to be created")
+    ("read-threads", po::value<int>(&readThreads)->default_value(1), "Number of parallel disk read threads")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size (in bytes) of chunks in which the file should be uploaded")
@@ -190,15 +191,15 @@ void Options::validate() {
                         boost::lexical_cast<string>(folders.size()) + " folders were provided.");
   }
 
-  // TODO: Here we need to assert the following:
-
-  // assert(names.size() == files.size());
-  // assert(folders.size() == files.size());
-  // assert(projects.size() == files.size());
-
-  // Note that this *is* an assertion failure, in the sense of an internal
-  // error -- something that should "never happen", not something that
-  // could be addressed by the user.
+  /*
+   * At this point, we should have the same name of names, folders,
+   * projects, and (local) files. If this is not the case, this is an
+   * internal error -- something that should "never happen", not something
+   * that can be addressed by the user.
+   */
+  assert(names.size() == files.size());
+  assert(folders.size() == files.size());
+  assert(projects.size() == files.size());
 
   if (authToken.empty()) {
     throw runtime_error("An authentication token must be provided");
@@ -212,6 +213,11 @@ void Options::validate() {
   if (apiserverPort < 1) {
     ostringstream msg;
     msg << "Invalid API server port: " << apiserverPort;
+    throw runtime_error(msg.str());
+  }
+  if (readThreads < 1) {
+    ostringstream msg;
+    msg << "Number of read threads must be positive: " << readThreads;
     throw runtime_error(msg.str());
   }
   if (compressThreads < 1) {
@@ -248,25 +254,26 @@ ostream &operator<<(ostream &out, const Options &opt) {
 
     out << "  projects:";
     for (unsigned int i = 0; i < opt.projects.size(); ++i)
-      out << " " << opt.projects[i];
+      out << " \"" << opt.projects[i] << "\"";
     out << endl;
 
     out << "  folders:";
     for (unsigned int i = 0; i < opt.folders.size(); ++i)
-      out << " " << opt.folders[i];
+      out << " \"" << opt.folders[i] << "\"";
     out << endl;
 
     out << "  names:";
     for (unsigned int i = 0; i < opt.names.size(); ++i)
-      out << " " << opt.names[i];
+      out << " \"" << opt.names[i] << "\"";
     out << endl;
 
     out << "  files:";
     for (unsigned int i = 0; i < opt.files.size(); ++i)
-      out << " " << opt.files[i];
+      out << " \"" << opt.files[i] << "\"";
     out << endl;
 
-    out << "  compression threads: " << opt.compressThreads << endl
+    out << "  read threads: " << opt.readThreads << endl
+        << "  compress threads: " << opt.compressThreads << endl
         << "  upload threads: " << opt.uploadThreads << endl
         << "  chunkSize: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl

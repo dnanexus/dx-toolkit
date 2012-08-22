@@ -32,6 +32,7 @@ public:
   std::vector<std::string> names;
   std::vector<std::string> files;
 
+  int readThreads;
   int compressThreads;
   int uploadThreads;
   int chunkSize;
