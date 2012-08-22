@@ -67,11 +67,11 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // General Note: We try and use a single call to operator <<() while outputting to std::cerr.
   //               (so that output in multi-threading env) has less "chance" of being garbled
   //               Not sure if a single call to operator <<() is thread safe from C++11, but
-  //               certainyl multiple calls can mix output of various threads.
+  //               certainly multiple calls can mix output of various threads.
   //               For some relevant commentary see -> dxfile.cc: getChunkHttp_()
 
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
-    cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set.\n";
+    cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set." << endl;
     throw;
   }
 
@@ -130,25 +130,27 @@ JSON DXHTTPRequest(const string &resource, const string &data,
         // Everything is fine, the request went through (and 200 recieved)
         // So return back the response now
         if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
-          cerr << ("\nRequest completed succesfuly in Retry #" + boost::lexical_cast<string>(countTries));
+          cerr << "Request completed succesfuly in Retry #" << countTries << endl;
 
         try {
           return JSON::parse(req.respData); // we always return json output
         } catch (JSONException &je) {
-          string errStr = "ERROR: Unable to parse output returned by APIServer as JSON";
-          errStr += "\nHttpRequest url: " + url + " , response code = " + boost::lexical_cast<string>(req.responseCode) + ", response body: '" + req.respData + "'";
-          errStr += "\nJSONException: " + string(je.what());
-          throw DXError(errStr);
+          ostringstream errStr;
+          errStr << "ERROR: Unable to parse output returned by APIServer as JSON" << endl;
+          errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode + "; response body: '" + req.respData + "'" << endl;
+          errStr << "JSONException: " << je.what() << endl;
+          throw DXError(errStr.str());
         }
       }
     }
-    if (toRetry && countTries < NUM_MAX_RETRIES) {
+
+    if (toRetry && (countTries < NUM_MAX_RETRIES)) {
       if (reqCompleted) {
-        cerr << ("\nWARNING: POST " + url + ": returned with HTTP code " + boost::lexical_cast<string>(req.responseCode) + " and body: '" + req.respData + "'");
+        cerr << "WARNING: POST " << url << " returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'" << endl;
       } else {
-        cerr << ("\nWARNING: Unable to complete request -> POST " + url + " . Details: '" + hre.what() + "'");
+        cerr << "WARNING: Unable to complete request: POST " << url << ". Details: '" << hre.what() << "'" << endl;
       }
-      cerr << ("\n... Waiting " + boost::lexical_cast<string>(sec_to_wait) + " seconds before retry " + boost::lexical_cast<string>(countTries + 1) + " of " + boost::lexical_cast<string>(NUM_MAX_RETRIES) + " ...");
+      cerr << "... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
 
       // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
       // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
@@ -159,23 +161,23 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       break;
     }
   }
+
   // We are here, implies, All retries were exhausted (or not made) with failure.
 
   if (reqCompleted) {
-    cerr << ("\nERROR: POST " + url + " returned non-200 http code in (at least) last of " + boost::lexical_cast<string>(countTries) + " attempt. Will throw\n");
+    cerr << "ERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
     JSON respJSON;
     try {
       respJSON = JSON::parse(req.respData);
     } catch (...) {
       // If invalid json
-      throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + "'\n");
+      throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + "'");
     }
-//    throw DXError("\nServer returned : " + respJSON.toString());
     throw DXAPIError(respJSON["error"]["type"].get<string>(),
-             respJSON["error"]["message"].get<string>(),
-             req.responseCode);
+                     respJSON["error"]["message"].get<string>(),
+                     req.responseCode);
   } else {
-    cerr << ("\nERROR: Unable to complete request -> POST " + url + " in " + boost::lexical_cast<string>(countTries) + " attempts. Will throw DXError.\n");
+    cerr << "ERROR: Unable to complete request: POST " << url << " in " << countTries << " attempts. Will throw DXError." << endl;
     throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
   }
   // Unreachable line
@@ -282,7 +284,7 @@ bool getFromEnvOrConfig(string key, string &val) {
 
   const string default_config_file_path = "/opt/dnanexus/environment";
   if (getVariableFromConfigFile(default_config_file_path, key, val)) {
-    cerr << "\nReading '" << key << "' value from file: '" << default_config_file_path << "'. Value = '" << val + "'" << endl;
+    cerr << "Reading '" << key << "' value from file: '" << default_config_file_path << "'. Value = '" << val + "'" << endl;
     return true;
   }
 
@@ -316,7 +318,8 @@ bool loadFromEnvironment() {
   if (g_loadFromEnvironment_finished == true)
     return true; // Short circuit this call - env variables already loaded
 
-  std::cerr<<"\n***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****\n";
+  cerr << "***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****" << endl;
+
   // intiialized with default values, will be overridden by env variable/config file (if present)
   string apiserver_host = "localhost";
   string apiserver_port = "8124";
@@ -344,20 +347,21 @@ bool loadFromEnvironment() {
       setWorkspaceID(tmp);
   }
 
-  cerr<<"\nThese values will be used by dxcpp library now:";
-  cerr<<"\n1. g_APISERVER_HOST: " + getVariableForPrinting(g_APISERVER_HOST);
-  cerr<<"\n2. g_APISERVER_PORT: " + getVariableForPrinting(g_APISERVER_PORT);
-  cerr<<"\n3. g_APISERVER_PROTOCOL: " + getVariableForPrinting(g_APISERVER_PROTOCOL);
-  cerr<<"\n4. g_APISERVER: " + getVariableForPrinting(g_APISERVER);
-  cerr<<"\n5. g_SECURITY_CONTEXT: " + getVariableForPrinting(g_SECURITY_CONTEXT);
-  cerr<<"\n6. g_JOB_ID: " + getVariableForPrinting(g_JOB_ID);
-  cerr<<"\n7. g_WORKSPACE_ID: " + getVariableForPrinting(g_WORKSPACE_ID);
-  cerr<<"\n8. g_PROJECT_CONTEXT_ID: " + getVariableForPrinting(g_PROJECT_CONTEXT_ID);
-  cerr<<"\n9. g_API_VERSION: " + getVariableForPrinting(g_API_VERSION);
+  cerr << "These values will be used by dxcpp library now:" << endl;
+  cerr << "1. g_APISERVER_HOST: " << getVariableForPrinting(g_APISERVER_HOST) << endl;
+  cerr << "2. g_APISERVER_PORT: " << getVariableForPrinting(g_APISERVER_PORT) << endl;
+  cerr << "3. g_APISERVER_PROTOCOL: " << getVariableForPrinting(g_APISERVER_PROTOCOL) << endl;
+  cerr << "4. g_APISERVER: " << getVariableForPrinting(g_APISERVER) << endl;
+  cerr << "5. g_SECURITY_CONTEXT: " << getVariableForPrinting(g_SECURITY_CONTEXT) << endl;
+  cerr << "6. g_JOB_ID: " << getVariableForPrinting(g_JOB_ID) << endl;
+  cerr << "7. g_WORKSPACE_ID: " << getVariableForPrinting(g_WORKSPACE_ID) << endl;
+  cerr << "8. g_PROJECT_CONTEXT_ID: " << getVariableForPrinting(g_PROJECT_CONTEXT_ID) << endl;
+  cerr << "9. g_API_VERSION: " << getVariableForPrinting(g_API_VERSION) << endl;
 
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
   g_loadFromEnvironment_finished = true;
-  cerr<<"\n***** Exiting dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****";
-  cerr<<"\n";
+
+  cerr << "***** Exiting dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****" << endl;
+
   return true;
 }
