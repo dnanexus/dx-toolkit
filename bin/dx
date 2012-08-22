@@ -1598,7 +1598,7 @@ def head(args):
                                                                   max_col_width=args.max_col_width)
                 else:
                     table_text, table_rows, table_cols = format_table(list(handler.iterate_rows(start=args.starting,
-                                                                                                end=args.lines)),
+                                                                                                end=args.starting + args.lines)),
                                                                       column_specs = entity_result['describe']['columns'],
                                                                       report_dimensions=True,
                                                                       max_col_width=args.max_col_width)
@@ -2837,7 +2837,7 @@ parser_head = subparsers.add_parser('head',
                                     description='Print the first first part of a file or a gtable.  By default, prints the first 10 lines or rows, respectively.  Additional query parameters can be provided in the case of gtables.',
                                     parents=[no_color_arg],
                                     prog='dx head')
-parser_head.add_argument('-n', '--lines', type=int, help='Print the first LINES number of lines or rows (default 10)', default=10)
+parser_head.add_argument('-n', '--lines', type=int, metavar='N', dest='lines', help='Print the first N lines or rows (default 10)', default=10)
 head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
 head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
 head_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
