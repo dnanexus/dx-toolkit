@@ -341,8 +341,8 @@ void DXGTable::flush() {
   if (pos > 10) {
     finalizeRequestBuffer_();
     addRowRequestsQueue.produce(row_buffer_.str());
-    joinAllWriteThreads_();
   }
+  joinAllWriteThreads_();
   reset_buffer_();
 }
 
