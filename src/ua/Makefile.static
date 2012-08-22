@@ -32,8 +32,8 @@ endif
 
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
-dxcpp_objs = api.o dxcpp.o
-ua_objs = compress.o options.o log.o SSLThreads.o chunk.o main.o
+dxcpp_objs = api.o dxcpp.o SSLThreads.o
+ua_objs = compress.o options.o log.o chunk.o main.o
 
 dxjson: $(dxjson_objs)
 dxhttp: $(dxhttp_objs)
