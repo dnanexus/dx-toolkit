@@ -1710,6 +1710,11 @@ def dximport(args):
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
 
+    args.indices = [] if args.indices is None else json.loads(args.indices)
+    if args.gri is not None:
+        args.indices.append(dxpy.DXGTable.genomic_range_index(args.gri[0], args.gri[1], args.gri[2]))
+        args.types = ['gri'] if args.types is None else args.types + ['gri']
+
     if args.filename == '-':
         fd = sys.stdin
     else:
@@ -1769,7 +1774,8 @@ def dximport(args):
                                          details=details,
                                          folder=folder,
                                          parents=args.parents,
-                                         columns=column_specs)
+                                         columns=column_specs,
+                                         indices=args.indices)
             if args.columns is not None:
                 dxgtable.add_row([ parse_item(firstrow_data[i], types[i]) for i in range(len(types))])
             for row in reader:
@@ -2880,6 +2886,8 @@ parser_import = subparsers.add_parser('import',
                                       parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
                                       prog='dx import')
 parser_import.add_argument('filename', help='local filename to import; "-" indicates that stdin will be used')
+parser_import.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"')
+parser_import.add_argument('--indices', help='JSON for specifying any other indices')
 parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
 import_format_args = parser_import.add_argument_group('input format arguments')
 import_format_args_gp = import_format_args.add_mutually_exclusive_group()
