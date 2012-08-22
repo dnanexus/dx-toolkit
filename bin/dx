@@ -1177,24 +1177,26 @@ def new_gtable(args):
     else:
         project, folder, name = resolve_path(args.output)
 
-    json_input = {}
-    if args.input is not None:
-        with open(args.input, 'r') as fd:
-            data = fd.read()
-            json_input = json.loads(data)
-
-    if 'columns' in json_input:
-        args.columns = json_input['columns']
-    elif args.columns is not None:
-        args.columns = json.loads(args.columns)
-    if 'indices' in json_input:
-        args.indices = json_input['indices']
-    elif args.indices is not None:
-        args.indices = json.loads(args.indices)
+    for i in range(len(args.columns)):
+        if ':' in args.columns[i]:
+            try:
+                col_name, col_type = args.columns[i].split(':')
+            except:
+                parser.exit(1, 'Too many colons found in column spec ' + args.columns[i] + '\n')
+            if col_type.startswith('bool'):
+                col_type = 'boolean'
+        else:
+            col_name = args.columns[i]
+            col_type = 'string'
+        args.columns[i] = {'name': col_name, 'type': col_type}
+    args.indices = [] if args.indices is None else json.loads(args.indices)
+    if args.gri is not None:
+        args.indices.append(dxpy.DXGTable.genomic_range_index(args.gri[0], args.gri[1], args.gri[2]))
+        args.types = ['gri'] if args.types is None else args.types + ['gri']
 
     try:
         dxgtable = dxpy.new_dxgtable(project=project, name=name,
-                                     tags=args.tags, types=args.types, 
+                                     tags=args.tags, types=args.types,
                                      hidden=hidden, properties=properties,
                                      details=details,
                                      folder=folder,
@@ -1516,7 +1518,7 @@ def get(args):
                                                               args.gri_name)
                 iterator = dxtable.iterate_query_rows(query=gri_query, limit=args.limit)
             else:
-                iterator = dxtable.iterate_rows(start=args.starting, end=args.starting + args.limit)
+                iterator = dxtable.iterate_rows(start=args.starting, end=(None if args.limit is None else args.starting + args.limit))
             for row in iterator:
                 writer.writerow([unicode(item).encode('utf-8') for item in row[0 if args.rowid else 1:]])
     elif entity_result['describe']['class'] == 'record':
@@ -1737,8 +1739,8 @@ def dximport(args):
 
         column_specs = []
         types = []
-        if args.column_names is not None:
-            specs = args.column_names.split(",")
+        if args.columns is not None:
+            specs = args.columns
         else:
             specs = firstrow_data
         for spec in specs:
@@ -1768,7 +1770,7 @@ def dximport(args):
                                          folder=folder,
                                          parents=args.parents,
                                          columns=column_specs)
-            if args.column_names is not None:
+            if args.columns is not None:
                 dxgtable.add_row([ parse_item(firstrow_data[i], types[i]) for i in range(len(types))])
             for row in reader:
                 dxgtable.add_row([ parse_item(row[i], types[i]) for i in range(len(types))])
@@ -2588,11 +2590,11 @@ parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
 parser_dataobject_args_gp.add_argument('-o', '--output', help='DNAnexus path for the new object (default uses current project and folder if not provided)')
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
-parser_dataobject_args_gp.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
-parser_dataobject_args_gp.add_argument('--types', nargs='+', help='Types of the data object')
-parser_dataobject_args_gp.add_argument('--tags', nargs='+', help='Tags of the data object')
+parser_dataobject_args_gp.add_argument('--properties', nargs='+', metavar='KEY=VALUE', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
+parser_dataobject_args_gp.add_argument('--types', nargs='+', metavar='TYPE', help='Types of the data object')
+parser_dataobject_args_gp.add_argument('--tags', nargs='+', metavar='TAG', help='Tags of the data object')
 parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
-parser_dataobject_args_gp.add_argument('-p', '--parents', help='Create any necessary folders if necessary', action='store_true')
+parser_dataobject_args_gp.add_argument('-p', '--parents', help='Create any parent folders necessary', action='store_true')
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
                                  epilog='For a breakdown of dx commands by category, run \"dx help\"')
@@ -2858,7 +2860,7 @@ parser_head = subparsers.add_parser('head',
                                     description='Print the first first part of a file or a gtable.  By default, prints the first 10 lines or rows, respectively.  Additional query parameters can be provided in the case of gtables.',
                                     parents=[no_color_arg],
                                     prog='dx head')
-parser_head.add_argument('-n', '--lines', type=int, metavar='N', dest='lines', help='Print the first N lines or rows (default 10)', default=10)
+parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines or rows (default 10)', default=10)
 head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
 head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
 head_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
@@ -2877,13 +2879,13 @@ parser_import = subparsers.add_parser('import',
                                       description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
                                       parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
                                       prog='dx import')
-parser_import.add_argument('filename', help='local filename to import')
+parser_import.add_argument('filename', help='local filename to import; "-" indicates that stdin will be used')
 parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
 import_format_args = parser_import.add_argument_group('input format arguments')
 import_format_args_gp = import_format_args.add_mutually_exclusive_group()
 import_format_args_gp.add_argument('--csv', help='Interpret the file as a comma-separated format', action='store_true')
 import_format_args_gp.add_argument('--tsv', help='Interpret the file as a tab-separated format (default if no format is specified and a file extension is not recognized)', action='store_true')
-import_format_args.add_argument('--column-names', help='Comma-separated list of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
+import_format_args.add_argument('--columns', metavar='COLUMN', nargs='+', help='List of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
 parser_import.set_defaults(func=dximport)
 parser_map['import'] = parser_import
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -3015,9 +3017,10 @@ parser_map['new record'] = parser_new_record
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
                                               parents=[parser_dataobject_args, stdout_args], prog='dx new gtable')
-parser_new_gtable.add_argument('--columns', help='JSON for specifying the columns')
-parser_new_gtable.add_argument('--indices', help='JSON for specifying the indices')
-parser_new_gtable.add_argument('--input', help='a filename containing the JSON input to be used (currently only used for overriding --columns and --indices)')
+parser_new_gtable.add_argument('--columns', metavar='COLUMN', nargs='+', help='List of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.', required=True)
+new_gtable_indices_args = parser_new_gtable.add_mutually_exclusive_group()
+new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"')
+new_gtable_indices_args.add_argument('--indices', help='JSON for specifying any other indices')
 parser_new_gtable.set_defaults(func=new_gtable)
 parser_map['new gtable'] = parser_new_gtable
 
