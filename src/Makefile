@@ -1,12 +1,14 @@
 SHELL=/bin/bash -e
 
-ifndef DNANEXUS_HOME
-	export DNANEXUS_HOME=$(CURDIR)/..
+ifndef DESTDIR
+	ifdef DNANEXUS_HOME
+		export DESTDIR=$(DNANEXUS_HOME)
+	else
+		export DESTDIR=$(CURDIR)/..
+	endif
 endif
 
-ifndef DESTDIR
-	export DESTDIR=$(DNANEXUS_HOME)
-endif
+export DNANEXUS_HOME=$(CURDIR)/..
 
 all: api_wrappers src_libs python contigset2fasta reads_validator
 
@@ -85,4 +87,4 @@ doc_dxjson:
 	mkdir -p ../doc/cpp/dxjson
 	doxygen cpp/dxjson/Doxyfile
 
-.PHONY: api_wrappers python perl contigset2fasta reads_validator src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
+.PHONY: api_wrappers python perl java contigset2fasta reads_validator src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
