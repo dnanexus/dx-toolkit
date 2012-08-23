@@ -2737,7 +2737,7 @@ Examples:
   -iname=\"hello world\"   # Quotes required for spaces
   -ireads=reads_name     # Names will be resolved''', action='append')
 parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
-parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file ("-" to use stdin)'))
+parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -2996,7 +2996,7 @@ EXAMPLE
 parser_api.add_argument('resource', help=fill('One of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\".  Use "app-name/1.0.0" to refer to version "1.0.0" of the app named "name".', width_adjustment=-17))
 parser_api.add_argument('method', help=fill('Method name for the resource as documented by the API specification', width_adjustment=-17))
 parser_api.add_argument('input_json', nargs='?', default="{}", help='JSON input for the method (if not given, \"{}\" is used)')
-parser_api.add_argument('--input', help=fill('Filename containing the JSON input to be used (use "-" for stdin)', width_adjustment=-17))
+parser_api.add_argument('--input', help=fill('Load JSON input from FILENAME ("-" to use stdin)', width_adjustment=-17))
 parser_api.set_defaults(func=api)
 parser_map['api'] = parser_api
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
