@@ -10,7 +10,11 @@
 .coverage
 /bin/dx-build-app
 /bin/dx-build-applet
+/bin/dx-csv-to-gtable
+/bin/dx-gtable-to-csv
+/bin/dx-gtable-to-tsv
 /bin/dx-mappings-to-sam
 /bin/dx-reads-to-fastq
+/bin/dx-tsv-to-gtable
 /bin/dx-workflow-to-applet
 /bin/pyrsa-*
