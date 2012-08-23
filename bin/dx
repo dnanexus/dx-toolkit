@@ -2629,17 +2629,6 @@ parser_map['download'] = parser_download
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_get = subparsers.add_parser('get', help='Download a data object (alias: download)',
-                                   description='Download the contents of some types of data (records, applets, and apps).  For files, use "dx download".  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.', prog='dx get')
-parser_get.add_argument('path', help='Data object ID or name to access')
-parser_get.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
-parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
-parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
-parser_get.set_defaults(func=get)
-parser_map['get'] = parser_get
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
 parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat')
 parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
 parser_cat.set_defaults(func=cat)
@@ -2667,7 +2656,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_import = subparsers.add_parser('import',
-                                      help='Import (convert and upload) a table or genomic file',
+                                      help='Import (convert and upload) a local table or genomic file',
                                       description=fill('Import a local file to the DNAnexus platform as a GenomicTable.') + '\n\n' + fill('For more details on how to import from a particular format, run ') + '\n  $ dx help import <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(importers)),
                                       formatter_class=argparse.RawTextHelpFormatter,
                                       prog='dx import')
@@ -2679,7 +2668,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_export = subparsers.add_parser('export',
-                                      help='Export (download and convert) a GenomicTable into a local file',
+                                      help='Export (download and convert) a gtable into a local file',
                                       description=fill('Export a GenomicTable into a local file with a particular file format.') + '\n\n' + fill('For more details on how to convert into a particular format, run ') + '\n  $ dx help export <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(exporters)),
                                       parents=[],
                                       formatter_class=argparse.RawTextHelpFormatter,
@@ -2694,7 +2683,7 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 from dxpy.scripts.dx_build_app import parser as build_parser
 
 parser_build = subparsers.add_parser('build', help='Build an applet/app',
-                                     description='Build an applet or app object from a local source directory.',
+                                     description='Build an applet or app object from a local source directory.  You can use dx-app-wizard to generate a skeleton directory with the necessary files.',
                                      prog='dx build',
                                      add_help=False,
                                      parents=[build_parser]
@@ -2895,7 +2884,7 @@ parser_map['unset_properties'] = parser_unset_properties
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_close = subparsers.add_parser('close', help='Close a remote data object', description='Close a remote data object.', prog='dx close')
+parser_close = subparsers.add_parser('close', help='Close a data object', description='Close a remote data object.', prog='dx close')
 parser_close.add_argument('path', help='Path to data object to close')
 parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
 parser_close.set_defaults(func=close)
@@ -2903,6 +2892,17 @@ parser_map['close'] = parser_close
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_get = subparsers.add_parser('get', help='Download records, applets, and apps',
+                                   description='Download the contents of some types of data (records, applets, and apps).  For files, use "dx download".  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.', prog='dx get')
+parser_get.add_argument('path', help='Data object ID or name to access')
+parser_get.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
+parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
+parser_get.set_defaults(func=get)
+parser_map['get'] = parser_get
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_find = subparsers.add_parser('find', help='Search functionality over various DNAnexus entities',
                                     description='Search functionality over various DNAnexus entities.', prog='dx find')
