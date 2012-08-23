@@ -50,7 +50,7 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
     else:
         prompt += ': '
     while True:
-        try: 
+        try:
             value = raw_input(prompt)
         except KeyboardInterrupt:
             print ''
@@ -377,7 +377,7 @@ class Test{app_name}(unittest.TestCase):
         cls.base_input = makeInputs()
         bundled_resources = dxpy.app_builder.upload_resources(src_dir)
         cls.app_id = dxpy.app_builder.upload_app(src_dir, bundled_resources, overwrite=True)
-    
+
     def setUp(self):
         pass
 
@@ -385,7 +385,7 @@ class Test{app_name}(unittest.TestCase):
         pass
 
     def test_base_input(self):
-        job = dxpy.DXApp(self.app_id).run(self.base_input)        
+        job = dxpy.DXApp(self.app_id).run(self.base_input)
         print "Waiting for job to complete"
         job.wait_on_done()
         print json.dumps(job.describe()["output"])
@@ -399,7 +399,7 @@ class Test{app_name}(unittest.TestCase):
         for input_param in app_json["inputSpec"]:
             if ("optional" in input_param and input_param['optional']) or "default" in input_param:
                 continue
-            inputs.append(input_param["name"]) 
+            inputs.append(input_param["name"])
 
         # Then, add keyword args
         for input_param in app_json["inputSpec"]:
