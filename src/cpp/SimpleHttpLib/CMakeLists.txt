@@ -12,5 +12,5 @@ set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 set (CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
-add_library(dxhttp SimpleHttp.cpp Utility.cpp SimpleHttpHeaders.cpp)
+add_library(dxhttp SimpleHttp.cpp Utility.cpp SimpleHttpHeaders.cpp SSLThreads.cpp)
 set_target_properties(dxhttp PROPERTIES COMPILE_FLAGS -fPIC)

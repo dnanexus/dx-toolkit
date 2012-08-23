@@ -269,29 +269,33 @@ def set_project_context(dxid):
     PROJECT_CONTEXT_ID = dxid
 
 from dxpy.utils.env import get_env
-env_vars = get_env()
-for var in env_vars:
-    if env_vars[var] is not None:
-        os.environ[var] = env_vars[var]
 
-set_api_server_info(host=os.environ.get("DX_APISERVER_HOST", None),
-                    port=os.environ.get("DX_APISERVER_PORT", None),
-                    protocol=os.environ.get("DX_APISERVER_PROTOCOL", None))
+def _initialize():
+    env_vars = get_env()
+    for var in env_vars:
+        if env_vars[var] is not None:
+            os.environ[var] = env_vars[var]
 
-if "DX_SECURITY_CONTEXT" in os.environ:
-    set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
-else:
-    print "Warning: no security context found in environment variables"
+    set_api_server_info(host=os.environ.get("DX_APISERVER_HOST", None),
+                        port=os.environ.get("DX_APISERVER_PORT", None),
+                        protocol=os.environ.get("DX_APISERVER_PROTOCOL", None))
 
-if "DX_JOB_ID" in os.environ:
-    set_job_id(os.environ["DX_JOB_ID"])
-    if "DX_WORKSPACE_ID" in os.environ:
-        set_workspace_id(os.environ["DX_WORKSPACE_ID"])
-    if "DX_PROJECT_CONTEXT_ID" in os.environ:
-        set_project_context(os.environ["DX_PROJECT_CONTEXT_ID"])
-else:
-    if "DX_PROJECT_CONTEXT_ID" in os.environ:
-        set_workspace_id(os.environ["DX_PROJECT_CONTEXT_ID"])
+    if "DX_SECURITY_CONTEXT" in os.environ:
+        set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
+    else:
+        print "Warning: no security context found in environment variables"
+
+    if "DX_JOB_ID" in os.environ:
+        set_job_id(os.environ["DX_JOB_ID"])
+        if "DX_WORKSPACE_ID" in os.environ:
+            set_workspace_id(os.environ["DX_WORKSPACE_ID"])
+        if "DX_PROJECT_CONTEXT_ID" in os.environ:
+            set_project_context(os.environ["DX_PROJECT_CONTEXT_ID"])
+    else:
+        if "DX_PROJECT_CONTEXT_ID" in os.environ:
+            set_workspace_id(os.environ["DX_PROJECT_CONTEXT_ID"])
+
+_initialize()
 
 from dxpy.bindings import *
 from dxpy.dxlog import *

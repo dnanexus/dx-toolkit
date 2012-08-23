@@ -71,7 +71,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   //               For some relevant commentary see -> dxfile.cc: getChunkHttp_()
 
   if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
-    cerr << "Error: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set." << endl;
+    cerr << "\nError: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set." << endl;
     throw;
   }
 
@@ -130,13 +130,13 @@ JSON DXHTTPRequest(const string &resource, const string &data,
         // Everything is fine, the request went through (and 200 recieved)
         // So return back the response now
         if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
-          cerr << "Request completed succesfuly in Retry #" << countTries << endl;
+          cerr << "\nRequest completed succesfuly in Retry #" << countTries << endl;
 
         try {
           return JSON::parse(req.respData); // we always return json output
         } catch (JSONException &je) {
           ostringstream errStr;
-          errStr << "ERROR: Unable to parse output returned by APIServer as JSON" << endl;
+          errStr << "\nERROR: Unable to parse output returned by APIServer as JSON" << endl;
           errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode + "; response body: '" + req.respData + "'" << endl;
           errStr << "JSONException: " << je.what() << endl;
           throw DXError(errStr.str());
@@ -146,11 +146,11 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
     if (toRetry && (countTries < NUM_MAX_RETRIES)) {
       if (reqCompleted) {
-        cerr << "WARNING: POST " << url << " returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'" << endl;
+        cerr << "\nWARNING: POST " << url << " returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'" << endl;
       } else {
-        cerr << "WARNING: Unable to complete request: POST " << url << ". Details: '" << hre.what() << "'" << endl;
+        cerr << "\nWARNING: Unable to complete request: POST " << url << ". Details: '" << hre.what() << "'" << endl;
       }
-      cerr << "... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
+      cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
 
       // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
       // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
@@ -165,7 +165,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // We are here, implies, All retries were exhausted (or not made) with failure.
 
   if (reqCompleted) {
-    cerr << "ERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
+    cerr << "\nERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
     JSON respJSON;
     try {
       respJSON = JSON::parse(req.respData);
@@ -177,7 +177,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
                      respJSON["error"]["message"].get<string>(),
                      req.responseCode);
   } else {
-    cerr << "ERROR: Unable to complete request: POST " << url << " in " << countTries << " attempts. Will throw DXError." << endl;
+    cerr << "\nERROR: Unable to complete request: POST " << url << " in " << countTries << " attempts. Will throw DXError." << endl;
     throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
   }
   // Unreachable line
@@ -318,7 +318,7 @@ bool loadFromEnvironment() {
   if (g_loadFromEnvironment_finished == true)
     return true; // Short circuit this call - env variables already loaded
 
-  cerr << "***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****" << endl;
+  cerr << "\n***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****" << endl;
 
   // intiialized with default values, will be overridden by env variable/config file (if present)
   string apiserver_host = "localhost";
