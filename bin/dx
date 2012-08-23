@@ -580,7 +580,7 @@ def ls(args):
                                 addendum = ' : ' + resp['objects'][i]['id']
 
                         if args.long:
-                            print_ls_l_desc(resp['objects'][i]['describe'])
+                            print_ls_l_desc(resp['objects'][i]['describe'], include_project=False)
                         else:
                             if resp['objects'][i]['describe']['class'] == 'applet':
                                 print BOLD() + GREEN() + resp['objects'][i]['describe']['name'] + ENDC() + addendum
@@ -596,7 +596,7 @@ def ls(args):
             if args.brief:
                 print result['id']
             else:
-                print_ls_l_desc(result['describe'])
+                print_ls_l_desc(result['describe'], include_project=False)
 
 def mkdir(args):
     had_error = False

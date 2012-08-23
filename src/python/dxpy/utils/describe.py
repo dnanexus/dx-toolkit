@@ -416,7 +416,7 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if desc['class'] == 'program':
         name_str = BOLD() + GREEN() + name_str + ENDC()
 
-    return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + desc['project'] + DELIMITER(':') + desc['id'] + DELIMITER(')')
+    return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
 
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
