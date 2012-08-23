@@ -1,0 +1,27 @@
+{
+  "name": "subprocess_example",
+  "title": "Subprocess Example",
+  "runSpec": {
+    "interpreter": "python2.7",
+    "file": "src/subprocess_example.py",
+    "execDepends": [
+      {
+        "name": "wamerican"
+      }
+    ]
+  },
+  "inputSpec": [],
+  "outputSpec": [
+    {
+      "name": "words",
+      "class": "gtable"
+    }
+  ],
+  "summary": "Reads the output of a Python subprocess and inserts it into a GTable.",
+  "version": "0.0.1",
+  "details": {
+    "contactUrl": "http://develop.dnanexus.com/Apps/subprocess_example"
+  },
+  "dxapi": "1.0.0",
+  "resources": []
+}

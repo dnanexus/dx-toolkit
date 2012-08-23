@@ -1,0 +1,29 @@
+{
+  "name": "hello_world_example",
+  "title": "\"Hello World\" Example",
+  "summary": "A \"Hello World\" DNAnexus App/Applet",
+  "description": "This app is pretty much the shortest DNAnexus app you could write.",
+  "version": "0.0.1",
+  "runSpec": {
+    "interpreter": "python2.7",
+    "file": "src/code.py"
+  },
+  "inputSpec": [
+    {
+      "optional": false,
+      "name": "name",
+      "class": "string"
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "greeting",
+      "class": "string"
+    }
+  ],
+  "details": {
+    "contactUrl": "http://develop.dnanexus.com/Apps/hello_world_example"
+  },
+  "dxapi": "1.0.0",
+  "resources": []
+}

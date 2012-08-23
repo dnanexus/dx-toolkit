@@ -1,0 +1,33 @@
+{
+  "name": "parallelism_example",
+  "title": "Parallelism Example",
+  "summary": "Spawns multiple jobs to process a data set in parallel.",
+  "version": "0.0.1",
+  "runSpec": {
+    "interpreter": "python2.7",
+    "file": "src/parallelism_example.py"
+  },
+  "inputSpec": [
+    {
+      "optional": false,
+      "name": "words",
+      "class": "gtable"
+    },
+    {
+      "optional": true,
+      "name": "chunk_size",
+      "class": "int"
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "backwards_sorted_words",
+      "class": "gtable"
+    }
+  ],
+  "details": {
+    "contactUrl": "http://develop.dnanexus.com/Apps/parallelism_example"
+  },
+  "dxapi": "1.0.0",
+  "resources": []
+}
