@@ -2261,6 +2261,7 @@ def run(args):
             print "Job ID: " + dxjob.get_id()
         else:
             print dxjob.get_id()
+        sys.stdout.flush()
         if args.wait:
             dxjob.wait_on_done()
         if args.watch:
