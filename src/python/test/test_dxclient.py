@@ -111,6 +111,11 @@ class TestDXClient(unittest.TestCase):
             fd.flush()
             run(u"dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
 
+            # Also, upload and download the file just to test out upload/download
+            run(u"dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
+            run(u"dx download uploadedfile -f")
+            run(u"dx download uploadedfile -o -")
+
         second_desc = json.loads(run(u"dx describe gritableimport --json"))
         self.assertEqual(second_desc['types'], ['gri'])
         self.assertEqual(second_desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])

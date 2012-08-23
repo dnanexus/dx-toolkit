@@ -1435,6 +1435,7 @@ def download(args):
     if entity_result['describe']['class'] != 'file':
         parser.exit(1, fill('Error: dx download is only for downloading file objects') + '\n')
 
+    use_stdout = False
     if args.output == '-':
         use_stdout = True
     else:
