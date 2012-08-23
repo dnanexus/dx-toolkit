@@ -10,6 +10,10 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 
+ifndef PREFIX
+	export PREFIX=/usr
+endif
+
 all: api_wrappers src_libs python contigset2fasta reads_validator
 
 api_wrappers:
@@ -59,9 +63,9 @@ clean:
 
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
-	mkdir -p $(DESTDIR)
+	mkdir -p $(DESTDIR)/$(PREFIX)
 	if [[ $(DNANEXUS_HOME) != $(DESTDIR) ]]; then \
-		cp -a $(DNANEXUS_HOME)/* $(DESTDIR); \
+		cp -a $(DNANEXUS_HOME)/{bin,environment,lib} $(DESTDIR)/$(PREFIX); \
 	fi
 
 setup_doc_virtualenv: build/doc_env/.setup_virtualenv
