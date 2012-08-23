@@ -16,14 +16,14 @@ void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, co
   int retries = 0;
   bool someThingWentWrong = false;
   string wrongThingDescription = "";
-  while (true) { 
+  while (true) {
     try {
       resp = HttpRequest::request(method, url, headers, data, size);
     } catch(HttpRequestException e) {
       someThingWentWrong = true;
       wrongThingDescription = e.what();
     }
-   
+
     if (!someThingWentWrong && (resp.responseCode < 200 || resp.responseCode >= 300)) {
       someThingWentWrong = true;
       wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode);
@@ -44,13 +44,13 @@ void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, co
         }
         throw DXFileError(string("******\nERROR (Unrecoverable): while performing : '") + getHttpMethodName(method) + " " + url + "'" + ".\n" + headerStr + "Giving up after " + boost::lexical_cast<string>(retries) + " tries.\nError message: " + wrongThingDescription + "\n******\n");
       }
-      
+
       // TODO: Make printing to stderr thread safe someday ?
       //       Though we are writing data to std::cerr in a single call to operator <<()
       //       (rather than chaining <<). It is not clear if a single call is thread safe.
       //       C++03 certainly did not provide any thread safe guarantees (it didn't
-      //       even recognize that "threads" exist at all!). 
-      //       Not sure if C++11 provides a thread safe guarantee for call to operator<<() 
+      //       even recognize that "threads" exist at all!).
+      //       Not sure if C++11 provides a thread safe guarantee for call to operator<<()
       //       (including the flush in case of std::cerr).
       //       Anyway, *observed* behavior (when compiled in g++ 4.6.3) is that output is *NOT*
       //       garbled, and work as if <<() was a thread safe call. :)
@@ -73,7 +73,7 @@ void DXFile::init_internals_() {
   eof_ = false;
   is_closed_ = false;
   countThreadsWaitingOnConsume = 0;
-  countThreadsNotWaitingOnConsume = 0; 
+  countThreadsNotWaitingOnConsume = 0;
 }
 
 void DXFile::setIDs(const string &dxid, const string &proj) {
@@ -120,8 +120,8 @@ void DXFile::read(char* ptr, int64_t n) {
   HttpHeaders headers;
   headers["Range"] = "bytes=" + boost::lexical_cast<string>(pos_) + "-" + boost::lexical_cast<string>(endbyte);
   pos_ = endbyte + 1;
-  
-  
+
+
   HttpRequest resp;
   makeHTTPRequestForFileReadAndWrite(resp, url, headers, HTTP_GET);
 
@@ -156,12 +156,12 @@ void DXFile::startLinearQuery(const int64_t start_byte,
 // the Range: [start,end] should be a valid byte range in file (shouldn't be past the end of file)
 void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) const {
   int64_t last_byte_in_result = start - 1;
- 
+
   while (last_byte_in_result < end) {
     HttpHeaders headers;
     string range = boost::lexical_cast<string>(last_byte_in_result + 1) + "-" + boost::lexical_cast<string>(end);
     headers["Range"] = "bytes=" + range;
-    
+
     HttpRequest resp;
     makeHTTPRequestForFileReadAndWrite(resp, lq_url, headers, HTTP_GET);
 
@@ -170,7 +170,7 @@ void DXFile::getChunkHttp_(int64_t start, int64_t end, string &result) const {
     else
       result.append(resp.respData);
 
-    last_byte_in_result += resp.respData.size();   
+    last_byte_in_result += resp.respData.size();
   }
   assert(result.size() == (end - start + 1));
 }
@@ -185,12 +185,12 @@ void DXFile::readChunk_() const {
     start = lq_query_start_;
     lq_query_start_ += lq_chunk_limit_;
     qs_lock.unlock();
-    
+
     int64_t end = std::min((start + lq_chunk_limit_ - 1), lq_query_end_ - 1);
-    
+
     std::string tmp;
     getChunkHttp_(start, end, tmp);
-     
+
     boost::mutex::scoped_lock r_lock(lq_results_mutex_);
     while (lq_next_result_ != start && lq_results_.size() >= lq_max_chunks_) {
       r_lock.unlock();
@@ -210,7 +210,7 @@ bool DXFile::getNextChunk(string &chunk) const {
   boost::mutex::scoped_lock r_lock(lq_results_mutex_);
   if (lq_next_result_ >= lq_query_end_)
     return false;
-  
+
   while (lq_results_.size() == 0 || (lq_results_.begin()->first != lq_next_result_)) {
     r_lock.unlock();
     usleep(100);
@@ -260,25 +260,25 @@ void DXFile::joinAllWriteThreads_() {
    * worker thread are closed after that
    * Brief notes about functioning:
    * --> uploadPartRequestsQueue.size() == 0, ensures that request queue is empty, i.e.,
-   *     some worker has picked the last request (note we use term "pick", because 
+   *     some worker has picked the last request (note we use term "pick", because
    *     the request might still be executing the request).
    * --> Once we know that request queue is empty, we issue interrupt() to all threads
    *     Note: interrupt() will only terminate threads, which are waiting on new request.
    *           So only threads which are blocked by .consume() operation will be terminated
    *           immediatly.
-   * --> Now we use a condition based on two interleaved counters to wait until all the 
+   * --> Now we use a condition based on two interleaved counters to wait until all the
    *     threads have finished the execution. (see writeChunk_() for understanding their usage)
    * --> Once we are sure that all threads have finished the requests, we join() them.
    *     Since interrupt() was already issued, thus join() terminates them instantly.
-   *     Note: Most of them would have been already terminated (since after issuing 
-   *           interrupt(), they will be terminated when they start waiting on consume()). 
+   *     Note: Most of them would have been already terminated (since after issuing
+   *           interrupt(), they will be terminated when they start waiting on consume()).
    *           It's ok to join() terminated threads.
    * --> We clear the thread pool (vector), and reset the counters.
    */
 
   if (writeThreads.size() == 0)
     return; // Nothing to do (no thread has been started)
-  
+
   // To avoid race condition
   // particularly the case when produce() has been called, but thread is still waiting on consume()
   // we don't want to incorrectly issue interrupt() that time
@@ -288,8 +288,8 @@ void DXFile::joinAllWriteThreads_() {
 
   for (unsigned i = 0; i < writeThreads.size(); ++i)
     writeThreads[i].interrupt();
- 
-  boost::mutex::scoped_lock cl(countThreadsMutex); 
+
+  boost::mutex::scoped_lock cl(countThreadsMutex);
   cl.unlock();
   while (true) {
     cl.lock();
@@ -301,10 +301,10 @@ void DXFile::joinAllWriteThreads_() {
     cl.unlock();
     usleep(100);
   }
-  
+
   for (unsigned i = 0; i < writeThreads.size(); ++i)
     writeThreads[i].join();
-  
+
   writeThreads.clear();
   // Reset the counts
   countThreadsWaitingOnConsume = 0;
@@ -314,7 +314,7 @@ void DXFile::joinAllWriteThreads_() {
 // This function is what each of the worker thread executes
 void DXFile::writeChunk_() {
   try {
-    boost::mutex::scoped_lock cl(countThreadsMutex); 
+    boost::mutex::scoped_lock cl(countThreadsMutex);
     cl.unlock();
     /* This function is executed throughtout the lifetime of an addRows worker thread
      * Brief note about various constructs used in the function:
@@ -343,7 +343,7 @@ void DXFile::writeChunk_() {
       cl.unlock();
     }
   }
-  catch (const boost::thread_interrupted &ti) 
+  catch (const boost::thread_interrupted &ti)
   {
     return;
   }
@@ -352,7 +352,7 @@ void DXFile::writeChunk_() {
 
 /* This function creates new worker thread for addRows
  * Usually it wil be called once for a series of addRows() and then close() request
- * However, if we call flush() in between, then we destroy any existing threads, thus 
+ * However, if we call flush() in between, then we destroy any existing threads, thus
  * threads will be recreated for any further addRows() request
  */
 void DXFile::createWriteThreads_() {
@@ -373,16 +373,16 @@ void DXFile::write(const char* ptr, int64_t n) {
     buffer_.write(ptr, n);
   } else {
     buffer_.write(ptr, remaining_buf_size);
-//    std::cerr<<"Hitting buffer size in write(), length = buffer_.tellp()"; 
+//    std::cerr<<"Hitting buffer size in write(), length = buffer_.tellp()";
     // Create thread pool (if not already created)
     if (writeThreads.size() == 0)
       createWriteThreads_();
 
     // add upload request for this part to blocking queue
-    uploadPartRequestsQueue.produce(make_pair(buffer_.str(), cur_part_)); 
+    uploadPartRequestsQueue.produce(make_pair(buffer_.str(), cur_part_));
     buffer_.str(string()); // clear the buffer
     cur_part_++; // increment the part number for next request
-    
+
     // Add remaining data to buffer (will be added in next call)
     write(ptr + remaining_buf_size, n - remaining_buf_size);
   }
@@ -421,7 +421,7 @@ void DXFile::uploadPart(const char *ptr, int64_t n, const int index) {
   const JSON resp = fileUpload(dxid_, input_params);
   HttpHeaders req_headers;
   req_headers["Content-Length"] = boost::lexical_cast<string>(n);
-  
+
   HttpRequest resp2;
   makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), HttpHeaders(), HTTP_POST, ptr, n);
 }
