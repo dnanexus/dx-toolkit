@@ -447,16 +447,12 @@ def pwd(args):
 def api(args):
     json_input = json.loads(args.input_json)
     if args.input is not None:
-        with open(args.input, 'r') as fd:
+        with (sys.stdin if args.input == '-' else open(args.input, 'r')) as fd:
             data = fd.read()
             try:
                 json_input = json.loads(data)
             except:
                 parser.exit(1, 'Error: file contents could not be parsed as JSON\n')
-    elif args.stdin:
-        json_input = get_json_from_stdin()
-        if json_input == None:
-            return
     resp = None
     try:
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
@@ -2171,20 +2167,18 @@ def run(args):
             parser.exit(1, 'Error: input could not be parsed as JSON\n')
     elif args.filename is not None:
         try:
-            fd = open(args.filename, 'r')
-            data = fd.read()
-            fd.close()
+            if args.filename == "-":
+                data = sys.stdin.read()
+            else:
+                fd = open(args.filename, 'r')
+                data = fd.read()
+                fd.close()
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
         try:
             input_json = json.loads(data)
         except:
             parser.exit(1, 'Error: file could not be parsed as JSON\n')
-    elif args.stdin:
-        try:
-            input_json = json.loads(raw_input('Input JSON > '))
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
     elif args.input is not None:
         input_inputs = []
         try:
@@ -2245,7 +2239,7 @@ def run(args):
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
-    if args.confirm and (args.input_json is None and args.filename is None and not args.stdin and sys.stdout.isatty()):
+    if args.confirm and (args.input_json is None and args.filename is None and sys.stdout.isatty()):
         try:
             value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
         except BaseException as details:
@@ -2726,7 +2720,6 @@ SPECIFYING INPUTS
 
     1) -j/--input_json INPUT_JSON
     2) -f/--input_json_file FILENAME
-    3) --stdin
 
 '''), prog='dx run', formatter_class=argparse.RawTextHelpFormatter, parents=[stdout_args])
 parser_run.add_argument('path', help='Name or ID of applet or app to run')
@@ -2744,8 +2737,7 @@ Examples:
   -iname=\"hello world\"   # Quotes required for spaces
   -ireads=reads_name     # Names will be resolved''', action='append')
 parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
-parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file'))
-parser_run_input.add_argument('--stdin', help=fill('Interprets inputs from stdin instead of using the -i flags.  Format should be in the raw JSON with keys equal to the input names and values equal to their values.', width_adjustment=-24), action='store_true')
+parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file ("-" to use stdin)'))
 parser_run.set_defaults(func=run, verbose=False)
 parser_map['run'] = parser_run
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -3004,8 +2996,7 @@ EXAMPLE
 parser_api.add_argument('resource', help=fill('One of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\".  Use "app-name/1.0.0" to refer to version "1.0.0" of the app named "name".', width_adjustment=-17))
 parser_api.add_argument('method', help=fill('Method name for the resource as documented by the API specification', width_adjustment=-17))
 parser_api.add_argument('input_json', nargs='?', default="{}", help='JSON input for the method (if not given, \"{}\" is used)')
-parser_api.add_argument('--input', help=fill('Filename containing the JSON input to be used', width_adjustment=-17))
-parser_api.add_argument('--stdin', help='Use stdin for JSON input', action='store_true')
+parser_api.add_argument('--input', help=fill('Filename containing the JSON input to be used (use "-" for stdin)', width_adjustment=-17))
 parser_api.set_defaults(func=api)
 parser_map['api'] = parser_api
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
