@@ -136,7 +136,7 @@ bool Options::version() {
 }
 
 void Options::printHelp(char * programName) {
-  cerr << "Usage: " << programName << " [options] <file>" << endl
+  cerr << "Usage: " << programName << " [options] <file> [...]" << endl
        << endl
        << (*visible_opts) << endl;
 }
