@@ -54,8 +54,8 @@ class TestDXClient(unittest.TestCase):
             writer = csv.writer(f)
             writer.writerows([['a:uint8', 'b:string', 'c:float'], [1, "x", 1.0], [2, "y", 4.0]])
             f.flush()
-            run(u"dx import -o '../{n}' --csv '{f}' --wait".format(n=table_name, f=f.name))
-            run(u"dx get '../{n}' --csv --output {o} -f".format(n=table_name, o=f.name))
+            run(u"dx import csv -o '../{n}' '{f}' --wait".format(n=table_name, f=f.name))
+            run(u"dx export csv '../{n}' --output {o} -f".format(n=table_name, o=f.name))
 
         run(u"dx get_details '../{n}'".format(n=table_name))
 
@@ -70,8 +70,17 @@ class TestDXClient(unittest.TestCase):
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
 
         run(u"dx new record -o :foo --verbose")
-        recordid = run(u"dx new record -o :foo2 --brief")
-        self.assertEqual(recordid, run(u"dx ls :foo2 -i"))
+        record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --properties foo=bar --tags onetag twotag --types foo --details '{\"hello\": \"world\"}'").strip()
+        self.assertEqual(record_id, run(u"dx ls :foo2 -i").strip())
+
+        # describe
+        desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
+        self.assertEqual(desc['tags'], ['onetag', 'twotag'])
+        self.assertEqual(desc['types'], ['foo'])
+        self.assertEqual(desc['properties'], {"foo": "bar"})
+        self.assertEqual(desc['details'], {"hello": "world"})
+        self.assertEqual(desc['hidden'], True)
+
         run(u"dx rm :foo")
         run(u"dx rm :foo2")
 
@@ -80,7 +89,7 @@ class TestDXClient(unittest.TestCase):
         run(u"dx find data --project :")
 
         # new gtable
-        gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr mylo:int32 myhi:int32 --brief").strip()
+        gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr mylo:int32 myhi:int32 --brief --properties hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
         # Add rows to it (?)
         # TODO: make this better.
         add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13], ["chr1", 5, 12]]}
@@ -89,15 +98,18 @@ class TestDXClient(unittest.TestCase):
         run(u"dx close {gt} --wait".format(gt=gri_gtable_id))
 
         # describe
-        desc = json.loads(run(u"dx describe {gt} --json".format(gt=gri_gtable_id)))
+        desc = json.loads(run(u"dx describe {gt} --details --json".format(gt=gri_gtable_id)))
         self.assertEqual(desc['types'], ['gri'])
         self.assertEqual(desc['indices'], [{"type":"genomic", "name":"gri", "chr":"mychr", "lo":"mylo", "hi":"myhi"}])
+        self.assertEqual(desc['properties'], {"hello": "world"})
+        self.assertEqual(desc['details'], {"hello": "world"})
+        self.assertEqual(desc['hidden'], False)
 
         # Download and re-import with gri
         with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
-            run(u"dx get {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
+            run(u"dx export tsv {gt} -o {fd} -f".format(gt=gri_gtable_id, fd=fd.name))
             fd.flush()
-            run(u"dx import {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
+            run(u"dx import tsv {fd} -o gritableimport --gri mychr mylo myhi --wait".format(fd=fd.name))
 
         second_desc = json.loads(run(u"dx describe gritableimport --json"))
         self.assertEqual(second_desc['types'], ['gri'])

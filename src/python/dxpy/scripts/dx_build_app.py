@@ -8,7 +8,7 @@ import os, sys, json, fileinput, re, subprocess, argparse
 from datetime import datetime
 import dxpy, dxpy.app_builder
 
-parser = argparse.ArgumentParser(prog="dx-build-app", description="Uploads a DNAnexus App.")
+parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 # COMMON OPTIONS
 parser.add_argument("src_dir", help="App or applet source directory")

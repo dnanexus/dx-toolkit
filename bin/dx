@@ -2,7 +2,7 @@
 
 import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
 import shlex # respects quoted substrings when splitting
-import csv, codecs
+import codecs
 import hashlib
 
 import requests
@@ -133,6 +133,7 @@ import dxpy
 from dxpy.utils.resolver import *
 from dxpy.utils.completer import *
 from dxpy.utils.describe import *
+from dxpy.cli.parsers import *
 
 # Loading other variables used for pretty-printing
 if "LESS" in os.environ:
@@ -193,12 +194,12 @@ class DXCLICompleter():
                 elif words[0] in ['head']:
                     path_matches = path_completer(words[-1],
                                                   classes=['gtable', 'file'])
-                elif words[0] in ['cat']:
+                elif words[0] in ['cat', 'download']:
                     path_matches = path_completer(words[-1],
                                                   classes=['file'])
                 elif words[0] in ['ls', 'rm', 'mv', 'cp']:
                     path_matches = path_completer(words[-1])
-                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close', 'get', 'download']:
+                elif words[0] in ['get_details', 'set_details', 'set_visibility', 'add_types', 'remove_types', 'close', 'get']:
                     path_matches = path_completer(words[-1])
                 elif words[0] in ['describe', 'rename', 'set_properties', 'unset_properties']:
                     path_matches = path_completer(words[-1], include_current_proj=True)
@@ -237,12 +238,6 @@ def login(args):
     if not state['interactive']:
         args.save = True
 
-    # TODO: Remove this and replace with actual logic and interaction
-    # when implemented
-    if args.emtest:
-        args.host = 'api.emtest.dev.dnanexus.com'
-        args.port = 8081
-
     if args.host is not None or args.port is not None:
         authserver = 'http://' + args.host
         authserver += ':' + str(args.port)
@@ -263,7 +258,7 @@ def login(args):
         token = json.loads(response.content)["access_token"]
         sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
     elif args.token is None:
-        authserver = 'https://auth.dnanexus.com'
+        authserver = 'https://emtestauth.dnanexus.com'
         print 'Acquiring credentials from ' + authserver
 
         try:
@@ -308,7 +303,7 @@ def logout(args):
             authserver += ':' + str(args.port)
             print 'Deleting credentials from ' + authserver
         else:
-            authserver = 'https://auth.dnanexus.com'
+            authserver = 'https://emtestauth.dnanexus.com'
         session = requests.session()
         token = dxpy.AUTH_HELPER.security_context['auth_token']
         try:
@@ -448,10 +443,6 @@ def pwd(args):
         print pwd_str
     else:
         parser.exit(1, 'Current project is not set\n')
-
-def get_output_flag(args):
-    if not args.brief and not args.summary and not args.verbose:
-        args.summary = True
 
 def api(args):
     json_input = json.loads(args.input_json)
@@ -1098,18 +1089,6 @@ def describe(args):
     elif not found_match:
         print "No matches found for " + args.path
 
-def get_properties_from_args(args_properties):
-    properties = None
-    if args_properties is not None:
-        properties = {}
-        for keyeqval in args_properties:
-            try:
-                key, val = split_unescaped('=', keyeqval)
-            except:
-                parser.exit(1, fill('Property key-value pair must be given using syntax "property_key=property_value"'))
-            properties[key] = val
-    return properties
-
 def new_project(args):
     get_output_flag(args)
     try:
@@ -1124,14 +1103,7 @@ def new_project(args):
 
 def new_record(args):
     get_output_flag(args)
-    hidden = (args.visibility == 'hidden')
-    properties = get_properties_from_args(args.properties)
-    details = None
-    if args.details is not None:
-        try:
-            details = json.loads(args.details)
-        except:
-            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    try_call(process_dataobject_args, args)
     init_from = None
     if args.init is not None:
         init_project, init_folder, init_result = try_call(resolve_existing_path,
@@ -1149,8 +1121,8 @@ def new_record(args):
     try:
         dxrecord = dxpy.new_dxrecord(project=project, name=name,
                                      tags=args.tags, types=args.types, 
-                                     hidden=hidden, properties=properties,
-                                     details=details,
+                                     hidden=args.hidden, properties=args.properties,
+                                     details=args.details,
                                      folder=folder,
                                      parents=args.parents, init_from=init_from)
         if args.brief:
@@ -1162,14 +1134,8 @@ def new_record(args):
 
 def new_gtable(args):
     get_output_flag(args)
-    hidden = (args.visibility == 'hidden')
-    properties = get_properties_from_args(args.properties)
-    details = None
-    if args.details is not None:
-        try:
-            details = json.loads(args.details)
-        except:
-            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    try_call(process_dataobject_args, args)
+
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
@@ -1197,8 +1163,8 @@ def new_gtable(args):
     try:
         dxgtable = dxpy.new_dxgtable(project=project, name=name,
                                      tags=args.tags, types=args.types,
-                                     hidden=hidden, properties=properties,
-                                     details=details,
+                                     hidden=args.hidden, properties=args.properties,
+                                     details=args.details,
                                      folder=folder,
                                      parents=args.parents,
                                      columns=args.columns,
@@ -1404,13 +1370,13 @@ def set_properties(args):
     if entity_results is None and project is None:
         parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
 
-    properties = get_properties_from_args(args.properties)
+    try_call(process_properties_args, args)
     if entity_results is not None:
         for result in entity_results:
             try:
                 dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
                                    {"project": project,
-                                    "properties": properties})
+                                    "properties": args.properties})
             except BaseException as details:
                 print fill(unicode(details))
                 had_error = True
@@ -1421,7 +1387,7 @@ def set_properties(args):
     else:
         try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
-                               {"properties": properties})
+                               {"properties": args.properties})
         except dxpy.DXAPIError as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -1459,6 +1425,38 @@ def unset_properties(args):
         except dxpy.DXAPIError as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
+def download(args):
+    # Attempt to resolve name
+    project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                  args.path, expected='entity')
+    if entity_result is None:
+        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+
+    if entity_result['describe']['class'] != 'file':
+        parser.exit(1, fill('Error: dx download is only for downloading file objects') + '\n')
+
+    if args.output == '-':
+        use_stdout = True
+    else:
+        filename = args.output
+        if filename is None:
+            filename = entity_result['describe']['name'].replace('/', '%2F')
+
+    if use_stdout:
+        try:
+            dxfile = dxpy.DXFile(entity_result['id'])
+            for line in dxfile:
+                print line
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
+    else:
+        if not args.overwrite and os.path.exists(filename):
+            parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
+        try:
+            dxpy.download_dxfile(entity_result['id'], filename)
+        except dxpy.DXAPIError as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
+
 def get(args):
     # Attempt to resolve name
     project, folderpath, entity_result = try_call(resolve_existing_path,
@@ -1467,78 +1465,39 @@ def get(args):
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
-    filename = args.output
-    if filename is None:
-        filename = entity_result['describe']['name'].replace('/', '%2F')
+    if entity_result['describe']['class'] not in ['record', 'applet']:
+        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record or applet was expected\n')
 
-    if entity_result['describe']['class'] == 'file':
-        if args.stdout:
-            try:
-                dxfile = dxpy.DXFile(entity_result['id'])
-                for line in dxfile:
-                    print line
-            except dxpy.DXAPIError as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
-        else:
+    if args.output == '-':
+        fd = sys.stdout
+    else:
+        filename = args.output
+        if filename is None:
+            filename = entity_result['describe']['name'].replace('/', '%2F')
+        if args.output is None and not args.no_ext:
+            if entity_result['describe']['class'] == 'record':
+                filename += '.json'
+            elif entity_result['describe']['class'] == 'applet':
+                if run_spec['interpreter'] == 'python2.7':
+                    filename += '.py'
+                elif run_spec['interpreter'] == 'v8cgi':
+                    filename += '.js'
+                elif run_spec['interpreter'] == 'bash':
+                    filename += '.sh'
             if not args.overwrite and os.path.exists(filename):
                 parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
             try:
-                dxpy.download_dxfile(entity_result['id'], filename)
-            except dxpy.DXAPIError as details:
+                fd = open(filename, 'w')
+            except BaseException as details:
                 parser.exit(1, fill(unicode(details)) + '\n')
-    elif entity_result['describe']['class'] in ['gtable', 'table']:
-        if not args.tsv and not args.csv:
-            args.tsv = True
-        dxtable = dxpy.get_handler(entity_result['id'])
-        if args.tsv or args.csv:
-            delimiter = '\t' if args.tsv else ','
-            if args.stdout:
-                writer = csv.writer(sys.stdout, delimiter=delimiter)
-            else:
-                if args.output is None and not args.no_ext:
-                    filename += '.tsv' if args.tsv else '.csv'
-                if not args.overwrite and os.path.exists(filename):
-                    parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
-                writer = csv.writer(open(filename, 'wb'),
-                                    delimiter=delimiter)
-            if not args.no_header:
-                writer.writerow((['__id__:int'] if args.rowid else []) + [(col['name'] + ':' + col['type']) for col in dxtable.describe()['columns']])
 
-            # Query stuff
-            if args.gri is not None:
-                try:
-                    lo = int(args.gri[1])
-                    hi = int(args.gri[2])
-                except:
-                    parser.exit(1, fill('Error: the LO and HI arguments to --gri must be integers') + '\n')
-                gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
-                                                              lo,
-                                                              hi,
-                                                              args.gri_mode,
-                                                              args.gri_name)
-                iterator = dxtable.iterate_query_rows(query=gri_query, limit=args.limit)
-            else:
-                iterator = dxtable.iterate_rows(start=args.starting, end=(None if args.limit is None else args.starting + args.limit))
-            for row in iterator:
-                writer.writerow([unicode(item).encode('utf-8') for item in row[0 if args.rowid else 1:]])
-    elif entity_result['describe']['class'] == 'record':
+    if entity_result['describe']['class'] == 'record':
         try:
             details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
                                          {})
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
-        if args.stdout:
-            print json.dumps(details, indent=4)
-        else:
-            if args.output is None and not args.no_ext:
-                filename += '.json'
-            if not args.overwrite and os.path.exists(filename):
-                parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
-            try:
-                with open(filename, 'w') as fd:
-                    fd.write(json.dumps(details, indent=4))
-            except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+        fd.write(json.dumps(details, indent=4))
     elif entity_result['describe']['class'] == 'applet':
         dxapplet = dxpy.DXApplet(entity_result['id'])
         try:
@@ -1551,30 +1510,13 @@ def get(args):
                 raise Exception('No run specification found')
         except BaseExceptions as details:
             parser.exit(1, fill(unicode(details)) + '\n')
-        if args.stdout:
-            print run_spec['code']
-            return
-        elif args.output is None and not args.no_ext:
-            if run_spec['interpreter'] == 'python2.7':
-                filename += '.py'
-            elif run_spec['interpreter'] == 'v8cgi':
-                filename += '.js'
-            elif run_spec['interpreter'] == 'bash':
-                filename += '.sh'
-        if not args.overwrite and os.path.exists(filename):
-            parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
-        try:
-            with open(filename, 'w') as fd:
-                fd.write(run_spec['code'])
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
-    else:
-        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record, file, gtable, table, or applet was expected\n')
+        fd.write(run_spec['code'])
+    fd.close()
 
 def cat(args):
     for path in args.path:
-        get_args = parser.parse_args(['get', '--stdout', path])
-        get(get_args)
+        download_args = parser.parse_args(['download', '-o', '-', path])
+        download(download_args)
 
 def head(args):
     # Attempt to resolve name
@@ -1635,33 +1577,27 @@ def head(args):
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def upload(args):
-    hidden = (args.visibility == 'hidden')
-    properties = get_properties_from_args(args.properties)
-    details = None
-    if args.details is not None:
-        try:
-            details = json.loads(args.details)
-        except:
-            parser.exit(1, 'Error: details could not be parsed as JSON\n')
+    try_call(process_dataobject_args, args)
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
-        name = os.path.basename(args.filename)
+        name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
         project, folder, name = resolve_path(args.output)
-        if name is None:
+        if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
 
     try:
-        dxfile = dxpy.upload_local_file(args.filename,
+        dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
+                                        file=(sys.stdin if args.filename == '-' else None),
                                         name=name,
                                         tags=args.tags,
                                         types=args.types,
-                                        hidden=hidden,
+                                        hidden=args.hidden,
                                         project=project,
-                                        properties=properties,
-                                        details=details,
+                                        properties=args.properties,
+                                        details=args.details,
                                         folder=folder,
                                         parents=args.parents)
         if args.wait:
@@ -1673,122 +1609,25 @@ def upload(args):
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
-def parse_item(item, item_type):
-    if item_type == 'string':
-        return item
-    elif item_type == 'int':
-        return int(item)
-    elif item_type == 'float':
-        return float(item)
-    elif item_type == 'boolean':
-        if item == '0' or item.lower().startswith('f'):
-            return False
-        else:
-            return True
-    else:
-        parser.exit(1, 'Unrecognized column type: ' + item_type + '\n')
+def import_csv(args):
+    sys.argv = [sys.argv[0] + ' import csv'] + args.importer_args
+    from dxpy.scripts import dx_csv_to_gtable
+    dx_csv_to_gtable.main()
+
+def import_tsv(args):
+    sys.argv = [sys.argv[0] + ' import tsv'] + args.importer_args
+    from dxpy.scripts import dx_tsv_to_gtable
+    dx_tsv_to_gtable.main()
+
+importers = {
+    "tsv": import_tsv,
+    "csv": import_csv
+}
 
 def dximport(args):
-    hidden = (args.visibility == 'hidden')
-    properties = get_properties_from_args(args.properties)
-    details = None
-    if args.details is not None:
-        try:
-            details = json.loads(args.details)
-        except:
-            parser.exit(1, 'Error: details could not be parsed as JSON\n')
-
-    if args.output is None:
-        project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
-        if args.filename != '-':
-            name = os.path.basename(args.filename)
-        else:
-            name = None
-    else:
-        project, folder, name = resolve_path(args.output)
-        if name is None and args.filename != '-':
-            name = os.path.basename(args.filename)
-
-    args.indices = [] if args.indices is None else json.loads(args.indices)
-    if args.gri is not None:
-        args.indices.append(dxpy.DXGTable.genomic_range_index(args.gri[0], args.gri[1], args.gri[2]))
-        args.types = ['gri'] if args.types is None else args.types + ['gri']
-
-    if args.filename == '-':
-        fd = sys.stdin
-    else:
-        try:
-            fd = open(args.filename, 'rb')
-        except:
-            parser.exit(1, fill(unicode('Could not open ' + args.filename + ' for reading')) + '\n')
-
-    if True: # not args.vcf
-        firstrow = fd.readline()
-
-        if args.csv:
-            delimiter = ','
-            dialect = 'excel'
-        elif args.tsv:
-            delimiter = '\t'
-            dialect = 'excel'
-        else:
-            # Try to sniff the file format
-            dialect = csv.Sniffer().sniff(firstrow)
-            delimiter = dialect.delimiter
-        firstrow_reader = csv.reader([firstrow], dialect=dialect,
-                                     delimiter=delimiter)
-        firstrow_data = firstrow_reader.next()
-        reader = csv.reader(fd, dialect=dialect,
-                            delimiter=delimiter)
-
-        column_specs = []
-        types = []
-        if args.columns is not None:
-            specs = args.columns
-        else:
-            specs = firstrow_data
-        for spec in specs:
-            if ':' in spec:
-                col_type = spec[spec.find(':') + 1:]
-                column_specs.append({'name': spec[:spec.find(':')],
-                                     'type': col_type})
-                if 'int' in col_type:
-                    types.append('int')
-                elif col_type == 'boolean':
-                    types.append('boolean')
-                elif col_type in ['float', 'double']:
-                    types.append('float')
-                elif col_type == 'string':
-                    types.append('string')
-                else:
-                    parser.exit(1, 'Unrecognized column type: ' + col_type + '\n')
-            else:
-                column_specs.append({'name': spec,
-                                     'type': 'string'})
-                types.append('string')
-        try:
-            dxgtable = dxpy.new_dxgtable(project=project, name=name,
-                                         tags=args.tags, types=args.types, 
-                                         hidden=hidden, properties=properties,
-                                         details=details,
-                                         folder=folder,
-                                         parents=args.parents,
-                                         columns=column_specs,
-                                         indices=args.indices)
-            if args.columns is not None:
-                dxgtable.add_row([ parse_item(firstrow_data[i], types[i]) for i in range(len(types))])
-            for row in reader:
-                dxgtable.add_row([ parse_item(row[i], types[i]) for i in range(len(types))])
-            dxgtable.close(block=args.wait)
-            if args.brief:
-                print dxgtable.get_id()
-            else:
-                print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
-    else:
-        parser.exit(1, 'Not yet implemented\n')
+    if args.format.lower() not in importers:
+        parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help import"') + '\n')
+    importers[args.format.lower()](args)
 
 def export_fastq(args):
     sys.argv = [sys.argv[0] + ' export fastq'] + args.exporter_args
@@ -1800,45 +1639,27 @@ def export_sam(args):
     from dxpy.scripts import dx_mappings_to_sam
     dx_mappings_to_sam.main()
 
+def export_csv(args):
+    sys.argv = [sys.argv[0] + ' export csv'] + args.exporter_args
+    from dxpy.scripts import dx_gtable_to_csv
+    dx_gtable_to_csv.main()
+
+def export_tsv(args):
+    sys.argv = [sys.argv[0] + ' export tsv'] + args.exporter_args
+    from dxpy.scripts import dx_gtable_to_tsv
+    dx_gtable_to_tsv.main()
+
 exporters = {
+    "tsv": export_tsv,
+    "csv": export_csv,
     "fastq": export_fastq,
-    "sam": export_sam
+    "sam": export_sam,
 }
 
 def export(args):
     if args.format.lower() not in exporters:
         parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help export"') + '\n')
     exporters[args.format.lower()](args)
-
-def gtable_get(args):
-    # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                  args.path, expected='entity')
-
-    if entity_result is None or entity_result['describe']['class'] != 'gtable':
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a gtable object\n')
-
-    gri_query = None
-    if args.gri is not None:
-        gri_query = dxpy.DXGTable.genomic_range_query(args.gri[0],
-                                                      int(args.gri[1]),
-                                                      int(args.gri[2]),
-                                                      args.gri_mode,
-                                                      args.gri_name)
-    try:
-        result = dxpy.DXGTable(entity_result['id']).get_rows(query=gri_query,
-                                                             starting=args.starting,
-                                                             limit=args.limit)
-        if args.json:
-            print json.dumps(result, indent=4)
-            return
-        if result["next"] is not None:
-            print "Use as STARTING to continue query: " + str(result["next"])
-        print "# retrieved rows: " + str(result["length"])
-        for row in result["data"]:
-            print json.dumps(row, indent=4)
-    except dxpy.DXAPIError as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_jobs(args):
     get_output_flag(args)
@@ -1912,7 +1733,7 @@ def find_jobs(args):
 
 def find_data(args):
     get_output_flag(args)
-    properties = get_properties_from_args(args.properties)
+    try_call(process_properties_args, args)
     if args.allprojects:
         args.project = None
         args.folder = None
@@ -1926,7 +1747,7 @@ def find_data(args):
         results = list(dxpy.find_data_objects(classname=args.classname,
                                               state=args.state,
                                               visibility=args.visibility,
-                                              properties=properties,
+                                              properties=args.properties,
                                               name=args.name,
                                               typename=args.type,
                                               tag=args.tag, link=args.link,
@@ -2557,6 +2378,12 @@ def print_help(args):
         new_args = argparse.Namespace()
         setattr(new_args, 'exporter_args', ['-h'])
         exporters[args.subcommand](new_args)
+    elif args.command_or_category == 'import' and args.subcommand is not None:
+        if args.subcommand not in importers:
+            parser.exit(1, 'Unsupported format for dx import: ' + args.subcommand + '\n')
+        new_args = argparse.Namespace()
+        setattr(new_args, 'importer_args', ['-h'])
+        importers[args.subcommand](new_args)
     elif args.subcommand is None:
         parser_map[args.command_or_category].print_help()
     elif (args.command_or_category + ' ' + args.subcommand) not in parser_map:
@@ -2570,38 +2397,6 @@ def exit_shell(args):
 
 # TODO: Add a subcommand for clearing the cache
 
-no_color_arg = argparse.ArgumentParser(add_help=False)
-no_color_arg.add_argument('--color',
-                          help='Set when color is used (auto=color is used when stdout is a TTY)',
-                          choices=['off', 'on', 'auto'], default='auto')
-
-delim_arg = argparse.ArgumentParser(add_help=False)
-delim_arg.add_argument('--delimiter', '--delim',
-                       dest='delimiter',
-                       help='Always use exactly one of DELIMITER to separate fields to be printed.  If no delimiter is provided with this flag, TAB will be used.',
-                       nargs='?',
-                       const="\t")
-
-json_arg = argparse.ArgumentParser(add_help=False)
-json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
-
-stdout_args = argparse.ArgumentParser(add_help=False)
-stdout_args_gp = stdout_args.add_mutually_exclusive_group()
-stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value.  For most commands, prints a DNAnexus ID per line.', width_adjustment=-24), action='store_true')
-stdout_args_gp.add_argument('--summary', help='Display summary output (default).', action='store_true')
-stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
-                            action='store_true')
-
-parser_dataobject_args = argparse.ArgumentParser(add_help=False)
-parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
-parser_dataobject_args_gp.add_argument('-o', '--output', help='DNAnexus path for the new object (default uses current project and folder if not provided)')
-parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], default='visible', help='Whether the object is hidden or not')
-parser_dataobject_args_gp.add_argument('--properties', nargs='+', metavar='KEY=VALUE', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
-parser_dataobject_args_gp.add_argument('--types', nargs='+', metavar='TYPE', help='Types of the data object')
-parser_dataobject_args_gp.add_argument('--tags', nargs='+', metavar='TAG', help='Tags of the data object')
-parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
-parser_dataobject_args_gp.add_argument('-p', '--parents', help='Create any parent folders necessary', action='store_true')
-
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
                                  epilog='For a breakdown of dx commands by category, run \"dx help\"')
 parser.add_argument('--version', action='version', version='dx 0.0.1')
@@ -2611,7 +2406,6 @@ subparsers.metavar = 'command'
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
 parser_login.add_argument('--token', help='Authentication token to use')
-parser_login.add_argument('--emtest', help='Log into emtest', action='store_true')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
@@ -2817,46 +2611,38 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_upload = subparsers.add_parser('upload', help='Upload a file',
-                                      description='Upload a local file.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.', parents=[parser_dataobject_args, stdout_args], prog="dx upload")
-parser_upload.add_argument('filename', help='local filename to upload')
+                                      description='Upload a local file.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.', parents=[parser_dataobject_args, stdout_args], prog="dx upload")
+parser_upload.add_argument('filename', help='local filename to upload ("-" indicates stdin input)')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.set_defaults(func=upload)
 parser_map['upload'] = parser_upload
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
+parser_download = subparsers.add_parser('download', help='Download a file',
+                                        description='Download the contents of a file object.  Use "-o -" to direct the output to stdout.', prog='dx download')
+parser_download.add_argument('path', help='Data object ID or name to access')
+parser_download.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
+parser_download.set_defaults(func=download)
+parser_map['download'] = parser_download
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
 parser_get = subparsers.add_parser('get', help='Download a data object (alias: download)',
-                                   description='Download the contents of a data object.  If downloading a gtable, the default format is tab-separated, but other formats can be requested via the flags --csv, and --tsv.  For special file formats like fastq and sam, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)', prog='dx get')
+                                   description='Download the contents of some types of data (records, applets, and apps).  For files, use "dx download".  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
-parser_get.add_argument('-o', '--output', help='local filename to be saved; if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_get.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
-parser_get.add_argument('--stdout', help='Print data to stdout', action='store_true')
-get_gtable_args = parser_get.add_argument_group(title='GTable-specific options')
-get_gtable_args.add_argument('--no-header', help='Do not print a header in the CSV or TSV file', action='store_true')
-get_gtable_args.add_argument('--rowid', help='Include the row ID column', action='store_true')
-get_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
-get_gtable_args.add_argument('--limit', type=int, help='Specify limit on # rows to return (by default, all results will be returned)')
-#get_gtable_args.add_argument('--columns', nargs='+', help='Specify a list of columns to display (default all columns)') TODO
-get_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-get_gtable_args.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
-get_gtable_args.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
-get_gtable_format_args = get_gtable_args.add_mutually_exclusive_group()
-get_gtable_format_args.add_argument('--csv', help='Save the gtable in comma-separated format', action='store_true')
-get_gtable_format_args.add_argument('--tsv', help='Save the gtable in tab-separated format (default if no format is specified)', action='store_true')
 parser_get.set_defaults(func=get)
 parser_map['get'] = parser_get
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-# parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
-parser_download = subparsers.add_parser('download', parents=[parser_get], add_help=False, help='Download a data object (alias: get)')
-parser_map['download'] = parser_get
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat')
 parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
-parser_cat.set_defaults(func=cat, output=None, stdout=True)
+parser_cat.set_defaults(func=cat)
 parser_map['cat'] = parser_cat
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -2882,30 +2668,22 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 
 parser_import = subparsers.add_parser('import',
                                       help='Import (convert and upload) a table or genomic file',
-                                      description='Import a table or genomic file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.  The type of the GenomicTable will be automatically set if applicable (e.g. Reads, etc.).',
-                                      parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args],
+                                      description=fill('Import a local file to the DNAnexus platform as a GenomicTable.') + '\n\n' + fill('For more details on how to import from a particular format, run ') + '\n  $ dx help import <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(importers)),
+                                      formatter_class=argparse.RawTextHelpFormatter,
                                       prog='dx import')
-parser_import.add_argument('filename', help='local filename to import; "-" indicates that stdin will be used')
-parser_import.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"')
-parser_import.add_argument('--indices', help='JSON for specifying any other indices')
-parser_import.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
-import_format_args = parser_import.add_argument_group('input format arguments')
-import_format_args_gp = import_format_args.add_mutually_exclusive_group()
-import_format_args_gp.add_argument('--csv', help='Interpret the file as a comma-separated format', action='store_true')
-import_format_args_gp.add_argument('--tsv', help='Interpret the file as a tab-separated format (default if no format is specified and a file extension is not recognized)', action='store_true')
-import_format_args.add_argument('--columns', metavar='COLUMN', nargs='+', help='List of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
+parser_import.add_argument('format', help='Format to import from')
+parser_import.add_argument('importer_args', help=fill('Arguments passed to the importer', width_adjustment=-24), nargs=argparse.REMAINDER)
 parser_import.set_defaults(func=dximport)
 parser_map['import'] = parser_import
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_export = subparsers.add_parser('export',
-                                      help='Export a GenomicTable into a local file',
-                                      description=fill('Export a GenomicTable into a local file with a particular file format.  For csv and tsv, use "dx get".') + '\n\n' + fill('For more details on how to convert into a particular format, run ') + '\n  $ dx help export <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(exporters.keys()),
+                                      help='Export (download and convert) a GenomicTable into a local file',
+                                      description=fill('Export a GenomicTable into a local file with a particular file format.') + '\n\n' + fill('For more details on how to convert into a particular format, run ') + '\n  $ dx help export <format>' + '\n\nSupported formats:\n\n  ' + '\n  '.join(sorted(exporters)),
                                       parents=[],
                                       formatter_class=argparse.RawTextHelpFormatter,
                                       prog='dx export')
-
 parser_export.add_argument('format', help='Format to export to')
 parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24), nargs=argparse.REMAINDER)
 parser_export.set_defaults(func=export)
@@ -2972,7 +2750,7 @@ parser_run_input = parser_run_input_gp.add_mutually_exclusive_group()
 parser_run_input.add_argument('-i', '--input', help='''An input to be added using "<input name>=<input value>"
 Examples:
   -ichunkSize=250000     # Numerical input
-  -iname=\'\"hello world\"\' # Quotes required for strings
+  -iname=\"hello world\"   # Quotes required for spaces
   -ireads=reads_name     # Names will be resolved''', action='append')
 parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from the file'))

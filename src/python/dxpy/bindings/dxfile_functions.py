@@ -102,6 +102,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type file: File-like object
     :param media_type: Internet Media Type
     :type media_type: string
+    :param keep_open: Keep the file open after writing the contents to the file
+    :type keep_open: boolean
     :param wait_on_close: Wait for the file to close
     :type wait_on_close: boolean
     :param use_existing_dxfile: Instead of creating a new file, use this one
