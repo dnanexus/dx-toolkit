@@ -49,7 +49,7 @@ public:
 
   void log(const std::string &message) const;
 
-  friend std::ostream &operator<<(std::ostream &out, const Chunk &opt);
+  friend std::ostream &operator<<(std::ostream &out, const Chunk &chunk);
 
 private:
 

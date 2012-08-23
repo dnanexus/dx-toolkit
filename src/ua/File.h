@@ -37,6 +37,11 @@ public:
   /* Destination file name. */
   std::string name;
 
+  /* Set to true if one or more chunks of the file fails to be uploaded. */
+  bool failed;
+
+  friend std::ostream &operator<<(std::ostream &out, const File &file);
+
 };
 
 #endif

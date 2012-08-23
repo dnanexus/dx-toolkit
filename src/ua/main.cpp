@@ -208,6 +208,15 @@ void curlCleanup() {
   curl_global_cleanup();
 }
 
+void markFileAsFailed(vector<File> &files, const string &fileID) {
+  for (unsigned int i = 0; i < files.size(); ++i) {
+    if (files[i].fileID == fileID) {
+      files[i].failed = true;
+      return;
+    }
+  }
+}
+
 int main(int argc, char * argv[]) {
   try {
     opt.parse(argc, argv);
@@ -247,8 +256,11 @@ int main(int argc, char * argv[]) {
 
     testServerConnection();
 
-    File file(opt.files[0], opt.projects[0], opt.folders[0], opt.names[0]);
-    totalChunks += file.createChunks(chunksToRead, opt.chunkSize, opt.tries);
+    vector<File> files;
+    for (unsigned int i = 0; i < opt.files.size(); ++i) {
+      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i]));
+      totalChunks += files[i].createChunks(chunksToRead, opt.chunkSize, opt.tries);
+    }
 
     LOG << "Created " << totalChunks << " chunks." << endl;
 
@@ -256,7 +268,6 @@ int main(int argc, char * argv[]) {
 
     LOG << "Creating monitor thread.." << endl;
     boost::thread monitorThread(monitor);
-
     LOG << "Joining monitor thread..." << endl;
     monitorThread.join();
     LOG << "Monitor thread finished." << endl;
@@ -264,14 +275,20 @@ int main(int argc, char * argv[]) {
     interruptWorkerThreads();
     joinWorkerThreads();
 
-    if (chunksFailed.empty()) {
-      cerr << "Upload was successful! Closing file...";
-      file.close();
-      cerr << endl;
-    } else {
-      int failed = chunksFailed.size();
-      cerr << "Upload failed. " << failed << " " << (failed == 1 ? "chunk" : "chunks")
-           << " could not be uploaded." << endl;
+    while (!chunksFailed.empty()) {
+      Chunk * c = chunksFailed.consume();
+      c->log("Chunk failed");
+      markFileAsFailed(files, c->fileID);
+    }
+
+    for (unsigned int i = 0; i < files.size(); ++i) {
+      if (files[i].failed) {
+        cerr << "File " << files[i] << " could not be uploaded." << endl;
+      } else {
+        cerr << "File " << files[i] << " was uploaded successfully. Closing...";
+        files[i].close();
+        cerr << endl;
+      }
     }
 
     curlCleanup();

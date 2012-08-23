@@ -21,7 +21,7 @@ void testFileExists(const string &filename) {
 }
 
 File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_)
-  : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_) {
+  : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_), failed(false) {
   init();
 }
 
@@ -55,4 +55,9 @@ unsigned int File::createChunks(BlockingQueue<Chunk *> &queue, const int chunkSi
 
 void File::close(void) {
   closeFileObject(fileID);
+}
+
+ostream &operator<<(ostream &out, const File &file) {
+  out << file.localFile << " (" << file.fileID << ")";
+  return out;
 }
