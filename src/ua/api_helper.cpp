@@ -2,6 +2,7 @@
 
 #include <curl/curl.h>
 
+#include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
 #include "log.h"

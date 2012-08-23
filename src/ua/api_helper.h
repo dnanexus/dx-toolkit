@@ -3,10 +3,6 @@
 
 #include <string>
 
-#include "dxjson/dxjson.h"
-
-dx::JSON securityContext(const std::string &authToken);
-
 void apiInit(const std::string &apiserverHost, const int apiserverPort, const std::string &apiserverProtocol, const std::string &authToken);
 
 void testServerConnection(void);
