@@ -4,6 +4,12 @@ cmake_policy(VERSION 2.6)
 project(dxcpp)
 set(CMAKE_BUILD_TYPE, Release)
 
+FIND_PACKAGE(Boost REQUIRED)
+IF (Boost_FOUND)
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+    LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+ENDIF()
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Wno-overloaded-virtual -Werror=return-type -Wno-deprecated")
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")

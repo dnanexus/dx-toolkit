@@ -1,4 +1,26 @@
 #include "SimpleHttp.h"
+#include "SSLThreads.h"
+
+class SSLThreadsInitializer
+{
+public:
+  SSLThreadsInitializer()
+  {
+    std::cerr<<"\nSimpleHttp: Initializing openssl for thread safety -> Calling SSLThreadsSetup()";
+    SSLThreadsSetup();
+  }
+
+  ~SSLThreadsInitializer()
+  {
+    std::cerr<<"\nSimpleHttp: Cleaning up openssl thread safety mechanism -> Calling SSLThreadsCleanup()";
+    SSLThreadsCleanup();
+  }
+};
+
+// Our aim is to call this SSLThreadsSetup() once in beginning
+// and SSLThreadsCleanup() at the end
+// See: http://horstr.blogspot.com/2008/04/on-libcurl-openssl-and-thread-safety.html
+SSLThreadsInitializer SSLThreads_initializer;
 
 /*
  * This function serves as a callback for response headers read by libcurl
