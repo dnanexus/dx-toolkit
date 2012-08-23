@@ -14,8 +14,6 @@
 #include "File.h"
 #include "log.h"
 
-#include "SSLThreads.h"
-
 using namespace std;
 
 Options opt;
@@ -245,7 +243,6 @@ int main(int argc, char * argv[]) {
   chunksToUpload.setCapacity(opt.uploadThreads);
 
   try {
-    SSLThreadsSetup();
     curlInit();
 
     testServerConnection();
@@ -278,7 +275,6 @@ int main(int argc, char * argv[]) {
     }
 
     curlCleanup();
-    SSLThreadsCleanup();
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
