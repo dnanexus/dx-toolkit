@@ -1856,12 +1856,13 @@ def close(args):
 
 def build(args):
     from dxpy.scripts import dx_build_app
-    dx_build_app.main(vars(args))
+    sys.argv = ['dx build'] + sys.argv[2:]
+    dx_build_app.main()
 
 def install(args):
     app_desc = get_app_from_path(args.app)
     if app_desc is None:
-        parser.exit(1, 'Could not find the app')
+        parser.exit(1, 'Could not find the app\n')
     else:
         try:
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
@@ -1872,7 +1873,7 @@ def install(args):
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
     if app_desc is None:
-        parser.exit(1, 'Could not find the app')
+        parser.exit(1, 'Could not find the app\n')
     else:
         try:
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/uninstall', {})
