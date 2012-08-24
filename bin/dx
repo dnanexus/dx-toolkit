@@ -1666,6 +1666,8 @@ def find_jobs(args):
                                        args.project, 'project')
     if args.allusers:
         args.user = None
+    if args.allprojects:
+        project = None
     try:
         describe = {"io": args.verbose}
         results = list(dxpy.find_jobs(launched_by=args.user,
@@ -2930,14 +2932,15 @@ parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', descrip
                                               prog='dx find jobs')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job, default is self', default='self')
 parser_find_jobs.add_argument('--allusers', help='Do not restrict search by who launched the job', action='store_true')
+parser_find_jobs.add_argument('--project', help='Project context (output project), default is current project if set')
+parser_find_jobs.add_argument('--allprojects', help='Project context (output project)', action='store_true')
 parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
-parser_find_jobs.add_argument('--project', help='Project context (output project)')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
 parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_jobs.add_argument('-n', '--num-results', type=int, help='Max number of origin jobs to return')
+parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help='Max number of origin jobs to return')
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))

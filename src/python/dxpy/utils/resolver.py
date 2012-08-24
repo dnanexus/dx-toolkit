@@ -403,7 +403,9 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
 
     project, folderpath, entity_name = resolve_path(path, expected)
 
-    if entity_name is None:
+    if project is None:
+        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  You should either set a default project using dx select or cd, or add a colon (":") after your project ID or name.')
+    elif entity_name is None:
         # Definitely a folder (or project)
         # FIXME? Should I check that the folder exists if expected="folder"?
         return project, folderpath, entity_name
