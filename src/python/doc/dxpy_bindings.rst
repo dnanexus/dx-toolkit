@@ -5,9 +5,3 @@ dxpy Object Handlers
    :members:
    :undoc-members:
    :show-inheritance:
-
-.. automodule:: dxpy.bindings.dxdataobject_functions
-   :members:
-   :undoc-members:
-   :show-inheritance:
-

@@ -341,8 +341,8 @@ class DXFile(DXDataObject):
         bytes left in the file.
 
         .. note::
-        After the first call to read(), passthrough kwargs are not respected while using the same response iterator
-        (i.e. until next seek).
+
+            After the first call to read(), passthrough kwargs are not respected while using the same response iterator (i.e. until next seek).
         '''
         if self._response_iterator == None:
             self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)

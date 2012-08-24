@@ -1,6 +1,20 @@
 :mod:`dxpy.bindings` Module
 ---------------------------
 
+Documentation on classes and methods:
+
+.. toctree::
+   :maxdepth: 9
+
+   dxpy_bindings
+   dxpy_functions
+   dxpy_dxproject
+   dxpy_dxrecord
+   dxpy_dxfile
+   dxpy_dxgtable
+   dxpy_apps
+   dxpy_search
+
 This module contains useful Python bindings for calling API methods on
 the DNAnexus platform. Data objects (such as records, files,
 GenomicTables, tables, and applets) can be represented locally by a
@@ -19,7 +33,7 @@ indicate which project's copy it represents.  The ID of a data object
 remains the same regardless of whether it is moved within a project or
 cloned to another project.  To access a preexisting object, a remote
 handler for that class can be set up via two methods: the constructor
-or the :meth:`DXDataObject.set_ids` method.  For example::
+or the :meth:`dxpy.bindings.DXDataObject.set_ids` method.  For example::
 
     dxFileHandle = DXFile("file-1234")
 
@@ -29,7 +43,7 @@ or the :meth:`DXDataObject.set_ids` method.  For example::
 Both these methods do not perform API calls and merely set the state
 of the remote file handler.  The object ID and project ID stored in
 the handler can be overwritten with subsequent calls to
-:meth:`DXDataObject.set_ids`.
+:meth:`dxpy.bindings.DXDataObject.set_ids`.
 
 Creation of a new object can be performed using the method
 :meth:`DXDataObject.new` which usually has a different
@@ -55,16 +69,3 @@ writing, downloading, and uploading files are all supported.
 Though not explicitly documented in each method as such, all methods
 which interact with the API server may raise the exception
 :exc:`dxpy.exceptions.DXAPIError`.
-
-The following sections have more details on the different handlers available.
-
-.. toctree::
-   :maxdepth: 9
-
-   dxpy_bindings
-   dxpy_dxproject
-   dxpy_dxrecord
-   dxpy_dxfile
-   dxpy_dxgtable
-   dxpy_apps
-   dxpy_search

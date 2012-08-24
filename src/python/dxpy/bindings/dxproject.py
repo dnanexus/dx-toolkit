@@ -1,7 +1,4 @@
 """
-DXProject and DXContainer handlers
-+++++++++++++++++
-
 Projects are platform entities which serve as containers for data, and are the unit of collaboration.
 
 Containers are special-purpose data containers which behave like projects with the PROTECTED flag unset (so that

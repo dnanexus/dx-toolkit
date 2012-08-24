@@ -1,8 +1,6 @@
 '''
-Helper Functions
-****************
-
-These functions provide shorthand functional interfaces for manipulating DNAnexus data object references.
+These functions provide shorthand functional interfaces for actions such as
+getting a :class:`dxpy.bindings.DXDataObject` handler from an ID or `link <http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_ or creating a link from a handler.  In addition, there are functions for performing simple actions with an ID or link as input when you do not need to keep around a full object handler after performing the action.
 '''
 
 from dxpy.bindings import *
@@ -43,6 +41,7 @@ def _guess_link_target_type(link):
 def get_handler(link, project=None):
     '''
     :param link: String containing an object ID or dict containing a DXLink
+
     Parses a string or DXLink dict. Creates and returns an object handler for it.
 
     Example::
@@ -61,6 +60,7 @@ def get_handler(link, project=None):
 def describe(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
+
     Given an object ID, recognizes the class and calls describe on it.
 
     Example::
@@ -73,6 +73,7 @@ def describe(link, **kwargs):
 def get_details(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
+
     Given an object ID, recognizes the class and calls getDetails on it.
 
     Example::
@@ -85,6 +86,7 @@ def get_details(link, **kwargs):
 def remove(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
+
     Given an object ID, recognizes the class and calls remove on it.
 
     Example::

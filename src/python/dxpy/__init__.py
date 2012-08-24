@@ -1,10 +1,10 @@
 '''
 When importing this package, configuration values will be loaded from the following sources in order of decreasing priority:
 
-* Environment variables
-* Values stored in ~/.dnanexus-env/environment
-* Values stored in /opt/dnanexus/environment
-* Hardcoded defaults
+1. Environment variables
+2. Values stored in ~/.dnanexus_config/environment
+3. Values stored in /opt/dnanexus/environment
+4. Hardcoded defaults
 
 The relevant environment variables are the following:
 
