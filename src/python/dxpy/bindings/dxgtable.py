@@ -3,7 +3,7 @@ DXGTable Handler
 ****************
 """
 
-import os, sys, json
+import os, sys, json, traceback
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
@@ -71,7 +71,11 @@ class DXGTable(DXDataObject):
 
         Also, neither this nor context managers are compatible with kwargs pass-through (so e.g. no custom auth).
         '''
-        self.flush(multithread=False)
+        try:
+            self.flush(multithread=False)
+        except Exception as e:
+            print "=== Exception occurred while flushing accumulated row data for " + self._dxid
+            traceback.print_exception(*sys.exc_info())
 
     def _check_row_is_valid(self, row):
         # TODO: if the user is using initFrom, we don't know what the schema looks like
