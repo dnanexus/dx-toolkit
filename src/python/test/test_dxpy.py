@@ -298,6 +298,19 @@ class TestDXGTable(unittest.TestCase):
         except DXAPIError:
             self.fail("Could not close table after table extension")
 
+    def test_addrows_async_error_handling(self):
+        table = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                   dxpy.DXGTable.make_column_desc("b", "int32")])
+        table.add_row(["", 68719476736]) # Not in int32 range
+
+        # In order for this test to be meaningful, this must be enough data to force flushing of
+        # the buffer. And the error above must not be caught by any local test.
+        for i in xrange(1000000):
+            table.add_row(["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 3])
+        # No assertion here, but this test should print some kind of error to the console at least.
+        # If GTable gets a proper context manager that would allow us to trap async errors in a
+        # reasonable way.
+
     def get_col_names(self):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
