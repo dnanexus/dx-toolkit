@@ -74,7 +74,7 @@ class DXGTable(DXDataObject):
         try:
             self.flush(multithread=False)
         except Exception as e:
-            print "=== Exception occurred while flushing accumulated row data for " + self._dxid
+            print "=== Exception occurred while flushing accumulated row data for %r" % (self._dxid,)
             traceback.print_exception(*sys.exc_info())
             raise
 
