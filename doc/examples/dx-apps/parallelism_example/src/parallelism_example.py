@@ -46,16 +46,12 @@ def mapper(words, output_gtable_id, row_offset, length):
 
     Maps each row [word] to a row in the output table [word, word_reversed].
     """
-    # Use each table IDs to create a remote object handler for the GTable
-    # (behaves like a file handle)
-    input_gtable = dxpy.DXGTable(words)
-
-    output_gtable = dxpy.DXGTable(output_gtable_id)
-
-    # row_offset + length may exceed the length of the input table, but that's
-    # not a problem (iterate_rows will truncate its result at the end).
-    for index, word in input_gtable.iterate_rows(start=row_offset, end=row_offset+length):
-        output_gtable.add_row([word, word[::-1]])
+    with dxpy.open_dxgtable(words, keep_open=True) as input_gtable, dxpy.open_dxgtable(output_gtable_id, keep_open=True) as output_gtable:
+        # row_offset + length may exceed the length of the input table, but
+        # that's not a problem (iterate_rows will truncate its result at the
+        # end).
+        for index, word in input_gtable.iterate_rows(start=row_offset, end=row_offset+length):
+            output_gtable.add_row([word, word[::-1]])
     return {"ok": True}
 
 @dxpy.entry_point("postprocess")
