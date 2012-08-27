@@ -299,19 +299,6 @@ class TestDXGTable(unittest.TestCase):
         except DXAPIError:
             self.fail("Could not close table after table extension")
 
-    def test_addrows_async_error_handling(self):
-        table = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                                   dxpy.DXGTable.make_column_desc("b", "int32")])
-        table.add_row(["", 68719476736]) # Not in int32 range
-
-        # In order for this test to be meaningful, this must be enough data to force flushing of
-        # the buffer. And the error above must not be caught by any local test.
-        for i in xrange(1000000):
-            table.add_row(["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 3])
-        # No assertion here, but this test should print some kind of error to the console at least.
-        # If GTable gets a proper context manager that would allow us to trap async errors in a
-        # reasonable way.
-
     def get_col_names(self):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
@@ -371,11 +358,68 @@ class TestDXGTable(unittest.TestCase):
         self.assertEqual(desc["length"], 64)
 
     def test_table_context_manager(self):
+        # Writing a new_dxgtable with parts
         with dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
              dxpy.DXGTable.make_column_desc("b", "int32")]) as self.dxgtable:
             for i in range(64):
                 self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
+
+        # Writing a new_dxgtable without parts
+        with dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                dxpy.DXGTable.make_column_desc("b", "int32")]) as table2:
+            table2_id = table2.get_id()
+            for i in range(64):
+                table2.add_rows(data=[["row"+str(i), i]])
+        table2 = dxpy.open_dxgtable(table2_id)
+        self.assertEqual(table2.describe()["length"], 64)
+        table2.remove()
+
+        # Writing an open_dxgtable
+        table3_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                       dxpy.DXGTable.make_column_desc("b", "int32")]).get_id()
+        with dxpy.open_dxgtable(table3_id, keep_open=True) as table3:
+            for i in range(64):
+                table3.add_rows(data=[["row"+str(i), i]])
+        with dxpy.open_dxgtable(table3_id, keep_open=False) as table3:
+            for i in range(64):
+                table3.add_rows(data=[["row"+str(i), i]])
+        table3 = dxpy.open_dxgtable(table3_id)
+        state = table3._get_state()
+        self.assertTrue(state in ['closing', 'closed'])
+        table3._wait_on_close()
+        self.assertEqual(table3.describe()["length"], 128)
+        table3.remove()
+
+    def test_table_context_manager_error_handling(self):
+        # In each case, the flush that happens at the close of the context handler should wait for
+        # the asynchronous requests and then raise the resulting error.
+
+        # Note that this test assumes that the error is a semantic error in the add_row data that
+        # is NOT caught by any local error checking.
+
+        # Use new_dxgtable
+        with self.assertRaises(DXAPIError):
+            with dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                    dxpy.DXGTable.make_column_desc("b", "int32")]) as table1:
+                table1.add_row(["", 68719476736]) # Not in int32 range
+
+        # Use open_dxgtable and close table
+        table2_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                       dxpy.DXGTable.make_column_desc("b", "int32")]).get_id()
+        with self.assertRaises(DXAPIError):
+            with dxpy.open_dxgtable(table2_id) as table2:
+                table2.add_row(["", 68719476736]) # Not in int32 range
+        # TODO: why does the flush in this table's destructor fail? Nothing should be getting
+        # flushed then...
+
+        # Use open_dxgtable and leave table open
+        table3_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                       dxpy.DXGTable.make_column_desc("b", "int32")])
+        with self.assertRaises(DXAPIError):
+            with dxpy.open_dxgtable(table3_id, keep_open=True) as table3:
+                table3.add_row(["", 68719476736]) # Not in int32 range
+
 
     def test_create_table_with_invalid_spec(self):
         with self.assertRaises(DXAPIError):

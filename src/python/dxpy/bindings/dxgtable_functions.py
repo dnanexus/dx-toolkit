@@ -2,22 +2,24 @@
 Opening and Creating
 ********************
 
-The following functions allow opening an existing remote table
-(read-only) and creating new remote tables (write-only).  All these
-methods return a remote table handler.
+The following functions allow opening an existing remote table (for reading or
+writing) and creating new remote tables (write-only). All these methods return
+a remote table handler.
 
 """
 
 from dxpy.bindings import *
 
-def open_dxgtable(dxid, project=None):
+def open_dxgtable(dxid, project=None, keep_open=False):
     '''
     :param dxid: table ID
     :type dxid: string
     :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
 
-    Given the object ID of an existing table, this function returns a
-    DXGTable object on which get_rows() can be called.
+    Given the object ID of an existing table, this function returns a DXGTable
+    object for reading (with :meth:`dxpy.bindings.dxgtable.DXGTable.get_rows`)
+    or writing (with :meth:`dxpy.bindings.dxgtable.DXGTable.add_row` or
+    :meth:`dxpy.bindings.dxgtable.DXGTable.add_rows`).
 
     Example::
 
@@ -31,7 +33,7 @@ def open_dxgtable(dxid, project=None):
 
     '''
 
-    return DXGTable(dxid, project=project)
+    return DXGTable(dxid, project=project, keep_open=keep_open)
 
 def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
                  **kwargs):
