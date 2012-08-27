@@ -120,7 +120,7 @@ def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
 def print_project_desc(desc):
-    recognized_fields = ['id', 'class', 'name', 'description', 'owner', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'appWorkspaces', 'appCaches', 'billTo']
+    recognized_fields = ['id', 'class', 'name', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -128,10 +128,8 @@ def print_project_desc(desc):
         print_field("Name", desc["name"])
     if 'description' in desc:
         print_field("Description", desc["description"])
-    if 'owner' in desc:
-        print_field("Owner", desc["owner"])
-    elif 'billTo' in desc:
-        print_field("Billed to", desc['billTo'])
+    if 'billTo' in desc:
+        print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'protected' in desc:
         print_json_field("Protected", desc["protected"])
     if 'restricted' in desc:
@@ -139,39 +137,37 @@ def print_project_desc(desc):
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
+    if "objects" in desc:
+        print_field("# Files", str(desc["objects"]))
     if 'tags' in desc:
-        print_list_field("Tags", join(desc["tags"]))
+        print_list_field("Tags", desc["tags"])
     if "level" in desc:
         print_field("Access level", desc["level"])
     if "folders" in desc:
         print_list_field("Folders", desc["folders"])
-    if "objects" in desc:
-        print_field("# Files", str(desc["objects"]))
     if "permissions" in desc:
-        print_field("Permissions", json.dumps(desc["permissions"]))
+        print_list_field("Permissions", [key[5 if key.startswith('user-') else 0:] + ':' + value for key, value in desc["permissions"].items()])
+    if "properties" in desc:
+        print_list_field("Properties", [key + '=' + value for key, value in desc["properties"].items()])
     if "appCaches" in desc:
-        print_field("App caches", json.dumps(desc["appCaches"]))
-    elif "appWorkspaces" in desc:
-        print_field("App caches", json.dumps(desc["appWorkspaces"]))
+        print_json_field("App caches", desc["appCaches"])
 
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
 
 def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'owner', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing']
+    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details']
     # NOTE: Hiding "billing" for now
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
-    if 'owner' in desc:
-        print_field("Owner", desc["owner"])
-    elif 'billTo' in desc:
-        print_field("Billed to", desc['billTo'])
+    if 'billTo' in desc:
+        print_field("Billed to", desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     print_field("Name", desc["name"])
     print_field("Version", desc["version"])
     print_list_field("Aliases", desc["aliases"])
-    print_field("Created by", desc["createdBy"])
+    print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "program" in desc:
@@ -195,6 +191,8 @@ def print_app_desc(desc):
         if "description" in desc and desc['description'] is not None:
             print_field("Description", desc["description"])
         print_list_field("Categories", desc["categories"])
+        if 'details' in desc:
+            print_json_field("Details", desc["details"])
         print_json_field("Access", desc["access"])
         print_field("API version", desc["dxapi"])
         if 'inputSpec' in desc:
@@ -247,7 +245,7 @@ def print_data_obj_desc(desc):
         print_list_field("Outgoing links", desc['links'])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     if 'createdBy' in desc:
-        print_field("Created by", desc['createdBy']['user'])
+        print_field("Created by", desc['createdBy']['user'][5:])
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "title" in desc:
         print_field("Title", desc["title"])

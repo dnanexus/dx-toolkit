@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding: utf-8
 
 import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
 import shlex # respects quoted substrings when splitting
@@ -464,10 +465,24 @@ def api(args):
 def invite(args):
     project, none, none = try_call(resolve_existing_path,
                                    args.project, 'project')
+    if args.invitee != 'PUBLIC' and not '-' in args.invitee:
+        args.invitee = 'user-' + args.invitee
     try:
         resp = dxpy.DXHTTPRequest('/' + project + '/invite',
-                                  {"invitee": args.user, "level": args.level})
-        print 'Invited ' + args.user + ' to ' + project + ' (' + resp['state'] + ')'
+                                  {"invitee": args.invitee, "level": args.level})
+        print 'Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')'
+    except BaseException as details:
+        parser.exit(1, fill(unicode(details)) + '\n')
+
+def uninvite(args):
+    project, none, none = try_call(resolve_existing_path,
+                                   args.project, 'project')
+    if args.entity != 'PUBLIC' and not '-' in args.entity:
+        args.entity = 'user-' + args.entity
+    try:
+        dxpy.DXHTTPRequest('/' + project + '/decreasePermissions',
+                           {args.entity: None})
+        print 'Uninvited ' + args.entity + ' from ' + project
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -948,7 +963,7 @@ def tree(args):
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
-        print format_tree(tree, root=args.path)
+        print format_tree(tree, root=(BOLD() + BLUE() + args.path + ENDC()))
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -957,7 +972,7 @@ def describe(args):
     # First, if it looks like a hash id, do that.
     json_input = {}
     json_input["properties"] = True
-    if args.details:
+    if args.details or args.verbose:
         json_input["details"] = True
     if is_data_obj_id(args.path):
         # Should prefer the current project's version if possible
@@ -986,6 +1001,11 @@ def describe(args):
     get_result_str = ResultCounter()
 
     # Could be a project
+    json_input = {}
+    json_input['countObjects'] = True
+    if args.verbose:
+        json_input["permissions"] = True
+        json_input['appCaches'] = True
     if entity_results is None:
         if args.path[-1] == ':':
             # It is the project.
@@ -1024,7 +1044,7 @@ def describe(args):
                 print get_result_str()
                 print_desc(result['describe'])
 
-    if not is_hashid(args.path):
+    if not is_hashid(args.path) and ':' not in args.path:
 
         # Could be an app name
         if args.path.startswith('app-'):
@@ -1048,9 +1068,22 @@ def describe(args):
                 found_match = True
 
         # Could be a user
-        if args.path.startswith('user'):
+        if args.path.startswith('user-'):
             try:
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
+                found_match = True
+                if args.json:
+                    json_output.append(desc)
+                else:
+                    print get_result_str()
+                    print_desc(desc)
+            except dxpy.DXAPIError as details:
+                pass
+        else:
+            try:
+                desc = dxpy.DXHTTPRequest('/user-' + args.path + '/describe',
+                                          {"appsInstalled": True,
+                                           "subscriptions": True})
                 found_match = True
                 if args.json:
                     json_output.append(desc)
@@ -1658,6 +1691,15 @@ def export(args):
         parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help export"') + '\n')
     exporters[args.format.lower()](args)
 
+def get_find_jobs_string(jobdesc, has_children):
+    is_origin_job = jobdesc['parentJob'] is None
+    string = ("* " if is_origin_job and get_delimiter() is None else "")
+    string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
+    string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
+    string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
+    string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
+    return string
+
 def find_jobs(args):
     get_output_flag(args)
     project = dxpy.WORKSPACE_ID
@@ -1668,65 +1710,68 @@ def find_jobs(args):
         args.user = None
     if args.allprojects:
         project = None
+    print_launched_by = args.allusers or args.verbose
     try:
-        describe = {"io": args.verbose}
-        results = list(dxpy.find_jobs(launched_by=args.user,
-                                      applet=args.applet,
-                                      project=project,
-                                      state=args.state,
-                                      origin_job=args.origin,
-                                      parent_job=args.parent,
-                                      describe=describe,
-                                      created_after=args.created_after,
-                                      created_before=args.created_before))
+        job_descs = {}    # job ID -> job desc
+        job_children = {} # job ID -> list of child job IDs
+        origin_jobs = []  # List of origin job IDs (ordered by creation)
+        job_strings = collections.OrderedDict() # for summary or verbose
+        json_output = []                        # for args.json
+        output_ids = []                         # for args.brief
+        describe = {"io": args.verbose and args.json}
+        for job_result in dxpy.find_jobs(launched_by=args.user,
+                                         applet=args.applet,
+                                         project=project,
+                                         state=args.state,
+                                         origin_job=args.origin,
+                                         parent_job=args.parent,
+                                         describe=describe,
+                                         created_after=args.created_after,
+                                         created_before=args.created_before):
+
+            job_descs[job_result['id']] = job_result['describe']
+            parent = job_result['describe']['parentJob']
+            if parent is None:
+                if args.num_results is not None and len(origin_jobs) >= args.num_results:
+                    break
+                origin_jobs.append(job_result['id'])
+            elif parent in job_children:
+                job_children[parent].append(job_result['id'])
+            else:
+                job_children[parent] = [job_result['id']]
+
+        def process_children(parent_job, parent_hash=None):
+            has_children = parent_job in job_children
+            if args.json:
+                json_output.append(job_descs[parent_job])
+            elif args.brief:
+                output_ids.append(parent_job)
+            else:
+                parent_string = get_find_jobs_string(job_descs[parent_job],
+                                                     has_children)
+                parent_hash[parent_string] = {}
+            if has_children:
+                for child_job in job_children[parent_job]:
+                    process_children(child_job,
+                                     parent_hash[parent_string] if parent_hash is not None else None)
+
+        for origin_job in origin_jobs:
+            process_children(origin_job, job_strings if not args.json and not args.brief else None)
 
         if args.json:
-            print json.dumps(results, indent=4)
-            return
-
-        job_ids = {}
-        job_children = {}
-        origin_jobs = []
-        for i in range(len(results)):
-            job_ids[results[i]['id']] = i
-            parent = results[i]['describe']['parentJob']
-            if parent is None:
-                origin_jobs.append(i)
-            elif parent in job_children:
-                job_children[parent].append(i)
+            print json.dumps(json_output, indent=4)
+        elif args.brief:
+            print "\n".join(output_ids)
+        else:
+            if get_delimiter() is None:
+                for origin_job in job_strings:
+                    print format_tree(job_strings[origin_job], root=origin_job)
             else:
-                job_children[parent] = [i]
-
-        def print_children(parent_id, num_tabs):
-            print_string = ""
-
-            if not args.brief:
-                for j in range(num_tabs):
-                    print_string += DELIMITER('\t')
-                if 'name' in results[job_ids[parent_id]]['describe'] and results[job_ids[parent_id]]['describe']['name'] is not None:
-                    print_string += results[job_ids[parent_id]]['describe']['name'] + DELIMITER(' ')
-
-            print_string += parent_id
-
-            if not args.brief:
-                print_string += DELIMITER(' ') + \
-                    str(datetime.datetime.fromtimestamp(results[job_ids[parent_id]]['describe']['created']/1000)) + DELIMITER(' (')
-                state = results[ job_ids[parent_id] ]['describe']['state']
-                print_string += JOB_STATES(state)
-                print_string += DELIMITER(')')
-            print print_string
-
-            if parent_id in job_children:
-                for child in job_children[parent_id]:
-                    print_children(results[child]['id'], num_tabs + 1)
-
-        n = 0
-        for origin_job in origin_jobs:
-            orig_id = results[origin_job]["id"]
-            print_children(orig_id, 0)
-            n += 1
-            if args.num_results is not None and n >= args.num_results:
-                break
+                def print_keys(hash_of_keys):
+                    for key in hash_of_keys:
+                        print key
+                        print_keys(hash_of_keys[key])
+                print_keys(job_strings)
     except dxpy.DXAPIError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -1777,8 +1822,9 @@ def find_data(args):
 def find_projects(args):
     get_output_flag(args)
     try:
-        results = list(dxpy.find_projects(name=args.name, level=args.level,
+        results = list(dxpy.find_projects(name=args.name, level=('VIEW' if args.public else args.level),
                                           describe=(not args.brief),
+                                          explicit_perms=(not args.public),
                                           public=args.public))
         if args.json:
             print json.dumps(results, indent=4)
@@ -2467,13 +2513,25 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_invite = subparsers.add_parser('invite',
-                                      help='Invite another user to a project',
+                                      help='Invite another user to a project or make it public',
+                                      description='Invite a DNAnexus entity to a project.  Use "PUBLIC" as the invitee and "VIEW" as the level to make the project public.  If the invitee is not recognized as a DNAnexus ID or is not "PUBLIC", it will be treated as a username, i.e. "dx invite alice : VIEW" is equivalent to inviting the user with user ID "user-alice" to view your current default project.',
                                       prog='dx invite')
-parser_invite.add_argument('user', help='User to invite')
-parser_invite.add_argument('project', help='Project to invite the user to')
+parser_invite.add_argument('invitee', help='Entity to invite')
+parser_invite.add_argument('project', help='Project to invite the invitee to')
 parser_invite.add_argument('level', help='Permissions level the new member should have', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'])
 parser_invite.set_defaults(func=invite)
 parser_map['invite'] = parser_invite
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_uninvite = subparsers.add_parser('uninvite',
+                                        help='Revoke others\' permissions on a project you administer',
+                                        description='Revoke others\' permissions on a project you administer.  Use "PUBLIC" as the entity to make the project no longer public.  If the entity is not recognized as a DNAnexus ID or is not "PUBLIC", it will be treated as a username, i.e. "dx uninvite alice :" is equivalent to revoking the permissions of the user with user ID "user-alice" to your current default project.',
+                                      prog='dx uninvite')
+parser_uninvite.add_argument('entity', help='Entity to uninvite')
+parser_uninvite.add_argument('project', help='Project to revoke permissions from')
+parser_uninvite.set_defaults(func=uninvite)
+parser_map['uninvite'] = parser_uninvite
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
@@ -2600,7 +2658,8 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
                                         parents=[json_arg, no_color_arg, delim_arg],
                                         prog='dx describe')
-parser_describe.add_argument('--details', help='Include details if available', action='store_true')
+parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
+parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
 parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
 parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
 parser_describe.set_defaults(func=describe)
@@ -2970,12 +3029,12 @@ parser_categories['data']['cmds'].append(('find data', subparsers_find._choices_
 parser_categories['metadata']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
 
 parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects',
-                                                  description='Finds projects with the given search parameters.',
+                                                  description='Finds projects with the given search parameters.  Use the --public flag to include only public projects in your search',
                                                   parents=[stdout_args, json_arg, delim_arg],
                                                   prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
-parser_find_projects.add_argument('--public', help='Include public projects', action='store_true')
+parser_find_projects.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)', action='store_true')
 parser_find_projects.set_defaults(func=find_projects)
 parser_map['find projects'] = parser_find_projects
 parser_categories['data']['cmds'].append(('find projects', subparsers_find._choices_actions[-1].help))

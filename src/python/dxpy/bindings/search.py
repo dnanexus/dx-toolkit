@@ -398,14 +398,19 @@ def find_jobs(launched_by=None, applet=None, project=None, state=None,
         else:
             raise StopIteration()
 
-def find_projects(name=None, level=None, describe=None, public=None, **kwargs):
+def find_projects(name=None, properties=None, level=None, describe=None, explicit_perms=None,
+                  public=None, **kwargs):
     """
     :param name: Name of the project
     :type name: string
+    :param properties: Properties (key-value pairs) that each result must have
+    :type properties: dict
     :param level: Minimum permissions level of returned project IDs
     :type level: string
     :param describe: Either false or the input to the describe call for the project
     :type describe: boolean or dict
+    :param explicit_perms: Whether to include projects for which explicit permissions are granted (true by default)
+    :type public: boolean
     :param public: Whether to include public projects in the results
     :type public: boolean
     :rtype: generator
@@ -417,26 +422,28 @@ def find_projects(name=None, level=None, describe=None, public=None, **kwargs):
     query = {}
     if name is not None:
         query["name"] = name
+    if properties is not None:
+        query["properties"] = level
     if level is not None:
         query["level"] = level
     if describe is not None:
         query["describe"] = describe
+    if explicit_perms is not None:
+        query['explicitPermission'] = explicit_perms
     if public is not None:
         query['public'] = public
 
-    resp = dxpy.api.systemFindProjects(query, **kwargs)
+    while True:
+        resp = dxpy.api.systemFindProjects(query, **kwargs)
 
-    if 'public' in resp:
-        found_projects = {}
-        for i in resp["results"]:
-            found_projects[i['id']] = True
-            yield i
-        for i in resp["public"]:
-            if i['id'] not in found_projects:
-                yield i
-    else:
         for i in resp["results"]:
             yield i
+
+        # set up next query
+        if resp["next"] is not None:
+            query["starting"] = resp["next"]
+        else:
+            raise StopIteration()
 
 def find_apps(name=None, category=None, all_versions=None, published=None,
               billed_to=None, created_by=None, developer=None,

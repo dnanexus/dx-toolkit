@@ -15,17 +15,17 @@ def format_tree(tree, root=None):
         print format_tree(collections.OrderedDict({'foo': 0, 'bar': {'xyz': 0}}))
 
     '''
-    formatted_tree = [BOLD() + BLUE() + root + ENDC()] if root is not None else []
-    def _format(tree, prefix=u'   '):
+    formatted_tree = [root] if root is not None else []
+    def _format(tree, prefix=u'    '):
         nodes = tree.keys()
         for i in range(len(nodes)):
             node = nodes[i]
             if i == len(nodes)-1 and len(prefix) > 1:
-                my_prefix = prefix[:-3] + u'└─ '
-                my_multiline_prefix = prefix[:-3] + u'   '
+                my_prefix = prefix[:-4] + u'└── '
+                my_multiline_prefix = prefix[:-4] + u'    '
             else:
-                my_prefix = prefix[:-3] + u'├─ '
-                my_multiline_prefix = prefix[:-3] + u'│  '
+                my_prefix = prefix[:-4] + u'├── '
+                my_multiline_prefix = prefix[:-4] + u'│   '
             n = 0
             for line in node.splitlines():
                 if n == 0:
@@ -36,9 +36,9 @@ def format_tree(tree, root=None):
 
             if isinstance(tree[node], collections.Mapping):
                 subprefix = prefix
-                if i < len(nodes)-1 and len(prefix) > 1 and prefix[-3:] == u'   ':
-                    subprefix = prefix[:-3] + u'│  '
-                _format(tree[node], subprefix + u'   ')
+                if i < len(nodes)-1 and len(prefix) > 1 and prefix[-4:] == u'    ':
+                    subprefix = prefix[:-4] + u'│   '
+                _format(tree[node], subprefix + u'    ')
     _format(tree)
     return '\n'.join(formatted_tree)
 
