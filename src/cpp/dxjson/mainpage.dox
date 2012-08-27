@@ -1,0 +1,10 @@
+/**
+\mainpage dxjson: DNAnexus C++ JSON library
+\html
+<p>
+The dxjson C++ library provides an easy interface to represent and handle JSON objects in C++. </p>
+<p>
+Please take a look at dx::JSON class documentation.
+</p>
+\endhtmlonly
+*/

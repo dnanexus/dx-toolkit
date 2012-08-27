@@ -1,0 +1,39 @@
+/**
+\mainpage dxcpp: DNAnexus C++ binding
+\html
+<p>
+The dxcpp C++ library provides functionality to interact with DNAnexus platform via its API. Before you start digging in, you may want to take a look at the <a class="reference external" href="http://wiki.dev.dnanexus.com/Introduction-to-the-DNAnexus-Platform">Introduction to the
+DNAnexus Platform</a>. The following references may also be useful to you as you develop your own scripts and apps. </p>
+<dl>
+  <dt><a class="reference external" href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Introduction">API Specification</a></dt>
+  <dd>complete details on the API, the lifecycle of different data
+  objects, project permissions, etc.</dd>
+  <dt><a class="reference external" href="http://wiki.dev.dnanexus.com/Execution-Environment-Reference">Execution Environment Reference</a></dt>
+  <dd>how applets and apps are run on the cloud</dd>
+  <dt><a class="reference external" href="http://wiki.dev.dnanexus.com/Developer-Portal">Developer Portal</a></dt>
+  <dd>links to all other docs, e.g. useful command-line tools</dd>
+</dl>
+
+<h4>dxcpp provide following handler classes to work with different DNAnexus objects:</h4>
+<ul>
+  <li>DXApp</li>
+  <li>DXApplet</li>
+  <li>DXContainer</li>
+  <li>DXFile</li>
+  <li>DXGTable</li>
+  <li>DXJob</li>
+  <li>DXProject</li>
+  <li>DXRecord</li>
+  <li>DXSystem</li>
+</ul>
+<h4>Following classes are used for throwing exceptions (all derive eventually from std::exception):</h4>
+<ul>
+  <li>DXAPIError</li>
+  <li>DXError</li>
+  <li>DXFileError</li>
+  <li>DXGTableError</li>
+  <li>DXNotImplementedError</li>
+</ul>
+<h1>Start by looking at some example C++ applications here (TODO: Add a link to relevant wiki page here)</h1>
+\endhtmlonly
+*/
