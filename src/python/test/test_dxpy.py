@@ -237,16 +237,17 @@ class TestDXGTable(unittest.TestCase):
     TODO: Test iterators, gri, and other queries
     """
     def setUp(self):
-        self.dxgtable = dxpy.DXGTable()
+        self.dxgtable = None
 
     def tearDown(self):
-        try:
-            state = self.dxgtable._get_state()
-            if state == 'closing':
-                self.dxgtable._wait_on_close()
-            self.dxgtable.remove()
-        except:
-            pass
+        if self.dxgtable:
+            try:
+                state = self.dxgtable._get_state()
+                if state == 'closing':
+                    self.dxgtable._wait_on_close()
+                self.dxgtable.remove()
+            except:
+                pass
 
     def test_col_desc(self):
         columns = [dxpy.DXGTable.make_column_desc("a", "string"),
