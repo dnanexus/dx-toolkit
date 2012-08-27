@@ -1,4 +1,7 @@
 /build/wrapper_table.json
+/build/doc_env/
+/doc/cpp/
+/doc/python/
 /lib/
 *~
 *.log
