@@ -46,7 +46,7 @@ def mapper(words, output_gtable_id, row_offset, length):
 
     Maps each row [word] to a row in the output table [word, word_reversed].
     """
-    with dxpy.open_dxgtable(words, keep_open=True) as input_gtable, dxpy.open_dxgtable(output_gtable_id, keep_open=True) as output_gtable:
+    with dxpy.open_dxgtable(words, mode='r') as input_gtable, dxpy.open_dxgtable(output_gtable_id, mode='a') as output_gtable:
         # row_offset + length may exceed the length of the input table, but
         # that's not a problem (iterate_rows will truncate its result at the
         # end).

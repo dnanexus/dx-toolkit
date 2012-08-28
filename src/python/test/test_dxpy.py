@@ -361,13 +361,13 @@ class TestDXGTable(unittest.TestCase):
         # Writing a new_dxgtable with parts
         with dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
-             dxpy.DXGTable.make_column_desc("b", "int32")]) as self.dxgtable:
+             dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as self.dxgtable:
             for i in range(64):
                 self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
 
         # Writing a new_dxgtable without parts
         with dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                                dxpy.DXGTable.make_column_desc("b", "int32")]) as table2:
+                                dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as table2:
             table2_id = table2.get_id()
             for i in range(64):
                 table2.add_rows(data=[["row"+str(i), i]])
@@ -378,10 +378,10 @@ class TestDXGTable(unittest.TestCase):
         # Writing an open_dxgtable
         table3_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
                                        dxpy.DXGTable.make_column_desc("b", "int32")]).get_id()
-        with dxpy.open_dxgtable(table3_id, keep_open=True) as table3:
+        with dxpy.open_dxgtable(table3_id, mode='a') as table3:
             for i in range(64):
                 table3.add_rows(data=[["row"+str(i), i]])
-        with dxpy.open_dxgtable(table3_id, keep_open=False) as table3:
+        with dxpy.open_dxgtable(table3_id, mode='w') as table3:
             for i in range(64):
                 table3.add_rows(data=[["row"+str(i), i]])
         table3 = dxpy.open_dxgtable(table3_id)
@@ -408,12 +408,12 @@ class TestDXGTable(unittest.TestCase):
         # Use new_dxgtable
         with self.assertRaises(DXAPIError):
             with dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                                    dxpy.DXGTable.make_column_desc("b", "int32")]) as table1:
+                                    dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as table1:
                 table1.add_row(["", 68719476736]) # Not in int32 range
 
         # Use open_dxgtable and close table
         table2_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                                       dxpy.DXGTable.make_column_desc("b", "int32")]).get_id()
+                                       dxpy.DXGTable.make_column_desc("b", "int32")], mode='w').get_id()
         with self.assertRaises(DXAPIError):
             with dxpy.open_dxgtable(table2_id) as table2:
                 table2.add_row(["", 68719476736]) # Not in int32 range
@@ -424,7 +424,7 @@ class TestDXGTable(unittest.TestCase):
         table3_id = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
                                        dxpy.DXGTable.make_column_desc("b", "int32")])
         with self.assertRaises(DXAPIError):
-            with dxpy.open_dxgtable(table3_id, keep_open=True) as table3:
+            with dxpy.open_dxgtable(table3_id, mode='a') as table3:
                 table3.add_row(["", 68719476736]) # Not in int32 range
 
 
