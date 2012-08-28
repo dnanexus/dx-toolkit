@@ -77,24 +77,24 @@ def process_dataobject_args(args):
         except:
             raise DXParserError('Error: details could not be parsed as JSON')
 
-env_overrides_parser = argparse.ArgumentParser(add_help=False)
-env_overrides_parser.add_argument('--apiserver-host', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--apiserver-port', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--apiserver-protocol', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--project-context-id', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--workspace-id', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--security-context', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--token', help=argparse.SUPPRESS)
-env_overrides_parser.add_argument('--env-help', help='Display help message for overriding environment variables', action='store_true')
+env_args = argparse.ArgumentParser(add_help=False)
+env_args.add_argument('--apiserver-host', help=argparse.SUPPRESS)
+env_args.add_argument('--apiserver-port', help=argparse.SUPPRESS)
+env_args.add_argument('--apiserver-protocol', help=argparse.SUPPRESS)
+env_args.add_argument('--project-context-id', help=argparse.SUPPRESS)
+env_args.add_argument('--workspace-id', help=argparse.SUPPRESS)
+env_args.add_argument('--security-context', help=argparse.SUPPRESS)
+env_args.add_argument('--auth-token', help=argparse.SUPPRESS)
+env_args.add_argument('--env-help', help='Display help message for overriding environment variables', action='store_true')
 
-_env_overrides_parser = argparse.ArgumentParser(add_help=False, prog='dx command')
-_env_overrides_parser.add_argument('--apiserver-host', help='API server host')
-_env_overrides_parser.add_argument('--apiserver-port', help='API server port')
-_env_overrides_parser.add_argument('--apiserver-protocol', help='API server protocol (http or https)')
-_env_overrides_parser.add_argument('--project-context-id', help='Default project or project context ID')
-_env_overrides_parser.add_argument('--workspace-id', help='Workspace ID (for jobs only)')
-_env_overrides_parser.add_argument('--security-context', help='JSON string of security context')
-_env_overrides_parser.add_argument('--token', help='Authentication token')
+_env_args = argparse.ArgumentParser(add_help=False, prog='dx command ...')
+_env_args.add_argument('--apiserver-host', help='API server host')
+_env_args.add_argument('--apiserver-port', help='API server port')
+_env_args.add_argument('--apiserver-protocol', help='API server protocol (http or https)')
+_env_args.add_argument('--project-context-id', help='Default project or project context ID')
+_env_args.add_argument('--workspace-id', help='Workspace ID (for jobs only)')
+_env_args.add_argument('--security-context', help='JSON string of security context')
+_env_args.add_argument('--auth-token', help='Authentication token')
 
 def set_env_from_args(args):
     ''' Sets the environment variables for this process from arguments (argparse.Namespace)
@@ -103,7 +103,7 @@ def set_env_from_args(args):
     args = vars(args)
 
     if args.get('env_help'):
-        _env_overrides_parser.print_help()
+        _env_args.print_help()
         raise Exception("Printed help")
 
     if args.get('apiserver_host') is not None:
@@ -120,8 +120,8 @@ def set_env_from_args(args):
         os.environ['DX_CLI_WD'] = args['cli_wd']
     if args.get('security_context') is not None:
         os.environ['DX_SECURITY_CONTEXT'] = args['security_context']
-    if args.get('token') is not None:
-        os.environ['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": args['token'],
+    if args.get('auth_token') is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": args['auth_token'],
                                                         "auth_token_type": "Bearer"})
     from dxpy import _initialize
     _initialize()
