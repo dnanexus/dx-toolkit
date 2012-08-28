@@ -75,8 +75,8 @@ class ResolutionError(Exception):
     def __str__(self):
         return self.msg
 
-data_obj_pattern = re.compile('^(record|table|gtable|program|applet|file)-[0-9A-Za-z]{24}$')
-hash_pattern = re.compile('^(record|table|gtable|app|program|applet|job|project|workspace|container|file)-[0-9A-Za-z]{24}$')
+data_obj_pattern = re.compile('^(record|table|gtable|applet|file)-[0-9A-Za-z]{24}$')
+hash_pattern = re.compile('^(record|table|gtable|app|applet|job|project|container|file)-[0-9A-Za-z]{24}$')
 nohash_pattern = re.compile('^(user|org|app|team)-')
 
 def is_hashid(string):
@@ -86,7 +86,7 @@ def is_data_obj_id(string):
     return data_obj_pattern.match(string) is not None
 
 def is_container_id(string):
-    return is_hashid(string) and (string.startswith('project-') or string.startswith('workspace-') or string.startswith('container-'))
+    return is_hashid(string) and (string.startswith('project-') or string.startswith('container-'))
 
 def is_job_id(string):
     return is_hashid(string) and string.startswith('job-')

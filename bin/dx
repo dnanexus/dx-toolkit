@@ -1908,6 +1908,24 @@ def close(args):
         for handler in handlers:
             handler._wait_on_close()
 
+def wait(args):
+    if is_job_id(args.path):
+        dxjob = dxpy.DXJob(args.path)
+        print "Waiting for " + args.path + " to finish running..."
+        try_call(dxjob.wait_on_done)
+        print "DONE"
+    else:
+        # Attempt to resolve name
+        project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                      args.path,
+                                                      expected='entity')
+        if entity_result is None:
+            parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+        handler = dxpy.get_handler(entity_result['id'])
+        print "Waiting for " + args.path + " to close..."
+        try_call(handler._wait_on_close)
+        print "DONE"
+
 def build(args):
     from dxpy.scripts import dx_build_app
     sys.argv = ['dx build'] + sys.argv[2:]
@@ -2959,6 +2977,15 @@ parser_map['close'] = parser_close
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+
+parser_wait = subparsers.add_parser('wait', help='Wait for a data object to close or job to finish', description='Polls the state of a data object or job until it is in the desired state.  By default, waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  It will exit with a non-zero code if a job reaches a terminal state that is not "done".', prog='dx wait')
+parser_wait.add_argument('path', help='Path to data object or job ID to wait for')
+parser_wait.set_defaults(func=wait)
+parser_map['wait'] = parser_wait
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_get = subparsers.add_parser('get', help='Download records, applets, and apps',
                                    description='Download the contents of some types of data (records, applets, and apps).  For files, use "dx download".  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.', prog='dx get')

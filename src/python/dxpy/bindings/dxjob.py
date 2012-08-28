@@ -135,9 +135,11 @@ class DXJob(DXObject):
                 break
             if state == "failed":
                 raise DXJobFailureError("Job has failed.")
+            if state == "terminated":
+                raise DXJobFailureError("Job was terminated.")
 
             if elapsed >= timeout or elapsed < 0:
-                raise DXJobFailureError("Reached timeout while waiting for the remote object to close")
+                raise DXJobFailureError("Reached timeout while waiting for the job to finish")
 
             time.sleep(interval)
             elapsed += interval
