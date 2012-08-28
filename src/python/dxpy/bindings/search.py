@@ -306,20 +306,20 @@ def find_one_data_object(classname=None, state=None, visibility=None,
         else:
             return resp['results'][0]
 
-def find_jobs(launched_by=None, applet=None, project=None, state=None,
+def find_jobs(launched_by=None, executable=None, project=None, state=None,
               origin_job=None, parent_job=None,
               created_after=None, created_before=None, describe=False,
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
     :type launched_by: string
-    :param applet: ID of the applet which spawned this job
-    :type applet: string
+    :param executable: ID of the applet or app which spawned this job
+    :type executable: string or a DXApp/DXApplet instance
     :param project: ID of the project context for the job
     :type project: string
     :param state: State of the job (e.g. "failed", "done")
     :type state: string
-    :param origin_job: ID of the original job initiated by a user running an applet which eventually spawned this job
+    :param origin_job: ID of the original job initiated by a user running an applet/app which eventually spawned this job
     :type origin_job: string
     :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
     :type parent_job: string
@@ -352,11 +352,13 @@ def find_jobs(launched_by=None, applet=None, project=None, state=None,
     query = {}
     if launched_by is not None:
         query["launchedBy"] = launched_by
-    if applet is not None:
-        if isinstance(applet, DXApplet):
-            query["applet"] = applet.get_id()
+    if executable is not None:
+        if isinstance(executable, DXApplet):
+            query["executable"] = executable.get_id()
+        elif isinstance(executable, DXApp):
+            query['executable'] = executable.get_id()
         else:
-            query["applet"] = applet
+            query["executable"] = executable
     if project is not None:
         query["project"] = project
     if state is not None:

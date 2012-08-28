@@ -337,7 +337,7 @@ def print_job_desc(desc):
         print_nofill_field("Output", get_io_field(desc["output"]))
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
-    print_field("Launched by", desc["launchedBy"])
+    print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if 'waitingOnChildren' in desc:

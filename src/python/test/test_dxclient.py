@@ -17,6 +17,10 @@ class TestDXClient(unittest.TestCase):
             run(u"yes|dx rmproject {p}".format(p=project))        
         except:
             pass
+        try:
+            os.remove("uploadedfile")
+        except:
+            pass
 
     def test_dx_actions(self):
         with self.assertRaises(subprocess.CalledProcessError):

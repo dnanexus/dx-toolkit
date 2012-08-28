@@ -1694,7 +1694,7 @@ def export(args):
 def get_find_jobs_string(jobdesc, has_children):
     is_origin_job = jobdesc['parentJob'] is None
     string = ("* " if is_origin_job and get_delimiter() is None else "")
-    string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
+    string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "<no name>") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
     string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
     string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
     string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
@@ -1708,6 +1708,8 @@ def find_jobs(args):
                                        args.project, 'project')
     if args.allusers:
         args.user = None
+    if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
+        args.user = 'user-' + args.user
     if args.allprojects:
         project = None
     print_launched_by = args.allusers or args.verbose
@@ -1720,7 +1722,7 @@ def find_jobs(args):
         output_ids = []                         # for args.brief
         describe = {"io": args.verbose and args.json}
         for job_result in dxpy.find_jobs(launched_by=args.user,
-                                         applet=args.applet,
+                                         executable=args.executable,
                                          project=project,
                                          state=args.state,
                                          origin_job=args.origin,
@@ -1735,10 +1737,13 @@ def find_jobs(args):
                 if args.num_results is not None and len(origin_jobs) >= args.num_results:
                     break
                 origin_jobs.append(job_result['id'])
-            elif parent in job_children:
-                job_children[parent].append(job_result['id'])
             else:
-                job_children[parent] = [job_result['id']]
+                if args.no_subjobs:
+                    continue
+                if parent in job_children:
+                    job_children[parent].append(job_result['id'])
+                else:
+                    job_children[parent] = [job_result['id']]
 
         def process_children(parent_job, parent_hash=None):
             has_children = parent_job in job_children
@@ -1955,7 +1960,8 @@ def parse_obj(string, klass):
         raise TypeError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
-    return {'$dnanexus_link': entity_result['id']}
+    return {'$dnanexus_link': {"project": project,
+                               "id": entity_result['id']}}
 
 dx_data_classes = ['record', 'gtable', 'file', 'applet', 'table']
 
@@ -2146,9 +2152,11 @@ def add_input_to_json(inputs, input_json, input_specs):
                 if entity_result is None:
                     parser.exit(1, 'Could not resolve ' + i[1] + ' to a value or object ID')
                 if i[0] not in input_json:
-                    input_json[i[0]] = [{"$dnanexus_link": entity_result['id']}]
+                    input_json[i[0]] = [{"$dnanexus_link": {"project": project,
+                                                            "id": entity_result['id']}}]
                 else:
-                    input_json[i[0]].append({"$dnanexus_link": entity_result['id']})
+                    input_json[i[0]].append({"$dnanexus_link": {"project": project,
+                                                                "id": entity_result['id']}})
         for key in input_json:
             if len(input_json[key]) == 1:
                 input_json[key] = input_json[key][0]
@@ -2993,8 +3001,9 @@ parser_find_jobs.add_argument('--user', help='User ID who launched the job, defa
 parser_find_jobs.add_argument('--allusers', help='Do not restrict search by who launched the job', action='store_true')
 parser_find_jobs.add_argument('--project', help='Project context (output project), default is current project if set')
 parser_find_jobs.add_argument('--allprojects', help='Project context (output project)', action='store_true')
-parser_find_jobs.add_argument('--applet', help='Applet ID that job is running')
+parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help='Applet or App ID that job is running')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
+parser_find_jobs.add_argument('--no-subjobs', help='Do not include subjobs', action='store_true')
 parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
 parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
 parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
