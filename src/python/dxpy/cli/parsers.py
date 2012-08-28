@@ -17,13 +17,13 @@ class DXParserError(Exception):
 
 no_color_arg = argparse.ArgumentParser(add_help=False)
 no_color_arg.add_argument('--color',
-                          help='Set when color is used (auto=color is used when stdout is a TTY)',
+                          help=fill('Set when color is used (auto=color is used when stdout is a TTY)', width_adjustment=-24),
                           choices=['off', 'on', 'auto'], default='auto')
 
 delim_arg = argparse.ArgumentParser(add_help=False)
 delim_arg.add_argument('--delimiter', '--delim',
                        dest='delimiter',
-                       help='Always use exactly one of DELIMITER to separate fields to be printed.  If no delimiter is provided with this flag, TAB will be used.',
+                       help=fill('Always use exactly one of DELIMITER to separate fields to be printed.  If no delimiter is provided with this flag, TAB will be used.', width_adjustment=-24),
                        nargs='?',
                        const="\t")
 

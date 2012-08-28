@@ -2451,11 +2451,12 @@ def exit_shell(args):
 
 # TODO: Add a subcommand for clearing the cache
 
-parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0',
-                                 epilog='For a breakdown of dx commands by category, run \"dx help\"')
+parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0' + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, upload data, navigate and organize your data, and even launch analyses.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dev.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
+                                 formatter_class=argparse.RawTextHelpFormatter,
+                                 usage='%(prog)s [-h] [--version] command ...')
 parser.add_argument('--version', action='version', version='dx 0.0.1')
 
-subparsers = parser.add_subparsers()
+subparsers = parser.add_subparsers(help=argparse.SUPPRESS)
 subparsers.metavar = 'command'
 
 parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login')
@@ -2664,13 +2665,14 @@ parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, su
 # data
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
-                                        description='Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.',
+                                        description=fill('Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.') + '\n\n' + fill('NOTE: the project found in the path is used as a HINT when you are using an object ID; you may still get a result if you have access to a copy of the object in some other project, but if it exists in the specified project, its description will be returned.'),
+                                        formatter_class=argparse.RawTextHelpFormatter,
                                         parents=[json_arg, no_color_arg, delim_arg],
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
 parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
-parser_describe.add_argument('--multi', help='If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', action='store_true')
-parser_describe.add_argument('path', help='Object ID or path to an object (possibly in another project) to describe.')
+parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24), action='store_true')
+parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 parser_describe.set_defaults(func=describe)
 parser_map['describe'] = parser_describe
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
