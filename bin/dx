@@ -604,10 +604,11 @@ def ls(args):
     else:
         # We have results to describe
         for result in entity_results:
-            if args.brief:
-                print result['id']
-            else:
-                print_ls_l_desc(result['describe'], include_project=False)
+            if result['describe']['project'] == project:
+                if args.brief:
+                    print result['id']
+                else:
+                    print_ls_l_desc(result['describe'], include_project=False)
 
 def mkdir(args):
     had_error = False
