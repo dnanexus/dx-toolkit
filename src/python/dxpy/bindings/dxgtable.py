@@ -78,17 +78,30 @@ class DXGTable(DXDataObject):
 
     def __del__(self):
         '''
-        When this is triggered by interpreter shutdown, the thread pool is not available,
-        and we will wait for the request queue forever. In this case, we must revert to synchronous, in-thread flushing.
-        I don't know how to detect this condition, so I'll use that for all destructor events.
+        Exceptions raised here in the destructor are IGNORED by Python! We will try and flush data
+        here just as a safety measure, but you should not rely on this to flush your data! We will
+        be really grumpy and complain if we detect unflushed data here.
+
         Use a context manager or flush the object explicitly to avoid this.
 
-        Also, neither this nor context managers are compatible with kwargs pass-through (so e.g. no custom auth).
+        In addition, when this is triggered by interpreter shutdown, the thread pool is not
+        available, and we will wait for the request queue forever. In this case, we must revert to
+        synchronous, in-thread flushing. We don't know how to detect this condition, so we'll use
+        that for all destructor events.
+
+        Neither this nor context managers are compatible with kwargs pass-through (so e.g. no
+        custom auth).
         '''
+        if len(self._row_buf) > 0 or (self._string_row_buf != None and self._string_row_buf.tell() > len('{"data": [')) or len(self._http_threadpool_futures) > 0:
+            print >> sys.stderr, "=== WARNING! ==="
+            print >> sys.stderr, "There is still unflushed data in the destructor of a DXGTable object!"
+            print >> sys.stderr, "We will attempt to flush it now, but if an error were to occur, we could not report it back to you."
+            print >> sys.stderr, "Your program could fail to flush the data but appear to succeed."
+            print >> sys.stderr, "Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxgtable(ID, mode='w') as gtable:)"
         try:
             self.flush(multithread=False)
         except Exception as e:
-            print "=== Exception occurred while flushing accumulated row data for %r" % (self._dxid,)
+            print >> sys.stderr, "=== Exception occurred while flushing accumulated row data for %r" % (self._dxid,)
             traceback.print_exception(*sys.exc_info())
             raise
 

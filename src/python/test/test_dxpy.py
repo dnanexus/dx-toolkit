@@ -391,6 +391,13 @@ class TestDXGTable(unittest.TestCase):
         self.assertEqual(table3.describe()["length"], 128)
         table3.remove()
 
+    def test_table_context_manager_destructor(self):
+        dxgtable = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                      dxpy.DXGTable.make_column_desc("b", "int32")])
+        for i in range(64):
+            dxgtable.add_rows(data=[["row"+str(i), i]])
+        # No assertion here, but this should print an error
+
     def test_table_context_manager_error_handling(self):
         # In each case, the flush that happens at the close of the context handler should wait for
         # the asynchronous requests and then raise the resulting error.
