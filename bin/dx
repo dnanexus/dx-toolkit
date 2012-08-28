@@ -8,7 +8,7 @@ import hashlib
 
 import requests
 from requests.auth import HTTPBasicAuth
-from dxpy.utils.env import parse_user_env_file, set_env_from_args, env_overrides_parser
+from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.printing import *
 from dxpy.utils.pretty_print import format_tree, format_table
 
@@ -1495,6 +1495,10 @@ def get(args):
 
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+
+    if entity_result['describe']['class'] == 'file':
+        download(args)
+        return
 
     if entity_result['describe']['class'] not in ['record', 'applet']:
         parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class record or applet was expected\n')
@@ -2988,7 +2992,7 @@ parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].de
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_get = subparsers.add_parser('get', help='Download records, applets, and apps',
-                                   description='Download the contents of some types of data (records, applets, and apps).  For files, use "dx download".  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.', prog='dx get')
+                                   description='Download the contents of some types of data (records, applets, and files).  For gtables, see "dx export".  Downloading an applet will only download the source.  (Any bundled dependencies must be downloaded separately.)  Use "-o -" to direct the output to stdout.', prog='dx get')
 parser_get.add_argument('path', help='Data object ID or name to access')
 parser_get.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
@@ -3130,7 +3134,11 @@ if len(args_list) > 0:
     args = parser.parse_args(args_list)
     set_cli_colors(args)
     set_delim(args)
-    set_env_from_args(args)
+    try:
+        set_env_from_args(args)
+    except BaseException as details:
+        if str(details) == "Printed help":
+            parser.exit(0)
     args.func(args)
 else:
     parser.print_help()

@@ -76,3 +76,52 @@ def process_dataobject_args(args):
             args.details = json.loads(args.details)
         except:
             raise DXParserError('Error: details could not be parsed as JSON')
+
+env_overrides_parser = argparse.ArgumentParser(add_help=False)
+env_overrides_parser.add_argument('--apiserver-host', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--apiserver-port', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--apiserver-protocol', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--project-context-id', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--workspace-id', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--security-context', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--token', help=argparse.SUPPRESS)
+env_overrides_parser.add_argument('--env-help', help='Display help message for overriding environment variables', action='store_true')
+
+_env_overrides_parser = argparse.ArgumentParser(add_help=False, prog='dx command')
+_env_overrides_parser.add_argument('--apiserver-host', help='API server host')
+_env_overrides_parser.add_argument('--apiserver-port', help='API server port')
+_env_overrides_parser.add_argument('--apiserver-protocol', help='API server protocol (http or https)')
+_env_overrides_parser.add_argument('--project-context-id', help='Default project or project context ID')
+_env_overrides_parser.add_argument('--workspace-id', help='Workspace ID (for jobs only)')
+_env_overrides_parser.add_argument('--security-context', help='JSON string of security context')
+_env_overrides_parser.add_argument('--token', help='Authentication token')
+
+def set_env_from_args(args):
+    ''' Sets the environment variables for this process from arguments (argparse.Namespace)
+    and calls dxpy._initialize() to reset any values that it has already set.
+    '''
+    args = vars(args)
+
+    if args.get('env_help'):
+        _env_overrides_parser.print_help()
+        raise Exception("Printed help")
+
+    if args.get('apiserver_host') is not None:
+        os.environ['DX_APISERVER_HOST'] = args['apiserver_host']
+    if args.get('apiserver_port') is not None:
+        os.environ['DX_APISERVER_PORT'] = args['apiserver_port']
+    if args.get('apiserver_protocol') is not None:
+        os.environ['DX_APISERVER_PROTOCOL'] = args['apiserver_protocol']
+    if args.get('project_context_id') is not None:
+        os.environ['DX_PROJECT_CONTEXT_ID'] = args['project_context_id']
+    if args.get('workspace_id') is not None:
+        os.environ['DX_WORKSPACE_ID'] = args['workspace_id']
+    if args.get('cli_wd') is not None:
+        os.environ['DX_CLI_WD'] = args['cli_wd']
+    if args.get('security_context') is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = args['security_context']
+    if args.get('token') is not None:
+        os.environ['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": args['token'],
+                                                        "auth_token_type": "Bearer"})
+    from dxpy import _initialize
+    _initialize()
