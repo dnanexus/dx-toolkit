@@ -40,9 +40,23 @@ class DXGTable(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
-    def __init__(self, dxid=None, project=None, keep_open=False,
+    def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
                  request_size=DEFAULT_TABLE_REQUEST_SIZE):
-        self._keep_open = keep_open
+
+        if keep_open is not None:
+            if keep_open:
+                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the table open, please set mode to be one of 'r' or 'a' instead."
+            else:
+                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To close the table on exit, please supply mode='w' instead."
+        if mode is None:
+            # Fall back on keep_open
+            if keep_open is None:
+                keep_open = False
+            self._close_on_exit = not keep_open
+        else:
+            if mode not in ['r', 'w', 'a']:
+                raise ValueError("mode must be one of 'r', 'w', or 'a'")
+            self._close_on_exit = (mode == 'w')
 
         self._request_size = request_size
         self._row_buf = []
@@ -59,7 +73,7 @@ class DXGTable(DXDataObject):
 
     def __exit__(self, type, value, traceback):
         self.flush()
-        if not self._keep_open:
+        if self._close_on_exit:
             self.close()
 
     def __del__(self):
@@ -274,7 +288,7 @@ class DXGTable(DXDataObject):
     def __iter__(self):
         return self.iterate_rows()
 
-    def extend(self, columns, indices=None, keep_open=False, **kwargs):
+    def extend(self, columns, indices=None, keep_open=None, mode=None, **kwargs):
         '''
         :param columns: List of new column names
         :type columns: list of strings
@@ -298,8 +312,7 @@ class DXGTable(DXDataObject):
         if indices is not None:
             dx_hash["indices"] = indices
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
-        return DXGTable(resp["id"], dx_hash["project"],
-                        keep_open)
+        return DXGTable(resp["id"], dx_hash["project"], keep_open=keep_open, mode=mode)
 
     def add_rows(self, data, part=None, validate=True, **kwargs):
         '''
@@ -316,7 +329,7 @@ class DXGTable(DXDataObject):
         Example::
 
             with new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                               dxpy.DXGTable.make_column_desc("b", "int32")]) as dxgtable:
+                               dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as dxgtable:
                 dxgtable.add_rows([["foo", 23], ["bar", 7]])
 
         '''
@@ -349,7 +362,7 @@ class DXGTable(DXDataObject):
         Example::
 
             with new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                               dxpy.DXGTable.make_column_desc("b", "int32")]) as dxgtable:
+                               dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as dxgtable:
                 for i in range(1000):
                     dxgtable.add_row(["foo", i])
         '''

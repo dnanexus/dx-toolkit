@@ -10,7 +10,7 @@ a remote table handler.
 
 from dxpy.bindings import *
 
-def open_dxgtable(dxid, project=None, keep_open=False):
+def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
     '''
     :param dxid: table ID
     :type dxid: string
@@ -33,9 +33,9 @@ def open_dxgtable(dxid, project=None, keep_open=False):
 
     '''
 
-    return DXGTable(dxid, project=project, keep_open=keep_open)
+    return DXGTable(dxid, project=project, keep_open=keep_open, mode=mode)
 
-def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
+def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mode=None,
                  **kwargs):
     '''
     :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required if init_from is not provided)
@@ -58,7 +58,7 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
 
         col_descs = [dxpy.DXGTable.make_column_desc("a", "string"),
                      dxpy.DXGTable.make_column_desc("b", "int32")]
-        with new_dxgtable(columns=col_descs) as dxgtable:
+        with new_dxgtable(columns=col_descs, mode='w') as dxgtable:
             dxgtable.add_rows([["foo", 23], ["bar", 7]])
 
         gri_cols = [dxpy.DXGTable.make_column_desc("chr", "string"),
@@ -73,12 +73,12 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=False,
         dxgtable.new(columns, **kwargs)
 
     '''
-    
-    dxgtable = DXGTable(keep_open=keep_open)
+
+    dxgtable = DXGTable(keep_open=keep_open, mode=mode)
     dxgtable.new(columns=columns, indices=indices, init_from=init_from, **kwargs)
     return dxgtable
 
-def extend_dxgtable(dxid, columns, indices=None, keep_open=False, **kwargs):
+def extend_dxgtable(dxid, columns, indices=None, keep_open=None, mode=None, **kwargs):
     '''
     :param dxid: Object ID of table to extend
     :type dxid: string
@@ -108,5 +108,4 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=False, **kwargs):
 
     '''
 
-    return DXGTable(dxid).extend(columns, indices,
-                                 keep_open, **kwargs)
+    return DXGTable(dxid).extend(columns, indices, keep_open=keep_open, mode=mode, **kwargs)
