@@ -620,20 +620,20 @@ TEST(JSONTest, Iterators) {
   ASSERT_EQ(j1.object_begin()->first, "0");
   for (JSON::object_iterator it = j1.object_begin(); it != j1.object_end(); ++i, ++it)
     ASSERT_EQ(it->second, i);
-
+/*
   i = 4;
   for (JSON::object_reverse_iterator it = j1.object_rbegin(); it != j1.object_rend(); --i, ++it)
     ASSERT_EQ(it->second, i);
-
+*/
   const JSON j1_const = j1;
   i = 0;
   for (JSON::const_object_iterator it = j1_const.object_begin(); it != j1_const.object_end(); ++i, ++it)
     ASSERT_EQ(it->second, i);
-
+/*
   i = 4;
   for (JSON::const_object_reverse_iterator it = j1_const.object_rbegin(); it != j1_const.object_rend(); --i, ++it)
     ASSERT_EQ(it->second, i);
-
+*/
   JSON j2(JSON_ARRAY);
   j2.resize_array(5);
   j2[0] = 0;

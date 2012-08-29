@@ -891,50 +891,50 @@ JSON::array_iterator JSON::array_end() {
     throw JSONException("Cannot get JSON::array_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.end();
 }
-
+/*
 // Reverse iterators
 JSON::const_object_reverse_iterator JSON::object_rbegin() const {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rbegin();
 }
-
+*/
 JSON::const_array_reverse_iterator JSON::array_rbegin() const {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rbegin();
 }
-
+/*
 JSON::object_reverse_iterator JSON::object_rbegin() {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rbegin();
 }
-
+*/
 JSON::array_reverse_iterator JSON::array_rbegin() {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rbegin();
 }
-
+/*
 JSON::const_object_reverse_iterator JSON::object_rend() const {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rend();
 }
-
+*/
 JSON::const_array_reverse_iterator JSON::array_rend() const {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");
   return (static_cast<Array*>(this->val))->val.rend();
 }
-
+/*
 JSON::object_reverse_iterator JSON::object_rend() {
   if (this->type() != JSON_OBJECT)
     throw JSONException("Cannot get JSON::object_reverse_iterator for a non-JSON_OBJECT");
   return (static_cast<Object*>(this->val))->val.rend();
 }
-
+*/
 JSON::array_reverse_iterator JSON::array_rend() {
   if (this->type() != JSON_ARRAY)
     throw JSONException("Cannot get JSON::array_reverse_iterator for a non-JSON_ARRAY");

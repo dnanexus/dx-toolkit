@@ -139,10 +139,20 @@ FILE_PATTERNS          = *.c \
                          *.vhdl
 RECURSIVE              = NO
 EXCLUDE                = gtest_json.cpp \
-                         example_usage.cpp
+                         example_usage.cpp \
 EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       = 
-EXCLUDE_SYMBOLS        = 
+EXCLUDE_PATTERNS       = trial.cpp \
+                         dxjson_example.cpp \
+                         utf8*\
+EXCLUDE_SYMBOLS        = dx::Array \
+                         dx::Boolean \
+                         dx::Integer \
+                         dx::Null \
+                         dx::Object \
+                         dx::Real \
+                         dx::Object \
+                         dx::String \
+                         dx::Value \
 EXAMPLE_PATH           = 
 EXAMPLE_PATTERNS       = *
 EXAMPLE_RECURSIVE      = NO
@@ -156,7 +166,7 @@ FILTER_SOURCE_PATTERNS =
 # configuration options related to source browsing
 #---------------------------------------------------------------------------
 SOURCE_BROWSER         = YES
-INLINE_SOURCES         = YES
+INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
 REFERENCED_BY_RELATION = YES
 REFERENCES_RELATION    = NO

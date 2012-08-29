@@ -24,6 +24,12 @@
 // NOTE:
 // 1) UTF-8 validity is checked while reading JSON from a string;
 // 2) UTF-8
+
+/** @file */
+
+/** @namespace dx This is the namespace which contain the JSON and JSONException
+                  class
+  */
 namespace dx {
 
   /** JSONException class: Inherits from std::exception
@@ -38,7 +44,28 @@ namespace dx {
     }
     ~JSONException() throw() { }
   };
-
+  
+  /** \enum JSONValue Enum for storing type of a particular JSON object.
+    * See http://json.org/ for possible JSON values.
+    * - JSON_UNDEFINED: Default type of an unintialized JSON object
+    * - JSON_HASH: A key/value pair hash.
+    * - JSON_OBJECT: Synonym for JSON_HASH (has same numerical value)
+    * - JSON_ARRAY: A JSON array
+    * - JSON_INTEGER: An integral numeric value. (internally: int64_t)
+    * - JSON_REAL: A floating point numeric value. (internally: double)
+    * - JSON_STRING: A JSON string.
+    * - JSON_BOOLEAN: Either true/false JSON value.
+    * - JSON_NULL: The JSON value: "null"
+    *
+    * To know which type of value a JSON object holds, use the function
+    * JSON::type()
+    *
+    * @note 
+    * - JSON_OBJECT and JSON_HASH are synonyms, and we use them interchangebly
+    * throughout the documentation and elsewhere.
+    * - We treat Integer and Real values differently, which is not in strict
+    * accordance with JSON rfc (which just have a single "number" type).
+    */
   enum JSONValue {
     JSON_UNDEFINED = 0,
     JSON_OBJECT = 1,
@@ -78,7 +105,7 @@ namespace dx {
     */
   class JSON {
   public:
-
+    
     typedef std::map<std::string, JSON>::iterator object_iterator;
     typedef std::map<std::string, JSON>::const_iterator const_object_iterator;
     typedef std::vector<JSON>::iterator array_iterator;
@@ -94,12 +121,14 @@ namespace dx {
     Value *val;
 
     /** Returns the current "epsilon" paramerer value.
+      * This value determines the "slack" while checking equality
+      * of two JSON_REAL values.
       * @return The currrent value of "epsilon" parameter
       * @see json_epsilon
       */
     static double getEpsilon();
 
-    /** Creates a new JSON object from a stringified (serialized) represntation.
+    /** Creates a new JSON object from a serialized representation.
       * @param str The serialized json object.
       * @return
       */
@@ -109,7 +138,7 @@ namespace dx {
       return tmp;
     }
 
-    /** Default constructor for JSON. Sets val = NULL
+    /** Default constructor for JSON. Creates JSON of type JSON_UNDEFINED.
       */
     JSON():val(NULL) {}
 
@@ -118,42 +147,66 @@ namespace dx {
       */
     JSON(const JSON &rhs);
 
-    /** Construct a blank JSON object of a particular JSONValue type
+    /** Construct a blank JSON object of a particular JSONValue type, i.e.,
+      * (this->type() == rhs) after construction.
       */
     JSON(const JSONValue &rhs);
 
     /** This constructor copy the parameter x's value using operator=().
-      * Error will be thrown if no suitable operator=() implemenation is found for copying from
-      * a particular type.
+      * @throw JSONException If no suitable operator=() implementation found for copying
+      * from a particular type.
       * @param x The new JSON object will be constructed from this value.
       */
     template<typename T>
     JSON(const T& x);
 
-    /** Clears the content of JSON object. Sets the type = JSON_UNDEFINED. */
+    /** Clears the content of JSON object. 
+      * this->type() == JSON_UNDEFINED after the call*/
     void clear() { delete val; val=NULL; }
 
     /** Writes the serialized JSON object to the output stream
       * @param out Output stream object, to which the serialized object will be written to
-      * @exception JSONException in case of writing to stream.
+      * @throw JSONException
       * @see read()
       * @see toString()
       */
     void write(std::ostream &out) const;
 
     /** Reads and populates current JSON object from specified input stream
-      * containing the valid serialized represntation of JSON object.
-      * @note Previous content of calling JSON object will be cleared.
+      * containing a valid serialized represntation of JSON value.
+      * @note 
+      * - Previous contents will be cleared.
+      * - It's not necessary that the JSON value being read is serialization of
+      * an array or hash only, i.e., serialization of string, number, boolean, 
+      * and null can be read as well.
+      * - JSON value started by first character of stream is read into object
+      *   and once the value finishes, rest of the stream's content is 
+      *   not looked into. For example:
+      *  - If stream contains: '{"hello": 12}blah', the function will read a 
+      *   JSON_OBJECT({"hello": 12}) and return (without looking ahead at 'blah')
+      *  - If stream contains: '12Hello', then function will read a
+      *    JSON_INTEGER (12) and return (without looking ahead at 'Hello')
+      *  - If stream contains: 'null12', then function will read a 
+      *    JSON_NULL and return (without looking ahead at '12')
+      *  - If stream contains: 'truenull' then function will read a 
+      *    JSON_BOOLEAN(true) (without looking ahead at 'null').
+      *  - If stream contains: '"hello"World' then function will read
+      *    a JSON_STRING("hello") (without looking at 'World')
+      *  - If stream contains: 'truHtrue' then function will throw an
+      *    error, since characters 'truHtrue' do not represent any legal
+      *    JSON value starting from first location.
       * @param in Input stream object (for reading the serialized JSON)
-      * @exception JSONException if invalid JSON serialization or error reading from stream
+      * @throw JSONException If string being read is illegal JSON, or error
+      * occured while reading the stream.
       * @see write()
       * @see readFromString()
       */
     void read(std::istream &in);
 
-    /** Populates current JSON object from the given stringified json value
+    /** Populates current JSON object from the given stringified json value.
+      * See all the notes in read() documentation (applies here as well).
       * @param jstr String reprenting a valid JSON object
-      * @exception JSONException if jstr contains a malformed JSON object.
+      * @exception JSONException If parameter jstr contain illegaly formatted JSON
       * @see read()
       * @see toString()
       */
@@ -171,7 +224,7 @@ namespace dx {
     std::string toString(bool onlyTopLevel = false) const;
 
     /** Equality comparison operator. Returns true if two JSON objects are equal.
-      * A deep matching of JSON object is performed. (Order of key's do not matter while matching).
+      * A deep matching of JSON object is performed.
       * @note JSON_UNDEFINED != JSON_UNDEFINED
       * @param other The JSON object to which current object will be compared.
       * @return true if both objects are same, else false.
@@ -189,7 +242,7 @@ namespace dx {
     /** Access value stored inside a JSON array by numeric index
       * @param indx Index location to be accessed inside current JSON array.
       * @return A constant reference to JSON value stored at given location
-      * @exception JSONException if indx is out of bounds or this->type() != JSON_ARRAY
+      * @throw JSONException if indx is out of bounds or this->type() != JSON_ARRAY
       */
     const JSON& operator [](const size_t &indx) const;
 
@@ -197,7 +250,7 @@ namespace dx {
       * @param s A pre-existing Key inside current object
       * @note The parameter "s" will be treated as serialized JSON string
       * @return A constant reference to JSON value stored under given Key
-      * @exception JSONException if key does not exist or this->type() != JSON_OBJECT
+      * @throw JSONException if key does not exist or this->type() != JSON_HASH
       */
     const JSON& operator [](const std::string &s) const;
 
@@ -206,7 +259,7 @@ namespace dx {
       * or string (if this->type() == JSON_OBJECT).
       * @param j This JSON value will be used to index the current JSON object.
       * @return A constant reference to JSON value stored at given index.
-      * @exception JSONException if conditions specified in descriptions are not met, or if
+      * @throw JSONException if conditions specified in descriptions are not met, or if
       *            the referenced property/index does not exist.
       */
     const JSON& operator [](const JSON &j) const;
@@ -222,6 +275,8 @@ namespace dx {
     /** This function take care of all possible numeric types used for referencing JSON array.
       * @param x A numeric value (specialized under std::numeric_limits). It is typecasted to
       *          size_t before using it as array index.
+      * @throw JSONException If parameter x cannot be converted to a numeric type
+      * or this->type() != JSON_ARRAY.
       * @return A constant reference to JSON value stored under given index.
       */
     template<typename T>
@@ -338,7 +393,7 @@ namespace dx {
       * This generic version works only for numeric types (and has same effect as overloaded
       * conversion operator). A specialization for std::string exist too.
       * @return Value of JSON object in desired fundamental type
-      * @exception Throws error is a conversion is not possible.
+      * @throw JSONException If no conversion from JSON object to required type is possible.
       */
     template<typename T>
     T get() const {
@@ -367,8 +422,10 @@ namespace dx {
       */
     void resize_array(size_t desired_size);
 
-    /** Returns total number of element in a JSON_ARRAY or JSON_OBJECT.
-      * It's illegal to call this method for any other type than JSON_ARRAY/JSON_OBJECT.
+    /** Returns total number of element in a JSON_ARRAY or JSON_HASH.
+      * @throw JSONException If called on a object which is not of type JSON_ARRAY
+      * or JSON_HASH
+      *
       * @return Total number of keys (if a JSON_OBJECT), and total number of values (if JSON_ARRAY).
       * @see length()
       */
@@ -380,7 +437,7 @@ namespace dx {
     size_t length() const { return size(); }
 
     /** Returns true if the given numeric value represent a valid index in current JSON_ARRAY.
-      * Throws exception if called for non JSON_ARRAY
+      * @throw JSONException If called for non JSON_ARRAY object.
       * @param indx the value representing an index inside array.
       * @return true if "indx" is a valid location in array, else false.
       */
@@ -388,66 +445,123 @@ namespace dx {
     bool has(const T &indx) const { return has(static_cast<size_t>(indx)); }
 
     /** Returns true if the given size_t value represent a valid index in current JSON_ARRAY.
-      * Throws exception if called for non JSON_ARRAY
+      * @throw JSONException If called for non JSON_ARRAY object.
       * @param indx the value representing an index inside array.
       * @return true if "indx" is a valid location in array, else false.
       */
     bool has(const size_t &indx) const;
 
     /** Returns true if the given std::string key represent a valid key in current JSON_OBJECT.
-      * Throws exception if called for non JSON_OBJECT.
+      * @throw JSONException If called for non JSON_HASH object.
       * @note The parameter "key" will be treated as serialized JSON string
       * @param key the value to be looked for inside current JSON_OBJECT.
       * @return true if is a valid key, else false.
       */
     bool has(const std::string &key) const;
 
-    /** Allow using a JSON object for has() - converted to a suitabel type before executing.
+    /** Allow using a JSON object for has() - converted to a suitable type before executing.
+      * @throw JSONException If suitable conversion of input parameter is not possible.
       */
     bool has(const JSON &j) const;
 
     /** Exactly same behavior as has(const std::string &key) function. The given C-string
       * is converted to std::string before executing the function.
+      * @throw JSONException If called for non JSON_HASH object.
       * @note The parameter "key" will be treated as serialized JSON string
       */
     bool has(const char *key) const;
 
     /** Appends a JSON value at end of current JSON_ARRAY object.
+      * @throw JSONException If called for non JSON_ARRAY object.
       * @param j The value to be appended to array.
       */
     void push_back(const JSON &j);
 
     /** Removes a particular index inside a JSON_ARRAY
+      * @throw JSONException If called for non JSON_ARRAY object.
       * @param indx The index to be removed from array
       */
     void erase(const size_t &indx);
 
-    /** Removes a particular key and it's associated value inside a JSON_OBJECT
+    /** Removes a particular key and it's associated value inside a JSON_HASH
+      * @throw JSONException If called for non JSON_HASH object.
       * @note The parameter "key" will be treated as serialized JSON string
       * @param key The key value to be removed from object.
       */
     void erase(const std::string &key);
 
-    // Forward Iterators
+    /** Returns iterator to beginning.
+      * @throw JSONException If called on an object which is not a JSON_HASH
+      * @return A const iterator to the first element in the container.
+      */
     const_object_iterator object_begin() const;
+
+    /** Returns iterator to beginning.
+      * @throw JSONException If called on an object which is not a JSON_HASH
+      * @return An iterator to the first element in the container.
+      */
     object_iterator object_begin();
+    
+    /** Returns iterator to beginning.
+      * @throw JSONException If called on an object which is not a JSON_ARRAY
+      * @return A const iterator to the first element in the container.
+      */ 
     const_array_iterator array_begin() const;
+    
+    /** Returns iterator to beginning.
+      * @throw JSONException If called on an object which is not a JSON_ARRAY
+      * @return An iterator to the first element in the container.
+      */ 
     array_iterator array_begin();
-
+    
+    /** Returns iterator to end.
+      * @throw JSONException If called on an object which is not a JSON_HASH
+      * @return A const iterator to the element past-the-end of the container.
+      */
     const_object_iterator object_end() const;
+    
+    /** Returns iterator to end.
+      * @throw JSONException If called on an object which is not a JSON_HASH
+      * @return An iterator to the element past-the-end of the container.
+      */
     object_iterator object_end();
+    
+    /** Returns iterator to end.
+      * @throw JSONException If called on an object which is not a JSON_ARRAY
+      * @return A const iterator to the element past-the-end of the container.
+      */   
     const_array_iterator array_end() const;
+    
+    /** Returns iterator to end.
+      * @throw JSONException If called on an object which is not a JSON_ARRAY
+      * @return An iterator to the element past-the-end of the container.
+      */   
     array_iterator array_end();
-
-    // Reverse Iterators
-    const_object_reverse_iterator object_rbegin() const;
-    object_reverse_iterator object_rbegin();
+    
+    /** Returns reverse iterator to reverse beginning.
+      * @throw JSONException If called on an object which not a JSON_ARRAY
+      * @retrun A reverse iterator referring to the last element in the container.
+      */
     const_array_reverse_iterator array_rbegin() const;
+    
+    /** Returns reverse iterator to reverse beginning.
+      * @throw JSONException If called on an object which not a JSON_ARRAY
+      * @retrun A const reverse iterator referring to the last element in the container.
+      */
     array_reverse_iterator array_rbegin();
-
-    const_object_reverse_iterator object_rend() const;
-    object_reverse_iterator object_rend();
+    
+    /** Returns reverse iterator to reverse end.
+      * @throw JSONException If called on an object which not a JSON_ARRAY
+      * @retrun A const reverse iterator referring to the element right before the
+      * first element (which is considered to be the reverse end)
+      */  
     const_array_reverse_iterator array_rend() const;
+    
+    /** Returns reverse iterator to reverse end.
+      * @throw JSONException If called on an object which not a JSON_ARRAY
+      * @retrun A reverse iterator referring to the element right before the
+      * first element (which is considered to be the reverse end)
+      */  
     array_reverse_iterator array_rend();
 
     /** Erases and deallocate any memory for the current JSON object */

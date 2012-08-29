@@ -93,12 +93,12 @@ int main() {
     for (JSON::array_reverse_iterator it = j8.array_rbegin();it != j8.array_rend(); ++it, --i) {
       assert(j8[i] == *(it));
     }
-
+/*
     for (JSON::object_reverse_iterator it = j10.object_rbegin();it != j10.object_rend(); ++it) {
       assert(j10[it->first] == it->second);
       std::cout<<"Key = "<<it->first<<", Value = "<<it->second.toString()<<endl;
     }
-
+*/
     //
     //typedef std::map<std::string, JSON> ObjectIterator
     //ObjectIterator it = j4.ObjectBegin();
