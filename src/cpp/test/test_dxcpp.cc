@@ -850,6 +850,42 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1_SLOW) {
   dxgtable2.remove();
 }
 
+TEST_F(DXGTableTest, AddRowsMultiThreadingTest_2_SLOW) {
+  // In this thread we try to add rows to NUM_GTABLES tables simultaneously
+  const int NUM_GTABLES = 200;
+  vector<DXGTable> tables;
+  for (int i = 0; i < NUM_GTABLES; ++i)
+    tables.push_back(DXGTable::newDXGTable(DXGTableTest::columns));
+  
+  JSON data(JSON_ARRAY);
+  JSON temp(JSON_ARRAY);
+  
+  data.push_back(std::string(10000, 'X'));
+  data.push_back(0);
+
+  int numRows = 10000;
+  for (int i = 0; i < numRows; i++) {
+    temp = JSON::parse("[]");
+    data[1] = i;
+    temp.push_back(data);
+    for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++) {
+//      std::cerr<<"\nWill call for i = "<<i<<" , countgtables = "<<countGtable;
+      tables[countGtable].addRows(temp);
+    }
+  }
+  for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++)
+  {
+//    std::cerr<<"\nCalling close on "<<countGtable<<" table";
+    tables[countGtable].close();
+//    std::cerr<<"\nclose called on "<<countGtable<<" table";
+  }
+  for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++) {
+    tables[countGtable].waitOnClose();
+    EXPECT_EQ(tables[countGtable].describe()["length"].get<int64_t>(), numRows);
+    tables[countGtable].remove();
+  }
+}
+
 TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
   
