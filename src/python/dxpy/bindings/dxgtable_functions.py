@@ -17,9 +17,9 @@ def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
     :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
 
     Given the object ID of an existing table, this function returns a DXGTable
-    object for reading (with :meth:`dxpy.bindings.dxgtable.DXGTable.get_rows`)
-    or writing (with :meth:`dxpy.bindings.dxgtable.DXGTable.add_row` or
-    :meth:`dxpy.bindings.dxgtable.DXGTable.add_rows`).
+    object for reading (with :meth:`~dxpy.bindings.dxgtable.DXGTable.get_rows`)
+    or writing (with :meth:`~dxpy.bindings.dxgtable.DXGTable.add_row` or
+    :meth:`~dxpy.bindings.dxgtable.DXGTable.add_rows`).
 
     Example::
 
