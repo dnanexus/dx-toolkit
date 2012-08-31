@@ -7,7 +7,7 @@ int main() {
   using namespace dx;
   
   // Read app input from file: job_input.json
-  JSON input, output;
+  JSON input;
   ifstream ifs("job_input.json");
   input.read(ifs);
 
