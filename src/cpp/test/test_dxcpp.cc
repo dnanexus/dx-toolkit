@@ -560,6 +560,28 @@ protected:
 
 const string DXFileTest::foostr = "foo\n";
 
+TEST(DXFileTest, UploadPartMultipleTime) {
+  DXFile dxf = DXFile::newDXFile();
+  // If we do not specify a part id, it should be overwritten each time
+  string s = "blah";
+  dxf.uploadPart(s);
+  dxf.uploadPart(s);
+  dxf.uploadPart(s);
+  dxf.close(true);
+  ASSERT_EQ(dxf.describe()["size"], 4);
+   
+  dxf = DXFile::newDXFile();
+  // since each part (except last) must be at least 5 mb
+  int sizeFirstPart = 5242880 + 1;
+  dxf.uploadPart(string(sizeFirstPart, 'x'), 1);
+  dxf.uploadPart(string("foo"), 1000);
+  dxf.close(true);
+  char data[9] = {0};
+  dxf.read(data, 8);
+  ASSERT_EQ(string(data), string(8, 'x'));
+  ASSERT_EQ(dxf.describe()["size"], sizeFirstPart + 3); 
+}
+
 TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   // Upload a file with "file_size" number of '$' in it
   // and download it, check that it is same.
