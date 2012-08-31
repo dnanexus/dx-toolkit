@@ -1984,7 +1984,7 @@ def parse_obj(string, klass):
         raise TypeError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
-    return {'$dnanexus_link': {"project": project,
+    return {'$dnanexus_link': {"project": entity_result['describe']['project'],
                                "id": entity_result['id']}}
 
 dx_data_classes = ['record', 'gtable', 'file', 'applet', 'table']
@@ -2175,12 +2175,12 @@ def add_input_to_json(inputs, input_json, input_specs):
                                                               expected='entity')
                 if entity_result is None:
                     parser.exit(1, 'Could not resolve ' + i[1] + ' to a value or object ID')
+                entity_link = {"$dnanexus_link": {"project": entity_result['describe']['project'],
+                                                  "id": entity_result['id']}}
                 if i[0] not in input_json:
-                    input_json[i[0]] = [{"$dnanexus_link": {"project": project,
-                                                            "id": entity_result['id']}}]
+                    input_json[i[0]] = [entity_link]
                 else:
-                    input_json[i[0]].append({"$dnanexus_link": {"project": project,
-                                                                "id": entity_result['id']}})
+                    input_json[i[0]].append(entity_link)
         for key in input_json:
             if len(input_json[key]) == 1:
                 input_json[key] = input_json[key][0]
