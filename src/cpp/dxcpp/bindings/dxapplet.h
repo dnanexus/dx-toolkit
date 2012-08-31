@@ -1,3 +1,25 @@
+/** \file
+ *
+ * \brief Applets.
+ */
+
+//! An executable object representing an analysis or other piece of software.
+
+///
+/// An applet operates on input data and produces output data. Both the inputs and the outputs of
+/// an applet can include a combination of simple objects (of numeric, string, hash, or boolean
+/// type; passed by value) or data objects (passed by reference).
+///
+/// To publish your software for public consumption, create an App object (represented by DXApp)
+/// instead.
+///
+/// To create a new applet object, consider using the <code>dx-build-applet</code> command-line
+/// tool in the DNAnexus SDK.
+///
+/// See <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets">Applets</a> in the
+/// API specification for more information.
+///
+
 #ifndef DXCPP_BINDINGS_DXAPPLET_H
 #define DXCPP_BINDINGS_DXAPPLET_H
 
@@ -24,32 +46,38 @@ public:
 
   // Applet-specific functions
   DXApplet() { }
-  
-  DXApplet(const std::string &dxid,
-            const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
-  
+
   /**
-   * Create a new applet with specified input hash.
-   * For details about input see the route: /applet-xxx/new.
+   * Creates a %DXApplet handler that can be used to manipulate a remote applet.
    *
-   * If inp["project"] is missing, then g_WORKSPACE_ID is used as the
-   * inp["project"]
+   * @param dxid ID of the applet to access
+   * @param proj ID of the project in which the applet should be accessed
+   */
+  DXApplet(const std::string &dxid,
+           const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+
+  /**
+   * Creates a new applet with the input hash as specified in the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a> API method.
    *
-   * @param inp JSON hash, which will be passed (after resolving missing project)
-   * to route: /applet-xxxx/new
+   * If <code>inp["project"]</code> is missing, then <code>g_WORKSPACE_ID</code> will be used as
+   * the destination project.
+   *
+   * @param inp JSON hash representing the applet to be created
    */
   void create(dx::JSON inp);
 
-  /** 
-   * Creates a new job, to execute the function "main" of this applet
-   * with the given input.
+  /**
+   * Runs this applet with the specified input and returns a handler to the resulting job.
    *
-   * @param applet_input JSON Hash of the applet's input argument
-   * @param project_context Project context in which the applet would be run
-   * @param output_folder Folder inside current project (decided by context)
-   * where applet's output would be placed.
+   * See the <a
+   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
+   * API method for more info.
    *
-   * @return Handler for the Job launched.
+   * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
+   * @param project_context A string representing the project context in which the applet is to be run.
+   * @param output_folder The folder (within the project_context) in which the applet's output objects will be placed.
+   *
+   * @return Handler for the job that was launched.
    */
   DXJob run(const dx::JSON &applet_input,
             const std::string &project_context=g_WORKSPACE_ID,
@@ -58,21 +86,18 @@ public:
   /**
    * Clones the associated object into the specified project and folder.
    *
-   * @param dest_proj_id ID of the project to which the object should
-   * be cloned
-   * @param dest_folder Folder route in which to put it in the
-   * destination project.
-   * @return New object handler with the associated project set to
-   * dest_proj_id.
+   * @param dest_proj_id ID of the project to which the object should be cloned
+   * @param dest_folder Folder route in destination project into which the clone should be placed.
+   *
+   * @return New object handler with the associated project set to dest_proj_id.
    */
   DXApplet clone(const std::string &dest_proj_id,
-                  const std::string &dest_folder="/") const;
+                 const std::string &dest_folder="/") const;
 
   /**
-   * Returns the full specification of the applet as a JSON object.
-   * See route: /applet-xxxx/get for details.
+   * Returns the full specification of the applet as specified in the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a> API method.
    *
-   * @return Full specification of the applet
+   * @return JSON hash containing the full specification of the applet
    */
   dx::JSON get() const { return appletGet(dxid_); }
 
