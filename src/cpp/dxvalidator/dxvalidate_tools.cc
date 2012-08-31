@@ -175,3 +175,38 @@ bool dx::exec(const string &cmd, string &out) {
   boost::algorithm::trim(out);
   return true;
 }
+
+ValidateInfo::ValidateInfo(ErrorMsg &m) {
+  msg = &m;
+  info = JSON(JSON_OBJECT);
+  info["valid"] = true;
+}
+      
+void ValidateInfo::addWarning(const string &w, bool additionalInfo) {
+  string str = msg->GetWarning(w, additionalInfo);
+  if (! info.has("warning")) info["warning"] = JSON(JSON_ARRAY);
+  info["warning"].push_back(str);
+}
+
+void ValidateInfo::addRowWarning(const string &w, uint32_t p) {
+  setDataIndex(rowIndex, p);
+  addWarning(w, true);
+}
+
+bool ValidateInfo::setError(const string &err, bool additionalInfo) {
+  info["error"] = msg->GetError(err, additionalInfo);
+  info["valid"] = false;
+  return false;
+}
+
+bool ValidateInfo::setRowError(const string &err, uint32_t p) {
+  setDataIndex(rowIndex, p);
+  return setError(err, true);
+}
+
+bool ValidateInfo::setDXError(const string &m, const string &err) {
+  setData(m, 0);
+  setError(err, true);
+  if (info.has("valid")) info.erase("valid");
+  return false;
+}

@@ -10,6 +10,10 @@
 
 using namespace std;
 
+typedef unsigned uint32;
+typedef unsigned long long uint64;
+typedef long long int64;
+
 namespace dx {
   class TypesHandler {
     private:
@@ -27,7 +31,7 @@ namespace dx {
   class ColumnsHandler {
     private:
       map<string, string> columnTypes[3];
-      set<string> intTypes, allColumns;
+      set<string> intTypes;
 
       vector<string> columnLists[4];
       JSON queryColumns;
@@ -37,8 +41,10 @@ namespace dx {
       void findMissingColumns();
 
     protected:
-      void clearColumns();
+      set<string> allColumns;
 
+      void clearColumns();
+      
       /** index
         * 0 - required columns
         * 1 - suggested columns
@@ -51,9 +57,9 @@ namespace dx {
     public:
       ColumnsHandler();
       
-      virtual void Init(const JSON &conf) { clearColumns(); }
+      void virtual Init() { clearColumns(); }
 
-      void Add(const JSON &c);
+      void virtual Add(const JSON &c);
 
       /** 0 - missing required columns
         * 1 - missing suggested columns
@@ -97,55 +103,32 @@ namespace dx {
   
   bool exec(const string &cmd, string &out);
 
-  template<class T>
   class ValidateInfo {
     private:
       JSON info;
-      T msg;
+      ErrorMsg *msg;
       int64_t rowIndex;
       
     public:
-      ValidateInfo() {
-        info = JSON(JSON_OBJECT);
-        info["valid"] = true;
-      }
-      
+      ValidateInfo(ErrorMsg &m);
+
       void setString(const string &key, const string &value) { info[key] = value; }
       void setBoolean(const string &key, bool value) { info[key] = value; }
 
-      void addWarning(const string &w, bool additionalInfo = false) {
-        string str = msg.GetWarning(w, additionalInfo);
-        if (! info.has("warning")) info["warning"] = JSON(JSON_ARRAY);
-        info["warning"].push_back(str);
-      }
+      void addWarning(const string &w, bool additionalInfo = false);
 
-      void addRowWarning(const string &w, uint32_t p = 0) {
-        setDataIndex(rowIndex, p);
-        addWarning(w, true);
-      }
+      void addRowWarning(const string &w, uint32_t p = 0);
 
-      bool setError(const string &err, bool additionalInfo = false) {
-        info["error"] = msg.GetError(err, additionalInfo);
-        info["valid"] = false;
-        return false;
-      }
+      bool setError(const string &err, bool additionalInfo = false);
 
-      bool setRowError(const string &err, uint32_t p = 0) {
-        setDataIndex(rowIndex, p);
-        return setError(err, true);
-      }
+      bool setRowError(const string &err, uint32_t p = 0);
 
-      bool setDXError(const string &msg, const string &err) {
-        setData(msg, 0);
-        setError(err, true);
-        if (info.has("valid")) info.erase("valid");
-        return false;
-      }
+      bool setDXError(const string &m, const string &err);
 
       void setRowIndex(int64_t index) { rowIndex = index; }
       
-      void setData(const string &data, uint32_t p) { msg.SetData(data, p); }
-      void setDataIndex(int64_t index, uint32_t p) { msg.SetData(dataIndex(index), p); }
+      void setData(const string &data, uint32_t p) { msg->SetData(data, p); }
+      void setDataIndex(int64_t index, uint32_t p) { msg->SetData(dataIndex(index), p); }
       
       JSON getInfo() { return info; }
   };
