@@ -1,0 +1,25 @@
+{
+  "name": "random_gtable",
+  "title": "Random String Gtable",
+  "summary": "Creates a Random Gtable with one column (integer), and compute average of the column.",
+  "description": "Creates a Random Gtable with one column (integer), and compute average of the column.\nThe app returns: Gtable created, a floating point value (average), and, a file which is written by the app during execution",
+  "dxapi": "1.0.0",
+  "folder": "/programs/random_gtable",
+  "inputSpec": [
+    {"name": "numRows", "class": "int", "default": 1000}
+  ],
+  "outputSpec": [
+    {"name": "rand_gtable", "class": "gtable"},
+    {"name": "col_avg", "class": "float"},
+    {"name": "results_file", "class": "file"}
+  ],
+  "runSpec": {
+    "code": "/random_gtable_app",
+    "interpreter": "bash",
+    "execDepends": [
+      {"name": "libcurl4-openssl-dev"}
+    ]
+  },
+  "version": "0.0.1",
+  "resources": []
+}
