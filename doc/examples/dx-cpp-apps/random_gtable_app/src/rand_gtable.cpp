@@ -49,21 +49,26 @@ int main() {
  
   // We can optimize iteration over all rows of a
   // a gtable by using startLinearQuery() and getNextChunk()
-  // construct (which fetches other chunks asynchronously in background)
-  // while you process the previous chunk.
-  // Call to startLinearQuery() signals that background fetching
-  // of chunk should be started 
-  // getNextChunk() can be used to get chunk in a sequential manner
-  // See documentation for details about input params, etc
+  // functions.
+  // By calling startLinearQuery() once, background fetching of
+  // gtable rows is started (multi-threaded).
+  // After this, each call to getNextChunk() returns the next chunk of rows
+  // in order, until the end (or desired limit) is reached.
+  // In which case getNextChunk() returns the value "false"
+  // This allows processing the gtable in chunked fashion
+  // and you can spend time on processing a particular chunk
+  // while next few chunks are being fetched in background
+  //
+  // There are various parameters you can tweak for startLinearQuery()
+  // Look at the Doxygen documentation for dxcpp to know about them.
   gtable.startLinearQuery(JSON::parse("[\"rand_value\"]"), 0, numRows, (numRows/10 + 1));
   JSON chunk;
   int64_t sum = 0;
-  while(gtable.getNextChunk(chunk)) {
+  while(gtable.getNextChunk(chunk))
     for (int i = 0; i < chunk.size(); ++i)
       sum += chunk[i][0].get<int>();
-  }
 
-  // Kill the background fetching threads
+  // Stop the background fetching of chunks
   gtable.stopLinearQuery();
 
   double avg = static_cast<double>(sum)/numRows;
@@ -79,7 +84,7 @@ int main() {
   ////////////////////////////////////////////////////////////
   // Write some data to file (like result, etc), and close it
   ////////////////////////////////////////////////////////////
-  dxf.write("This file is generated as a result of running this app");
+  dxf.write("This file is generated as a result of running random_gtable app");
   dxf.write("\nnumRows = " + boost::lexical_cast<string>(numRows));
   dxf.write("\nAverage = " + boost::lexical_cast<string>(avg));
   dxf.write("\nRandom gtable ID = " + gtable.getID());
