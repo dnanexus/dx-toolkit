@@ -128,6 +128,9 @@ public:
     reset_buffer_();
   }
 
+  /**
+   * Copy constructor.
+   */
   DXGTable(const DXGTable &to_copy)
     : DXDataObject(to_copy), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
   {
@@ -135,9 +138,9 @@ public:
   }
 
   /**
-   * Creates a handler for the specified remote GTable.
+   * Creates a %DXGTable handler for the specified remote GTable.
    *
-   * @param dxid ID of the remote object.
+   * @param dxid GTable ID.
    * @param proj ID of the project in which to access the object.
    */
   DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID)
@@ -146,6 +149,9 @@ public:
     setIDs(dxid, proj);
   }
 
+  /**
+   * Assignment operator.
+   */
   DXGTable& operator=(const DXGTable& to_copy) {
     if (this == &to_copy)
       return *this;
@@ -187,7 +193,7 @@ public:
   void setIDs(const std::string &dxid, const std::string &proj="default");
 
   /**
-   * Creates a new GTable and sets the object ID.
+   * Creates a new remote GTable and sets the object ID.
    *
    * @param columns Vector of column descriptors. This must be nonempty.
    * @param indices Vector of index descriptors.
@@ -202,7 +208,7 @@ public:
               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable with no indices and sets the object ID.
+   * Creates a new remote GTable with no indices and sets the object ID.
    *
    * @param columns Vector of column descriptors. This must be nonempty.
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
@@ -217,8 +223,8 @@ public:
   }
 
   /**
-   * Creates a new GTable, initializing it using the schema and metadata from an existing GTable,
-   * and sets the object ID.
+   * Creates a new remote GTable, initializing it using the schema and metadata from an existing
+   * GTable, and sets the object ID.
    *
    * Note that the default behavior of creating a new data object in the current workspace is still
    * in effect and "project" needs to be explicitly specified if the project of the object
@@ -236,8 +242,8 @@ public:
 	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable, initializing it using the schema and metadata from an existing GTable
-   * and overriding the columns, and sets the object ID.
+   * Creates a new remote GTable, initializing it using the schema and metadata from an existing
+   * GTable and overriding the columns, and sets the object ID.
    *
    * @param init_from A GTable from which to initialize all metadata, including column and index
    * specs.
@@ -254,8 +260,8 @@ public:
 	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable, initializing it using the schema and metadata from an existing GTable
-   * and overriding the columns and indices, and sets the object ID.
+   * Creates a new remote GTable, initializing it using the schema and metadata from an existing
+   * GTable and overriding the columns and indices, and sets the object ID.
    *
    * @param init_from A GTable from which to initialize all metadata, including column and index
    * specs.
@@ -277,9 +283,9 @@ public:
 	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable by extending the current GTable with additional columns. The only indices
-   * generated are those explicitly specified here, even if the current table has indices. Returns
-   * an object handler for the new GTable.
+   * Creates a new remote GTable by extending the current GTable with additional columns. The only
+   * indices generated are those explicitly specified here, even if the current table has indices.
+   * Returns an object handler for the new GTable.
    *
    * @param columns Vector of column descriptors representing columns (to be added after the
    * existing columns).
@@ -298,8 +304,8 @@ public:
                   dx::JSON(dx::JSON_OBJECT)) const;
 
   /**
-   * Creates a new GTable by extending the current GTable with additional columns. The resulting
-   * table has no indices, even if the current table has indices (use
+   * Creates a new remote GTable by extending the current GTable with additional columns. The
+   * resulting table has no indices, even if the current table has indices (use
    * extend(const std::vector<dx::JSON> &, const std::vector<dx::JSON> &, const dx::JSON &) const
    * to declare indices on the extension table). Returns an object handler for the new GTable.
    *
@@ -344,8 +350,8 @@ public:
                    const int64_t starting=-1, const int64_t limit=-1) const;
 
   /**
-   * Starts fetching rows in chunks of specified size from the GTable in background. After calling
-   * this function, getNextChunk() can be use to access chunks in a linear manner.
+   * Starts fetching rows in chunks of the specified size, in the background. After calling this
+   * function, getNextChunk() can be use to access chunks in a linear manner.
    *
    * @note - Calling this function invalidates any previous call to the function.
    *
@@ -396,7 +402,7 @@ public:
   bool getNextChunk(dx::JSON &chunk) const;
 
   /**
-   * Adds the rows listed in data to the current GTable, writing to the specified part ID, as
+   * Adds the rows listed in data to the remote GTable, writing to the specified part ID, as
    * specified in <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">/gtable-xxxx/addRows</a>.
    *
@@ -416,7 +422,7 @@ public:
   void addRows(const dx::JSON &data, int part_id);
 
   /**
-   * Appends the rows listed in data to the current GTable.
+   * Appends the rows listed in data to the remote GTable.
    *
    * The data is written to an internal buffer that is added to the GTable when full.
    *
@@ -435,9 +441,9 @@ public:
   void addRows(const dx::JSON &data); // For automatic part ID generation
 
   /**
-   * Queries an open GTable and returns a valid unused number (part ID) which can then be used to
-   * add rows to the GTable. The method will not return the same part ID more than once, even if
-   * multiple clients are querying the same GTable simultaneously.
+   * Queries the remote GTable and returns a valid part ID which can then be used to add rows to
+   * the GTable. The method will not return the same part ID more than once, even if multiple
+   * clients are querying the same GTable simultaneously.
    *
    * However, this method does <b>not</b> check that the part ID that it returns has not previously
    * been written, nor does it protect against someone else adding rows with that part ID.
@@ -452,8 +458,8 @@ public:
 
   /**
    * Ensures that all the data sent via previous addRows(const dx::JSON&) requests has been flushed
-   * from the buffers and added to the GTable. Finishes all pending write requests and terminates
-   * all write threads. This function blocks until the above has been completed.
+   * from the buffers and added to the remote GTable. Finishes all pending write requests and
+   * terminates all write threads. This function blocks until the above has been completed.
    *
    * This function is idempotent.
    *
@@ -498,9 +504,9 @@ public:
                  const std::string &dest_folder="/") const;
 
   /**
-   * Returns a DXGTable handler for specified GTable id.
+   * Returns a DXGTable handler for the specified GTable.
    *
-   * @param dxid ID of the GTable to be opened.
+   * @param dxid GTable ID.
    * @param project The project in which to open the GTable.
    *
    * @return An object handler for the specified GTable.
@@ -509,7 +515,7 @@ public:
 			       const std::string &project="default");
 
   /**
-   * Creates a new GTable and returns its DXGTable handler.
+   * Creates a new remote GTable and returns a handler for it.
    *
    * @param columns Vector of column descriptors; must be nonempty
    * @param indices Vector of index descriptors.
@@ -526,7 +532,7 @@ public:
                               const dx::JSON &data_obj_fields=
                               dx::JSON(dx::JSON_OBJECT));
   /**
-   * Creates a new GTable and returns its DXGTable handler.
+   * Creates a new remote GTable and returns a handler for it.
    *
    * Equivalent to: newDXGTable(columns, std::vector<dx::JSON>(), data_obj_fields).
    *
@@ -546,7 +552,7 @@ public:
   }
 
   /**
-   * Creates a new GTable using the metadata from an existing GTable.
+   * Creates a new remote GTable using the metadata from an existing GTable.
    *
    * Note that the default behavior of creating a new data object in the current workspace is still
    * in effect and "project" needs to be explicitly specified if the project of the object
@@ -566,7 +572,7 @@ public:
 			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable using the metadata from an existing GTable.
+   * Creates a new remote GTable using the metadata from an existing GTable.
    *
    * Note that the default behavior of creating a new data object in the current workspace is still
    * in effect and "project" needs to be explicitly specified if the project of the object
@@ -588,7 +594,7 @@ public:
 			      const std::vector<dx::JSON> &columns,
 			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
   /**
-   * Creates a new GTable using the metadata from an existing GTable.
+   * Creates a new remote GTable using the metadata from an existing GTable.
    *
    * Note that the default behavior of creating a new data object in the current workspace is still
    * in effect and needs to be explicitly stated if the project of the object specified as
@@ -616,10 +622,11 @@ public:
 			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable by extending the specified GTable with additional columns and indices.
-   * The only indices generated are those explicitly specified here, even if the current table has
-   * indices. Returns an object handler for the new GTable.
+   * Creates a new remote GTable by extending the specified GTable with additional columns and
+   * indices. The only indices generated are those explicitly specified here, even if the current
+   * table has indices. Returns an object handler for the new GTable.
    *
+   * @param dxgtable GTable to be extended.
    * @param columns Vector of column descriptors representing columns (to be added after the
    * existing columns in the specified GTable).
    * @param indices Vector of index descriptors.
@@ -638,11 +645,12 @@ public:
                                  dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new GTable by extending the specified GTable with additional columns. The resulting
-   * table has no indices, even if the current table has indices (use
+   * Creates a new remote GTable by extending the specified GTable with additional columns. The
+   * resulting table has no indices, even if the current table has indices (use
    * extendDXGTable(const DXGTable&, const std::vector<dx::JSON>&, const std::vector<dx::JSON>&, const dx::JSON&)
    * to declare indices on the extension table). Returns an object handler for the new GTable.
    *
+   * @param dxgtable GTable to be extended.
    * @param columns Vector of column descriptors representing columns (to be added after the
    * existing columns in the specified GTable).
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
@@ -692,7 +700,7 @@ public:
   /**
    * Creates a lexicographic index descriptor for use with the create() or extend() calls.
    *
-   * @param columns Vector of lists of the form [<column name>, "ASC"|"DESC"].
+   * @param columns Vector of lists of the form [COLUMN_NAME, "ASC"|"DESC"].
    * @param name Name of the index.
    *
    * @return A JSON object containing the index descriptor.
@@ -715,7 +723,7 @@ public:
   // columns of type int32, but if we ever change this, we should
   // change the data type as well.
   /**
-   * Constructs a query for a genomic range index of the GTable.
+   * Constructs a query for a genomic range index of a GTable.
    *
    * @param chr Name of chromosome to be queried.
    * @param lo Low boundary of query interval.
@@ -732,7 +740,7 @@ public:
                                     const std::string &index="gri");
 
   /**
-   * Constructs a query for a lexicographic index of the GTable.
+   * Constructs a query for a lexicographic index of a GTable.
    *
    * @param query MongoDB-style query.
    * @param index Name of the lexicographic index to use.
@@ -743,7 +751,7 @@ public:
                                      const std::string &index);
 
   /**
-   * Constructs a query for a substring index of the GTable.
+   * Constructs a query for a substring index of a GTable.
    *
    * @param match String to match.
    * @param mode Mode in which to match the string ("equal", "substring", or "prefix").

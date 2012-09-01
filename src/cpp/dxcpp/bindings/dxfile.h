@@ -164,20 +164,26 @@ class DXFile: public DXDataObject {
 
   DXFile() { init_internals_(); }
 
+  /**
+   * Copy constructor.
+   */
   DXFile(const DXFile& to_copy) : DXDataObject(to_copy) {
     setIDs(to_copy.dxid_, to_copy.proj_);
   }
 
   /**
-   * Creates a %DXFile associated with the specified File object.
+   * Creates a %DXFile handler for the specified File object.
    *
-   * @param dxid ID of the remote File object to access.
+   * @param dxid File object ID.
    * @param proj ID of the project in which the File should be accessed.
    */
   DXFile(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID) {
     setIDs(dxid, proj);
   }
 
+  /**
+   * Assignment operator.
+   */
   DXFile& operator=(const DXFile& to_copy) {
     if (this == &to_copy)
       return *this;
@@ -185,7 +191,7 @@ class DXFile: public DXDataObject {
     this->setIDs(to_copy.dxid_, to_copy.proj_);
     return *this;
   }
-  
+
   ~DXFile() {
     flush();
     stopLinearQuery();
@@ -193,10 +199,11 @@ class DXFile: public DXDataObject {
   // File-specific functions
 
   /**
-   * Sets the remote object ID associated with the remote file handler. If the handler had data
-   * stored in its internal buffer to be written to the remote file, that data will be flushed.
+   * Sets the remote File ID associated with this file handler. If the handler had data stored in
+   * its internal buffer to be written to the remote file, that data will be flushed.
    *
-   * @param dxid Object ID of the remote file to be accessed.
+   * @param dxid new File object ID
+   * @param proj ID of project in which to access the File.
    */
   void setIDs(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID);
 
@@ -240,7 +247,7 @@ class DXFile: public DXDataObject {
   bool eof() const;
 
   /**
-   * Changes the position of the reading cursor (for read()) to the specified byte offset..
+   * Changes the position of the reading cursor (for read()) to the specified byte offset.
    *
    * Calling this function on a File that is not in the "closed" state will throw an object of
    * class DXFileError.
@@ -254,7 +261,7 @@ class DXFile: public DXDataObject {
 
   /**
    * Ensures that all the data sent via previous write() calls has been flushed from the buffers
-   * and uploaded to the remote file. Finishes all pending uploads and terminates all write
+   * and uploaded to the remote File. Finishes all pending uploads and terminates all write
    * threads. This function blocks until the above has completed.
    *
    * This function is idempotent.
@@ -267,7 +274,7 @@ class DXFile: public DXDataObject {
   void flush();
 
   /**
-   * Appends the data stored at ptr to the File.
+   * Appends the data stored at <code>ptr</code> to the remote File.
    *
    * The data is written to an internal buffer that is uploaded to the remote file when full.
    *
@@ -285,7 +292,7 @@ class DXFile: public DXDataObject {
   void write(const char* ptr, int64_t n);
 
   /**
-   * Appends the data in the specified string to the File.
+   * Appends the data in the specified string to the remote File.
    *
    * Same functionality as write(const char*, int64_t).
    *
@@ -310,8 +317,8 @@ class DXFile: public DXDataObject {
   void uploadPart(const std::string &data, const int index=-1);
 
   /**
-   * Uploads the <code>n</code> bytes stored at <code>ptr</code> as a part. Blocks until the
-   * request is completed.
+   * Uploads the <code>n</code> bytes stored at <code>ptr</code> as a part to the remote File.
+   * Blocks until the request is completed.
    *
    * If there are multiple requests to write to the same part, the last one to finish "wins".
    *
@@ -338,7 +345,7 @@ class DXFile: public DXDataObject {
   bool is_closed() const;
 
   /**
-   * Calls flush() and issues a request to close the remote file.
+   * Calls flush() and issues a request to close the remote File.
    *
    * See the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">/file-xxxx/close</a>
@@ -350,13 +357,14 @@ class DXFile: public DXDataObject {
   void close(const bool block=false);
 
   /**
-   * Waits until the remote file object is in the "closed" state.
+   * Waits until the remote File object is in the "closed" state.
    */
   void waitOnClose() const;
 
   /**
-   * Starts fetching data in chunks (of the specified byte size) from the file in the background.
-   * After calling this function, getNextChunk() can be use to access the chunks in order.
+   * Starts fetching data in chunks (of the specified byte size) from the remote File in the
+   * background. After calling this function, getNextChunk() can be use to access the chunks in
+   * order.
    *
    * @note - Calling this function invalidates any previous call to the function
    * (all previously started fetching of chunks is stopped).
@@ -406,7 +414,7 @@ class DXFile: public DXDataObject {
   bool getNextChunk(std::string &chunk) const;
 
   /**
-   * Shorthand for creating a DXFile remote file handler with the given object id.
+   * Shorthand for creating a DXFile remote File handler with the given object id.
    *
    * @param dxid Object id of the file to open.
    * @return DXFile remote handler for the requested file object
@@ -414,8 +422,8 @@ class DXFile: public DXDataObject {
   static DXFile openDXFile(const std::string &dxid);
 
   /**
-   * Shorthand for creating a DXFile remote file handler for a new empty remote file. The newly
-   * initialized file is ready for writing.
+   * Shorthand for creating a DXFile remote File handler for a new empty remote File. The newly
+   * initialized File is ready for writing.
    *
    * @param media_type String representing the media type of the file.
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
@@ -429,15 +437,15 @@ class DXFile: public DXDataObject {
                           dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Shorthand for downloading a remote file to a local file.
+   * Shorthand for downloading a remote File to a local file.
    *
    * The File is downloaded using startLinearQuery() and getNextChunk() semantics. Multiple threads
    * with concurrent HTTP requests are used to fetch the data for higher throughput.
    *
-   * @note This should be called only after the remote file is in "closed" state; otherwise, an
+   * @note This should be called only after the remote File is in the "closed" state; otherwise, an
    * error of type DXFileError will be thrown.
    *
-   * @param dxfile Object handler or id of the file to download.
+   * @param dxid Object handler or id of the file to download.
    * @param filename Local path for writing the downloaded data.
    * @param chunksize Size, in bytes, of each chunk when downloading the file.
    */
@@ -457,7 +465,8 @@ class DXFile: public DXDataObject {
    * @param waitForClose If set to true, then function returns only after uploaded file is in the
    * "closed" state. Otherwise, returns directly after initiating the file close (the uploaded file
    * will be in the "closing" or "closed" state).
-   * @return DXFile remote file handler for the newly uploaded file.
+   *
+   * @return A remote File handler for the newly uploaded File.
    */
   static DXFile uploadLocalFile(const std::string &filename,
                                 const std::string &media_type="",

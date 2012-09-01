@@ -10,6 +10,9 @@
 #include <limits>
 #include "dxcpp.h"
 
+/**
+ * Current project context.
+ */
 extern std::string g_WORKSPACE_ID;
 
 //! The abstract base class for all data object remote handlers.
@@ -59,16 +62,27 @@ class DXDataObject {
 
  public:
   DXDataObject() { }
+
+  /**
+   * Copy constructor.
+   */
   DXDataObject(const DXDataObject &to_copy) {
     dxid_ = to_copy.dxid_;
     proj_ = to_copy.proj_;
   }
-  DXDataObject(const std::string &dxid) { setIDs(dxid); }
+
   /**
    * Creates a handler for the specified remote data object.
    *
-   * @param dxid ID of the object.
-   * @param proj ID of of the project via which to access the object.
+   * @param dxid Data object ID.
+   */
+  DXDataObject(const std::string &dxid) { setIDs(dxid); }
+
+  /**
+   * Creates a handler for the specified remote data object.
+   *
+   * @param dxid Data object ID.
+   * @param proj ID of of the project in which to access the object.
    */
   DXDataObject(const std::string &dxid, const std::string &proj) {
     setIDs(dxid, proj);

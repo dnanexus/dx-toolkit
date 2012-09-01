@@ -48,16 +48,18 @@ public:
   DXApplet() { }
 
   /**
-   * Creates a %DXApplet handler that can be used to manipulate a remote applet.
+   * Creates a %DXApplet handler for the specified remote applet.
    *
-   * @param dxid ID of the applet to access
+   * @param dxid applet ID
    * @param proj ID of the project in which the applet should be accessed
    */
   DXApplet(const std::string &dxid,
            const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
   /**
-   * Creates a new applet with the input hash as specified in the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a> API method.
+   * Creates a new remote applet with the input hash, as specified in the <a
+   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a>
+   * API method.
    *
    * If <code>inp["project"]</code> is missing, then <code>g_WORKSPACE_ID</code> will be used as
    * the destination project.
@@ -67,7 +69,7 @@ public:
   void create(dx::JSON inp);
 
   /**
-   * Runs this applet with the specified input and returns a handler to the resulting job.
+   * Runs this applet with the specified input and returns a handler for the resulting job.
    *
    * See the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
@@ -84,7 +86,7 @@ public:
             const std::string &output_folder="/") const;
 
   /**
-   * Clones the associated object into the specified project and folder.
+   * Clones the applet into the specified project and folder.
    *
    * @param dest_proj_id ID of the project to which the object should be cloned
    * @param dest_folder Folder route in destination project into which the clone should be placed.
@@ -95,7 +97,9 @@ public:
                  const std::string &dest_folder="/") const;
 
   /**
-   * Returns the full specification of the applet as specified in the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a> API method.
+   * Returns the full specification of the applet, as specified in the <a
+   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a>
+   * API method.
    *
    * @return JSON hash containing the full specification of the applet
    */

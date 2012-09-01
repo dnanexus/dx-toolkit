@@ -36,11 +36,10 @@ public:
   DXApp() { }
 
   /**
-   * Creates a %DXApp handler that can be used to manipulate a remote app version. Providing only
-   * an app name (such as "micromap") selects the version of the app that is tagged "default". You
-   * can select an arbitrary version by providing a unique identifier (e.g.
-   * "app-j47b1k3z8Jqqv001213v312j1") or a combination of a name and version (e.g. "micromap"
-   * "1.0.1").
+   * Creates a handler for the remote app version. Providing only an app name (such as "micromap")
+   * selects the version of the app that is tagged "default". You can select an arbitrary version
+   * by providing a unique identifier (e.g. "app-j47b1k3z8Jqqv001213v312j1") or a combination of a
+   * name and version (e.g. "micromap" "1.0.1").
    *
    * @param nameOrID Either the name of the app, (e.g. "micromap"), or the object ID of the app version (e.g. "app-j47b1k3z8Jqqv001213v312j1")
    * @param alias The version or tag of the app to be used (if nameOrID is an app name)
@@ -51,7 +50,7 @@ public:
   }
 
   /**
-   * Associates the handler with the given app version. Providing only an app name (such as
+   * Sets the app ID to that of a different remote app version. Providing only an app name (such as
    * "micromap") selects the version of the app that is tagged "default". You can select an
    * arbitrary version by providing a unique identifier (e.g. "app-j47b1k3z8Jqqv001213v312j1") or a
    * combination of a name and version (e.g. "micromap" "1.0.1").
@@ -81,7 +80,7 @@ public:
   dx::JSON describe() const;
 
   /**
-   * Updates the app's properties with given input hash, as specified by the <a
+   * Updates the remote app's properties with given input hash, as specified by the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fupdate">/app-xxxx[/yyyy]/update</a>
    * API method.
    */
@@ -164,7 +163,7 @@ public:
   dx::JSON get() const;
 
   /**
-   * Makes this version of app discoverable by other users on DNAnexus platform.
+   * Makes this version of app discoverable by other users on the DNAnexus platform.
    *
    * See the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fpublish">/app-xxxx[/yyyy]/publish</a>
@@ -186,7 +185,7 @@ public:
   void remove() const;
 
   /**
-   * Runs this app with the specified input and returns a handler to the resulting job.
+   * Runs this app with the specified input and returns a handler for the resulting job.
    *
    * See the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Frun">/app-xxxx[/yyyy]/run</a>

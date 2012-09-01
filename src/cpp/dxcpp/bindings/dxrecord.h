@@ -36,6 +36,13 @@ class DXRecord: public DXDataObject {
   // Record-specific functions
 
   DXRecord() { }
+
+  /**
+   * Creates a new %DXRecord handler for the specified remote record object.
+   *
+   * @param dxid Record ID.
+   * @param proj Project in which to access the object.
+   */
   DXRecord(const std::string &dxid,
 	   const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
@@ -64,7 +71,7 @@ class DXRecord: public DXDataObject {
               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new remote record object. A handler for the new remote object is returned.
+   * Creates a new remote record. Returns a handler for the new object.
    *
    * @param data_obj_fields JSON containing the optional fields with which to create the object
    * ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
@@ -78,8 +85,8 @@ class DXRecord: public DXDataObject {
 
   /**
    * Creates a new remote record object, initializing it from the specified record (and overriding
-   * with any values that are present in data_obj_fields). A handler for the new remote object is
-   * returned.
+   * with any values that are present in data_obj_fields). Returns a handler for the new remote
+   * object.
    *
    * @param init_from a DXRecord from which to initialize the metadata.
    * @param data_obj_fields JSON containing the optional fields with which to create the object
@@ -94,7 +101,7 @@ class DXRecord: public DXDataObject {
 			      dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Clones the associated object into the specified project and folder.
+   * Clones the remote record into the specified project and folder.
    *
    * @param dest_proj_id ID of the project to which the object should be cloned.
    * @param dest_folder Folder route in which to put it in the destination project.

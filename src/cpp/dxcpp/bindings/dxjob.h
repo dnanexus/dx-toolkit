@@ -26,6 +26,12 @@ class DXJob {
   std::string dxid_;
  public:
   DXJob() { }
+
+  /**
+   * Creates a %DXJob handler for the specified remote job.
+   *
+   * @param dxid Job ID.
+   */
   DXJob(const std::string &dxid) : dxid_(dxid) { }
 
   /**
@@ -38,14 +44,14 @@ class DXJob {
   dx::JSON describe() const;
 
   /**
-   * Updates the handler to refer to specified job ID.
+   * Updates the handler to refer to the specified remote job ID.
    *
-   * @param dxid ID of the job.
+   * @param dxid Job ID.
    */
   void setID(const std::string &dxid) { dxid_ = dxid; }
 
   /**
-   * Return the current job state.
+   * Returns the current remote job state.
    *
    * @return A string containing the current state of the job. Possible values are listed in the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Job-Execution#Job-states">API
@@ -54,7 +60,7 @@ class DXJob {
   std::string getState() const { return describe()["state"].get<std::string>(); }
 
   /**
-   * Returns the ID of the associated job.
+   * Returns the ID of the associated remote job.
    *
    * @return A string giving the ID of a job, or blank string if the handler is associated with no
    * job.
