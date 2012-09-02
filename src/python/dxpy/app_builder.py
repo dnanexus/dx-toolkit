@@ -22,8 +22,8 @@ class AppletBuilderException(Exception):
     pass
 
 def validate_applet_spec(applet_spec):
-    if "name" not in applet_spec:
-        raise AppletBuilderException("Applet specification does not contain a name")
+    if 'runSpec' not in applet_spec:
+        raise AppletBuilderException("Required field 'runSpec' not found in dxapp.json")
 
 def validate_app_spec(app_spec):
     pass
@@ -95,6 +95,15 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     else:
         dest_project = project
         applet_spec['project'] = project
+
+    if 'name' not in applet_spec:
+        try:
+            applet_spec['name'] = os.path.basename(os.path.abspath(src_dir))
+        except:
+            raise AppletBuilderException("Could not resolve applet name from specification or working directory")
+
+    if 'dxapi' not in applet_spec:
+        applet_spec['dxapi'] = dxpy.API_VERSION
 
     if check_name_collisions:
         logging.debug("Searching for applets with name " + applet_spec["name"])

@@ -11,7 +11,7 @@ import dxpy, dxpy.app_builder
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 # COMMON OPTIONS
-parser.add_argument("src_dir", help="App or applet source directory")
+parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", default=os.getcwd(), nargs='?')
 
 parser.set_defaults(mode="app")
 parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
@@ -38,7 +38,7 @@ parser.add_argument("--no-update", help="Never update an existing unpublished ap
 # --[no-]dx-toolkit-autodep
 parser.set_defaults(dx_toolkit_autodep=True)
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
-parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. Only use this if you know what you are doing.", action="store_false", dest="dx_toolkit_autodep")
+parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
 
 def get_timestamp_version_suffix():
