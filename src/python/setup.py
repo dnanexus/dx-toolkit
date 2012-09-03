@@ -3,6 +3,9 @@
 import os, sys, glob
 from setuptools import setup, find_packages
 
+if sys.version_info < (2, 7):
+    raise Exception("dxpy requires Python >= 2.7")
+
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
 # See Readme.md for details.
