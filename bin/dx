@@ -1735,7 +1735,9 @@ def find_jobs(args):
                                          parent_job=args.parent,
                                          describe=describe,
                                          created_after=args.created_after,
-                                         created_before=args.created_before):
+                                         created_before=args.created_before,
+                                         name=args.name,
+                                         name_mode='glob'):
 
             job_descs[job_result['id']] = job_result['describe']
             parent = job_result['describe']['parentJob']
@@ -1804,6 +1806,7 @@ def find_data(args):
                                               visibility=args.visibility,
                                               properties=args.properties,
                                               name=args.name,
+                                              name_mode='glob',
                                               typename=args.type,
                                               tag=args.tag, link=args.link,
                                               project=args.project,
@@ -1833,7 +1836,8 @@ def find_data(args):
 def find_projects(args):
     get_output_flag(args)
     try:
-        results = list(dxpy.find_projects(name=args.name, level=('VIEW' if args.public else args.level),
+        results = list(dxpy.find_projects(name=args.name, name_mode='glob',
+                                          level=('VIEW' if args.public else args.level),
                                           describe=(not args.brief),
                                           explicit_perms=(not args.public),
                                           public=args.public))
@@ -1856,7 +1860,7 @@ def find_projects(args):
 def find_apps(args):
     get_output_flag(args)
     try:
-        results = list(dxpy.find_apps(name=args.name, category=args.category,
+        results = list(dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
                                       all_versions=args.all,
                                       published=(not args.unpublished),
                                       billed_to=args.billed_to,
@@ -2482,6 +2486,7 @@ def exit_shell(args):
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0' + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, upload data, navigate and organize your data, and even launch analyses.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dev.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
                                  formatter_class=argparse.RawTextHelpFormatter,
+                                 parents=[env_args],
                                  usage='%(prog)s [-h] [--version] command ...')
 parser.add_argument('--version', action='version', version='dx 0.0.1')
 
@@ -3092,6 +3097,7 @@ parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_
 parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job name (if available), the job ID, the time at which the job was created, and its current state.',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args],
                                               prog='dx find jobs')
+parser_find_jobs.add_argument('--name', help='Name of the job')
 parser_find_jobs.add_argument('--user', help='User ID who launched the job, default is self', default='self')
 parser_find_jobs.add_argument('--allusers', help='Do not restrict search by who launched the job', action='store_true')
 parser_find_jobs.add_argument('--project', help='Project context (output project), default is current project if set')
@@ -3196,11 +3202,7 @@ if len(args_list) > 0:
     args = parser.parse_args(args_list)
     set_cli_colors(args)
     set_delim(args)
-    try:
-        set_env_from_args(args)
-    except BaseException as details:
-        if str(details) == "Printed help":
-            parser.exit(0)
+    set_env_from_args(args)
     args.func(args)
 else:
     parser.print_help()
