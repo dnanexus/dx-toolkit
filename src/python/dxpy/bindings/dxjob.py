@@ -25,7 +25,7 @@ def new_dxjob(fn_input, fn_name, **kwargs):
     :type fn_input: dict
     :param fn_name: Name of the function to be called
     :type fn_name: string
-    :rtype: :class:`dxpy.bindings.DXJob`
+    :rtype: :class:`~dxpy.bindings.DXJob`
 
     Creates and enqueues a new job that will execute a particular
     function (from the same app as the one the current job is
@@ -123,7 +123,7 @@ class DXJob(DXObject):
         :type interval: integer
         :param timeout: Max amount of time to wait until the job is done running
         :type timeout: integer
-        :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the job has finished running
+        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the job has finished running
 
         Wait until the job has finished running.
         '''

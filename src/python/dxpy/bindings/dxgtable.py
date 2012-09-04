@@ -136,7 +136,7 @@ class DXGTable(DXDataObject):
         :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`. (optional)
         :type indices: list of index descriptors
         :param init_from: GTable from which to initialize the metadata including column and index specs
-        :type init_from: :class:`GTable`
+        :type init_from: :class:`DXGTable`
 
         Creates a new gtable with the given column names in *columns*
         and the indices described in *indices*.
@@ -307,7 +307,7 @@ class DXGTable(DXDataObject):
         :type columns: list of strings
         :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`.
         :type indices: list of index descriptors
-        :rtype: :class:`dxpy.bindings.DXGTable`
+        :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
 
         Additional optional parameters not listed: all those under
         :func:`dxpy.bindings.DXDataObject.new`.
@@ -333,7 +333,7 @@ class DXGTable(DXDataObject):
         :type data: list of lists
         :param part: The part ID to label the rows in data. Optional; it will be selected automatically if not given.
         :type part: integer
-        :raises: :exc:`dxpy.exceptions.DXGTableError`
+        :raises: :exc:`~dxpy.exceptions.DXGTableError`
 
         Adds the rows listed in data to the current gtable.  If *part*
         is not given, rows may be queued up for addition internally
@@ -367,7 +367,7 @@ class DXGTable(DXDataObject):
         '''
         :param row: Row to be added
         :type data: list
-        :raises: :exc:`dxpy.exceptions.DXGTableError`
+        :raises: :exc:`~dxpy.exceptions.DXGTableError`
 
         Adds a single row to the current gtable. Rows may be queued up for addition internally
         and will be flushed to the remote server periodically.
@@ -461,7 +461,7 @@ class DXGTable(DXDataObject):
         '''
         :param timeout: Max amount of time to wait until the gtable is closed.
         :type timeout: integer
-        :raises: :exc:`dxpy.exceptions.DXError` if the timeout is reached before the remote gtable has been closed
+        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the remote gtable has been closed
 
         Wait until the remote gtable is closed.
         '''

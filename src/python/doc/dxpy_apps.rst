@@ -1,10 +1,6 @@
 Applets, Apps, and Jobs
 +++++++++++++++++++++++
 
-.. automodule:: dxpy.app_builder
-   :members:
-   :undoc-members:
-
 .. automodule:: dxpy.bindings.dxapplet
    :members:
    :undoc-members:
@@ -19,3 +15,7 @@ Applets, Apps, and Jobs
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: dxpy.app_builder
+   :members:
+   :undoc-members:

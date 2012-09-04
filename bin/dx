@@ -1840,7 +1840,7 @@ def find_projects(args):
                                           level=('VIEW' if args.public else args.level),
                                           describe=(not args.brief),
                                           explicit_perms=(not args.public),
-                                          public=args.public))
+                                          public=(args.public if args.public else None)))
         if args.json:
             print json.dumps(results, indent=4)
             return

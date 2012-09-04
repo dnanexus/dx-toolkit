@@ -14,7 +14,7 @@ def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
     '''
     :param dxid: table ID
     :type dxid: string
-    :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
+    :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
 
     Given the object ID of an existing table, this function returns a DXGTable
     object for reading (with :meth:`~dxpy.bindings.dxgtable.DXGTable.get_rows`)
@@ -38,14 +38,14 @@ def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
 def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mode=None,
                  **kwargs):
     '''
-    :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required if init_from is not provided)
+    :param columns: An ordered list containing column descriptors.  See :meth:`~dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required if init_from is not provided)
     :type columns: list of column descriptors
-    :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable._new` for more details. (optional)
+    :param indices: An ordered list containing index descriptors.  See :func:`~dxpy.bindings.dxgtable.DXGTable._new` for more details. (optional)
     :type indices: list of index descriptors
     :param init_from: GTable from which to initialize the metadata including column and index specs
     :type init_from: :class:`GTable`
     :returns: Remote table handler for the created table
-    :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
+    :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
@@ -82,11 +82,11 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=None, mode=None, **kw
     '''
     :param dxid: Object ID of table to extend
     :type dxid: string
-    :param columns: An ordered list containing column descriptors.  See :meth:`dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
+    :param columns: An ordered list containing column descriptors.  See :meth:`~dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required)
     :type columns: list of column descriptors
-    :param indices: An ordered list containing index descriptors.  See :func:`dxpy.bindings.dxgtable.DXGTable.extend` for more details. (optional)
+    :param indices: An ordered list containing index descriptors.  See :func:`~dxpy.bindings.dxgtable.DXGTable.extend` for more details. (optional)
     :type indices: list of index descriptors
-    :rtype: :class:`dxpy.bindings.dxgtable.DXGTable`
+    :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.

@@ -35,7 +35,7 @@ class DXApp(DXObject):
         :type name: string
         :param alias: App version or tag
         :type alias: string
-        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* and some other input are both given or if neither *dxid* nor *name* are given
+        :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* and some other input are both given or if neither *dxid* nor *name* are given
 
         Discards the currently stored ID and associates the handler
         with the requested parameters.  Note that if *dxid* is given,

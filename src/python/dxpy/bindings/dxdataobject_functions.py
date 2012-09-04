@@ -20,9 +20,22 @@ def dxlink(object_id, project_id=None):
         return {'$dnanexus_link': {'project': project_id, 'id': object_id}}
 
 def is_dxlink(x):
+    '''
+    :param x: A potential DNAnexus link
+
+    Returns whether *x* appears to be a DNAnexus link (is a dict with
+    key "$dnanexus_link").
+    '''
     return isinstance(x, dict) and '$dnanexus_link' in x
 
 def get_dxlink_ids(link):
+    '''
+    :param link: A DNAnexus link
+    :type link: dict
+    :returns: Object ID, Project ID (or :const:`None` if no project specified in the link)
+
+    Returns the IDs stored in the given DNAnexus link.
+    '''
     if isinstance(link['$dnanexus_link'], dict):
         return link['$dnanexus_link']['id'], link['$dnanexus_link']['project']
     else:
