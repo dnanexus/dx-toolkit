@@ -59,6 +59,7 @@ class DXFile(DXDataObject):
         self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
         self._keep_open = keep_open
+        self._num_uploaded_parts = 0
 
         if buffer_size < 5*1024*1024:
             raise DXFileError("Buffer size must be at least 5 MB")
@@ -145,6 +146,7 @@ class DXFile(DXDataObject):
         self._pos = 0
         self._file_length = None
         self._cur_part = 1
+        self._num_uploaded_parts = 0
 
     def seek(self, offset):
         '''
@@ -248,16 +250,10 @@ class DXFile(DXDataObject):
         '''
         self.flush(**kwargs)
 
-        try:
-            dxpy.api.fileClose(self._dxid, **kwargs)
-        except DXAPIError as e:
-            if e.name == 'InvalidState' and e.msg == 'File needs to contain at least one part to be closed.':
-                # File is empty
-                self._cur_part += 1
-                self.upload_part('', 1, **kwargs)
-                dxpy.api.fileClose(self._dxid, **kwargs)
-            else:
-                raise
+        if self._num_uploaded_parts == 0: # File is empty, upload an empty part (files with 0 parts cannot be closed)
+            self.upload_part('', 1, **kwargs)
+
+        dxpy.api.fileClose(self._dxid, **kwargs)
 
         if block:
             self._wait_on_close(**kwargs)
@@ -298,6 +294,8 @@ class DXFile(DXDataObject):
         headers['Content-Type'] = 'application/octet-stream'
 
         DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
+
+        self._num_uploaded_parts += 1
 
         if display_progress:
             print >> sys.stderr, "."
