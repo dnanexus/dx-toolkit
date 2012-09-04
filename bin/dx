@@ -8,9 +8,6 @@ import hashlib
 
 import requests
 from requests.auth import HTTPBasicAuth
-from dxpy.utils.env import parse_user_env_file
-from dxpy.utils.printing import *
-from dxpy.utils.pretty_print import format_tree, format_table
 
 try:
     import readline
@@ -131,6 +128,9 @@ if len(args_list) == 1 and args_list[0] == 'clearenv':
 
 # importing dxpy will now appropriately load env variables
 import dxpy
+from dxpy.utils.env import parse_user_env_file
+from dxpy.utils.printing import *
+from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import *
 from dxpy.utils.completer import *
 from dxpy.utils.describe import *
