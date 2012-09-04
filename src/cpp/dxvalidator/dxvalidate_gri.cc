@@ -3,6 +3,7 @@
 using namespace dx;
 
 bool GriValidator::validateTypes() {
+  GTableValidator::validateTypes();
   if (! types.Has("gri")) return msg->setError("TYPE_NOT_GRI");
   if (! hasGenomicIndex()) return msg->setError("GRI_INDEX_MISSING");
   return true;

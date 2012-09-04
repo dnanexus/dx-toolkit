@@ -20,7 +20,10 @@ namespace dx {
       
       bool processColumns();
       
-      virtual bool validateTypes() { return true; }
+      virtual bool validateTypes() { 
+        if (types.HasDuplicate()) msg->addWarning("TYPE_DUPLICATE");
+        return true;
+      }
       virtual bool validateDetails() { return true; }
       virtual bool validateColumns();
       virtual bool validateData() { return true; }
@@ -43,6 +46,9 @@ namespace dx {
         
         errorMsg["COLUMNS_MISSING"] = "Following columns are missing: ({1})";
         errorMsg["COLUMNS_INVALID_TYPES"] = "Following columns have wrong types (The proper type of each column is in the bracket): ({1})"; 
+        errorMsg["COLUMNS_FORBIDDEN"] = "Following columns are forbidden: ({1})";
+
+        warningMsg["COLUMNS_NOT_RECOGNIZED"] = "Following columns are not Unrecognized: ({1})";
       }
   };
 };

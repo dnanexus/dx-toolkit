@@ -26,6 +26,12 @@ bool GTableValidator::processColumns() {
     return msg->setError("COLUMNS_INVALID_TYPES", true);
   }
 
+  cols = columns->getColumnList(4);
+  if (cols.size() > 0) {
+    msg->setData(cols, 0);
+    return msg->setError("COLUMNS_FORBIDDEN", true);
+  }
+
   cols = columns->getColumnList(3);
   if (cols.size() > 0) {
     msg->setData(cols, 0);
