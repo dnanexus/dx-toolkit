@@ -6,6 +6,7 @@ using namespace dx;
 bool GTableValidator::processColumns() { 
   columns->Init();
   columns->Add(desc["columns"]);
+  queryColumns = columns->getQueryColumns();
 
   string cols = columns->getColumnList(0);
   if (cols.size() > 0) {
@@ -54,7 +55,6 @@ bool GTableValidator::fetchHead(const string &source_id) {
     }
     return false;
   }
-
   
   if (desc["class"].get<string>() != "gtable") return msg->setError("CLASS_NOT_GTABLE");
   if (desc["state"].get<string>() != "closed") return msg->setError("GTABLE_NOT_CLOSED");

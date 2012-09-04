@@ -106,7 +106,7 @@ ErrorMsg::ErrorMsg() {
 }
 
 void ErrorMsg::SetData(const string &msgD, uint32_t pos) {
-  msgData.resize(pos+1);
+  if (msgData.size() <= pos) msgData.resize(pos+1);
   msgData[pos] = msgD;
 }
 

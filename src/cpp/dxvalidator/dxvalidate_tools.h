@@ -69,6 +69,8 @@ namespace dx {
       string getColumnList(int index);
 
       JSON getQueryColumns() { return queryColumns; }
+
+      bool Has(const string &column) { return (allColumns.find(column) != allColumns.end()); }
   };
 
   class ErrorMsg {
@@ -116,12 +118,12 @@ namespace dx {
       void setBoolean(const string &key, bool value) { info[key] = value; }
 
       void addWarning(const string &w, bool additionalInfo = false);
-
       void addRowWarning(const string &w, uint32_t p = 0);
+      void addRowWarning(const string &w, const string &colName, uint32_t p = 0);
 
       bool setError(const string &err, bool additionalInfo = false);
-
       bool setRowError(const string &err, uint32_t p = 0);
+      bool setRowError(const string &err, const string &colName, uint32_t p = 0);
 
       bool setDXError(const string &m, const string &err);
 
