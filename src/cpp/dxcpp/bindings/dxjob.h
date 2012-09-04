@@ -38,7 +38,7 @@ class DXJob {
    * Returns a description of the job.
    *
    * @return JSON hash describing the job, as given by the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Job-Execution#API-method%3A-%2Fjob-xxxx%2Fdescribe">/job-xxxx/describe</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Execution#API-method%3A-%2Fjob-xxxx%2Fdescribe">/job-xxxx/describe</a>
    * API method.
    */
   dx::JSON describe() const;
@@ -54,7 +54,7 @@ class DXJob {
    * Returns the current remote job state.
    *
    * @return A string containing the current state of the job. Possible values are listed in the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Job-Execution#Job-states">API
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Execution#Job-states">API
    * specification</a>.
    */
   std::string getState() const { return describe()["state"].get<std::string>(); }
@@ -81,7 +81,7 @@ class DXJob {
    * parent job + ":fn_name") will be used instead.
    * @param resources A hash specifying the minimum resources to be allocated to this job, as
    * provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Job-Execution#API-method%3A-%2Fjob%2Fnew">/job/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Execution#API-method%3A-%2Fjob%2Fnew">/job/new</a>
    * API method.
    */
   void create(const dx::JSON &fn_input, const std::string &fn_name, const std::string &job_name="", const dx::JSON resources=dx::JSON(dx::JSON_NULL));
