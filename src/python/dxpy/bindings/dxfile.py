@@ -248,7 +248,16 @@ class DXFile(DXDataObject):
         '''
         self.flush(**kwargs)
 
-        dxpy.api.fileClose(self._dxid, **kwargs)
+        try:
+            dxpy.api.fileClose(self._dxid, **kwargs)
+        except DXAPIError as e:
+            if e.name == 'InvalidState' and e.msg == 'File needs to contain at least one part to be closed.':
+                # File is empty
+                self._cur_part += 1
+                self.upload_part('', 1, **kwargs)
+                dxpy.api.fileClose(self._dxid, **kwargs)
+            else:
+                raise
 
         if block:
             self._wait_on_close(**kwargs)
