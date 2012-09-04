@@ -380,7 +380,7 @@ def resolve_job_ref(job_id, name, describe={}):
 
     return results
 
-def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}):
+def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}, all_mult=False):
     '''
     :param ask_to_resolve: Whether picking may be necessary (if true, a list is returned; if false, only one result is returned)
     :type ask_to_resolve: boolean
@@ -388,6 +388,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     :type allow_mult: boolean
     :param describe: Input hash to describe call for the results
     :type describe: dict
+    :param all_mult: Whether to return all matching results without prompting (only applicable if allow_mult == True)
+    :type all_mult: boolean
     :returns: A LIST of results when ask_to_resolve is False or allow_mult is True
 
     Returns either a list of results or a single result (depending on
@@ -465,6 +467,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             return project, None, results
 
         if len(results) > 1:
+            if allow_mult and all_mult:
+                return project, None, results
             if sys.stdout.isatty():
                 print 'The given path \"' + path + '\" resolves to the following data objects:'
                 choice = pick(map(lambda result:
