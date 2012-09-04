@@ -94,6 +94,9 @@ def is_job_id(string):
 def is_nohash_id(string):
     return nohash_pattern.match(string) is not None
 
+def is_glob_pattern(string):
+    return (get_last_pos_of_char('*', string) >= 0) or (get_last_pos_of_char('?', string) >= 0)
+
 def escape_folder_str(string):
     return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('*', '\*').replace('?', '\?')
 
@@ -440,11 +443,12 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         # Probably an object
         if is_job_id(project):
             # The following will raise if no results could be found
-            results =  resolve_job_ref(project, entity_name, describe=describe)
+            results = resolve_job_ref(project, entity_name, describe=describe)
         else:
             results = list(dxpy.find_data_objects(project=project,
                                                   folder=folderpath,
                                                   name=entity_name,
+                                                  name_mode=('glob' if is_glob_pattern(entity_name) else 'exact'),
                                                   recurse=False,
                                                   describe=describe,
                                                   visibility='either'))
@@ -467,7 +471,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             return project, None, results
 
         if len(results) > 1:
-            if allow_mult and all_mult:
+            if allow_mult and (all_mult or is_glob_pattern(entity_name)):
                 return project, None, results
             if sys.stdout.isatty():
                 print 'The given path \"' + path + '\" resolves to the following data objects:'

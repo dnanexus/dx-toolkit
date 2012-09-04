@@ -9,6 +9,13 @@ import hashlib
 import requests
 from requests.auth import HTTPBasicAuth
 
+# Try to reset encoding to utf-8
+try:
+    import sys, locale
+    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+except:
+    pass
+
 try:
     import readline
 except ImportError:
