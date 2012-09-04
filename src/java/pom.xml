@@ -6,7 +6,7 @@
   <packaging>jar</packaging>
   <version>0.1-SNAPSHOT</version>
   <name>dnanexus-api</name>
-  <url>http://wiki.dev.dnanexus.com/</url>
+  <url>http://wiki.dnanexus.com/</url>
   <dependencies>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>

@@ -1,6 +1,6 @@
 '''
 These functions provide shorthand functional interfaces for actions such as
-getting a :class:`dxpy.bindings.DXDataObject` handler from an ID or `link <http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_ or creating a link from a handler.  In addition, there are functions for performing simple actions with an ID or link as input when you do not need to keep around a full object handler after performing the action.
+getting a :class:`dxpy.bindings.DXDataObject` handler from an ID or `link <http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_ or creating a link from a handler.  In addition, there are functions for performing simple actions with an ID or link as input when you do not need to keep around a full object handler after performing the action.
 '''
 
 from dxpy.bindings import *
@@ -20,9 +20,22 @@ def dxlink(object_id, project_id=None):
         return {'$dnanexus_link': {'project': project_id, 'id': object_id}}
 
 def is_dxlink(x):
+    '''
+    :param x: A potential DNAnexus link
+
+    Returns whether *x* appears to be a DNAnexus link (is a dict with
+    key "$dnanexus_link").
+    '''
     return isinstance(x, dict) and '$dnanexus_link' in x
 
 def get_dxlink_ids(link):
+    '''
+    :param link: A DNAnexus link
+    :type link: dict
+    :returns: Object ID, Project ID (or :const:`None` if no project specified in the link)
+
+    Returns the IDs stored in the given DNAnexus link.
+    '''
     if isinstance(link['$dnanexus_link'], dict):
         return link['$dnanexus_link']['id'], link['$dnanexus_link']['project']
     else:

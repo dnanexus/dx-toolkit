@@ -23,7 +23,7 @@ Here is an example of a context-managed GTable handle::
       for line in input_file:
           gtable.add_row(line.split(','))
 
-The use of the context-managed GTable is optional, that is, you may use the
+The use of the context-managed GTable is optional; that is, you may use the
 object without a "with" block (and omit the "mode" parameter). However, if you
 write any data to a GTable using a non context-managed GTable handle, you must
 call :meth:`~dxpy.bindings.dxgtable.DXGTable.flush` or

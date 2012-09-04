@@ -84,8 +84,9 @@ class DXDataObject(DXObject):
         :type parents: boolean
 
         Creates the data object with the given fields.  Only *project*
-        is required; the rest are optional and have default behavior
-        as specified in the API documentation.
+        is required if no default project or workspace is set; the
+        rest are optional and have default behavior as specified in
+        the API documentation.
 
         '''
         try:
@@ -154,9 +155,9 @@ class DXDataObject(DXObject):
         :returns: Description of the remote object
         :rtype: dict
 
-        Returns a dictionary which will include the keys "id",
-        "class", "types", and "created".  Other fields may also be
-        included, depending on the class.
+        Returns a dictionary which will include the key-value pairs as
+        specified in the API documentation such as "id", "class", etc.
+        Different classes of objects may have different fields.
 
         """
 
@@ -340,7 +341,7 @@ class DXDataObject(DXObject):
 
     def remove(self, **kwargs):
         '''
-        :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
+        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
 
         Permanently remove the associated remote object from the
         associated project.
@@ -361,7 +362,7 @@ class DXDataObject(DXObject):
         '''
         :param folder: Folder route to which to move the object
         :type folder: string
-        :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
+        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
 
         Move the associated remote object to *folder*.
 
@@ -382,7 +383,7 @@ class DXDataObject(DXObject):
         :type project: string
         :param folder: Folder route to which to move the object
         :type folder: string
-        :raises: :exc:`dxpy.exceptions.DXError` if no project is associated with the object
+        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
         :returns: An object handler for the new cloned object
         :rtype: :class:`DXDataObject`
 

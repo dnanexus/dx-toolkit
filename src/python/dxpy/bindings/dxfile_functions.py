@@ -1,13 +1,32 @@
 '''
+You can obtain a handle to a new or existing File object with
+:func:`new_dxfile` or :func:`open_dxfile`, respectively.  Both return
+a remote file handler that can be treated as a file descriptor.
+
+Here is an example of iterating through an entire file and printing it
+to stdout using a context-managed File handle::
+
+  with open_dxfile('file-xxxx') as fd:
+      for line in input_file:
+          fd.write(line)
+
+The use of the context-managed File is optional; that is, you may use
+the object without a "with" block.  However, if you write any data to a File using a non-context-managed File handle, you must call :meth:`~dxpy.bindings.dxfile.DXFile.flush` or :meth:~dxpy.bindings.dxfile.DXFile.close` explicitly yourself::
+
+  file = open_dxfile('file-xxxx')
+  for line in input_file:
+      fd.write(line)
+  file.flush()
+
+There are also helper functions (:func:`download_dxfile`,
+:func:`upload_local_file`, and :func:`upload_string`) for directly
+downloading and uploading existing files or strings as a whole.
+
 Helper Functions
 ****************
 
-These two functions provide functionality for opening an existing
-remote file (read-only) and creating a new remote file (write-only).
-Both return a remote file handler that can be treated as a file
-descriptor.  These two functions are essentially useful aliases for
-executing simple download and upload operations between the local and
-the remote file systems.
+The following helper functions are useful shortcuts for interacting with File objects.
+
 '''
 
 import os
@@ -124,9 +143,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         with open("reads.fastq") as fh:
             dxpy.upload_local_file(file=fh)
-
-    TODO: Do I want an optional argument to indicate in what size
-    chunks the file should be uploaded or in how many pieces?
 
     '''
     fd = file if filename is None else open(filename, 'rb')

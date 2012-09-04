@@ -1,16 +1,16 @@
 '''
 There are a few different methods by which existing objects and
-entities can be queried.  The :func:`dxpy.bindings.search.find_data_objects`
+entities can be queried.  The :func:`~dxpy.bindings.search.find_data_objects`
 function will provide search functionality over all data objects
 managed by the API server.  All jobs (running, failed, or done) can be
-found using :func:`dxpy.bindings.search.find_jobs`.
+found using :func:`~dxpy.bindings.search.find_jobs`.
 '''
 
 import dxpy
 from dxpy.bindings import *
 import time
 
-def now():
+def _now():
     return int(time.time()*1000)
 
 def find_data_objects(classname=None, state=None, visibility=None,
@@ -134,14 +134,14 @@ def find_data_objects(classname=None, state=None, visibility=None,
             if modified_after >= 0:
                 query["modified"]["after"] = modified_after
             else:
-                query["modified"]["after"] = now() + modified_after
+                query["modified"]["after"] = _now() + modified_after
         if modified_before is not None:
             if isinstance(modified_before, basestring):
                 modified_before = dxpy.utils.normalize_timedelta(modified_before)
             if modified_before >= 0:
                 query["modified"]["before"] = modified_before
             else:
-                query["modified"]["before"] = now() + modified_before
+                query["modified"]["before"] = _now() + modified_before
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
@@ -150,14 +150,14 @@ def find_data_objects(classname=None, state=None, visibility=None,
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
-                query["created"]["after"] = now() + created_after
+                query["created"]["after"] = _now() + created_after
         if created_before is not None:
             if isinstance(created_before, basestring):
                 created_before = dxpy.utils.normalize_timedelta(created_before)
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
-                query["created"]["before"] = now() + created_before
+                query["created"]["before"] = _now() + created_before
     if describe is not None:
         query["describe"] = describe
     if level is not None:
@@ -287,14 +287,14 @@ def find_one_data_object(classname=None, state=None, visibility=None,
             if modified_after >= 0:
                 query["modified"]["after"] = modified_after
             else:
-                query["modified"]["after"] = now() + modified_after
+                query["modified"]["after"] = _now() + modified_after
         if modified_before is not None:
             if isinstance(modified_before, basestring):
                 modified_before = dxpy.utils.normalize_timedelta(modified_before)
             if modified_before >= 0:
                 query["modified"]["before"] = modified_before
             else:
-                query["modified"]["before"] = now() + modified_before
+                query["modified"]["before"] = _now() + modified_before
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
@@ -303,14 +303,14 @@ def find_one_data_object(classname=None, state=None, visibility=None,
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
-                query["created"]["after"] = now() + created_after
+                query["created"]["after"] = _now() + created_after
         if created_before is not None:
             if isinstance(created_before, basestring):
                 created_before = dxpy.utils.normalize_timedelta(created_before)
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
-                query["created"]["before"] = now() + created_before
+                query["created"]["before"] = _now() + created_before
     if describe is not None:
         query["describe"] = describe
     query["limit"] = 1
@@ -404,14 +404,14 @@ def find_jobs(launched_by=None, executable=None, project=None,
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
-                query["created"]["after"] = now() + created_after
+                query["created"]["after"] = _now() + created_after
         if created_before is not None:
             if isinstance(created_before, basestring):
                 created_before = dxpy.utils.normalize_timedelta(created_before)
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
-                query["created"]["before"] = now() + created_before
+                query["created"]["before"] = _now() + created_before
     query["describe"] = describe
     if name is not None:
         if name_mode == 'exact':
@@ -470,7 +470,7 @@ def find_projects(name=None, name_mode='exact', properties=None,
         else:
             raise DXError('find_projects: Unexpected value found for argument name_mode')
     if properties is not None:
-        query["properties"] = level
+        query["properties"] = properties
     if level is not None:
         query["level"] = level
     if describe is not None:
@@ -567,26 +567,26 @@ def find_apps(name=None, name_mode='exact', category=None,
             if modified_after >= 0:
                 query["modified"]["after"] = modified_after
             else:
-                query["modified"]["after"] = now() + modified_after
+                query["modified"]["after"] = _now() + modified_after
         if modified_before is not None:
             if isinstance(modified_before, basestring):
                 modified_before = dxpy.utils.normalize_timedelta(modified_before)
             if modified_before >= 0:
                 query["modified"]["before"] = modified_before
             else:
-                query["modified"]["before"] = now() + modified_before
+                query["modified"]["before"] = _now() + modified_before
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
             if created_after >= 0:
                 query["created"]["after"] = created_after
             else:
-                query["created"]["after"] = now() + created_after
+                query["created"]["after"] = _now() + created_after
         if created_before is not None:
             if created_before >= 0:
                 query["created"]["before"] = created_before
             else:
-                query["created"]["before"] = now() + created_before
+                query["created"]["before"] = _now() + created_before
     if describe is not None:
         query["describe"] = describe
 

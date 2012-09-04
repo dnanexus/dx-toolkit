@@ -17,7 +17,7 @@
 ///
 /// GenomicTables (GTables) are a medium for storing and querying large amounts of tabular data and
 /// querying it (see the <a
-/// href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables">API specification</a>
+/// href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables">API specification</a>
 /// for more info). In order to support jobs that process large volumes of data, the GTable API
 /// allows streaming storage and retrieval of data, and parallel access from multiple compute
 /// nodes; and can automatically sort and index GTable data for you. GTables can support queries on
@@ -200,7 +200,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    */
   void create(const std::vector<dx::JSON> &columns,
@@ -214,7 +214,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    */
   void create(const std::vector<dx::JSON> &columns,
@@ -235,7 +235,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    */
   void create(const DXGTable &init_from,
@@ -252,7 +252,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    */
   void create(const DXGTable &init_from,
@@ -274,7 +274,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    */
   void create(const DXGTable &init_from,
@@ -293,7 +293,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the new (extended) GTable.
@@ -314,7 +314,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the new (extended) GTable.
@@ -342,7 +342,7 @@ public:
    * number of rows returned, the next row ID that may satisfy the same query (or null if there are
    * known to be no more query results), and the matching results, as an array of arrays. For more
    * info, see the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">/gtable-xxxx/get</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">/gtable-xxxx/get</a>
    * API method.
    */
   dx::JSON getRows(const dx::JSON &query=dx::JSON(dx::JSON_NULL),
@@ -404,7 +404,7 @@ public:
   /**
    * Adds the rows listed in data to the remote GTable, writing to the specified part ID, as
    * specified in <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">/gtable-xxxx/addRows</a>.
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">/gtable-xxxx/addRows</a>.
    *
    * @note This function works quite differently from its overloaded counterpart
    * addRows(const dx::JSON&).
@@ -449,7 +449,7 @@ public:
    * been written, nor does it protect against someone else adding rows with that part ID.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">/gtable-xxxx/nextPart</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">/gtable-xxxx/nextPart</a>
    * API method for more info.
    *
    * @return A valid part ID can be used to upload to the remote GTable object.
@@ -474,7 +474,7 @@ public:
    * Calls flush() and issues a request to close the remote GTable.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">/gtable-xxxx/close</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">/gtable-xxxx/close</a>
    * API method for more info.
    *
    * @param block Boolean indicating whether the process should block until the remote GTable is in
@@ -522,7 +522,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the newly created GTable.
@@ -540,7 +540,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the newly created GTable.
@@ -563,7 +563,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the newly created GTable.
@@ -585,7 +585,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the newly created GTable.
@@ -611,7 +611,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the newly created GTable.
@@ -633,7 +633,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the new (extended) GTable.
@@ -656,7 +656,7 @@ public:
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project" if not using the default project, "types", "details", "hidden", "name",
    * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
    * API method.
    *
    * @return An object handler for the new (extended) GTable.

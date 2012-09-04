@@ -15,6 +15,9 @@ class DXParserError(Exception):
     def __str__(self):
         return self.msg
 
+all_arg = argparse.ArgumentParser(add_help=False)
+all_arg.add_argument('-a', '--all', help=fill('Apply to all results with the same name without prompting', width_adjustment=-24), action='store_true')
+
 no_color_arg = argparse.ArgumentParser(add_help=False)
 no_color_arg.add_argument('--color',
                           help=fill('Set when color is used (auto=color is used when stdout is a TTY)', width_adjustment=-24),
@@ -88,7 +91,8 @@ _env_args.add_argument('--auth-token', help='Authentication token')
 
 class EnvHelpAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        parser.exit(0, _env_args.format_help())
+        _env_args.print_help()
+        parser.exit(0)
 
 env_args = argparse.ArgumentParser(add_help=False)
 env_args.add_argument('--apiserver-host', help=argparse.SUPPRESS)

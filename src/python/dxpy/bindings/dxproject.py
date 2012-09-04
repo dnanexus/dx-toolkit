@@ -28,7 +28,7 @@ class DXContainer(DXObject):
         '''
         :param dxid: Project or container ID
         :type dxid: string
-        :raises: :exc:`dxpy.exceptions.DXError` if *dxid* does not match class type
+        :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* does not match class type
 
         Discards the currently stored ID and associates the handler
         with *dxid*.
@@ -62,9 +62,10 @@ class DXContainer(DXObject):
         :returns: A hash containing attributes of the project or container.
         :rtype: dict
 
-        Returns a hash which will include the keys "id", "class",
-        "name", "description", "protected", "restricted", and
-        "created".
+        Returns a hash with key-value pairs as specified by the API
+        specification.  This will usually include keys such as "id",
+        "name", "class", "billTo", "created", "modified", and
+        "dataUsage".
 
         """
         api_method = dxpy.api.containerDescribe

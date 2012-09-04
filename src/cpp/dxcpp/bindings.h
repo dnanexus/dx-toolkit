@@ -51,7 +51,7 @@ class DXDataObject {
    * Clones the object into the specified project and folder.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxxx/clone</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxxx/clone</a>
    * API method for more info.
    *
    * @param dest_proj_id ID of the project into which the object should be cloned
@@ -131,7 +131,7 @@ class DXDataObject {
    * Adds the specified types to the object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">/class-xxxx/addTypes</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">/class-xxxx/addTypes</a>
    * API method for more info.
    *
    * @param types JSON array of strings to add as types
@@ -142,7 +142,7 @@ class DXDataObject {
    * Removes the specified types from the object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">/class-xxxx/removeTypes</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">/class-xxxx/removeTypes</a>
    * API method for more info.
    *
    * @param types JSON array of strings to remove as types
@@ -153,7 +153,7 @@ class DXDataObject {
    * Retrieves the details stored in the object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">/class-xxxx/getDetails</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">/class-xxxx/getDetails</a>
    * API method for more info.
    *
    * @return JSON hash or array containing the remote object's details
@@ -164,7 +164,7 @@ class DXDataObject {
    * Stores the given JSON in the details of the remote object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">/class-xxxx/setDetails</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">/class-xxxx/setDetails</a>
    * API method for more info.
    *
    * @param details Arbitrary JSON hash or array to store as details
@@ -175,7 +175,7 @@ class DXDataObject {
    * Ensures that the remote object is hidden.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
    * API method for more info.
    */
   void hide() const;
@@ -184,7 +184,7 @@ class DXDataObject {
    * Ensures that the remote object is visible.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
    * API method for more info.
    */
   void unhide() const;
@@ -193,7 +193,7 @@ class DXDataObject {
    * Renames the object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">/class-xxxx/rename</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">/class-xxxx/rename</a>
    * API method for more info.
    *
    * @param name New name for the object.
@@ -204,7 +204,7 @@ class DXDataObject {
    * Sets the specified properties.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">/class-xxxx/setProperties</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">/class-xxxx/setProperties</a>
    * API method for more info.
    *
    * @param properties JSON hash mapping strings to strings, containing names and values of
@@ -224,7 +224,7 @@ class DXDataObject {
    * Adds the specified tags to the object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">/class-xxxx/addTags</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">/class-xxxx/addTags</a>
    * API method for more info.
    *
    * @param tags JSON array of strings to add as tags.
@@ -235,7 +235,7 @@ class DXDataObject {
    * Removes the specified tags from the object.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">/class-xxxx/removeTags</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">/class-xxxx/removeTags</a>
    * API method for more info.
    *
    * @param tags JSON array of strings to remove as tags.
