@@ -187,10 +187,16 @@ class DXContainer {
 
 class DXProject : public DXContainer {
  public:
- DXProject(const std::string &dxid=g_WORKSPACE_ID) : DXContainer(dxid) { }
 
   /**
-   * Update the project with specified options, as specified in the <a
+   * Creates a %DXProject handler for the specified remote project.
+   *
+   * @param dxid Project ID.
+   */
+  DXProject(const std::string &dxid=g_WORKSPACE_ID) : DXContainer(dxid) { }
+
+  /**
+   * Updates the remote project with the provided options, as specified in the <a
    * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">/project-xxxx/update</a>
    * method.
    *
@@ -199,14 +205,14 @@ class DXProject : public DXContainer {
   void update(const dx::JSON &to_update) const;
 
   /**
-   * Destroys the specified project. All objects in the project are removed. Any jobs running in
-   * the project context are terminated.
+   * Destroys the remote project. All objects in the project are removed. Any jobs running in the
+   * project context are terminated.
    */
   void destroy() const;
 
   /**
-   * Invites another person (or PUBLIC) to the project. If the invitee is another person, they will
-   * receive the specified permission when they accept the invitation.
+   * Invites another person (or PUBLIC) to the remote project. If the invitee is another person,
+   * they will receive the specified permission when they accept the invitation.
    *
    * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Invitations%20and%20Join%20Requests#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
    *
@@ -216,7 +222,7 @@ class DXProject : public DXContainer {
   void invite(const std::string &invitee, const std::string &level) const;
 
   /**
-   * Decreases the permissions of the specified user in the associated project.
+   * Decreases the permissions of the specified user in the remote project.
    *
    * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
    *

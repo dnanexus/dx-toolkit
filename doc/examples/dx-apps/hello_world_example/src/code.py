@@ -5,6 +5,6 @@ import dxpy
 
 @dxpy.entry_point('main')
 def main(name):
-    return {'greeting': 'Hello, %s!' % (name,)}
+    return {'greeting': 'Hello, ' + name + '!'}
 
 dxpy.run()

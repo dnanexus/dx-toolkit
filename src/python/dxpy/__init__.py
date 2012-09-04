@@ -69,7 +69,7 @@ JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
 APISERVER_PROTOCOL = 'http'
 APISERVER_HOST = 'localhost'
-APISERVER_PORT = 8124
+APISERVER_PORT = '8124'
 
 DEFAULT_RETRIES = 5
 
@@ -201,7 +201,7 @@ def set_api_server_info(host=None, port=None, protocol=None):
     :param host: API server hostname
     :type host: string
     :param port: API server port
-    :type port: int
+    :type port: string
     :param protocol: either "http" or "https" for SSL
     :type protocol: string
 
@@ -270,8 +270,12 @@ def set_project_context(dxid):
 
 from dxpy.utils.env import get_env
 
-def _initialize():
-    env_vars = get_env()
+def _initialize(suppress_warning=False):
+    '''
+    :param suppress_warning: Whether to suppress the warning message for any mismatch found in the environment variables and the dx configuration file
+    :type suppress_warning: boolean
+    '''
+    env_vars = get_env(suppress_warning)
     for var in env_vars:
         if env_vars[var] is not None:
             os.environ[var] = env_vars[var]
@@ -282,8 +286,6 @@ def _initialize():
 
     if "DX_SECURITY_CONTEXT" in os.environ:
         set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
-    else:
-        print "Warning: no security context found in environment variables"
 
     if "DX_JOB_ID" in os.environ:
         set_job_id(os.environ["DX_JOB_ID"])

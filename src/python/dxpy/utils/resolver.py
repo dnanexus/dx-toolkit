@@ -95,16 +95,16 @@ def is_nohash_id(string):
     return nohash_pattern.match(string) is not None
 
 def escape_folder_str(string):
-    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:')
+    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('*', '\*').replace('?', '\?')
 
 def escape_name_str(string):
-    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('/', '\/')
+    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('/', '\/').replace('*', '\*').replace('?', '\?')
 
 def unescape_folder_str(string):
-    return string.replace('\:', ':').replace('\ ', ' ').replace('\\\\', '\\')
+    return string.replace('\?', '?').replace('\*', '*').replace('\:', ':').replace('\ ', ' ').replace('\\\\', '\\')
 
 def unescape_name_str(string):
-    return string.replace('\:', ':').replace('\ ', ' ').replace('\/', '/').replace('\\\\', '\\')
+    return string.replace('\?', '?').replace('\*', '*').replace('\:', ':').replace('\ ', ' ').replace('\/', '/').replace('\\\\', '\\')
 
 def get_last_pos_of_char(char, string):
     '''
@@ -386,11 +386,15 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     :type ask_to_resolve: boolean
     :param allow_mult: Whether to allow the user to select multiple results from the same path
     :type allow_mult: boolean
+    :param describe: Input hash to describe call for the results
+    :type describe: dict
     :returns: A LIST of results when ask_to_resolve is False or allow_mult is True
 
     Returns either a list of results or a single result (depending on
     how many is expected; if only one, then an interactive picking of
     a choice will be initiated if input is a tty, or else throw an error).
+
+    TODO: Always treats the path as a glob pattern.
 
     Output is of the form {"id": id, "describe": describe hash} a list
     of those
@@ -417,6 +421,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if not found_valid_class:
             return None, None, None
         try:
+            if 'project' not in describe and dxpy.WORKSPACE_ID is not None:
+                describe['project'] = dxpy.WORKSPACE_ID
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
         except BaseException as details:
             raise ResolutionError(str(details))

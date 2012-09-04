@@ -3,7 +3,7 @@
 import dxpy
 import math
 import operator
-from optparse import OptionParser
+import argparse
 import re
 import sys
 
@@ -22,35 +22,35 @@ sys.path.append('/usr/local/lib/')
 import magic
 
 
-#Example: dx_vcfToSimplevar --table_id gtable-9yZvF200000PYKJyV4k00005 --vcf_file variants.vcf --extract_header
+#Example: dx-vcf-to-simplevar --table_id gtable-9yZvF200000PYKJyV4k00005 --vcf_file variants.vcf --extract_header
 
 def main():
 
-    parser = OptionParser("Usage: % mappings_id file_name")
-    parser.add_option("--table_id", dest="simplevar_id", action="append", help="Simplevar table id to read from")
-    parser.add_option("--vcf_file", dest="file_name", help="Name of file to import VCF from")
-    parser.add_option("--infer_no_call", dest="infer_no_call", action = "store_true", default = False, help="All contigous blocks of no-call will be compressed to a single row")
-    parser.add_option("--compress_reference", dest="compress_reference", action="store_true", default = False, help="All contiguous blocks of reference will be compressed to a single row")
-    parser.add_option("--store_full_vcf", dest="store_full_vcf", action="store_true", default = False, help="All contiguous blocks of reference will be compressed to a single row")
-    parser.add_option("--extract_header", dest="extract_header", action="store_true", default = False, help="Use this to set the details for the header data")
-    parser.add_option("--store_samples_individually", dest="store_samples_individually", action="store_true", default = False, help="Each column of samples will be stored in its own gtable. You must provide as many table_ids as there are columns")
-    parser.add_option("--region_file", dest="region_file", default="", help="Regions to process for variants in the format Chr:lo-hi")
+    parser = argparse.ArgumentParser(description='Upload a local VCF file as a Simplevar GTable')
+    parser.add_argument("--table_id", dest="simplevar_id", action="append", help="Simplevar table id to read from")
+    parser.add_argument("--vcf_file", dest="file_name", help="Name of file to import VCF from")
+    parser.add_argument("--infer_no_call", dest="infer_no_call", action = "store_true", help="All contigous blocks of no-call will be compressed to a single row")
+    parser.add_argument("--compress_reference", dest="compress_reference", action="store_true", help="All contiguous blocks of reference will be compressed to a single row")
+    parser.add_argument("--store_full_vcf", dest="store_full_vcf", action="store_true", help="All contiguous blocks of reference will be compressed to a single row")
+    parser.add_argument("--extract_header", dest="extract_header", action="store_true", help="Use this to set the details for the header data")
+    parser.add_argument("--store_samples_individually", dest="store_samples_individually", action="store_true", help="Each column of samples will be stored in its own gtable. You must provide as many table_ids as there are columns")
+    parser.add_argument("--region_file", dest="region_file", default="", help="Regions to process for variants in the format Chr:lo-hi")
 
-    (opts, args) = parser.parse_args()
+    args = parser.parse_args()
     
     simpleVarArray = []
     priors = []
-    for x in opts.simplevar_id:
+    for x in args.simplevar_id:
         simpleVarArray.append(dxpy.open_dxgtable(x))
         priors.append({'chr':'', 'position':-1})
-    #vcfFile = open(opts.file_name, 'r')
-    vcfFileName = opts.file_name
+    #vcfFile = open(args.file_name, 'r')
+    vcfFileName = args.file_name
     print vcfFileName
     print open(vcfFileName, 'r').readline()
-    inferNoCall = opts.infer_no_call
-    compressReference = opts.compress_reference
-    storeFullVcf = opts.store_full_vcf
-    extractHeader = opts.extract_header
+    inferNoCall = args.infer_no_call
+    compressReference = args.compress_reference
+    storeFullVcf = args.store_full_vcf
+    extractHeader = args.extract_header
 
     priorType = "None"
     priorPosition = -1
@@ -77,8 +77,8 @@ def main():
     contigNames = contigDetails['names']
     contigSizes = contigDetails['sizes']
     
-    if opts.region_file != "":
-        regionText = open(opts.region_file, 'r').read()
+    if args.region_file != "":
+        regionText = open(args.region_file, 'r').read()
         intervalMatch = re.findall("(\w+):(\d+)-(\d+)", regionText)
         for x in intervalMatch:
             if regions.get(x[0]) == None:
@@ -124,7 +124,7 @@ def main():
             else:
                 for sample in range(len(simpleVarArray)):
                     simpleVar = simpleVarArray[sample]
-                    vcfLine = parseVcfLine(opts.store_samples_individually, input, sample)
+                    vcfLine = parseVcfLine(args.store_samples_individually, input, sample)
                     regionIndex = checkWithinRegion(vcfLine['chr'], vcfLine['lo'], vcfLine['hi'], regions)
                     if regionIndex > -1:
                         

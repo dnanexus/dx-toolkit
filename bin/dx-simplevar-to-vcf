@@ -2,24 +2,24 @@
 
 import dxpy
 import math
-from optparse import OptionParser
+import argparse
 import re
 
 def main():
 
-    parser = OptionParser("Usage: %prog table_id output quality_filter")
-    parser.add_option("--table_id", dest="simple_var_id", help="Simplevar table id to read from")
-    parser.add_option("--output", dest="file_name", help="Name of file to write VCF to")
-    parser.add_option("--quality_filter", dest="filter", default=0, help="What quality score filter to apply")
-    parser.add_option("--region", "-L", dest="region", action="append", help="Regions to pull mappings from in the format chr:lo-hi, useful for parallelization")
-    parser.add_option("--region_index_offset", dest="index_offset", type="int", default=0, help="For region arguments, shift the index by this amount (useful for converting from one-indexed to zero-indexed lists)")
-    parser.add_option("--export_minimal_columns", dest="export_minimal_columns", default=True, action="store_false" , help="Export more columns than the minimal simplevar set, if present")
+    parser = argparse.ArgumentParser(description='Download a Simplevar GTable as a VCF file.')
+    parser.add_argument("--table_id", dest="simple_var_id", help="Simplevar gtable id to read from")
+    parser.add_argument("-o", "--output", dest="file_name", help="Name of file to write VCF to")
+    parser.add_argument("--quality_filter", dest="filter", type=int, default=0, help="What quality score filter to apply")
+    parser.add_argument("--region", "-L", dest="region", action="append", help="Regions to pull mappings from in the format chr:lo-hi, useful for parallelization")
+    parser.add_argument("--region_index_offset", dest="index_offset", type=int, default=0, help="For region arguments, shift the index by this amount (useful for converting from one-indexed to zero-indexed lists)")
+    parser.add_argument("--export_minimal_columns", dest="export_minimal_columns", action="store_false" , help="Export more columns than the minimal simplevar set, if present")
     
-    (opts, args) = parser.parse_args()
-    outputFile = open(opts.file_name, 'w')
-    writeAdditionalColumns = opts.export_minimal_columns
+    args = parser.parse_args()
+    outputFile = open(args.file_name, 'w')
+    writeAdditionalColumns = args.export_minimal_columns
     
-    simpleVarTable = dxpy.open_dxgtable(opts.simple_var_id)
+    simpleVarTable = dxpy.open_dxgtable(args.simple_var_id)
     
     try:
         originalContigSet = simpleVarTable.get_details()['original_contigset']
@@ -47,12 +47,12 @@ def main():
     #refAppearsCompressed = False
     #noCallAppearsCompressed = False
     
-    filter = int(opts.filter)
+    filter = args.filter
     
-    if opts.region != None:
-        regions = parseRegions(opts.region)
+    if args.region != None:
+        regions = parseRegions(args.region)
         for x in regions:
-            query = simpleVarTable.genomic_range_query(chr=x[0][0],lo=int(x[0][1])+opts.index_offset,hi=int(x[0][2])+opts.index_offset,mode='overlap',index='gri')
+            query = simpleVarTable.genomic_range_query(chr=x[0][0],lo=int(x[0][1])+args.index_offset,hi=int(x[0][2])+args.index_offset,mode='overlap',index='gri')
             for row in simpleVarTable.iterate_query_rows(query=query):
                 writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequence, chromosomeOffsets)
     else:
@@ -95,5 +95,5 @@ def writeRow(row, col, filter, outputFile, writeAdditionalColumns, contigSequenc
                     if k not in minimalColumns:
                         outputFile.write("\t"+str(row[v]))
         outputFile.write("\n")
-    
+
 main()

@@ -1,3 +1,8 @@
+/** \file
+ *
+ * \brief Exception classes.
+ */
+
 #ifndef DXCPP_EXCEPTIONS_H
 #define DXCPP_EXCEPTIONS_H
 
@@ -5,9 +10,7 @@
 #include <string>
 #include <boost/lexical_cast.hpp>
 
-/**
- * Generic exception for the DNAnexus C++ library.
- */
+//! Generic exception for the DNAnexus C++ library.
 class DXError: public std::exception {
  public:
   std::string msg;
@@ -22,10 +25,12 @@ class DXError: public std::exception {
 
 };
 
-/**
- * This exception is thrown when a request made to the API server
- * results in an HTTP response code other than 200.
- */
+//! Represents errors returned by the API server.
+
+///
+/// This exception is thrown when a request made to the API server results in
+/// an HTTP response code other than 200.
+///
 class DXAPIError: public DXError {
  public:
   std::string name;
@@ -43,9 +48,7 @@ class DXAPIError: public DXError {
   virtual ~DXAPIError() throw() { }
 };
 
-/**
- * Exception thrown for errors relating to the DXFile class.
- */
+//! Represents errors relating to the DXFile class.
 class DXFileError: public DXError {
  public:
   DXFileError(): DXError("Unknown error occured while using DXFile class.") { }
@@ -54,9 +57,7 @@ class DXFileError: public DXError {
   virtual ~DXFileError() throw() { }
 };
 
-/**
- * Exception thrown for errors relating to the DXGTable class.
- */
+//! Represents errors relating to the DXGTable class.
 class DXGTableError: public DXError {
  public:
   DXGTableError(): DXError("Unknown error occured while using DXGTable class.") { }
@@ -65,10 +66,11 @@ class DXGTableError: public DXError {
   virtual ~DXGTableError() throw() { }
 };
 
-/**
- * Exception thrown for methods that are not yet implemented.  For
- * development purposes only.
- */
+//! Thrown by methods that are not yet implemented.
+
+///
+/// For development purposes only.
+///
 class DXNotImplementedError: public DXError {
  public:
   DXNotImplementedError(): DXError("Not yet implemented.") { }

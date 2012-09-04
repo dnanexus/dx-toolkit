@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
 import os, sys, json, fileinput, re
-from optparse import OptionParser
 import dxpy
+
+if '-h' in sys.argv:
+    print 'usage: ' + sys.argv[0] + ' FILENAME ...'
+    print ''
+    print 'Grabs chromosomes from the SAM headers and stores them in details of records on the DNAnexus platform'
+    exit(0)
 
 chromosomes = []; i = 0
 

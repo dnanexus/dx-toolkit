@@ -14,12 +14,14 @@ def now():
     return int(time.time()*1000)
 
 def find_data_objects(classname=None, state=None, visibility=None,
-                      name=None, properties=None, typename=None, tag=None,
+                      name=None, name_mode='exact', properties=None,
+                      typename=None, tag=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
                       describe=None, limit=None, level=None,
-                      return_handler=False, **kwargs):
+                      return_handler=False,
+                      **kwargs):
     """
     :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet"
     :type classname: string
@@ -29,6 +31,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type visibility: string
     :param name: Name of the object
     :type name: string
+    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
     :param typename: Type that each result must conform to
@@ -91,7 +95,14 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if visibility is not None:
         query["visibility"] = visibility
     if name is not None:
-        query["name"] = name
+        if name_mode == 'exact':
+            query["name"] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('find_data: Unexpected value found for argument name_mode')
     if properties is not None:
         query["properties"] = properties
     if typename is not None:
@@ -176,7 +187,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
             raise StopIteration()
 
 def find_one_data_object(classname=None, state=None, visibility=None,
-                         name=None, properties=None, typename=None, tag=None,
+                         name=None, name_mode='exact',
+                         properties=None, typename=None, tag=None,
                          link=None, project=None, folder=None, recurse=None,
                          modified_after=None, modified_before=None,
                          created_after=None, created_before=None,
@@ -190,6 +202,8 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type visibility: string
     :param name: Name of the object
     :type name: string
+    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
     :param typename: Type that each result must conform to
@@ -234,7 +248,14 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     if visibility is not None:
         query["visibility"] = visibility
     if name is not None:
-        query["name"] = name
+        if name_mode == 'exact':
+            query['name'] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('find_one_data_object: Unexpected value found for argument name_mode')
     if properties is not None:
         query["properties"] = properties
     if typename is not None:
@@ -306,9 +327,10 @@ def find_one_data_object(classname=None, state=None, visibility=None,
         else:
             return resp['results'][0]
 
-def find_jobs(launched_by=None, executable=None, project=None, state=None,
-              origin_job=None, parent_job=None,
+def find_jobs(launched_by=None, executable=None, project=None,
+              state=None, origin_job=None, parent_job=None,
               created_after=None, created_before=None, describe=False,
+              name=None, name_mode="exact",
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
@@ -329,6 +351,10 @@ def find_jobs(launched_by=None, executable=None, project=None, state=None,
     :type created_before: integer
     :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False) (use the dict {"io": False} to exclude detailed IO information)
     :type describe: boolean or dict
+    :param name: Name of the job to search by
+    :type name: string
+    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :type name_mode: string
     :rtype: generator
 
     This is a generator function which returns the search results and
@@ -387,6 +413,15 @@ def find_jobs(launched_by=None, executable=None, project=None, state=None,
             else:
                 query["created"]["before"] = now() + created_before
     query["describe"] = describe
+    if name is not None:
+        if name_mode == 'exact':
+            query['name'] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('find_jobs: Unexpected value found for argument name_mode')
 
     while True:
         resp = dxpy.api.systemFindJobs(query, **kwargs)
@@ -400,11 +435,14 @@ def find_jobs(launched_by=None, executable=None, project=None, state=None,
         else:
             raise StopIteration()
 
-def find_projects(name=None, properties=None, level=None, describe=None, explicit_perms=None,
+def find_projects(name=None, name_mode='exact', properties=None,
+                  level=None, describe=None, explicit_perms=None,
                   public=None, **kwargs):
     """
     :param name: Name of the project
     :type name: string
+    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
     :param level: Minimum permissions level of returned project IDs
@@ -423,7 +461,14 @@ def find_projects(name=None, properties=None, level=None, describe=None, explici
     """
     query = {}
     if name is not None:
-        query["name"] = name
+        if name_mode == 'exact':
+            query['name'] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('find_projects: Unexpected value found for argument name_mode')
     if properties is not None:
         query["properties"] = level
     if level is not None:
@@ -447,7 +492,8 @@ def find_projects(name=None, properties=None, level=None, describe=None, explici
         else:
             raise StopIteration()
 
-def find_apps(name=None, category=None, all_versions=None, published=None,
+def find_apps(name=None, name_mode='exact', category=None,
+              all_versions=None, published=None,
               billed_to=None, created_by=None, developer=None,
               created_after=None, created_before=None,
               modified_after=None, modified_before=None,
@@ -455,6 +501,8 @@ def find_apps(name=None, category=None, all_versions=None, published=None,
     """
     :param name: Name of the app
     :type name: string
+    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :type name_mode: string
     :param category: Name of a category with which to restrict the results
     :type category: string
     :param all_versions: Whether to return all versions of the apps or just the default versions
@@ -491,7 +539,14 @@ def find_apps(name=None, category=None, all_versions=None, published=None,
 
     query = {}
     if name is not None:
-        query["name"] = name
+        if name_mode == 'exact':
+            query['name'] = name
+        elif name_mode == 'glob':
+            query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
+        else:
+            raise DXError('find_apps: Unexpected value found for argument name_mode')
     if category is not None:
         query["category"] = category
     if all_versions is not None:
