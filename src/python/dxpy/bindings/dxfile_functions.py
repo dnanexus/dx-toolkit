@@ -44,21 +44,19 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
 
     Example::
 
-        with open_dxfile("file-xxxx") as fd:
-            for line in fd:
-                ...
-                
+      with open_dxfile("file-xxxx") as fd:
+          for line in fd:
+              ...
+
     Note that this is shorthand for::
 
-        DXFile(dxid)
+      DXFile(dxid)
 
     '''
     return DXFile(dxid, project=project, buffer_size=buffer_size)
 
 def new_dxfile(keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     '''
-    :param media_type: Internet Media Type (optional)
-    :type media_type: string
     :rtype: :class:`dxpy.bindings.dxfile.DXFile`
 
     Additional optional parameters not listed: all those under
@@ -138,11 +136,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     handler.  In addition, it will set the "name" property of the
     remote file to *filename* or to *file.name* (if it exists).
 
-    Examples:
-        dxpy.upload_local_file("/home/ubuntu/reads.fastq.gz")
+    Examples::
 
-        with open("reads.fastq") as fh:
-            dxpy.upload_local_file(file=fh)
+      # Upload from a path
+      dxpy.upload_local_file("/home/ubuntu/reads.fastq.gz")
+      # Upload from a file-like object
+      with open("reads.fastq") as fh:
+          dxpy.upload_local_file(file=fh)
 
     '''
     fd = file if filename is None else open(filename, 'rb')
@@ -202,7 +202,7 @@ def upload_string(to_upload, media_type=None, keep_open=False,
     Uploads the given string *to_upload* into a new file object (with
     media type *media_type* if given) and returns the associated
     remote file handler.
-    
+
     """
 
     dxfile = new_dxfile(media_type=media_type, keep_open=keep_open, **kwargs)
