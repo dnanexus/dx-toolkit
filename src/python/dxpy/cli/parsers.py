@@ -136,4 +136,4 @@ def set_env_from_args(args):
 
     if require_initialize:
         from dxpy import _initialize
-        _initialize()
+        _initialize(suppress_warning=True)

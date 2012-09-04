@@ -24,7 +24,7 @@ def parse_user_env_file():
 def parse_installed_env_file():
     return parse_env_file('/opt/dnanexus/environment')
 
-def get_env():
+def get_env(suppress_warning=False):
     '''
     :returns env_vars: mapping of environment variable names to resolved values
     :type env_vars: dict
@@ -68,8 +68,8 @@ def get_env():
             if var in env_vars and user_file_env_vars[var] != env_vars[var]:
                 already_set.append(var)
 
-        if len(already_set) > 0:
-            print textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(already_set), width=80) + '\n'
-            print textwrap.fill("To use the values stored by dx, unset the environment variables in your shell by running \"source ~/.dnanexus_config/unsetenv\".  To clear the dx-stored values, run \"dx clearenv\".", width=80)
+        if not suppress_warning and len(already_set) > 0:
+            sys.stderr.write(textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(already_set), width=80) + '\n')
+            sys.stderr.write(textwrap.fill("To use the values stored by dx, unset the environment variables in your shell by running \"source ~/.dnanexus_config/unsetenv\".  To clear the dx-stored values, run \"dx clearenv\".", width=80) + '\n')
 
     return env_vars
