@@ -1,8 +1,10 @@
 '''
-DNAnexus Applet Builder Library
+DNAnexus App Builder Library
+++++++++++++++++++++++++++++
 
-Contains methods used by the application builder to compile and deploy applets
-and apps onto the platform.
+Contains methods used by the command-line application builder
+`dx-build-app <http://wiki.dev.dnanexus.com/DxBuildApp>`_ to compile
+and deploy applets and apps onto the platform.
 
 You can specify the destination project in the following ways (with the earlier
 ones taking precedence):

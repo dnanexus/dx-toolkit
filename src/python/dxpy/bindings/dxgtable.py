@@ -307,6 +307,8 @@ class DXGTable(DXDataObject):
         :type columns: list of strings
         :param indices: An ordered list containing index descriptors.  See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`.
         :type indices: list of index descriptors
+        :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+        :type mode: string
         :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
 
         Additional optional parameters not listed: all those under

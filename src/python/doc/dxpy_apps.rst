@@ -1,6 +1,13 @@
 Applets, Apps, and Jobs
 +++++++++++++++++++++++
 
+To create an applet or app from scratch, we encourage you to use the
+command-line tools `dx-app-wizard
+<http://wiki.dev.dnanexus.com/Building-Your-First-DNAnexus-App>`_ and
+`dx-build-app <http://wiki.dev.dnanexus.com/DxBuildApp>`_.  Handlers
+for applets, apps, and jobs are also available, and are probably most
+useful for running executables and monitoring their resulting jobs.
+
 .. automodule:: dxpy.bindings.dxapplet
    :members:
    :undoc-members:
@@ -15,7 +22,3 @@ Applets, Apps, and Jobs
    :members:
    :undoc-members:
    :show-inheritance:
-
-.. automodule:: dxpy.app_builder
-   :members:
-   :undoc-members:
