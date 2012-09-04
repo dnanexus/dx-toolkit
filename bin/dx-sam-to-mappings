@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 import os, sys, json, re
-from optparse import OptionParser
+import argparse
 import dxpy
 
-parser = OptionParser("Usage: %prog sam_filename table_id chroms")
-(opts, args) = parser.parse_args()
-if len(args) != 3:
-    parser.print_help()
-    parser.error("Incorrect number of arguments")
+parser = argparse.ArgumentParser(description='Upload a SAM file as a Mappings GTable on the DNAnexus platform.')
+parser.add_argument('sam_filename', help='Filename of SAM file')
+parser.add_argument('gtable_id', help='Existing GTable ID if appending to an existing GTable; use "0" to create a new GTable.')
+parser.add_argument('chromosomes_id', help='ID of the record with chromosome information in its details')
+args = parser.parse_args()
 
-sam_filename, table_id, chromosomes_id = args
+sam_filename, table_id, chromosomes_id = args.sam_filename, args.gtable_id, args.chromosomes_id
 
 chromosomes = dxpy.DXRecord(chromosomes_id).get_details()['chromosomes']
 

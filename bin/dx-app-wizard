@@ -2,7 +2,7 @@
 
 import sys, os, subprocess
 import json, re
-from optparse import OptionParser
+import argparse
 from dxpy.utils.printing import *
 
 API_VERSION = '1.0.0'
@@ -95,9 +95,9 @@ def prompt_for_yn(prompt_str, default=None):
         elif default is not None:
             return default
 
-parser = OptionParser(usage="%prog [options] app_dir", description="Create a source code directory for a DNAnexus app.")
-parser.add_option("-f", "--overwrite", help="Overwrite files that are in the way", action='store_true', default=False)
-(opts, args) = parser.parse_args()
+parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
+# parser.add_argument("-f", "--overwrite", help="Overwrite files that are in the way", action='store_true')
+args = parser.parse_args()
 
 print DNANEXUS_LOGO() + ' App Wizard, API v' + API_VERSION
 print ''
@@ -119,7 +119,7 @@ while True:
     else:
         break
 
-#if os.path.exists(name) and not opts.overwrite:
+#if os.path.exists(name) and not args.overwrite:
 #    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
 if os.path.exists(name):
     sys.stderr.write('''The directory %s already exists, please move it or specify a different name.\n''' % name)

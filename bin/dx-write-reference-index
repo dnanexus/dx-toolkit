@@ -3,24 +3,24 @@
 import dxpy
 import math
 import operator
-from optparse import OptionParser
+import argparse
 import re
 
 #Example: dx_writeReferenceIndex --contig_set record-9yZvF200000PYKJyV4k00005 --writeSamtoolsIndex ref.fa.fai --writePicardDictionary ref.dict
 
 def main():
 
-    parser = OptionParser("Usage: % --contig_set options")
-    parser.add_option("--contig_set", dest="contig_set", help="ContigSet to extract chromosome information from")
-    parser.add_option("--writeSamtoolsIndex", dest="samtools", default="", help="Write .fa.fai file to this file name")
-    parser.add_option("--writePicardDictionary", dest="picard", default="", help="Write .dict file to this file name")
+    parser = argparse.ArgumentParser(description='Extract chromosome information from a ContigSet record on the DNAnexus platform and create the requested reference index files locally.')
+    parser.add_argument("--contig_set", dest="contig_set", help="ContigSet to extract chromosome information from")
+    parser.add_argument("--writeSamtoolsIndex", dest="samtools", help="Write .fa.fai file to this file name")
+    parser.add_argument("--writePicardDictionary", dest="picard", help="Write .dict file to this file name")
 
-    (opts, args) = parser.parse_args()
+    args = parser.parse_args()
 
-    if opts.samtools != "":
-        writeReferenceIndex(opts.contig_set, opts.samtools)
-    if opts.picard != "":
-        writeGenomeDict(opts.contig_set, opts.picard)
+    if args.samtools is not None:
+        writeReferenceIndex(args.contig_set, args.samtools)
+    if args.picard is not None:
+        writeGenomeDict(args.contig_set, args.picard)
 
 
 def writeGenomeDict(contig_set, dictFileName):

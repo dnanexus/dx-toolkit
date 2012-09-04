@@ -5,7 +5,7 @@ import dxpy
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
-parser = argparse.ArgumentParser(usage="%prog [options]", description="Redirects stdin to a DNAnexus log socket in the execution environment.")
+parser = argparse.ArgumentParser(description="Redirects stdin to a DNAnexus log socket in the execution environment.")
 parser.add_argument("-p", "--prefix", help="Prefix lines from the stream with this tag", default='')
 parser.add_argument("-l", "--level", help="Logging level to use", default='info')
 args = parser.parse_args()
