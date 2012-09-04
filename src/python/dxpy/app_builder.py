@@ -169,7 +169,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if "details" not in applet_spec:
         applet_spec["details"] = {}
     if "contactUrl" not in applet_spec["details"]:
-        new_contact_url = "http://wiki.dev.dnanexus.com/Apps/%s" % (applet_spec["name"],)
+        new_contact_url = "http://wiki.dnanexus.com/Apps/%s" % (applet_spec["name"],)
         logging.info("Setting contactUrl to %s" % (new_contact_url,))
         logging.info('You can override this in your dxapp.json: {details: {contactUrl: "%s", ...}, ...' % (new_contact_url,))
         applet_spec["details"]["contactUrl"] = new_contact_url

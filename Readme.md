@@ -10,7 +10,7 @@ Initialize your environment by sourcing this file:
 source dx-toolkit/environment
 ```
 
-After initialization, you will be able to use ```dx``` (the [DNAnexus Command Line Client](http://wiki.dev.dnanexus.com/Command-Line-Client/Quickstart)) and other utilities; and you will be able to use DNAnexus API bindings in supported languages.
+After initialization, you will be able to use ```dx``` (the [DNAnexus Command Line Client](http://wiki.dnanexus.com/Command-Line-Client/Quickstart)) and other utilities; and you will be able to use DNAnexus API bindings in supported languages.
 
 Supported languages:
 

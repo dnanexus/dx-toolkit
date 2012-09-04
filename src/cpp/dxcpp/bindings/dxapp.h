@@ -16,7 +16,7 @@
 /// Platform. To create a new app object, use the <code>dx-build-app</code> command-line tool in
 /// the DNAnexus SDK.
 ///
-/// See <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps">Apps</a> in the API
+/// See <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps">Apps</a> in the API
 /// specification for more information.
 ///
 
@@ -72,7 +72,7 @@ public:
 
   /**
    * Returns a description of the app, as specified by the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fdescribe">/app-xxxx[/yyyy]/describe</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fdescribe">/app-xxxx[/yyyy]/describe</a>
    * API method.
    *
    * @return JSON hash containing the describe output
@@ -81,7 +81,7 @@ public:
 
   /**
    * Updates the remote app's properties with given input hash, as specified by the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fupdate">/app-xxxx[/yyyy]/update</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fupdate">/app-xxxx[/yyyy]/update</a>
    * API method.
    */
   void update(const dx::JSON &to_update) const;
@@ -90,7 +90,7 @@ public:
    * Adds the specified categories to the app. (Setting categories affects all versions of this app.)
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FaddCategories">/app-xxxx[/yyyy]/addCategories</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FaddCategories">/app-xxxx[/yyyy]/addCategories</a>
    * API method for more info.
    *
    * @param categories A JSON array of strings, each of which will be added
@@ -102,7 +102,7 @@ public:
    * Removes the specified categories from the app. (Setting categories affects all versions of this app.)
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FremoveCategories">/app-xxxx[/yyyy]/removeCategories</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FremoveCategories">/app-xxxx[/yyyy]/removeCategories</a>
    * API method for more info.
    *
    * @param categories A JSON array of strings, each of which will be removed
@@ -114,7 +114,7 @@ public:
    * Adds the specified tags to the app.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FaddTags">/app-xxxx[/yyyy]/addTags</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FaddTags">/app-xxxx[/yyyy]/addTags</a>
    * API method for more info.
    *
    * @param tags A JSON array of strings, each of which will be added
@@ -126,7 +126,7 @@ public:
    * Removes the specified tags from the app.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FremoveTags">/app-xxxx[/yyyy]/removeTags</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2FremoveTags">/app-xxxx[/yyyy]/removeTags</a>
    * API method for more info.
    *
    * @param tags A JSON array of strings, each of which will be removed
@@ -138,7 +138,7 @@ public:
    * Installs the app into the requesting user's account.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Finstall">/app-xxxx[/yyyy]/install</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Finstall">/app-xxxx[/yyyy]/install</a>
    * API method for more info.
    */
   void install() const;
@@ -148,14 +148,14 @@ public:
    * error is thrown if the app wasn't originally installed.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Funinstall">/app-xxxx[/yyyy]/uninstall</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Funinstall">/app-xxxx[/yyyy]/uninstall</a>
    * API method for more info.
    */
   void uninstall() const;
 
   /**
    * Returns the full specification of the app as a JSON object, as described in the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fget">/app-xxxx[/yyyy]/get</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fget">/app-xxxx[/yyyy]/get</a>
    * API method.
    *
    * @return JSON has containing the full specification of the app
@@ -166,7 +166,7 @@ public:
    * Makes this version of app discoverable by other users on the DNAnexus platform.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fpublish">/app-xxxx[/yyyy]/publish</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fpublish">/app-xxxx[/yyyy]/publish</a>
    * API method for more info.
    *
    * @param makeDefault If true, then also makes this version of the app the
@@ -179,7 +179,7 @@ public:
    * reflected in output of DXApp::describe.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fdelete">/app-xxxx[/yyyy]/delete</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Fdelete">/app-xxxx[/yyyy]/delete</a>
    * API method for more info.
    */
   void remove() const;
@@ -188,7 +188,7 @@ public:
    * Runs this app with the specified input and returns a handler for the resulting job.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Frun">/app-xxxx[/yyyy]/run</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp-xxxx%5B%2Fyyyy%5D%2Frun">/app-xxxx[/yyyy]/run</a>
    * API method for more info.
    *
    * @param app_input A hash of name/value pairs specifying the input

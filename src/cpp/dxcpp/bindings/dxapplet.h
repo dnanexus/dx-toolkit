@@ -16,7 +16,7 @@
 /// To create a new applet object, consider using the <code>dx-build-applet</code> command-line
 /// tool in the DNAnexus SDK.
 ///
-/// See <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets">Applets</a> in the
+/// See <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets">Applets</a> in the
 /// API specification for more information.
 ///
 
@@ -58,7 +58,7 @@ public:
 
   /**
    * Creates a new remote applet with the input hash, as specified in the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a>
    * API method.
    *
    * If <code>inp["project"]</code> is missing, then <code>g_WORKSPACE_ID</code> will be used as
@@ -72,7 +72,7 @@ public:
    * Runs this applet with the specified input and returns a handler for the resulting job.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
    * API method for more info.
    *
    * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
@@ -98,7 +98,7 @@ public:
 
   /**
    * Returns the full specification of the applet, as specified in the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a>
    * API method.
    *
    * @return JSON hash containing the full specification of the applet
