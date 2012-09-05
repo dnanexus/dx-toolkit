@@ -448,7 +448,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             results = list(dxpy.find_data_objects(project=project,
                                                   folder=folderpath,
                                                   name=entity_name,
-                                                  name_mode=('glob' if is_glob_pattern(entity_name) else 'exact'),
+                                                  name_mode='glob',
                                                   recurse=False,
                                                   describe=describe,
                                                   visibility='either'))

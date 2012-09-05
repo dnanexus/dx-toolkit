@@ -11,7 +11,7 @@ def startswith(text):
     return (lambda string: string.startswith(text))
 
 def escape_completion_name_str(string):
-    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/')
+    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?')
 
 def get_folder_matches(text, delim_pos, dxproj, folderpath):
     '''
