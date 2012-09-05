@@ -44,6 +44,19 @@ that doesn't require them.
 * Command Line Tools for XCode (https://developer.apple.com/downloads/ - free registration required with Apple)
 * The following packages can be installed either from their respective websites or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/).
     * CMake (http://www.cmake.org/cmake/resources/software.html)
+* **Installing C++ bindings dependencies on OS X:**
+    - Install MacPorts by following instructions [here](http://www.macports.org/install.php)
+    - Install GCC 4.7.x and set it as default gcc target:   
+         
+         ```
+         $ sudo port install gcc47
+         $ sudo port select --set gcc mp-gcc47
+         ```
+    - Install Boost C++ libraries:
+         
+         ```
+         $ sudo port install boost
+         ```
 
 ### Test dependencies
 TODO
