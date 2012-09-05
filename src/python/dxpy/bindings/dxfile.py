@@ -86,7 +86,7 @@ class DXFile(DXDataObject):
         self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
 
-        DXDataObject.set_ids(dxid, project)
+        DXDataObject.set_ids(self, dxid, project)
 
         # Initialize state
         self._pos = 0
