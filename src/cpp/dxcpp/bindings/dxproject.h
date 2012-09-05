@@ -163,6 +163,25 @@ class DXContainer {
   void removeObjects(const dx::JSON &objects) const;
 
   /**
+   * Clone the specified folder to another data container. Name of the folder is kept 
+   * intact in the destination data container.
+   *
+   * Any hidden objects contained in a folder to be cloned are only cloned if a 
+   * visible ancestor is also cloned.
+   *
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+   *
+   * @param folder The full path of the folder to be cloned.
+   * @param dest_proj ID of the project into which the folder should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination project.
+   */
+  void cloneFolder(const std::string &folder,
+                    const std::string &dest_proj,
+                    const std::string &dest_folder) const {
+    clone(dx::JSON(dx::JSON_ARRAY), dx::JSON::parse("[\"" + folder + "\"]"), dest_proj, dest_folder);
+  }
+  
+  /**
    * Clone the specified object(s) from the associated data container to another data container.
    *
    * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.

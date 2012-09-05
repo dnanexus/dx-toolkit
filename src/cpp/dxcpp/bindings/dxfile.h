@@ -86,6 +86,12 @@ class DXFile: public DXDataObject {
   ///////////////////////////////////////////////////////////////////
 
   /**
+   * Will be true if "upload" method has been called at least once.
+   * This allows us to create empty files.
+   */
+  bool hasAnyPartBeenUploaded;
+
+  /**
    * For use when reading closed remote files; stores the current
    * position (in bytes from the beginning of the file) from which
    * future read() calls will begin.
@@ -120,7 +126,7 @@ class DXFile: public DXDataObject {
    * file.
    */
   bool eof_;
- 
+
   /**
    * This is used for disallowing seek() when file is in not "closed" state
    * Initially it should always be set to false.
@@ -283,6 +289,8 @@ class DXFile: public DXDataObject {
    * (MAX_WRITE_THREADS threads) are already busy with HTTP requests. Otherwise, it returns
    * immediately.
    *
+   * If any of the threads fails then std::terminate() will be called.
+   *
    * @warning Do <b>not</b> mix and match with uploadPart().
    *
    * @see flush()
@@ -378,7 +386,7 @@ class DXFile: public DXDataObject {
    *
    * @see stopLinearQuery(), getNextChunk()
    */
-  void startLinearQuery(const int64_t start_byte=-1,
+  void startLinearQuery(const int64_t start_byte=0,
                         const int64_t num_bytes=-1,
                         const int64_t chunk_size=10*1024*1024,
                         const unsigned max_chunks=20,
