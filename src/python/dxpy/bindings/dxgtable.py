@@ -65,8 +65,7 @@ class DXGTable(DXDataObject):
         self._http_threadpool_futures = set()
         self._columns = None
 
-        if dxid is not None:
-            self.set_ids(dxid, project)
+        self.set_ids(dxid, project)
 
     def __enter__(self):
         return self
@@ -181,7 +180,8 @@ class DXGTable(DXDataObject):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous gtable object if the buffer is nonempty.
         '''
-        self.flush()
+        if getattr(self, '_dxid', None) is not None:
+            self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
 

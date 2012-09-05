@@ -86,8 +86,7 @@ class DXFile(DXDataObject):
         self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
 
-        if dxid is not None:
-            self.set_ids(dxid, project)
+        self.set_ids(dxid, project)
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -172,7 +171,8 @@ class DXFile(DXDataObject):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous file object if the buffer is nonempty.
         '''
-        self.flush()
+        if getattr(self, '_dxid', None) is not None:
+            self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
 
