@@ -135,6 +135,7 @@ if len(args_list) == 1 and args_list[0] == 'clearenv':
 
 # importing dxpy will now appropriately load env variables
 import dxpy
+from dxpy.utils import argcomplete
 from dxpy.utils.env import parse_user_env_file
 from dxpy.utils.printing import *
 from dxpy.utils.pretty_print import format_tree, format_table
@@ -3201,6 +3202,9 @@ parser_map['help'] = parser_help
 for cat in parser_categories:
     parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()
+
+# Bash argument completer hook
+argcomplete.autocomplete(parser)
 
 # "Execution" starts here
 
