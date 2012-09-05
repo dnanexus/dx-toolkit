@@ -6,9 +6,10 @@ set(CMAKE_BUILD_TYPE, Release)
 
 FIND_PACKAGE(Boost REQUIRED)
 IF (Boost_FOUND)
-    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-    LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+  LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF()
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Wno-overloaded-virtual -Werror=return-type -Wno-deprecated")
 
@@ -36,4 +37,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/.
 
 add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc)
 set_target_properties(dxcpp PROPERTIES COMPILE_FLAGS -fPIC)
-target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex-mt)
+IF (APPLE)
+  target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex-mt crypto)
+ELSE ()
+  target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex-mt)
+ENDIF()

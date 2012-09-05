@@ -5,9 +5,13 @@ project(contigset2fasta)
 
 # Default build type.
 set (CMAKE_BUILD_TYPE, Release)
+FIND_PACKAGE(Boost REQUIRED)
+IF (Boost_FOUND)
+     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+ENDIF()
 
 # ==================== FLAGS ==================== 
-
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Wno-overloaded-virtual -Werror=return-type")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -Wno-deprecated")
 
@@ -22,4 +26,4 @@ add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp)
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(contigset2fasta contigset2fasta.cpp)
-target_link_libraries(contigset2fasta dxcpp)
+target_link_libraries(contigset2fasta dxcpp boost_system-mt)
