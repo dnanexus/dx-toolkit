@@ -49,7 +49,7 @@ def main(**kwargs):
         originalContig = opts.reference
     else:
         try:
-            originalContig = mappingsTable.get_details()['original_contigset']
+            originalContig = mappingsTable.get_details()['original_contigset']['$dnanexus_link']
         except:
             raise dxpy.AppError("The original reference genome must be attached to mappings table")
     
