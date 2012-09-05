@@ -249,24 +249,12 @@ def autocomplete(parser,
     # subcommand.
     if subcommands:
         assert isinstance(subcommands, types.DictType)
-        value = guess_first_nonoption(parser, subcommands)
-        if value:
-            if isinstance(value, types.ListType) or \
-               isinstance(value, types.TupleType):
-                parser = value[0]
-                if len(value) > 1 and value[1]:
-                    # override completer for command if it is present.
-                    completer = value[1]
-                else:
-                    completer = subcmd_completer
-                return autocomplete(parser, completer)
-            else:
-                # Call completion method on object. This should call
-                # autocomplete() recursively with appropriate arguments.
-                if hasattr(value, 'autocomplete'):
-                    return value.autocomplete(subcmd_completer)
-                else:
-                    sys.exit(1) # no completions for that command object
+        if len(cwords) > 2 and cwords[1]+" "+cwords[2] in subcommands: # TODO: HACK
+            parser = subcommands[cwords[1]+" "+cwords[2]]
+            return autocomplete(parser, arg_completer=arg_completer)
+        elif len(cwords) > 1 and cwords[1] in subcommands:
+            parser = subcommands[cwords[1]]
+            return autocomplete(parser, arg_completer=arg_completer)
 
     # Extract word enclosed word.
     prefix, suffix = extract_word(cline, cpoint)
