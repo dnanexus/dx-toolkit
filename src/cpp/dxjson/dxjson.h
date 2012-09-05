@@ -129,6 +129,7 @@ namespace dx {
     static double getEpsilon();
 
     /** Creates a new JSON object from a serialized representation.
+      * See notes for read() (applies here as well)
       * @param str The serialized json object.
       * @return
       */
@@ -204,7 +205,7 @@ namespace dx {
     void read(std::istream &in);
 
     /** Populates current JSON object from the given stringified json value.
-      * See all the notes in read() documentation (applies here as well).
+      * See notes for read() (applies here as well).
       * @param jstr String reprenting a valid JSON object
       * @exception JSONException If parameter jstr contain illegaly formatted JSON
       * @see read()

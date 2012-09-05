@@ -11,6 +11,7 @@ using namespace dx;
 
 string proj_id = "";
 string second_proj_id = "";
+string third_proj_id = "";
 
 // TODO: Finish writing tests for other classes.
 
@@ -223,6 +224,13 @@ TEST_F(DXProjectTest, CloneTest) {
   expected = JSON(JSON_ARRAY);
   expected.push_back("/d");
   ASSERT_EQ(listf["folders"], expected);
+
+  DXProject third_proj(third_proj_id);
+  
+  dxproject.cloneFolder("/a/b/c/d", third_proj_id, "/");
+  expected = JSON(JSON_ARRAY);
+  expected.push_back("/d");
+  ASSERT_EQ(third_proj.listFolder()["folders"], expected);
 }
 
 TEST_F(DXProjectTest, CloneRemoveObjectsTest) {
@@ -560,7 +568,7 @@ protected:
 
 const string DXFileTest::foostr = "foo\n";
 
-TEST(DXFileTest, UploadPartMultipleTime) {
+TEST_F(DXFileTest, UploadPartMultipleTime) {
   DXFile dxf = DXFile::newDXFile();
   // If we do not specify a part id, it should be overwritten each time
   string s = "blah";
@@ -582,6 +590,18 @@ TEST(DXFileTest, UploadPartMultipleTime) {
   ASSERT_EQ(dxf.describe()["size"], sizeFirstPart + 3); 
 }
 
+TEST_F(DXFileTest, UploadEmptyFile) {
+  DXFile dxf = DXFile::newDXFile();
+  dxf.close();
+  ASSERT_EQ(dxf.describe()["size"], 0);
+ 
+  char fname[L_tmpnam];
+  tmpnam(fname);
+  ofstream lf(fname);
+  lf.close();
+  DXFile dxf2 = DXFile::uploadLocalFile(fname);
+  ASSERT_EQ(dxf2.describe()["size"], 0);
+}
 TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   // Upload a file with "file_size" number of '$' in it
   // and download it, check that it is same.
@@ -872,7 +892,7 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1_SLOW) {
   dxgtable2.remove();
 }
 
-TEST_F(DXGTableTest, AddRowsMultiThreadingTest_2_SLOW) {
+TEST_F(DXGTableTest, AddRowsMultiThreadingTest_2_SUPER_SLOW) {
   // In this thread we try to add rows to NUM_GTABLES tables simultaneously
   const int NUM_GTABLES = 200;
   vector<DXGTable> tables;
@@ -1146,7 +1166,7 @@ TEST(DXSystemTest, findApps) {
   ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
   
   apl.remove();
-  app.remove();
+//  app.remove();
 }
 
 
@@ -1258,10 +1278,10 @@ TEST(DXAppTest, AllAppTests) {
   ASSERT_EQ(app.describe().has("published"), true);
 
   // Remove the app
-  app.remove();
-  ASSERT_EQ(app.describe()["deleted"].get<bool>(), true);
+  // app.remove();
+  //ASSERT_EQ(app.describe()["deleted"].get<bool>(), true);
 
-  apl.remove();
+//  apl.remove();
 }
 
 ///////////
@@ -1291,6 +1311,9 @@ int main(int argc, char **argv) {
   project_hash["name"] = "second_test_project";
   resp = projectNew(project_hash);
   second_proj_id = resp["id"].get<string>();
+  
+  resp = projectNew(project_hash);
+  third_proj_id = resp["id"].get<string>();
 
   setWorkspaceID(proj_id);
 
@@ -1298,6 +1321,7 @@ int main(int argc, char **argv) {
   remove(foofilename.c_str());
   projectDestroy(proj_id);
   projectDestroy(second_proj_id);
+  projectDestroy(third_proj_id);
 
   return result;
 }

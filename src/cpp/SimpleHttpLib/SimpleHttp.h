@@ -146,7 +146,7 @@ public:
     * defined as static constants in HttpRequestException class
     */
   int errorCode;
-  
+
   HttpRequestException(): errorCode(DEFAULT_VALUE) {
   }
 

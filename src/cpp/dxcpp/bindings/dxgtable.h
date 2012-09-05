@@ -369,7 +369,7 @@ public:
    * @see stopLinearQuery(), getNextChunk()
    */
   void startLinearQuery(const dx::JSON &column_names=dx::JSON(dx::JSON_NULL),
-                        const int64_t start_row=-1,
+                        const int64_t start_row=0,
                         const int64_t num_rows=-1,
                         const int64_t chunk_size=10000,
                         const unsigned max_chunks=20,

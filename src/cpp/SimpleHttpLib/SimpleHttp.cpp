@@ -128,6 +128,8 @@ void HttpRequest::assertLibCurlFunctions(CURLcode retVal, const std::string &msg
     errorBuffer[CURL_ERROR_SIZE] = 0;
     exceptionStr += std::string(errorBuffer) + "'";
     exceptionStr += "\n********\n";
+    // If a response code is available - get it's value 
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
     throw HttpRequestException(exceptionStr, retVal);
   }
 }
@@ -196,12 +198,11 @@ void HttpRequest::send() {
     switch (method) {
       case HTTP_POST:
         assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_POST, 1L));
-        if (reqData.length > 0u) {
-          assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_POSTFIELDS, reqData.data));
-          // To disallow strlen() on reqData, setting POSTFIELDSIZE explicitly
-          // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPOSTFIELDSIZE
-          assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, reqData.length));
-        }
+        // Always adding a body to POST request (might be empty)
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_POSTFIELDS, reqData.data));
+        // To disallow strlen() on reqData, setting POSTFIELDSIZE explicitly
+        // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTPOSTFIELDSIZE
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, reqData.length));
         break;
       case HTTP_PUT:
         reqData_temp = reqData; // Make a copy, since it will be modified
