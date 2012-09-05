@@ -1618,6 +1618,7 @@ def head(args):
                                                                       column_specs = entity_result['describe']['columns'],
                                                                       report_dimensions=True,
                                                                       max_col_width=args.max_col_width)
+                    table_text += "\n{nrows} more rows".format(nrows=entity_result['describe']['length'] - args.starting - args.lines)
                 if sys.stdout.isatty():
                     if tty_rows <= table_rows or tty_cols <= table_cols:
                         try:
