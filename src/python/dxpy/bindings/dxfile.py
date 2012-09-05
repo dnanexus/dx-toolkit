@@ -171,7 +171,7 @@ class DXFile(DXDataObject):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous file object if the buffer is nonempty.
         '''
-        if getattr(self, '_dxid', None) is not None:
+        if self._dxid is not None:
             self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
