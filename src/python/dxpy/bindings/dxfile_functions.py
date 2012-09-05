@@ -1,27 +1,4 @@
 '''
-You can obtain a handle to a new or existing File object with
-:func:`new_dxfile` or :func:`open_dxfile`, respectively.  Both return
-a remote file handler that can be treated as a file descriptor.
-
-Here is an example of iterating through an entire file and printing it
-to stdout using a context-managed File handle::
-
-  with open_dxfile('file-xxxx') as fd:
-      for line in input_file:
-          fd.write(line)
-
-The use of the context-managed File is optional; that is, you may use
-the object without a "with" block.  However, if you write any data to a File using a non-context-managed File handle, you must call :meth:`~dxpy.bindings.dxfile.DXFile.flush` or :meth:~dxpy.bindings.dxfile.DXFile.close` explicitly yourself::
-
-  file = open_dxfile('file-xxxx')
-  for line in input_file:
-      fd.write(line)
-  file.flush()
-
-There are also helper functions (:func:`download_dxfile`,
-:func:`upload_local_file`, and :func:`upload_string`) for directly
-downloading and uploading existing files or strings as a whole.
-
 Helper Functions
 ****************
 
@@ -55,8 +32,12 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
     '''
     return DXFile(dxid, project=project, buffer_size=buffer_size)
 
-def new_dxfile(keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
+def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     '''
+    :param keep_open: Deprecated. Use the mode parameter instead.
+    :type keep_open: boolean
+    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+    :type mode: string
     :rtype: :class:`dxpy.bindings.dxfile.DXFile`
 
     Additional optional parameters not listed: all those under
@@ -78,7 +59,7 @@ def new_dxfile(keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
         dxFile.new(**kwargs)
 
     '''
-    dx_file = DXFile(keep_open=keep_open, buffer_size=buffer_size)
+    dx_file = DXFile(keep_open=keep_open, mode=mode, buffer_size=buffer_size)
     dx_file.new(**kwargs)
     return dx_file
 
@@ -119,8 +100,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type file: File-like object
     :param media_type: Internet Media Type
     :type media_type: string
-    :param keep_open: Keep the file open after writing the contents to the file
+    :param keep_open: Deprecated. Use the mode parameter instead.
     :type keep_open: boolean
+    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+    :type mode: string
     :param wait_on_close: Wait for the file to close
     :type wait_on_close: boolean
     :param use_existing_dxfile: Instead of creating a new file, use this one
@@ -157,7 +140,9 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if use_existing_dxfile:
         dxfile = use_existing_dxfile
     else:
-        dxfile = new_dxfile(keep_open=keep_open, media_type=media_type, buffer_size=buffer_size, **kwargs)
+        # Use 'a' mode because we will be responsible for closing the file
+        # ourselves later (if requested).
+        dxfile = new_dxfile(mode='a', media_type=media_type, buffer_size=buffer_size, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
@@ -186,13 +171,17 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     return dxfile
 
-def upload_string(to_upload, media_type=None, keep_open=False,
+def upload_string(to_upload, media_type=None, keep_open=None, mode=None,
                   wait_on_close=False, **kwargs):
     """
     :param to_upload: String to upload into a file
     :type to_upload: string
     :param media_type: Internet Media Type
     :type media_type: string
+    :param keep_open: Deprecated. Use the mode parameter instead.
+    :type keep_open: boolean
+    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+    :type mode: string
     :returns: Remote file handler
     :rtype: :class:`dxpy.bindings.dxfile.DXFile`
 
@@ -205,7 +194,7 @@ def upload_string(to_upload, media_type=None, keep_open=False,
 
     """
 
-    dxfile = new_dxfile(media_type=media_type, keep_open=keep_open, **kwargs)
+    dxfile = new_dxfile(media_type=media_type, keep_open=keep_open, mode=mode, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 

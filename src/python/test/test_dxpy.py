@@ -232,6 +232,22 @@ class TestDXFile(unittest.TestCase):
             for line in self.dxfile:
                 pass
 
+    def test_file_context_manager(self):
+        with dxpy.new_dxfile(mode='w') as self.dxfile:
+            file_id = self.dxfile.get_id()
+            self.dxfile.write("Haha")
+        file2 = dxpy.open_dxfile(file_id)
+        state = file2._get_state()
+        self.assertTrue(state in ['closing', 'closed'])
+        file2._wait_on_close()
+        self.assertEqual(file2.describe()["size"], 4)
+
+
+    def test_file_context_manager_destructor(self):
+        dxfile = dxpy.new_dxfile(mode='w')
+        dxfile.write("Haha")
+        # No assertion here, but this should print an error
+
 class TestDXGTable(unittest.TestCase):
     """
     TODO: Test iterators, gri, and other queries

@@ -23,8 +23,10 @@ class DXFile(DXDataObject):
     :type dxid: string
     :param project: Project ID
     :type project: string
-    :param keep_open: Indicates whether the remote file should be kept open when exiting the context manager or when the destructor is called on the file handler
+    :param keep_open: Deprecated. Use the mode parameter instead.
     :type keep_open: boolean
+    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+    :type mode: string
 
     Remote file object handler
 
@@ -54,11 +56,25 @@ class DXFile(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
-    def __init__(self, dxid=None, project=None, keep_open=False, buffer_size=DEFAULT_BUFFER_SIZE):
-        self._keep_open = keep_open
+    def __init__(self, dxid=None, project=None, keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE):
+
+        if keep_open is not None:
+            if keep_open:
+                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the file open, please set mode to be one of 'r' or 'a' instead."
+            else:
+                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To close the file on exit, please supply mode='w' instead."
+        if mode is None:
+            # Fall back on keep_open
+            if keep_open is None:
+                keep_open = False
+            self._close_on_exit = not keep_open
+        else:
+            if mode not in ['r', 'w', 'a']:
+                raise ValueError("mode must be one of 'r', 'w', or 'a'")
+            self._close_on_exit = (mode == 'w')
+
         self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
-        self._keep_open = keep_open
         self._num_uploaded_parts = 0
 
         if buffer_size < 5*1024*1024:
@@ -95,19 +111,37 @@ class DXFile(DXDataObject):
 
     def __exit__(self, type, value, traceback):
         self.flush()
-        if (not self._keep_open) and self._get_state() == "open":
+        if self._close_on_exit and self._get_state() == "open":
             self.close()
 
     def __del__(self):
         '''
-        When this is triggered by interpreter shutdown, the thread pool is not available,
-        and we will wait for the request queue forever. In this case, we must revert to synchronous, in-thread flushing.
-        I don't know how to detect this condition, so I'll use that for all destructor events.
+        Exceptions raised here in the destructor are IGNORED by Python! We will try and flush data
+        here just as a safety measure, but you should not rely on this to flush your data! We will
+        be really grumpy and complain if we detect unflushed data here.
+
         Use a context manager or flush the object explicitly to avoid this.
 
-        Also, neither this nor context managers are compatible with kwargs pass-through (so e.g. no custom auth).
+        In addition, when this is triggered by interpreter shutdown, the thread pool is not
+        available, and we will wait for the request queue forever. In this case, we must revert to
+        synchronous, in-thread flushing. We don't know how to detect this condition, so we'll use
+        that for all destructor events.
+
+        Neither this nor context managers are compatible with kwargs pass-through (so e.g. no
+        custom auth).
         '''
-        self.flush(multithread=False)
+        if self._write_buf.tell() > 0 or len(self._http_threadpool_futures) > 0:
+            print >> sys.stderr, "=== WARNING! ==="
+            print >> sys.stderr, "There is still unflushed data in the destructor of a DXFile object!"
+            print >> sys.stderr, "We will attempt to flush it now, but if an error were to occur, we could not report it back to you."
+            print >> sys.stderr, "Your program could fail to flush the data but appear to succeed."
+            print >> sys.stderr, "Instead, please call flush() or close(), or use the context managed version (e.g., with open_dxfile(ID, mode='w') as f:)"
+        try:
+            self.flush(multithread=False)
+        except Exception as e:
+            print >> sys.stderr, "=== Exception occurred while flushing accumulated file data for %r" % (self._dxid,)
+            traceback.print_exception(*sys.exc_info())
+            raise
 
     def __iter__(self):
         buffer = self.read(self._bufsize)
