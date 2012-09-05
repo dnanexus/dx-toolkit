@@ -86,7 +86,13 @@ class DXFile(DXDataObject):
         self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
 
-        self.set_ids(dxid, project)
+        DXDataObject.set_ids(dxid, project)
+
+        # Initialize state
+        self._pos = 0
+        self._file_length = None
+        self._cur_part = 1
+        self._num_uploaded_parts = 0
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
