@@ -10,6 +10,11 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 
+# TODO: Command `getconf _NPROCESSORS_ONLN` returns number of cores on
+#       linux. Instead of hardcoding -j8 flag below, use this value.
+#       But make sure that Makefile still works on Mac -  ("sysctl hw.ncpu"
+#       can return similar information on Mac).
+export MAKEFLAGS=-j8
 ifndef PREFIX
 	export PREFIX=/usr
 endif
