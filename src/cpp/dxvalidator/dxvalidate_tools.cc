@@ -87,7 +87,7 @@ void ColumnsHandler::Add(const JSON &c) {
 }
 
 string ColumnsHandler::getColumnList(int index) {
-  if ((index < 0) || (index > 3)) return "";
+  if ((index < 0) || (index > 4)) return "";
   if (columnLists[index].size() == 0) return "";
 
   string ret_val = columnLists[index][0];
