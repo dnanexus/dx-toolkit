@@ -67,8 +67,11 @@ TODO: Necessary but not sufficient list
 
 ### Java build dependencies
 Java is not built by default.
+
 #### Dependencies
+
 * Maven
+
 #### Building
 
     cd src/java
