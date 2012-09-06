@@ -61,7 +61,7 @@ that doesn't require them.
             export CXX=g++-4.7
             ```
 
-* Please note: there is an incompatibility when using GCC 4.7.1 and Boost 1.49. Please use either the GCC 4.6 series or Boost 1.50+ in this case.
+* **Note:** There is an incompatibility when using GCC 4.7.1 and Boost 1.49. Please use either the GCC 4.6 series or Boost 1.50+ in this case.
 
 
 ### Test dependencies
