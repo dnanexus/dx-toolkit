@@ -65,10 +65,10 @@ TODO: Necessary but not sufficient list
 
 * **Note:** There is an incompatibility when using GCC 4.7.1 and Boost 1.49. Please use either the GCC 4.6 series or Boost 1.50+ in this case.
 
-### Java build dependencies
-Java is not built by default.
+### Java bindings
+The Java bindings are not built by default.
 
-#### Dependencies
+#### Build dependencies
 
 * Maven
 
