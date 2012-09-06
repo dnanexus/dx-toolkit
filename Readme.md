@@ -30,8 +30,6 @@ The following packages are required to build the toolkit. You can avoid having t
 compiled release from https://github.com/dnanexus/dx-toolkit/downloads, or by building only a portion of the toolkit
 that doesn't require them.
 
-* TODO: list packages
-
 #### Ubuntu 12.04
 
 TODO: Necessary but not sufficient list
