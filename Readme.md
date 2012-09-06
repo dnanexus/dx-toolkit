@@ -3,6 +3,8 @@ DNAnexus Platform Toolkit
 
 Welcome to the `dx-toolkit` repository! This repository contains the DNAnexus API language bindings and utilities for interacting with the DNAnexus platform.
 
+See http://wiki.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant documentation.
+
 ## Using the toolkit on your system
 Initialize your environment by sourcing this file:
 
