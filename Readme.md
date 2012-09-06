@@ -70,9 +70,12 @@ Java is not built by default.
 #### Dependencies
 * Maven
 #### Building
+
     cd src/java
     mvn package
+
 #### Installing
+
     mvn install
 
 ### Test dependencies
