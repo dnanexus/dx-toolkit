@@ -36,7 +36,7 @@ that doesn't require them.
 
 TODO: Necessary but not sufficient list
 
-    python-setuptools g++ cmake libboost-dev libcurl4-openssl-dev libboost-regex-dev libbost-thread-dev libboost-system-dev
+    python-setuptools g++ cmake libboost-dev libcurl4-openssl-dev libboost-regex-dev libboost-thread-dev libboost-system-dev
 
 #### Ubuntu 10.04
 
