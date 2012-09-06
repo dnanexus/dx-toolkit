@@ -1,8 +1,8 @@
 {
   "name": "random_gtable",
-  "title": "Random String Gtable",
-  "summary": "Creates a Random Gtable with one column (integer), and compute average of the column.",
-  "description": "Creates a Random Gtable with one column (integer), and compute average of the column.\nThe app returns: Gtable created, a floating point value (average), and, a file which is written by the app during execution",
+  "title": "Random String GTable",
+  "summary": "Creates a Random GTable with one column (integer), and computes average of the column.",
+  "description": "Creates a Random GTable with one column (integer), and computes average of the column.\nThe app returns: GTable created, a floating point value (average), and a file which is written by the app during execution.",
   "dxapi": "1.0.0",
   "folder": "/programs/random_gtable",
   "inputSpec": [
