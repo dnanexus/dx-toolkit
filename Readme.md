@@ -47,9 +47,10 @@ that doesn't require them.
     * Boost >= 1.49 (```sudo port install boost``` or ```brew install boost```)
     * GCC >= 4.6
         * On MacPorts, install and select GCC with:
-        
-               sudo port install gcc47
-               sudo port select --set gcc mp-gcc47
+         ```
+         sudo port install gcc47
+         sudo port select --set gcc mp-gcc47
+         ```
 
         * On Homebrew, install and select an up-to-date version of GCC with:
         
