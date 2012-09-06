@@ -34,7 +34,9 @@ that doesn't require them.
 
 #### Ubuntu 12.04
 
-(Necessary but not sufficient list by Mike) python-setuptools g++ cmake libboost-dev libcurl4-openssl-dev libboost-regex-dev libbost-thread-dev
+TODO: Necessary but not sufficient list
+
+    python-setuptools g++ cmake libboost-dev libcurl4-openssl-dev libboost-regex-dev libbost-thread-dev
 
 #### Ubuntu 10.04
 
