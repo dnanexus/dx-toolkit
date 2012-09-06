@@ -34,7 +34,12 @@ add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(reads_validator reads_validator.cpp)
-target_link_libraries(reads_validator dxjson dxcpp boost_system-mt)
+
+if(APPLE)
+  target_link_libraries(reads_validator dxjson dxcpp boost_system-mt)
+else()
+  target_link_libraries(reads_validator dxjson dxcpp)
+endif()
 
 if (BUILD_TEST)
   add_executable(test_reads_validator test_reads_validator.cpp ${GTEST_DIR}/src/gtest-all.cc)

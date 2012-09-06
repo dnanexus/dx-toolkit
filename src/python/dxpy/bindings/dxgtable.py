@@ -65,7 +65,7 @@ class DXGTable(DXDataObject):
         self._http_threadpool_futures = set()
         self._columns = None
 
-        self.set_ids(dxid, project)
+        DXDataObject.set_ids(self, dxid, project)
 
     def __enter__(self):
         return self
