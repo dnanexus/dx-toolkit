@@ -46,13 +46,13 @@ that doesn't require them.
     * CMake (http://www.cmake.org/cmake/resources/software.html) (```sudo port install cmake``` or ```brew install cmake```)
     * Boost >= 1.49 (```sudo port install boost``` or ```brew install boost```)
     * GCC >= 4.6
-        * On MacPorts, install and select GCC with the following:
-             sudo port install gcc47
-             sudo port select --set gcc mp-gcc47
+        * On MacPorts, install and select GCC with:
+              sudo port install gcc47
+              sudo port select --set gcc mp-gcc47
         * On Homebrew, install and select an up-to-date version of GCC with:
-             brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
-             export CC=gcc-4.7
-             export CXX=g++-4.7
+              brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
+              export CC=gcc-4.7
+              export CXX=g++-4.7
 
 ##### C++ bindings dependencies on OS X
 
