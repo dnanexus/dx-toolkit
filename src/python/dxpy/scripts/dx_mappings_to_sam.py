@@ -227,7 +227,7 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs):
     if values["mate_id"] == -1 or values["chr"] != values["chr2"] or values["chr"] == '' or values["chr"] == '*':
         tlen = 0
     else:
-        tlen = (max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])) - 1)
+        tlen = (max(int(values["hi2"]),int(values["hi"])) - min(int(values["lo2"]),int(values["lo"])))
         if int(values["lo"]) > int(values["lo2"]):
             tlen *= -1
 
