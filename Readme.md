@@ -48,29 +48,21 @@ that doesn't require them.
     * GCC >= 4.6
         * On MacPorts, install and select GCC with:
 
-              ```
-              sudo port install gcc47
-              sudo port select --set gcc mp-gcc47
-              ```
+            ```
+            sudo port install gcc47
+            sudo port select --set gcc mp-gcc47
+            ```
 
         * On Homebrew, install and select an up-to-date version of GCC with:
         
-              brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
-              export CC=gcc-4.7
-              export CXX=g++-4.7
+            ```
+            brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
+            export CC=gcc-4.7
+            export CXX=g++-4.7
+            ```
 
-##### C++ bindings dependencies on OS X
+* Please note: there is an incompatibility when using GCC 4.7.1 and Boost 1.49. Please use either the GCC 4.6 series or Boost 1.50+ in this case.
 
-
-* **:** GCC 4.6+ and Boost C++ libraries 1.5x are required for compiling C++ bindings on Mac. Follow these intructions to install them:
-    - Install MacPorts by following instructions 
-    - Install GCC 4.7.x and set it as default gcc target:   
-         
-    - Install Boost C++ libraries:
-         
-         ```
-         $ 
-         ```
 
 ### Test dependencies
 TODO
