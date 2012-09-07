@@ -40,6 +40,7 @@ public:
   bool compress;
   bool progress;
   bool verbose;
+  bool waitOnClose;
 
 private:
 

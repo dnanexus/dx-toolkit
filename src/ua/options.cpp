@@ -49,6 +49,7 @@ Options::Options() {
     ("compress,z", po::bool_switch(&compress), "Compress chunks before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
+    ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
     ;
 
   hidden_opts = new po::options_description();
@@ -280,6 +281,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  compress: " << opt.compress << endl
         << "  progress: " << opt.progress << endl
         << "  verbose: " << opt.verbose << endl
+        << "  wait on close: " << opt.waitOnClose << endl
       ;
   }
   return out;

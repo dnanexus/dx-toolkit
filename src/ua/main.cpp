@@ -136,6 +136,37 @@ void monitor() {
   }
 }
 
+bool fileDone(File &file) {
+  if (file.failed)
+    return true;
+  if (!file.waitOnClose)
+    return true;
+  if (file.waitOnClose && file.closed)
+    return true;
+  return false;
+}
+
+bool allFilesDone(vector<File> &files) {
+  for (unsigned int i = 0; i < files.size(); ++i) {
+    if (!fileDone(files[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void updateFileState(vector<File> &files) {
+  for (unsigned int i = 0; i < files.size(); ++i) {
+    files[i].updateState();
+  }
+}
+
+void waitOnClose(vector<File> &files) {
+  do {
+    updateFileState(files);
+  } while (!allFilesDone(files));
+}
+
 void createWorkerThreads() {
   LOG << "Creating worker threads:" << endl;
 
@@ -262,6 +293,12 @@ int main(int argc, char * argv[]) {
       totalChunks += files[i].createChunks(chunksToRead, opt.chunkSize, opt.tries);
     }
 
+    if (opt.waitOnClose) {
+      for (unsigned int i = 0; i < files.size(); ++i) {
+        files[i].waitOnClose = true;
+      }
+    }
+
     LOG << "Created " << totalChunks << " chunks." << endl;
 
     createWorkerThreads();
@@ -290,6 +327,12 @@ int main(int argc, char * argv[]) {
         cerr << endl;
       }
     }
+
+    LOG << "Waiting for files to be closed..." << endl;
+    boost::thread waitOnCloseThread(waitOnClose, boost::ref(files));
+    LOG << "Joining wait-on-close thread..." << endl;
+    waitOnCloseThread.join();
+    LOG << "Wait-on-close thread finished." << endl;
 
     curlCleanup();
 

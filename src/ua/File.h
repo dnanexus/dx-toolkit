@@ -19,6 +19,8 @@ public:
 
   void close(void);
 
+  void updateState(void);
+
   /* Name of the local file to be uploaded. */
   std::string localFile;
 
@@ -39,6 +41,12 @@ public:
 
   /* Set to true if one or more chunks of the file fails to be uploaded. */
   bool failed;
+
+  /* Whether to wait for this file to be closed before exiting. */
+  bool waitOnClose;
+
+  /* Whether this file is in the closed state. */
+  bool closed;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
 

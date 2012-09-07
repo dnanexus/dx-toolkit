@@ -17,4 +17,6 @@ std::string createFileObject(const std::string &project, const std::string &fold
 
 void closeFileObject(const std::string &fileID);
 
+std::string getFileState(const std::string &fileID);
+
 #endif

@@ -159,3 +159,8 @@ string createFileObject(const string &project, const string &folder, const strin
 void closeFileObject(const string &fileID) {
   fileClose(fileID);
 }
+
+string getFileState(const string &fileID) {
+  dx::JSON result = fileDescribe(fileID);
+  return result["state"].get<string>();
+}

@@ -10,6 +10,12 @@ Windows.
 To build the UA, simply run `make` in this directory. This will produce a
 subdirectory called `build/`, containing the `ua` executable.
 
+On Linux, the resulting executable is statically linked. On Mac OS X, the
+executable is statically linked with the exception of two libraries: libgcc
+and libstdc++. As a result, the `libstdc++.6.dylib` and `libgcc_s.1.dylib`
+files in the `build/` directory must be distributed along with the Mac
+executable.
+
 ## Dependencies
 
 The UA depends on the following libraries:
@@ -20,9 +26,12 @@ The UA depends on the following libraries:
 * c-ares, an asynchronous DNS library (Ubuntu package libc-ares-dev; Mac
   port c-ares);
 
+* OpenSSL for HTTPS;
+
 * various [Boost](http://www.boost.org/) libraries, including Thread,
-  Lexical Cast, Program Options, and Filesystem;
+  Lexical Cast, Program Options, Filesystem, System, and Regex;
 
 * [zlib](http://zlib.net/) for compression;
 
-* the dxjson and dxcpp libraries for communicating with the platform API.
+* the dxjson, SimpleHttpLib, and dxcpp libraries for communicating with the
+  platform API.
