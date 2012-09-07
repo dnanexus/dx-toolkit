@@ -13,6 +13,7 @@ export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export PATH="${DNANEXUS_HOME}/bin:$PATH"
 export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
 export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
+export CLASSPATH="${DNANEXUS_HOME}/src/java/target/dnanexus-api-0.1-SNAPSHOT-jar-with-dependencies.jar:${CLASSPATH}"
 
 export PYTHONIOENCODING=UTF-8
 
