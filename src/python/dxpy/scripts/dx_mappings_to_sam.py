@@ -41,7 +41,7 @@ def main(**kwargs):
     
     regions = []
     if opts.region_file != "":
-        regions = re.findall("(-L [^:]*):(\d+)-(\d+)", open(opts.region_file, 'r').read())
+        regions = re.findall("-L ([^:]*):(\d+)-(\d+)", open(opts.region_file, 'r').read())
     
     name = mappingsTable.describe()['name']
     
