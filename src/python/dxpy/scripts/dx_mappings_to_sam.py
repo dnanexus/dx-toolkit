@@ -72,7 +72,7 @@ def main(**kwargs):
     for i in range(len(contigNames)):
         header += ("@SQ\tSN:"+contigNames[i]+"\tLN:"+str(contigSizes[i])+"\n")
     if opts.add_read_groups and "\n@RG" not in header:
-        header += ("@RG\tID:0\n")
+        header += ("@RG\tID:0\tSM:Sample_0\n")
 
     if outputFile != None:
         outputFile.write(header)
