@@ -271,7 +271,7 @@ class DXProject(DXContainer):
 
     def invite(self, invitee, level, **kwargs):
         """
-        :param invitee: Username or email of person to be invited to the project; use "PUBLIC" to make it publicly viewable (level must be set to "VIEW")
+        :param invitee: Username (of the form "user-USERNAME") or email of person to be invited to the project; use "PUBLIC" to make the project publicly available (in which case level must be set to "VIEW").
         :type invitee: string
         :param level: Permissions level that the invitee would get ("LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
         :type level: string
@@ -284,7 +284,7 @@ class DXProject(DXContainer):
 
     def decrease_perms(self, member, level, **kwargs):
         """
-        :param member: Username of the project member whose permissions will be decreased
+        :param member: Username (of the form "user-USERNAME") of the project member whose permissions will be decreased.
         :type member: string
         :param level: Permissions level that the member will now have (None, "LIST", "VIEW", or "CONTRIBUTE")
         :type level: string or None
