@@ -2012,11 +2012,11 @@ def parse_obj(string, klass):
         raise TypeError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:
         raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
-#    if project is None:
-    return {'$dnanexus_link': entity_result['id']}
-#    else:
-#        return {'$dnanexus_link': {"project": entity_result['describe']['project'],
-#                                   "id": entity_result['id']}}
+    if is_hashid(string):
+        return {'$dnanexus_link': entity_result['id']}
+    else:
+        return {'$dnanexus_link': {"project": entity_result['describe']['project'],
+                                   "id": entity_result['id']}}
 
 dx_data_classes = ['record', 'gtable', 'file', 'applet', 'table']
 
@@ -2206,11 +2206,11 @@ def add_input_to_json(inputs, input_json, input_specs):
                                                               expected='entity')
                 if entity_result is None:
                     parser.exit(1, 'Could not resolve ' + i[1] + ' to a value or object ID')
-#                if project is None:
-                entity_link = {'$dnanexus_link': entity_result['id']}
-#                else:
-#                    entity_link = {"$dnanexus_link": {"project": entity_result['describe']['project'],
-#                                                      "id": entity_result['id']}}
+                if is_hashid(i[1]):
+                    entity_link = {'$dnanexus_link': entity_result['id']}
+                else:
+                    entity_link = {"$dnanexus_link": {"project": entity_result['describe']['project'],
+                                                      "id": entity_result['id']}}
                 if i[0] not in input_json:
                     input_json[i[0]] = [entity_link]
                 else:
