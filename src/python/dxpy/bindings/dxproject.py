@@ -231,7 +231,7 @@ class DXContainer(DXObject):
         return api_method(self._dxid,
                           {"objects": objects,
                            "folders": folders,
-                           "project": project,
+                           "project": container,
                            "destination": destination,
                            "includeHiddenLinks": include_hidden_links},
                           **kwargs)
