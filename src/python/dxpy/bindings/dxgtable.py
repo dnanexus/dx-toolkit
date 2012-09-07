@@ -114,7 +114,7 @@ class DXGTable(DXDataObject):
             raise ValueError("Row has wrong number of columns (expected %d, got %d)" % (len(self._columns), len(row)))
         for index, (value, column) in enumerate(zip(row, self._columns)):
             if column['type'] == 'string':
-                if type(value) is not str:
+                if type(value) is not str and type(value) is not unicode:
                     raise ValueError("Expected value in column %d to be a string, got %r instead" % (index, value))
             elif column['type'] == 'boolean':
                 if value != True and value != False:

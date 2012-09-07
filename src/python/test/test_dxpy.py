@@ -355,6 +355,8 @@ class TestDXGTable(unittest.TestCase):
             self.dxgtable.add_rows(data=[["303", 1.248, 123.5, True]], part=3) # Bad column 2
         with self.assertRaises(ValueError):
             self.dxgtable.add_rows(data=[["303", 1.248, 123, "True"]], part=4) # Bad column 3
+        # Correct column types
+        self.dxgtable.add_rows(data=[[u"303", 1.248, 123, True]], part=5)
         self.dxgtable.close(block=True)
 
     def test_add_rows_no_index(self):
