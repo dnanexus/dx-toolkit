@@ -91,12 +91,12 @@ class DXContainer {
    *
    * @param objects A JSON array of strings containing the object ID(s) to be cloned.
    * @param folders A JSON array of strings containing the folder route(s) to be cloned.
-   * @param dest_proj ID of the project into which the selected objects should be cloned.
-   * @param dest_folder The full path of the destination folder in the destination project.
+   * @param dest_container ID of the container into which the selected objects should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination container.
    */
   void clone(const dx::JSON &objects,
              const dx::JSON &folders,
-             const std::string &dest_proj,
+             const std::string &dest_container,
              const std::string &dest_folder="/") const;
 
   // Folder specific
@@ -163,37 +163,37 @@ class DXContainer {
   void removeObjects(const dx::JSON &objects) const;
 
   /**
-   * Clone the specified folder to another data container. Name of the folder is kept 
-   * intact in the destination data container.
+   * Clones the specified folder to another data container. The of the folder is preserved in the
+   * destination data container.
    *
-   * Any hidden objects contained in a folder to be cloned are only cloned if a 
-   * visible ancestor is also cloned.
+   * Any hidden objects contained in a folder to be cloned are only cloned if a visible ancestor is
+   * also cloned.
    *
    * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
    *
    * @param folder The full path of the folder to be cloned.
-   * @param dest_proj ID of the project into which the folder should be cloned.
-   * @param dest_folder The full path of the destination folder in the destination project.
+   * @param dest_container ID of the container into which the folder should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination container.
    */
   void cloneFolder(const std::string &folder,
-                    const std::string &dest_proj,
-                    const std::string &dest_folder) const {
-    clone(dx::JSON(dx::JSON_ARRAY), dx::JSON::parse("[\"" + folder + "\"]"), dest_proj, dest_folder);
+		   const std::string &dest_container,
+		   const std::string &dest_folder) const {
+    clone(dx::JSON(dx::JSON_ARRAY), dx::JSON::parse("[\"" + folder + "\"]"), dest_container, dest_folder);
   }
-  
+
   /**
-   * Clone the specified object(s) from the associated data container to another data container.
+   * Clones the specified object(s) from the associated data container to another data container.
    *
    * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
    *
    * @param objects A JSON array of strings containing the object ID(s) to be cloned.
-   * @param dest_proj ID of the project into which the selected objects should be cloned.
-   * @param dest_folder The full path of the destination folder in the destination project.
+   * @param dest_container ID of the container into which the selected objects should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination container.
    */
   void cloneObjects(const dx::JSON &objects,
-                    const std::string &dest_proj,
+                    const std::string &dest_container,
                     const std::string &dest_folder) const {
-    clone(objects, dx::JSON(dx::JSON_ARRAY), dest_proj, dest_folder);
+    clone(objects, dx::JSON(dx::JSON_ARRAY), dest_container, dest_folder);
   }
 };
 

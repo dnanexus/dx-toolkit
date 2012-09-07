@@ -27,12 +27,12 @@ void DXContainer::move(const JSON &objects,
 
 void DXContainer::clone(const JSON &objects,
                         const JSON &folders,
-                        const string &dest_proj,
+                        const string &dest_container,
                         const string &dest_folder) const {
   JSON input_params(JSON_OBJECT);
   input_params["objects"] = objects;
   input_params["folders"] = folders;
-  input_params["project"] = dest_proj;
+  input_params["project"] = dest_container;
   input_params["destination"] = dest_folder;
   DXHTTPRequest("/" + dxid_ + "/clone",
                 input_params.toString());

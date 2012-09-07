@@ -200,29 +200,28 @@ class DXContainer(DXObject):
         api_method(self._dxid, {"objects": objects},
                    **kwargs)
 
-    def clone(self, project, destination="/", objects=[], folders=[],
+    def clone(self, container, destination="/", objects=[], folders=[],
               include_hidden_links=True, **kwargs):
         """
         :param objects: List of object IDs to move
         :type objects: list of strings
         :param folders: List of full paths to folders to move
         :type folders: list of strings
-        :param project: Destination project ID
-        :type project: string
-        :param destination: Path of destination folder in the destination project
+        :param container: Destination container ID
+        :type container: string
+        :param destination: Path of destination folder in the destination container
         :type destination: string
         :param include_hidden_links: Whether to also clone objects that are hidden and linked from any of the objects that would be cloned
         :type include_hidden_links: boolean
 
-        Clones (copies) the specified objects and folders in the
-        project to the project specified in *project* and into the
-        folder *destination*.  Cloning a folder also clones all
-        contained folders and objects.  If an object or folder is
-        explicitly specified but also appears inside another specified
-        folder, it will be removed from the larger folder and placed
-        directly in *destination*.  Note that objects must be in the
-        "closed" state to be cloned, and that no objects or folders
-        are modified in the source project..
+        Clones (copies) the specified objects and folders in the container to
+        the container specified in *container* and into the folder
+        *destination*. Cloning a folder also clones all contained folders and
+        objects. If an object or folder is explicitly specified but also
+        appears inside another specified folder, it will be removed from the
+        larger folder and placed directly in *destination*. Note that objects
+        must be in the "closed" state to be cloned, and that no objects or
+        folders are modified in the source container.
 
         """
         api_method = dxpy.api.containerClone
