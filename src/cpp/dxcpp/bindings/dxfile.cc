@@ -23,7 +23,6 @@ void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, co
       someThingWentWrong = true;
       wrongThingDescription = e.what();
     }
-
     if (!someThingWentWrong && (resp.responseCode < 200 || resp.responseCode >= 300)) {
       someThingWentWrong = true;
       wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode);
@@ -74,6 +73,7 @@ void DXFile::init_internals_() {
   is_closed_ = false;
   countThreadsWaitingOnConsume = 0;
   countThreadsNotWaitingOnConsume = 0;
+  hasAnyPartBeenUploaded = false;
 }
 
 void DXFile::setIDs(const string &dxid, const string &proj) {
@@ -385,6 +385,7 @@ void DXFile::write(const char* ptr, int64_t n) {
 
     // Add remaining data to buffer (will be added in next call)
     write(ptr + remaining_buf_size, n - remaining_buf_size);
+    hasAnyPartBeenUploaded = true;
   }
 }
 
@@ -400,8 +401,8 @@ void DXFile::flush() {
        createWriteThreads_();
     uploadPartRequestsQueue.produce(make_pair(buffer_.str(), cur_part_));
     cur_part_++;
+    hasAnyPartBeenUploaded = true;
   }
-
   // Now join all write threads
   joinAllWriteThreads_();
   buffer_.str(string());
@@ -417,13 +418,13 @@ void DXFile::uploadPart(const char *ptr, int64_t n, const int index) {
   JSON input_params(JSON_OBJECT);
   if (index >= 1)
     input_params["index"] = index;
-
   const JSON resp = fileUpload(dxid_, input_params);
   HttpHeaders req_headers;
   req_headers["Content-Length"] = boost::lexical_cast<string>(n);
-
+  
   HttpRequest resp2;
   makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), HttpHeaders(), HTTP_POST, ptr, n);
+  hasAnyPartBeenUploaded = true;
 }
 
 bool DXFile::is_open() const {
@@ -448,6 +449,10 @@ bool DXFile::is_closed() const {
 
 void DXFile::close(const bool block) {
   flush();
+  // If not part has been uploaded, upload an empty part.
+  // This allows creation of empty files
+  if (hasAnyPartBeenUploaded == false)
+    uploadPart(std::string(""), 1);
   fileClose(dxid_);
   if (block)
     waitOnState("closed");

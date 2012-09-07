@@ -13,5 +13,14 @@ export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export PATH="${DNANEXUS_HOME}/bin:$PATH"
 export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
 export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
+export CLASSPATH="${DNANEXUS_HOME}/src/java/target/dnanexus-api-0.1-SNAPSHOT-jar-with-dependencies.jar:${CLASSPATH}"
 
 export PYTHONIOENCODING=UTF-8
+
+_dx_argcomplete() {
+    COMPREPLY=( $( \
+        COMP_LINE=$COMP_LINE  COMP_POINT=$COMP_POINT \
+        COMP_WORDS="${COMP_WORDS[*]}"  COMP_CWORD=$COMP_CWORD \
+    ARGPARSE_AUTO_COMPLETE=1 $1 ) )
+}
+complete -F _dx_argcomplete dx

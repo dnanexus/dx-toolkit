@@ -625,7 +625,7 @@ var DNAnexus = {};
    *  @route POST: /jobs/:id/jobs
    */
   DNAnexus.runJob = function(body) {
-    // The current job's id is stored in globally available variable: job.id - See http://wiki.dnanexus.com/index.php/Execution_subsystem#Run_Job
+    // The current job's id is stored in globally available variable.
     var resp = httpReq(buildReq("/jobs/" + job.id + "/jobs", "POST", buildHeader(true, true), body));
     verifyStatusCode(resp.status, 201, "POST /jobs/:id/jobs");
     return getResponseDataJSON(resp.data).jobID;

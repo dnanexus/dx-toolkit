@@ -47,20 +47,21 @@ int main() {
   // Now read the gtable asynchorounsly
   /////////////////////////////////////////
  
-  // We can optimize iteration over all rows of a
-  // a gtable by using startLinearQuery() and getNextChunk()
+  // We can optimize fetching rows of a GTable
+  // by using startLinearQuery() and getNextChunk()
   // functions.
-  // By calling startLinearQuery() once, background fetching of
-  // gtable rows is started (multi-threaded).
-  // After this, each call to getNextChunk() returns the next chunk of rows
-  // in order, until the end (or desired limit) is reached.
-  // In which case getNextChunk() returns the value "false"
-  // This allows processing the gtable in chunked fashion
+  //  - startLinearQuery(): Call this function once to
+  //    start background fetching of GTable rows (multi-threaded).
+  //  - Each subsequent calls to getNextChunk() function copies the
+  //    next chunk of rows (in order) in the given input variable, and returns 
+  //    true iff more chunks are available.
+  //  - Once all chunks have been returned back, getNextChunk() returns false
+  // This allows processing the GTable in a chunked fashion
   // and you can spend time on processing a particular chunk
   // while next few chunks are being fetched in background
   //
-  // There are various parameters you can tweak for startLinearQuery()
-  // Look at the Doxygen documentation for dxcpp to know about them.
+  // There are various parameters you can tweak for startLinearQuery(),
+  // look at the Doxygen documentation for dxcpp to know about them.
   gtable.startLinearQuery(JSON::parse("[\"rand_value\"]"), 0, numRows, (numRows/10 + 1));
   JSON chunk;
   int64_t sum = 0;

@@ -33,14 +33,16 @@ namespace dx {
       map<string, string> columnTypes[3];
       set<string> intTypes;
 
-      vector<string> columnLists[4];
+      vector<string> columnLists[5];
       JSON queryColumns;
 
-      bool integerType(const string &type) { return (intTypes.find(type) != intTypes.end()); }
-      bool identifyColumn(const string &name, const string &type);
+      bool integerType() { return (intTypes.find(cType) != intTypes.end()); }
+      bool floatType() { return ((cType == "float") || (cType == "double")); }
+      bool identifyColumn();
       void findMissingColumns();
 
     protected:
+      string cName, cType;
       set<string> allColumns;
 
       void clearColumns();
@@ -52,7 +54,8 @@ namespace dx {
         */
       void addColumn(const string &name, const string &type, int index) { columnTypes[index][name] = type; }
 
-      virtual bool recognizeColumn(const string &n, const string &t) { return false; }
+      virtual bool isForbidden() { return false; }
+      virtual bool isRecognized() { return false; }
 
     public:
       ColumnsHandler();
@@ -65,6 +68,7 @@ namespace dx {
         * 1 - missing suggested columns
         * 2 - invalid columns
         * 3 - unrecognized columns
+        * 4 - forbidden columns
         */
       string getColumnList(int index);
 

@@ -11,6 +11,12 @@ if (BUILD_TEST)
   include_directories(${GTEST_DIR} ${GTEST_DIR}/include)
 endif()
 
+FIND_PACKAGE(Boost REQUIRED)
+IF (Boost_FOUND)
+     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+ENDIF()
+
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated -fopenmp")
 
@@ -28,7 +34,12 @@ add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(reads_validator reads_validator.cpp)
-target_link_libraries(reads_validator dxjson dxcpp)
+
+if(APPLE)
+  target_link_libraries(reads_validator dxjson dxcpp boost_system-mt)
+else()
+  target_link_libraries(reads_validator dxjson dxcpp)
+endif()
 
 if (BUILD_TEST)
   add_executable(test_reads_validator test_reads_validator.cpp ${GTEST_DIR}/src/gtest-all.cc)

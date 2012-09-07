@@ -51,7 +51,7 @@ class DXRecord: public DXDataObject {
    *
    * @param data_obj_fields JSON containing the optional fields with which to create the object
    * ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
    * API method.
    */
   void create(const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
@@ -64,7 +64,7 @@ class DXRecord: public DXDataObject {
    * @param init_from a DXRecord from which to initialize the metadata
    * @param data_obj_fields JSON containing the optional fields with which to create the object
    * ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
    * API method.
    */
   void create(const DXRecord &init_from,
@@ -75,7 +75,7 @@ class DXRecord: public DXDataObject {
    *
    * @param data_obj_fields JSON containing the optional fields with which to create the object
    * ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
    * API method.
    *
    * @return A DXRecord remote object handler.
@@ -91,7 +91,7 @@ class DXRecord: public DXDataObject {
    * @param init_from a DXRecord from which to initialize the metadata.
    * @param data_obj_fields JSON containing the optional fields with which to create the object
    * ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">/record/new</a>
    * API method.
    *
    * @return A DXRecord remote object handler.

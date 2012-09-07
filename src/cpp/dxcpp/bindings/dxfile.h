@@ -16,7 +16,7 @@
 
 ///
 /// A File represents an opaque array of bytes (see the <a
-/// href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Files">API specification</a> for more
+/// href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files">API specification</a> for more
 /// info). DXFile supports multithreaded uploading and downloading for high performance.
 ///
 /// When a File object is initialized, it is empty, in the "open" state, and writable. In order to
@@ -86,6 +86,12 @@ class DXFile: public DXDataObject {
   ///////////////////////////////////////////////////////////////////
 
   /**
+   * Will be true if "upload" method has been called at least once.
+   * This allows us to create empty files.
+   */
+  bool hasAnyPartBeenUploaded;
+
+  /**
    * For use when reading closed remote files; stores the current
    * position (in bytes from the beginning of the file) from which
    * future read() calls will begin.
@@ -120,7 +126,7 @@ class DXFile: public DXDataObject {
    * file.
    */
   bool eof_;
- 
+
   /**
    * This is used for disallowing seek() when file is in not "closed" state
    * Initially it should always be set to false.
@@ -214,7 +220,7 @@ class DXFile: public DXDataObject {
    * @param media_type String representing the media type of the file.
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
    * API method.
    */
   void create(const std::string &media_type="",
@@ -283,6 +289,8 @@ class DXFile: public DXDataObject {
    * (MAX_WRITE_THREADS threads) are already busy with HTTP requests. Otherwise, it returns
    * immediately.
    *
+   * If any of the threads fails then std::terminate() will be called.
+   *
    * @warning Do <b>not</b> mix and match with uploadPart().
    *
    * @see flush()
@@ -348,7 +356,7 @@ class DXFile: public DXDataObject {
    * Calls flush() and issues a request to close the remote File.
    *
    * See the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">/file-xxxx/close</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">/file-xxxx/close</a>
    * API method for more info.
    *
    * @param block Boolean indicating whether the process should block until the remote file is in
@@ -378,7 +386,7 @@ class DXFile: public DXDataObject {
    *
    * @see stopLinearQuery(), getNextChunk()
    */
-  void startLinearQuery(const int64_t start_byte=-1,
+  void startLinearQuery(const int64_t start_byte=0,
                         const int64_t num_bytes=-1,
                         const int64_t chunk_size=10*1024*1024,
                         const unsigned max_chunks=20,
@@ -428,7 +436,7 @@ class DXFile: public DXDataObject {
    * @param media_type String representing the media type of the file.
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
    * API method.
    * @return DXFile remote file handler for a new remote file.
    */
@@ -460,7 +468,7 @@ class DXFile: public DXDataObject {
    * @param media_type String representing the media type of the file.
    * @param data_obj_fields JSON hash containing the optional fields with which to create the
    * object ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
    * API method.
    * @param waitForClose If set to true, then function returns only after uploaded file is in the
    * "closed" state. Otherwise, returns directly after initiating the file close (the uploaded file

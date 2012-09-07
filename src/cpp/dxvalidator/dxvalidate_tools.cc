@@ -17,20 +17,21 @@ void TypesHandler::Add(const JSON &t) {
   }
 }
 
-bool ColumnsHandler::identifyColumn(const string &name, const string &type) {
+bool ColumnsHandler::identifyColumn() {
   map<string, string>::iterator it;
 
   for (int i = 0; i < 3; i ++) {
-    it = columnTypes[i].find(name);
+    it = columnTypes[i].find(cName);
     if (it == columnTypes[i].end()) continue;
   
-    queryColumns.push_back(name);
+    queryColumns.push_back(cName);
     
     string t = it->second;
-    if (type == t) return true;
-    if ((t == "integer") && integerType(type)) return true;
+    if (cType == t) return true;
+    if ((t == "integer") && integerType()) return true;
+    if ((t == "float or double") && floatType()) return true;
 
-    columnLists[2].push_back(name + " [" + t + "]");
+    columnLists[2].push_back(cName + " [" + t + "]");
     return true;
   }
 
@@ -51,7 +52,7 @@ void ColumnsHandler::clearColumns() {
   for (int i = 0; i < 3; i++)
     columnTypes[i].clear();
 
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 5; i++)
     columnLists[i].clear();
   
   queryColumns.resize_array(0);
@@ -67,22 +68,26 @@ ColumnsHandler::ColumnsHandler() {
 
 void ColumnsHandler::Add(const JSON &c) {
   for (int i = 0; i < c.size(); i++) {
-    string name = c[i]["name"].get<string>();
-    string type = c[i]["type"].get<string>();
+    cName = c[i]["name"].get<string>();
+    cType = c[i]["type"].get<string>();
     
-    allColumns.insert(name);
+    allColumns.insert(cName);
     
-    if (identifyColumn(name, type)) continue;
-    if (recognizeColumn(name, type)) continue;
+    if (identifyColumn()) continue;
+    if (isForbidden()) {
+      columnLists[4].push_back(cName);
+      continue;
+    }
+    if (isRecognized()) continue;
 
-    columnLists[3].push_back(name);
+    columnLists[3].push_back(cName);
   }
 
   findMissingColumns();
 }
 
 string ColumnsHandler::getColumnList(int index) {
-  if ((index < 0) || (index > 3)) return "";
+  if ((index < 0) || (index > 4)) return "";
   if (columnLists[index].size() == 0) return "";
 
   string ret_val = columnLists[index][0];
@@ -94,8 +99,10 @@ string ColumnsHandler::getColumnList(int index) {
 string ErrorMsg::replaceStr() {
   for (int i = 0; i < msgData.size(); i++) {
     string marker = "{" + boost::lexical_cast<string>(i+1) + "}";
-    size_t found = msg.find(marker);
-    if (found != string::npos) msg.replace(found, marker.size(), msgData[i]);
+    size_t found = -1;
+    while ((found = msg.find(marker, found+1)) != string::npos) {
+      msg.replace(found, marker.size(), msgData[i]);
+    }
   }
   return msg;
 }

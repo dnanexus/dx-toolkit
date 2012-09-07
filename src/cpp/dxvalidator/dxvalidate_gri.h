@@ -43,16 +43,16 @@ namespace dx {
     public:
       GriErrorMsg() {              
         errorMsg["TYPE_NOT_GRI"] = "Object is not a gri type";
-        errorMsg["CONTIGSET_MISSING"] = "Object details do not contain 'original_contigset'";
-        errorMsg["CONTIGSET_INVALID"] = "In object details, 'original_contigset' is not a valid DNAnexus links to a contigset object";
+        errorMsg["CONTIGSET_MISSING"] = "'Details' of this object does not contain 'original_contigset'";
+        errorMsg["CONTIGSET_INVALID"] = "In object details, 'original_contigset' is not a valid DNAnexus link to a contigset object";
         errorMsg["CONTIGSET_FETCH_FAIL"] = "Internal error: {1}. Fail to fetch the details or content of the contigset";
         errorMsg["GRI_INDEX_MISSING"] = "Object does not have genomic range index named 'gri'";
 
-        errorMsg["LO_TOO_SMALL"] = "In {1} mapping, {2} is negative";
-        errorMsg["LO_TOO_LARGE"] = "In {1} mapping, {2} is larger than {3}";
-        errorMsg["HI_TOO_LARGE"] = "In {1} mapping, {2} is larger than the size of the mapped contig";
+        errorMsg["LO_TOO_SMALL"] = "In {1} row, {2} is negative";
+        errorMsg["LO_TOO_LARGE"] = "In {1} row, {2} is larger than {3}";
+        errorMsg["HI_TOO_LARGE"] = "In {1} row, {2} is larger than the size of the mapped contig";
         
-        warningMsg["CHR_INVALID"] = "In some mapping, such as the {1} one, {2} does not match any contigset name";
+        warningMsg["CHR_INVALID"] = "In some row, such as the {1} one, {2} does not match any contig name";
       }
   };
 };

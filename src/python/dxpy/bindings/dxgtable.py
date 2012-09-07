@@ -65,8 +65,7 @@ class DXGTable(DXDataObject):
         self._http_threadpool_futures = set()
         self._columns = None
 
-        if dxid is not None:
-            self.set_ids(dxid, project)
+        DXDataObject.set_ids(self, dxid, project)
 
     def __enter__(self):
         return self
@@ -115,7 +114,7 @@ class DXGTable(DXDataObject):
             raise ValueError("Row has wrong number of columns (expected %d, got %d)" % (len(self._columns), len(row)))
         for index, (value, column) in enumerate(zip(row, self._columns)):
             if column['type'] == 'string':
-                if type(value) is not str:
+                if type(value) is not str and type(value) is not unicode:
                     raise ValueError("Expected value in column %d to be a string, got %r instead" % (index, value))
             elif column['type'] == 'boolean':
                 if value != True and value != False:
@@ -181,7 +180,8 @@ class DXGTable(DXDataObject):
         with *dxid*.  As a side effect, it also flushes the buffer for
         the previous gtable object if the buffer is nonempty.
         '''
-        self.flush()
+        if self._dxid is not None:
+            self.flush()
 
         DXDataObject.set_ids(self, dxid, project)
 

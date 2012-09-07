@@ -20,7 +20,10 @@ namespace dx {
       
       bool processColumns();
       
-      virtual bool validateTypes() { return true; }
+      virtual bool validateTypes() { 
+        if (types.HasDuplicate()) msg->addWarning("TYPE_DUPLICATE");
+        return true;
+      }
       virtual bool validateDetails() { return true; }
       virtual bool validateColumns();
       virtual bool validateData() { return true; }
@@ -38,11 +41,15 @@ namespace dx {
         errorMsg["OBJECT_INVALID"] = "Cannot find source object";
         errorMsg["GTABLE_FETCH_FAIL"] = "Internal error: {1}. Fail to fetch the description, details, or content of the object";
         errorMsg["CLASS_NOT_GTABLE"] = "Object is not a gtable";
-        errorMsg["DETAILS_NOT_HASH"] = "Object 'details' is not a hash";
+        errorMsg["DETAILS_NOT_HASH"] = "'Details' of this object is not a hash";
         errorMsg["GTABLE_NOT_CLOSED"] = "Object is not closed";
         
         errorMsg["COLUMNS_MISSING"] = "Following columns are missing: ({1})";
         errorMsg["COLUMNS_INVALID_TYPES"] = "Following columns have wrong types (The proper type of each column is in the bracket): ({1})"; 
+        errorMsg["COLUMNS_FORBIDDEN"] = "Following columns are forbidden: ({1})";
+
+        warningMsg["COLUMNS_NOT_RECOGNIZED"] = "Following columns are not recognized: ({1})";
+        warningMsg["COLUMNS_MISSING"] = "Following columns are missing: ({1})";
       }
   };
 };

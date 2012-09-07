@@ -10,6 +10,14 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 
+# TODO: Command `getconf _NPROCESSORS_ONLN` returns number of cores on
+#       linux. Instead of hardcoding -j8 flag below, use this value.
+#       But make sure that Makefile still works on Mac -  ("sysctl hw.ncpu"
+#       can return similar information on Mac).
+# commenting out parallel compilation code, because:
+#   1) Output of make is in random order, and thus impossible to follow
+#   2) On idna2, the make process just hangs (race condition ?)
+# export MAKEFLAGS=-j8
 ifndef PREFIX
 	export PREFIX=/usr
 endif
@@ -41,7 +49,7 @@ perl:
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl")
 
 java:
-	(cd java; mvn package)
+	(cd java; mvn assembly:single)
 
 test: test_python test_perl
 

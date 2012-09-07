@@ -7,6 +7,8 @@ converted to JSON.  If it is not given, the JSON of an empty dict will
 be sent.  Each function will return the Pythonized JSON (a list or
 dict) that is the output from the API server.
 
+.. py:currentmodule:: dxpy.api
+
 .. describe:: An example API call
 
       .. function:: apiCall(object_id, input_params={}, **kwargs)

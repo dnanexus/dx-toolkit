@@ -17,7 +17,7 @@
 /// first created, it may only reside in a single container. However, objects may be cloned into
 /// other containers once the objects have been closed (and their contents may no longer be
 /// modified). See <a
-/// href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle">Data Object
+/// href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle">Data Object
 /// Lifecycle</a> in the API specification for more information.
 ///
 /// Projects (DXProject) are containers that provide additional functionality for collaboration
@@ -73,7 +73,7 @@ class DXContainer {
    * Moves the specified objects and/or folders in the associated data container to the specified
    * folder.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
    *
    * @param objects A JSON array of strings containing the object ID(s) to be moved.
    * @param folders A JSON array of strings containing the folder route(s) to be moved.
@@ -87,16 +87,16 @@ class DXContainer {
    * Clones the specified objects and/or folders from the associated data container to another data
    * container.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
    *
    * @param objects A JSON array of strings containing the object ID(s) to be cloned.
    * @param folders A JSON array of strings containing the folder route(s) to be cloned.
-   * @param dest_proj ID of the project into which the selected objects should be cloned.
-   * @param dest_folder The full path of the destination folder in the destination project.
+   * @param dest_container ID of the container into which the selected objects should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination container.
    */
   void clone(const dx::JSON &objects,
              const dx::JSON &folders,
-             const std::string &dest_proj,
+             const std::string &dest_container,
              const std::string &dest_folder="/") const;
 
   // Folder specific
@@ -122,7 +122,7 @@ class DXContainer {
    * Moves a folder in the associated data container (and all the objects and subfolders it
    * contains) to the specified destination folder.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
    *
    * @param folder The full path of the folder to be moved.
    * @param dest_folder The full path of the destination folder.
@@ -145,7 +145,7 @@ class DXContainer {
   /**
    * Move objects in the associated data container to the specified destination folder.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
    *
    * @param objects A JSON array of strings containing the object ID(s) to be moved.
    * @param dest_folder The full path of the destination folder.
@@ -163,18 +163,37 @@ class DXContainer {
   void removeObjects(const dx::JSON &objects) const;
 
   /**
-   * Clone the specified object(s) from the associated data container to another data container.
+   * Clones the specified folder to another data container. The of the folder is preserved in the
+   * destination data container.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+   * Any hidden objects contained in a folder to be cloned are only cloned if a visible ancestor is
+   * also cloned.
+   *
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+   *
+   * @param folder The full path of the folder to be cloned.
+   * @param dest_container ID of the container into which the folder should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination container.
+   */
+  void cloneFolder(const std::string &folder,
+		   const std::string &dest_container,
+		   const std::string &dest_folder) const {
+    clone(dx::JSON(dx::JSON_ARRAY), dx::JSON::parse("[\"" + folder + "\"]"), dest_container, dest_folder);
+  }
+
+  /**
+   * Clones the specified object(s) from the associated data container to another data container.
+   *
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
    *
    * @param objects A JSON array of strings containing the object ID(s) to be cloned.
-   * @param dest_proj ID of the project into which the selected objects should be cloned.
-   * @param dest_folder The full path of the destination folder in the destination project.
+   * @param dest_container ID of the container into which the selected objects should be cloned.
+   * @param dest_folder The full path of the destination folder in the destination container.
    */
   void cloneObjects(const dx::JSON &objects,
-                    const std::string &dest_proj,
+                    const std::string &dest_container,
                     const std::string &dest_folder) const {
-    clone(objects, dx::JSON(dx::JSON_ARRAY), dest_proj, dest_folder);
+    clone(objects, dx::JSON(dx::JSON_ARRAY), dest_container, dest_folder);
   }
 };
 
@@ -197,7 +216,7 @@ class DXProject : public DXContainer {
 
   /**
    * Updates the remote project with the provided options, as specified in the <a
-   * href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">/project-xxxx/update</a>
+   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">/project-xxxx/update</a>
    * method.
    *
    * @param to_update JSON hash to be provided to <code>/project-xxxx/update</code>.
@@ -214,9 +233,11 @@ class DXProject : public DXContainer {
    * Invites another person (or PUBLIC) to the remote project. If the invitee is another person,
    * they will receive the specified permission when they accept the invitation.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Invitations%20and%20Join%20Requests#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations%20and%20Join%20Requests#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
    *
-   * @param invitee Username or email of the person to be invited to the project. Use "PUBLIC" to make it publicly available.
+   * @param invitee Username (of the form "user-USERNAME") or email of the
+   * person to be invited to the project. Use "PUBLIC" to make the project
+   * publicly available (in which case level must be set to "VIEW").
    * @param level Permission level that the invitee would get ("LIST", "VIEW", "CONTRIBUTE", "ADMINISTER").
    */
   void invite(const std::string &invitee, const std::string &level) const;
@@ -224,9 +245,10 @@ class DXProject : public DXContainer {
   /**
    * Decreases the permissions of the specified user in the remote project.
    *
-   * See the <a href="http://wiki.dev.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
+   * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
    *
-   * @param member Username of the project member whose permission will be decreased.
+   * @param member Username (of the form "user-USERNAME") of the project member
+   * whose permissions will be decreased.
    * @param level The new permission level for the user ("LIST", "VIEW", "CONTRIBUTE", "ADMINISTER").
    */
   // TODO: link to wiki docs
