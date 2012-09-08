@@ -49,7 +49,9 @@ perl:
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl")
 
 java:
+	mkdir -p "$(DNANEXUS_HOME)/lib/java"
 	(cd java; mvn assembly:single)
+	cp -f java/target/*.jar "$(DNANEXUS_HOME)/lib/java"
 
 test: test_python test_perl
 

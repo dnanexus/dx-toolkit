@@ -17,8 +17,8 @@ except:
 
 try:
     logging.getLogger().addHandler(dxpy.DXLogHandler())
-except:
-    print >> sys.stderr, "dx_log_stream: Error while initializing logging"
+except Exception as e:
+    print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
     sys.exit(1)
 
 for line in sys.stdin:
