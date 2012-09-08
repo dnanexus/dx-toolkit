@@ -163,6 +163,7 @@ void updateFileState(vector<File> &files) {
 
 void waitOnClose(vector<File> &files) {
   do {
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     updateFileState(files);
   } while (!allFilesDone(files));
 }
