@@ -61,9 +61,9 @@ sub DXHTTPRequest($;$%) {
 
 sub set_api_server_info(;$$$) {
     my ($host, $port, $protocol) = @_;
-    $host ||= 'localhost';
-    $port ||= 8124;
-    $protocol ||= 'http';
+    $host ||= 'preprod.dnanexus.com';
+    $port ||= 443;
+    $protocol ||= 'https';
     
     $APISERVER_HOST = $host;
     $APISERVER_PORT = $port;

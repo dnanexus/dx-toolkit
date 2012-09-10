@@ -281,7 +281,7 @@ def login(args):
         token = json.loads(response.content)["access_token"]
         sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
     elif args.token is None:
-        authserver = 'https://emtestauth.dnanexus.com'
+        authserver = 'https://preprodauth.dnanexus.com'
         print 'Acquiring credentials from ' + authserver
 
         try:
@@ -326,7 +326,7 @@ def logout(args):
             authserver += ':' + str(args.port)
             print 'Deleting credentials from ' + authserver
         else:
-            authserver = 'https://emtestauth.dnanexus.com'
+            authserver = 'https://preprodauth.dnanexus.com'
         session = requests.session()
         token = dxpy.AUTH_HELPER.security_context['auth_token']
         try:
@@ -2506,6 +2506,13 @@ def exit_shell(args):
     if state['interactive']:
         raise StopIteration()
 
+class SetEMTestEnv(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):        
+        setattr(namespace, 'host', 'emtestauth.dnanexus.com')
+        setattr(namespace, 'port', '443')
+        setattr(namespace, 'protocol', 'https')
+        set_api(protocol='https', host='emtest.dnanexus.com', port='443', write=True)
+
 # TODO: Add a subcommand for clearing the cache
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0' + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, upload data, navigate and organize your data, and even launch analyses.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
@@ -2525,6 +2532,7 @@ parser_login.add_argument('--port', type=int, help='Log into the given auth serv
 parser_login.add_argument('--protocol', help='Use the given protocol to contact auth server (by default, the correct protocol is guessed based on --port)')
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
+parser_login.add_argument('--emtest', nargs=0, help=argparse.SUPPRESS, action=SetEMTestEnv)
 parser_login.set_defaults(func=login)
 parser_map['login'] = parser_login
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
