@@ -109,12 +109,7 @@ void Chunk::upload() {
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction));
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this));
 
-  /*
-   * Set the Content-Type header. Default to something generic for now, and
-   * do something sophisticated (i.e., detect it) later.
-   */
   struct curl_slist * slist = NULL;
-  slist = curl_slist_append(slist, "Content-Type: application/octet-stream");
   /*
    * Set the Content-Length header.
    */
