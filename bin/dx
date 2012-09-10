@@ -2918,7 +2918,7 @@ parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, 
 parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch',
                                      parents=[env_args])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
-parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', default=9999999999)
+parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=9999999999)
 parser_watch.add_argument('--no-subjobs', help='Do not watch messages from subjobs')
 parser_watch.set_defaults(func=watch)
 parser_map['watch'] = parser_watch
