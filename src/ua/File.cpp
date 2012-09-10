@@ -20,9 +20,8 @@ void testFileExists(const string &filename) {
   }
 }
 
-File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_)
-  : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_),
-    failed(false), waitOnClose(false), closed(false) {
+File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_, const bool toCompress_, const string &mimeType_)
+  : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_), failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_)  {
   init();
 }
 
@@ -32,8 +31,12 @@ void File::init(void) {
   createFolder(projectID, folder);
 
   testFileExists(localFile);
+  
+  string remoteFileName = name;
+  if (toCompress) 
+    remoteFileName += ".gz";
 
-  fileID = createFileObject(projectID, folder, name);
+  fileID = createFileObject(projectID, folder, remoteFileName, mimeType);
   LOG << "fileID is " << fileID << endl;
 
   cerr << "Uploading file " << localFile << " to file object " << fileID << endl;
@@ -46,7 +49,7 @@ unsigned int File::createChunks(BlockingQueue<Chunk *> &queue, const int chunkSi
   unsigned int numChunks = 0;
   for (int64_t start = 0; start < size; start += chunkSize) {
     int64_t end = min(start + chunkSize, size);
-    Chunk * c = new Chunk(localFile, fileID, numChunks, tries, start, end);
+    Chunk * c = new Chunk(localFile, fileID, numChunks, tries, start, end, toCompress);
     c->log("created");
     queue.produce(c);
     ++numChunks;

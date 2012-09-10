@@ -13,7 +13,7 @@ void testProjectPermissions(const std::string &projectID);
 
 void createFolder(const std::string &projectID, const std::string &folder);
 
-std::string createFileObject(const std::string &project, const std::string &folder, const std::string &name);
+std::string createFileObject(const std::string &project, const std::string &folder, const std::string &name, const std::string &mimeType);
 
 void closeFileObject(const std::string &fileID);
 

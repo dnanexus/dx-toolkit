@@ -10,9 +10,9 @@ class Chunk {
 public:
 
   Chunk(const std::string &localFile_, const std::string &fileID_, const unsigned int index_,
-        const unsigned int triesLeft_, const int64_t start_, const int64_t end_)
+        const unsigned int triesLeft_, const int64_t start_, const int64_t end_, const bool toCompress_)
     : localFile(localFile_), fileID(fileID_), index(index_),
-      triesLeft(triesLeft_), start(start_), end(end_), uploadOffset(0)
+      triesLeft(triesLeft_), start(start_), end(end_), uploadOffset(0), toCompress(toCompress_)
   {
   }
 
@@ -41,6 +41,9 @@ public:
 
   /* While uploading, the offset of the next byte to give to libcurl */
   int64_t uploadOffset;
+  
+  /* If true, then the chunk will be compressed, else not */
+  bool toCompress;
 
   void read();
   void compress();

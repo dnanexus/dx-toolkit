@@ -3,6 +3,7 @@
 #include <queue>
 
 #include <curl/curl.h>
+#include <magic.h>
 
 #include <boost/thread.hpp>
 
@@ -13,6 +14,8 @@
 #include "chunk.h"
 #include "File.h"
 #include "log.h"
+
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
@@ -67,7 +70,7 @@ void compressChunks() {
     while (true) {
       Chunk * c = chunksToCompress.consume();
 
-      if (opt.compress) {
+      if (c->toCompress) {
         c->log("Compressing...");
         c->compress();
         c->log("Finished compressing");
@@ -249,6 +252,85 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
+/* 
+ * - Returns the MIME type for a file (of this format: "type/subType")
+ * - Symlinks are followed (and MIME type of actual file being pointed is returned)
+ * - We do not try to uncompress an archive, rather return the mime type for compressed file.
+ * - Throw runtime_error if the file path (fpath) is invalid, or if some other
+ *   internal error occurs.
+ */
+string getMimeType(string filePath) {
+  // It's necessary to check file's existence
+  // because if an invalid path is given,
+  // then libmagic silently Seg faults.
+  if (!boost::filesystem::exists(boost::filesystem::path(filePath)))
+    throw runtime_error("Local file '" + filePath + "' does not exist");
+  
+  string magic_output;
+  magic_t magic_cookie;
+  magic_cookie = magic_open(MAGIC_MIME | MAGIC_NO_CHECK_COMPRESS | MAGIC_SYMLINK);
+
+  if (magic_cookie == NULL) {
+    throw runtime_error("error allocating magic cookie (libmagic)");
+  }
+
+  if (magic_load(magic_cookie, NULL) != 0) {
+    string errMsg = magic_error(magic_cookie);
+    magic_close(magic_cookie);
+    throw runtime_error("cannot load magic database - '" + errMsg + "'");
+  }
+
+  magic_output = magic_file(magic_cookie, filePath.c_str());
+  magic_close(magic_cookie);
+  // magic_output will be of this format: "type/subType; charset=.."
+  // we just want to return "type/subType"
+
+  return magic_output.substr(0, magic_output.find(';'));
+}
+
+/* 
+ * - Returns true iff the file is detected as 
+ *   one of the compressed types.
+ */
+bool isCompressed(string mimeType) {
+  // This list is mostly compiled from: http://en.wikipedia.org/wiki/List_of_archive_formats
+  // Some of the items are added by trying libmagic with few common file formats
+  const char* compressed_mime_types[] = {
+    "application/x-bzip2",
+    "application/zip",
+    "application/x-gzip",
+    "application/x-lzip",
+    "application/x-lzma",
+    "application/x-lzop",
+    "application/x-xz",
+    "application/x-compress",
+    "application/x-7z-compressed",
+    "application/x-ace-compressed",
+    "application/x-alz-compressed",
+    "application/x-astrotite-afa",
+    "application/x-arj",
+    "application/x-cfs-compressed",
+    "application/x-lzx",
+    "application/x-lzh",
+    "application/x-gca-compressed",
+    "application/x-apple-diskimage",
+    "application/x-dgc-compressed",
+    "application/x-dar",
+    "application/vnd.ms-cab-compressed",
+    "application/x-rar-compressed",
+    "application/x-stuffit",
+    "application/x-stuffitx",
+    "application/x-gtar",
+    "application/x-zoo"
+  };
+  unsigned numElems = sizeof compressed_mime_types/sizeof(compressed_mime_types[0]);
+  for (unsigned i = 0; i < numElems; ++i) {
+    if (mimeType == string(compressed_mime_types[i]))
+      return true;
+  }
+  return false;
+}
+
 int main(int argc, char * argv[]) {
   try {
     opt.parse(argc, argv);
@@ -290,7 +372,25 @@ int main(int argc, char * argv[]) {
 
     vector<File> files;
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
-      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i]));
+      LOG<<"Getting MIME type for local file " << opt.files[i] << "..."<<endl;
+      string mimeType = getMimeType(opt.files[i]);
+      LOG<<"MIME type for local file " << opt.files[i] << " is '" << mimeType << "'."<<endl;
+      
+      bool toCompress;
+      if (!opt.do_not_compress) {
+        bool is_compressed = isCompressed(mimeType);
+        toCompress = !is_compressed;
+        if (is_compressed)
+          LOG<<"File "<<opt.files[i]<<" is already compressed, so won't try to compress it any further."<<endl;
+        else
+          LOG<<"File "<<opt.files[i]<<" is not compressed, will compress it before uploading."<<endl;
+      } else {
+        toCompress = false;
+      }
+      if (toCompress) {
+        mimeType = "application/x-gzip";
+      }
+      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, mimeType));
       totalChunks += files[i].createChunks(chunksToRead, opt.chunkSize, opt.tries);
     }
 

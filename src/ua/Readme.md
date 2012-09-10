@@ -33,5 +33,6 @@ The UA depends on the following libraries:
 
 * [zlib](http://zlib.net/) for compression;
 
-* the dxjson, SimpleHttpLib, and dxcpp libraries for communicating with the
-  platform API.
+* libmagic, a library to recognize the MIME type of the input file(s).
+
+* the dxjson and dxcpp libraries for communicating with the platform API.

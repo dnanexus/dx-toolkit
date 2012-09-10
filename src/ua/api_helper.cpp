@@ -142,12 +142,13 @@ void createFolder(const string &projectID, const string &folder) {
  * folder, and with the specified name. The folder and any parent folders
  * are created if they do not exist.
  */
-string createFileObject(const string &project, const string &folder, const string &name) {
+string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType) {
   dx::JSON params(dx::JSON_OBJECT);
   params["project"] = project;
   params["folder"] = folder;
   params["name"] = name;
   params["parents"] = true;
+  params["media"] = mimeType;
   LOG << "Creating new file with parameters " << params.toString() << endl;
 
   dx::JSON result = fileNew(params);

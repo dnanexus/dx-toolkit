@@ -11,7 +11,7 @@ class File {
 public:
 
   File(const std::string &localFile_,
-       const std::string &projectSpec_, const std::string &folder_, const std::string &name_);
+       const std::string &projectSpec_, const std::string &folder_, const std::string &name_, const bool toCompress_, const std::string &mimeType_);
 
   void init(void);
 
@@ -47,6 +47,12 @@ public:
 
   /* Whether this file is in the closed state. */
   bool closed;
+  
+  /* true if all chunks in the file should be compressed before uploading*/
+  bool toCompress;
+
+  /* Stores the mime-type of file (as identified by libmagic) */
+  std::string mimeType;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
 
