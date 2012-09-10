@@ -1477,10 +1477,11 @@ def unset_properties(args):
         except dxpy.DXAPIError as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
-def download(args):
-    # Attempt to resolve name
-    project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                  args.path, expected='entity')
+def download(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
+    if not already_parsed:
+        # Attempt to resolve name
+        project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                      args.path, expected='entity')
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
@@ -1519,7 +1520,7 @@ def get(args):
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
     if entity_result['describe']['class'] == 'file':
-        download(args)
+        download(args, True, project, folderpath, entity_result)
         return
 
     if entity_result['describe']['class'] not in ['record', 'applet']:
