@@ -321,9 +321,14 @@ bool loadFromEnvironment() {
   cerr << "\n***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****" << endl;
 
   // intiialized with default values, will be overridden by env variable/config file (if present)
-  string apiserver_host = "preprod.dnanexus.com";
-  string apiserver_port = "443";
-  string apiserver_protocol = "https";
+  //string apiserver_host = "preprod.dnanexus.com";
+  //string apiserver_port = "443";
+  //string apiserver_protocol = "https";
+
+  // Temporary workaround for EM bug
+  string apiserver_host = "localhost";
+  string apiserver_port = "8124";
+  string apiserver_protocol = "http";
 
   getFromEnvOrConfig("DX_APISERVER_HOST", apiserver_host);
   getFromEnvOrConfig("DX_APISERVER_PORT", apiserver_port);
