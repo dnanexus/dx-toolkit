@@ -102,7 +102,7 @@ env_args.add_argument('--project-context-id', help=argparse.SUPPRESS)
 env_args.add_argument('--workspace-id', help=argparse.SUPPRESS)
 env_args.add_argument('--security-context', help=argparse.SUPPRESS)
 env_args.add_argument('--auth-token', help=argparse.SUPPRESS)
-env_args.add_argument('--env-help', help='Display help message for overriding environment variables', action=EnvHelpAction, nargs=0)
+env_args.add_argument('--env-help', help=fill('Display help message for overriding environment variables', width_adjustment=-24), action=EnvHelpAction, nargs=0)
 
 def set_env_from_args(args):
     ''' Sets the environment variables for this process from arguments (argparse.Namespace)

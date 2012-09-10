@@ -1734,16 +1734,24 @@ def get_find_jobs_string(jobdesc, has_children):
 def find_jobs(args):
     get_output_flag(args)
     project = dxpy.WORKSPACE_ID
-    if args.project is not None:
-        project, none, none = try_call(resolve_existing_path,
-                                       args.project, 'project')
-    if args.allusers:
-        args.user = None
-    if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
-        args.user = 'user-' + args.user
-    if args.allprojects:
+    name = None
+    origin = None
+    if is_job_id(args.id_or_name):
+        origin = try_call(dxpy.api.jobDescribe, args.id_or_name).get('originJob', None)
         project = None
-    print_launched_by = args.allusers or args.verbose
+        args.user = None
+    else:
+        if args.id_or_name != '':
+            name = args.id_or_name + '*'
+        if args.project is not None:
+            project, none, none = try_call(resolve_existing_path,
+                                           args.project, 'project')
+        if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
+            args.user = 'user-' + args.user
+        if args.allprojects:
+            project = None
+    print_launched_by = (args.user is None) or args.verbose
+    more_results = False
     try:
         job_descs = {}    # job ID -> job desc
         job_children = {} # job ID -> list of child job IDs
@@ -1756,18 +1764,19 @@ def find_jobs(args):
                                          executable=args.executable,
                                          project=project,
                                          state=args.state,
-                                         origin_job=args.origin,
-                                         parent_job=args.parent,
+                                         origin_job=origin,
+#                                         parent_job=args.parent, # Currently broken
                                          describe=describe,
                                          created_after=args.created_after,
                                          created_before=args.created_before,
-                                         name=args.name,
+                                         name=name,
                                          name_mode='glob'):
 
             job_descs[job_result['id']] = job_result['describe']
             parent = job_result['describe']['parentJob']
             if parent is None:
-                if args.num_results is not None and len(origin_jobs) >= args.num_results:
+                if len(origin_jobs) == args.num_results:
+                    more_results = True
                     break
                 origin_jobs.append(job_result['id'])
             else:
@@ -1804,6 +1813,8 @@ def find_jobs(args):
             if get_delimiter() is None:
                 for origin_job in job_strings:
                     print format_tree(job_strings[origin_job], root=origin_job)
+                if more_results:
+                    print fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  ')
             else:
                 def print_keys(hash_of_keys):
                     for key in hash_of_keys:
@@ -3127,22 +3138,33 @@ parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = parser_find_apps
 parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_actions[-1].help))
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description='Finds jobs with the given search parameters.  Output is formatted to show origin jobs on the left with its children jobs indented underneath it.  Output string includes the job name (if available), the job ID, the time at which the job was created, and its current state.',
+parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description=fill('Finds jobs with the given search parameters.  Output is formatted to show the job trees that have been run.') + '''
+
+EXAMPLES
+
+  ''' + fill('The following will show the full job tree containing the job ID given (it does not have to be the origin job).', subsequent_indent='  ') + '''
+
+  $ dx find jobs job-B13f83KgpqG0PB8P0xkQ000X
+
+  ''' + fill('The following will find all jobs that start with the string "bwa"', subsequent_indent='  ') + '''
+
+  $ dx find jobs bwa
+''',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args],
+                                              formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx find jobs')
-parser_find_jobs.add_argument('--name', help='Name of the job')
-parser_find_jobs.add_argument('--user', help='User ID who launched the job, default is self', default='self')
-parser_find_jobs.add_argument('--allusers', help='Do not restrict search by who launched the job', action='store_true')
-parser_find_jobs.add_argument('--project', help='Project context (output project), default is current project if set')
-parser_find_jobs.add_argument('--allprojects', help='Project context (output project)', action='store_true')
+parser_find_jobs.add_argument('id_or_name', help=fill('Optional: Job ID or name for which the job tree(s) should be shown.  If not provided, results are restricted to all jobs you launched in the current project.', width_adjustment=-24), nargs='?', default='')
+parser_find_jobs.add_argument('--user', help=fill('Username who launched the job (use "self" to ask for your own jobs)', width_adjustment=-24))
+parser_find_jobs.add_argument('--project', help=fill('Project context (output project), default is current project if set', width_adjustment=-24))
+parser_find_jobs.add_argument('--allprojects', help=fill('Project context (output project)', width_adjustment=-24), action='store_true')
 parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help='Applet or App ID that job is running')
 parser_find_jobs.add_argument('--state', help='State of the job, e.g. \"done\", \"failed\"')
 parser_find_jobs.add_argument('--no-subjobs', help='Do not include subjobs', action='store_true')
-parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job')
-parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent')
-parser_find_jobs.add_argument('--created-after', help='Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y')
-parser_find_jobs.add_argument('--created-before', help='Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help='Max number of origin jobs to return')
+# parser_find_jobs.add_argument('--origin', help='Job ID of the top-level (user-initiated) job') # Now redundant
+#parser_find_jobs.add_argument('--parent', help='Job ID of the parent job, or the string \'none\' to indicate no parent') # Currently broken
+parser_find_jobs.add_argument('--created-after', help=fill('Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y', width_adjustment=-24))
+parser_find_jobs.add_argument('--created-before', help=fill('Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of origin jobs to return (default 10)', width_adjustment=-24), default=10)
 parser_find_jobs.set_defaults(func=find_jobs)
 parser_map['find jobs'] = parser_find_jobs
 parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))
