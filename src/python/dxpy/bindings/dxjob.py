@@ -163,4 +163,4 @@ class DXJob(DXObject):
 
         '''
 
-        return self.describe(**kwargs)["state"]
+        return self.describe(io=False, **kwargs)["state"]
