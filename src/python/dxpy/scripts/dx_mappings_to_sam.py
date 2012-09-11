@@ -22,7 +22,6 @@ parser.add_argument("--region_index_offset", dest="region_index_offset", type=in
 parser.add_argument("--region_file", dest="region_file", default="", help="Regions to extract mappings for, in the format ChrX:A-B")
 parser.add_argument("--output_ids", dest="output_ids", action="store_true", default=False, help="Write gtable ids as an optional field to allow for easy reimport")
 parser.add_argument("--discard_unmapped", dest="discard_unmapped", action="store_true", default=False, help="If set, do not write unmapped reads to SAM")
-parser.add_argument("--add_read_groups", dest="add_read_groups", action="store_true", default=False, help="If read groups are not present in the file, read group ID:0 to all rows. If read groups are present, do nothing")
 parser.add_argument("--read_pair_aware", dest="read_pair_aware", action="store_true", default=False, help="If set, every time a paired read is encoutered, both reads will be included if the mate chr+lo+hi of the mate is above that of the enoutered read. If this is not the case, neither will be written. WARNING: read-pair-aware is not guaranteed to output a sorted SAM file.")
 parser.add_argument("--reference", dest="reference", default=None, help="Generating a SAM file requires information about the reference the reads were mapped to.  The Mappings SHOULD have a link to their reference, in the case they do not, or you wish to override that reference, you may optionally supply the ID of a ContigSet object to use instead.")
 
@@ -70,9 +69,10 @@ def main(**kwargs):
     header = ""
 
     for i in range(len(contigNames)):
-        header += ("@SQ\tSN:"+contigNames[i]+"\tLN:"+str(contigSizes[i])+"\n")
-    if opts.add_read_groups and "\n@RG" not in header:
-        header += ("@RG\tID:0\tSM:Sample_0\n")
+        header += "@SQ\tSN:"+str(contigNames[i])+"\tLN:"+str(contigSizes[i])+"\n"
+
+    for i in range(len(mappingsTable.get_details()['read_groups'])):
+        header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)+"\n"
 
     if outputFile != None:
         outputFile.write(header)
@@ -86,6 +86,11 @@ def main(**kwargs):
 
     column_descs = mappingsTable.describe()['columns']
     
+    sam_cols = []
+    for c in column_descs:
+        if c['name'].startswith("sam_field_") or c['name'] == "sam_optional_fields":
+            sam_cols.append(c)
+
     defaultCol = {"sequence":"", 
                   "name":"", 
                   "quality": "", 
@@ -124,7 +129,8 @@ def main(**kwargs):
         # write each row unless we're throwing out unmapped 
         for row in generator:
             if row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False:
-                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, opts.add_read_groups)
+
+                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
 
     else:
         for x in regions:
@@ -140,12 +146,15 @@ def main(**kwargs):
 
                     # if we have a single read and we wanna store it (is mapped or are storing unmapped)
                     if row[col["mate_id"]] == -1 and (row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False):
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, opts.add_read_groups)
+
+                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+
                     #################################################################################
 
                     #If paired read is the left read, write it and grab the right one
                     if row[col["mate_id"]] == 0:
-                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, opts.add_read_groups)
+
+                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, sam_cols)
                         if row[col["status2"]] != "UNMAPPED":
                             #print row[col["chr2"]]+":"+ str(row[col["lo2"]])+"-"+str(row[col["hi2"]])
 
@@ -154,7 +163,8 @@ def main(**kwargs):
                             for mateRow in mappingsTable.iterate_query_rows(query=query):
                                 #print mateRow
                                 if mateRow[col["mate_id"]] == 1 and mateRow[col["chr2"]] == row[col["chr"]] and mateRow[col["lo2"]] == row[col["lo"]] and mateRow[col["hi2"]] == row[col["hi"]]:
-                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, opts.add_read_groups)
+
+                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
                                     break
                             #print "Mate not found"
                         else:
@@ -162,13 +172,14 @@ def main(**kwargs):
                             #print "Mate unmapped"
                 else:
                     if row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False:
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, opts.add_read_groups)
+
+                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
 
     if outputFile != None:
         outputFile.close()
 
 
-def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, addReadGroups):
+def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols):
     
     global MAX_INT
 
@@ -233,12 +244,12 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, addReadGr
             tlen *= -1
 
     
-    out_row += (readName.strip("@") + "\t" + str(flag) + "\t" + chromosome + "\t" + str(lo) + "\t")
-    out_row += (str(values["error_probability"]) + "\t" + values["cigar"] + "\t" + chromosome2 + "\t")
-    out_row += (str(lo2) + "\t" + str(tlen) + "\t" + seq + "\t" + qual)
+    out_row = readName.strip("@") 
+    out_row = "\t".join([out_row, str(flag), chromosome, str(lo), str(values["error_probability"]), values["cigar"] , chromosome2, str(lo2), str(tlen), seq, qual])
 
-    for col_hash in column_descs:
-        if col_hash['name'].startswith("sam_field_"):
+    # see if we've found a 
+    if len(sam_cols) > 0:
+        for col_hash in sam_cols:
             write_tag = True
             tag_value = row[col[col_hash['name']]]
             field_name = col_hash['name'][10:]
@@ -255,16 +266,15 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, addReadGr
                 if tag_value == "":
                     write_tag = False
                 field_type = "Z"
-            
+
             if write_tag:
-                out_row += ("\t"+":".join([field_name, field_type, str(tag_value)]))
+                if col_hash['name'] != "sam_optional_fields":
+                    out_row = "\t".join([out_row, ":".join([field_name, field_type, str(tag_value)])])
+                else:
+                    out_row = "\t".join([out_row, row[col["sam_optional_fields"]]])
 
-        elif col_hash['name'] == "sam_optional_fields" and row[col["sam_optional_fields"]] != "":
-            out_row += ("\t"+row[col["sam_optional_fields"]])
-
-    
-    if col.get("sam_field_RG") == None and addReadGroups:
-        out_row += ("\tRG:Z:0")
+   
+    out_row = "\t".join([out_row, "RG:Z:"+str(values['read_group'])])
     
     if writeIds:
         out_row += ("\tZD:Z:"+str(row[0]))
