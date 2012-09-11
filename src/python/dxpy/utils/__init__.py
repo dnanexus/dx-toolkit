@@ -20,7 +20,11 @@ def wait_for_all_futures(futures):
     Wait indefinitely for all futures in the input iterable to complete.
     Use a timeout to enable interrupt handling.
     Call os._exit() in case of KeyboardInterrupt. Otherwise, the atexit registered handler in concurrent.futures.thread
-    will run, and issue blocking join() on all worker threads, requiring us to listen to events in worker threads.
+    will run, and issue blocking join() on all worker threads, requiring us to listen to events in worker threads
+    in order to enable timely exit in response to Ctrl-C.
+
+    Note: This still doesn't handle situations where Ctrl-C is pressed elsewhere in the code and there are worker
+    threads with long-running tasks.
 
     Note: os._exit() doesn't work well with interactive mode (e.g. ipython). This may help:
     import __main__ as main; if hasattr(main, '__file__'): os._exit() else: os.exit()
