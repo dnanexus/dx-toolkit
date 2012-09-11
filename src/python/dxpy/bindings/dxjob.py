@@ -161,8 +161,8 @@ class DXJob(DXObject):
 
         Note that this function is shorthand for:
 
-            dxjob.describe()["state"]
+            dxjob.describe(io=False, **kwargs)["state"]
 
         '''
 
-        return self.describe(**kwargs)["state"]
+        return self.describe(io=False, **kwargs)["state"]
