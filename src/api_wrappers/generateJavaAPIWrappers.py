@@ -19,12 +19,12 @@ postscript = '''}
 '''
 
 class_method_template = '''
-    public JsonNode {method_name}(JsonNode inputParams) throws Exception {{
+    public static JsonNode {method_name}(JsonNode inputParams) throws Exception {{
         return new DXHTTPRequest().request("{route}", inputParams);
     }}'''
 
 object_method_template = '''
-    public JsonNode {method_name}(String objectId, JsonNode inputParams) throws Exception {{
+    public static JsonNode {method_name}(String objectId, JsonNode inputParams) throws Exception {{
         return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams);
     }}'''
 

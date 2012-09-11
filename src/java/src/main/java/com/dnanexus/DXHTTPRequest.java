@@ -20,6 +20,7 @@ public class DXHTTPRequest {
     public String WORKSPACE_ID = System.getenv("DX_WORKSPACE_ID");
     public String PROJECT_CONTEXT_ID = System.getenv("DX_PROJECT_CONTEXT_ID");
 
+    private JsonNode SecurityContext;
     private String apiserver;
     private DefaultHttpClient httpclient;
     private ObjectMapper mapper;
@@ -30,18 +31,20 @@ public class DXHTTPRequest {
         if (APISERVER_PORT == null) { APISERVER_PORT = "443"; }
         if (APISERVER_PROTOCOL == null) { APISERVER_PROTOCOL = "https"; }
         if (SECURITY_CONTEXT == null) { System.err.println("Warning: No security context found"); }
-
-        System.out.println("H:" + APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + APISERVER_PORT);
-
+        
         httpclient = new DefaultHttpClient();
         apiserver = APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + APISERVER_PORT;
         dxJsonFactory = new MappingJsonFactory();
+        SecurityContext = dxJsonFactory.createJsonParser(SECURITY_CONTEXT).readValueAsTree();
     }
 
     public String request(String resource, String data) throws Exception {
         HttpPost request = new HttpPost(apiserver + resource);
         
         request.setHeader("Content-Type", "application/json");
+        request.setHeader("Authorization", SecurityContext.get("auth_token_type").textValue()
+        		+ " "
+        		+ SecurityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data));
 
         ResponseHandler<String> handler = new ResponseHandler<String>() {
@@ -65,7 +68,6 @@ public class DXHTTPRequest {
     public JsonNode request(String resource, JsonNode data) throws Exception {
         String dataAsString = data.toString();
         String response = this.request(resource, dataAsString);
-        System.out.println(response);
         JsonNode root = dxJsonFactory.createJsonParser(response).readValueAsTree();
         return root;
     }
