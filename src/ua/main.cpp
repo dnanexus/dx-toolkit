@@ -377,7 +377,7 @@ int main(int argc, char * argv[]) {
       LOG<<"MIME type for local file " << opt.files[i] << " is '" << mimeType << "'."<<endl;
       
       bool toCompress;
-      if (!opt.do_not_compress) {
+      if (!opt.doNotCompress) {
         bool is_compressed = isCompressed(mimeType);
         toCompress = !is_compressed;
         if (is_compressed)

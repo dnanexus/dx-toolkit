@@ -37,7 +37,7 @@ public:
   int uploadThreads;
   int chunkSize;
   int tries;
-  bool do_not_compress;
+  bool doNotCompress;
   bool progress;
   bool verbose;
   bool waitOnClose;

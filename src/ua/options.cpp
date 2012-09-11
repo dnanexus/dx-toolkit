@@ -46,7 +46,7 @@ Options::Options() {
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size (in bytes) of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
-    ("do-not-compress", po::bool_switch(&do_not_compress), "Do Not compress chunks before upload")
+    ("do-not-compress", po::bool_switch(&doNotCompress), "Do Not compress chunks before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
@@ -278,7 +278,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  upload threads: " << opt.uploadThreads << endl
         << "  chunkSize: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl
-        << "  do-not-compress: " << opt.do_not_compress << endl
+        << "  do-not-compress: " << opt.doNotCompress << endl
         << "  progress: " << opt.progress << endl
         << "  verbose: " << opt.verbose << endl
         << "  wait on close: " << opt.waitOnClose << endl
