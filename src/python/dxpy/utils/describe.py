@@ -418,3 +418,12 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
+
+def get_find_jobs_string(jobdesc, has_children):
+    is_origin_job = jobdesc['parentJob'] is None
+    string = ("* " if is_origin_job and get_delimiter() is None else "")
+    string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "<no name>") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
+    string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
+    string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
+    string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
+    return string

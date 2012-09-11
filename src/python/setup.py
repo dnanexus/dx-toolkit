@@ -30,8 +30,6 @@ setup(
     entry_points = {
         "console_scripts": scripts,
     },
-    install_requires = ['requests==0.12.1',
-                        'futures==2.1.2',
-                        'ctypes-snappy==1.02',
-                        'ws4py==0.2.2'],
+    install_requires = map(lambda s: s.rstrip(),
+                           list(open(os.path.join(os.path.dirname(__file__), "requirements.txt"))))
 )

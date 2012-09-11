@@ -1722,15 +1722,6 @@ def export(args):
         parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help export"') + '\n')
     exporters[args.format.lower()](args)
 
-def get_find_jobs_string(jobdesc, has_children):
-    is_origin_job = jobdesc['parentJob'] is None
-    string = ("* " if is_origin_job and get_delimiter() is None else "")
-    string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "<no name>") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
-    string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
-    string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
-    string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
-    return string
-
 def find_jobs(args):
     get_output_flag(args)
     project = dxpy.WORKSPACE_ID
