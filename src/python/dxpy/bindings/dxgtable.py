@@ -253,7 +253,7 @@ class DXGTable(DXDataObject):
 
         """
         if self._http_threadpool is None:
-            DXGTable._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+            DXGTable._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
         request_iterator = self._generate_read_requests(start_row=start, end_row=end, **kwargs)
 
@@ -436,7 +436,7 @@ class DXGTable(DXDataObject):
                 dxpy.api.gtableAddRows(self._dxid, request_data, jsonify_data=False, **kwargs)
 
         if len(self._http_threadpool_futures) > 0:
-            concurrent.futures.wait(self._http_threadpool_futures)
+            dxpy.utils.wait_for_all_futures(self._http_threadpool_futures)
             try:
                 for future in self._http_threadpool_futures:
                     if future.exception() != None:
@@ -592,7 +592,7 @@ class DXGTable(DXDataObject):
     def _async_add_rows_request(self, *args, **kwargs):
         kwargs['always_retry'] = True
         if self._http_threadpool is None:
-            DXGTable._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+            DXGTable._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
             future = concurrent.futures.as_completed(self._http_threadpool_futures).next()

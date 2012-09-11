@@ -217,7 +217,7 @@ class DXFile(DXDataObject):
             self._cur_part += 1
 
         if len(self._http_threadpool_futures) > 0:
-            concurrent.futures.wait(self._http_threadpool_futures)
+            dxpy.utils.wait_for_all_futures(self._http_threadpool_futures)
             for future in self._http_threadpool_futures:
                 if future.exception() != None:
                     raise future.exception()
@@ -225,7 +225,7 @@ class DXFile(DXDataObject):
 
     def _async_upload_part_request(self, *args, **kwargs):
         if self._http_threadpool == None:
-            DXFile._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+            DXFile._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
             future = concurrent.futures.as_completed(self._http_threadpool_futures).next()
@@ -371,7 +371,7 @@ class DXFile(DXDataObject):
 
     def _next_response_content(self):
         if self._http_threadpool is None:
-            DXFile._http_threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=self._http_threadpool_size)
+            DXFile._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
         if self._response_iterator is None:
             self._response_iterator = dxpy.utils.response_iterator(self._request_iterator, self._http_threadpool,
