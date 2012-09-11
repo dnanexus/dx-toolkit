@@ -5,33 +5,33 @@ Utilities shared by dxpy modules.
 import os, sys, collections, concurrent.futures, signal, traceback
 from exec_utils import *
 
-force_quit_on_sigint = True
-
 def _force_quit(signum, frame):
     traceback.print_stack(frame)
-    os.abort()
+    os._exit(os.EX_IOERR)
+    # os.abort()
 
 def get_futures_threadpool(max_workers):
-    '''
-    Invoke concurrent.futures.ThreadPoolExecutor(). Before returning the result, register a global interrupt handler
-    that converts SIGINT to SIGABRT to enable a timely exit without requiring threads to watch for requests to exit.
-
-    Note: if this behavior is undesirable, set dxpy.utils.force_quit_on_sigint = False.
-    '''
-    global force_quit_on_sigint
-    if force_quit_on_sigint:
-        signal.signal(signal.SIGINT, _force_quit)
+    #if force_quit_on_sigint:
+    #    signal.signal(signal.SIGINT, _force_quit)
     return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
 def wait_for_all_futures(futures):
     '''
     Wait indefinitely for all futures in the input iterable to complete.
-    Uses a timeout to enable interrupt handling.
+    Use a timeout to enable interrupt handling.
+    Call os._exit() in case of KeyboardInterrupt, to avoid making worker threads listen to events.
+
+    Note: os._exit() doesn't work well with interactive mode (e.g. ipython). This may help:
+    import __main__ as main; if hasattr(main, '__file__'): os._exit() else: os.exit()
     '''
-    while True:
-        waited_futures = concurrent.futures.wait(futures, timeout=60)
-        if len(waited_futures.not_done) == 0:
-            break
+    try:
+        while True:
+            waited_futures = concurrent.futures.wait(futures, timeout=60)
+            if len(waited_futures.not_done) == 0:
+                break
+    except KeyboardInterrupt as e:
+        traceback.print_stack()
+        os._exit(os.EX_IOERR)
 
 def response_iterator(request_iterator, worker_pool, max_active_tasks=4):
     '''
