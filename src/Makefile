@@ -67,12 +67,17 @@ contigset2fasta:
 reads_validator:
 	$(MAKE) -C reads_validator
 
+ua:
+	$(MAKE) -C ua
+
 clean:
 	$(MAKE) -C contigset2fasta clean
 	$(MAKE) -C reads_validator clean
 
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
+	-$(MAKE) -C reads_validator install
+	-$(MAKE) -C ua install
 	mkdir -p $(DESTDIR)/$(PREFIX)
 	if [[ $(DNANEXUS_HOME) != $(DESTDIR) ]]; then \
 		cp -a $(DNANEXUS_HOME)/{bin,environment,lib} $(DESTDIR)/$(PREFIX); \
@@ -105,4 +110,4 @@ doc_java:
 	mkdir -p ../doc/java
 	(cd java; mvn javadoc:javadoc)
 
-.PHONY: api_wrappers python perl java contigset2fasta reads_validator src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
+.PHONY: api_wrappers python perl java contigset2fasta reads_validator ua src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
