@@ -8,9 +8,22 @@ import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
 
-# TODO: adaptive buffer size
-DEFAULT_TABLE_ROW_BUFFER_SIZE = 40000
-DEFAULT_TABLE_REQUEST_SIZE = 1024*1024*32 # bytes
+# Number of rows to request at a time when reading.
+#
+# TODO: adaptive buffer size. Start with small requests to improve interactivity and make
+# progressively larger requests?
+DEFAULT_TABLE_READ_ROW_BUFFER_SIZE = 40000
+
+# Writing uses two bufferes: one that contains the actual rows (list of Python lists) and the
+# stringified data to send to the server (kept in a StringIO object). The row data is stringified
+# when we have accumulated a fixed number of rows. The stringified data is sent to the server once
+# its size exceeds a certain number of bytes.
+#
+# The row buffer should be large enough that we don't suffer a huge amount of overhead in
+# stringifying, but the larger the row buffer, the more we could exceed the max byte size of the
+# stringified buffer.
+DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE = 10000
+DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*96 # bytes
 
 class DXGTable(DXDataObject):
     '''Remote GenomicTable object handler
@@ -41,7 +54,7 @@ class DXGTable(DXDataObject):
         cls._http_threadpool_size = num_threads
 
     def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
-                 request_size=DEFAULT_TABLE_REQUEST_SIZE):
+                 request_size=DEFAULT_TABLE_WRITE_REQUEST_SIZE):
 
         if keep_open is not None:
             if keep_open:
@@ -58,9 +71,10 @@ class DXGTable(DXDataObject):
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")
             self._close_on_exit = (mode == 'w')
 
-        self._request_size = request_size
+        self._write_request_size = request_size
         self._row_buf = []
-        self._row_buffer_size = DEFAULT_TABLE_ROW_BUFFER_SIZE
+        self._read_row_buffer_size = DEFAULT_TABLE_READ_ROW_BUFFER_SIZE
+        self._write_row_buffer_size = DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE
         self._string_row_buf = None
         self._http_threadpool_futures = set()
         self._columns = None
@@ -289,7 +303,7 @@ class DXGTable(DXDataObject):
                 return
             resp = self.get_rows(query=query, columns=columns,
                                  starting=cursor,
-                                 limit=(self._row_buffer_size if limit is None else min(limit - returned, self._row_buffer_size)),
+                                 limit=(self._read_row_buffer_size if limit is None else min(limit - returned, self._read_row_buffer_size)),
                                  **kwargs)
             buffer = resp['data']
             cursor = resp['next']
@@ -355,9 +369,9 @@ class DXGTable(DXDataObject):
         if part is None:
             for row in data:
                 self._row_buf.append(row)
-                if len(self._row_buf) >= self._row_buffer_size:
+                if len(self._row_buf) >= self._write_row_buffer_size:
                     self._flush_row_buf_to_string_buf()
-                    if self._string_row_buf.tell() > self._request_size:
+                    if self._string_row_buf.tell() > self._write_request_size:
                         self._finalize_string_row_buf()
                         request_data = self._string_row_buf.getvalue()
                         self._string_row_buf = None
@@ -610,7 +624,7 @@ class DXGTable(DXDataObject):
         kwargs['columns'] = columns
         cursor = start_row
         while cursor < end_row:
-            request_size = min(self._row_buffer_size, end_row - cursor)
+            request_size = min(self._read_row_buffer_size, end_row - cursor)
             my_kwargs = dict(kwargs)
             my_kwargs['starting'] = cursor
             my_kwargs['limit'] = request_size

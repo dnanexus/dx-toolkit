@@ -1,8 +1,10 @@
 /build/wrapper_table.json
 /build/doc_env/
 /doc/cpp/
+/doc/java/
 /doc/python/
 /lib/
+/src/java/target/
 *~
 *.log
 *.swp

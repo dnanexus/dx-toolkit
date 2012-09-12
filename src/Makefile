@@ -67,6 +67,9 @@ contigset2fasta:
 reads_validator:
 	$(MAKE) -C reads_validator
 
+ua:
+	$(MAKE) -C ua
+
 clean:
 	$(MAKE) -C contigset2fasta clean
 	$(MAKE) -C reads_validator clean
@@ -88,7 +91,7 @@ build/doc_env/.setup_virtualenv: ../build/doc_build_requirements.txt
 	virtualenv --relocatable ../build/doc_env
 	touch ../build/doc_env/.setup_virtualenv
 
-doc: doc_python doc_dxcpp doc_dxjson
+doc: doc_python doc_dxcpp doc_dxjson doc_java
 
 doc_python: python setup_doc_virtualenv
 	source ../build/doc_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
@@ -101,4 +104,8 @@ doc_dxjson:
 	mkdir -p ../doc/cpp/dxjson
 	doxygen cpp/dxjson/Doxyfile
 
-.PHONY: api_wrappers python perl java contigset2fasta reads_validator src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
+doc_java:
+	mkdir -p ../doc/java
+	(cd java; mvn javadoc:javadoc)
+
+.PHONY: api_wrappers python perl java contigset2fasta reads_validator ua src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson

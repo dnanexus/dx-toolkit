@@ -2459,6 +2459,7 @@ def shell(orig_args):
 
 def watch(args):
     try:
+        ws = None
         from dxpy.utils.job_log_client import DXJobLogStreamClient
         streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
         response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
@@ -2474,7 +2475,8 @@ def watch(args):
             # See also https://dnanexus.jira.com/browse/PTFM-2692
             time.sleep(5)
     except KeyboardInterrupt:
-        ws.close()
+        if ws is not None:
+            ws.close()
 
 def print_help(args):
     if args.command_or_category is None:
