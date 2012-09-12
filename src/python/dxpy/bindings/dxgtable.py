@@ -77,7 +77,7 @@ class DXGTable(DXDataObject):
         self._write_row_buffer_size = DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE
         self._string_row_buf = None
         self._http_threadpool_futures = set()
-        self._columns = None
+        self._columns, self._col_names = None, None
 
         DXDataObject.set_ids(self, dxid, project)
 
@@ -260,9 +260,11 @@ class DXGTable(DXDataObject):
         Queries the gtable for its columns and returns a list of all
         column names.
         '''
-        return [col["name"] for col in self.get_columns(**kwargs)]
+        if self._col_names is None:
+            self._col_names = [col["name"] for col in self.get_columns(**kwargs)]
+        return self._col_names
 
-    def iterate_rows(self, start=0, end=None, **kwargs):
+    def iterate_rows(self, start=0, end=None, want_dict=False, **kwargs):
         """
         :param start: The row ID of the first row to return
         :type start: integer
@@ -274,14 +276,20 @@ class DXGTable(DXDataObject):
         interval [*start*, *end*).
 
         """
+        if want_dict:
+            col_names = ['__index__'] + self.get_col_names(**kwargs)
         if self._http_threadpool is None:
             DXGTable._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
         request_iterator = self._generate_read_requests(start_row=start, end_row=end, **kwargs)
 
         for response in dxpy.utils.response_iterator(request_iterator, self._http_threadpool, max_active_tasks=self._http_threadpool_size):
-            for row in response['data']:
-                yield row
+            if want_dict:
+                for row in response['data']:
+                    yield dict(zip(col_names, row))
+            else:
+                for row in response['data']:
+                    yield row
 
     def iterate_query_rows(self, query=None, columns=None, limit=None, **kwargs):
         """
