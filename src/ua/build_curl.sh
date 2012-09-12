@@ -16,7 +16,7 @@ tar jxvf curl-7.27.0.tar.bz2
 ln -s curl-7.27.0 curl
 cd curl
 
-./configure --prefix=/home/jdale/sw/local --disable-ldap --disable-ldaps \
+./configure --prefix=${HOME}/sw/local --disable-ldap --disable-ldaps \
   --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
   --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
   --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
