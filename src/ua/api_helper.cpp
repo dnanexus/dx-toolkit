@@ -42,59 +42,74 @@ string urlEscape(const string &str) {
 
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
+ * Important: Only projects with >=CONTRIBUTE access are considered 
+ *            for resolution. Thus, this function is guranteed to do
+ *            exactly one of the following:
+ *            1) Throw an error is no such project exist.
+ *            2) Throw an error, if multiple projects match the criteria.
+ *            3) Return a project ID with >=CONTRIBUTE access.
  *
- * To determine whether projectSpec is an ID, we call describe. If this
- * succeeds or throws PermissionDenied, we have verified that a project
- * with that ID exists (though we may not have permission to access it).
+ * We use following procedure to revolve project specifier to a project ID:
  *
- * If projectSpec is not an ID, we try to determine whether it is a name by
- * calling findProjects on projectSpec, with minimum permission level
- * "CONTRIBUTE". If no results are returned, the projectSpec cannot be
- * resolved; if more than one project is returned, projectSpec is
- * ambiguous; otherwise, the projectSpec is unambiguously a project name.
+ * Start with an empty project list (matchingProjectIdToName), then
+ * 1) If project specifier represent ID of a project with >=CONTRIBUTE
+ *    access, add it to project list.
+ * 2) Add all project whose name matches project specifier, and
+ *    >= CONTRIBUTE access is available, to project list.
+ * Now,
+ * - If project list's size > 2, then project specifier does not uniquely
+ *   identify the project. (error is thrown)
+ * - If project list's size == 0, then project specifier does not represent
+ *   a project's ID or name (with >=CONTRIBUTE access). (error is thrown)
+ * - If project list's size == 1, then we return the project ID.
  */
 string resolveProject(const string &projectSpec) {
   LOG << "Resolving project specifier " << projectSpec << "...";
   string projectID;
+  map<string, string> matchingProjectIdToName;
 
   try {
     dx::JSON desc = projectDescribe(urlEscape(projectSpec));
-    projectID = desc["id"].get<string>();
-  } catch (DXAPIError &e) {
-    if (e.name == "PermissionDenied") {
-      // the project exists, though we don't have access to it
-      projectID = projectSpec;
+    string level = desc["level"].get<string>();
+    if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
+      matchingProjectIdToName[projectSpec] = desc["name"].get<string>();
     }
+  } catch (DXAPIError &e) {
+    // Ignore the error (we will check for matching project name)
   }
-
-  if (!projectID.empty()) {
-    LOG << " found project ID " << projectID << endl;
-    return projectID;
-  }
-
+  
   try {
     dx::JSON params(dx::JSON_OBJECT);
     params["name"] = projectSpec;
     params["level"] = "CONTRIBUTE";
-
+    
     dx::JSON findResult = systemFindProjects(params);
     dx::JSON projects = findResult["results"];
-
-    if (projects.size() == 0) {
-      LOG << " failure." << endl;
-      throw runtime_error("\"" + projectSpec + "\" is not a valid project name or ID");
-    } else if (projects.size() > 1) {
-      LOG << " failure." << endl;
-      throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project");
-    } else {
-      projectID = projects[0]["id"].get<string>();
-      LOG << " found project ID " << projectID << endl;
-      return projectID;
+    LOG<< "\nstringified = "<< findResult.toString() << "\n\n";
+    for (unsigned i = 0; i < projects.size(); ++i) {
+      matchingProjectIdToName[projects[i]["id"].get<string>()] = projectSpec;
     }
   } catch (DXAPIError &e) {
     LOG << "Call to findProjects failed." << endl;
-    throw;
+    throw;  
   }
+
+  if (matchingProjectIdToName.size() == 0) {
+    LOG << " failure." << endl;
+    throw runtime_error("\"" + projectSpec + "\" is not a valid project name or ID (with >=CONTRIBUTE access)");
+  }
+
+  if (matchingProjectIdToName.size() > 1) {
+    LOG << "failure. " << matchingProjectIdToName.size() << " projects (with >=CONTRIBUTE access) match the identifer: \"" + projectSpec + "\":" << endl;
+    int i =  1;
+    for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
+      LOG << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")" << endl;
+    }
+    throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project");
+  }
+  
+  LOG << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corrosponding to project identifer \"" << projectSpec << "\"" << endl;
+  return matchingProjectIdToName.begin()->first;
 }
 
 /*

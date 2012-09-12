@@ -38,6 +38,7 @@ public:
   int chunkSize;
   int tries;
   bool doNotCompress;
+  bool doNotResume;
   bool progress;
   bool verbose;
   bool waitOnClose;

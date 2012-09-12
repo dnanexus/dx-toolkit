@@ -27,7 +27,7 @@ File::File(const string &localFile_, const string &projectSpec_, const string &f
 
 void File::init(void) {
   projectID = resolveProject(projectSpec);
-  testProjectPermissions(projectID);
+//  testProjectPermissions(projectID);
   createFolder(projectID, folder);
 
   testFileExists(localFile);
