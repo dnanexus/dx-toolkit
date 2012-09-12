@@ -240,6 +240,18 @@ class DXGTable(DXDataObject):
 
         return dxpy.api.gtableGet(self._dxid, get_rows_params, always_retry=True, **kwargs)
 
+    def get_columns(self, **kwargs):
+        '''
+        :returns: A list of column descriptors
+        :rtype: list of strings
+
+        Queries the gtable for its columns and returns a list of all
+        column descriptors.
+        '''
+        if self._columns is None:
+            self._columns = self.describe(**kwargs).get("columns")
+        return self._columns
+
     def get_col_names(self, **kwargs):
         '''
         :returns: A list of column names
@@ -248,11 +260,7 @@ class DXGTable(DXDataObject):
         Queries the gtable for its columns and returns a list of all
         column names.
         '''
-        desc = self.describe(**kwargs)
-        col_names = []
-        for col_desc in desc["columns"]:
-            col_names.append(col_desc["name"])
-        return col_names
+        return [col["name"] for col in self.get_columns(**kwargs)]
 
     def iterate_rows(self, start=0, end=None, **kwargs):
         """
