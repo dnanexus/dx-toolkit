@@ -50,6 +50,7 @@ Options::Options() {
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
+    ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
     ;
 
   hidden_opts = new po::options_description();
@@ -282,6 +283,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  progress: " << opt.progress << endl
         << "  verbose: " << opt.verbose << endl
         << "  wait on close: " << opt.waitOnClose << endl
+        << "  do-not-resume: " << opt.doNotResume << endl
       ;
   }
   return out;
