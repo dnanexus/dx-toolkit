@@ -86,10 +86,12 @@ def main(**kwargs):
 
     column_descs = mappingsTable.describe()['columns']
     
-    sam_cols = []
+    sam_cols = []; sam_col_names = []; sam_col_types = {}
     for c in column_descs:
         if c['name'].startswith("sam_field_") or c['name'] == "sam_optional_fields":
             sam_cols.append(c)
+            sam_col_names.append(c['name'])
+            sam_col_types[c['name']] = c['type']
 
     defaultCol = {"sequence":"", 
                   "name":"", 
@@ -122,15 +124,15 @@ def main(**kwargs):
             raise dxpy.AppError("Ending row is before Start")
 
         if opts.end_row > 0:
-            generator = mappingsTable.iterate_rows(start=opts.start_row, end=opts.end_row)
+            generator = mappingsTable.iterate_rows(start=opts.start_row, end=opts.end_row, want_dict=True)
         else:
-            generator = mappingsTable.iterate_rows(start=opts.start_row)
+            generator = mappingsTable.iterate_rows(start=opts.start_row, want_dict=True)
 
         # write each row unless we're throwing out unmapped 
         for row in generator:
-            if row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False:
+            if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
 
-                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     else:
         for x in regions:
@@ -178,21 +180,34 @@ def main(**kwargs):
     if outputFile != None:
         outputFile.close()
 
+def tag_value_is_default(value):
+    return value == MAX_INT or value == "" or (type(value) == float and math.isnan(value))
 
-def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols):
+def col_name_to_field_name(name):
+    if name == 'sam_optional_fields':
+        return name
+    else:
+        return name[10:]
+
+def _disabled_tag_value_is_default(value, col_type):
+    if col_type == 'int32':
+        return value == MAX_INT
+    elif col_type == 'float':
+        return math.isnan(value)
+    elif value == "":
+        return True
+    return False
+
+#@profile
+def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
     
     global MAX_INT
 
     out_row = ""
 
-    values = {}
-    for k,v in defaultCol.iteritems():
-        if col.get(k) == None:
-            values[k] = defaultCol[k]
-        else:
-            values[k] = row[col[k]]
-    
-        
+    values = dict(defaultCol)
+    values.update(row)
+
     flag =  0x1*(values["mate_id"] > -1 and values["mate_id"] <= 1)
     flag += 0x2*(values["proper_pair"] == True) 
     flag += 0x4*(values["status"] == "UNMAPPED")
@@ -243,15 +258,28 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
         if int(values["lo"]) > int(values["lo2"]):
             tlen *= -1
 
-    
-    out_row = readName.strip("@") 
-    out_row = "\t".join([out_row, str(flag), chromosome, str(lo), str(values["error_probability"]), values["cigar"] , chromosome2, str(lo2), str(tlen), seq, qual])
+    out_row = [readName.strip("@"), str(flag), chromosome, str(lo), str(values["error_probability"]), values["cigar"] , chromosome2, str(lo2), str(tlen), seq, qual]
 
+    tag_values = {c: values[c] for c in sam_col_names if not tag_value_is_default(values[c])}
+    out_row.extend([":".join([col_name_to_field_name(name), sam_col_types[name], str(value)]) for name, value in tag_values.iteritems()])
+    
+
+#    tag_types = {column['name']: column['type'] for column in sam_cols}
+#    for name, value in tag_values.iteritems():
+        
+#    for column in sam_cols:
+#        value = values[column['name']]
+#        if not tag_value_is_default(value, column['type']):
+#            pass
+
+    #non_default_tags = [column['name'] for column in sam_cols if not tag_value_is_default(values[column['name']], column['type'])]
+
+    '''
     # see if we've found a 
     if len(sam_cols) > 0:
         for col_hash in sam_cols:
             write_tag = True
-            tag_value = row[col[col_hash['name']]]
+            tag_value = values[col_hash['name']]
             field_name = col_hash['name'][10:]
             if col_hash['type'] == 'int32':
                 # if we find the default, do not output tag
@@ -271,14 +299,14 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
                 if col_hash['name'] != "sam_optional_fields":
                     out_row = "\t".join([out_row, ":".join([field_name, field_type, str(tag_value)])])
                 else:
-                    out_row = "\t".join([out_row, row[col["sam_optional_fields"]]])
-
+                    out_row = "\t".join([out_row, row["sam_optional_fields"]])
+    '''
    
-    out_row = "\t".join([out_row, "RG:Z:"+str(values['read_group'])])
+    out_row.append("RG:Z:"+str(values['read_group']))
     
     if writeIds:
-        out_row += ("\tZD:Z:"+str(row[0]))
-    out_row += "\n"
+        out_row.append("ZD:Z:"+str(row[0]))
+    out_row = "\t".join(out_row) + "\n"
 
     if outputFile != None:
         outputFile.write(out_row)
