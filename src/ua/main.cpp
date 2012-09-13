@@ -160,7 +160,9 @@ bool allFilesDone(vector<File> &files) {
 
 void updateFileState(vector<File> &files) {
   for (unsigned int i = 0; i < files.size(); ++i) {
-    files[i].updateState();
+    if (!files[i].failed) {
+      files[i].updateState();
+    }
   }
 }
 
@@ -295,6 +297,8 @@ string getMimeType(string filePath) {
 bool isCompressed(string mimeType) {
   // This list is mostly compiled from: http://en.wikipedia.org/wiki/List_of_archive_formats
   // Some of the items are added by trying libmagic with few common file formats
+  // Note: application/x-empty and inode/x-empty are added to treat
+  //       the special case of empty file (i.e., not compress them).
   const char* compressed_mime_types[] = {
     "application/x-bzip2",
     "application/zip",
@@ -321,7 +325,9 @@ bool isCompressed(string mimeType) {
     "application/x-stuffit",
     "application/x-stuffitx",
     "application/x-gtar",
-    "application/x-zoo"
+    "application/x-zoo",
+    "application/x-empty",
+    "inode/x-empty"
   };
   unsigned numElems = sizeof compressed_mime_types/sizeof(compressed_mime_types[0]);
   for (unsigned i = 0; i < numElems; ++i) {
@@ -372,26 +378,26 @@ int main(int argc, char * argv[]) {
 
     vector<File> files;
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
-      LOG<<"Getting MIME type for local file " << opt.files[i] << "..."<<endl;
+      LOG << "Getting MIME type for local file " << opt.files[i] << "..." << endl;
       string mimeType = getMimeType(opt.files[i]);
-      LOG<<"MIME type for local file " << opt.files[i] << " is '" << mimeType << "'."<<endl;
+      LOG << "MIME type for local file " << opt.files[i] << " is '" << mimeType << "'." << endl;
       
       bool toCompress;
       if (!opt.doNotCompress) {
         bool is_compressed = isCompressed(mimeType);
         toCompress = !is_compressed;
         if (is_compressed)
-          LOG<<"File "<<opt.files[i]<<" is already compressed, so won't try to compress it any further."<<endl;
+          LOG << "File " << opt.files[i] << " is already compressed, so won't try to compress it any further." << endl;
         else
-          LOG<<"File "<<opt.files[i]<<" is not compressed, will compress it before uploading."<<endl;
+          LOG << "File " << opt.files[i] << " is not compressed, will compress it before uploading." << endl;
       } else {
         toCompress = false;
       }
       if (toCompress) {
         mimeType = "application/x-gzip";
       }
-      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, mimeType));
-      totalChunks += files[i].createChunks(chunksToRead, opt.chunkSize, opt.tries);
+      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize));
+      totalChunks += files[i].createChunks(chunksToRead, opt.tries);
     }
 
     if (opt.waitOnClose) {
@@ -424,7 +430,9 @@ int main(int argc, char * argv[]) {
         cerr << "File " << files[i] << " could not be uploaded." << endl;
       } else {
         cerr << "File " << files[i] << " was uploaded successfully. Closing...";
-        files[i].close();
+        if (files[i].isRemoteFileOpen) {
+          files[i].close();
+        }
         cerr << endl;
       }
     }

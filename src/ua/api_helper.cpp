@@ -85,7 +85,6 @@ string resolveProject(const string &projectSpec) {
     
     dx::JSON findResult = systemFindProjects(params);
     dx::JSON projects = findResult["results"];
-    LOG<< "\nstringified = "<< findResult.toString() << "\n\n";
     for (unsigned i = 0; i < projects.size(); ++i) {
       matchingProjectIdToName[projects[i]["id"].get<string>()] = projectSpec;
     }
@@ -157,19 +156,48 @@ void createFolder(const string &projectID, const string &folder) {
  * folder, and with the specified name. The folder and any parent folders
  * are created if they do not exist.
  */
-string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType) {
+string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType, const dx::JSON &properties) {
   dx::JSON params(dx::JSON_OBJECT);
   params["project"] = project;
   params["folder"] = folder;
   params["name"] = name;
   params["parents"] = true;
   params["media"] = mimeType;
+  params["properties"] = properties;
+
   LOG << "Creating new file with parameters " << params.toString() << endl;
 
   dx::JSON result = fileNew(params);
   LOG << "Got result " << result.toString() << endl;
 
   return result["id"].get<string>();
+}
+
+/* 
+ * Returns output["results"] array from /findDataObjects call, to search for
+ * all files in "project" with the given file signature. Describe output
+ * is also returned.
+ * Note: Hidden files are searched as well.
+ */
+dx::JSON findResumableFileObject(string project, string signature) {
+  dx::JSON query(dx::JSON_OBJECT);
+  query["class"] = "file";
+  query["properties"] = dx::JSON::parse("{\".system-fileSignature\": \"" + signature + "\"}");
+  query["scope"] = dx::JSON(dx::JSON_OBJECT);
+  query["scope"]["project"] = project;
+  query["scope"]["folder"] = "/";
+  query["scope"]["recurse"] = true;
+  query["visibility"] = "either";
+  query["describe"] = dx::JSON::parse("{\"project\": \"" + project + "\"}");
+
+  dx::JSON output;
+  try {
+    output = systemFindDataObjects(query);
+  } catch (exception &e) {
+    LOG << " failure while running findDataObjects with this input query: " << query.toString() << endl;
+    throw;
+  }
+  return output["results"];
 }
 
 void closeFileObject(const string &fileID) {

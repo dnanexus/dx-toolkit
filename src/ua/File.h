@@ -11,11 +11,12 @@ class File {
 public:
 
   File(const std::string &localFile_,
-       const std::string &projectSpec_, const std::string &folder_, const std::string &name_, const bool toCompress_, const std::string &mimeType_);
+       const std::string &projectSpec_, const std::string &folder_, const std::string &name_, const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
+       const int64_t chunkSize);
 
-  void init(void);
+  void init(const bool tryResuming);
 
-  unsigned int createChunks(BlockingQueue<Chunk *> &queue, const int chunkSize, const int tries);
+  unsigned int createChunks(BlockingQueue<Chunk *> &queue, const int tries);
 
   void close(void);
 
@@ -50,12 +51,26 @@ public:
   
   /* true if all chunks in the file should be compressed before uploading*/
   bool toCompress;
+ 
+  /* true if remote file is in open state, false otherwise.
+   * This variable is used for noting  wheter a resumed upload
+   * is already in "closing"/"closed" state or not.
+   */
+  bool isRemoteFileOpen;
 
   /* Stores the mime-type of file (as identified by libmagic) */
   std::string mimeType;
 
-  friend std::ostream &operator<<(std::ostream &out, const File &file);
+  /* chunk size for this file*/
+  int64_t chunkSize;
 
+  friend std::ostream &operator<<(std::ostream &out, const File &file);
+  
+  /* Returns a string with all the input parameteres serialized in order 
+   * (with space as delimiter). This string is used for identifying whether 
+   * an upload can be resumed or not 
+   */
+  static std::string createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const std::string &name);
 };
 
 #endif
