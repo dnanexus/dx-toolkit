@@ -190,11 +190,19 @@ def col_name_to_field_name(name):
     else:
         return name[10:]
 
+def col_type_to_field_type(col_type):
+    if col_type == 'int32':
+        return 'i'
+    elif col_type == 'float':
+        return 'f'
+    else:
+        return 'Z'
+
 def format_tag_field(name, value, sam_col_types):
     if name == "sam_optional_fields":
         return value
     else:
-        return ":".join([col_name_to_field_name(name), sam_col_types[name], str(value)])
+        return ":".join([col_name_to_field_name(name), col_type_to_field_type(sam_col_types[name]), str(value)])
 
 def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
     out_row = ""
