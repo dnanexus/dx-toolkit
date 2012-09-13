@@ -85,7 +85,7 @@ def main(**kwargs):
         col[names[i]] = i+1
 
     column_descs = mappingsTable.describe()['columns']
-    
+
     sam_cols = []; sam_col_names = []; sam_col_types = {}
     for c in column_descs:
         if c['name'].startswith("sam_field_") or c['name'] == "sam_optional_fields":
@@ -149,14 +149,14 @@ def main(**kwargs):
                     # if we have a single read and we wanna store it (is mapped or are storing unmapped)
                     if row[col["mate_id"]] == -1 and (row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False):
 
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
                     #################################################################################
 
                     #If paired read is the left read, write it and grab the right one
                     if row[col["mate_id"]] == 0:
 
-                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, sam_cols)
+                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
                         if row[col["status2"]] != "UNMAPPED":
                             #print row[col["chr2"]]+":"+ str(row[col["lo2"]])+"-"+str(row[col["hi2"]])
 
@@ -166,7 +166,7 @@ def main(**kwargs):
                                 #print mateRow
                                 if mateRow[col["mate_id"]] == 1 and mateRow[col["chr2"]] == row[col["chr"]] and mateRow[col["lo2"]] == row[col["lo"]] and mateRow[col["hi2"]] == row[col["hi"]]:
 
-                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
                                     break
                             #print "Mate not found"
                         else:
@@ -175,7 +175,7 @@ def main(**kwargs):
                 else:
                     if row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False:
 
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     if outputFile != None:
         outputFile.close()
@@ -189,18 +189,7 @@ def col_name_to_field_name(name):
     else:
         return name[10:]
 
-def _disabled_tag_value_is_default(value, col_type):
-    if col_type == 'int32':
-        return value == MAX_INT
-    elif col_type == 'float':
-        return math.isnan(value)
-    elif value == "":
-        return True
-    return False
-
-#@profile
 def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
-    
     global MAX_INT
 
     out_row = ""
@@ -262,20 +251,8 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols,
 
     tag_values = {c: values[c] for c in sam_col_names if not tag_value_is_default(values[c])}
     out_row.extend([":".join([col_name_to_field_name(name), sam_col_types[name], str(value)]) for name, value in tag_values.iteritems()])
-    
 
-#    tag_types = {column['name']: column['type'] for column in sam_cols}
-#    for name, value in tag_values.iteritems():
-        
-#    for column in sam_cols:
-#        value = values[column['name']]
-#        if not tag_value_is_default(value, column['type']):
-#            pass
-
-    #non_default_tags = [column['name'] for column in sam_cols if not tag_value_is_default(values[column['name']], column['type'])]
-
-    '''
-    # see if we've found a 
+    ''' Old SAM tags code
     if len(sam_cols) > 0:
         for col_hash in sam_cols:
             write_tag = True
