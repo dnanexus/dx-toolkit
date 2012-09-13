@@ -181,6 +181,7 @@ def main(**kwargs):
         outputFile.close()
 
 def tag_value_is_default(value):
+    global MAX_INT
     return value == MAX_INT or value == "" or (type(value) == float and math.isnan(value))
 
 def col_name_to_field_name(name):
@@ -189,9 +190,13 @@ def col_name_to_field_name(name):
     else:
         return name[10:]
 
-def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
-    global MAX_INT
+def format_tag_field(name, value, sam_col_types):
+    if name == "sam_optional_fields":
+        return value
+    else:
+        return ":".join([col_name_to_field_name(name), sam_col_types[name], str(value)])
 
+def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
     out_row = ""
 
     values = dict(defaultCol)
@@ -248,9 +253,9 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols,
             tlen *= -1
 
     out_row = [readName.strip("@"), str(flag), chromosome, str(lo), str(values["error_probability"]), values["cigar"] , chromosome2, str(lo2), str(tlen), seq, qual]
-
     tag_values = {c: values[c] for c in sam_col_names if not tag_value_is_default(values[c])}
-    out_row.extend([":".join([col_name_to_field_name(name), sam_col_types[name], str(value)]) for name, value in tag_values.iteritems()])
+
+    out_row.extend([format_tag_field(name, value, sam_col_types) for name, value in tag_values.iteritems()])
 
     ''' Old SAM tags code
     if len(sam_cols) > 0:
