@@ -73,6 +73,8 @@ ua:
 clean:
 	$(MAKE) -C contigset2fasta clean
 	$(MAKE) -C reads_validator clean
+	-rm -rf python/build
+	-rm -rf java/target
 
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
