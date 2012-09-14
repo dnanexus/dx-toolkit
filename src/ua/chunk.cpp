@@ -51,6 +51,44 @@ void Chunk::compress() {
     throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
   }
 
+  /* Special case: If the chunk is compressed below 5MB, try compressing it with
+   *               level 1
+   */
+  if (!lastChunk && destLen < 5 * 1024 * 1024) {
+    log("Compression at level 3, resulted in data size =" + boost::lexical_cast<string>(destLen) + " bytes. " +
+        "We cannot upload data less than 5MB in any chunk (except last). So will try to compress at level 1 now");
+    destLen = gzCompressBound(sourceLen);
+    dest.clear();
+    dest.resize(destLen);
+    destLen = gzCompressBound(sourceLen);
+    compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
+                                    (const Bytef *) (&(data[0])), (uLong) sourceLen,
+                                    1);  // 1 => fastest compression
+
+    if (compressStatus == Z_MEM_ERROR) {
+      throw runtime_error("compression failed: not enough memory");
+    } else if (compressStatus == Z_BUF_ERROR) {
+      throw runtime_error("compression failed: output buffer too small");
+    } else if (compressStatus != Z_OK) {
+      throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
+    }
+    
+    if (destLen < 5 * 1024 * 1024) {
+      log("Compression at level 1, resulted in data size = " + boost::lexical_cast<string>(destLen) + " bytes. " +
+          "We cannot upload data less than 5MB in any chunk (except last). Critical error.");
+      cerr << "One of the chunks for file " << localFile << " was compressed to less than 5MB. Upload to fileID: " 
+           << fileID << " cannot be completed. Program will terminate now (critical error)." << endl
+           << "Here are some of the things you can try: " << endl
+           << "  1. Upload file " << localFile << " without compression (--do-not-compress flag)" << endl
+           << "  2. Try increasing chunk size to a larger value. (--chunk-size option)" << endl
+           << "  3. Remove this file from upload list (so other file uploads (if any) can continue)" << endl;
+      // TODO: Should we be removing the incomplete file ? If yes, we need projectID in Chunk class.
+/*      cerr << endl << "Program will clear the incomplete remote file: " << fileID;
+      projectRemove(projectID, dx::JSON::parse("[\"" + fileID + "\"]"));*/
+      throw runtime_error("compression (at level 1) produced chunk size " + boost::lexical_cast<string>(destLen) + " bytes (< 5MB).");
+    }
+  }
+
   if (destLen < (int64_t) dest.size()) {
     dest.resize(destLen);
   }

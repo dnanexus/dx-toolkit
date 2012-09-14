@@ -129,7 +129,8 @@ unsigned int File::createChunks(BlockingQueue<Chunk *> &queue, const int tries) 
       //       if it fails ?
     } else {
       int64_t end = min(start + chunkSize, size);
-      Chunk * c = new Chunk(localFile, fileID, numChunks, tries, start, end, toCompress);
+      bool lastChunk = ((start + chunkSize) >= size);
+      Chunk * c = new Chunk(localFile, fileID, numChunks, tries, start, end, toCompress, lastChunk);
       c->log("created");
       queue.produce(c);
       actualChunksCreated++;

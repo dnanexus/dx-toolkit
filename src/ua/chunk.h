@@ -10,9 +10,9 @@ class Chunk {
 public:
 
   Chunk(const std::string &localFile_, const std::string &fileID_, const unsigned int index_,
-        const unsigned int triesLeft_, const int64_t start_, const int64_t end_, const bool toCompress_)
+        const unsigned int triesLeft_, const int64_t start_, const int64_t end_, const bool toCompress_, const bool lastChunk_)
     : localFile(localFile_), fileID(fileID_), index(index_),
-      triesLeft(triesLeft_), start(start_), end(end_), uploadOffset(0), toCompress(toCompress_)
+      triesLeft(triesLeft_), start(start_), end(end_), uploadOffset(0), toCompress(toCompress_), lastChunk(lastChunk_)
   {
   }
 
@@ -44,6 +44,9 @@ public:
   
   /* If true, then the chunk will be compressed, else not */
   bool toCompress;
+
+  /* true, if this chunk will be uploaded to last part index in the file */
+  bool lastChunk;
 
   void read();
   void compress();
