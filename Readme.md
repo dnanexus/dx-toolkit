@@ -84,3 +84,23 @@ The Java bindings are not built by default.
 ### Test dependencies
 TODO
 
+##Installing dependencies for prebuilt dx-toolkit
+You can download a prebuilt archive of dx-toolkit [here](http://wiki.dnanexus.com/DNAnexus-SDK). Depending on your OS type, you may need to install some additional dependencies.
+
+### Ubuntu 12.04
+You can install dx-toolkit, and all related dependencies by installing our debian package. ```TODO: Instructions```
+
+### Ubuntu 10.04
+You will need to install following packages:
+- libboost-regex
+- libboost-thread
+- libgomp1
+
+Run this command to install them
+
+```
+sudo apt-get install libboost-regex1.40.0 libboost-thread1.40.0 libgomp1
+```
+
+### OS X
+You will need Boost C++ libraries and GCC 4.6+ installed for running tools in precompiled dx-toolkit. Please see [OS X](#os-x) section above for instructions on how to install them.
