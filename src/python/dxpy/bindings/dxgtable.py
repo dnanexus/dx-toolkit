@@ -23,7 +23,7 @@ DEFAULT_TABLE_READ_ROW_BUFFER_SIZE = 40000
 # stringifying, but the larger the row buffer, the more we could exceed the max byte size of the
 # stringified buffer.
 DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE = 10000
-DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*96 # bytes
+DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*48 # bytes
 
 class DXGTable(DXDataObject):
     '''Remote GenomicTable object handler
