@@ -15,9 +15,8 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
     :type dxid: string
     :rtype: :class:`dxpy.bindings.dxfile.DXFile`
 
-    Given the object ID of an uploaded file, this function returns a
-    remote file handler which can be treated as a read-only file
-    descriptor.
+    Given the object ID of an uploaded file, returns a remote file handler that
+    is a read-only file-like object.
 
     Example::
 
@@ -34,7 +33,7 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
 
 def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     '''
-    :param keep_open: Deprecated. Use the mode parameter instead.
+    :param keep_open: Deprecated. Use the *mode* parameter instead.
     :type keep_open: boolean
     :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
     :type mode: string
@@ -43,10 +42,9 @@ def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwa
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Creates a new remote file object that is ready to be written to
-    and returns a DXFile object which can be treated as a write-only
-    file descriptor.  Other optional parameters available (see
-    :func:`dxpy.bindings.DXDataObject.new()`).
+    Creates a new remote file object that is ready to be written to; returns a
+    DXFile object that is a writable file-like object. Other optional
+    parameters are available (see :func:`dxpy.bindings.DXDataObject.new()`).
 
     Example::
 
@@ -70,7 +68,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
     :type dxid: string
     :param filename: Local filename
     :type filename: string
-    :param append: Set to true if the local filename is to be appended to
+    :param append: Appends to the local file if True
     :type append: boolean
 
     Downloads the remote file with object ID *dxid* and saves it to
@@ -114,10 +112,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Uploads *filename* or reads from *file* into a new file object (with media type
-    *media_type* if given) and returns the associated remote file
-    handler.  In addition, it will set the "name" property of the
-    remote file to *filename* or to *file.name* (if it exists).
+    Uploads *filename* or reads from *file* into a new file object (with media
+    type *media_type* if given) and returns the associated remote file handler.
+    The "name" property of the remote file is set to *filename* or to
+    *file.name* (if it exists).
 
     Examples::
 
@@ -188,9 +186,9 @@ def upload_string(to_upload, media_type=None, keep_open=None, mode=None,
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Uploads the given string *to_upload* into a new file object (with
-    media type *media_type* if given) and returns the associated
-    remote file handler.
+    Uploads the data in the given string *to_upload* into a new file object
+    (with media type *media_type* if given) and returns the associated remote
+    file handler.
 
     """
 

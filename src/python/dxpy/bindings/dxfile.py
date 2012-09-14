@@ -28,7 +28,7 @@ class DXFile(DXDataObject):
     :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
     :type mode: string
 
-    Remote file object handler
+    Remote file object handler.
 
     .. automethod:: _new
 
@@ -203,7 +203,7 @@ class DXFile(DXDataObject):
 
     def flush(self, multithread=True, **kwargs):
         '''
-        Flushes the internal write buffer
+        Flushes the internal write buffer.
         '''
         if self._write_buf.tell() > 0:
             data = self._write_buf.getvalue()
@@ -284,9 +284,9 @@ class DXFile(DXDataObject):
         :param block: Indicates whether this function should block until the remote file has closed or not.
         :type block: boolean
 
-        Attempts to close the file.  Note that the remote file cannot
-        be closed until all parts have been fully uploaded, and an
-        exception will be thrown in this case.
+        Attempts to close the file. Note that the remote file cannot be closed
+        until all parts have been fully uploaded. An exception will be thrown
+        if this is not the case.
         '''
         self.flush(**kwargs)
 
@@ -304,7 +304,7 @@ class DXFile(DXDataObject):
         :type timeout: integer
         :raises: :exc:`dxpy.exceptions.DXFileError` if the timeout is reached before the remote file has been closed
 
-        Wait until the remote file is closed.
+        Waits until the remote file is closed.
         '''
         self._wait_on_close(timeout, **kwargs)
 
@@ -316,11 +316,10 @@ class DXFile(DXDataObject):
         :type index: integer
         :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is in the wrong range, :exc:`requests.exceptions.HTTPError` if upload fails
 
-        Requests a URL for uploading a part, and uploads the data in
-        *data* as part number *index* for the associated file.  If no
-        value for *index* is given, it is assumed that this is the
-        only part to be uploaded.
-
+        Requests a URL for uploading a part, and uploads the data in *data* as
+        part number *index* for the associated file. If no value for *index* is
+        given, *index* defaults to 1. This probably only makes sense if this is
+        the only part to be uploaded.
         """
 
         req_input = {}
@@ -384,8 +383,8 @@ class DXFile(DXDataObject):
         :type size: integer
         :rtype: string
 
-        Returns the next *size* bytes or until the end of file if no *size* is given or there are fewer than *size*
-        bytes left in the file.
+        Returns the next *size* bytes, or until the end of file (if no *size*
+        is given or there are fewer than *size* bytes left in the file).
 
         .. note::
 

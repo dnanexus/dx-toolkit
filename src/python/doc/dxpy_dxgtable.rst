@@ -1,6 +1,9 @@
 GenomicTable Bindings
 +++++++++++++++++++++
 
+GenomicTable is an immutable tabular dataset suitable for large-scale genomic
+applications.
+
 You can obtain a handle to a new or existing GenomicTable object with
 :func:`~dxpy.bindings.dxgtable_functions.new_dxgtable` or
 :func:`~dxpy.bindings.dxgtable_functions.open_dxgtable`, respectively. The

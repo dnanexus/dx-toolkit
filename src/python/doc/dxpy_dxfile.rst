@@ -1,6 +1,9 @@
 File Bindings
 +++++++++++++
 
+Files can be used to store an opaque sequence of bytes in the DNAnexus
+Platform.
+
 You can obtain a handle to a new or existing File object with
 :func:`~dxpy.bindings.dxfile_functions.new_dxfile` or
 :func:`~dxpy.bindings.dxfile_functions.open_dxfile`, respectively. Both return

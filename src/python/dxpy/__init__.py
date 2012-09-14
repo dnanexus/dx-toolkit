@@ -2,27 +2,27 @@
 When importing this package, configuration values will be loaded from the following sources in order of decreasing priority:
 
 1. Environment variables
-2. Values stored in ~/.dnanexus_config/environment
-3. Values stored in /opt/dnanexus/environment
+2. Values stored in ``~/.dnanexus_config/environment``
+3. Values stored in ``/opt/dnanexus/environment``
 4. Hardcoded defaults
 
 The relevant environment variables are the following:
 
-* DX_SECURITY_CONTEXT: stores a JSON containing your auth token
-* DX_APISERVER_PROTOCOL: either "http" or "https" (usually "https")
-* DX_APISERVER_HOST: hostname of the DNAnexus API server
-* DX_APISERVER_PORT: port of the DNAnexus API server
-* DX_JOB_ID: should only be present if run in an Execution Environment
-* DX_WORKSPACE_ID: should only be present if run in an Execution Environment; indicates the running job's temporary workspace ID
-* DX_PROJECT_CONTEXT_ID: indicates either the project context of a running job, or the default project to use for a user accessing the platfrom
+* ``DX_SECURITY_CONTEXT``: a JSON hash containing your auth token
+* ``DX_APISERVER_PROTOCOL``: either ``http`` or ``https`` (usually ``https``)
+* ``DX_APISERVER_HOST``: hostname of the DNAnexus API server
+* ``DX_APISERVER_PORT``: port of the DNAnexus API server
+* ``DX_JOB_ID``: should only be present if run in an Execution Environment
+* ``DX_WORKSPACE_ID``: should only be present if run in an Execution Environment; indicates the running job's temporary workspace ID
+* ``DX_PROJECT_CONTEXT_ID``: indicates either the project context of a running job, or the default project to use for a user accessing the platfrom
 
 If the security context and API server variables are available, then
 upon importing the module, any method which relies on the
 :func:`dxpy.DXHTTPRequest` function will set the appropriate
 authentication headers for making API calls to the API server.  (Note:
 All methods in the :mod:`dxpy.api` use this function.)  In addition,
-it will set the default workspace according to DX_WORKSPACE_ID (if
-running inside an Execution Environment) or DX_PROJECT_CONTEXT_ID
+it will set the default workspace according to ``DX_WORKSPACE_ID`` (if
+running inside an Execution Environment) or ``DX_PROJECT_CONTEXT_ID``
 (otherwise).  This workspace will be used by default for any object
 handler methods that require a project ID.
 
@@ -86,7 +86,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     '''
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
-    :param data: Contents for the request body
+    :param data: Content of the request body
     :param jsonify_data: Indicates whether *data* should be converted from a Python list or dict to a JSON string
     :type jsonify_data: boolean
     :param want_full_response: Indicates whether the function should return the full :class:`requests.Response` object or just the content of the response
@@ -222,7 +222,7 @@ def set_api_server_info(host=None, port=None, protocol=None):
 
 def set_security_context(security_context):
     '''
-    :param security_context: Authentication hash, usually with keys "auth_token_type" set to "bearer" and "auth_token" set to the authentication token.
+    :param security_context: Authentication hash, usually with keys "auth_token_type" set to "Bearer" and "auth_token" set to the authentication token.
     :type security_context: dict
 
     Sets the security context to use the provided token.

@@ -14,7 +14,8 @@ NUM_HTTP_THREADS = 4
 
 
 class DXObject(object):
-    """Abstract base class for all remote object handlers"""
+    """Abstract base class for all remote object handlers."""
+
     def __init__(self, dxid=None, project=None):
         raise NotImplementedError("DXObject is an abstract class; a subclass should be initialized instead.")
 
@@ -38,7 +39,7 @@ class DXObject(object):
 
 
 class DXDataObject(DXObject):
-    """Abstract base class for all remote data object handlers"""
+    """Abstract base class for all remote data object handlers."""
 
     def __init__(self, dxid=None, project=None):
         try:
@@ -108,7 +109,7 @@ class DXDataObject(DXObject):
 
         Discards the currently stored ID and associates the handler
         with *dxid*.  Associates the handler with the copy of the
-        object in *project*.  Uses the current workspace ID as the default
+        object in *project*.  Uses the current workspace ID as the default.
 
         '''
         self._proj = None
@@ -139,8 +140,7 @@ class DXDataObject(DXObject):
         :returns: Project ID of associated object
         :rtype: string
 
-        Returns the project ID that the handler is currently associated
-        with if any.
+        Returns the project ID, if any, that the handler is currently associated with.
 
         '''
 
@@ -203,8 +203,9 @@ class DXDataObject(DXObject):
 
     def get_details(self, **kwargs):
         """
-        Returns the contents of the details of the object
+        Returns the contents of the details of the object.
 
+        :rtype: list or dict
         """
 
         return self._get_details(self._dxid, **kwargs)
@@ -285,7 +286,7 @@ class DXDataObject(DXObject):
 
             dxgtable.set_properties({"name": "George", "project": "cancer"})
 
-        The following line would delete the property "project"::
+        Subsequently, the following would delete the property "project"::
 
             dxgtable.set_properties({"project": None})
 
@@ -341,11 +342,9 @@ class DXDataObject(DXObject):
 
     def remove(self, **kwargs):
         '''
-        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
+        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object.
 
-        Permanently remove the associated remote object from the
-        associated project.
-
+        Permanently removes the associated remote object from the associated project.
         '''
 
         if self._proj is None:
@@ -364,7 +363,7 @@ class DXDataObject(DXObject):
         :type folder: string
         :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
 
-        Move the associated remote object to *folder*.
+        Moves the associated remote object to *folder*.
 
         '''
 

@@ -16,7 +16,7 @@ from dxpy.bindings import *
 ###############
 
 class DXContainer(DXObject):
-    '''Remote container handler'''
+    '''Remote container handler.'''
 
     def __init__(self, dxid=None):
         if dxid is not None:
@@ -80,7 +80,7 @@ class DXContainer(DXObject):
         :param parents: Whether to recursively create all parent folders if they are missing
         :type parents: boolean
 
-        Creates a new folder in the project or container
+        Creates a new folder in the project or container.
 
         """
         api_method = dxpy.api.containerNewFolder
@@ -189,8 +189,8 @@ class DXContainer(DXObject):
         :type objects: list of strings
 
         Removes the specified objects in the project or container; removal
-        propagates to any linked hidden objects that would otherwise
-        be unreachable from any visible object in the project or container.
+        propagates to any linked hidden objects that would otherwise be
+        unreachable from any visible object in the same project or container.
 
         """
         api_method = dxpy.api.containerRemoveObjects
@@ -275,6 +275,8 @@ class DXProject(DXContainer):
         :param level: Permissions level that the invitee would get ("LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
         :type level: string
 
+        Invites the specified user to have access to the project.
+
         """
 
         return dxpy.api.projectInvite(self._dxid,
@@ -287,6 +289,8 @@ class DXProject(DXContainer):
         :type member: string
         :param level: Permissions level that the member will now have (None, "LIST", "VIEW", or "CONTRIBUTE")
         :type level: string or None
+
+        Decreases the permissions that the specified user has in the project.
 
         """
 

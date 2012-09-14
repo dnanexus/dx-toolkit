@@ -33,6 +33,7 @@ def get_dxlink_ids(link):
     :param link: A DNAnexus link
     :type link: dict
     :returns: Object ID, Project ID (or :const:`None` if no project specified in the link)
+    :rtype: tuple
 
     Returns the IDs stored in the given DNAnexus link.
     '''

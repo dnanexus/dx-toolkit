@@ -26,7 +26,8 @@ DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE = 10000
 DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*48 # bytes
 
 class DXGTable(DXDataObject):
-    '''Remote GenomicTable object handler
+    '''
+    Remote GenomicTable object handler.
 
     .. automethod:: _new
     '''
@@ -151,7 +152,7 @@ class DXGTable(DXDataObject):
         :param init_from: GTable from which to initialize the metadata including column and index specs
         :type init_from: :class:`DXGTable`
 
-        Creates a new gtable with the given column names in *columns*
+        Creates a new GenomicTable with the given column names in *columns*
         and the indices described in *indices*.
 
         '''
@@ -192,7 +193,7 @@ class DXGTable(DXDataObject):
 
         Discards the currently stored ID and associates the handler
         with *dxid*.  As a side effect, it also flushes the buffer for
-        the previous gtable object if the buffer is nonempty.
+        the previous GenomicTable object if the buffer is nonempty.
         '''
         if self._dxid is not None:
             self.flush()
@@ -211,13 +212,13 @@ class DXGTable(DXDataObject):
         :type limit: integer
         :returns: A hash with the key-value pairs "length": the number of rows returned, "next": a value to use as "starting" to get the next chunk of rows, and "data": a list of rows satisfying the query.
         
-        Queries the gtable for rows using the given parameters.  If
+        Queries the GenomicTable for rows using the given parameters.  If
         *columns* is set, the order of elements in the returned rows
         follows the ordering in *columns*.  The *starting* and *limit*
         options restrict the search further.
 
-        Note that a row will be returned as a list containing the row
-        id and the values for each of the columns.
+        Each row is returned as a list containing the row id followed by the
+        values for each of the columns.
 
         Example::
 
@@ -245,7 +246,7 @@ class DXGTable(DXDataObject):
         :returns: A list of column descriptors
         :rtype: list of strings
 
-        Queries the gtable for its columns and returns a list of all
+        Queries the GenomicTable for its columns and returns a list of all
         column descriptors.
         '''
         if self._columns is None:
@@ -257,7 +258,7 @@ class DXGTable(DXDataObject):
         :returns: A list of column names
         :rtype: list of strings
 
-        Queries the gtable for its columns and returns a list of all
+        Queries the GenomicTable for its columns and returns a list of all
         column names.
         '''
         if self._col_names is None:
@@ -272,8 +273,8 @@ class DXGTable(DXDataObject):
         :type end: integer or None
         :rtype: generator
 
-        Returns a generator which will yield the rows with IDs in the
-        interval [*start*, *end*).
+        Returns a generator that will yield rows with IDs in the interval
+        [*start*, *end*).
 
         """
         if want_dict:
@@ -301,9 +302,9 @@ class DXGTable(DXDataObject):
         :type limit: int
         :rtype: generator
 
-        Returns a generator which iterates through the rows of the
-        table while using the given query parameters.  If *query* is
-        not given, all rows are returned in order of the row ID.
+        Returns a generator that iterates through the rows of the table that
+        match the given query parameters. If *query* is not given, all rows are
+        returned in order of the row ID.
 
         Example::
 
@@ -344,9 +345,9 @@ class DXGTable(DXDataObject):
         Additional optional parameters not listed: all those under
         :func:`dxpy.bindings.DXDataObject.new`.
 
-        Extends the current gtable object with the column names in
-        *columns*, creating a new remote gtable as a result.  Returns
-        the handler for this new gtable.  Note that any indices
+        Extends the current GenomicTable object with the column names in
+        *columns*, creating a new remote GenomicTable as a result.  Returns
+        the handler for this new GenomicTable.  Note that any indices
         created for the original table are not automatically carried
         over to this new table, and any new indices for the new table
         must be given at creation time.
@@ -367,7 +368,7 @@ class DXGTable(DXDataObject):
         :type part: integer
         :raises: :exc:`~dxpy.exceptions.DXGTableError`
 
-        Adds the rows listed in data to the current gtable.  If *part*
+        Adds the rows listed in data to the current GenomicTable.  If *part*
         is not given, rows may be queued up for addition internally
         and will be flushed to the remote server periodically.
 
@@ -401,7 +402,7 @@ class DXGTable(DXDataObject):
         :type data: list
         :raises: :exc:`~dxpy.exceptions.DXGTableError`
 
-        Adds a single row to the current gtable. Rows may be queued up for addition internally
+        Adds a single row to the current GenomicTable. Rows may be queued up for addition internally
         and will be flushed to the remote server periodically.
 
         Example::
@@ -418,8 +419,10 @@ class DXGTable(DXDataObject):
         :returns: An unused part id
         :rtype: integer
 
-        Queries the API server for an unused part ID.  The same part
-        ID will not be returned more than once by this method.
+        Queries the API server for an unused part ID, for use with
+        :meth:`~dxpy.bindings.dxgtable.DXGTable.add_rows()`. Each call to this
+        method on the same GenomicTable (even from clients on different
+        instances) returns a different part ID.
 
         '''
         return dxpy.api.gtableNextPart(self._dxid, **kwargs)['part']
@@ -476,10 +479,10 @@ class DXGTable(DXDataObject):
 
     def close(self, block=False, **kwargs):
         '''
-        :param block: Indicates whether this function should block until the remote gtable has closed or not.
+        :param block: Indicates whether this function should block until the remote GenomicTable has closed or not.
         :type block: boolean
 
-        Closes the gtable.
+        Closes the GenomicTable.
 
         '''
         self.flush(**kwargs)
@@ -491,11 +494,11 @@ class DXGTable(DXDataObject):
 
     def wait_on_close(self, timeout=sys.maxint, **kwargs):
         '''
-        :param timeout: Max amount of time to wait until the gtable is closed.
+        :param timeout: Max amount of time to wait until the GenomicTable is closed.
         :type timeout: integer
-        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the remote gtable has been closed
+        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the remote GenomicTable has been closed
 
-        Wait until the remote gtable is closed.
+        Waits until the remote GenomicTable is closed.
         '''
         self._wait_on_close(timeout, **kwargs)
 
@@ -525,7 +528,7 @@ class DXGTable(DXDataObject):
         :param name: Name of the index
         :type name: string
 
-        Creates a genomic range index descriptor for use with the new() call.
+        Returns a genomic range index descriptor for use with the new() call.
 
         """
         return {"name": name, "type": "genomic",
@@ -539,7 +542,7 @@ class DXGTable(DXDataObject):
         :param name: Name of the index
         :type name: string
 
-        Creates a lexicographic index descriptor for use with the new() call.
+        Returns a lexicographic index descriptor for use with the new() call.
 
         """
 
@@ -554,7 +557,7 @@ class DXGTable(DXDataObject):
         :param name: Name of the index
         :type name: string
 
-        Creates a substring index descriptor for use with the new() call.
+        Returns a substring index descriptor for use with the new() call.
 
         """
         return {"name": name, "type": "substring", "column": column}
@@ -573,7 +576,7 @@ class DXGTable(DXDataObject):
         :param index: Name of the genomic range index to use
         :type index: string
 
-        Constructs a query for a genomic range index of the table.
+        Returns a query for a genomic range index of the table.
 
         """
 
@@ -588,7 +591,7 @@ class DXGTable(DXDataObject):
         :param index: Name of the lexicographic index to use
         :type index: string
 
-        Constructs a query for a lexicographic index of the table.
+        Returns a query for a lexicographic index of the table.
 
         """
 
@@ -604,7 +607,7 @@ class DXGTable(DXDataObject):
         :param index: Name of the substring index to use
         :type index: string
 
-        Constructs a query for a substring index of the table.
+        Returns a query for a substring index of the table.
 
         """
         query = {"index": index, "parameters": {} }
