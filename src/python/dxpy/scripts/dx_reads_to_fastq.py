@@ -75,7 +75,7 @@ def main(**kwargs):
             exportToFile(columns=col2, table=table, output_file=out_fh2, hasName=hasName, hasQual=hasQual, FASTA=kwargs['output_FASTA'])
 
 def exportToFile(columns, table, output_file, hasName = True, hasQual = True, FASTA = False):
-    for row in table.iterate_query_rows(columns=columns):
+    for row in table.iterate_rows(columns=columns):
         if FASTA == True:
             if hasName == True:
                 # change comment character for FASTA
