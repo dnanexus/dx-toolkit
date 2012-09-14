@@ -63,13 +63,13 @@ void File::init(const bool tryResuming) {
   const int64_t size = fs::file_size(p);
   const int64_t modifiedTimestamp = static_cast<int64_t>(fs::last_write_time(p));
   dx::JSON properties(dx::JSON_OBJECT);
-  // Add property {".system-fileSignature": "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
-  properties[".system-fileSignature"] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, p.filename().string());
+  // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
+  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, p.filename().string());
   
   dx::JSON findResult;
   if (tryResuming) {
     // Now check if a resumable file already exist in the project
-    findResult = findResumableFileObject(projectID, properties[".system-fileSignature"].get<string>());
+    findResult = findResumableFileObject(projectID, properties[FILE_SIGNATURE_PROPERTY].get<string>());
     if (findResult.size() == 1) {
       fileID = findResult[0]["id"].get<string>();
       double completePercentage;

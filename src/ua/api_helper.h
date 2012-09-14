@@ -22,4 +22,5 @@ std::string getFileState(const std::string &fileID);
 
 dx::JSON findResumableFileObject(std::string project, std::string signature);
 
+#define FILE_SIGNATURE_PROPERTY ".system-fileSignature"
 #endif

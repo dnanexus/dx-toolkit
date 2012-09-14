@@ -182,7 +182,8 @@ string createFileObject(const string &project, const string &folder, const strin
 dx::JSON findResumableFileObject(string project, string signature) {
   dx::JSON query(dx::JSON_OBJECT);
   query["class"] = "file";
-  query["properties"] = dx::JSON::parse("{\".system-fileSignature\": \"" + signature + "\"}");
+  query["properties"] = dx::JSON(dx::JSON_OBJECT);
+  query["properties"][FILE_SIGNATURE_PROPERTY] = signature;
   query["scope"] = dx::JSON(dx::JSON_OBJECT);
   query["scope"]["project"] = project;
   query["scope"]["folder"] = "/";
