@@ -1,6 +1,6 @@
 """
-Opening and Creating
-********************
+Helper Functions
+****************
 
 The following functions allow opening an existing remote table (for reading or
 writing) and creating new remote tables (write-only). All these methods return
