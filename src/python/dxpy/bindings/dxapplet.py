@@ -2,8 +2,9 @@
 DXApplet Handler
 ++++++++++++++++
 
-Applets are data objects which store an executable and specifications
-for input, output, and execution.  They can be run by calling the :func:`DXApplet.run` method.
+Applets are data objects that store an executable and specifications for input,
+output, and execution. They can be run by calling the :func:`DXApplet.run`
+method.
 
 """
 
@@ -16,7 +17,7 @@ from dxpy.bindings import *
 
 class DXApplet(DXDataObject):
     '''
-    Remote applet object handler
+    Remote applet object handler.
 
     .. automethod:: _new
     '''
@@ -57,8 +58,10 @@ class DXApplet(DXDataObject):
         :param description: description string (optional)
         :type description: string
 
-        It is highly recommended that :mod:`dxpy.applet_builder` is
-        used for applet creation.
+        .. note:: It is highly recommended that the higher-level module
+           :mod:`dxpy.app_builder` or (preferably) its frontend
+           `dx-build-applet <http://wiki.dnanexus.com/DxBuildApplet>`_ be used
+           instead for applet creation.
 
         Creates an applet with the given parameters (see API
         documentation for the correct syntax).  The applet is not run
@@ -93,10 +96,10 @@ class DXApplet(DXDataObject):
         :param folder: Folder in which applet's outputs will be placed in *project*
         :type folder: string
         :returns: Object handler of the created job now running the applet
-        :rtype: :class:`dxpy.bindings.DXJob`
+        :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
-        Creates a new job to execute the function "main" of this applet
-        with the given input *applet_input*.
+        Creates a new job that executes the function "main" of this applet with
+        the given input *applet_input*.
 
         '''
         if project is None:

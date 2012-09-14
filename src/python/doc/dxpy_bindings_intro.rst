@@ -18,7 +18,7 @@ Documentation on classes and methods:
 This module contains useful Python bindings for calling API methods on
 the DNAnexus platform. Data objects (such as records, files,
 GenomicTables, tables, and applets) are represented locally by a
-handler that inherits from the abstract class :class:`DXDataObject`.
+handler that inherits from the abstract class :class:`dxpy.bindings.DXDataObject`.
 This abstract base class supports functionality common to all of the
 data object classes--for example, setting properties and types, as
 well as cloning the object to a different project, moving it to a
@@ -46,8 +46,9 @@ handler can be overwritten with subsequent calls to
 :meth:`dxpy.bindings.DXDataObject.set_ids`.
 
 Creation of a new object can be performed using the method
-:meth:`DXDataObject.new`. In each subclass of :class:`DXDataObject`
-the method can take class-specific arguments::
+:meth:`dxpy.bindings.DXDataObject.new`. In each subclass of
+:class:`dxpy.bindings.DXDataObject` the method can take class-specific
+arguments::
 
     newDXFileHandle = DXFile()
     newDXFileHandle.new(media_type="application/json")

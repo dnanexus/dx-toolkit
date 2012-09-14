@@ -1,9 +1,9 @@
 '''
-There are a few different methods by which existing objects and
-entities can be queried.  The :func:`~dxpy.bindings.search.find_data_objects`
-function will provide search functionality over all data objects
-managed by the API server.  All jobs (running, failed, or done) can be
-found using :func:`~dxpy.bindings.search.find_jobs`.
+This module provides methods for finding existing objects and entities in the
+DNAnexus Platform. The :func:`~dxpy.bindings.search.find_data_objects` function
+provides search functionality over all data objects in the system. The
+:func:`~dxpy.bindings.search.find_jobs` function can be used to find jobs
+(whether they are running, failed, or done).
 '''
 
 import dxpy
@@ -47,15 +47,15 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type folder: string
     :param recurse: If *project* is given, whether to look in subfolders as well
     :type recurse: boolean
-    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past; can be given as string with suffixes)
+    :param modified_after: Timestamp after which each result was last modified (see note below for interpretation)
     :type modified_after: int or string
-    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past; can be given as string with suffixes)
+    :param modified_before: Timestamp before which each result was last modified (see note below for interpretation)
     :type modified_before: int or string
-    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past; can be given as string with suffixes)
+    :param created_after: Timestamp after which each result was last created (see note below for interpretation)
     :type created_after: int or string
-    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past; can be given as string with suffixes)
+    :param created_before: Timestamp before which each result was last created (see note below for interpretation)
     :type created_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
+    :param describe: Whether to also return the output of calling describe() on the object
     :type describe: boolean
     :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
@@ -65,25 +65,28 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type return_handler: boolean
     :rtype: generator
 
-    This is a generator function which returns the search results and
-    handles fetching of future chunks if necessary.  The search is not
-    restricted by any fields which are omitted and otherwise imposes
-    the restrictions requested.
-    
-    All timestamps are in milliseconds since the Epoch. Timestamps can also be given as strings with suffixes "s", "m",
-    "d", "w", or "y" (for seconds, minutes, days, weeks, or years). The following example finds all items which were
-    created more than 1 week ago:
-    
-        items = list(find_data_objects(created_before="-1w"))
+    Returns a generator of a sequence of all data objects matching the query.
+    It transparently handles paging through the result set if necessary. For
+    all parameters that are omitted, the search is not restricted by the
+    corresponding field.
 
-    These two examples iterate through all gtables with property
-    "project" set to "cancer project" and prints their object IDs::
+    .. note:: All timestamps must be supplied as one of the following:
 
-        for result in find_data_objects(classname="gtable", properties={"project": "cancer project"}):
-            print "Found gtable with object id " + result["id"]
+       * A nonnegative integer, interpreted as milliseconds since the Epoch
+       * A negative integer, interpreted as an offset in milliseconds relative
+         to the current time
+       * A string with one of the suffixes "s", "m", "d", "w", or "y" (for
+         seconds, minutes, days, weeks, or years), interpreted as an offset
+         from the current time. The following example finds all items that were
+         created more than 1 week ago::
 
-        for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
-            print "Found gtable with name " + result["describe"]["name"]
+           items = list(find_data_objects(created_before="-1w"))
+
+    This examples iterates through all GenomicTables with property "project"
+    set to "cancer project" and prints their object IDs::
+
+      for result in find_data_objects(classname="gtable", properties={"project": "cancer project"}):
+          print "Found gtable with object id " + result["id"]
 
     """
 
@@ -218,15 +221,15 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type folder: string
     :param recurse: If *project* is given, whether to look in subfolders as well
     :type recurse: boolean
-    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
-    :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
-    :type modified_before: integer
-    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
-    :type created_after: integer
-    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
-    :type created_before: integer
-    :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
+    :param modified_after: Timestamp after which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type modified_after: int or string
+    :param modified_before: Timestamp before which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type modified_before: int or string
+    :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_before: int or string
+    :param describe: Whether to also return the output of calling describe() on the object
     :type describe: boolean
     :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
@@ -234,9 +237,8 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type return_handler: boolean
     :rtype: dict, handler, or None
 
-    This is a function which returns the first data object found which
-    satisfies all of the constraints.  If no results are found, it
-    returns None.
+    Returns the first data object found that satisfies all of the constraints
+    (or None if no results are found).
 
     """
 
@@ -345,11 +347,11 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type origin_job: string
     :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
     :type parent_job: string
-    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
-    :type created_after: integer
-    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
-    :type created_before: integer
-    :param describe: Whether to also return the output of calling describe() on the job (if given True) or not (False) (use the dict {"io": False} to exclude detailed IO information)
+    :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_before: int or string
+    :param describe: Whether to also return the output of calling describe() on the job. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the job's inputs and outputs.
     :type describe: boolean or dict
     :param name: Name of the job to search by
     :type name: string
@@ -357,21 +359,16 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type name_mode: string
     :rtype: generator
 
-    This is a generator function which returns the search results and
-    handles fetching of future chunks if necessary.  The search is not
-    restricted by any fields which are omitted and otherwise imposes
-    the restrictions requested.
+    Returns a generator of a sequence of all jobs that match the query. It
+    transparently handles paging through the result set if necessary. For all
+    parameters that are omitted, the search is not restricted by the
+    corresponding field.
 
-    These two examples iterates through all finished jobs in a
-    particular project in the last two days::
+    The following example iterates through all finished jobs in a particular
+    project in the last two days::
 
-        two_days_ago = time.time()
-        for result in find_jobs(state="done", project=proj_id,
-                                created_after=time.time()-}):
-            print "Found gtable with object id " + result["id"]
-
-        for result in search(classname="gtable", properties={"project": "cancer project"}, describe=True):
-            print "Found gtable with name " + result["describe"]["name"]
+      for result in find_jobs(state="done", project=proj_id, created_after="-2d"):
+          print "Found job with object id " + result["id"]
 
     '''
 
@@ -455,8 +452,13 @@ def find_projects(name=None, name_mode='exact', properties=None,
     :type public: boolean
     :rtype: generator
 
-    Queries for the user's accessible projects with the specified
-    minimum permissions level.
+    Returns a generator of a sequence of all projects that match the query. It
+    transparently handles paging through the result set if necessary. For all
+    parameters that are omitted, the search is not restricted by the
+    corresponding field.
+
+    You can use the *level* parameter to find projects that the user has at
+    least a specific level of access to (e.g. CONTRIBUTE).
 
     """
     query = {}
@@ -515,25 +517,22 @@ def find_apps(name=None, name_mode='exact', category=None,
     :type created_by: string
     :param developer: User ID of a developer of the app
     :type developer: string
-    :param created_after: Timestamp after which each result was last created (if negative, interpreted as *created_after* ms in the past)
-    :type created_after: integer
-    :param created_before: Timestamp before which each result was last created (if negative, interpreted as *created_before* ms in the past)
-    :type created_before: integer
-    :param modified_after: Timestamp after which each result was last modified (if negative, interpreted as *modified_after* ms in the past)
-    :type modified_after: integer
-    :param modified_before: Timestamp before which each result was last modified (if negative, interpreted as *modified_before* ms in the past)
-    :type modified_before: integer
+    :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_after: int or string
+    :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type created_before: int or string
+    :param modified_after: Timestamp after which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type modified_after: int or string
+    :param modified_before: Timestamp before which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
+    :type modified_before: int or string
     :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
     :type describe: boolean
     :rtype: generator
-    
-    This is a generator function which returns the search results over
-    apps and handles fetching of future chunks if necessary.  The
-    search is not restricted by any fields which are omitted and
-    otherwise imposes the restrictions requested.
 
-    All timestamps are in milliseconds since the Epoch. Timestamps can also be given as strings with suffixes "s", "m",
-    "d", "w", or "y" (for seconds, minutes, days, weeks, or years).
+    Returns a generator of a sequence of all apps that match the query. It
+    transparently handles paging through the result set if necessary. For all
+    parameters that are omitted, the search is not restricted by the
+    corresponding field.
 
     """
 

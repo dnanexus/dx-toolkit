@@ -2,9 +2,12 @@
 DXApp Handler
 +++++++++++++
 
-Apps are data objects which provide a way for applets to be distributed to users in the system.
-They store an executable and specifications for input, output, execution, access, and billing. 
-They can be run by calling the :func:`DXApp.run` method.
+Apps are objects that provide a way for application logic to be distributed to
+users in the system. They store an executable and specifications for input,
+output, execution, access, and billing. They can be run by calling the
+:func:`DXApp.run` method.
+
+Unlike applets, apps are not data objects and do not live in projects.
 
 """
 
@@ -17,7 +20,7 @@ from dxpy.bindings import *
 
 class DXApp(DXObject):
     '''
-    Remote app object handler
+    Remote app object handler.
 
     '''
 
@@ -63,6 +66,13 @@ class DXApp(DXObject):
             raise DXError("Did not expect name or alias to be given if dxid is given")
 
     def get_id(self):
+        '''
+        :returns: Object ID of associated app
+        :rtype: string
+
+        Returns the object ID of the app that the handler is currently
+        associated with.
+        '''
         if self._dxid is not None:
             return self._dxid
         else:
@@ -93,10 +103,15 @@ class DXApp(DXObject):
         :param resources: Contents to be put into the app's resources container (existing project ID or list of object IDs)
         :type resources: string or list
 
-        It is highly recommended that :mod:`dxpy.app_builder` is used for applet and app creation.
+        .. note:: It is highly recommended that the higher-level module
+           :mod:`dxpy.app_builder` or (preferably) its frontend `dx-build-app
+           <http://wiki.dnanexus.com/DxBuildApp>`_ be used instead for app
+           creation.
 
-        Creates an app with the given parameters (see API documentation for the correct syntax).  The app is only
-        available to its developers until :meth:`publish()` is called, and is not run until :meth:`run()` is called.
+        Creates an app with the given parameters (see API documentation for the
+        correct syntax). The app is only available to its developers until
+        :meth:`publish()` is called, and is not run until :meth:`run()` is
+        called.
 
         '''
         dx_hash = {}
@@ -122,6 +137,13 @@ class DXApp(DXObject):
         self.set_id(dxid=resp["id"])
 
     def describe(self, **kwargs):
+        '''
+        :returns: Description of the remote app object
+        :rtype: dict
+
+        Returns a dict with a description of the app. The result includes the
+        key-value pairs as specified in the API documentation.
+        '''
         if self._dxid is not None:
             return dxpy.api.appDescribe(self._dxid, **kwargs)
         else:
@@ -140,7 +162,7 @@ class DXApp(DXObject):
         :param resources: Contents to be put into the app's resources container
         :type resources: string or list
 
-        Update parameters of an existing app.
+        Updates the parameters of an existing app.
 
         '''
         updates = {}
@@ -235,10 +257,10 @@ class DXApp(DXObject):
         :param folder: Folder in which the app's outputs will be placed in *project*
         :type folder: string
         :returns: Object handler of the created job now running the app
-        :rtype: :class:`dxpy.bindings.DXJob`
+        :rtype: :class:`dxpy.bindings.dxjob.DXJob`
 
-        Creates a new job to execute the function "main" of this app
-        with the given input *app_input*.
+        Creates a new job that execute the function "main" of this app with the
+        given input *app_input*.
 
         '''
         if project is None:

@@ -155,10 +155,10 @@ class DXDataObject(DXObject):
         :returns: Description of the remote object
         :rtype: dict
 
-        Returns a dictionary which will include the key-value pairs as
-        specified in the API documentation such as "id", "class", etc.
-        Different classes of objects may have different fields.
-
+        Returns a dict with a description of the remote data object. The result
+        includes the key-value pairs as specified in the API documentation,
+        such as "id", "class", etc. Different classes of objects may have
+        different fields.
         """
 
         if self._proj is not None:
