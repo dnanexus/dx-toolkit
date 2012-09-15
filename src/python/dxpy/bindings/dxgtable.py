@@ -265,12 +265,16 @@ class DXGTable(DXDataObject):
             self._col_names = [col["name"] for col in self.get_columns(**kwargs)]
         return self._col_names
 
-    def iterate_rows(self, start=0, end=None, want_dict=False, **kwargs):
+    def iterate_rows(self, start=0, end=None, columns=None, want_dict=False, **kwargs):
         """
         :param start: The row ID of the first row to return
         :type start: integer
         :param end: Return all rows before this row (return all rows until the end if None)
         :type end: integer or None
+        :param columns: List of columns to be included; all columns will be included if not set
+        :type columns: list of strings
+        :param want_dict: If true, return a mapping of column names to values, instead of an array of values
+        :type want_dict: boolean
         :rtype: generator
 
         Returns a generator that will yield rows with IDs in the interval
@@ -278,11 +282,14 @@ class DXGTable(DXDataObject):
 
         """
         if want_dict:
-            col_names = ['__index__'] + self.get_col_names(**kwargs)
+            if columns is None:
+                col_names = ['__id__'] + self.get_col_names(**kwargs)
+            else:
+                col_names = columns
         if self._http_threadpool is None:
             DXGTable._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
-        request_iterator = self._generate_read_requests(start_row=start, end_row=end, **kwargs)
+        request_iterator = self._generate_read_requests(start_row=start, end_row=end, columns=columns, **kwargs)
 
         for response in dxpy.utils.response_iterator(request_iterator, self._http_threadpool, max_active_tasks=self._http_threadpool_size):
             if want_dict:
@@ -292,7 +299,7 @@ class DXGTable(DXDataObject):
                 for row in response['data']:
                     yield row
 
-    def iterate_query_rows(self, query=None, columns=None, limit=None, **kwargs):
+    def iterate_query_rows(self, query=None, columns=None, limit=None, want_dict=False, **kwargs):
         """
         :param query: Query with which to fetch the rows; see :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, :meth:`substring_query()`
         :type query: dict
@@ -300,6 +307,8 @@ class DXGTable(DXDataObject):
         :type columns: list of strings
         :param limit: Limit to the number of rows to be returned (default is to return all results)
         :type limit: int
+        :param want_dict: If true, return a mapping of column names to values, instead of an array of values
+        :type want_dict: boolean
         :rtype: generator
 
         Returns a generator that iterates through the rows of the table that
@@ -313,6 +322,11 @@ class DXGTable(DXDataObject):
                 print row
 
         """
+        if want_dict:
+            if columns is None:
+                col_names = ['__id__'] + self.get_col_names(**kwargs)
+            else:
+                col_names = columns
         cursor = 0
         returned = 0
         while cursor is not None:
@@ -325,9 +339,14 @@ class DXGTable(DXDataObject):
             buffer = resp['data']
             cursor = resp['next']
             if len(buffer) < 1: break
-            for row in buffer:
-                returned += 1
-                yield row
+            if want_dict:
+                for row in buffer:
+                    returned += 1
+                    yield dict(zip(col_names, row))
+            else:
+                for row in buffer:
+                    returned += 1
+                    yield row
 
     def __iter__(self):
         return self.iterate_rows()
