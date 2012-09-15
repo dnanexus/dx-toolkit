@@ -226,7 +226,6 @@ def _create_or_update_version(app_name, version, app_spec, try_update=True):
     # published since we last looked.
     try:
         app_id = dxpy.api.appNew(app_spec)["id"]
-        print >> sys.stderr, 'appNew => %r' % (app_id)
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         # TODO: detect this error more reliably
@@ -250,7 +249,6 @@ def _update_version(app_name, version, app_spec, try_update=True):
         return None
     try:
         app_id = dxpy.api.appUpdate("app-" + app_name, version, app_spec)["id"]
-        print >> sys.stderr, 'appUpdate => %r' % (app_id)
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'InvalidState':
