@@ -1,0 +1,36 @@
+{
+  "name": "ncbi_blast_example",
+  "title": "NCBI BLAST Example",
+  "outputSpec": [
+    {
+      "name": "result",
+      "class": "hash"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "python2.7",
+    "file": "src/blast.py",
+    "execDepends": [{"name": "blast2"}]
+  },
+  "summary": "An example app that calls out to NCBI BLAST",
+  "version": "0.0.1",
+  "inputSpec": [
+    {
+      "label": "Query File (FASTA)",
+      "optional": false,
+      "name": "query_file",
+      "class": "file"
+    },
+    {
+      "label": "Database File",
+      "optional": false,
+      "name": "db_file",
+      "class": "file"
+    }
+  ],
+  "details": {
+    "contactUrl": "http://wiki.dnanexus.com/Apps/ncbi_blast_example"
+  },
+  "dxapi": "1.0.0",
+  "resources": []
+}
