@@ -23,3 +23,5 @@
 /bin/dx-tsv-to-gtable
 /bin/dx-workflow-to-applet
 /bin/pyrsa-*
+/bin/contigset2fasta
+/bin/dx-reads-validator

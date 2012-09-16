@@ -2,11 +2,11 @@
 DXJob Handler
 +++++++++++++
 
-Jobs are DNAnexus entities which capture an app or applet that is
-being run.  They can be created from either
+Jobs are DNAnexus entities that capture an instantiation of a running app or
+applet. They can be created from either
 :func:`dxpy.bindings.dxapplet.DXApplet.run` or
-:func:`dxpy.bindings.dxapp.DXApp.run` if running an applet or app, or
-via :func:`new_dxjob` or :func:`DXJob.new` if a job is creating a
+:func:`dxpy.bindings.dxapp.DXApp.run` if running an applet or app, or via
+:func:`new_dxjob` or :func:`DXJob.new` in the special case of a job creating a
 subjob.
 
 """
@@ -25,11 +25,11 @@ def new_dxjob(fn_input, fn_name, **kwargs):
     :type fn_input: dict
     :param fn_name: Name of the function to be called
     :type fn_name: string
-    :rtype: :class:`~dxpy.bindings.DXJob`
+    :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
-    Creates and enqueues a new job that will execute a particular
-    function (from the same app as the one the current job is
-    running).  Returns the DXJob handle for the job.
+    Creates and enqueues a new job that will execute a particular function
+    (from the same app as the one the current job is running). Returns the
+    :class:`~dxpy.bindings.dxjob.DXJob` handle for the job.
 
     Note that this function is shorthand for::
 
@@ -38,7 +38,7 @@ def new_dxjob(fn_input, fn_name, **kwargs):
 
     .. note:: This method is intended for calls made from within already-executing jobs or apps.  If it is called from outside of an Execution Environment, an exception will be thrown.
 
-    .. note:: If the environment variable *DX_JOB_ID* is not set, this method assmes that it is running within the debug harness, executes the job in place, and provides a debug job handler object which does not have a corresponding remote API job object.
+    .. note:: If the environment variable ``DX_JOB_ID`` is not set, this method assmes that it is running within the debug harness, executes the job in place, and provides a debug job handler object that does not have a corresponding remote API job object.
 
     '''
     dxjob = DXJob()
@@ -46,7 +46,9 @@ def new_dxjob(fn_input, fn_name, **kwargs):
     return dxjob
 
 class DXJob(DXObject):
-    '''Remote job object handler'''
+    '''
+    Remote job object handler.
+    '''
 
     _class = "job"
 
@@ -110,9 +112,9 @@ class DXJob(DXObject):
         :returns: Description of the job
         :rtype: dict
 
-        Returns a hash which will include key-value pairs that include
-        information on its input and outputs, state, etc.  See the API
-        documentation for the full list.
+        Returns a hash that contains key-value pairs with information about the
+        job, including its state and (optionally) its inputs and outputs. See
+        the API documentation for the full list.
 
         """
         return dxpy.api.jobDescribe(self._dxid, {"io": io}, **kwargs)
@@ -125,7 +127,7 @@ class DXJob(DXObject):
         :type timeout: integer
         :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the job has finished running
 
-        Wait until the job has finished running.
+        Waits until the job has finished running.
         '''
 
         elapsed = 0
@@ -146,7 +148,7 @@ class DXJob(DXObject):
 
     def terminate(self, **kwargs):
         '''
-        Terminate the associated job.
+        Terminates the associated job.
         '''
         dxpy.api.jobTerminate(self._dxid, **kwargs)
 

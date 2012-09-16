@@ -5,7 +5,7 @@ Exceptions for the :mod:`dxpy` package.
 import json
 
 class DXError(Exception):
-    '''Base class for exceptions in this package'''
+    '''Base class for exceptions in this package.'''
     pass
 
 class DXAPIError(DXError):
@@ -30,37 +30,47 @@ class DXAPIError(DXError):
         return output
 
 class DXFileError(DXError):
-    '''Exception for :class:`dxpy.bindings.DXFile`'''
+    '''Exception for :class:`dxpy.bindings.dxfile.DXFile`.'''
     pass
 
 class DXGTableError(DXError):
-    '''Exception for :class:`dxpy.bindings.DXGTable`'''
+    '''Exception for :class:`dxpy.bindings.dxgtable.DXGTable`.'''
     pass
 
 class DXAppletError(DXError):
-    '''Exception for :class:`dxpy.bindings.DXApplet`'''
+    '''Exception for :class:`dxpy.bindings.dxapplet.DXApplet`.'''
     pass
 
 class DXJobFailureError(DXError):
-    '''Exception produced by :class:`dxpy.bindings.DXJob` when a job fails'''
+    '''Exception produced by :class:`dxpy.bindings.dxjob.DXJob` when a job fails.'''
     pass
 
 class AppError(DXError):
-    '''Base class for fatal exceptions to be raised while using dxpy inside DNAnexus execution containers.
-    This exception is thrown for user errors, and the error message is presented to the user.
-    Throwing this exception will cause the Python execution template to write exception information into the file
-    *job_error.json* in the current working directory, allowing reporting of the error state through the DNAnexus
-    API.'''
+    '''
+    Base class for fatal exceptions to be raised while using :mod:`dxpy` inside
+    DNAnexus execution containers.
+
+    This exception is thrown for user errors, and the error message is
+    presented to the user. Throwing this exception will cause the Python
+    execution template to write exception information into the file
+    *job_error.json* in the current working directory, allowing reporting of
+    the error state through the DNAnexus API.
+    '''
     pass
 
 class ProgramError(AppError):
-    '''Deprecated. Use AppError instead.'''
+    '''Deprecated. Use :class:`AppError` instead.'''
     pass
 
 class AppInternalError(DXError):
-    '''Base class for fatal exceptions to be raised while using dxpy inside DNAnexus execution containers.                                                     
-    This exception is intended for internal App errors, whose message goes to the App developer.
-    Throwing this exception will cause the Python execution template to write exception information into the file                                              
-    *job_error.json* in the current working directory, allowing reporting of the error state through the DNAnexus                                              
-    API.'''
+    '''
+    Base class for fatal exceptions to be raised while using :mod:`dxpy` inside
+    DNAnexus execution containers.
+
+    This exception is intended for internal App errors, whose message goes to
+    the App developer. Throwing this exception will cause the Python execution
+    template to write exception information into the file ``job_error.json`` in
+    the current working directory, allowing reporting of the error state
+    through the DNAnexus API.
+    '''
     pass

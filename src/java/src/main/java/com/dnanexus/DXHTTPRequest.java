@@ -27,7 +27,7 @@ public class DXHTTPRequest {
     private JsonFactory dxJsonFactory;
 
     public DXHTTPRequest() throws Exception {
-        if (APISERVER_HOST == null) { APISERVER_HOST = "preprod.dnanexus.com"; }
+        if (APISERVER_HOST == null) { APISERVER_HOST = "preprodapi.dnanexus.com"; }
         if (APISERVER_PORT == null) { APISERVER_PORT = "443"; }
         if (APISERVER_PROTOCOL == null) { APISERVER_PROTOCOL = "https"; }
         if (SECURITY_CONTEXT == null) { System.err.println("Warning: No security context found"); }
@@ -47,6 +47,7 @@ public class DXHTTPRequest {
         		+ SecurityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data));
 
+        /*
         ResponseHandler<String> handler = new ResponseHandler<String>() {
             public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
                 HttpEntity entity = response.getEntity();
@@ -58,11 +59,18 @@ public class DXHTTPRequest {
                 }
             }
         };
+        */
 
-        String response = httpclient.execute(request, handler);
+        HttpResponse response = httpclient.execute(request);
+
+        HttpEntity entity = response.getEntity();
+        EntityUtils.consume(entity);
+        System.out.println(entity);
+        
+        //        String response = entity.toString(); //httpclient.execute(request, handler);
 
         //TODO: make handler throw on response.getStatusLine().getStatusCode()
-        return response;
+        return entity.toString();
     }
 
     public JsonNode request(String resource, JsonNode data) throws Exception {

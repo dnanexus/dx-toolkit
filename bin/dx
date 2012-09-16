@@ -317,7 +317,11 @@ def login(args):
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
     args.current = False
-    setenv(args)
+
+    if args.host is not None or args.emtest or args.token:
+        setenv(args)
+    elif args.projects:
+        pick_and_set_project(args)
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:

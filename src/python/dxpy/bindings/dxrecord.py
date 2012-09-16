@@ -1,6 +1,6 @@
 """
-Records are the most basic data object and do not store additional
-data beyond associated details, properties, etc.
+Records are the most basic data object and do not store additional data beyond those available in
+all data objects (details, properties, etc.).
 """
 
 from dxpy.bindings import *
@@ -16,7 +16,7 @@ def new_dxrecord(**kwargs):
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Creates a new remote record object with contents set to *project*
+    Creates a new remote record object with project set to *project*
     and returns the appropriate handler.
 
     Note that this function is shorthand for::
@@ -31,8 +31,7 @@ def new_dxrecord(**kwargs):
 
 class DXRecord(DXDataObject):
     '''
-    Remote record object handler
-
+    Remote record object handler.
     '''
 
     _class = "record"

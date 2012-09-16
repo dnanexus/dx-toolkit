@@ -1,17 +1,17 @@
 '''
-DNAnexus App Builder Library
-++++++++++++++++++++++++++++
+App Builder Library
++++++++++++++++++++
 
-Contains methods used by the command-line application builder
-`dx-build-app <http://wiki.dnanexus.com/DxBuildApp>`_ to compile
-and deploy applets and apps onto the platform.
+Contains utility methods useful for compiling and deploying applets and apps
+onto the platform.
 
 You can specify the destination project in the following ways (with the earlier
 ones taking precedence):
 
-* Supply the 'project' argument to upload_resources or upload_applet.
-* Supply the 'project' attribute in your dxapplet.json.
-* Set the DX_WORKSPACE_ID environment variable (when running in a job context).
+* Supply the 'project' argument to :func:`upload_resources()` or
+  :func:`upload_applet()`.
+* Supply the 'project' attribute in your dxapp.json.
+* Set the ``DX_WORKSPACE_ID`` environment variable (when running in a job context).
 
 '''
 
@@ -21,34 +21,45 @@ import dxpy
 NUM_CORES = multiprocessing.cpu_count()
 
 class AppletBuilderException(Exception):
+    """
+    This exception is raised by the methods in this module when app or applet
+    building fails.
+    """
     pass
 
-def validate_applet_spec(applet_spec):
+def _validate_applet_spec(applet_spec):
     if 'runSpec' not in applet_spec:
         raise AppletBuilderException("Required field 'runSpec' not found in dxapp.json")
 
-def validate_app_spec(app_spec):
+def _validate_app_spec(app_spec):
     pass
 
-def get_applet_spec(src_dir):
+def _get_applet_spec(src_dir):
     applet_spec_file = os.path.join(src_dir, "dxapp.json")
     with open(applet_spec_file) as fh:
         applet_spec = json.load(fh)
 
-    validate_applet_spec(applet_spec)
+    _validate_applet_spec(applet_spec)
     if 'project' not in applet_spec:
         applet_spec['project'] = dxpy.WORKSPACE_ID
     return applet_spec
 
-def get_app_spec(src_dir):
+def _get_app_spec(src_dir):
     app_spec_file = os.path.join(src_dir, "dxapp.json")
     with open(app_spec_file) as fh:
         app_spec = json.load(fh)
 
-    validate_app_spec(app_spec)
+    _validate_app_spec(app_spec)
     return app_spec
 
 def build(src_dir):
+    """
+    Runs any build scripts that are found in the specified directory.
+
+    In particular, runs ``./configure`` if it exists, followed by ``make -jN``
+    if it exists (building with as many parallel tasks as there are CPUs on the
+    system).
+    """
     logging.debug("Building in " + src_dir)
     # TODO: use Gentoo or deb buildsystem
     config_script = os.path.join(src_dir, "configure")
@@ -62,7 +73,16 @@ def build(src_dir):
         subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
 
 def upload_resources(src_dir, project=None):
-    applet_spec = get_applet_spec(src_dir)
+    """
+    :returns: A reference to the generated archive
+    :rtype: list
+
+    Archives and uploads the contents of the ``resources/`` subdirectory of
+    *src_dir* to a new remote file object, and returns an list describing a
+    single bundled dependency in the form expected by the ``bundledDepends``
+    field of a run specification.
+    """
+    applet_spec = _get_applet_spec(src_dir)
 
     if project is None:
         dest_project = applet_spec['project']
@@ -90,7 +110,10 @@ def upload_resources(src_dir, project=None):
         return None
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
-    applet_spec = get_applet_spec(src_dir)
+    """
+    Creates a new applet object.
+    """
+    applet_spec = _get_applet_spec(src_dir)
 
     if project is None:
         dest_project = applet_spec['project']
@@ -194,7 +217,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     return applet_id
 
-def create_or_update_version(app_name, version, app_spec, try_update=True):
+def _create_or_update_version(app_name, version, app_spec, try_update=True):
     """
     Creates a new version of the app. Returns an app_id, or None if the app has
     already been created and published.
@@ -203,7 +226,6 @@ def create_or_update_version(app_name, version, app_spec, try_update=True):
     # published since we last looked.
     try:
         app_id = dxpy.api.appNew(app_spec)["id"]
-        print >> sys.stderr, 'appNew => %r' % (app_id)
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         # TODO: detect this error more reliably
@@ -215,10 +237,10 @@ def create_or_update_version(app_name, version, app_spec, try_update=True):
             app_describe = dxpy.api.appDescribe("app-" + app_name, alias=version)
             if app_describe.get("published", 0) > 0:
                 return None
-            return update_version(app_name, version, app_spec, try_update=try_update)
+            return _update_version(app_name, version, app_spec, try_update=try_update)
         raise e
 
-def update_version(app_name, version, app_spec, try_update=True):
+def _update_version(app_name, version, app_spec, try_update=True):
     """
     Updates a version of the app in place. Returns an app_id, or None if the
     app has already been published.
@@ -227,7 +249,6 @@ def update_version(app_name, version, app_spec, try_update=True):
         return None
     try:
         app_id = dxpy.api.appUpdate("app-" + app_name, version, app_spec)["id"]
-        print >> sys.stderr, 'appUpdate => %r' % (app_id)
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'InvalidState':
@@ -236,7 +257,10 @@ def update_version(app_name, version, app_spec, try_update=True):
         raise e
 
 def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True):
-    app_spec = get_app_spec(src_dir)
+    """
+    Creates a new app object from the specified applet.
+    """
+    app_spec = _get_app_spec(src_dir)
     print >> sys.stderr, "Will create app with spec: ", app_spec
 
     applet_desc = dxpy.DXApplet(applet_id).describe(incl_properties=True)
@@ -276,7 +300,7 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
         # from API errors.
         if app_describe is None:
             print >> sys.stderr, 'App %s/%s does not yet exist' % (app_spec["name"], version)
-            app_id = create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
+            app_id = _create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
             print >> sys.stderr, "Created app " + app_id
@@ -284,7 +308,7 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
             break
         elif app_describe.get("published", 0) == 0:
             print >> sys.stderr, 'App %s/%s already exists and has not been published' % (app_spec["name"], version)
-            app_id = update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
+            app_id = _update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
             print >> sys.stderr, "Updated existing app " + app_id

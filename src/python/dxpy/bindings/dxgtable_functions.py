@@ -1,6 +1,6 @@
 """
-Opening and Creating
-********************
+Helper Functions
+****************
 
 The following functions allow opening an existing remote table (for reading or
 writing) and creating new remote tables (write-only). All these methods return
@@ -20,9 +20,9 @@ def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
     :type mode: string
     :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
 
-    Given the object ID of an existing table, this function returns a DXGTable
-    object for reading (with :meth:`~dxpy.bindings.dxgtable.DXGTable.get_rows`)
-    or writing (with :meth:`~dxpy.bindings.dxgtable.DXGTable.add_row` or
+    Given the object ID of an existing table, returns a DXGTable object for reading (with
+    :meth:`~dxpy.bindings.dxgtable.DXGTable.get_rows`) or writing (with
+    :meth:`~dxpy.bindings.dxgtable.DXGTable.add_row` or
     :meth:`~dxpy.bindings.dxgtable.DXGTable.add_rows`).
 
     Example::
@@ -60,9 +60,9 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mod
 
     Creates a new remote table with the given columns.  If indices are
     given, the GenomicTable will be indexed by the requested indices
-    when closed.
+    at the time that the table is closed.
 
-    Example (after importing dxpy)::
+    Example::
 
         col_descs = [dxpy.DXGTable.make_column_desc("a", "string"),
                      dxpy.DXGTable.make_column_desc("b", "int32")]
@@ -73,7 +73,7 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mod
                     dxpy.DXGTable.make_column_desc("lo", "int32"),
                     dxpy.DXGTable.make_column_desc("hi", "int32")]
         gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
-        indexedTable = new_dxgtable(columns=gri_cols, indices=[gri_index])
+        indexed_table = new_dxgtable(columns=gri_cols, indices=[gri_index])
 
     Note that this function is shorthand for the following::
 
@@ -103,9 +103,9 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=None, mode=None, **kw
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Given the object ID of an existing table and a list of new columns
-    with which to extend the table, this function creates a new remote
-    table that is ready to be written to.
+    Given the object ID of an existing table and a list of new columns with
+    which to extend the table, creates a new remote table that is ready to be
+    written to.
 
     Example::
 

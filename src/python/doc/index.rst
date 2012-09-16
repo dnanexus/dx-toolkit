@@ -31,6 +31,7 @@ Table of Contents
 
    dxpy
    dxpy_bindings_intro
+   dxpy_app_builder
    dxpy_api
    dxpy_exceptions
 

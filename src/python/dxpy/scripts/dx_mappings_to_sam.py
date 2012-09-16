@@ -85,11 +85,13 @@ def main(**kwargs):
         col[names[i]] = i+1
 
     column_descs = mappingsTable.describe()['columns']
-    
-    sam_cols = []
+
+    sam_cols = []; sam_col_names = []; sam_col_types = {}
     for c in column_descs:
         if c['name'].startswith("sam_field_") or c['name'] == "sam_optional_fields":
             sam_cols.append(c)
+            sam_col_names.append(c['name'])
+            sam_col_types[c['name']] = c['type']
 
     defaultCol = {"sequence":"", 
                   "name":"", 
@@ -122,15 +124,15 @@ def main(**kwargs):
             raise dxpy.AppError("Ending row is before Start")
 
         if opts.end_row > 0:
-            generator = mappingsTable.iterate_rows(start=opts.start_row, end=opts.end_row)
+            generator = mappingsTable.iterate_rows(start=opts.start_row, end=opts.end_row, want_dict=True)
         else:
-            generator = mappingsTable.iterate_rows(start=opts.start_row)
+            generator = mappingsTable.iterate_rows(start=opts.start_row, want_dict=True)
 
         # write each row unless we're throwing out unmapped 
         for row in generator:
-            if row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False:
+            if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
 
-                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     else:
         for x in regions:
@@ -138,61 +140,76 @@ def main(**kwargs):
             query = mappingsTable.genomic_range_query(x[0],int(x[1])+opts.region_index_offset,int(x[2])+opts.region_index_offset,mode='overlap',index='gri')
 
             # for each row in that range
-            for row in mappingsTable.iterate_query_rows(query=query):
+            for row in mappingsTable.iterate_query_rows(query=query, want_dict=True):
 
                 #######
                 # if the table is paired then we have to partition the mates correctly
                 if opts.read_pair_aware == True and "mate_id" in col:
 
                     # if we have a single read and we wanna store it (is mapped or are storing unmapped)
-                    if row[col["mate_id"]] == -1 and (row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False):
+                    if row["mate_id"] == -1 and (row["status"] != "UNMAPPED" or opts.discard_unmapped == False):
 
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
                     #################################################################################
 
                     #If paired read is the left read, write it and grab the right one
-                    if row[col["mate_id"]] == 0:
+                    if row["mate_id"] == 0:
 
-                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, sam_cols)
-                        if row[col["status2"]] != "UNMAPPED":
-                            #print row[col["chr2"]]+":"+ str(row[col["lo2"]])+"-"+str(row[col["hi2"]])
+                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
+                        if row["status2"] != "UNMAPPED":
+                            #print row["chr2"]+":"+ str(row["lo2"])+"-"+str(row["hi2"])
 
                             # pull mate from the table
-                            query = mappingsTable.genomic_range_query(chr=row[col["chr2"]], lo=row[col["lo2"]], hi=row[col["hi2"]])
-                            for mateRow in mappingsTable.iterate_query_rows(query=query):
+                            query = mappingsTable.genomic_range_query(chr=row["chr2"], lo=row["lo2"], hi=row["hi2"])
+                            for mateRow in mappingsTable.iterate_query_rows(query=query, want_dict=True):
                                 #print mateRow
-                                if mateRow[col["mate_id"]] == 1 and mateRow[col["chr2"]] == row[col["chr"]] and mateRow[col["lo2"]] == row[col["lo"]] and mateRow[col["hi2"]] == row[col["hi"]]:
+                                if mateRow["mate_id"] == 1 and mateRow["chr2"] == row["chr"] and mateRow["lo2"] == row["lo"] and mateRow["hi2"] == row["hi"]:
 
-                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
                                     break
                             #print "Mate not found"
                         else:
                             pass
                             #print "Mate unmapped"
                 else:
-                    if row[col["status"]] != "UNMAPPED" or opts.discard_unmapped == False:
+                    if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
 
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
+                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     if outputFile != None:
         outputFile.close()
 
-
-def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols):
-    
+def tag_value_is_default(value):
     global MAX_INT
+    return value == MAX_INT or value == "" or (type(value) == float and math.isnan(value))
 
+def col_name_to_field_name(name):
+    if name == 'sam_optional_fields':
+        return name
+    else:
+        return name[10:]
+
+def col_type_to_field_type(col_type):
+    if col_type == 'int32':
+        return 'i'
+    elif col_type == 'float':
+        return 'f'
+    else:
+        return 'Z'
+
+def format_tag_field(name, value, sam_col_types):
+    if name == "sam_optional_fields":
+        return value
+    else:
+        return ":".join([col_name_to_field_name(name), col_type_to_field_type(sam_col_types[name]), str(value)])
+
+def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
     out_row = ""
 
-    values = {}
-    for k,v in defaultCol.iteritems():
-        if col.get(k) == None:
-            values[k] = defaultCol[k]
-        else:
-            values[k] = row[col[k]]
-    
-        
+    values = dict(defaultCol)
+    values.update(row)
+
     flag =  0x1*(values["mate_id"] > -1 and values["mate_id"] <= 1)
     flag += 0x2*(values["proper_pair"] == True) 
     flag += 0x4*(values["status"] == "UNMAPPED")
@@ -243,15 +260,16 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
         if int(values["lo"]) > int(values["lo2"]):
             tlen *= -1
 
-    
-    out_row = readName.strip("@") 
-    out_row = "\t".join([out_row, str(flag), chromosome, str(lo), str(values["error_probability"]), values["cigar"] , chromosome2, str(lo2), str(tlen), seq, qual])
+    out_row = [readName.strip("@"), str(flag), chromosome, str(lo), str(values["error_probability"]), values["cigar"] , chromosome2, str(lo2), str(tlen), seq, qual]
+    tag_values = {c: values[c] for c in sam_col_names if not tag_value_is_default(values[c])}
 
-    # see if we've found a 
+    out_row.extend([format_tag_field(name, value, sam_col_types) for name, value in tag_values.iteritems()])
+
+    ''' Old SAM tags code
     if len(sam_cols) > 0:
         for col_hash in sam_cols:
             write_tag = True
-            tag_value = row[col[col_hash['name']]]
+            tag_value = values[col_hash['name']]
             field_name = col_hash['name'][10:]
             if col_hash['type'] == 'int32':
                 # if we find the default, do not output tag
@@ -271,14 +289,14 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols)
                 if col_hash['name'] != "sam_optional_fields":
                     out_row = "\t".join([out_row, ":".join([field_name, field_type, str(tag_value)])])
                 else:
-                    out_row = "\t".join([out_row, row[col["sam_optional_fields"]]])
-
+                    out_row = "\t".join([out_row, row["sam_optional_fields"]])
+    '''
    
-    out_row = "\t".join([out_row, "RG:Z:"+str(values['read_group'])])
+    out_row.append("RG:Z:"+str(values['read_group']))
     
     if writeIds:
-        out_row += ("\tZD:Z:"+str(row[0]))
-    out_row += "\n"
+        out_row.append("ZD:Z:"+str(row[0]))
+    out_row = "\t".join(out_row) + "\n"
 
     if outputFile != None:
         outputFile.write(out_row)
