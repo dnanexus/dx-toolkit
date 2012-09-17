@@ -11,12 +11,11 @@ useful as you develop your own scripts and apps:</p>
 <dl>
   <dt>TODO: link to example C++ apps</dt>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction">API Specification</a></dt>
-  <dd>complete details on the API, the lifecycle of different data
-  objects, project permissions, etc.</dd>
+  <dd>Complete details on the API, the lifecycle of different data objects, project permissions, and more. Many methods in the bindings translate directly into API calls, so it will be helpful to have at least a general understanding of the API's structure.</dd>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/Execution-Environment-Reference">Execution Environment Reference</a></dt>
-  <dd>how applets and apps are run within the Platform</dd>
+  <dd>How applets and apps are run within the DNAnexus Platform.</dd>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/Developer-Portal">Developer Portal</a></dt>
-  <dd>links to all other docs, e.g. useful command-line tools</dd>
+  <dd>Links to all other docs, e.g. useful command-line tools.</dd>
 </dl>
 
 <h4>dxcpp provides the following handler classes for DNAnexus objects:</h4>
