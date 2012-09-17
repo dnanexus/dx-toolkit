@@ -50,7 +50,7 @@ perl:
 
 java:
 	mkdir -p "$(DNANEXUS_HOME)/lib/java"
-	(cd java; mvn assembly:single)
+	(cd java; mvn compile assembly:single)
 	cp -f java/target/*.jar "$(DNANEXUS_HOME)/lib/java"
 
 test: test_python test_perl
@@ -108,6 +108,6 @@ doc_dxjson:
 
 doc_java:
 	mkdir -p ../doc/java
-	(cd java; mvn javadoc:javadoc)
+	(cd java; mvn compile javadoc:javadoc)
 
 .PHONY: api_wrappers python perl java contigset2fasta reads_validator ua src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
