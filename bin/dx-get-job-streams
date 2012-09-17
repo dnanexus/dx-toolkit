@@ -7,23 +7,23 @@ import dxpy
 
 parser = argparse.ArgumentParser(description="Get stdout/stderr streams for a job and, optionally, its subjobs.")
 parser.add_argument("-1", "--only-this-job", help="Do not recurse into subjobs' output streams", action='store_true')
-parser.add_argument("-f", "--print-to-files", help="Instead of printing a summary, print each stream into a file <job_id>.stdout, etc. in the working directory", action='store_true')
+#parser.add_argument("-f", "--print-to-files", help="Instead of printing a summary, print each stream into a file <job_id>.stdout, etc. in the working directory", action='store_true')
 parser.add_argument("-q", "--quiet", help="Do not print banners when using summary format", action='store_true')
 parser.add_argument("-n", "--no-tag", help="Do not prepend job tag to every line", action='store_true')
-parser.add_argument("--force", help="Force to run", action='store_true')
+#parser.add_argument("--force", help="Force to run", action='store_true')
+parser.add_argument("job_id", help="Job ID")
 args = parser.parse_args()
 
-if not args.force:
-    print >>sys.stderr, "dx-get-job-streams is deprecated. Please use `dx watch` instead."
-    print >>sys.stderr, "To run dx-get-job-streams anyway, add the --force option."
-    exit(1)
+# if not args.force:
+#     print >>sys.stderr, "dx-get-job-streams is deprecated. Please use `dx watch` instead."
+#     print >>sys.stderr, "To run dx-get-job-streams anyway, add the --force option."
+#     exit(1)
 
-if len(args) != 1:
+if args.job_id == None:
     parser.print_help()
-    parser.error("Incorrect number of arguments")
+    parser.error("Missing job ID")
 
-job_id = args[0]
-
+job_id = args.job_id
 root_job = dxpy.DXJob(job_id)
 
 if args.only_this_job:
