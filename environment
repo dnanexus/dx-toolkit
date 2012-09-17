@@ -22,7 +22,7 @@ _dx_argcomplete() {
     then
         DX_IFS_TEMP=$IFS
     fi
-    IFS=':'
+    IFS='`'
     COMPREPLY=( $( \
         IFS=$IFS \
         COMP_LINE=$COMP_LINE  COMP_POINT=$COMP_POINT \
