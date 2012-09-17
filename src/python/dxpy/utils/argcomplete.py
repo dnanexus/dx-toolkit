@@ -92,65 +92,12 @@ import sys, os
 from os.path import *
 import types
 import re
+import argparse
 
 from pprint import pprint, pformat
 
 
 debugfn = None # for debugging only
-
-class AllCompleter:
-
-    """Completes by listing all possible files in current directory."""
-
-    def __call__(self, pwd, line, point, prefix, suffix):
-        return os.listdir(pwd)
-
-class NoneCompleter:
-
-    """Generates empty completion list."""
-
-    def __call__(self, pwd, line, point, prefix, suffix):
-        return []
-
-class DirCompleter:
-
-    """Completes by listing subdirectories only."""
-
-    def __call__(self, pwd, line, point, prefix, suffix):
-        return filter(isdir, os.listdir(pwd))
-
-class RegexCompleter:
-
-    """Completes by filtering all possible files with the given list of
-    regexps."""
-
-    def __init__(self, regexlist, always_dirs=True):
-        self.always_dirs = always_dirs
-
-        if isinstance(regexlist, types.StringType):
-            regexlist = [regexlist]
-        self.regexlist = []
-        for r in regexlist:
-            if isinstance(r, types.StringType):
-                r = re.compile(r)
-            self.regexlist.append(r)
-
-    def __call__(self, pwd, line, point, prefix, suffix):
-        dn = dirname(prefix)
-        if dn:
-            pwd = dn
-        files = os.listdir(pwd)
-        ofiles = []
-        for fn in files:
-            for r in self.regexlist:
-                if r.match(fn):
-                    if dn:
-                        fn = join(dn, fn)
-                    ofiles.append(fn)
-                    break
-            if self.always_dirs and isdir(fn):
-                ofiles.append(fn + '/')
-        return ofiles
 
 class ListCompleter:
 
@@ -188,10 +135,8 @@ def extract_word(line, point):
     return line[preii : point], line[point : sufii]
 
 def autocomplete(parser,
-                  arg_completer=None, # means use default.
-                  opt_completer=None,
-                  subcmd_completer=None,
-                  subcommands=None):
+                 arg_completer=None, # means use default.
+                 subcommands=None):
 
     """Automatically detect if we are requested completing and if so generate
     completion automatically from given parser.
@@ -221,15 +166,6 @@ def autocomplete(parser,
     if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
         return
 
-    # Set default completers.
-    if arg_completer is None:
-        arg_completer = AllCompleter()
-    if opt_completer is None:
-        opt_completer = AllCompleter()
-    if subcmd_completer is None:
-        ## subcmd_completer = arg_completer
-        subcmd_completer = AllCompleter()
-
     # By default, completion will be arguments completion, unless we find out
     # later we're trying to complete for an option.
     completer = arg_completer
@@ -239,97 +175,52 @@ def autocomplete(parser,
     #
 
     # Fetching inputs... not sure if we're going to use these.
-    cwords = os.environ['COMP_WORDS'].split()
+    ifs = os.environ.get('IFS')
+    cwords = os.environ['COMP_WORDS'].split(ifs)
     cline = os.environ['COMP_LINE']
     cpoint = int(os.environ['COMP_POINT'])
     cword = int(os.environ['COMP_CWORD'])
 
+#    sys.stderr.write(str(cwords))
 
     # If requested, try subcommand syntax to find an options parser for that
     # subcommand.
     if subcommands:
         assert isinstance(subcommands, types.DictType)
         if len(cwords) > 2 and cwords[1]+" "+cwords[2] in subcommands: # TODO: HACK
-            parser = subcommands[cwords[1]+" "+cwords[2]]
-            return autocomplete(parser, arg_completer=arg_completer)
+            parser = subcommands[cwords[1]+" "+cwords[2]][0]
+            return autocomplete(parser, arg_completer=subcommands[cwords[1]+" "+cwords[2]][1])
         elif len(cwords) > 1 and cwords[1] in subcommands:
-            parser = subcommands[cwords[1]]
-            return autocomplete(parser, arg_completer=arg_completer)
+            parser = subcommands[cwords[1]][0]
+            return autocomplete(parser, arg_completer=subcommands[cwords[1]][1])
+        else:
+            return autocomplete(parser)
 
     # Extract word enclosed word.
     prefix, suffix = extract_word(cline, cpoint)
+#    sys.stderr.write(prefix)
     # The following would be less exact, but will work nonetheless .
     # prefix, suffix = cwords[cword], None
-
-    # Look at previous word, if it is an option and it requires an argument,
-    # check for a local completer.  If there is no completer, what follows
-    # directly cannot be another option, so mark to not add those to
-    # completions.
-    optarg = False
-    '''
-    try:
-        # Look for previous word, which will be containing word if the option
-        # has an equals sign in it.
-        prev = None
-        if cword < len(cwords):
-            mo = re.search('(--.*)=(.*)', cwords[cword])
-            if mo:
-                prev, prefix = mo.groups()
-        if not prev:
-            prev = cwords[cword - 1]
-
-        if prev and prev.startswith('-'):
-            option = parser.get_option(prev)
-            if option:
-                if option.nargs > 0:
-                    optarg = True
-                    if hasattr(option, 'completer'):
-                        completer = option.completer
-                    elif option.type != 'string':
-                        completer = NoneCompleter()
-                    else:
-                        completer = opt_completer
-                # Warn user at least, it could help him figure out the problem.
-                elif hasattr(option, 'completer'):
-                    raise SystemExit(
-                        "Error: optparse option with a completer "
-                        "does not take arguments: %s" % str(option))
-    except KeyError:
-        pass
-    '''
     
     completions = []
 
-    # Options completion.
-    if not optarg and (not prefix or prefix.startswith('-')):
-        for action in parser._actions:
-            completions += action.option_strings
-        # Note: this will get filtered properly below.
+    # Subcommand and options completion.
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            completions += [subcmd for subcmd in action.choices.keys() if subcmd.startswith(prefix)]
+        elif prefix and prefix.startswith('-'):
+            completions += [option for option in action.option_strings if option.startswith(prefix)]
 
-    # File completion.
+    # Argument completion.
     if completer and (not prefix or not prefix.startswith('-')):
+        completions += completer.get_matches(cline, cpoint, prefix, suffix)
 
-        # Call appropriate completer depending on type.
-        if isinstance(completer, types.StringType) or \
-               isinstance(completer, types.ListType) or \
-               isinstance(completer, types.TupleType):
-
-            completer = RegexCompleter(completer)
-            completions += completer(os.getcwd(), cline, cpoint, prefix, suffix)
-
-
-        elif isinstance(completer, types.FunctionType) or \
-             isinstance(completer, types.LambdaType) or \
-             isinstance(completer, types.ClassType) or \
-             isinstance(completer, types.ObjectType):
-            completions += completer(os.getcwd(), cline, cpoint, prefix, suffix)
-
-    # Filter using prefix.
-    if prefix:
-        completions = filter(lambda x: x.startswith(prefix), completions)
+    # # Filter using prefix.
+    # if prefix:
+    #     completions = filter(lambda x: x.startswith(prefix), completions)
 
     # Print result.
-    print ' '.join(completions)
+    print ifs.join(completions)
 
     # Print debug output (if needed).  You can keep a shell with 'tail -f' to
     # the log file to monitor what is happening.
@@ -386,25 +277,6 @@ def guess_first_nonoption(gparser, subcmds_map):
     gparser.allow_interspersed_args = prev_interspersed # restore state
 
     return value # can be None, indicates no command chosen.
-
-class CmdComplete:
-
-    """Simple default base class implementation for a subcommand that supports
-    command completion.  This class is assuming that there might be a method
-    addopts(self, parser) to declare options for this subcommand, and an
-    optional completer data member to contain command-specific completion.  Of
-    course, you don't really have to use this, but if you do it is convenient to
-    have it here."""
-
-    def autocomplete(self, completer):
-        import optparse
-        parser = optparse.OptionParser(self.__doc__.strip())
-        if hasattr(self, 'addopts'):
-            self.addopts(parser)
-        if hasattr(self, 'completer'):
-            completer = self.completer
-        return autocomplete(parser, completer)
-
 
 def test():
     print extract_word("extraire un mot d'une phrase", 11)
