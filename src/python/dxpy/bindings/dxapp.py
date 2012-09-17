@@ -116,8 +116,6 @@ class DXApp(DXObject):
         :type version: string
         :param bill_to: ID of the user or organization who will own the app and be billed for its space usage (optional if an app with this name already exists)
         :type bill_to: string
-        :param billing: Billing specification (optional)
-        :type billing: dict
         :param access: Access specification (optional)
         :type access: dict
         :param resources: Specifies what is to be put into the app's resources container. Must be a string containing a project ID, or a list containing object IDs. (optional)
@@ -186,8 +184,6 @@ class DXApp(DXObject):
         :type applet: string
         :param details: Metadata to store with the app (optional)
         :type details: dict or list
-        :param billing: Billing specification (optional)
-        :type billing: dict
         :param access: Access specification (optional)
         :type access: dict
         :param resources: Specifies what is to be put into the app's resources container. Must be a string containing a project ID, or a list containing object IDs. (optional)
