@@ -29,9 +29,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type state: string
     :param visibility: Visibility of the object ("hidden", "visible", "either")
     :type visibility: string
-    :param name: Name of the object
+    :param name: Name of the object (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
@@ -39,13 +39,13 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type typename: string
     :param tag: Tag that each result must be tagged with
     :type tag: string
-    :param link: ID of an object to which each result must link to
+    :param link: ID of an object that each result must link to
     :type link: string
-    :param project: ID of a project in which each result must belong
+    :param project: ID of a project in which each result must appear
     :type project: string
     :param folder: If *project* is given, full path to a folder in which each result must belong (default is the root folder)
     :type folder: string
-    :param recurse: If *project* is given, whether to look in subfolders as well
+    :param recurse: If *project* is given, whether to look in subfolders of *folder* as well (default is True)
     :type recurse: boolean
     :param modified_after: Timestamp after which each result was last modified (see note below for interpretation)
     :type modified_after: int or string
@@ -59,16 +59,16 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type describe: boolean
     :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
-    :param limit: The maximum number of results to be returned
+    :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
-    :param return_handler: Whether to yield results as dxpy object handlers or as a dict with keys "id" and "project"
+    :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
 
-    Returns a generator of a sequence of all data objects matching the query.
-    It transparently handles paging through the result set if necessary. For
-    all parameters that are omitted, the search is not restricted by the
-    corresponding field.
+    Returns a generator that yields all data objects matching the query,
+    up to *limit* objects. It transparently handles paging through the
+    result set if necessary. For all parameters that are omitted, the
+    search is not restricted by the corresponding field.
 
     .. note:: All timestamps must be supplied as one of the following:
 
@@ -77,13 +77,16 @@ def find_data_objects(classname=None, state=None, visibility=None,
          to the current time
        * A string with one of the suffixes "s", "m", "d", "w", or "y" (for
          seconds, minutes, days, weeks, or years), interpreted as an offset
-         from the current time. The following example finds all items that were
-         created more than 1 week ago::
+         from the current time.
 
-           items = list(find_data_objects(created_before="-1w"))
+       The following examples both find all items that were created more
+       than 1 week ago::
 
-    This examples iterates through all GenomicTables with property "project"
-    set to "cancer project" and prints their object IDs::
+           items1 = list(find_data_objects(created_before="-1w"))
+           items2 = list(find_data_objects(created_before=-7*24*60*60*1000))
+
+    This example iterates through all GenomicTables with property
+    "project" set to "cancer project" and prints their object IDs::
 
       for result in find_data_objects(classname="gtable", properties={"project": "cancer project"}):
           print "Found gtable with object id " + result["id"]
@@ -203,9 +206,9 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type state: string
     :param visibility: Visibility of the object ("hidden", "visible", "either")
     :type visibility: string
-    :param name: Name of the object
+    :param name: Name of the object (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
@@ -213,13 +216,13 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type typename: string
     :param tag: Tag that each result must be tagged with
     :type tag: string
-    :param link: ID of an object to which each result must link to
+    :param link: ID of an object that each result must link to
     :type link: string
-    :param project: ID of a project in which each result must belong
+    :param project: ID of a project in which each result must appear
     :type project: string
     :param folder: If *project* is given, full path to a folder in which each result must belong (default is the root folder)
     :type folder: string
-    :param recurse: If *project* is given, whether to look in subfolders as well
+    :param recurse: If *project* is given, whether to look in subfolders of *folder* as well (default is True)
     :type recurse: boolean
     :param modified_after: Timestamp after which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type modified_after: int or string
@@ -233,7 +236,7 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type describe: boolean
     :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
-    :param return_handler: Whether to return a result as a dxpy object handler or as a dict with keys "id" and "project"
+    :param return_handler: If True, returns the result as a dxpy object handler (otherwise, returns a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: dict, handler, or None
 
@@ -337,15 +340,15 @@ def find_jobs(launched_by=None, executable=None, project=None,
     '''
     :param launched_by: User ID of the user who launched the job's origin job
     :type launched_by: string
-    :param executable: ID of the applet or app which spawned this job
+    :param executable: ID of the applet or app that spawned this job, or a corresponding remote object handler
     :type executable: string or a DXApp/DXApplet instance
     :param project: ID of the project context for the job
     :type project: string
     :param state: State of the job (e.g. "failed", "done")
     :type state: string
-    :param origin_job: ID of the original job initiated by a user running an applet/app which eventually spawned this job
+    :param origin_job: ID of the original job (initiated by a user running an applet/app) that eventually transitively spawned this job
     :type origin_job: string
-    :param parent_job: ID of the parent job; the string 'none' indicates it should have no parent
+    :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent
     :type parent_job: string
     :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_after: int or string
@@ -353,19 +356,19 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type created_before: int or string
     :param describe: Whether to also return the output of calling describe() on the job. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the job's inputs and outputs.
     :type describe: boolean or dict
-    :param name: Name of the job to search by
+    :param name: Name of the job to search by (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :rtype: generator
 
-    Returns a generator of a sequence of all jobs that match the query. It
-    transparently handles paging through the result set if necessary. For all
-    parameters that are omitted, the search is not restricted by the
-    corresponding field.
+    Returns a generator that yields all jobs that match the query. It
+    transparently handles paging through the result set if necessary.
+    For all parameters that are omitted, the search is not restricted by
+    the corresponding field.
 
-    The following example iterates through all finished jobs in a particular
-    project in the last two days::
+    The following example iterates through all finished jobs in a
+    particular project that were launched in the last two days::
 
       for result in find_jobs(state="done", project=proj_id, created_after="-2d"):
           print "Found job with object id " + result["id"]
@@ -436,29 +439,31 @@ def find_projects(name=None, name_mode='exact', properties=None,
                   level=None, describe=None, explicit_perms=None,
                   public=None, **kwargs):
     """
-    :param name: Name of the project
+    :param name: Name of the project (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
-    :param level: Minimum permissions level of returned project IDs
+    :param level: One of 'LIST', 'VIEW', 'CONTRIBUTE', or 'ADMINSTER'. If specified, only returns projects where the current user has at least the specified permission level.
     :type level: string
     :param describe: Either false or the input to the describe call for the project
     :type describe: boolean or dict
-    :param explicit_perms: Whether to include projects for which explicit permissions are granted (true by default)
-    :type public: boolean
-    :param public: Whether to include public projects in the results
+    :param explicit_perms: If True, includes projects for which the current user has some explicit permissions on that project (default is True)
+    :type explicit_perms: boolean
+    :param public: If True, includes public projects in the results (default is False)
     :type public: boolean
     :rtype: generator
 
-    Returns a generator of a sequence of all projects that match the query. It
-    transparently handles paging through the result set if necessary. For all
-    parameters that are omitted, the search is not restricted by the
-    corresponding field.
+    Returns a generator that yields all projects that match the query.
+    It transparently handles paging through the result set if necessary.
+    For all parameters that are omitted, the search is not restricted by
+    the corresponding field.
 
-    You can use the *level* parameter to find projects that the user has at
-    least a specific level of access to (e.g. CONTRIBUTE).
+    You can use the *level* parameter to find projects that the user has
+    at least a specific level of access to (e.g. "CONTRIBUTE").
+
+    
 
     """
     query = {}
@@ -501,21 +506,21 @@ def find_apps(name=None, name_mode='exact', category=None,
               modified_after=None, modified_before=None,
               describe=None, **kwargs):
     """
-    :param name: Name of the app
+    :param name: Name of the app (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the name field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
-    :param category: Name of a category with which to restrict the results
+    :param category: If specified, only returns apps that are in the specified category
     :type category: string
-    :param all_versions: Whether to return all versions of the apps or just the default versions
-    :type all_versions: bool
-    :param published: Whether to restrict the results to only published apps
-    :type published: bool
+    :param all_versions: Whether to return all versions of each app or just the version tagged "default"
+    :type all_versions: boolean
+    :param published: If specified, only returns results that have the specified publish status (True for published apps, False for unpublished apps)
+    :type published: boolean
     :param billed_to: Entity ID (user or organization) that pays for the app's storage costs
     :type billed_to: string
-    :param created_by: User ID of the developer that created the version
+    :param created_by: If specified, only returns app versions that were created by the specified user (of the form "user-USERNAME")
     :type created_by: string
-    :param developer: User ID of a developer of the app
+    :param developer: If specified, only returns apps for which the specified user (of the form "user-USERNAME") is a developer
     :type developer: string
     :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_after: int or string
@@ -525,14 +530,14 @@ def find_apps(name=None, name_mode='exact', category=None,
     :type modified_after: int or string
     :param modified_before: Timestamp before which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type modified_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the object (if given True) or not (False)
+    :param describe: If True, also returns the output of calling describe() on the object
     :type describe: boolean
     :rtype: generator
 
-    Returns a generator of a sequence of all apps that match the query. It
-    transparently handles paging through the result set if necessary. For all
-    parameters that are omitted, the search is not restricted by the
-    corresponding field.
+    Returns a generator that yields all apps that match the query. It
+    transparently handles paging through the result set if necessary.
+    For all parameters that are omitted, the search is not restricted by
+    the corresponding field.
 
     """
 

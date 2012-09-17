@@ -8,9 +8,9 @@ onto the platform.
 You can specify the destination project in the following ways (with the earlier
 ones taking precedence):
 
-* Supply the 'project' argument to :func:`upload_resources()` or
+* Supply the *project* argument to :func:`upload_resources()` or
   :func:`upload_applet()`.
-* Supply the 'project' attribute in your dxapp.json.
+* Supply the 'project' attribute in your ``dxapp.json``.
 * Set the ``DX_WORKSPACE_ID`` environment variable (when running in a job context).
 
 '''
@@ -77,10 +77,10 @@ def upload_resources(src_dir, project=None):
     :returns: A reference to the generated archive
     :rtype: list
 
-    Archives and uploads the contents of the ``resources/`` subdirectory of
-    *src_dir* to a new remote file object, and returns an list describing a
-    single bundled dependency in the form expected by the ``bundledDepends``
-    field of a run specification.
+    Archives and uploads the contents of the ``resources/`` subdirectory
+    of *src_dir* to a new remote file object, and returns a list
+    describing a single bundled dependency in the form expected by the
+    ``bundledDepends`` field of a run specification.
     """
     applet_spec = _get_applet_spec(src_dir)
 

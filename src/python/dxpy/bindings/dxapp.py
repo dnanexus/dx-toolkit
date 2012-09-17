@@ -2,12 +2,30 @@
 DXApp Handler
 +++++++++++++
 
-Apps are objects that provide a way for application logic to be distributed to
-users in the system. They store an executable and specifications for input,
-output, execution, access, and billing. They can be run by calling the
-:func:`DXApp.run` method.
+Apps allow for application logic to be distributed to users in the
+system, and they allow for analyses to be run in a reproducible and
+composable way.
+
+Apps extend the functionality of applets to require input/output
+specifications as well as to allow for versioning, collaborative
+development, and policies for billing and data access. Similarly to
+applets, apps can be run by calling their
+:meth:`~dxpy.bindings.dxapp.DXApp.run` method.
 
 Unlike applets, apps are not data objects and do not live in projects.
+Instead, they share a single global namespace. An app may have multiple
+different versions (e.g. "1.0.0", "1.0.1", etc.) associated with a
+single name (which is of the form "app-APPNAME"). A particular version
+of an app may be identified in two ways, either by specifying a
+combination of its name and a version (or a *tag*), or by specifying its
+unique identifier.
+
+Each app has a list of developers, which are the users that are
+authorized to publish new versions of an app; perform administrative
+tasks, such as assigning categories, and attaching new tags to versions
+of the app; and add or remove other developers. When the first version
+of an app with a given name is created, the creating user initially
+becomes the sole developer of the app.
 
 """
 
@@ -80,11 +98,11 @@ class DXApp(DXObject):
 
     def new(self, **kwargs):
         '''
-        :param initializeFrom: ID of an app object from which to initialize the app
+        :param initializeFrom: ID of an existing app object from which to initialize the app
         :type initializeFrom: string
-        :param applet: ID of the applet which the app will be created from
+        :param applet: ID of the applet that the app will be created from
         :type applet: string
-        :param name: Name of the app (optional; inherited from name if not given)
+        :param name: Name of the app (inherits from *initializeFrom* if possible)
         :type name: string
         :param title: Title or brand name of the app (optional)
         :type title: string
@@ -92,15 +110,17 @@ class DXApp(DXObject):
         :type summary: string
         :param description: An extended description of the app (optional)
         :type description: string
-        :param version: app's version
+        :param details: Arbitrary JSON to be associated with the app (optional)
+        :type details: dict or list
+        :param version: Version number
         :type version: string
-        :param bill_to: ID of the user or organization who will own the app (optional if an app with this name already exists)
+        :param bill_to: ID of the user or organization who will own the app and be billed for its space usage (optional if an app with this name already exists)
         :type bill_to: string
-        :param billing: billing specification (optional)
+        :param billing: Billing specification (optional)
         :type billing: dict
-        :param access: access specification (optional)
+        :param access: Access specification (optional)
         :type access: dict
-        :param resources: Contents to be put into the app's resources container (existing project ID or list of object IDs)
+        :param resources: Specifies what is to be put into the app's resources container. Must be a string containing a project ID, or a list containing object IDs. (optional)
         :type resources: string or list
 
         .. note:: It is highly recommended that the higher-level module
@@ -108,10 +128,17 @@ class DXApp(DXObject):
            <http://wiki.dnanexus.com/DxBuildApp>`_ be used instead for app
            creation.
 
-        Creates an app with the given parameters (see API documentation for the
-        correct syntax). The app is only available to its developers until
-        :meth:`publish()` is called, and is not run until :meth:`run()` is
-        called.
+        Creates an app with the given parameters by using the specified
+        applet or app as a base and overriding its attributes. See the
+        API documentation for the `/app/new
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp%2Fnew>`_
+        method for more info.
+
+        Exactly one of *initializeFrom* and *applet* must be provided.
+
+        The app is only available to its developers until
+        :meth:`publish()` is called, and is not run until :meth:`run()`
+        is called.
 
         '''
         dx_hash = {}
@@ -141,8 +168,12 @@ class DXApp(DXObject):
         :returns: Description of the remote app object
         :rtype: dict
 
-        Returns a dict with a description of the app. The result includes the
-        key-value pairs as specified in the API documentation.
+        Returns a dict with a description of the app. The result
+        includes the key-value pairs as specified in the API
+        documentation for the `/app-xxxx/describe
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fdescribe>`_
+        method.
+
         '''
         if self._dxid is not None:
             return dxpy.api.appDescribe(self._dxid, **kwargs)
@@ -153,16 +184,21 @@ class DXApp(DXObject):
         '''
         :param applet: ID of the applet to replace the app's contents with
         :type applet: string
-        :param details: Metadata to store with the app
+        :param details: Metadata to store with the app (optional)
         :type details: dict or list
-        :param billing: billing specification (optional)
+        :param billing: Billing specification (optional)
         :type billing: dict
-        :param access: access specification (optional)
+        :param access: Access specification (optional)
         :type access: dict
-        :param resources: Contents to be put into the app's resources container
+        :param resources: Specifies what is to be put into the app's resources container. Must be a string containing a project ID, or a list containing object IDs. (optional)
         :type resources: string or list
 
-        Updates the parameters of an existing app.
+        Updates the parameters of an existing app. See the API
+        documentation for the `/app/update
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fupdate>`_
+        method for more info.
+
+        The current user must be a developer of the app.
 
         '''
         updates = {}
@@ -182,7 +218,10 @@ class DXApp(DXObject):
         :param tags: Tags to add to the app
         :type tags: array
 
-        Adds application name tags (aliases) to this app.
+        Adds the specified application name tags (aliases) to this app.
+
+        The current user must be a developer of the app.
+
         """
         if self._dxid is not None:
             return dxpy.api.appAddTags(self._dxid, input_params=tags, **kwargs)
@@ -195,8 +234,11 @@ class DXApp(DXObject):
         :param tags: Tags to remove from the app
         :type tags: array
 
-        Remove the application name tags (aliases) that the app is
-        being addressed by.
+        Removes the specified application name tags (aliases) from this
+        app, so that it is no longer addressable by those aliases.
+
+        The current user must be a developer of the app.
+
         """
         if self._dxid is not None:
             return dxpy.api.appRemoveTags(self._dxid, **kwargs)
@@ -223,7 +265,14 @@ class DXApp(DXObject):
 
     def get(self, **kwargs):
         """
-        Returns the contents of the app.
+        :returns: Full specification of the remote app object
+        :rtype: dict
+
+        Returns the contents of the app. The result includes the
+        key-value pairs as specified in the API documentation for the
+        `/app-xxxx/get
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fget>`_
+        method.
         """
         if self._dxid is not None:
             return dxpy.api.appGet(self._dxid, **kwargs)
@@ -233,6 +282,8 @@ class DXApp(DXObject):
     def publish(self, **kwargs):
         """
         Publishes the app, so all users can find it on the platform.
+
+        The current user must be a developer of the app.
         """
         if self._dxid is not None:
             return dxpy.api.appPublish(self._dxid, **kwargs)
@@ -242,6 +293,8 @@ class DXApp(DXObject):
     def delete(self, **kwargs):
         """
         Removes this app object from the platform.
+
+        The current user must be a developer of the app.
         """
         if self._dxid is not None:
             return dxpy.api.appDelete(self._dxid, **kwargs)
@@ -256,11 +309,11 @@ class DXApp(DXObject):
         :type project: string
         :param folder: Folder in which the app's outputs will be placed in *project*
         :type folder: string
-        :returns: Object handler of the created job now running the app
-        :rtype: :class:`dxpy.bindings.dxjob.DXJob`
+        :returns: Object handler of the newly created job
+        :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
-        Creates a new job that execute the function "main" of this app with the
-        given input *app_input*.
+        Creates a new job that executes the function "main" of this app
+        with the given input *app_input*.
 
         '''
         if project is None:

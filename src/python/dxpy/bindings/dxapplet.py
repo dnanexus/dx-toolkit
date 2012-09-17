@@ -2,9 +2,9 @@
 DXApplet Handler
 ++++++++++++++++
 
-Applets are data objects that store an executable and specifications for input,
-output, and execution. They can be run by calling the :func:`DXApplet.run`
-method.
+Applets are data objects that store application logic, including
+specifications for executing it, and (optionally) input and output
+signatures. They can be run by calling the :func:`DXApplet.run` method.
 
 """
 
@@ -41,21 +41,21 @@ class DXApplet(DXDataObject):
         '''
         :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
         :type dx_hash: dict
-        :param runSpec: run specification
+        :param runSpec: Run specification
         :type runSpec: dict
-        :param inputSpec: input specification (optional)
-        :type inputSpec: dict
-        :param outputSpec: output specification (optional)
-        :type outputSpec: dict
-        :param access: access specification (optional)
-        :type access: dict
         :param dxapi: API version string
         :type dxapi: string
-        :param title: title string (optional)
+        :param inputSpec: Input specification (optional)
+        :type inputSpec: dict
+        :param outputSpec: Output specification (optional)
+        :type outputSpec: dict
+        :param access: Access specification (optional)
+        :type access: dict
+        :param title: Title string (optional)
         :type title: string
-        :param summary: summary string (optional)
+        :param summary: Summary string (optional)
         :type summary: string
-        :param description: description string (optional)
+        :param description: Description string (optional)
         :type description: string
 
         .. note:: It is highly recommended that the higher-level module
@@ -63,9 +63,11 @@ class DXApplet(DXDataObject):
            `dx-build-applet <http://wiki.dnanexus.com/DxBuildApplet>`_ be used
            instead for applet creation.
 
-        Creates an applet with the given parameters (see API
-        documentation for the correct syntax).  The applet is not run
-        until :meth:`run()` is called.
+        Creates an applet with the given parameters. See the API
+        documentation for the `/applet/new
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew>`_
+        method for more info. The applet is not run until :meth:`run()`
+        is called.
 
         '''
         for field in 'runSpec', 'dxapi':
@@ -83,7 +85,14 @@ class DXApplet(DXDataObject):
 
     def get(self, **kwargs):
         """
-        Returns the contents of the applet.
+        :returns: Full specification of the remote applet object
+        :rtype: dict
+
+        Returns the contents of the applet. The result includes the
+        key-value pairs as specified in the API documentation for the
+        `/applet-xxxx/get
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget>`_
+        method.
         """
         return dxpy.api.appletGet(self._dxid, **kwargs)
 
@@ -95,7 +104,7 @@ class DXApplet(DXDataObject):
         :type project: string
         :param folder: Folder in which applet's outputs will be placed in *project*
         :type folder: string
-        :returns: Object handler of the created job now running the applet
+        :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
         Creates a new job that executes the function "main" of this applet with
