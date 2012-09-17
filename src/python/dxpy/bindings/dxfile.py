@@ -2,7 +2,7 @@
 DXFile Handler
 **************
 
-This remote file handler is a file-like object.
+This remote file handler is a Python file-like object.
 '''
 
 import os, logging
@@ -98,7 +98,7 @@ class DXFile(DXDataObject):
         """
         :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
         :type dx_hash: dict
-        :param media_type: Internet Media Type (optional)
+        :param media_type: Internet Media Type
         :type media_type: string
 
         Creates a new remote file with media type *media_type*, if given.
@@ -173,9 +173,9 @@ class DXFile(DXDataObject):
         :param project: Project ID
         :type project: string
 
-        Discards the currently stored ID and associates the handler
-        with *dxid*.  As a side effect, it also flushes the buffer for
-        the previous file object if the buffer is nonempty.
+        Discards the currently stored ID and associates the handler with
+        *dxid*. As a side effect, it also flushes the buffer for the
+        previous file object if the buffer is nonempty.
         '''
         if self._dxid is not None:
             self.flush()
@@ -245,7 +245,8 @@ class DXFile(DXDataObject):
 
         .. note::
 
-            Writing to remote files is append-only.  Using :meth:`seek` will not affect where the next :meth:`write` will occur.
+            Writing to remote files is append-only. Using :meth:`seek`
+            does not affect where the next :meth:`write` will occur.
 
         '''
         remaining_space = self._bufsize - self._write_buf.tell()
@@ -273,20 +274,22 @@ class DXFile(DXDataObject):
         :rtype: boolean
 
         Returns :const:`True` if the remote file is closed and
-        :const:`False` otherwise.  Note that if it is not closed, it
-        can be in either the "open" and "closing" states.
+        :const:`False` otherwise. Note that if it is not closed, it can
+        be in either the "open" or "closing" states.
         '''
 
         return self.describe(**kwargs)["state"] == "closed"
 
     def close(self, block=False, **kwargs):
         '''
-        :param block: Indicates whether this function should block until the remote file has closed or not.
+        :param block: If True, this function blocks until the remote file has closed.
         :type block: boolean
 
-        Attempts to close the file. Note that the remote file cannot be closed
-        until all parts have been fully uploaded. An exception will be thrown
-        if this is not the case.
+        Attempts to close the file.
+
+        .. note:: The remote file cannot be closed until all parts have
+           been fully uploaded. An exception will be thrown if this is
+           not the case.
         '''
         self.flush(**kwargs)
 
@@ -300,7 +303,7 @@ class DXFile(DXDataObject):
 
     def wait_on_close(self, timeout=sys.maxint, **kwargs):
         '''
-        :param timeout: Max amount of time to wait (in seconds) until the file is closed.
+        :param timeout: Maximum amount of time to wait (in seconds) until the file is closed.
         :type timeout: integer
         :raises: :exc:`dxpy.exceptions.DXFileError` if the timeout is reached before the remote file has been closed
 
@@ -314,12 +317,12 @@ class DXFile(DXDataObject):
         :type data: string
         :param index: Index of part to be uploaded; must be in [1, 10000]
         :type index: integer
-        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is in the wrong range, :exc:`requests.exceptions.HTTPError` if upload fails
+        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is not in the correct range, :exc:`requests.exceptions.HTTPError` if upload fails
 
-        Requests a URL for uploading a part, and uploads the data in *data* as
-        part number *index* for the associated file. If no value for *index* is
-        given, *index* defaults to 1. This probably only makes sense if this is
-        the only part to be uploaded.
+        Uploads the data in *data* as part number *index* for the
+        associated file. If no value for *index* is given, *index*
+        defaults to 1. This probably only makes sense if this is the
+        only part to be uploaded.
         """
 
         req_input = {}
@@ -383,12 +386,14 @@ class DXFile(DXDataObject):
         :type size: integer
         :rtype: string
 
-        Returns the next *size* bytes, or until the end of file (if no *size*
-        is given or there are fewer than *size* bytes left in the file).
+        Returns the next *size* bytes, or all the bytes until the end of
+        file (if no *size* is given or there are fewer than *size* bytes
+        left in the file).
 
-        .. note::
+        .. note:: After the first call to read(), passthrough kwargs are
+           not respected while using the same response iterator (i.e.
+           until next seek).
 
-            After the first call to read(), passthrough kwargs are not respected while using the same response iterator (i.e. until next seek).
         '''
         if self._response_iterator == None:
             self._request_iterator = self._generate_read_requests(start_pos=self._pos, **kwargs)

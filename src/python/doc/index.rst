@@ -7,20 +7,24 @@ DNAnexus Python Bindings
 ========================
 
 The DNAnexus :mod:`dxpy` Python library provides Python bindings to
-interact with the DNAnexus platform via its API.  Before you start
-digging in, you may want to take a look at the `Introduction to the
-DNAnexus Platform
-<http://wiki.dnanexus.com/Introduction-to-the-DNAnexus-Platform>`_.
-The following references may also be useful to you as you develop your
-own scripts and apps.
+interact with the DNAnexus Platform via its API. The bindings are
+available to Python apps running within the DNAnexus Execution
+Environment, and can also be used in scripts you run that access the API
+from the outside. Before you start digging in, you may want to take a
+look at the `Introduction to the DNAnexus Platform
+<http://wiki.dnanexus.com/Introduction-to-the-DNAnexus-Platform>`_. The
+following references may also be useful to you as you develop your own
+scripts and apps.
 
 `API Specification <http://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction>`_
-    complete details on the API, the lifecycle of different data
-    objects, project permissions, etc.
+    Complete details on the API, the lifecycle of different data
+    objects, project permissions, and more. Many methods in the bindings
+    translate directly into API calls, so it will be helpful to have at
+    least a general understanding of the API's structure.
 `Execution Environment Reference <http://wiki.dnanexus.com/Execution-Environment-Reference>`_
-    how applets and apps are run on the cloud
+    How applets and apps are run within the DNAnexus Platform.
 `Developer Portal <http://wiki.dnanexus.com/Developer-Portal>`_
-    links to all other docs, e.g. useful command-line tools
+    Links to all other docs, e.g. useful command-line tools.
 
 Table of Contents
 -----------------

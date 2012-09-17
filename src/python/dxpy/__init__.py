@@ -1,44 +1,73 @@
 '''
-When importing this package, configuration values will be loaded from the following sources in order of decreasing priority:
+When this package is imported, configuration values will be loaded from
+the following sources in order of decreasing priority:
 
 1. Environment variables
 2. Values stored in ``~/.dnanexus_config/environment``
 3. Values stored in ``/opt/dnanexus/environment``
 4. Hardcoded defaults
 
-The relevant environment variables are the following:
+The bindings are configured by the following environment variables:
 
-* ``DX_SECURITY_CONTEXT``: a JSON hash containing your auth token
-* ``DX_APISERVER_PROTOCOL``: either ``http`` or ``https`` (usually ``https``)
-* ``DX_APISERVER_HOST``: hostname of the DNAnexus API server
-* ``DX_APISERVER_PORT``: port of the DNAnexus API server
-* ``DX_JOB_ID``: should only be present if run in an Execution Environment
-* ``DX_WORKSPACE_ID``: should only be present if run in an Execution Environment; indicates the running job's temporary workspace ID
-* ``DX_PROJECT_CONTEXT_ID``: indicates either the project context of a running job, or the default project to use for a user accessing the platfrom
+.. envvar:: DX_SECURITY_CONTEXT
 
-If the security context and API server variables are available, then
-upon importing the module, any method which relies on the
-:func:`dxpy.DXHTTPRequest` function will set the appropriate
-authentication headers for making API calls to the API server.  (Note:
-All methods in the :mod:`dxpy.api` use this function.)  In addition,
-it will set the default workspace according to ``DX_WORKSPACE_ID`` (if
-running inside an Execution Environment) or ``DX_PROJECT_CONTEXT_ID``
-(otherwise).  This workspace will be used by default for any object
-handler methods that require a project ID.
+   A JSON hash containing your auth token, typically of the form
+   ``{"auth_token_type": "Bearer", "auth_token": "YOUR_TOKEN"}``.
 
-To override any of the settings from the environment for a particular
-session, the following functions can be used:
+.. envvar:: DX_APISERVER_PROTOCOL
 
-* :func:`dxpy.set_security_context`: for using a different authentication token
-* :func:`dxpy.set_api_server_info`: for using a different API server
-* :func:`dxpy.set_workspace_id`: for overriding the default data container to use
+   Either ``http`` or ``https`` (usually ``https``).
 
-If an HTTP/HTTPS proxy is to be used, set the environment variables
-beforehand as applicable while using the format 'hostname:port'
-(e.g. '10.10.1.10:3128'):
+.. envvar:: DX_APISERVER_HOST
 
-* **HTTP_PROXY**: 'hostname:port' for the HTTP proxy
-* **HTTPS_PROXY**: 'hostname:port' for the HTTPS proxy
+   Hostname of the DNAnexus API server.
+
+.. envvar:: DX_APISERVER_PORT
+
+   Port of the DNAnexus API server.
+
+.. envvar:: DX_JOB_ID
+
+   Should only be present if run in an Execution Environment; indicates
+   the ID of the currently running job.
+
+.. envvar:: DX_WORKSPACE_ID
+
+   Should only be present if run in an Execution Environment; indicates
+   the running job's temporary workspace ID.
+
+.. envvar:: DX_PROJECT_CONTEXT_ID
+
+   Indicates either the project context of a running job, or the default
+   project to use for a user accessing the platform from the outside.
+
+The :func:`dxpy.DXHTTPRequest` function uses the ``DX_SECURITY_CONTEXT``
+and ``DX_APISERVER_*`` variables to select an API server and provide
+appropriate authentication headers to it. (Note: all methods in the
+:mod:`dxpy.api` module, and by extension any of the bindings methods
+that make API calls, use this function.)
+
+All object handler methods that require a project or data container ID
+use by default the ``DX_WORKSPACE_ID`` (if running inside an Execution
+Environment) or ``DX_PROJECT_CONTEXT_ID`` (otherwise).
+
+The following functions can be used to override any of the settings
+obtained from the environment for the duration of the session:
+
+* :func:`dxpy.set_security_context`: to specify an authentication token
+* :func:`dxpy.set_api_server_info`: to specify the API server (host, port, or protocol)
+* :func:`dxpy.set_workspace_id`: to specify the default data container
+
+To pass API server requests through an HTTP(S) proxy, set the following
+environment variables:
+
+.. envvar:: HTTP_PROXY
+
+   HTTP proxy, in the form 'hostname:port' (e.g. '10.10.1.10:3128')
+
+.. envvar:: HTTPS_PROXY
+
+   HTTPS proxy, in the form 'hostname:port'
 
 '''
 
@@ -87,19 +116,39 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
     :param data: Content of the request body
-    :param jsonify_data: Indicates whether *data* should be converted from a Python list or dict to a JSON string
+    :type data: list or dict, if *jsonify_data* is True; or string, otherwise
+    :param headers: Names and values of HTTP headers to submit with the request (in addition to those needed for authentication, compression, or other options specified with the call).
+    :type headers: dict
+    :param auth: Overrides the *auth* value to pass through to :meth:`requests.request`. By default a token is obtained from the ``DX_SECURITY_CONTEXT``.
+    :type auth: tuple, object, or None
+    :param timeout: HTTP request timeout, in seconds
+    :type timeout: float
+    :param config: *config* value to pass through to :meth:`requests.request`
+    :type config: dict
+    :param use_compression: "snappy" to use Snappy compression, or None
+    :type use_compression: string or None
+    :param jsonify_data: If True, *data* is converted from a Python list or dict to a JSON string
     :type jsonify_data: boolean
-    :param want_full_response: Indicates whether the function should return the full :class:`requests.Response` object or just the content of the response
+    :param want_full_response: If True, the full :class:`requests.Response` object is returned (otherwise, only the content of the response body is returned)
     :type want_full_response: boolean
-    :param max_retries: Number of retries to perform for requests which are safe to retry. Safe requests are GET requests or requests which produced a network error or HTTP/1.1 server error (500, 502, 503, 504).
+    :param prepend_srv: If True, prepends the API server location to the URL
+    :type prepend_srv: boolean
+    :param max_retries: Number of retries to perform for requests that are safe to retry. Safe requests are GET requests and requests that produced a network error or HTTP/1.1 server error (500, 502, 503, 504).
     :type max_retries: int
-    :param always_retry: Indicates whether to attempt retries even for requests which are not considered safe to retry.  Exception: if the HTTP response has code 422, no retries will be attempted (request is invalid and cannot be fulfilled with retries).
+    :param always_retry: If True, attempts retries even for requests that are not considered safe to retry. As an exception, if the HTTP response has code 422, retries are never attempted (it is likely that the request is invalid and cannot be completed successfully with retries).
     :type always_retry: boolean
-    :returns: Response from API server in the requested format.  Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the contents of the response will **always** be converted from JSON to Python before it is returned, and it will therefore be of type list or dict.
-    :raises: :exc:`requests.exceptions.HTTPError` if response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
+    :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
+    :raises: :exc:`requests.exceptions.HTTPError` if the response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
 
-    Wrapper around requests.request(). Inserts authentication and
-    converts *data* to JSON.
+    Wrapper around :meth:`requests.request()` that makes an HTTP
+    request, inserting authentication headers and (by default)
+    converting *data* to JSON.
+
+    .. note:: Bindings methods that make API calls make the underlying
+       HTTP request(s) using :func:`DXHTTPRequest`, and most of them
+       will pass any unrecognized keyword arguments you have supplied
+       through to :func:`DXHTTPRequest`.
+
     '''
     url = APISERVER + resource if prepend_srv else resource
 
@@ -200,13 +249,14 @@ def set_api_server_info(host=None, port=None, protocol=None):
     '''
     :param host: API server hostname
     :type host: string
-    :param port: API server port
+    :param port: API server port. If not specified, *port* is guessed based on *protocol*.
     :type port: string
-    :param protocol: either "http" or "https" for SSL
+    :param protocol: Either "http" or "https"
     :type protocol: string
 
     Overrides the current settings for which API server to communicate
-    with.
+    with. Any parameters that are not explicitly specified are not
+    overridden.
     '''
     global APISERVER_PROTOCOL, APISERVER_HOST, APISERVER_PORT, APISERVER
     if host is not None:
@@ -222,7 +272,7 @@ def set_api_server_info(host=None, port=None, protocol=None):
 
 def set_security_context(security_context):
     '''
-    :param security_context: Authentication hash, usually with keys "auth_token_type" set to "Bearer" and "auth_token" set to the authentication token.
+    :param security_context: Authentication hash, usually with keys ``auth_token_type`` set to ``Bearer`` and ``auth_token`` set to the authentication token.
     :type security_context: dict
 
     Sets the security context to use the provided token.
@@ -238,6 +288,11 @@ def set_job_id(dxid):
 
     Sets the ID of the running job.
 
+    .. warning:: This function is only really useful if you are
+       developing code that will run in and interact with the Execution
+       Environment, but wish to test it outside of an actual Execution
+       Environment.
+
     """
     global JOB_ID
     JOB_ID = dxid
@@ -247,8 +302,9 @@ def set_workspace_id(dxid):
     :param dxid: ID of a project or workspace
     :type dxid: string
 
-    Sets the default project or workspace for object creation and
-    modification to *dxid*.
+    Sets the default data container for object creation and modification
+    to the specified project or workspace.
+
     """
 
     global WORKSPACE_ID
@@ -259,9 +315,16 @@ def set_project_context(dxid):
     :param dxid: Project ID
     :type dxid: string
 
-    Sets the project context for a running job.  This does not change
-    the default data container in which new objects are created or
-    name resolution is attempted.
+    Sets the project context for a running job.
+
+    .. warning:: This function is only really useful if you are
+       developing code that will run in and interact with the Execution
+       Environment but wish to test it outside of an actual Execution
+       Environment.
+
+       It does not change the default data container in which new
+       objects are created or name resolution is performed. If you want
+       to do that, use :func:`set_workspace_id` instead.
 
     """
 

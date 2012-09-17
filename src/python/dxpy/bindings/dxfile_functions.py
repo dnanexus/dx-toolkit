@@ -13,7 +13,7 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
     '''
     :param dxid: file ID
     :type dxid: string
-    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+    :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
 
     Given the object ID of an uploaded file, returns a remote file handler that
     is a read-only file-like object.
@@ -35,16 +35,16 @@ def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwa
     '''
     :param keep_open: Deprecated. Use the *mode* parameter instead.
     :type keep_open: boolean
-    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
+    :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
-    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+    :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Creates a new remote file object that is ready to be written to; returns a
-    DXFile object that is a writable file-like object. Other optional
-    parameters are available (see :func:`dxpy.bindings.DXDataObject.new()`).
+    Creates a new remote file object that is ready to be written to;
+    returns a :class:`~dxpy.bindings.dxfile.DXFile` object that is a
+    writable file-like object.
 
     Example::
 
@@ -64,11 +64,11 @@ def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwa
 def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                     **kwargs):
     '''
-    :param dxid: Object ID of a file
+    :param dxid: Remote file ID
     :type dxid: string
     :param filename: Local filename
     :type filename: string
-    :param append: Appends to the local file if True
+    :param append: If True, appends to the local file (default is to truncate local file if it exists)
     :type append: boolean
 
     Downloads the remote file with object ID *dxid* and saves it to
@@ -98,24 +98,25 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type file: File-like object
     :param media_type: Internet Media Type
     :type media_type: string
-    :param keep_open: Deprecated. Use the mode parameter instead.
+    :param keep_open: If False, closes the file after uploading
     :type keep_open: boolean
-    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
-    :type mode: string
-    :param wait_on_close: Wait for the file to close
+    :param wait_on_close: If True, waits for the file to close
     :type wait_on_close: boolean
-    :param use_existing_dxfile: Instead of creating a new file, use this one
-    :type use_existing_dxfile: :class:`dxpy.bindings.dxfile.DXFile`
+    :param use_existing_dxfile: Instead of creating a new file object, upload to the specified file
+    :type use_existing_dxfile: :class:`~dxpy.bindings.dxfile.DXFile`
     :returns: Remote file handler
-    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+    :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Uploads *filename* or reads from *file* into a new file object (with media
-    type *media_type* if given) and returns the associated remote file handler.
-    The "name" property of the remote file is set to *filename* or to
-    *file.name* (if it exists).
+    Exactly one of *filename* or *file* is required.
+
+    Uploads *filename* or reads from *file* into a new file object (with
+    media type *media_type* if given) and returns the associated remote
+    file handler. The "name" property of the newly created remote file
+    is set to the basename of *filename* or to *file.name* (if it
+    exists).
 
     Examples::
 
@@ -176,19 +177,19 @@ def upload_string(to_upload, media_type=None, keep_open=None, mode=None,
     :type to_upload: string
     :param media_type: Internet Media Type
     :type media_type: string
-    :param keep_open: Deprecated. Use the mode parameter instead.
+    :param keep_open: If False, closes the file after uploading
     :type keep_open: boolean
-    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
-    :type mode: string
+    :param wait_on_close: If True, waits for the file to close
+    :type wait_on_close: boolean
     :returns: Remote file handler
-    :rtype: :class:`dxpy.bindings.dxfile.DXFile`
+    :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
 
-    Uploads the data in the given string *to_upload* into a new file object
-    (with media type *media_type* if given) and returns the associated remote
-    file handler.
+    Uploads the data in the string *to_upload* into a new file object
+    (with media type *media_type* if given) and returns the associated
+    remote file handler.
 
     """
 

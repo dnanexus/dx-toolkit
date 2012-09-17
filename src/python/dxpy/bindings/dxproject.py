@@ -1,11 +1,19 @@
 """
-Projects are platform entities which serve as containers for data, and are the unit of collaboration.
 
-Containers are special-purpose data containers which behave like projects with the PROTECTED flag unset (so that
-temporary intermediate data files can be deleted), except they cannot be explicitly created or destroyed, and their
-permissions are fixed.  In particular, the container class shares with the project class the following methods with
-the exact same syntax: newFolder, listFolder, renameFolder, removeFolder, move, removeObjects, and clone.  There is
-also a minimalist describe method that returns metadata about the objects and folders inside the container.
+Projects (:class:`~dxpy.bindings.dxproject.DXProject`) are platform
+entities that serve as general-purpose containers for data, and are the
+unit of collaboration.
+
+Containers (:class:`~dxpy.bindings.dxproject.DXContainer`) are
+special-purpose data containers that support a subset of the methods
+available to projects. Containers behave like projects with the
+PROTECTED flag unset (so that temporary intermediate data files can be
+deleted), except they cannot be explicitly created or destroyed, and
+their permissions are fixed.
+
+:class:`~dxpy.bindings.dxproject.DXProject` is implemented as a subclass
+of :class:`~dxpy.bindings.dxproject.DXContainer`.
+
 """
 
 import dxpy
@@ -63,11 +71,13 @@ class DXContainer(DXObject):
         :rtype: dict
 
         Returns a hash with key-value pairs as specified by the API
-        specification.  This will usually include keys such as "id",
-        "name", "class", "billTo", "created", "modified", and
-        "dataUsage".
+        specification for the `/project-xxxx/describe
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe>`_
+        method. This will usually include keys such as "id", "name",
+        "class", "billTo", "created", "modified", and "dataUsage".
 
         """
+        # TODO: link to /container-xxxx/describe
         api_method = dxpy.api.containerDescribe
         if isinstance(self, DXProject):
             api_method = dxpy.api.projectDescribe
@@ -77,7 +87,7 @@ class DXContainer(DXObject):
         """
         :param folder: Full path to the new folder to create
         :type folder: string
-        :param parents: Whether to recursively create all parent folders if they are missing
+        :param parents: If True, recursively create any parent folders that are missing
         :type parents: boolean
 
         Creates a new folder in the project or container.
@@ -95,7 +105,7 @@ class DXContainer(DXObject):
         """
         :param folder: Full path to the folder to list
         :type folder: string
-        :param describe: Either false or the input to /describe to be called on each object
+        :param describe: If True, returns the output of ``/describe`` on each object (see below for notes)
         :type describe: bool or dict
         :param only: Indicate "objects" for only objects, "folders" for only folders, or "all" for both
         :type only: string
@@ -104,10 +114,18 @@ class DXContainer(DXObject):
         :returns: A hash with key "objects" for the list of object IDs and key "folders" for the list of folder routes
         :rtype: dict
 
-        Returns a hash containing a list of object IDs for objects
-        residing directly inside the specified folder, and a list of
-        folders (with their full routes) directly inside the specified
-        folder.
+        Returns a hash containing a list of objects that reside directly
+        inside the specified folder, and a list of strings representing
+        the full paths to folders that reside directly inside the
+        specified folder.
+
+        By default, the list of objects is provided as a list containing
+        one hash ``{"id": "class-XXXX"}`` with the ID of each matching
+        object. If *describe* is not False, the output of ``/describe``
+        is also included in an additional field "describe" for each
+        object. If *describe* is True, ``/describe`` is called with the
+        default arguments. *describe* may also be a hash, indicating the
+        input hash to be supplied to each ``/describe`` call.
 
         """
         api_method = dxpy.api.containerListFolder
@@ -122,18 +140,18 @@ class DXContainer(DXObject):
 
     def move(self, destination, objects=[], folders=[], **kwargs):
         """
+        :param destination: Path of destination folder
+        :type destination: string
         :param objects: List of object IDs to move
         :type objects: list of strings
         :param folders: List of full paths to folders to move
         :type folders: list of strings
-        :param destination: Path of destination folder
-        :type destination: string
 
         Moves the specified objects and folders into the folder
-        represented by *destination*.  Moving a folder also moves all
-        contained folders and objects.  If an object or folder is
+        represented by *destination*. Moving a folder also moves all
+        contained folders and objects. If an object or folder is
         explicitly specified but also appears inside another specified
-        folder, it will be removed from the larger folder and placed
+        folder, it will be removed from its parent folder and placed
         directly in *destination*.
 
         """
@@ -153,8 +171,9 @@ class DXContainer(DXObject):
         :param destination: Full path to the destination folder that will contain *folder*
         :type destination: string
 
-        Moves *folder* to reside in *destination* in the same project or container.
-        Note that all contained objects and subfolders are also moved.
+        Moves *folder* to reside in *destination* in the same project or
+        container. All objects and subfolders inside *folder* are also
+        moved.
 
         """
         api_method = dxpy.api.containerMove
@@ -169,11 +188,16 @@ class DXContainer(DXObject):
         """
         :param folder: Full path to the folder to remove
         :type folder: string
-        :param recurse: Whether to remove all objects in the folder as well
+        :param recurse: If True, recursively remove all objects and subfolders in the folder
         :type recurse: bool
 
-        Removes the specified folder in the project or container; it must be empty
-        to be removed.
+        Removes the specified folder from the project or container. It
+        must be empty to be removed, unless *recurse* is True.
+
+        Removal propagates to any hidden objects that become unreachable
+        from any visible object in the same project or container as a
+        result of this operation. (This can only happen if *recurse* is
+        True.)
 
         """
         api_method = dxpy.api.containerRemoveFolder
@@ -188,9 +212,11 @@ class DXContainer(DXObject):
         :param objects: List of object IDs to remove from the project or container
         :type objects: list of strings
 
-        Removes the specified objects in the project or container; removal
-        propagates to any linked hidden objects that would otherwise be
-        unreachable from any visible object in the same project or container.
+        Removes the specified objects from the project or container.
+
+        Removal propagates to any hidden objects that become unreachable
+        from any visible object in the same project or container as a
+        result of this operation.
 
         """
         api_method = dxpy.api.containerRemoveObjects
@@ -203,25 +229,27 @@ class DXContainer(DXObject):
     def clone(self, container, destination="/", objects=[], folders=[],
               include_hidden_links=True, **kwargs):
         """
-        :param objects: List of object IDs to move
-        :type objects: list of strings
-        :param folders: List of full paths to folders to move
-        :type folders: list of strings
         :param container: Destination container ID
         :type container: string
         :param destination: Path of destination folder in the destination container
         :type destination: string
-        :param include_hidden_links: Whether to also clone objects that are hidden and linked from any of the objects that would be cloned
+        :param objects: List of object IDs to move
+        :type objects: list of strings
+        :param folders: List of full paths to folders to move
+        :type folders: list of strings
+        :param include_hidden_links: If True, also clone objects that are hidden and linked to from any of the objects that would be cloned
         :type include_hidden_links: boolean
 
-        Clones (copies) the specified objects and folders in the container to
-        the container specified in *container* and into the folder
-        *destination*. Cloning a folder also clones all contained folders and
-        objects. If an object or folder is explicitly specified but also
-        appears inside another specified folder, it will be removed from the
-        larger folder and placed directly in *destination*. Note that objects
-        must be in the "closed" state to be cloned, and that no objects or
-        folders are modified in the source container.
+        Clones (copies) the specified objects and folders in the
+        container into the folder *destination* in the container
+        *container*. Cloning a folder also clones all all folders and
+        objects it contains. If an object or folder is explicitly
+        specified but also appears inside another specified folder, it
+        will be removed from its parent folder and placed directly in
+        *destination*. No objects or folders are modified in the source
+        container.
+
+        Objects must be in the "closed" state to be cloned.
 
         """
         api_method = dxpy.api.containerClone
@@ -241,6 +269,8 @@ class DXContainer(DXObject):
 #############
 
 class DXProject(DXContainer):
+    '''Remote project handler.'''
+
     def update(self, name=None, description=None, protected=None,
                restricted=None, **kwargs):
         """
@@ -253,8 +283,11 @@ class DXProject(DXContainer):
         :param restricted: Whether the project should become restricted
         :type restricted: boolean
 
-        Updates the project with the new fields.  Each field is
-        optional.  Fields that are not provided are not changed.
+        Updates the project with the new fields. All fields are
+        optional. Fields that are not provided are not changed.
+        See the API documentation for the `/project-xxxx/update
+        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate>`_
+        method for more info.
 
         """
         update_hash = {}
@@ -270,7 +303,7 @@ class DXProject(DXContainer):
 
     def invite(self, invitee, level, **kwargs):
         """
-        :param invitee: Username (of the form "user-USERNAME") or email of person to be invited to the project; use "PUBLIC" to make the project publicly available (in which case level must be set to "VIEW").
+        :param invitee: Username (of the form "user-USERNAME") or email address of person to be invited to the project; use "PUBLIC" to make the project publicly available (in which case level must be set to "VIEW").
         :type invitee: string
         :param level: Permissions level that the invitee would get ("LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
         :type level: string
@@ -287,7 +320,7 @@ class DXProject(DXContainer):
         """
         :param member: Username (of the form "user-USERNAME") of the project member whose permissions will be decreased.
         :type member: string
-        :param level: Permissions level that the member will now have (None, "LIST", "VIEW", or "CONTRIBUTE")
+        :param level: Permissions level that the member will have after this operation (None, "LIST", "VIEW", or "CONTRIBUTE")
         :type level: string or None
 
         Decreases the permissions that the specified user has in the project.

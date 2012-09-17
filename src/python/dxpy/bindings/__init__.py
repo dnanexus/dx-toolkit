@@ -1,7 +1,7 @@
 """
-The :class:`DXObject` class defined below is the abstract base class
-for all remote object handlers, and the :class:`DXDataObject` class is
-the abstract base class for all data object handlers.
+The :class:`DXObject` class is the abstract base class for all remote
+object handlers, and its subclass :class:`DXDataObject` is the abstract
+base class for all remote data object handlers.
 """
 
 import time, re, requests, sys, json
@@ -16,7 +16,7 @@ NUM_HTTP_THREADS = 4
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
-    def __init__(self, dxid=None, project=None):
+    def __init__(self, dxid=None):
         raise NotImplementedError("DXObject is an abstract class; a subclass should be initialized instead.")
 
     def __str__(self):
@@ -73,7 +73,7 @@ class DXDataObject(DXObject):
         :type tags: list of strings
         :param types: Types to add to the object
         :type types: list of strings
-        :param hidden: Whether the object is to be hidden or not
+        :param hidden: Whether the object is to be hidden
         :type hidden: boolean
         :param properties: Properties given as key-value pairs of strings
         :type properties: dict
@@ -81,13 +81,16 @@ class DXDataObject(DXObject):
         :type details: dict or list
         :param folder: Full path to the destination folder
         :type folder: string
-        :param parents: Whether to recursively create all parent folders if they are missing
+        :param parents: If True, recursively create all parent folders if they are missing
         :type parents: boolean
 
-        Creates the data object with the given fields.  Only *project*
-        is required if no default project or workspace is set; the
-        rest are optional and have default behavior as specified in
-        the API documentation.
+        :rtype: :class:`DXDataObject`
+
+        Creates a data object with the given fields. Only *project* is
+        required, and only if no default project or workspace is set;
+        the remaining arguments are optional and have default behavior
+        as specified in the API documentation for the ``/new`` method of
+        each data object class.
 
         '''
         try:
@@ -107,9 +110,10 @@ class DXDataObject(DXObject):
         :param project: Project ID
         :type project: string
 
-        Discards the currently stored ID and associates the handler
-        with *dxid*.  Associates the handler with the copy of the
-        object in *project*.  Uses the current workspace ID as the default.
+        Discards the currently stored ID and associates the handler with
+        *dxid*. Associates the handler with the copy of the object in
+        *project* (if no project is explicitly specified, the default
+        data container is used).
 
         '''
         self._proj = None
@@ -140,7 +144,8 @@ class DXDataObject(DXObject):
         :returns: Project ID of associated object
         :rtype: string
 
-        Returns the project ID, if any, that the handler is currently associated with.
+        Returns the project ID, if any, that the handler is currently
+        associated with.
 
         '''
 
@@ -148,17 +153,24 @@ class DXDataObject(DXObject):
 
     def describe(self, incl_properties=False, incl_details=False, **kwargs):
         """
-        :param incl_properties: Whether to also include the properties of the object
+        :param incl_properties: If true, includes the properties of the object in the output
         :type incl_properties: boolean
-        :param incl_details: Whether to also include the details of the object
+        :param incl_details: If true, includes the details of the object in the output
         :type incl_details: boolean
         :returns: Description of the remote object
         :rtype: dict
 
-        Returns a dict with a description of the remote data object. The result
-        includes the key-value pairs as specified in the API documentation,
-        such as "id", "class", etc. Different classes of objects may have
-        different fields.
+        Returns a dict with a description of the remote data object. The
+        result includes the key-value pairs as specified in the API
+        documentation for the ``/describe`` method of each data object
+        class. At a minimum, "id", "class", etc. should be available,
+        but different classes of objects may have additional fields.
+
+        If *incl_properties* is set, the output contains an additional
+        key-value pair with key "properties". If *incl_details* is set,
+        the output contains an additional key-value pair with key
+        "details".
+
         """
 
         if self._proj is not None:
@@ -175,12 +187,10 @@ class DXDataObject(DXObject):
         """
         :param types: Types to add to the object
         :type types: list of strings
+        :raises: :class:`~dxpy.exceptions.DXAPIError` if the object is not in the "open" state
 
-        Adds the list of types to the remote object.  Takes no action
-        for types that are already listed for the object.
-
-        This method can only be called if the object is in the "open"
-        state.
+        Adds each of the specified types to the remote object. Takes no
+        action for types that are already listed for the object.
 
         """
 
@@ -190,12 +200,10 @@ class DXDataObject(DXObject):
         """
         :param types: Types to remove from the object
         :type types: list of strings
+        :raises: :class:`~dxpy.exceptions.DXAPIError` if the object is not in the "open" state
 
-        Removes the list of types from the remote object.  Takes no
-        action for types that the object does not currently have.
-
-        This method can only be called if the object is in the "open"
-        state.
+        Removes each the specified types from the remote object. Takes
+        no action for types that the object does not currently have.
 
         """
 
@@ -214,14 +222,12 @@ class DXDataObject(DXObject):
         """
         :param details: Details to set for the object
         :type details: dict or list
+        :raises: :class:`~dxpy.exceptions.DXAPIError` if the object is not in the "open" state
 
-        Sets the details for the remote object with the specified
-        value.  If the input contains the string "$dnanexus_link" as a
-        key in a hash, it must be the only key in the hash, and its
-        value must be a valid ID of an existing object.
-
-        This method can only be called if the object is in the "open"
-        state.
+        Sets the details for the remote object with the specified value.
+        If the input contains the string ``"$dnanexus_link"`` as a key
+        in a hash, it must be the only key in the hash, and its value
+        must be a valid ID of an existing object.
 
         """
 
@@ -229,10 +235,9 @@ class DXDataObject(DXObject):
 
     def hide(self, **kwargs):
         """
-        Hides the remote object.
+        :raises: :class:`~dxpy.exceptions.DXAPIError` if the object is not in the "open" state
 
-        This method can only be called if the object is in the "open"
-        state.
+        Hides the remote object.
 
         """
 
@@ -240,10 +245,9 @@ class DXDataObject(DXObject):
 
     def unhide(self, **kwargs):
         """
-        Makes the remote object visible.
+        :raises: :class:`~dxpy.exceptions.DXAPIError` if the object is not in the "open" state
 
-        This method can only be called if the object is in the "open"
-        state.
+        Makes the remote object visible.
 
         """
 
@@ -273,16 +277,19 @@ class DXDataObject(DXObject):
 
     def set_properties(self, properties, **kwargs):
         """
-        :param properties: Properties given as key-value pairs of strings; a value of :const:`None` indicates a property should be deleted
+        :param properties: Property names and values given as key-value pairs of strings
         :type properties: dict
 
         Given key-value pairs in *properties* for property names and
         values, the properties are set on the object for the given
-        property names.  Note that existing properties not mentioned
-        in *properties* are not changed by this method.
+        property names. Any property with a value of :const:`None`
+        indicates the property will be deleted.
+
+        .. note:: Any existing properties not mentioned in *properties*
+           are not modified by this method.
 
         The following example sets the properties for "name" and
-        "project" for a remote gtable::
+        "project" for a remote GTable::
 
             dxgtable.set_properties({"name": "George", "project": "cancer"})
 
@@ -301,8 +308,8 @@ class DXDataObject(DXObject):
         :param tags: Tags to add to the object
         :type tags: list of strings
 
-        Adds the list of tags to the remote object.  Takes no action
-        for tags that are already listed for the object.
+        Adds each of the specified tags to the remote object. Takes no
+        action for tags that are already listed for the object.
 
         """
 
@@ -314,8 +321,8 @@ class DXDataObject(DXObject):
         :param tags: Tags to remove from the object
         :type tags: list of strings
 
-        Removes the list of tags from the remote object.  Takes no
-        action for tags that the object does not currently have.
+        Removes each of the specified tags from the remote object. Takes
+        no action for tags that the object does not currently have.
 
         """
 
@@ -333,8 +340,10 @@ class DXDataObject(DXObject):
 
     def list_projects(self, **kwargs):
         """
-        Returns a list of project IDs for the projects that contain
-        this object and are visible to the requesting user.
+        :rtype: list of strings
+
+        Returns a list of project IDs of the projects that contain this
+        object and are visible to the requesting user.
 
         """
 
@@ -342,9 +351,10 @@ class DXDataObject(DXObject):
 
     def remove(self, **kwargs):
         '''
-        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object.
+        :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
 
-        Permanently removes the associated remote object from the associated project.
+        Permanently removes the associated remote object from the
+        associated project.
         '''
 
         if self._proj is None:
@@ -382,12 +392,15 @@ class DXDataObject(DXObject):
         :type project: string
         :param folder: Folder route to which to move the object
         :type folder: string
+        :param include_hidden_links: If True, hidden objects linked to by this object are also cloned into the destination project
+        :type include_hidden_links: boolean
         :raises: :exc:`~dxpy.exceptions.DXError` if no project is associated with the object
         :returns: An object handler for the new cloned object
         :rtype: :class:`DXDataObject`
 
-        Clones the associated remote object to *folder* in *project*
-        and returns an object handler for the new object.
+        Clones the associated remote object to *folder* in *project* and
+        returns an object handler for the new object in the destination
+        project.
 
         '''
 

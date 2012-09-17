@@ -16,49 +16,55 @@ Documentation on classes and methods:
    dxpy_search
 
 This module contains useful Python bindings for calling API methods on
-the DNAnexus platform. Data objects (such as records, files,
-GenomicTables, tables, and applets) are represented locally by a
-handler that inherits from the abstract class :class:`dxpy.bindings.DXDataObject`.
+the DNAnexus Platform. Data objects (such as records, files,
+GenomicTables, and applets) are represented locally by a handler that
+inherits from the abstract class :class:`~dxpy.bindings.DXDataObject`.
 This abstract base class supports functionality common to all of the
-data object classes--for example, setting properties and types, as
-well as cloning the object to a different project, moving it to a
-different folder in the same project, or removing the object from a
-project. Note that while this documentation will largely refer to data
-containers as simply "projects", both project and container IDs can be
-used and will be returned as appropriate.
+data object classes--for example, setting properties and types, as well
+as cloning the object to a different project, moving it to a different
+folder in the same project, or removing the object from a project.
+
+.. note:: While this documentation will largely refer to data containers
+   as simply "projects", both project and container IDs can generally be
+   provided as input and will be returned as output anywhere a "project"
+   is expected, unless otherwise noted.
 
 A remote handler for a data object always has two IDs associated with
 it: one ID representing the underlying data, and a project ID to
-indicate which project's copy it represents. The ID of a data object
-remains the same when it is moved within a project or cloned to
-another project. To access a preexisting object, a remote handler for
-that class can be set up via two methods: the constructor or the
-:meth:`dxpy.bindings.DXDataObject.set_ids` method. For example::
+indicate which project's copy it represents. (If not explicitly
+specified for a particular handler, the project defaults to the default
+data container.) The ID of a data object remains the same when it is
+moved within a project or cloned to another project. To access a
+preexisting object, a remote handler for that class can be set up via
+two methods: the constructor or the
+:meth:`~dxpy.bindings.DXDataObject.set_ids` method. For example::
 
+    # Provide ID in constructor
     dxFileHandle = DXFile("file-1234")
 
+    # Provide no ID initially, then call set_ids()
     dxOtherFH = DXFile()
     dxOtherFH.set_ids("file-4321")
 
-Neither of these methods perform API calls; they merely set the state
-of the remote file handler. The object ID and project ID stored in the
-handler can be overwritten with subsequent calls to
-:meth:`dxpy.bindings.DXDataObject.set_ids`.
+Neither of these methods perform API calls; they merely set the local
+state of the remote file handler. The object ID and project ID stored in
+the handler can be overwritten with subsequent calls to
+:meth:`~dxpy.bindings.DXDataObject.set_ids`.
 
 Creation of a new object can be performed using the method
 :meth:`dxpy.bindings.DXDataObject.new`. In each subclass of
-:class:`dxpy.bindings.DXDataObject` the method can take class-specific
-arguments::
+:class:`~dxpy.bindings.DXDataObject` the method can take class-specific
+arguments, for example::
 
     newDXFileHandle = DXFile()
     newDXFileHandle.new(media_type="application/json")
 
-Some of the classes provide additional functions that are shorthand
-for some of these common use cases. For instance,
+Some of the classes provide additional functions that are shorthand for
+some of these common use cases. For instance,
 :func:`dxpy.bindings.dxfile_functions.open_dxfile` opens a preexisting
 file, and :func:`dxpy.bindings.dxfile_functions.new_dxfile` creates a
-new file and opens it for writing. Both of these methods return a
-remote object handler on which the other methods can be called.
+new file and opens it for writing. Both of those methods return a remote
+object handler on which additional methods can be called.
 
 In addition, class-specific handlers provide extra functionality for
 their respective classes. For example,

@@ -1,16 +1,26 @@
 '''
-These functions provide shorthand functional interfaces for actions such as
-getting a :class:`dxpy.bindings.DXDataObject` handler from an ID or `link <http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_ or creating a link from a handler.  In addition, there are functions for performing simple actions with an ID or link as input when you do not need to keep around a full object handler after performing the action.
+
+These functions provide shorthand functional interfaces for actions such
+as getting a :class:`~dxpy.bindings.DXDataObject` handler from an ID or
+`link
+<http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_,
+or creating a link from a handler. In addition, there are functions for
+performing simple actions with an ID or link as input without creating a
+full object handler.
+
 '''
 
 from dxpy.bindings import *
 
 def dxlink(object_id, project_id=None):
     '''
-    :param object_id: String containing an object ID or the object handler itself
-    :param project_id: String containing a project ID, if creating a cross-project DXLink
+    :param object_id: Object ID or the object handler itself
+    :type object_id: string or :class:`~dxpy.bindings.DXDataObject`
+    :param project_id: A project ID, if creating a cross-project DXLink
+    :type project_id: string
 
-    Creates a DXLink (a dict formatted as a symbolic DNAnexus object reference).
+    Creates a DXLink (a dict formatted as a symbolic DNAnexus object
+    reference) to the specified object.
     '''
     if isinstance(object_id, DXDataObject):
         object_id = object_id.get_id()
@@ -24,7 +34,7 @@ def is_dxlink(x):
     :param x: A potential DNAnexus link
 
     Returns whether *x* appears to be a DNAnexus link (is a dict with
-    key "$dnanexus_link").
+    key ``"$dnanexus_link"``).
     '''
     return isinstance(x, dict) and '$dnanexus_link' in x
 
@@ -35,7 +45,8 @@ def get_dxlink_ids(link):
     :returns: Object ID, Project ID (or :const:`None` if no project specified in the link)
     :rtype: tuple
 
-    Returns the IDs stored in the given DNAnexus link.
+    Returns the object and project IDs stored in the given DNAnexus
+    link.
     '''
     if isinstance(link['$dnanexus_link'], dict):
         return link['$dnanexus_link']['id'], link['$dnanexus_link']['project']
@@ -55,11 +66,12 @@ def _guess_link_target_type(link):
 def get_handler(link, project=None):
     '''
     :param link: String containing an object ID or dict containing a DXLink
+    :rtype: :class:`~dxpy.bindings.DXDataObject`
 
     Parses a string or DXLink dict. Creates and returns an object handler for it.
 
     Example::
-    
+
         get_handler("gtable-1234").get_col_names()
     '''
     try:
@@ -75,7 +87,7 @@ def describe(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
 
-    Given an object ID, recognizes the class and calls describe on it.
+    Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.describe` on the object.
 
     Example::
 
@@ -88,7 +100,7 @@ def get_details(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
 
-    Given an object ID, recognizes the class and calls getDetails on it.
+    Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.get_details` on the object.
 
     Example::
 
@@ -101,7 +113,7 @@ def remove(link, **kwargs):
     '''
     :param link: String containing an object ID or dict containing a DXLink
 
-    Given an object ID, recognizes the class and calls remove on it.
+    Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.remove` on the object.
 
     Example::
 
