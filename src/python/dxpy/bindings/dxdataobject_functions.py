@@ -63,9 +63,9 @@ def _guess_link_target_type(link):
     cls = dxpy.__dict__[class_name]
     return cls
 
-def get_handler(link, project=None):
+def get_handler(id_or_link, project=None):
     '''
-    :param link: String containing an object ID or dict containing a DXLink
+    :param id_or_link: String containing an object ID or dict containing a DXLink
     :rtype: :class:`~dxpy.bindings.DXDataObject`
 
     Parses a string or DXLink dict. Creates and returns an object handler for it.
@@ -75,17 +75,17 @@ def get_handler(link, project=None):
         get_handler("gtable-1234").get_col_names()
     '''
     try:
-        cls = _guess_link_target_type(link)
+        cls = _guess_link_target_type(id_or_link)
         if project is not None:
-            return cls(link, project=project)
+            return cls(id_or_link, project=project)
         else:
-            return cls(link)
+            return cls(id_or_link)
     except Exception as e:
-        raise DXError("Could not parse link "+str(link))
+        raise DXError("Could not parse link "+str(id_or_link))
 
-def describe(link, **kwargs):
+def describe(id_or_link, **kwargs):
     '''
-    :param link: String containing an object ID or dict containing a DXLink
+    :param id_or_link: String containing an object ID or dict containing a DXLink
 
     Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.describe` on the object.
 
@@ -93,12 +93,12 @@ def describe(link, **kwargs):
 
         describe("file-1234")
     '''
-    handler = get_handler(link)
+    handler = get_handler(id_or_link)
     return handler.describe(**kwargs)
 
-def get_details(link, **kwargs):
+def get_details(id_or_link, **kwargs):
     '''
-    :param link: String containing an object ID or dict containing a DXLink
+    :param id_or_link: String containing an object ID or dict containing a DXLink
 
     Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.get_details` on the object.
 
@@ -106,12 +106,12 @@ def get_details(link, **kwargs):
 
         get_details("file-1234")
     '''
-    handler = get_handler(link)
+    handler = get_handler(id_or_link)
     return handler.get_details(**kwargs)
 
-def remove(link, **kwargs):
+def remove(id_or_link, **kwargs):
     '''
-    :param link: String containing an object ID or dict containing a DXLink
+    :param id_or_link: String containing an object ID or dict containing a DXLink
 
     Given an object ID, calls :meth:`~dxpy.bindings.DXDataObject.remove` on the object.
 
@@ -119,5 +119,5 @@ def remove(link, **kwargs):
 
         remove("file-1234")
     '''
-    handler = get_handler(link)
+    handler = get_handler(id_or_link)
     return handler.remove(**kwargs)
