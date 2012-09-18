@@ -205,6 +205,10 @@ void closeFileObject(const string &fileID) {
   fileClose(fileID);
 }
 
+void removeFromProject(const string &projID, const string &objID) {
+  projectRemoveObjects(projID, dx::JSON::parse("{\"objects\": [\"" + objID + "\"]}"));
+}
+
 string getFileState(const string &fileID) {
   dx::JSON result = fileDescribe(fileID);
   return result["state"].get<string>();

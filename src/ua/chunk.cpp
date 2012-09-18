@@ -75,17 +75,8 @@ void Chunk::compress() {
     
     if (destLen < 5 * 1024 * 1024) {
       log("Compression at level 1, resulted in data size = " + boost::lexical_cast<string>(destLen) + " bytes. " +
-          "We cannot upload data less than 5MB in any chunk (except last). Critical error.");
-      cerr << "One of the chunks for file " << localFile << " was compressed to less than 5MB. Upload to fileID: " 
-           << fileID << " cannot be completed. Program will terminate now (critical error)." << endl
-           << "Here are some of the things you can try: " << endl
-           << "  1. Upload file " << localFile << " without compression (--do-not-compress flag)" << endl
-           << "  2. Try increasing chunk size to a larger value. (--chunk-size option)" << endl
-           << "  3. Remove this file from upload list (so other file uploads (if any) can continue)" << endl;
-      // TODO: Should we be removing the incomplete file ? If yes, we need projectID in Chunk class.
-/*      cerr << endl << "Program will clear the incomplete remote file: " << fileID;
-      projectRemove(projectID, dx::JSON::parse("[\"" + fileID + "\"]"));*/
-      throw runtime_error("compression (at level 1) produced chunk size " + boost::lexical_cast<string>(destLen) + " bytes (< 5MB).");
+          "We cannot upload data less than 5MB in any chunk (except last). The remote file: \"" + boost::lexical_cast<string>(fileID) + 
+          "\" will fail to close at the end.");
     }
   }
 

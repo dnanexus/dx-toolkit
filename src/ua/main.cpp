@@ -14,6 +14,7 @@
 #include "chunk.h"
 #include "File.h"
 #include "log.h"
+#include "dxcpp/dxcpp.h"
 
 #include <boost/filesystem.hpp>
 
@@ -431,7 +432,22 @@ int main(int argc, char * argv[]) {
       } else {
         cerr << "File " << files[i] << " was uploaded successfully. Closing...";
         if (files[i].isRemoteFileOpen) {
-          files[i].close();
+          try {
+            files[i].close();
+          } catch (DXAPIError &e) {
+            if (e.name == "InvalidState") {
+              // TODO: Make sure, that a file can never be in "InvalidState" other than < 5MB case
+              cerr << "One of the chunks for file \"" << files[i].localFile << "\" was compressed to less than 5MB. Upload to fileID " 
+                   << files[i].fileID << ", cannot be completed (will remove the incomplete remote file)" << endl
+                   << "Here are some of the things you can try for uploading file: \"" << files[i].localFile << "\":" << endl
+                   << "  1. Upload without compression (--do-not-compress flag)" << endl
+                   << "  2. Try increasing chunk size to a larger value. (--chunk-size option)" << endl;
+              removeFromProject(files[i].projectID, files[i].fileID);
+              files[i].failed = true;
+            } else {
+              throw;
+            }
+          }
         }
         cerr << endl;
       }
