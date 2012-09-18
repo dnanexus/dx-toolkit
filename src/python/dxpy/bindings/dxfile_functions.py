@@ -8,6 +8,7 @@ The following helper functions are useful shortcuts for interacting with File ob
 
 import os
 from dxpy.bindings import *
+from math import floor
 
 def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
     '''
@@ -79,12 +80,32 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
         download_dxfile("file-xxxx", "localfilename.fastq")
 
     '''
+    file_size = None
+    num_ticks = 60
+    bytes = 0
+
     mode = 'ab' if append else 'wb'
-    with DXFile(dxid) as dxfile:
+    with DXFile(dxid, buffer_size=chunksize) as dxfile:
         with open(filename, mode) as fd:
             while True:
                 file_content = dxfile.read(chunksize, **kwargs)
+
+                if file_size is None:
+                  file_size = dxfile._file_length
+
+
+                bytes += len(file_content)
+                ticks = int(floor(bytes / (file_size / num_ticks)))
+                percent = int(round((bytes / float(file_size)) * 100))
+
+                fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
+                sys.stdout.write(fmt.format('X' * ticks, ' ' * (num_ticks - ticks), bytes, file_size, percent))
+                sys.stdout.flush()
+                sys.stdout.write("\r")
+                sys.stdout.flush()
+
                 if len(file_content) == 0:
+                    print ""
                     break
                 fd.write(file_content)
 
