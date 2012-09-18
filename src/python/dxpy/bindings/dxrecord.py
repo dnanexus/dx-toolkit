@@ -51,7 +51,7 @@ class DXRecord(DXDataObject):
 
     def _new(self, dx_hash, **kwargs):
         """
-        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()` containing attributes common to all data object classes.
         :type dx_hash: dict
         :param init_from: Record from which to initialize the metadata
         :type init_from: :class:`DXRecord`

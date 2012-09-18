@@ -143,7 +143,7 @@ class DXGTable(DXDataObject):
 
     def _new(self, dx_hash, **kwargs):
         '''
-        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()`
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()` containing attributes common to all data object classes.
         :type dx_hash: dict
         :param columns: An ordered list containing column descriptors. See :meth:`make_column_desc`.
         :type columns: list of column descriptors
