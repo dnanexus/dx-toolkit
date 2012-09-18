@@ -1,5 +1,5 @@
-dxpy Package
-============
+:mod:`dxpy` Package
+===================
 
 This Python 2.7 package includes three key modules:
 

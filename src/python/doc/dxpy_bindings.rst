@@ -1,5 +1,5 @@
-dxpy Object Handlers
-====================
+:mod:`dxpy` Object Handlers
+===========================
 
 .. automodule:: dxpy.bindings
    :members:
