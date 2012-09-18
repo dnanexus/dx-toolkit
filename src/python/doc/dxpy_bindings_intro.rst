@@ -27,16 +27,33 @@ folder in the same project, or removing the object from a project.
 .. note:: While this documentation will largely refer to data containers
    as simply "projects", both project and container IDs can generally be
    provided as input and will be returned as output anywhere a "project"
-   is expected, unless otherwise noted.
+   is expected, except in methods of the
+   :class:`~dxpy.bindings.dxproject.DXProject` class specifically or
+   where otherwise noted.
 
-A remote handler for a data object always has two IDs associated with
-it: one ID representing the underlying data, and a project ID to
-indicate which project's copy it represents. (If not explicitly
-specified for a particular handler, the project defaults to the default
-data container.) The ID of a data object remains the same when it is
-moved within a project or cloned to another project. To access a
-preexisting object, a remote handler for that class can be set up via
-two methods: the constructor or the
+.. rubric:: Object and Project IDs
+
+A remote handler for a data object has two IDs associated with it: one
+ID representing the underlying data and a project ID to indicate which
+project's copy it represents. (If not explicitly specified for a
+particular handler, the project defaults to the default data container.)
+The ID of a data object remains the same when it is moved within a
+project or cloned to another project.
+
+The project ID is **only** relevant when using certain metadata fields
+that are tied to a particular project. These are the name, properties,
+and tags fields, and are read and updated using the following methods:
+:meth:`~dxpy.bindings.DXDataObject.describe` ("name", "properties", and
+"tags" fields), :meth:`~dxpy.bindings.DXDataObject.rename`,
+:meth:`~dxpy.bindings.DXDataObject.get_properties`,
+:meth:`~dxpy.bindings.DXDataObject.set_properties`,
+:meth:`~dxpy.bindings.DXDataObject.add_tags`,
+:meth:`~dxpy.bindings.DXDataObject.remove_tags`.
+
+.. rubric:: Creating new handlers and remote objects
+
+To access a preexisting object, a remote handler for that class can be
+set up via two methods: the constructor or the
 :meth:`~dxpy.bindings.DXDataObject.set_ids` method. For example::
 
     # Provide ID in constructor
@@ -51,7 +68,9 @@ state of the remote file handler. The object ID and project ID stored in
 the handler can be overwritten with subsequent calls to
 :meth:`~dxpy.bindings.DXDataObject.set_ids`.
 
-Creation of a new object can be performed using the method
+The object handler ``__init__`` methods do not create new remote
+objects; they only initialize whatever local state the handler needs.
+Creation of a new remote object can be performed using the method
 :meth:`dxpy.bindings.DXDataObject.new`. In each subclass of
 :class:`~dxpy.bindings.DXDataObject` the method can take class-specific
 arguments, for example::
