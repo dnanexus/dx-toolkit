@@ -185,7 +185,7 @@ bool_completer = Completer(['true', 'false'])
 print ''
 print BOLD() + 'Input Specification' + ENDC()
 print ''
-print fill('Specifying the inputs to your app is optional but is required if you would like to publish it as an app.')
+print fill('Specifying the inputs is optional for applets, but required for apps.')
 print ''
 
 input_spec = prompt_for_yn('Specify inputs', True)
@@ -266,7 +266,7 @@ array:gtable   array:record   file           int            table
 print ''
 print BOLD() + 'Output Specification' + ENDC()
 print ''
-print fill('Specifying the outputs to your app is optional but is required if you would like to publish it as an app.')
+print fill('Specifying the outputs is optional for applets, but required for apps.')
 print ''
 
 output_spec = prompt_for_yn('Specify outputs', True)
