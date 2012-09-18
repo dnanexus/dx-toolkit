@@ -147,7 +147,7 @@ class DXGTable(DXDataObject):
         :type dx_hash: dict
         :param columns: An ordered list containing column descriptors. See :meth:`make_column_desc`.
         :type columns: list of column descriptors
-        :param indices: An ordered list containing index descriptors. See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`. If not provided, no indices are created.
+        :param indices: An ordered list containing index descriptors. See :meth:`genomic_range_index()` and :meth:`lexicographic_index()`. If not provided, no indices are created.
         :type indices: list of index descriptors
         :param init_from: GTable from which to initialize the metadata including column and index specs
         :type init_from: :class:`DXGTable`
@@ -202,7 +202,7 @@ class DXGTable(DXDataObject):
 
     def get_rows(self, query=None, columns=None, starting=None, limit=None, **kwargs):
         '''
-        :param query: Query with which to filter the rows. See :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, or :meth:`substring_query()`.
+        :param query: Query with which to filter the rows. See :meth:`genomic_range_query()` and :meth:`lexicographic_query()`.
         :type query: dict
         :param columns: List of column names to be included in the output. If not specified, each result contains the row ID followed by all column values. You can explicitly obtain the row ID by requesting the column ``__id__``.
         :type columns: list of strings
@@ -308,7 +308,7 @@ class DXGTable(DXDataObject):
 
     def iterate_query_rows(self, query=None, columns=None, limit=None, want_dict=False, **kwargs):
         """
-        :param query: Query with which to filter the rows. See :meth:`genomic_range_query()`, :meth:`lexicographic_query()`, or :meth:`substring_query()`.
+        :param query: Query with which to filter the rows. See :meth:`genomic_range_query()` and :meth:`lexicographic_query()`.
         :type query: dict
         :param columns: List of column names to be included in the output. If not specified, each result contains the row ID followed by all column values. You can explicitly obtain the row ID by requesting the column ``__id__``.
         :type columns: list of strings
@@ -362,7 +362,7 @@ class DXGTable(DXDataObject):
         '''
         :param columns: List of new column descriptors. See :meth:`make_column_desc`.
         :type columns: list of column descriptors
-        :param indices: An ordered list containing index descriptors. See :meth:`genomic_range_index()`, :meth:`lexicographic_index()`, and :meth:`substring_index()`. If not provided, no indices are created.
+        :param indices: An ordered list containing index descriptors. See :meth:`genomic_range_index()` and :meth:`lexicographic_index()`. If not provided, no indices are created.
         :type indices: list of index descriptors
         :param mode: One of "w" or "a" for write and append modes, respectively
         :type mode: string
@@ -590,22 +590,6 @@ class DXGTable(DXDataObject):
                 "columns": columns}
 
     @staticmethod
-    def substring_index(column, name):
-        """
-        :param column: Column name to index by
-        :type column: string
-        :param name: Name of the index
-        :type name: string
-        :returns: A specially formatted dict that represents an index schema in the API
-        :rtype: dict
-
-        Returns a substring index descriptor, for use with the
-        :meth:`_new` or :meth:`extend` methods.
-
-        """
-        return {"name": name, "type": "substring", "column": column}
-
-    @staticmethod
     def genomic_range_query(chr, lo, hi, mode="overlap", index="gri"):
         """
         :param chr: Name of chromosome to be queried
@@ -647,34 +631,6 @@ class DXGTable(DXDataObject):
         """
 
         return {"index": index, "parameters": query}
-
-    @staticmethod
-    def substring_query(string, mode, index):
-        """
-        :param string: String to match
-        :type string: string
-        :param mode: Mode in which to match the string ("equal", "substring", or "prefix")
-        :type mode: string
-        :param index: Name of the substring index to use
-        :type index: string
-        :returns: A specially formatted dict that represents a GTable query in the API
-        :rtype: dict
-
-        Returns a query against a substring index of the table, for use
-        with the :meth:`get_rows` or :meth:`iterate_query_rows` methods.
-
-        """
-        query = {"index": index, "parameters": {} }
-        if mode == "equal":
-            query["parameters"]["$eq"] = string
-        elif mode == "substring":
-            query["parameters"]["$substr"] = string
-        elif mode == "prefix":
-            query["parameters"]["$prefix"] = string
-        else:
-            raise DXGTableError("Unrecognized substring index query mode: " + \
-                                str(mode))
-        return query
 
     def _async_add_rows_request(self, *args, **kwargs):
         kwargs['always_retry'] = True
