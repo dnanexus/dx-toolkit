@@ -171,6 +171,10 @@ class DXDataObject(DXObject):
         the output contains an additional key-value pair with key
         "details".
 
+        Any project-specific metadata fields (name, properties, and
+        tags) are obtained from the copy of the object in the project
+        associated with the handler, if possible.
+
         """
 
         if self._proj is not None:
@@ -260,6 +264,9 @@ class DXDataObject(DXObject):
 
         Renames the remote object.
 
+        The name is changed on the copy of the object in the project
+        associated with the handler.
+
         """
 
         return self._rename(self._dxid, {"project": self._proj,
@@ -271,6 +278,9 @@ class DXDataObject(DXObject):
         :rtype: dict
 
         Returns the properties of the object.
+
+        The properties are read from the copy of the object in the
+        project associated with the handler.
 
         """
         return self.describe(incl_properties=True, **kwargs)["properties"]
@@ -287,6 +297,9 @@ class DXDataObject(DXObject):
 
         .. note:: Any existing properties not mentioned in *properties*
            are not modified by this method.
+
+        The properties are written to the copy of the object in the
+        project associated with the handler.
 
         The following example sets the properties for "name" and
         "project" for a remote GTable::
@@ -311,6 +324,9 @@ class DXDataObject(DXObject):
         Adds each of the specified tags to the remote object. Takes no
         action for tags that are already listed for the object.
 
+        The tags are added to the copy of the object in the project
+        associated with the handler.
+
         """
 
         self._add_tags(self._dxid, {"project": self._proj, "tags": tags},
@@ -323,6 +339,9 @@ class DXDataObject(DXObject):
 
         Removes each of the specified tags from the remote object. Takes
         no action for tags that the object does not currently have.
+
+        The tags are removed from the copy of the object in the project
+        associated with the handler.
 
         """
 
