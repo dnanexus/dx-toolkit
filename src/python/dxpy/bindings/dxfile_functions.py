@@ -16,8 +16,8 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
     :type dxid: string
     :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
 
-    Given the object ID of an uploaded file, returns a remote file handler that
-    is a read-only file-like object.
+    Given the object ID of an uploaded file, returns a remote file
+    handler that is a Python file-like object.
 
     Example::
 
