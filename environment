@@ -34,4 +34,4 @@ _dx_argcomplete() {
         unset DX_IFS_TEMP
     fi
 }
-complete -F _dx_argcomplete dx
+complete -o nospace -F _dx_argcomplete dx
