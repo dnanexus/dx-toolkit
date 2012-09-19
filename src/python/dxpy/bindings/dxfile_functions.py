@@ -95,11 +95,11 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
 
 
                 bytes += len(file_content)
-                ticks = int(floor(bytes / (file_size / num_ticks)))
+                ticks = int(round((bytes / float(file_size)) * num_ticks))
                 percent = int(round((bytes / float(file_size)) * 100))
 
                 fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
-                sys.stdout.write(fmt.format('X' * ticks, ' ' * (num_ticks - ticks), bytes, file_size, percent))
+                sys.stdout.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
                 sys.stdout.flush()
                 sys.stdout.write("\r")
                 sys.stdout.flush()
