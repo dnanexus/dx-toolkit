@@ -555,9 +555,9 @@ class DXGTable(DXDataObject):
         """
         :param chr: Name of the column containing chromosome names; must be a column of type string
         :type chr: string
-        :param lo: Name of the column containing the low boundary of a genomic interval; must be a column of type int32
+        :param lo: Name of the column containing the low boundary of a genomic interval; must be a column of integral type
         :type lo: string
-        :param hi: Name of the column containing the high boundary of a genomic interval; must be a column of type int32
+        :param hi: Name of the column containing the high boundary of a genomic interval; must be a column of integral type
         :type hi: string
         :param name: Name of the index
         :type name: string

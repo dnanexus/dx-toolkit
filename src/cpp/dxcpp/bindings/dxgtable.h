@@ -685,10 +685,10 @@ public:
    *
    * @param chr Name of the column containing chromosome names (must be a column in the GTable, of
    * type string).
-   * @param lo Name of the column containing the low boundary of a genomic interval (must be a
-   * column in the GTable, of type int32).
-   * @param hi Name of the column containing the high boundary of a genomic interval (must be a
-   * column in the GTable, of type int32).
+   * @param lo Name of the column containing the low boundary of a genomic interval (must be an
+   * integral type column in the GTable).
+   * @param hi Name of the column containing the high boundary of a genomic interval (must be an
+   * integral type column in the GTable).
    * @param name Name of the index.
    *
    * @return A JSON object containing the index descriptor.
