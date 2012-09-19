@@ -9,7 +9,8 @@ href="http://wiki.dnanexus.com/Introduction-to-the-DNAnexus-Platform">Introducti
 to the DNAnexus Platform</a>. You may also find the following references to be
 useful as you develop your own scripts and apps:</p>
 <dl>
-  <dt>TODO: link to example C++ apps</dt>
+  <dt><a class="reference external" href="http://wiki.dnanexus.com/Building-Apps-in-cpp">Building Apps in C++</a></dt>
+  <dd>Tutorial for writing DNAnexus apps in C++</dd>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction">API Specification</a></dt>
   <dd>Complete details on the API, the lifecycle of different data objects, project permissions, and more. Many methods in the bindings translate directly into API calls, so it will be helpful to have at least a general understanding of the API's structure.</dd>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/Execution-Environment-Reference">Execution Environment Reference</a></dt>
