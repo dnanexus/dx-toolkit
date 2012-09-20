@@ -107,7 +107,7 @@ http_server_errors = set([requests.codes.server_error,
                           requests.codes.service_unavailable,
                           requests.codes.gateway_timeout])
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=3600, config=None,
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
                   max_retries=DEFAULT_RETRIES, always_retry=False,
