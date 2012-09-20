@@ -47,30 +47,14 @@ public class DXHTTPRequest {
         		+ SecurityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data));
 
-        /*
-        ResponseHandler<String> handler = new ResponseHandler<String>() {
-            public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-                HttpEntity entity = response.getEntity();
-                if (entity != null) {
-                    // TODO: check that this decodes safely
-                    return EntityUtils.toString(entity);
-                } else {
-                    return null;
-                }
-            }
-        };
-        */
-
         HttpResponse response = httpclient.execute(request);
+        
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        	throw new Exception();
+        }
 
         HttpEntity entity = response.getEntity();
-        EntityUtils.consume(entity);
-        System.out.println(entity);
-        
-        //        String response = entity.toString(); //httpclient.execute(request, handler);
-
-        //TODO: make handler throw on response.getStatusLine().getStatusCode()
-        return entity.toString();
+        return EntityUtils.toString(entity);
     }
 
     public JsonNode request(String resource, JsonNode data) throws Exception {
