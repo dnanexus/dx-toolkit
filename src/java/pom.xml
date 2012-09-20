@@ -63,6 +63,15 @@
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
         </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -93,7 +102,21 @@
                 </artifactItem>
               </artifactItems>
               <outputDirectory>/tmp/foo</outputDirectory>
-              <stripVersion>true</stripVersion>
+              <stripVersion>false</stripVersion>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>/tmp/foo</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
             </configuration>
           </execution>
         </executions>
