@@ -174,11 +174,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
-    dx_toolkit_dep = {"name": "dx-toolkit",
-                      "package_manager": "git",
-                      "url": "git@github.com:dnanexus/dx-toolkit.git",
-                      "tag": "master",
-                      "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
+    dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
         dx_toolkit_dep_found = False
