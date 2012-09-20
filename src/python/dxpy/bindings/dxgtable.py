@@ -14,7 +14,7 @@ from dxpy.bindings import *
 # progressively larger requests?
 DEFAULT_TABLE_READ_ROW_BUFFER_SIZE = 40000
 
-# Writing uses two bufferes: one that contains the actual rows (list of Python lists) and the
+# Writing uses two buffers: one that contains the actual rows (list of Python lists) and the
 # stringified data to send to the server (kept in a StringIO object). The row data is stringified
 # when we have accumulated a fixed number of rows. The stringified data is sent to the server once
 # its size exceeds a certain number of bytes.
