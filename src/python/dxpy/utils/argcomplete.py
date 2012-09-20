@@ -99,8 +99,8 @@ def autocomplete(parser, arg_completer=None, subcommands=None):
     if arg_completer and (not prefix or not prefix.startswith('-')):
         completions += arg_completer.get_matches(cline, cpoint, prefix, suffix)
 
-    # If there's only one completion, add a space
-    if len(completions) == 1:
+    # If there's only one completion, and it doesn't end with / or :, add a space
+    if len(completions) == 1 and completions[0][-1] not in '/:':
         completions[0] += ' '
 
     # Print result
