@@ -112,7 +112,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
             results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
                              list(dxpy.find_projects(describe=True, level=perm_level)))
             matches += filter(startswith(text),
-                              map(lambda result: escape_completion_name_str(result['describe']['name']) + ':', results))
+                              [(escape_completion_name_str(result['describe']['name']) + ':') for result in results])
 
     if expected == 'project':
         return matches
@@ -158,16 +158,97 @@ class DXPathCompleter():
     names with spaces, the delimiters set for the completer must not
     include spaces.
     '''
-    def __init__(self, expected=None, classes=None, typespec=None):
+    def __init__(self, expected=None, classes=None, typespec=None, include_current_proj=False):
         self.matches = []
         self.expected = expected
         self.classes = classes
         self.typespec = typespec
+        self.include_current_proj = include_current_proj
+
+    def get_matches(self, line, point, prefix, suffix):
+        self.matches = path_completer(prefix, self.expected, self.classes,
+                                      typespec=self.typespec,
+                                      include_current_proj=self.include_current_proj)
+        return self.matches
 
     def __call__(self, text, state):
         if state == 0:
             self.matches = path_completer(text, self.expected, self.classes,
-                                          typespec=self.typespec)
+                                          typespec=self.typespec,
+                                          include_current_proj=self.include_current_proj)
+
+        if state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
+
+class DXAppCompleter():
+    def __init__(self, installed=None):
+        self.matches = []
+        self.installed = installed
+
+    def _populate_matches(self, prefix):
+        appnames = [result['describe']['name'] for result in dxpy.find_apps(describe=True) if self.installed is None or (self.installed == result['describe']['installed'])]
+        self.matches = [name for name in appnames if name.startswith(prefix)]
+        if prefix != '':
+            appnames_with_prefix = [('app-' + name) for name in appnames]
+            self.matches += [name for name in appnames_with_prefix if name.startswith(prefix)]
+
+    def get_matches(self, line, point, prefix, suffix):
+        self._populate_matches(prefix)
+        return self.matches
+
+    def __call__(self, text, state):
+        if state == 0:
+            self._populate_matches(text)
+
+        if state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
+
+class LocalCompleter():
+    def __init__(self):
+        self.matches = []
+
+    def _populate_matches(self, prefix):
+        self.matches = [match for match in [path.replace(' ', '\ ') for path in os.listdir(os.getcwdu())] if match.startswith(prefix)]
+
+    def get_matches(self, line, point, prefix, suffix):
+        self._populate_matches(prefix)
+        return self.matches
+
+    def __call__(self, text, state):
+        if state == 0:
+            self._populate_matches(text)
+
+        if state < len(self.matches):
+            return self.matches[state].replace(' ', '\ ')
+        else:
+            return None
+
+class NoneCompleter():
+    def get_matches(self, line, point, prefix, suffix):
+        return []
+
+    def __call__(self, text, state):
+        return None
+
+class ListCompleter():
+    def __init__(self, completions):
+        self.completions = completions
+        self.matches = []
+
+    def _populate_matches(self, prefix):
+        self.matches = [ans for ans in completions if ans.startswith(prefix)]
+
+    def get_matches(self, line, point, prefix, suffix):
+        self._populate_matches(prefix)
+        return self.matches
+
+    def __call__(self, text, state):
+        if state == 0:
+            self._populate_matches(text)
 
         if state < len(self.matches):
             return self.matches[state]
