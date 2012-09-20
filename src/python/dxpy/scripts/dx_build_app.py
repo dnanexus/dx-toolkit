@@ -15,7 +15,7 @@ parser.add_argument("src_dir", help="App or applet source directory (default: cu
 
 parser.set_defaults(mode="app")
 parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
-parser.add_argument("--create-applet", help="Create an applet (default is to create an app).", action="store_const", dest="mode", const="applet")
+parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
 parser.add_argument("-p", "--destination-project", help="Insert the applet into the project with the specified project ID.", default=None)
 
 # --[no-]publish
