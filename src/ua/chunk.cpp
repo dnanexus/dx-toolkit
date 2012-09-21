@@ -19,6 +19,12 @@ extern "C" {
 
 using namespace std;
 
+/* Initialize the extern variables, decalred in chunk.h */
+queue<pair<time_t, int64_t> > instantaneousBytesAndTimestampQueue;
+int64_t sumOfInstantaneousBytes = 0;
+boost::mutex instantaneousBytesMutex;
+const size_t MAX_QUEUE_SIZE = 1000;
+
 void Chunk::read() {
   const int64_t len = end - start;
   data.clear();
@@ -122,16 +128,51 @@ size_t curlReadFunction(void * ptr, size_t size, size_t nmemb, void * userdata) 
   return bytesToCopy;
 }
 
+struct myProgressStruct {
+  int64_t uploadedBytes;
+  CURL *curl;
+};
+
+int progress_func(void* ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded) {
+  if (int64_t(NowUploaded) == 0) {
+    return 0;
+  }
+  myProgressStruct *myp = static_cast<myProgressStruct*>(ptr);
+  
+  boost::mutex::scoped_lock lock(instantaneousBytesMutex);
+  if (instantaneousBytesAndTimestampQueue.size() >= MAX_QUEUE_SIZE) {
+    pair<time_t, int64_t> elem = instantaneousBytesAndTimestampQueue.front();
+    sumOfInstantaneousBytes -= elem.second;
+    instantaneousBytesAndTimestampQueue.pop();
+  }
+  int64_t uploadedThisTime = int64_t(NowUploaded) - myp->uploadedBytes;
+  myp->uploadedBytes = int64_t(NowUploaded);
+  instantaneousBytesAndTimestampQueue.push(make_pair(std::time(0), uploadedThisTime));
+  sumOfInstantaneousBytes += uploadedThisTime;
+  
+  lock.unlock();
+  return 0;
+}
+
 void Chunk::upload() {
   string url = uploadURL();
   log("Upload URL: " + url);
 
   uploadOffset = 0;
-
+  
   CURL * curl = curl_easy_init();
   if (curl == NULL) {
     throw runtime_error("An error occurred when initializing the HTTP connection");
   }
+  
+  // Internal CURL progressmeter must be disabled if we provide our own callback
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0));
+  // Install the callback function
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func));
+  myProgressStruct prog;
+  prog.curl = curl;
+  prog.uploadedBytes = 0;
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog));
 
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1));
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()));

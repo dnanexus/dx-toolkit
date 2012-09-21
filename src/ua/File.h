@@ -4,7 +4,6 @@
 #include <string>
 
 #include "dxcpp/bqueue.h"
-
 #include "chunk.h"
 
 class File {
@@ -12,7 +11,7 @@ public:
 
   File(const std::string &localFile_,
        const std::string &projectSpec_, const std::string &folder_, const std::string &name_, const bool toCompress_, const bool tryResuming, const std::string &mimeType_, 
-       const int64_t chunkSize);
+       const int64_t chunkSize, const unsigned int fileIndex_);
 
   void init(const bool tryResuming);
 
@@ -64,6 +63,15 @@ public:
   /* chunk size for this file*/
   int64_t chunkSize;
 
+  /* Size of the local file to be uploaded */
+  int64_t size;
+
+  /* Number of bytes uploaded succesfuly so far from local file */
+  int64_t bytesUploaded;
+  
+  /* Index of this File object in the Files vector (in main.cpp) */
+  unsigned int fileIndex;
+
   friend std::ostream &operator<<(std::ostream &out, const File &file);
   
   /* Returns a string with all the input parameteres serialized in order 
@@ -71,6 +79,10 @@ public:
    * an upload can be resumed or not 
    */
   static std::string createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const std::string &name);
+
+/*  ~File() {
+    delete bytesUploadedMutex;
+  }*/
 };
 
 #endif

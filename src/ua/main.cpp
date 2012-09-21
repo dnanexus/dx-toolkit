@@ -22,6 +22,21 @@ using namespace std;
 
 Options opt;
 
+/* Mutex for "bytesUploaded" member variable of "File" class
+ * , as well as bytesUploadedSinceStart global variable.
+ */
+boost::mutex bytesUploadedMutex;
+
+/* Keep track of total number of bytes uploaded since starting of the program */
+int64_t bytesUploadedSinceStart = 0;
+
+/* Keep track of time since program started (i.e., just before creating worker threads)*/
+std::time_t startTime;
+
+/* This variable is used as an additional mechanism for terminating
+ * uploadProgressThread.*/ 
+bool keepShowingUploadProgress = true;
+
 /*
  * The Upload Agent operates as a collection of threads, operating on a set
  * of queues of Chunk objects.
@@ -86,7 +101,7 @@ void compressChunks() {
   }
 }
 
-void uploadChunks() {
+void uploadChunks(vector<File> &files) {
   try {
     while (true) {
       Chunk * c = chunksToUpload.consume();
@@ -107,6 +122,11 @@ void uploadChunks() {
         c->log("Upload succeeded!");
         c->clear();
         chunksFinished.produce(c);
+        // Update number of bytes uploaded in parent file object
+        boost::mutex::scoped_lock boLock(bytesUploadedMutex);
+        files[c->parentFileIndex].bytesUploaded += (c->end - c->start);
+        bytesUploadedSinceStart += (c->end - c->start);
+        boLock.unlock();
       } else if (c->triesLeft > 0) {
         c->log("Retrying");
         --(c->triesLeft);
@@ -174,7 +194,61 @@ void waitOnClose(vector<File> &files) {
   } while (!allFilesDone(files));
 }
 
-void createWorkerThreads() {
+void uploadProgressHelper(vector<File> &files) {
+  cerr << "\r";
+  boost::mutex::scoped_lock boLock(bytesUploadedMutex);
+  for (unsigned i = 0; i < files.size(); ++i) {
+    //cerr << files[i].localFile << " , bytesuploaded = "<<files[i].bytesUploaded << " size = "<<files[i].size << "   ";
+    cerr << files[i].localFile << " " << setw(6) << setprecision(2) << std::fixed
+         << ( (double(files[i].bytesUploaded) / files[i].size) * 100.0) << "% complete";
+    if ((i + 1) != files.size()) {
+      cerr << ", ";
+    }
+  }
+  int64_t timediff  = std::time(0) - startTime;
+  double mbps = (timediff > 0) ? (double(bytesUploadedSinceStart) / (1024.0 * 1024.0)) / timediff : 0.0;
+  boLock.unlock();
+  cerr << " ... Average transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec";
+  
+  // Print rate of transfer, etc here ...
+  boost::mutex::scoped_lock queueLock(instantaneousBytesMutex);
+  double mbps2 = 0.0;
+  if (!instantaneousBytesAndTimestampQueue.empty()) {
+    int64_t oldestElemTime = instantaneousBytesAndTimestampQueue.front().first;
+    int64_t timediff2 = std::time(0) - oldestElemTime; 
+    if (timediff2 > 60) {
+      // If lastupdated time was so older than 60seconds, clear the queue and set current bytes = 0
+      queue<pair<time_t, int64_t> > empty;
+      swap(instantaneousBytesAndTimestampQueue, empty);
+      sumOfInstantaneousBytes = 0;
+      mbps2 = 0.0;
+    }
+    if (timediff2 > 0) {
+      mbps2 = (double(sumOfInstantaneousBytes) / (1024.0 * 1024.0)) / timediff2;
+    }
+  }
+  queueLock.unlock();
+  cerr << " ... Instantenous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+}
+
+void uploadProgress(vector<File> &files) {
+  try {
+    do {
+      uploadProgressHelper(files);
+      boost::this_thread::sleep(boost::posix_time::milliseconds(250));
+    } while (keepShowingUploadProgress);
+    uploadProgressHelper(files);
+    return;
+  } catch (boost::thread_interrupted &ti) {
+    // Call upload helper once at least, else message for "100%"
+    // might not be displayed ever;
+    uploadProgressHelper(files);
+    cerr << endl;
+    return;
+  }
+}
+
+void createWorkerThreads(vector<File> &files) {
   LOG << "Creating worker threads:" << endl;
 
   LOG << " read..." << endl;
@@ -189,7 +263,7 @@ void createWorkerThreads() {
 
   LOG << " upload..." << endl;
   for (int i = 0; i < opt.uploadThreads; ++i) {
-    uploadThreads.push_back(boost::thread(uploadChunks));
+    uploadThreads.push_back(boost::thread(uploadChunks, boost::ref(files)));
   }
 }
 
@@ -265,7 +339,7 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
 string getMimeType(string filePath) {
   // It's necessary to check file's existence
   // because if an invalid path is given,
-  // then libmagic silently Seg faults.
+  // then, libmagic silently Seg faults.
   if (!boost::filesystem::exists(boost::filesystem::path(filePath)))
     throw runtime_error("Local file '" + filePath + "' does not exist");
   
@@ -382,7 +456,6 @@ int main(int argc, char * argv[]) {
       LOG << "Getting MIME type for local file " << opt.files[i] << "..." << endl;
       string mimeType = getMimeType(opt.files[i]);
       LOG << "MIME type for local file " << opt.files[i] << " is '" << mimeType << "'." << endl;
-      
       bool toCompress;
       if (!opt.doNotCompress) {
         bool is_compressed = isCompressed(mimeType);
@@ -397,7 +470,7 @@ int main(int argc, char * argv[]) {
       if (toCompress) {
         mimeType = "application/x-gzip";
       }
-      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize));
+      files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
       totalChunks += files[i].createChunks(chunksToRead, opt.tries);
     }
 
@@ -406,16 +479,36 @@ int main(int argc, char * argv[]) {
         files[i].waitOnClose = true;
       }
     }
+    
+    // Take this point as the starting time for program operation
+    // (to calculate average transfer speed)
+    startTime = std::time(0);
 
     LOG << "Created " << totalChunks << " chunks." << endl;
-
-    createWorkerThreads();
+    
+    createWorkerThreads(files);
 
     LOG << "Creating monitor thread.." << endl;
     boost::thread monitorThread(monitor);
+    
+    boost::thread uploadProgressThread;
+    if (opt.progress) {
+      LOG << "Creating Upload Progress thread.." << endl;
+      uploadProgressThread = boost::thread(uploadProgress, boost::ref(files));
+    }
+
     LOG << "Joining monitor thread..." << endl;
     monitorThread.join();
     LOG << "Monitor thread finished." << endl;
+
+    if (opt.progress) {
+      LOG << "Joining Upload Progress thread.." << endl;
+      keepShowingUploadProgress = false;
+      uploadProgressThread.interrupt();
+      uploadProgressThread.join();
+      LOG << "Upload Progress thread finished." << endl;
+    }
+
 
     interruptWorkerThreads();
     joinWorkerThreads();
@@ -428,9 +521,9 @@ int main(int argc, char * argv[]) {
 
     for (unsigned int i = 0; i < files.size(); ++i) {
       if (files[i].failed) {
-        cerr << "File " << files[i] << " could not be uploaded." << endl;
+        cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
-        cerr << "File " << files[i] << " was uploaded successfully. Closing...";
+        cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing...";
         if (files[i].isRemoteFileOpen) {
           try {
             files[i].close();
