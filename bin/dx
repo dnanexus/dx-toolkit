@@ -308,6 +308,8 @@ def login(args):
         assert(res.status_code == requests.codes.ok)
         token_res = json.loads(res.content)
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
+
+        set_api('https', 'preprodapi.dnanexus.com', '443', True)
     else:
         sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
 
@@ -318,7 +320,7 @@ def login(args):
 
     args.current = False
 
-    if args.host is not None or args.emtest or args.token:
+    if (args.host is not None or args.token) and not args.emtest:
         setenv(args)
     elif args.projects:
         pick_and_set_project(args)
@@ -2520,6 +2522,7 @@ class SetEMTestEnv(argparse.Action):
         setattr(namespace, 'host', 'emtestauth.dnanexus.com')
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
+        setattr(namespace, 'emtest', True)
         set_api(protocol='https', host='emtest.dnanexus.com', port='443', write=True)
 
 # TODO: Add a subcommand for clearing the cache
@@ -2542,7 +2545,7 @@ parser_login.add_argument('--protocol', help='Use the given protocol to contact 
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.add_argument('--emtest', nargs=0, help=argparse.SUPPRESS, action=SetEMTestEnv)
-parser_login.set_defaults(func=login)
+parser_login.set_defaults(emtest=False, func=login)
 parser_map['login'] = (parser_login, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
