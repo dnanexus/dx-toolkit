@@ -79,6 +79,7 @@ clean:
 install: api_wrappers src_libs python
 	$(MAKE) -C contigset2fasta install
 	mkdir -p $(DESTDIR)/$(PREFIX)
+	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*
 	if [[ $(DNANEXUS_HOME) != $(DESTDIR) ]]; then \
 		cp -a $(DNANEXUS_HOME)/{bin,environment,lib} $(DESTDIR)/$(PREFIX); \
 	fi
