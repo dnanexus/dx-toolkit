@@ -14,6 +14,7 @@ public class DXTrimReads {
         String JobInput = IOUtils.toString(new FileInputStream("job_input.json"));
         JsonNode JobInputJson = (JsonNode)(new MappingJsonFactory().createJsonParser(JobInput).readValueAsTree());
 
+        // TODO: check for presence of params instead of NullPointerException
         String gtableId = JobInputJson.get("reads").get("$dnanexus_link").textValue();
         int trimLength = JobInputJson.get("trimLength").intValue();
 
@@ -45,16 +46,17 @@ public class DXTrimReads {
             ArrayNode outputRows = mapper.createArrayNode();
             for (JsonNode row : DXAPI.gtableGet(gtableId, gtableGetInput).get("data")) {
                 ArrayNode arrayRow = (ArrayNode)row;
+                arrayRow.remove(0); // First row is the index - don't send it back
                 String sequence = arrayRow.get(sequenceColumnIndex).textValue();
                 String quality = arrayRow.get(qualColumnIndex).textValue();
-                String sequenceSubstr = sequence.substring(0, sequence.length()-trimLength);
-                String qualitySubstr = quality.substring(0, quality.length()-trimLength);
+                String sequenceSubstr = sequence.substring(0, Math.max(sequence.length()-trimLength, 0));
+                String qualitySubstr = quality.substring(0, Math.max(quality.length()-trimLength, 0));
                 arrayRow.set(sequenceColumnIndex, TextNode.valueOf(sequenceSubstr));
                 arrayRow.set(qualColumnIndex, TextNode.valueOf(qualitySubstr));
                 outputRows.add(row);
             }
             ObjectNode gtableAddRowsInput = mapper.createObjectNode();
-            gtableAddRowsInput.put("part", i);
+            gtableAddRowsInput.put("part", i+1);
             gtableAddRowsInput.put("data", outputRows);
             DXAPI.gtableAddRows(outputGTableId, gtableAddRowsInput);
         }
