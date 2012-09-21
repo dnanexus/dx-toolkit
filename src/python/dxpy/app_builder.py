@@ -174,7 +174,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Include the DNAnexus client libraries as an execution dependency, if they are not already
     # there
-    dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
+    if dx_toolkit_autodep == "git":
+        dx_toolkit_dep = {"name": "dx-toolkit",
+                          "package_manager": "git",
+                          "url": "git@github.com:dnanexus/dx-toolkit.git",
+                          "tag": "master",
+                          "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
+    else:
+        dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
         dx_toolkit_dep_found = False
@@ -183,10 +190,11 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 dx_toolkit_dep_found = True
         if not dx_toolkit_dep_found:
             applet_spec["runSpec"]["execDepends"].append(dx_toolkit_dep)
-        applet_spec.setdefault("access", {})
-        applet_spec["access"].setdefault("network", [])
-        if "github.com" not in applet_spec["access"]["network"]:
-            applet_spec["access"]["network"].append("github.com")
+            if dx_toolkit_autodep == "git":
+                applet_spec.setdefault("access", {})
+                applet_spec["access"].setdefault("network", [])
+                if "github.com" not in applet_spec["access"]["network"]:
+                    applet_spec["access"]["network"].append("github.com")
 
     # Supply a contactUrl if one is not provided
     if "details" not in applet_spec:

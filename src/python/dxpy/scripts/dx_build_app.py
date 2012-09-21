@@ -37,6 +37,7 @@ parser.add_argument("--update", help=argparse.SUPPRESS, action="store_true", des
 parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
 parser.set_defaults(dx_toolkit_autodep=True)
+parser.add_argument("--dx-toolkit-legacy-git-autodep", help="Auto-insert a dx-toolkit dependency on the latest git version (to be built from source at runtime)", action="store_const", dest="dx_toolkit_autodep", const="git")
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
