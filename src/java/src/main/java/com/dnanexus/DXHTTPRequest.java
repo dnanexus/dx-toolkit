@@ -50,6 +50,8 @@ public class DXHTTPRequest {
         HttpResponse response = httpclient.execute(request);
         
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        	System.err.println(response.getStatusLine());
+        	System.err.println(EntityUtils.toString(response.getEntity()));
         	throw new Exception();
         }
 
