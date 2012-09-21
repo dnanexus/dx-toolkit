@@ -19,6 +19,17 @@ extern "C" {
 
 using namespace std;
 
+// A macro to allow unused variable (without throwing warning)
+// Does work for GCC, will need to be expanded for other compilers.
+#ifdef UNUSED
+#elif defined(__GNUC__) 
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused)) 
+#elif defined(__LCLINT__) 
+# define UNUSED(x) /*@unused@*/ x 
+#else 
+# define UNUSED(x) x 
+#endif
+
 /* Initialize the extern variables, decalred in chunk.h */
 queue<pair<time_t, int64_t> > instantaneousBytesAndTimestampQueue;
 int64_t sumOfInstantaneousBytes = 0;
@@ -139,7 +150,7 @@ struct myProgressStruct {
   CURL *curl;
 };
 
-int progress_func(void* ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded) {
+int progress_func(void* ptr, double UNUSED(TotalToDownload), double UNUSED(NowDownloaded), double UNUSED(TotalToUpload), double NowUploaded) {
   myProgressStruct *myp = static_cast<myProgressStruct*>(ptr);
 
   boost::mutex::scoped_lock lock(instantaneousBytesMutex);

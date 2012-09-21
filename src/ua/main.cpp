@@ -445,7 +445,7 @@ int main(int argc, char * argv[]) {
   try {
     opt.validate();
   } catch (exception &e) {
-    LOG << "ERROR: " << e.what() << endl;
+    cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
 
@@ -564,7 +564,7 @@ int main(int argc, char * argv[]) {
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
-    LOG << "ERROR: " << e.what() << endl;
+    cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
 
