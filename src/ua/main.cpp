@@ -429,7 +429,7 @@ bool isCompressed(string mimeType) {
  * Note: - Signature is: <project, size, last_write_time, filename> tuple
  *         Same as what we use for resuming.
  */
-void disallowDuplicateFileNames(const vector<string> &files, const vector<string> &prjs) {
+void disallowDuplicateFiles(const vector<string> &files, const vector<string> &prjs) {
   map<string, int> hashTable; // a map for - hash string to index in files vector
   for (unsigned i = 0; i < files.size(); ++i) {
     string hash = prjs[i] + " ";
@@ -472,7 +472,7 @@ int main(int argc, char * argv[]) {
   try {
     opt.validate();
     if (!opt.doNotResume) {
-      disallowDuplicateFileNames(opt.files, opt.projects);
+      disallowDuplicateFiles(opt.files, opt.projects);
     }
   } catch (exception &e) {
     cerr << "ERROR: " << e.what() << endl;
