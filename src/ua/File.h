@@ -71,6 +71,10 @@ public:
   
   /* Index of this File object in the Files vector (in main.cpp) */
   unsigned int fileIndex;
+  
+  /* This is a hack for displaying percentage complete for "empty" file correctly
+   * As the name suggests, any succesful part upload will set it to true */
+  bool atleastOnePartDone;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
   

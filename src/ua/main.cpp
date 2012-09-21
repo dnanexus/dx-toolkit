@@ -125,6 +125,7 @@ void uploadChunks(vector<File> &files) {
         // Update number of bytes uploaded in parent file object
         boost::mutex::scoped_lock boLock(bytesUploadedMutex);
         files[c->parentFileIndex].bytesUploaded += (c->end - c->start);
+        files[c->parentFileIndex].atleastOnePartDone = true;
         bytesUploadedSinceStart += (c->end - c->start);
         boLock.unlock();
       } else if (c->triesLeft > 0) {
@@ -200,8 +201,11 @@ void uploadProgressHelper(vector<File> &files) {
   // Print individual file progress
   boost::mutex::scoped_lock boLock(bytesUploadedMutex);
   for (unsigned i = 0; i < files.size(); ++i) {
+    double percent = (files[i].size == 0 && files[i].atleastOnePartDone) ? 100.0 : 0.0;
+    percent =  (files[i].size != 0) ? ((double(files[i].bytesUploaded) / files[i].size) * 100.0) : percent;
+
     cerr << files[i].localFile << " " << setw(6) << setprecision(2) << std::fixed
-         << ( (double(files[i].bytesUploaded) / files[i].size) * 100.0) << "% complete";
+         << percent << "% complete";
     if ((i + 1) != files.size()) {
       cerr << ", ";
     }
@@ -420,6 +424,29 @@ bool isCompressed(string mimeType) {
   return false;
 }
 
+/* This function throws a runtime_error if two or more file 
+ * have same "signature", and are being uploaded to same project.
+ * Note: - Signature is: <project, size, last_write_time, filename> tuple
+ *         Same as what we use for resuming.
+ */
+void disallowDuplicateFileNames(const vector<string> &files, const vector<string> &prjs) {
+  map<string, int> hashTable; // a map for - hash string to index in files vector
+  for (unsigned i = 0; i < files.size(); ++i) {
+    string hash = prjs[i] + " ";
+    
+    boost::filesystem::path p(files[i]);
+    
+    hash += boost::lexical_cast<string>(boost::filesystem::file_size(p)) + " ";
+    hash += boost::lexical_cast<string>(boost::filesystem::last_write_time(p)) + " ";
+    hash += p.filename().string();
+    if (hashTable.count(hash) > 0) {
+      throw runtime_error("File \"" + files[i] + "\" and \"" + files[hashTable[hash]] + "\" have same Signature. You cannot upload"
+                           " two files with same signature to same project without using '--do-not-resume' flag");
+    }
+    hashTable[hash] = i;
+  }
+}
+
 int main(int argc, char * argv[]) {
   try {
     opt.parse(argc, argv);
@@ -444,6 +471,9 @@ int main(int argc, char * argv[]) {
   LOG << opt;
   try {
     opt.validate();
+    if (!opt.doNotResume) {
+      disallowDuplicateFileNames(opt.files, opt.projects);
+    }
   } catch (exception &e) {
     cerr << "ERROR: " << e.what() << endl;
     return 1;
@@ -453,7 +483,7 @@ int main(int argc, char * argv[]) {
 
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
-
+  
   try {
     curlInit();
 

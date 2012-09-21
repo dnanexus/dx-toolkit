@@ -4,7 +4,7 @@ using namespace std;
 
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
-
+#include <boost/filesystem/operations.hpp>
 namespace fs = boost::filesystem;
 
 #include "dxjson/dxjson.h"
@@ -144,7 +144,19 @@ void Options::printHelp(char * programName) {
 }
 
 void Options::validate() {
-  if (files.empty()) {
+  if (!files.empty()) {
+    // - Check that all file actually exist
+    // - Resolve all symlinks
+    for (unsigned i = 0; i < files.size(); ++i) {
+      fs::path p (files[i]);
+      if (!fs::exists(p)) {
+        throw runtime_error("File \"" + files[i] + "\" does not exist");
+      }
+      if (fs::is_symlink(p)) {
+        files[i] = fs::read_symlink(p).string(); 
+      }
+    }
+  } else {
     throw runtime_error("Must specify at least one file to upload");
   }
 

@@ -44,6 +44,10 @@ void Chunk::read() {
   const int64_t len = end - start;
   data.clear();
   data.resize(len);
+  if (len == 0) {
+    // For empty file case (empty chunk)
+    return;
+  }
   ifstream in(localFile.c_str(), ifstream::in | ifstream::binary);
   in.seekg(start);
   in.read(&(data[0]), len);
@@ -57,6 +61,10 @@ void Chunk::read() {
 
 void Chunk::compress() {
   int64_t sourceLen = data.size();
+  if (sourceLen == 0) {
+    // Empty file case (empty chunk)
+    return;
+  }
   int64_t destLen = gzCompressBound(sourceLen);
   vector<char> dest(destLen);
 

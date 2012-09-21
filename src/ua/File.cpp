@@ -47,7 +47,7 @@ int numberOfCompletedParts(const dx::JSON &parts) {
  */
 double percentageComplete(const dx::JSON &parts, const int64_t size, const int64_t chunkSize) {
   if (size == 0) {
-    return 100.0;
+    return ((parts.has("1") && parts["1"]["state"].get<string>() == "complete") ? 100.0 : 0.0);
   }
   const int completed = numberOfCompletedParts(parts);
   const int lastPartIndex = ((size % chunkSize) == 0) ? int(size / chunkSize) : int(ceil(double(size) / chunkSize));
@@ -62,7 +62,7 @@ double percentageComplete(const dx::JSON &parts, const int64_t size, const int64
 
 File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_, const bool toCompress_, const bool tryResuming, const string &mimeType_, const int64_t chunkSize_, const unsigned fileIndex_)
   : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_), failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_), chunkSize(chunkSize_), 
-  bytesUploaded(0), fileIndex(fileIndex_) {
+  bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false) {
   init(tryResuming);
 }
 
@@ -74,12 +74,17 @@ void File::init(const bool tryResuming) {
 
   testLocalFileExists(localFile);
   
-  string remoteFileName = name;
-  if (toCompress) 
-    remoteFileName += ".gz";
-  
   fs::path p(localFile);
   size = fs::file_size(p);
+  if (size == 0) {
+    // Never try to compress empty file, no matter what :D !
+    toCompress = false;
+  }
+  string remoteFileName = name;
+  
+  if (toCompress) 
+    remoteFileName += ".gz";
+ 
   const int64_t modifiedTimestamp = static_cast<int64_t>(fs::last_write_time(p));
   dx::JSON properties(dx::JSON_OBJECT);
   // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
@@ -135,27 +140,40 @@ unsigned int File::createChunks(BlockingQueue<Chunk *> &queue, const int tries) 
   const dx::JSON desc = fileDescribe(fileID);
   // sanity check
   assert(desc["state"].get<string>() == "open");
+ 
+  // Treat special case of empty file here
+  if (size == 0) {
+    if (desc["parts"].has("1") && desc["parts"]["1"]["state"].get<string>() == "complete") {
+      LOG << "Part index 1 for fileID " << fileID << " is in complete state. Will not create an upload chunk for it." << endl;
+      atleastOnePartDone = true;
+      return 0;
+    }
+    Chunk * c = new Chunk(localFile, fileID, 0, tries, 0, 0, toCompress, true, fileIndex);
+    c->log("created");
+    queue.produce(c);
+    return 1;
+  }
+  
   LOG << "Creating chunks:" << endl;
   fs::path p(localFile);
-  unsigned int numChunks = 0; // to iterate over chunks
+  unsigned int countChunks = 0; // to iterate over chunks
   unsigned int actualChunksCreated = 0; // won't be incremented for case when a chunk is already "complete" while resuming
 
   for (int64_t start = 0; start < size; start += chunkSize) {
-    string partIndex = boost::lexical_cast<string>(numChunks + 1); // minimum part index is 1
+    string partIndex = boost::lexical_cast<string>(countChunks + 1); // minimum part index is 1
     const int64_t end = min(start + chunkSize, size);
     if (desc["parts"].has(partIndex) && desc["parts"][partIndex]["state"] == "complete") {
       LOG << "Part index " << partIndex << " for fileID " << fileID << " is in complete state. Will not create an upload chunk for it." << endl;
       bytesUploaded += (end - start);
-      // TODO :Should we assert here for part size (for sanity check). What to do
-      //       if it fails ?
+      atleastOnePartDone = true;
     } else { 
       const bool lastChunk = ((start + chunkSize) >= size);
-      Chunk * c = new Chunk(localFile, fileID, numChunks, tries, start, end, toCompress, lastChunk, fileIndex);
+      Chunk * c = new Chunk(localFile, fileID, countChunks, tries, start, end, toCompress, lastChunk, fileIndex);
       c->log("created");
       queue.produce(c);
       actualChunksCreated++;
     }
-    ++numChunks;
+    ++countChunks;
   }
   return actualChunksCreated++;
 }
