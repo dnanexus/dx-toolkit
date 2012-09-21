@@ -6,13 +6,13 @@ class SSLThreadsInitializer
 public:
   SSLThreadsInitializer()
   {
-    std::cerr << "SimpleHttp: Initializing openssl for thread safety -> Calling SSLThreadsSetup()" << std::endl;
+//    std::cerr << "SimpleHttp: Initializing openssl for thread safety -> Calling SSLThreadsSetup()" << std::endl;
     SSLThreadsSetup();
   }
 
   ~SSLThreadsInitializer()
   {
-    std::cerr << "SimpleHttp: Cleaning up openssl thread safety mechanism -> Calling SSLThreadsCleanup()" << std::endl;
+//    std::cerr << "SimpleHttp: Cleaning up openssl thread safety mechanism -> Calling SSLThreadsCleanup()" << std::endl;
     SSLThreadsCleanup();
   }
 };
