@@ -103,7 +103,7 @@ void File::init(const bool tryResuming) {
       }
 
       cerr << "Signature of file " << localFile << " matches remote file: " << findResult[0]["describe"]["name"].get<string>() 
-           << " (" << fileID << "), which is " << completePercentage << "% complete (approx) ... will resume uploading to it" << endl;
+           << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it" << endl;
       LOG << "Remote resume target is in state: \"" << state << "\"" << endl;
     }
     if (findResult.size() > 1) {

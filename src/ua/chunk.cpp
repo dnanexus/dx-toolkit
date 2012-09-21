@@ -23,7 +23,11 @@ using namespace std;
 queue<pair<time_t, int64_t> > instantaneousBytesAndTimestampQueue;
 int64_t sumOfInstantaneousBytes = 0;
 boost::mutex instantaneousBytesMutex;
-const size_t MAX_QUEUE_SIZE = 1000;
+// it takes roughly 30sec to reach queue size = 5000 on my computer.
+// Unfortunately, standard C++ does not allow time resolution
+// smaller than seconds, so we need to set it to some higher value
+// (like ~30sec) to mitigate rounding effects.
+const size_t MAX_QUEUE_SIZE = 5000;
 
 void Chunk::read() {
   const int64_t len = end - start;
@@ -128,17 +132,16 @@ size_t curlReadFunction(void * ptr, size_t size, size_t nmemb, void * userdata) 
   return bytesToCopy;
 }
 
+// This structure is used for passing data to progress_func(),
+// via CURL's PROGRESSFUNCTION option.
 struct myProgressStruct {
   int64_t uploadedBytes;
   CURL *curl;
 };
 
 int progress_func(void* ptr, double TotalToDownload, double NowDownloaded, double TotalToUpload, double NowUploaded) {
-  if (int64_t(NowUploaded) == 0) {
-    return 0;
-  }
   myProgressStruct *myp = static_cast<myProgressStruct*>(ptr);
-  
+
   boost::mutex::scoped_lock lock(instantaneousBytesMutex);
   if (instantaneousBytesAndTimestampQueue.size() >= MAX_QUEUE_SIZE) {
     pair<time_t, int64_t> elem = instantaneousBytesAndTimestampQueue.front();

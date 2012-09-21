@@ -196,33 +196,41 @@ void waitOnClose(vector<File> &files) {
 
 void uploadProgressHelper(vector<File> &files) {
   cerr << "\r";
+
+  // Print individual file progress
   boost::mutex::scoped_lock boLock(bytesUploadedMutex);
   for (unsigned i = 0; i < files.size(); ++i) {
-    //cerr << files[i].localFile << " , bytesuploaded = "<<files[i].bytesUploaded << " size = "<<files[i].size << "   ";
     cerr << files[i].localFile << " " << setw(6) << setprecision(2) << std::fixed
          << ( (double(files[i].bytesUploaded) / files[i].size) * 100.0) << "% complete";
     if ((i + 1) != files.size()) {
       cerr << ", ";
     }
   }
+
+  // Print average transfer rate
   int64_t timediff  = std::time(0) - startTime;
   double mbps = (timediff > 0) ? (double(bytesUploadedSinceStart) / (1024.0 * 1024.0)) / timediff : 0.0;
   boLock.unlock();
   cerr << " ... Average transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec";
   
-  // Print rate of transfer, etc here ...
+  // Print instantaneous transfer rate
   boost::mutex::scoped_lock queueLock(instantaneousBytesMutex);
   double mbps2 = 0.0;
   if (!instantaneousBytesAndTimestampQueue.empty()) {
+
     int64_t oldestElemTime = instantaneousBytesAndTimestampQueue.front().first;
-    int64_t timediff2 = std::time(0) - oldestElemTime; 
-    if (timediff2 > 60) {
-      // If lastupdated time was so older than 60seconds, clear the queue and set current bytes = 0
+    int64_t timediff2 = std::time(0) - oldestElemTime;  
+    if (timediff2 >= 90) {
+      // If lastupdated time was older than 90seconds, we are lagging too behind to call it 
+      // "instantaneous", so clear the previous data and start fresh again.
+      // Note: If this happens to often on a system, then we need to decrease MAX_QUEUE_SIZE in chunk.cpp
       queue<pair<time_t, int64_t> > empty;
       swap(instantaneousBytesAndTimestampQueue, empty);
       sumOfInstantaneousBytes = 0;
       mbps2 = 0.0;
     }
+    // Note if timediff2 = 0 too often on some system, then we need to increase MAX_QUEUE_SIZE in chunk.cpp
+    // because this implies that queue is filling very quickly (in less than second).
     if (timediff2 > 0) {
       mbps2 = (double(sumOfInstantaneousBytes) / (1024.0 * 1024.0)) / timediff2;
     }
