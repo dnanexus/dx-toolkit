@@ -2,7 +2,7 @@
 Utilities used in the DNAnexus execution environment and test harness.
 '''
 
-import os, sys, json, collections, logging
+import os, sys, json, collections, logging, argparse
 from functools import wraps
 import dxpy
 
@@ -37,8 +37,11 @@ def run(function_name=None, function_input=None):
     The absence of *DX_JOB_ID* signals to run() that execution is happening in the debug harness. In this mode of
     operation, all calls to *dxpy.api.jobNew* (and higher level handler methods which use it) are intercepted, and run()
     is invoked instead with appropriate inputs. The initial invocation of *dxpy.run()* (with no arguments) need not be
-    changed; instead, use the environment variable *DX_JOB_INPUT*. Thus, no program code requires changing between the
-    two modes.
+    changed; instead, use the environment variable *DX_JOB_INPUT* and/or command line arguments:
+
+        script_name --spec=path/to/dxapp.spec --input1=value1 --input2=value2 ...
+
+    With this, no program code requires changing between the two modes.
     '''
     global RUN_COUNT
     RUN_COUNT += 1
@@ -59,6 +62,19 @@ def run(function_name=None, function_input=None):
             function_name = 'main'
         if function_input is None:
             function_input = json.loads(os.environ.get('DX_JOB_INPUT', '{}'))
+
+            # Try to parse args from the command line
+            args, remaining_args = None, None
+            try:
+                parser = argparse.ArgumentParser()
+                parser.add_argument("-s", "--spec", help="Path to app metadata definition file (dxapp.json)")
+                args, remaining_args = parser.parse_known_args()
+            except:
+                pass
+
+            if args is not None and args.spec is not None:
+                function_input.update(parse_args_as_job_input(args=remaining_args, app_spec=json.load(open(args.spec))))
+
         job = {'function': function_name, 'input': function_input}
     job['input'] = resolve_job_refs_in_test(job['input'])
     print "Invoking", job.get('function'), "with", job.get('input')
@@ -99,6 +115,34 @@ def resolve_job_refs_in_test(x):
         for i in range(len(x)):
             x[i] = resolve_job_refs_in_test(x[i])
     return x
+
+def parse_args_as_job_input(args, app_spec):
+    parser = argparse.ArgumentParser()
+    json_inputs = set()
+    for ispec in app_spec.get("inputSpec", []):
+        kwargs = {}
+        if ispec.get("type") == "int":
+            kwargs["type"] = int
+        elif ispec.get("type") == "float":
+            kwargs["type"] = float
+        elif ispec.get("type") == "boolean":
+            kwargs["type"] = bool
+        elif ispec.get("type") != "string":
+            json_inputs.add(ispec["name"])
+
+        if ispec.get("optional") != None:
+            kwargs["required"] = not ispec["optional"]
+
+        parser.add_argument("--" + ispec["name"], **kwargs)
+
+    inputs = {}
+    for i, value in vars(parser.parse_args(args)).iteritems():
+        if i in json_inputs:
+            inputs[i] = json.loads(value)
+        else:
+            inputs[i] = value
+
+    return inputs
 
 def entry_point(entry_point_name):
     '''
