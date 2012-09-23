@@ -33,6 +33,7 @@
 # Copyright 2012 DNAnexus, Inc. All rights reserved.
 
 import sys, os, string, types, argparse
+import dxpy.utils.completer
 
 def autocomplete(parser, arg_completer=None, subcommands=None):
     """Automatically detect if we are requested completing and if so generate
@@ -97,6 +98,10 @@ def autocomplete(parser, arg_completer=None, subcommands=None):
 
     # Argument completion
     if arg_completer and (not prefix or not prefix.startswith('-')):
+        if isinstance(arg_completer, dxpy.utils.completer.LocalCompleter):
+            # Avoid using the built-in local completer, fall back to default bash completer
+            print "__DX_STOP_COMPLETION__"
+            sys.exit(1)
         completions += arg_completer.get_matches(cline, cpoint, prefix, suffix)
 
     # If there's only one completion, and it doesn't end with / or :, add a space

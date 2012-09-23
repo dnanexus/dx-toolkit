@@ -18,8 +18,7 @@ export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
 export PYTHONIOENCODING=UTF-8
 
 _dx_argcomplete() {
-    if [ ${!IFS[@]} ]
-    then
+    if [[ ${!IFS[@]} ]]; then
         DX_IFS_TEMP=$IFS
     fi
     IFS='`'
@@ -28,10 +27,14 @@ _dx_argcomplete() {
         COMP_LINE=$COMP_LINE  COMP_POINT=$COMP_POINT \
         COMP_WORDS="${COMP_WORDS[*]}"  COMP_CWORD=$COMP_CWORD \
     ARGPARSE_AUTO_COMPLETE=1 $1 ) )
-    if [ ${!DX_IFS_TEMP[@]} ]
-    then
+
+    if [[ ${!DX_IFS_TEMP[@]} ]]; then
         IFS=$DX_IFS_TEMP
         unset DX_IFS_TEMP
     fi
+
+    if [[ "${COMPREPLY[0]}" == "__DX_STOP_COMPLETION__" ]]; then
+        unset COMPREPLY
+    fi
 }
-complete -o nospace -F _dx_argcomplete dx
+complete -o nospace -o default -F _dx_argcomplete dx
