@@ -6,9 +6,8 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.dnanexus.DXAPI;
 
-DXAPI dx = new DXAPI();
 JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
-JsonNode root = dx.systemFindDataObjects(input);
+JsonNode root = DXAPI.systemFindDataObjects(input);
 System.out.println(root);
 ```
 
