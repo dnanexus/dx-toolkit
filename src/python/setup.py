@@ -24,6 +24,7 @@ setup(
     author='Katherine Lai, Andrey Kislyuk',
     author_email='klai@dnanexus.com, akislyuk@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
+    zip_safe=False,
     license='as-is',
     packages = find_packages(),
     #scripts = glob.glob('scripts/*.py'),
