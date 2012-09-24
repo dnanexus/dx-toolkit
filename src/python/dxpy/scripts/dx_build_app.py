@@ -80,6 +80,12 @@ def main(**kwargs):
         using_temp_project = True
 
     try:
+        with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
+            app_json = json.load(app_desc)
+            if "buildOptions" in app_json:
+                if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
+                    args.dx_toolkit_autodep = False
+
         dxpy.app_builder.build(args.src_dir)
         bundled_resources = dxpy.app_builder.upload_resources(args.src_dir,
                                                               project=working_project)
