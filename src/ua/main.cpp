@@ -582,6 +582,14 @@ int main(int argc, char * argv[]) {
         }
         cerr << endl;
       }
+      if (files[i].failed) {
+        cout << "failed";
+      } else {
+        cout << files[i].fileID;
+      }
+      if (i != (files.size() - 1u)) {
+        cout << endl;
+      }
     }
 
     LOG << "Waiting for files to be closed..." << endl;
