@@ -85,6 +85,7 @@ def main(**kwargs):
             if "buildOptions" in app_json:
                 if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
                     args.dx_toolkit_autodep = False
+                del app_json["buildOptions"]
 
         dxpy.app_builder.build(args.src_dir)
         bundled_resources = dxpy.app_builder.upload_resources(args.src_dir,
