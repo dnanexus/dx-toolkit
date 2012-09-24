@@ -93,17 +93,17 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                 if file_size is None:
                   file_size = dxfile._file_length
 
-
                 bytes += len(file_content)
-                ticks = int(round((bytes / float(file_size)) * num_ticks))
-                percent = int(round((bytes / float(file_size)) * 100))
-
-                fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
-                sys.stdout.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
-                sys.stdout.flush()
-                sys.stdout.write("\r")
-                sys.stdout.flush()
-
+                if file_size > 0:
+                    ticks = int(round((bytes / float(file_size)) * num_ticks))
+                    percent = int(round((bytes / float(file_size)) * 100))
+                    
+                    fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
+                    sys.stdout.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
+                    sys.stdout.flush()
+                    sys.stdout.write("\r")
+                    sys.stdout.flush()
+        
                 if len(file_content) == 0:
                     print ""
                     break
