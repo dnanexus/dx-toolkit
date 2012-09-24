@@ -14,7 +14,7 @@ class TestDXClient(unittest.TestCase):
 
     def tearDown(self):
         try:
-            run(u"yes|dx rmproject {p}".format(p=project))        
+            run(u"yes|dx rmproject {p}".format(p=TestDXClient.project))
         except:
             pass
         try:
