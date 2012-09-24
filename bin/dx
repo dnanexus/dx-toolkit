@@ -2527,7 +2527,7 @@ class SetEMTestEnv(argparse.Action):
 
 # TODO: Add a subcommand for clearing the cache
 
-parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0' + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, upload data, navigate and organize your data, and even launch analyses.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
+parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0' + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, upload data, navigate, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
                                  formatter_class=argparse.RawTextHelpFormatter,
                                  parents=[env_args],
                                  usage='%(prog)s [-h] [--version] command ...')
