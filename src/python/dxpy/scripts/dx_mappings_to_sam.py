@@ -131,50 +131,18 @@ def main(**kwargs):
         # write each row unless we're throwing out unmapped 
         for row in generator:
             if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
-
                 writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     else:
         for x in regions:
             # generate the query for this region
-            query = mappingsTable.genomic_range_query(x[0],int(x[1])+opts.region_index_offset,int(x[2])+opts.region_index_offset,mode='overlap',index='gri')
-
-            # for each row in that range
-            for row in mappingsTable.iterate_query_rows(query=query, want_dict=True):
-
-                #######
-                # if the table is paired then we have to partition the mates correctly
-                if opts.read_pair_aware == True and "mate_id" in col:
-
-                    # if we have a single read and we wanna store it (is mapped or are storing unmapped)
-                    if row["mate_id"] == -1 and (row["status"] != "UNMAPPED" or opts.discard_unmapped == False):
-
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
-
-                    #################################################################################
-
-                    #If paired read is the left read, write it and grab the right one
-                    if row["mate_id"] == 0:
-
-                        writeRow(row, col, defaultCol, unmappedFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
-                        if row["status2"] != "UNMAPPED":
-                            #print row["chr2"]+":"+ str(row["lo2"])+"-"+str(row["hi2"])
-
-                            # pull mate from the table
-                            query = mappingsTable.genomic_range_query(chr=row["chr2"], lo=row["lo2"], hi=row["hi2"])
-                            for mateRow in mappingsTable.iterate_query_rows(query=query, want_dict=True):
-                                #print mateRow
-                                if mateRow["mate_id"] == 1 and mateRow["chr2"] == row["chr"] and mateRow["lo2"] == row["lo"] and mateRow["hi2"] == row["hi"]:
-
-                                    writeRow(mateRow, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
-                                    break
-                            #print "Mate not found"
-                        else:
-                            pass
-                            #print "Mate unmapped"
-                else:
+            query = mappingsTable.genomic_range_query(x[0],int(x[1])+opts.region_index_offset,int(x[2])+opts.region_index_offset, index='gri')
+            for row in mappingsTable.get_rows(query=query, limit=1)['data']:
+                startRow =  row[0]
+                for row in mappingsTable.iterate_rows(query=query, want_dict=True):
+                    if row["chr"] != x[0] or row["lo"] > int(x[2])+opts.region_index_offset:
+                        break
                     if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
-
                         writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     if outputFile != None:
@@ -295,7 +263,7 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols,
     out_row.append("RG:Z:"+str(values['read_group']))
     
     if writeIds:
-        out_row.append("ZD:Z:"+str(row[0]))
+        out_row.append("ZD:Z:"+str(row['__id__']))
     out_row = "\t".join(out_row) + "\n"
 
     if outputFile != None:
