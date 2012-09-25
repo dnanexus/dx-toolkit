@@ -18,11 +18,11 @@ HELPER2_PID=$!
 
 wait_for_helpers() {
     sleep 1
-    kill $HELPER1_PID
-    kill $HELPER2_PID
+    kill $HELPER1_PID || true
+    kill $HELPER2_PID || true
     sleep 1
-    kill -9 $HELPER1_PID
-    kill -9 $HELPER2_PID
+    kill -9 $HELPER1_PID || true
+    kill -9 $HELPER2_PID || true
 #    wait $HELPER1_PID
 #    wait $HELPER2_PID
 }
