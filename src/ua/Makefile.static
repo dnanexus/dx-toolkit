@@ -8,7 +8,7 @@
 GITVERSION := $(shell git describe)
 VERSION = 0.0.1
 
-curl_dir = /home/$(USER)/sw/local
+curl_dir = $(HOME)/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
 dxjson_dir = $(cpp_dir)/dxjson
 dxhttp_dir = $(cpp_dir)/SimpleHttpLib
