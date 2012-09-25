@@ -1513,7 +1513,11 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
         if not args.overwrite and os.path.exists(filename):
             parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
         try:
-            dxpy.download_dxfile(entity_result['id'], filename, show_progress=args.show_progress)
+            show_progress = args.show_progress
+        except AttributeError:
+            show_progress = False
+        try:
+            dxpy.download_dxfile(entity_result['id'], filename, show_progress=show_progress)
         except dxpy.DXAPIError as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
