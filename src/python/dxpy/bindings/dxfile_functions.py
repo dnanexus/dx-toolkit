@@ -85,29 +85,30 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
     bytes = 0
 
     mode = 'ab' if append else 'wb'
-    with DXFile(dxid, buffer_size=chunksize) as dxfile:
-        with open(filename, mode) as fd:
-            while True:
-                file_content = dxfile.read(chunksize, **kwargs)
-                if file_size is None:
-                    file_size = dxfile._file_length
+    with DXFile(dxid, buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
+        while True:
+            file_content = dxfile.read(chunksize, **kwargs)
+            if file_size is None:
+                file_size = dxfile._file_length
 
+            if show_progress:
+                bytes += len(file_content)
+                if file_size > 0:
+                    ticks = int(round((bytes / float(file_size)) * num_ticks))
+                    percent = int(round((bytes / float(file_size)) * 100))
+
+                    fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
+                    sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
+                    sys.stderr.flush()
+                    sys.stderr.write("\r")
+                    sys.stderr.flush()
+
+            if len(file_content) == 0:
                 if show_progress:
-                    bytes += len(file_content)
-                    if file_size > 0:
-                        ticks = int(round((bytes / float(file_size)) * num_ticks))
-                        percent = int(round((bytes / float(file_size)) * 100))
-
-                        fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
-                        sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
-                        sys.stderr.flush()
-                        sys.stderr.write("\r")
-                        sys.stderr.flush()
-
-                if len(file_content) == 0:
                     sys.stderr.write("\n")
-                    break
-                fd.write(file_content)
+                break
+
+            fd.write(file_content)
 
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
