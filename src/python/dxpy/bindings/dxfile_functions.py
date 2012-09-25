@@ -104,9 +104,9 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                         sys.stderr.write("\r")
                         sys.stderr.flush()
 
-                    if len(file_content) == 0:
-                        sys.stderr.write("\n")
-                        break
+                if len(file_content) == 0:
+                    sys.stderr.write("\n")
+                    break
                 fd.write(file_content)
 
 
