@@ -26,5 +26,5 @@
 
 #stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr
 
-rm /usr/bin/dx-exec-helper
+rm -f /usr/bin/dx-exec-helper
 $@
