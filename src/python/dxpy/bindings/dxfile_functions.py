@@ -86,11 +86,11 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
 
     mode = 'ab' if append else 'wb'
     with DXFile(dxid, buffer_size=chunksize) as dxfile:
-        if file_size is None:
-            file_size = dxfile._file_length
         with open(filename, mode) as fd:
             while True:
                 file_content = dxfile.read(chunksize, **kwargs)
+                if file_size is None:
+                    file_size = dxfile._file_length
 
                 if show_progress:
                     bytes += len(file_content)
