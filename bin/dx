@@ -1513,7 +1513,7 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
         if not args.overwrite and os.path.exists(filename):
             parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
         try:
-            dxpy.download_dxfile(entity_result['id'], filename)
+            dxpy.download_dxfile(entity_result['id'], filename, show_progress=args.show_progress)
         except dxpy.DXAPIError as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2794,6 +2794,7 @@ parser_download = subparsers.add_parser('download', help='Download a file',
 parser_download.add_argument('path', help='Data object ID or name to access')
 parser_download.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
+parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
 parser_map['download'] = (parser_download, DXPathCompleter(classes=['file']))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
