@@ -61,6 +61,8 @@ vector<boost::thread> readThreads;
 vector<boost::thread> compressThreads;
 vector<boost::thread> uploadThreads;
 
+int NUMTRIES_g; // Number of max tries for a chunk (to be given by user)
+
 bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
 }
@@ -129,9 +131,16 @@ void uploadChunks(vector<File> &files) {
         bytesUploadedSinceStart += (c->end - c->start);
         boLock.unlock();
       } else if (c->triesLeft > 0) {
-        c->log("Retrying");
+        int numTry = NUMTRIES_g - c->triesLeft + 1; // find out which try is it
+        int timeout = (numTry > 6) ? 256 : 4 << numTry; // timeout is always between [8, 256] seconds
+        c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds");
         --(c->triesLeft);
-        chunksToUpload.produce(c);
+        c->clear(); // we will read & compress data again
+        sleep(timeout);
+        // We push the chunk to retry to "chunksToRead" and not "chunksToUpload"
+        // Since chunksToUpload queue is bounded, and chunksToUpload.produce() can block,
+        // thus giving rise to deadlock
+        chunksToRead.produce(c);
       } else {
         c->log("Not retrying");
         c->clear();
@@ -488,6 +497,7 @@ int main(int argc, char * argv[]) {
     curlInit();
 
     testServerConnection();
+    NUMTRIES_g = opt.tries;
 
     vector<File> files;
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
