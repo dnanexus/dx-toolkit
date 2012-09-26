@@ -45,7 +45,11 @@ class DXJobFailureError(DXError):
     '''Exception produced by :class:`dxpy.bindings.dxjob.DXJob` when a job fails.'''
     pass
 
-class AppError(DXError):
+class ProgramError(DXError):
+    '''Deprecated. Use :class:`AppError` instead.'''
+    pass
+
+class AppError(ProgramError):
     '''
     Base class for fatal exceptions to be raised while using :mod:`dxpy` inside
     DNAnexus execution containers.
@@ -56,10 +60,6 @@ class AppError(DXError):
     *job_error.json* in the current working directory, allowing reporting of
     the error state through the DNAnexus API.
     '''
-    pass
-
-class ProgramError(AppError):
-    '''Deprecated. Use :class:`AppError` instead.'''
     pass
 
 class AppInternalError(DXError):
