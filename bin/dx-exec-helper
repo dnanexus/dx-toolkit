@@ -2,29 +2,34 @@
 
 # This script is executed by the DNAnexus Execution Manager when running applications inside the Execution Environment.
 
-#shopt -s nullglob
+shopt -s nullglob
 
-#for i in /etc/dnanexus-env.d/*; do
-#    source $i
-#done
+for i in /etc/dnanexus-env.d/*; do
+    source $i
+done
 
-#[[ -e dx_stdout ]] || mkfifo dx_stdout 
-#[[ -e dx_stderr ]] || mkfifo dx_stderr
+[[ -e dx_stdout ]] || mkfifo dx_stdout 
+[[ -e dx_stderr ]] || mkfifo dx_stderr
 
-# Temporarily disabled pending investigation into deadlock in logging relays
-#dx-log-stream -p stdout: < dx_stdout &
-#HELPER1_PID=$!
-#dx-log-stream -p stderr: -l warn < dx_stderr &
-#HELPER2_PID=$!
+dx-log-stream -p stdout: < dx_stdout &
+HELPER1_PID=$!
+dx-log-stream -p stderr: -l warn < dx_stderr &
+HELPER2_PID=$!
 
-#wait_for_helpers() {
+wait_for_helpers() {
+    sleep 1
+    kill $HELPER1_PID || true
+    kill $HELPER2_PID || true
+    sleep 1
+    kill -9 $HELPER1_PID || true
+    kill -9 $HELPER2_PID || true
 #    wait $HELPER1_PID
 #    wait $HELPER2_PID
-#}
+}
 
-#trap wait_for_helpers EXIT
+trap wait_for_helpers EXIT
 
 #stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr
 
-rm -f /usr/bin/dx-exec-helper
-$@
+#rm -f /usr/bin/dx-exec-helper
+$@ > dx_stdout 2> dx_stderr
