@@ -36,8 +36,9 @@ parser.set_defaults(update=True)
 parser.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
 parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
-parser.set_defaults(dx_toolkit_autodep=True)
+parser.set_defaults(dx_toolkit_autodep="auto")
 parser.add_argument("--dx-toolkit-legacy-git-autodep", help="Auto-insert a dx-toolkit dependency on the latest git version (to be built from source at runtime)", action="store_const", dest="dx_toolkit_autodep", const="git")
+parser.add_argument("--dx-toolkit-apt-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
@@ -91,6 +92,14 @@ def main(**kwargs):
         dxpy.app_builder.build(args.src_dir)
         bundled_resources = dxpy.app_builder.upload_resources(args.src_dir,
                                                               project=working_project)
+
+        if args.dx_toolkit_autodep == "auto":
+            # "auto" means a tagged git version on preprod and True (i.e. apt,
+            # the default) on all other systems.
+            if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
+                args.dx_toolkit_autodep = "preprod"
+            else:
+                args.dx_toolkit_autodep = True
 
         applet_id = dxpy.app_builder.upload_applet(args.src_dir, bundled_resources,
                                                    check_name_collisions=(args.mode == "applet"),

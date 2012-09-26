@@ -112,6 +112,9 @@ def upload_resources(src_dir, project=None):
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
     """
     Creates a new applet object.
+
+    :param dx_toolkit_autodep: What type of dx-toolkit dependency to inject if none is present. True for apt package, "git" for HEAD of dx-toolkit master branch, "preprod" for a semi-frozen release of dx-toolkit, or False for no dependency.
+    :type dx_toolkit_autodep: boolean or string
     """
     applet_spec = _get_applet_spec(src_dir)
 
@@ -179,6 +182,12 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                           "package_manager": "git",
                           "url": "git@github.com:dnanexus/dx-toolkit.git",
                           "tag": "master",
+                          "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
+    elif dx_toolkit_autodep == "preprod":
+        dx_toolkit_dep = {"name": "dx-toolkit",
+                          "package_manager": "git",
+                          "url": "git@github.com:dnanexus/dx-toolkit.git",
+                          "tag": "cv_20120926",
                           "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
     else:
         dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
