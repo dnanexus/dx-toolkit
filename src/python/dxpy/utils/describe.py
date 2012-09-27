@@ -427,4 +427,9 @@ def get_find_jobs_string(jobdesc, has_children):
     string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
     string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
     string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
+    if jobdesc['state'] == 'done':
+        string += " .. {enddate} ({duration})".format(
+            enddate=str(datetime.datetime.fromtimestamp(jobdesc['modified']/1000)),
+            duration=str(datetime.timedelta(milliseconds=jobdesc['modified']-jobdesc['created'])))
+
     return string
