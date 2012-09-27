@@ -18,6 +18,9 @@ parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const"
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
 parser.add_argument("-p", "--destination-project", help="Insert the applet into the project with the specified project ID.", default=None)
 
+parser.set_defaults(use_temp_build_project=True)
+parser.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
+
 # --[no-]publish
 parser.set_defaults(publish=False)
 parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
@@ -75,7 +78,7 @@ def main(**kwargs):
     if args.mode == "applet" and args.destination_project:
         # TODO: should -p be required when creating an applet?
         working_project = args.destination_project
-    elif args.mode == "app":
+    elif args.mode == "app" and args.use_temp_build_project:
         # Create a temp project
         working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
         print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
