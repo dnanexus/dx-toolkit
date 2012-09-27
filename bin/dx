@@ -16,10 +16,13 @@ try:
 except:
     pass
 
-try:
-    import readline
-except ImportError:
-    print 'readline module not available'
+if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
+    try:
+        import readline
+        if 'libedit' in readline.__doc__:
+            print >>sys.stderr, 'Warning: incompatible readline module detected (libedit), tab completion disabled'
+    except ImportError:
+        print >>sys.stderr, 'Warning: readline module is not available, tab completion disabled'
 
 state = {"interactive": False,
          "colors": "auto",
