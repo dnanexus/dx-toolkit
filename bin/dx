@@ -2277,6 +2277,8 @@ def run(args):
 
     if args.folder is None:
         dest_proj = dxpy.WORKSPACE_ID
+        if dest_proj is None:
+            parser.exit(1, "Unable to find project to run the app in. Please set the project context or use --folder=project:path\n")
         dest_path = os.environ.get('DX_CLI_WD', '/').decode('utf-8')
     else:
         dest_proj, dest_path, none = try_call(resolve_existing_path,
