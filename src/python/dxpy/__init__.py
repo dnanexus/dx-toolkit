@@ -74,11 +74,11 @@ environment variables:
 # Try to reset the encoding to utf-8.
 # (The alternative is to encode every single input and output as utf-8, which is unmaintainable.)
 # TODO: consider using codecs.wrap/sys.stdout = codecs.getwriter('utf8')(sys.stdout) or PYTHONIOENCODING instead of this
-try:
-    import sys, locale
-    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
-except:
-    pass
+#try:
+#    import sys, locale
+#    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+#except:
+#    pass
 
 import os, json, requests, time
 from requests.exceptions import ConnectionError, HTTPError
@@ -151,6 +151,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
 
     '''
     url = APISERVER + resource if prepend_srv else resource
+    
+    #print method, url, data
 
     if auth is None:
         auth = AUTH_HELPER
