@@ -1674,7 +1674,7 @@ def upload(args):
                                         details=args.details,
                                         folder=folder,
                                         parents=args.parents,
-                                        show_progress=True)
+                                        show_progress=args.show_progress)
         if args.wait:
             dxfile._wait_on_close()
         if args.brief:
@@ -2792,6 +2792,7 @@ parser_upload = subparsers.add_parser('upload', help='Upload a file',
                                       prog="dx upload")
 parser_upload.add_argument('filename', help='local filename to upload ("-" indicates stdin input)')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
+parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_upload.set_defaults(func=upload)
 parser_map['upload'] = (parser_upload, LocalCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
