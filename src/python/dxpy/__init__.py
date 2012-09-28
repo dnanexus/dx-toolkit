@@ -71,14 +71,16 @@ environment variables:
 
 '''
 
-# Try to reset the encoding to utf-8.
-# (The alternative is to encode every single input and output as utf-8, which is unmaintainable.)
-# TODO: consider using codecs.wrap/sys.stdout = codecs.getwriter('utf8')(sys.stdout) or PYTHONIOENCODING instead of this
-#try:
-#    import sys, locale
-#    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
-#except:
-#    pass
+# Note: The default I/O stream encoding in Python 2.7 (as configured on ubuntu) is ascii, not UTF-8 or the system locale
+# encoding. The lines below attempt to reset it here to avoid having to set it for every I/O operation explicitly.
+# However, this method doesn't work with pypy, so instead we set the environment variable PYTHONIOENCODING=UTF-8 in
+# dx-toolkit environment initialization (dx-toolkit/environment).
+# One other alternative is to use codecs.wrap or sys.stdout = codecs.getwriter('utf8')(sys.stdout).
+# try:
+#     import sys, locale
+#     reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+# except:
+#     pass
 
 import os, json, requests, time
 from requests.exceptions import ConnectionError, HTTPError
