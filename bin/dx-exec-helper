@@ -29,7 +29,4 @@ wait_for_helpers() {
 
 trap wait_for_helpers EXIT
 
-#stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr
-
-#rm -f /usr/bin/dx-exec-helper
-$@ > dx_stdout 2> dx_stderr
+stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr

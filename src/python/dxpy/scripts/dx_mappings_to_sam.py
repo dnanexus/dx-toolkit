@@ -20,10 +20,12 @@ parser.add_argument("--start_row", dest="start_row", type=int, default=0, help="
 parser.add_argument("--end_row", dest="end_row", type=int, default=0, help="If restricting by the id of the gtable row, which id to start at. Selecting regions will override this option")                  
 parser.add_argument("--region_index_offset", dest="region_index_offset", type=int, default = 0, help="Adjust regions by this amount. Useful for converting between zero and one indexed lists")
 parser.add_argument("--region_file", dest="region_file", default="", help="Regions to extract mappings for, in the format ChrX:A-B")
-parser.add_argument("--output_ids", dest="output_ids", action="store_true", default=False, help="Write gtable ids as an optional field to allow for easy reimport")
+parser.add_argument("--id_as_name", dest="id_as_name", action="store_true", default=False, help="Use the template_id instead of the name when writing the SAM")
+parser.add_argument("--id_prepend", dest="id_prepend", default='', help="When id_as_name is selected, text entered into this option will be written in front of the name to facilitate the combination of multiple samples when mergine SAMs")
 parser.add_argument("--discard_unmapped", dest="discard_unmapped", action="store_true", default=False, help="If set, do not write unmapped reads to SAM")
-parser.add_argument("--read_pair_aware", dest="read_pair_aware", action="store_true", default=False, help="If set, every time a paired read is encoutered, both reads will be included if the mate chr+lo+hi of the mate is above that of the enoutered read. If this is not the case, neither will be written. WARNING: read-pair-aware is not guaranteed to output a sorted SAM file.")
 parser.add_argument("--reference", dest="reference", default=None, help="Generating a SAM file requires information about the reference the reads were mapped to.  The Mappings SHOULD have a link to their reference, in the case they do not, or you wish to override that reference, you may optionally supply the ID of a ContigSet object to use instead.")
+parser.add_argument("--no_interchromosomal_mate", dest="no_interchromosomal", action="store_true", default=False, help="If selected, do not output reads where the mates are mapped to different chromosomes.")
+parser.add_argument("--only_interchromosomal_mate", dest="only_interchromosomal", action="store_true", default=False, help="If selected, output only reads where the mates are mapped to different chromosomes. Selecting no_interchromosomal_mate will take precendence.")
 
 def main(**kwargs):
 
@@ -37,7 +39,8 @@ def main(**kwargs):
         sys.exit(1)
     
     mappingsTable = dxpy.DXGTable(opts.mappings_id)
-    writeIds = opts.output_ids
+    idAsName = opts.id_as_name
+    idPrepend = opts.id_prepend
     
     regions = []
     if opts.region_file != "":
@@ -131,7 +134,13 @@ def main(**kwargs):
         # write each row unless we're throwing out unmapped 
         for row in generator:
             if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
-                writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
+                if opts.no_interchromosomal and row["chr"] == row["chr2"]:
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                elif opts.only_interchromosomal and opts.no_interchromosomal == False and (row["chr"] != row["chr2"] or (row["chr"] == "" and row["chr2"] == "")):
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                elif opts.no_interchromosomal == False and opts.only_interchromosomal == False:
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                
 
     else:
         for x in regions:
@@ -143,7 +152,12 @@ def main(**kwargs):
                     if row["chr"] != x[0] or row["lo"] > int(x[2])+opts.region_index_offset:
                         break
                     if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
-                        writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types)
+                        if opts.no_interchromosomal and row["chr"] == row["chr2"]:
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                        elif opts.only_interchromosomal and opts.no_interchromosomal == False and (row["chr"] != row["chr2"] or (row["chr"] == "" and row["chr2"] == "")):
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                        elif opts.no_interchromosomal == False and opts.only_interchromosomal == False:
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     if outputFile != None:
         outputFile.close()
@@ -172,7 +186,7 @@ def format_tag_field(name, value, sam_col_types):
     else:
         return ":".join([col_name_to_field_name(name), col_type_to_field_type(sam_col_types[name]), str(value)])
 
-def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols, sam_col_names, sam_col_types):
+def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types):
     out_row = ""
 
     values = dict(defaultCol)
@@ -206,10 +220,15 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols,
     if values["chr2"] == "":
         chromosome2 = "*"
         lo2 = 0
-        
-    readName = values["name"]    
-    if readName.strip("@") == "":
-        readName = "*"    
+    
+    if idAsName:
+        readName = idPrepend
+        readName += str(row["__id__"])
+    
+    else:
+        readName = values["name"]    
+        if readName.strip("@") == "":
+            readName = "*"    
     
     if values.get("quality") == None or values.get("quality") == "":
         qual = "*"
@@ -262,8 +281,6 @@ def writeRow(row, col, defaultCol, outputFile, writeIds, column_descs, sam_cols,
    
     out_row.append("RG:Z:"+str(values['read_group']))
     
-    if writeIds:
-        out_row.append("ZD:Z:"+str(row['__id__']))
     out_row = "\t".join(out_row) + "\n"
 
     if outputFile != None:
