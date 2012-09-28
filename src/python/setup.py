@@ -19,7 +19,7 @@ for module in os.listdir('dxpy/scripts'):
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
-# If this is an OS X system where GNU readline is not available, add the readline module from pypi to dependencies.
+# If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
 # See also http://stackoverflow.com/questions/7116038
 # Warning: This may not work as intended in cross-compilation scenarios
 import readline
