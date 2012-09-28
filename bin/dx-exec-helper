@@ -29,4 +29,6 @@ wait_for_helpers() {
 
 trap wait_for_helpers EXIT
 
-stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr
+# FIXME: This freezes the processes using these streams
+#stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr
+$@ > dx_stdout 2> dx_stderr
