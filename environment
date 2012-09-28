@@ -15,6 +15,8 @@ export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:${DNANEXUS_HOME}
 export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
 export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
 
+# Note: The default I/O stream encoding in Python 2.7 (as configured on ubuntu) is ascii, not UTF-8 or the system locale
+# encoding. We reset it here to avoid having to set it for every I/O operation explicitly.
 export PYTHONIOENCODING=UTF-8
 
 _dx_argcomplete() {

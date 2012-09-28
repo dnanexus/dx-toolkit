@@ -112,7 +112,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
 
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
-                      wait_on_close=False, use_existing_dxfile=None, **kwargs):
+                      wait_on_close=False, use_existing_dxfile=None, show_progress=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -167,11 +167,28 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
+    num_ticks = 60
+    bytes = 0
+
     while True:
         buf = fd.read(dxfile._bufsize)
         if len(buf) == 0:
             break
         dxfile.write(buf, **remaining_kwargs)
+
+        if show_progress:
+            bytes += len(buf)
+            if file_size > 0:
+                ticks = int(round((bytes / float(file_size)) * num_ticks))
+                percent = int(round((bytes / float(file_size)) * 100))
+
+                fmt = "[{0}{1}] Uploaded ({2} of {3} bytes) {4}%"
+                sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
+                sys.stderr.flush()
+                sys.stderr.write("\r")
+                sys.stderr.flush()
+            if len(buf) == 0:
+                sys.stderr.write("\n")
 
     if filename is not None:
         fd.close()
