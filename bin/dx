@@ -1673,7 +1673,8 @@ def upload(args):
                                         properties=args.properties,
                                         details=args.details,
                                         folder=folder,
-                                        parents=args.parents)
+                                        parents=args.parents,
+                                        show_progress=True)
         if args.wait:
             dxfile._wait_on_close()
         if args.brief:
