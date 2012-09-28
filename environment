@@ -33,6 +33,7 @@ _dx_argcomplete() {
         unset DX_IFS_TEMP
     fi
 
+    # TODO: probably best done with an exit code, not special value
     if [[ "${COMPREPLY[0]}" == "__DX_STOP_COMPLETION__" ]]; then
         unset COMPREPLY
     fi
