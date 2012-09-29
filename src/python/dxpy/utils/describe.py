@@ -310,7 +310,8 @@ def print_job_desc(desc):
     if "name" in desc and desc['name'] is not None:
         print_field("Name", desc['name'])
     print_field("Project context", desc["project"])
-    print_field("Workspace", desc["workspace"])
+    if 'workspace' in desc:
+        print_field("Workspace", desc["workspace"])
     if 'projectWorkspace' in desc:
         print_field('Cache workspace', desc['projectWorkspace'])
         print_field('GlobalWorkspace', desc['globalWorkspace'])
