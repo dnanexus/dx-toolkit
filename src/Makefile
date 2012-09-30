@@ -10,13 +10,8 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 
-# TODO: Command `getconf _NPROCESSORS_ONLN` returns number of cores on
-#       linux. Instead of hardcoding -j8 flag below, use this value.
-#       But make sure that Makefile still works on Mac -  ("sysctl hw.ncpu"
-#       can return similar information on Mac).
-# commenting out parallel compilation code, because:
-#   1) Output of make is in random order, and thus impossible to follow
-#   2) On idna2, the make process just hangs (race condition ?)
+# Build parallelism should not be handled in the makefile, but in the developer's configuration.
+# The line below can be added to the developer's .bashrc or other build environment initialization file.
 # export MAKEFLAGS=-j8
 ifndef PREFIX
 	export PREFIX=/usr
