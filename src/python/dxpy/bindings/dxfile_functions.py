@@ -171,7 +171,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     bytes = 0
 
     while True:
-        buf = fd.read(dxfile._read_bufsize)
+        buf = fd.read(dxfile._write_bufsize)
         if len(buf) == 0:
             break
         dxfile.write(buf, **remaining_kwargs)
