@@ -11,7 +11,7 @@ import dxpy, dxpy.app_builder
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 # COMMON OPTIONS
-parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", default=os.getcwd(), nargs='?')
+parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 
 parser.set_defaults(mode="app")
 parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
@@ -66,6 +66,9 @@ def main(**kwargs):
         args = parser.parse_args()
     else:
         args = parser.parse_args(kwargs)
+
+    if args.src_dir is None:
+        args.src_dir = os.getcwd()
 
     if not os.path.isdir(args.src_dir):
         parser.error("%s is not a directory" % args.src_dir)
