@@ -56,8 +56,8 @@ class DXFile(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
-    def __init__(self, dxid=None, project=None, keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE):
-
+    def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
+                 read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
         if keep_open is not None:
             if keep_open:
                 print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the file open, please set mode to be one of 'r' or 'a' instead."
@@ -77,10 +77,11 @@ class DXFile(DXDataObject):
         self._write_buf = StringIO.StringIO()
         self._num_uploaded_parts = 0
 
-        if buffer_size < 5*1024*1024:
-            raise DXFileError("Buffer size must be at least 5 MB")
+        if write_buffer_size < 5*1024*1024:
+            raise DXFileError("Write buffer size must be at least 5 MB")
 
-        self._bufsize = buffer_size
+        self._read_bufsize = read_buffer_size
+        self._write_bufsize = write_buffer_size
 
         self._download_url, self._download_url_expires = None, None
         self._request_iterator, self._response_iterator = None, None
@@ -149,7 +150,7 @@ class DXFile(DXDataObject):
             raise
 
     def __iter__(self):
-        buffer = self.read(self._bufsize)
+        buffer = self.read(self._read_bufsize)
         done = False
         while not done:
             if "\n" in buffer:
@@ -158,7 +159,7 @@ class DXFile(DXDataObject):
                     yield lines[i]
                 buffer = lines[len(lines) - 1]
             else:
-                more = self.read(self._bufsize)
+                more = self.read(self._read_bufsize)
                 if more == "":
                     done = True
                 else:
@@ -249,7 +250,7 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        remaining_space = self._bufsize - self._write_buf.tell()
+        remaining_space = self._write_bufsize - self._write_buf.tell()
         if len(string) <= remaining_space:
             self._write_buf.write(string)
         else:
@@ -265,7 +266,7 @@ class DXFile(DXDataObject):
 
             self._cur_part += 1
 
-            # TODO: check if repeat string splitting is bad for performance when len(string) >> _bufsize
+            # TODO: check if repeat string splitting is bad for performance when len(string) >> _write_bufsize
             self.write(string[remaining_space:], **kwargs)
 
     def closed(self, **kwargs):
@@ -362,8 +363,8 @@ class DXFile(DXDataObject):
         if end_pos > self._file_length:
             raise DXFileError("Invalid end_pos")
 
-        for chunk_start_pos in xrange(start_pos, end_pos, self._bufsize):
-            chunk_end_pos = min(chunk_start_pos + self._bufsize - 1, end_pos)
+        for chunk_start_pos in xrange(start_pos, end_pos, self._read_bufsize):
+            chunk_end_pos = min(chunk_start_pos + self._read_bufsize - 1, end_pos)
             headers = {'Range': "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)}
             yield DXHTTPRequest, [url, ''], {'method': 'GET',
                                              'headers': headers,

@@ -10,7 +10,7 @@ import os
 from dxpy.bindings import *
 from math import floor
 
-def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
+def open_dxfile(dxid, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE):
     '''
     :param dxid: file ID
     :type dxid: string
@@ -30,9 +30,9 @@ def open_dxfile(dxid, project=None, buffer_size=DEFAULT_BUFFER_SIZE):
       DXFile(dxid)
 
     '''
-    return DXFile(dxid, project=project, buffer_size=buffer_size)
+    return DXFile(dxid, project=project, read_buffer_size=read_buffer_size)
 
-def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
+def new_dxfile(keep_open=None, mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     '''
     :param keep_open: Deprecated. Use the *mode* parameter instead.
     :type keep_open: boolean
@@ -58,7 +58,7 @@ def new_dxfile(keep_open=None, mode=None, buffer_size=DEFAULT_BUFFER_SIZE, **kwa
         dxFile.new(**kwargs)
 
     '''
-    dx_file = DXFile(keep_open=keep_open, mode=mode, buffer_size=buffer_size)
+    dx_file = DXFile(keep_open=keep_open, mode=mode, write_buffer_size=write_buffer_size)
     dx_file.new(**kwargs)
     return dx_file
 
@@ -85,7 +85,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
     bytes = 0
 
     mode = 'ab' if append else 'wb'
-    with DXFile(dxid, buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
+    with DXFile(dxid, read_buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
         while True:
             file_content = dxfile.read(chunksize, **kwargs)
             if file_size is None:
@@ -163,7 +163,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     else:
         # Use 'a' mode because we will be responsible for closing the file
         # ourselves later (if requested).
-        dxfile = new_dxfile(mode='a', media_type=media_type, buffer_size=buffer_size, **kwargs)
+        dxfile = new_dxfile(mode='a', media_type=media_type, write_buffer_size=buffer_size, **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
