@@ -299,9 +299,6 @@ class DXGTable(DXDataObject):
         request_iterator = self._generate_read_requests(start_row=start, end_row=end, columns=columns, **kwargs)
 
         for response in dxpy.utils.response_iterator(request_iterator, self._http_threadpool, max_active_tasks=self._http_threadpool_size):
-            if type(response) is not dict:
-                print >> sys.stderr, "response = %r" % (response,)
-                raise ValueError("Expected row response to be a dict, got a value of type %r, printed above" % (type(response),))
             if want_dict:
                 for row in response['data']:
                     yield dict(zip(col_names, row))
