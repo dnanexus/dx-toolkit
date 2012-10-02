@@ -11,10 +11,10 @@
 // DX_APISERVER_HOST=localhost
 // DX_SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
 
-#define PRINT_ENV_VAR_VALUES_WHEN_LOADED 1
-
 using namespace std;
 using namespace dx;
+
+const bool PRINT_ENV_VAR_VALUES_WHEN_LOADED = (getenv("DXCPP_DEBUG") != NULL && string(getenv("DXCPP_DEBUG")) == "true");
 
 const string g_API_VERSION = "1.0.0";
 
@@ -274,25 +274,25 @@ string getUserHomeDirectory() {
 bool getFromEnvOrConfig(string key, string &val) {
   if (getenv(key.c_str()) != NULL) {
     val = getenv(key.c_str());
-    #if PRINT_ENV_VAR_VALUES_WHEN_LOADED
+    if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
       cerr << "Reading '" << key << "' value from environment variables. Value = '" << val << "'" << endl;
-    #endif
+    }
     return true;
   }
 
   const string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
   if (getVariableFromConfigFile(user_config_file_path, key, val)) {
-    #if PRINT_ENV_VAR_VALUES_WHEN_LOADED
+    if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
       cerr << "Reading '" << key << "' value from file: '" << user_config_file_path << "'. Value = '" << val + "'" << endl;
-    #endif 
+    } 
     return true;
   }
 
   const string default_config_file_path = "/opt/dnanexus/environment";
   if (getVariableFromConfigFile(default_config_file_path, key, val)) {
-    #if PRINT_ENV_VAR_VALUES_WHEN_LOADED
+    if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
       cerr << "Reading '" << key << "' value from file: '" << default_config_file_path << "'. Value = '" << val + "'" << endl;
-    #endif
+    }
     return true;
   }
 
@@ -353,20 +353,20 @@ bool loadFromEnvironment() {
     if (getFromEnvOrConfig("DX_PROJECT_CONTEXT_ID", tmp))
       setWorkspaceID(tmp);
   }
-#if PRINT_ENV_VAR_VALUES_WHEN_LOADED
-  cerr << "\n***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****" << endl;
-  cerr << "These values will be used by dxcpp library now:" << endl;
-  cerr << "1. g_APISERVER_HOST: " << getVariableForPrinting(g_APISERVER_HOST) << endl;
-  cerr << "2. g_APISERVER_PORT: " << getVariableForPrinting(g_APISERVER_PORT) << endl;
-  cerr << "3. g_APISERVER_PROTOCOL: " << getVariableForPrinting(g_APISERVER_PROTOCOL) << endl;
-  cerr << "4. g_APISERVER: " << getVariableForPrinting(g_APISERVER) << endl;
-  cerr << "5. g_SECURITY_CONTEXT: " << getVariableForPrinting(g_SECURITY_CONTEXT) << endl;
-  cerr << "6. g_JOB_ID: " << getVariableForPrinting(g_JOB_ID) << endl;
-  cerr << "7. g_WORKSPACE_ID: " << getVariableForPrinting(g_WORKSPACE_ID) << endl;
-  cerr << "8. g_PROJECT_CONTEXT_ID: " << getVariableForPrinting(g_PROJECT_CONTEXT_ID) << endl;
-  cerr << "9. g_API_VERSION: " << getVariableForPrinting(g_API_VERSION) << endl;
-  cerr << "***** Will exit dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****" << endl;
-#endif
+  if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
+    cerr << "\n***** In dxcpp.cc::loadFromEnvironment() - Will set Global Variables for dxcpp *****" << endl;
+    cerr << "These values will be used by dxcpp library now:" << endl;
+    cerr << "1. g_APISERVER_HOST: " << getVariableForPrinting(g_APISERVER_HOST) << endl;
+    cerr << "2. g_APISERVER_PORT: " << getVariableForPrinting(g_APISERVER_PORT) << endl;
+    cerr << "3. g_APISERVER_PROTOCOL: " << getVariableForPrinting(g_APISERVER_PROTOCOL) << endl;
+    cerr << "4. g_APISERVER: " << getVariableForPrinting(g_APISERVER) << endl;
+    cerr << "5. g_SECURITY_CONTEXT: " << getVariableForPrinting(g_SECURITY_CONTEXT) << endl;
+    cerr << "6. g_JOB_ID: " << getVariableForPrinting(g_JOB_ID) << endl;
+    cerr << "7. g_WORKSPACE_ID: " << getVariableForPrinting(g_WORKSPACE_ID) << endl;
+    cerr << "8. g_PROJECT_CONTEXT_ID: " << getVariableForPrinting(g_PROJECT_CONTEXT_ID) << endl;
+    cerr << "9. g_API_VERSION: " << getVariableForPrinting(g_API_VERSION) << endl;
+    cerr << "***** Will exit dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****" << endl;
+  }
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
   g_loadFromEnvironment_finished = true;
 
