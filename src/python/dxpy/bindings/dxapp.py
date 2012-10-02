@@ -297,7 +297,7 @@ class DXApp(DXObject):
         else:
             return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
 
-    def run(self, app_input, project=None, folder="/", **kwargs):
+    def run(self, app_input, project=None, folder="/", name=None, **kwargs):
         '''
         :param app_input: Hash of the app's input arguments
         :type app_input: dict
@@ -305,6 +305,8 @@ class DXApp(DXObject):
         :type project: string
         :param folder: Folder in which the app's outputs will be placed in *project*
         :type folder: string
+        :param name: Name for the new job (default is "<name of the app>")
+        :type name: string
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -317,6 +319,8 @@ class DXApp(DXObject):
 
         run_input = {"input": app_input,
                      "folder": folder}
+        if name is not None:
+            run_input["name"] = name
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project

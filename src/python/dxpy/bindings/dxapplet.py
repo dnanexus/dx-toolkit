@@ -96,7 +96,7 @@ class DXApplet(DXDataObject):
         """
         return dxpy.api.appletGet(self._dxid, **kwargs)
 
-    def run(self, applet_input, project=None, folder="/", **kwargs):
+    def run(self, applet_input, project=None, folder="/", name=None, **kwargs):
         '''
         :param applet_input: Hash of the applet's input arguments
         :type applet_input: dict
@@ -104,6 +104,8 @@ class DXApplet(DXDataObject):
         :type project: string
         :param folder: Folder in which applet's outputs will be placed in *project*
         :type folder: string
+        :param name: Name for the new job (default is "<name of the applet>")
+        :type name: string
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -116,6 +118,8 @@ class DXApplet(DXDataObject):
 
         run_input = {"input": applet_input,
                      "folder": folder}
+        if name is not None:
+            run_input["name"] = name
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project

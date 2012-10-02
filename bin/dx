@@ -2384,7 +2384,7 @@ def run(args):
     if not args.brief:
         print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
-        dxjob = handler.run(input_json, project=dest_proj, folder=dest_path)
+        dxjob = handler.run(input_json, project=dest_proj, folder=dest_path, name=args.name)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -2921,6 +2921,7 @@ parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
 parser_run.add_argument('--folder', help=fill('The project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')

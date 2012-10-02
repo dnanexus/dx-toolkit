@@ -303,7 +303,7 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependencies', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -344,6 +344,8 @@ def print_job_desc(desc):
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
+    if 'dependencies' in desc:
+        print_list_field('Dependencies', desc['dependencies'])
     if "failureReason" in desc:
         print_field("Failure reason", desc["failureReason"])
     if "failureMessage" in desc:

@@ -19,12 +19,14 @@ _test_harness_jobs = {}
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, **kwargs):
+def new_dxjob(fn_input, fn_name, name=None, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
     :param fn_name: Name of the function to be called
     :type fn_name: string
+    :param name: Name for the new job (default is "<parent job name>:<fn_name>")
+    :type name: string
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -63,12 +65,14 @@ class DXJob(DXObject):
         if dxid is not None:
             self.set_id(dxid)
 
-    def new(self, fn_input, fn_name, **kwargs):
+    def new(self, fn_input, fn_name, name=None, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
         :param fn_name: Name of the function to be called
         :type fn_name: string
+        :param name: Name for the new job (default is "<parent job name>:<fn_name>")
+        :type name: string
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job
@@ -86,6 +90,8 @@ class DXJob(DXObject):
             req_input = {}
             req_input["input"] = fn_input
             req_input["function"] = fn_name
+            if name is not None:
+                req_input["name"] = name
             resp = dxpy.api.jobNew(req_input, **kwargs)
             self.set_id(resp["id"])
         else:
