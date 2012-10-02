@@ -18,7 +18,7 @@ set (CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 
 if (NOT DEFINED ENV{DNANEXUS_HOME})
-  message(FATAL_ERROR "Environment variable DNANEXUS_HOME (location of dx-tooklit) not defined")
+  message(FATAL_ERROR "Environment variable DNANEXUS_HOME (location of dx-toolkit) not defined")
 endif (NOT DEFINED ENV{DNANEXUS_HOME})
 
 add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
