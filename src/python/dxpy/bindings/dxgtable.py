@@ -387,10 +387,11 @@ class DXGTable(DXDataObject):
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
         return DXGTable(resp["id"], dx_hash["project"], keep_open=keep_open, mode=mode)
 
+    # TODO: make this consume recarrays
     def add_rows(self, data, part=None, validate=True, **kwargs):
         '''
         :param data: List of rows to be added
-        :type data: list of lists
+        :type data: List of lists, list of mappings from column names to values (TODO), or mapping from column names to lists of values (TODO)
         :param part: The part ID to label the rows in data. Optional; it will be selected automatically if not given.
         :type part: integer
         :raises: :exc:`~dxpy.exceptions.DXGTableError`
@@ -427,7 +428,7 @@ class DXGTable(DXDataObject):
     def add_row(self, row, **kwargs):
         '''
         :param row: Row to be added
-        :type data: list
+        :type data: List or mapping from column names to values (TODO)
         :raises: :exc:`~dxpy.exceptions.DXGTableError`
 
         Adds a single row to the current GTable. Rows may be queued up for addition internally
