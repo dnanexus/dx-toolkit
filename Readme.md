@@ -56,7 +56,7 @@ TODO: Necessary but not sufficient list
             ```
 
         * On Homebrew, install and select an up-to-date version of GCC with:
-        
+
             ```
             brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
             export CC=gcc-4.7
