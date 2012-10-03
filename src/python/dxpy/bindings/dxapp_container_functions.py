@@ -28,7 +28,7 @@ def load_app_resource(**kwargs):
     if dxpy.JOB_ID is None:
         raise DXError('Not called by a job')
     if 'DX_RESOURCES_ID' not in os.environ:
-        raiseDXError('App resources container ID could not be found in the environment variable DX_RESOURCES_ID')
+        raise DXError('App resources container ID could not be found in the environment variable DX_RESOURCES_ID')
 
     kwargs['project'] = os.environ.get('DX_RESOURCES_ID')
     kwargs['get_handler'] = True
@@ -52,7 +52,7 @@ def load_from_cache(**kwargs):
     if dxpy.JOB_ID is None:
         raise DXError('Not called by a job')
     if 'DX_PROJECT_CACHE_ID' not in os.environ:
-        raiseDXError('Project cache ID could not be found in the environment variable DX_PROJECT_CACHE_ID')
+        raise DXError('Project cache ID could not be found in the environment variable DX_PROJECT_CACHE_ID')
 
     kwargs['project'] = os.environ.get('DX_PROJECT_CACHE_ID')
     kwargs['get_handler'] = True
@@ -76,6 +76,6 @@ def save_to_cache(dxobject):
     if dxpy.JOB_ID is None:
         raise DXError('Not called by a job')
     if 'DX_PROJECT_CACHE_ID' not in os.environ:
-        raiseDXError('Project cache ID could not be found in the environment variable DX_PROJECT_CACHE_ID')
+        raise DXError('Project cache ID could not be found in the environment variable DX_PROJECT_CACHE_ID')
 
     dxobject.clone(os.environ.get('DX_PROJECT_CACHE_ID'))
