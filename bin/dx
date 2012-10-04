@@ -9,6 +9,15 @@ import hashlib
 import requests
 from requests.auth import HTTPBasicAuth
 
+# Try to reset encoding to utf-8
+# Note: This is incompatible with pypy
+# Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
+try:
+    import sys, locale
+    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+except:
+    pass
+
 if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
     try:
         import readline
