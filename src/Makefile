@@ -20,7 +20,7 @@ ifndef PREFIX
 	export PREFIX=/usr
 endif
 
-all: api_wrappers src_libs python contigset2fasta reads_validator
+all: api_wrappers cpp src_libs python contigset2fasta reads_validator
 
 # Client bindings and wrappers
 # ============================
@@ -37,6 +37,10 @@ api_wrappers:
 	touch -r "../build/list_of_all_routes.txt" python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc \
 		javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java
 	rm ../bin/generateWrapperTable
+
+cpp: api_wrappers
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
+	cp -a cpp "$(DNANEXUS_HOME)/share/dnanexus/src"
 
 src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib/bash"
@@ -98,9 +102,6 @@ base_install: all
 
 	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
 	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
-
-	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/src
-	cp -a cpp $(DESTDIR)/$(PREFIX)/share/dnanexus/src                          # c++ source
 
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 
