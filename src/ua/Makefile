@@ -1,3 +1,10 @@
+ifndef DESTDIR
+	export DESTDIR=/opt/dnanexus
+endif
+ifndef PREFIX
+	export PREFIX=/
+endif
+
 all:
 	mkdir -pv build
 	make -C build -f ../Makefile.static all
@@ -9,6 +16,6 @@ dist: all
 	make -C build -f ../Makefile.static dist
 
 install: all
-	cp -v build/ua $(DNANEXUS_HOME)/bin
+	install -v build/ua $(DESTDIR)/$(PREFIX)/bin
 
-.PHONY: all
+.PHONY: all clean dist install

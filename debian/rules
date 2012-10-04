@@ -1,0 +1,8 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	DESTDIR="$(CURDIR)/debian/dx-toolkit" PREFIX="/usr" $(MAKE) -C src debian_install
+
+override_dh_auto_test:

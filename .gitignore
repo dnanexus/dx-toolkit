@@ -4,6 +4,7 @@
 /doc/java/
 /doc/python/
 /lib/
+/share/
 /src/java/target/
 *~
 *.log
