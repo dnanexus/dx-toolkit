@@ -26,6 +26,7 @@ parser.add_argument("--discard_unmapped", dest="discard_unmapped", action="store
 parser.add_argument("--reference", dest="reference", default=None, help="Generating a SAM file requires information about the reference the reads were mapped to.  The Mappings SHOULD have a link to their reference, in the case they do not, or you wish to override that reference, you may optionally supply the ID of a ContigSet object to use instead.")
 parser.add_argument("--no_interchromosomal_mate", dest="no_interchromosomal", action="store_true", default=False, help="If selected, do not output reads where the mates are mapped to different chromosomes.")
 parser.add_argument("--only_interchromosomal_mate", dest="only_interchromosomal", action="store_true", default=False, help="If selected, output only reads where the mates are mapped to different chromosomes. Selecting no_interchromosomal_mate will take precendence.")
+parser.add_argument("--read_group_platform", dest="read_group_platform", default="", help="If entered, will print this as the platform used for the read group in the SAM header")
 
 def main(**kwargs):
 
@@ -75,7 +76,10 @@ def main(**kwargs):
         header += "@SQ\tSN:"+str(contigNames[i])+"\tLN:"+str(contigSizes[i])+"\n"
 
     for i in range(len(mappingsTable.get_details()['read_groups'])):
-        header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)+"\n"
+        header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)
+        if opts.read_group_platform != '':
+            header += "\tPL:"+opts.read_group_platform
+        header += "\n"
 
     if outputFile != None:
         outputFile.write(header)
@@ -223,7 +227,9 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs
     
     if idAsName:
         readName = idPrepend
-        readName += str(row["__id__"])
+        readName += str(row["template_id"])
+        readName += "_"
+        readName += str(row["mate_id"])
     
     else:
         readName = values["name"]    
