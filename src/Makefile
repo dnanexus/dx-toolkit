@@ -53,6 +53,7 @@ src_libs: api_wrappers
 python: api_wrappers
 	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
 	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
 	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; ./setup.py build; ./setup.py install --prefix="$(DNANEXUS_HOME)"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 
 # TODO: fix up perl and java targets
