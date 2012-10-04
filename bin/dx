@@ -9,13 +9,6 @@ import hashlib
 import requests
 from requests.auth import HTTPBasicAuth
 
-# Try to reset encoding to utf-8
-try:
-    import sys, locale
-    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
-except:
-    pass
-
 if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
     try:
         import readline
@@ -1959,22 +1952,23 @@ def close(args):
             handler._wait_on_close()
 
 def wait(args):
-    if is_job_id(args.path):
-        dxjob = dxpy.DXJob(args.path)
-        print "Waiting for " + args.path + " to finish running..."
-        try_call(dxjob.wait_on_done)
-        print "DONE"
-    else:
-        # Attempt to resolve name
-        project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                      args.path,
-                                                      expected='entity')
-        if entity_result is None:
-            parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
-        handler = dxpy.get_handler(entity_result['id'])
-        print "Waiting for " + args.path + " to close..."
-        try_call(handler._wait_on_close)
-        print "DONE"
+    for path in args.path:
+        if is_job_id(path):
+            dxjob = dxpy.DXJob(path)
+            print "Waiting for " + path + " to finish running..."
+            try_call(dxjob.wait_on_done)
+            print "Done"
+        else:
+            # Attempt to resolve name
+            project, folderpath, entity_result = try_call(resolve_existing_path,
+                                                          path,
+                                                          expected='entity')
+            if entity_result is None:
+                parser.exit(1, fill('Could not resolve ' + path + ' to a data object') + '\n')
+            handler = dxpy.get_handler(entity_result['id'])
+            print "Waiting for " + path + " to close..."
+            try_call(handler._wait_on_close)
+            print "Done"
 
 def build(args):
     from dxpy.scripts import dx_build_app
@@ -2399,10 +2393,11 @@ def run(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def terminate(args):
-    try:
-        dxpy.api.jobTerminate(args.jobid)
-    except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+    for jobid in args.jobid:
+        try:
+            dxpy.api.jobTerminate(jobid)
+        except BaseException as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def shell(orig_args):
     if orig_args.filename is not None:
@@ -2952,7 +2947,7 @@ parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, 
 parser_terminate = subparsers.add_parser('terminate', help='Terminate a job that has not yet finished',
                                          prog='dx terminate',
                                          parents=[env_args])
-parser_terminate.add_argument('jobid', help='ID of the job to terminate')
+parser_terminate.add_argument('jobid', help='ID of the job to terminate', nargs='+')
 parser_terminate.set_defaults(func=terminate)
 parser_map['terminate'] = (parser_terminate, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -3102,7 +3097,7 @@ parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].de
 parser_wait = subparsers.add_parser('wait', help='Wait for a data object to close or job to finish', description='Polls the state of a data object or job until it is in the desired state.  By default, waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  It will exit with a non-zero code if a job reaches a terminal state that is not "done".',
                                     prog='dx wait',
                                     parents=[env_args])
-parser_wait.add_argument('path', help='Path to data object or job ID to wait for')
+parser_wait.add_argument('path', help='Path to data object or job ID to wait for', nargs='+')
 parser_wait.set_defaults(func=wait)
 parser_map['wait'] = (parser_wait, DXPathCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))

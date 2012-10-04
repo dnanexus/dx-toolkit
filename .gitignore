@@ -18,6 +18,7 @@
 /bin/dx-csv-to-gtable
 /bin/dx-gtable-to-csv
 /bin/dx-gtable-to-tsv
+/bin/dx-mappings-to-fastq
 /bin/dx-mappings-to-sam
 /bin/dx-reads-to-fastq
 /bin/dx-tsv-to-gtable
