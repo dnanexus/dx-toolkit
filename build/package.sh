@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 source "$(dirname $0)/../environment"
-cd "${DNANEXUS_HOME}/src"
+cd "${DNANEXUS_HOME}"
 make clean
 make
 make install
