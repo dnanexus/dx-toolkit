@@ -16,10 +16,6 @@ export DNANEXUS_HOME=$(CURDIR)/..
 #
 #   export MAKEFLAGS=-j8
 
-ifndef PREFIX
-	export PREFIX=/usr
-endif
-
 all: api_wrappers cpp src_libs python contigset2fasta reads_validator
 
 # Client bindings and wrappers
