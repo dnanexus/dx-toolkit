@@ -1090,8 +1090,9 @@ def describe(args):
                     print get_result_str()
                     print_desc(desc)
                 found_match = True
-            except:
-                pass
+            except dxpy.DXAPIError as details:
+                if details.code != requests.codes.not_found:
+                    raise
         else:
             for result in dxpy.find_apps(name=args.path, describe=True):
                 if args.json:
@@ -1112,7 +1113,8 @@ def describe(args):
                     print get_result_str()
                     print_desc(desc)
             except dxpy.DXAPIError as details:
-                pass
+                if details.code != requests.codes.not_found:
+                    raise
         else:
             try:
                 desc = dxpy.DXHTTPRequest('/user-' + args.path + '/describe',
@@ -1125,7 +1127,8 @@ def describe(args):
                     print get_result_str()
                     print_desc(desc)
             except dxpy.DXAPIError as details:
-                pass
+                if details.code != requests.codes.not_found:
+                    raise
 
         # Could be an org or team
         if args.path.startswith('org-') or args.path.startswith('team-'):
@@ -1138,7 +1141,8 @@ def describe(args):
                     print get_result_str()
                     print_desc(desc)
             except dxpy.DXAPIError as details:
-                pass
+                if details.code != requests.codes.not_found:
+                    raise
 
     if args.json:
         if args.multi:
@@ -2245,13 +2249,10 @@ def run(args):
     desc = None
     if args.alias is None:
         # Attempt to resolve name (and only look for applets)
-        try:
-            project, folderpath, entity_results = resolve_existing_path(args.path,
-                                                                        expected='entity',
-                                                                        ask_to_resolve=False,
-                                                                        expected_classes=['applet'])
-        except:
-            entity_results = None
+        project, folderpath, entity_results = resolve_existing_path(args.path,
+                                                                    expected='entity',
+                                                                    ask_to_resolve=False,
+                                                                    expected_classes=['applet'])
         app_desc = get_app_from_path(args.path)
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
             handler = dxpy.DXApplet(entity_results[0]['id'])
