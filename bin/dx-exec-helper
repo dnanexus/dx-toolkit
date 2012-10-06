@@ -4,6 +4,11 @@
 
 shopt -s nullglob
 
+dhclient
+
+[[ -e /etc/profile.d/dnanexus.environment ]] && source /etc/profile.d/dnanexus.environment
+[[ -e /opt/dnanexus/environment ]] && source /opt/dnanexus/environment
+
 for i in /etc/dnanexus-env.d/*; do
     source $i
 done
@@ -16,19 +21,15 @@ HELPER1_PID=$!
 dx-log-stream -p stderr: -l warn < dx_stderr &
 HELPER2_PID=$!
 
-wait_for_helpers() {
-    sleep 1
-    kill $HELPER1_PID || true
-    kill $HELPER2_PID || true
-    sleep 1
-    kill -9 $HELPER1_PID || true
-    kill -9 $HELPER2_PID || true
-#    wait $HELPER1_PID
-#    wait $HELPER2_PID
+stop_helpers() {
+    set +e
+    kill $HELPER1_PID 2>/dev/null
+    kill $HELPER2_PID 2>/dev/null
+    pkill dhclient
+    kill -9 $HELPER1_PID 2>/dev/null
+    kill -9 $HELPER2_PID 2>/dev/null
 }
 
-trap wait_for_helpers EXIT
+trap stop_helpers EXIT
 
-# FIXME: This freezes the processes using these streams
-#stdbuf -oL -eL $@ > dx_stdout 2> dx_stderr
 $@ > dx_stdout 2> dx_stderr
