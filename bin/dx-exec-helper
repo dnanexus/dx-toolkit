@@ -32,4 +32,4 @@ stop_helpers() {
 
 trap stop_helpers EXIT
 
-$@ > dx_stdout 2> dx_stderr
+bash -c "$@" > dx_stdout 2> dx_stderr
