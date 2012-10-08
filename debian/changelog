@@ -1,3 +1,9 @@
+dx-toolkit (0.0.18-dnanexus.1) precise; urgency=low
+
+  * 0.0.18 release.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 08 Oct 2012 15:54:28 -0700
+
 dx-toolkit (0.0.17-dnanexus.1) precise; urgency=low
 
   * 0.0.17 release.
