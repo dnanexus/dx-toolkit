@@ -6,7 +6,7 @@
 # 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 GITVERSION := $(shell git describe)
-VERSION = 0.0.1
+VERSION = 0.0.2
 
 curl_dir = $(HOME)/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
@@ -25,7 +25,8 @@ UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
 LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -lcurl -lcares -lssl -lcrypto -lrt -lz -ldl -lboost_program_options -lboost_filesystem -lboost_system -lboost_thread-mt -lboost_regex -lmagic
 else ifeq ($(UNAME), Darwin)
-LDFLAGS := /usr/local/lib/libboost_program_options-mt.a /usr/local/lib/libboost_thread.a /usr/local/lib/libboost_filesystem.a /usr/local/lib/libboost_regex.a /usr/local/lib/libcurl.a /opt/local/lib/libssl.a /opt/local/lib/libcrypto.a /opt/local/lib/libcares.a /opt/local/lib/libz.a /usr/local/lib/libboost_system.a
+boost_ldir_mac = /opt/local/lib
+LDFLAGS := $(boost_ldir_mac)/libboost_program_options-mt.a $(boost_ldir_mac)/libboost_thread-mt.a $(boost_ldir_mac)/libboost_filesystem-mt.a $(boost_ldir_mac)/libboost_regex-mt.a $(curl_dir)/lib/libcurl.a /opt/local/lib/libssl.a /opt/local/lib/libcrypto.a /opt/local/lib/libcares.a /opt/local/lib/libz.a $(boost_ldir_mac)/libboost_system-mt.a /opt/local/lib/libmagic.a
 else
 $(error No LDFLAGS for system $(UNAME))
 endif
