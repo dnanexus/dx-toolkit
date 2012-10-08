@@ -26,6 +26,7 @@ parser.add_argument("--discard_unmapped", dest="discard_unmapped", action="store
 parser.add_argument("--reference", dest="reference", default=None, help="Generating a SAM file requires information about the reference the reads were mapped to.  The Mappings SHOULD have a link to their reference, in the case they do not, or you wish to override that reference, you may optionally supply the ID of a ContigSet object to use instead.")
 parser.add_argument("--no_interchromosomal_mate", dest="no_interchromosomal", action="store_true", default=False, help="If selected, do not output reads where the mates are mapped to different chromosomes.")
 parser.add_argument("--only_interchromosomal_mate", dest="only_interchromosomal", action="store_true", default=False, help="If selected, output only reads where the mates are mapped to different chromosomes. Selecting no_interchromosomal_mate will take precendence.")
+parser.add_argument("--assign_read_group", dest="assign_read_group", default="", help="If entered, this value will be used for the read group id of all exported mappings")
 parser.add_argument("--read_group_platform", dest="read_group_platform", default="", help="If entered, will print this as the platform used for the read group in the SAM header")
 
 def main(**kwargs):
@@ -43,6 +44,8 @@ def main(**kwargs):
     idAsName = opts.id_as_name
     idPrepend = opts.id_prepend
     
+    paired = "chr2" in mappingsTable.get_col_names()
+
     regions = []
     if opts.region_file != "":
         regions = re.findall("-L ([^:]*):(\d+)-(\d+)", open(opts.region_file, 'r').read())
@@ -75,11 +78,16 @@ def main(**kwargs):
     for i in range(len(contigNames)):
         header += "@SQ\tSN:"+str(contigNames[i])+"\tLN:"+str(contigSizes[i])+"\n"
 
-    for i in range(len(mappingsTable.get_details()['read_groups'])):
-        header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)
-        if opts.read_group_platform != '':
-            header += "\tPL:"+opts.read_group_platform
-        header += "\n"
+    assignReadGroup = opts.assign_read_group
+    if assignReadGroup != "":
+        header += "@RG\tID:" + assignReadGroup + "\tSM:Sample_0"
+    else:
+        for i in range(len(mappingsTable.get_details()['read_groups'])):
+            header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)
+    
+    if opts.read_group_platform != '':
+        header += "\tPL:"+opts.read_group_platform
+    header += "\n"
 
     if outputFile != None:
         outputFile.write(header)
@@ -138,12 +146,14 @@ def main(**kwargs):
         # write each row unless we're throwing out unmapped 
         for row in generator:
             if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
-                if opts.no_interchromosomal and row["chr"] == row["chr2"]:
-                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                if not paired:
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
+                elif opts.no_interchromosomal and row["chr"] == row["chr2"]:
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
                 elif opts.only_interchromosomal and opts.no_interchromosomal == False and (row["chr"] != row["chr2"] or (row["chr"] == "" and row["chr2"] == "")):
-                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
                 elif opts.no_interchromosomal == False and opts.only_interchromosomal == False:
-                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                    writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
                 
 
     else:
@@ -152,16 +162,18 @@ def main(**kwargs):
             query = mappingsTable.genomic_range_query(x[0],int(x[1])+opts.region_index_offset,int(x[2])+opts.region_index_offset, index='gri')
             for row in mappingsTable.get_rows(query=query, limit=1)['data']:
                 startRow =  row[0]
-                for row in mappingsTable.iterate_rows(query=query, want_dict=True):
+                for row in mappingsTable.iterate_rows(start=startRow, want_dict=True):
                     if row["chr"] != x[0] or row["lo"] > int(x[2])+opts.region_index_offset:
                         break
                     if row["status"] != "UNMAPPED" or opts.discard_unmapped == False:
-                        if opts.no_interchromosomal and row["chr"] == row["chr2"]:
-                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                        if not paired:
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
+                        elif opts.no_interchromosomal and row["chr"] == row["chr2"]:
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
                         elif opts.only_interchromosomal and opts.no_interchromosomal == False and (row["chr"] != row["chr2"] or (row["chr"] == "" and row["chr2"] == "")):
-                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
                         elif opts.no_interchromosomal == False and opts.only_interchromosomal == False:
-                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types)
+                            writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types)
 
     if outputFile != None:
         outputFile.close()
@@ -190,7 +202,7 @@ def format_tag_field(name, value, sam_col_types):
     else:
         return ":".join([col_name_to_field_name(name), col_type_to_field_type(sam_col_types[name]), str(value)])
 
-def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs, sam_cols, sam_col_names, sam_col_types):
+def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, assignReadGroup, column_descs, sam_cols, sam_col_names, sam_col_types):
     out_row = ""
 
     values = dict(defaultCol)
@@ -228,9 +240,7 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs
     if idAsName:
         readName = idPrepend
         readName += str(row["template_id"])
-        readName += "_"
-        readName += str(row["mate_id"])
-    
+
     else:
         readName = values["name"]    
         if readName.strip("@") == "":
@@ -284,8 +294,12 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, column_descs
                 else:
                     out_row = "\t".join([out_row, row["sam_optional_fields"]])
     '''
-   
-    out_row.append("RG:Z:"+str(values['read_group']))
+    
+    
+    if assignReadGroup != "":
+        out_row.append("RG:Z:" + assignReadGroup)
+    else:
+        out_row.append("RG:Z:"+str(values['read_group']))
     
     out_row = "\t".join(out_row) + "\n"
 
