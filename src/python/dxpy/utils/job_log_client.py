@@ -14,7 +14,6 @@ class DXJobLogStreamClient(WebSocketBaseClient):
     def set_dx_streaming_id(self, dx_streaming_id):
         self.dx_streaming_id = dx_streaming_id
         self.seen_jobs = set()
-        self.num_received_messages = 0
 
     def opened(self):
         self.send('5:1::' + json.dumps({"name": "streamingId", "args": [self.dx_streaming_id]}))
@@ -38,7 +37,6 @@ class DXJobLogStreamClient(WebSocketBaseClient):
 
         msg_type, msg_id, msg_endpoint, msg_data = re.match("^([^:]+):([^:]*):([^:]*):(.+)", message_string).groups()
         if msg_type == '5':
-            self.num_received_messages += 1
             try:
                 msg_content = json.loads(msg_data)
                 if (msg_content["name"] == "log"):
