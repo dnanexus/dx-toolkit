@@ -1,3 +1,9 @@
+dx-toolkit (0.0.17-dnanexus.1) precise; urgency=low
+
+  * 0.0.17 release.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 08 Oct 2012 11:06:55 -0700
+
 dx-toolkit (0.0.14-dnanexus.2) precise; urgency=low
 
   * Debian build system unification.
