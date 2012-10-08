@@ -2479,25 +2479,23 @@ def shell(orig_args):
                 print unicode(details) + '\n'
 
 def watch(args):
-    try:
-        ws = None
-        from dxpy.utils.job_log_client import DXJobLogStreamClient
-        streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
-        response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
-        hskey = response.content.split(':')[0]
-        ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
-        server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
-        ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey)
-        ws.set_dx_streaming_id(streaming_id)
+    from dxpy.utils.job_log_client import DXJobLogStreamClient
+    from ws4py.exc import HandshakeError
+    streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
+    response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
+    hskey = response.content.split(':')[0]
+    ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
+    server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
 
-        print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
-        ws.connect()
-        while not ws.terminated:
-            # See also https://dnanexus.jira.com/browse/PTFM-2692
-            time.sleep(5)
-    except KeyboardInterrupt:
-        if ws is not None:
-            ws.close()
+    while True:
+        try:
+            ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, protocols=None, extensions=None)
+            ws.set_dx_streaming_id(streaming_id)
+            print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
+            ws.connect()
+            break
+        except HandshakeError: # HACK: Workaround for https://github.com/LearnBoost/socket.io/issues/438
+            continue
 
 def print_help(args):
     if args.command_or_category is None:
