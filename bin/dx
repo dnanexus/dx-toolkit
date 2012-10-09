@@ -1938,23 +1938,25 @@ def find_apps(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def close(args):
-    # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
-
-    if entity_results is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
-
     handlers = []
-    for result in entity_results:
-        try:
-            obj = dxpy.get_handler(result['id'], project=project)
-            obj.close()
-            handlers.append(obj)
-        except dxpy.DXAPIError as details:
-            print fill(unicode(details))
+    for path in args.path:
+        # Attempt to resolve name
+        project, folderpath, entity_results = try_call(resolve_existing_path,
+                                                       path,
+                                                       expected='entity',
+                                                       allow_mult=True, all_mult=args.all)
+
+        if entity_results is None:
+            parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+
+        for result in entity_results:
+            try:
+                obj = dxpy.get_handler(result['id'], project=project)
+                obj.close()
+                handlers.append(obj)
+            except dxpy.DXAPIError as details:
+                print fill(unicode(details))
+
     if args.wait:
         for handler in handlers:
             handler._wait_on_close()
@@ -2938,6 +2940,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch',
+                                     description='Monitors logging output from a running job',
                                      parents=[env_args])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=9999999999)
@@ -2947,7 +2950,8 @@ parser_map['watch'] = (parser_watch, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_terminate = subparsers.add_parser('terminate', help='Terminate a job that has not yet finished',
+parser_terminate = subparsers.add_parser('terminate', help='Terminate jobs',
+                                         description='Terminate a job or jobs that have not yet finished',
                                          prog='dx terminate',
                                          parents=[env_args])
 parser_terminate.add_argument('jobid', help='ID of the job to terminate', nargs='+')
@@ -3087,20 +3091,20 @@ parser_map['unset_properties'] = (parser_unset_properties, DXPathCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_close = subparsers.add_parser('close', help='Close a data object', description='Close a remote data object.', prog='dx close',
+parser_close = subparsers.add_parser('close', help='Close data object(s)', description='Close a remote data object or set of objects.', prog='dx close',
                                      parents=[env_args, all_arg])
-parser_close.add_argument('path', help='Path to data object to close')
-parser_close.add_argument('--wait', help='Wait for the object to close', action='store_true')
+parser_close.add_argument('path', help='Path to a data object to close', nargs='+')
+parser_close.add_argument('--wait', help='Wait for the object(s) to close', action='store_true')
 parser_close.set_defaults(func=close)
 parser_map['close'] = (parser_close, DXPathCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_wait = subparsers.add_parser('wait', help='Wait for a data object to close or job to finish', description='Polls the state of a data object or job until it is in the desired state.  By default, waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  It will exit with a non-zero code if a job reaches a terminal state that is not "done".',
+parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish', description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  By default, waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
                                     prog='dx wait',
                                     parents=[env_args])
-parser_wait.add_argument('path', help='Path to data object or job ID to wait for', nargs='+')
+parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+')
 parser_wait.set_defaults(func=wait)
 parser_map['wait'] = (parser_wait, DXPathCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
