@@ -240,7 +240,7 @@ class ListCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        self.matches = [ans for ans in completions if ans.startswith(prefix)]
+        self.matches = [ans for ans in self.completions if ans.startswith(prefix)]
 
     def get_matches(self, line, point, prefix, suffix):
         self._populate_matches(prefix)
