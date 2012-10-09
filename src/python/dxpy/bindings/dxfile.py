@@ -199,6 +199,7 @@ class DXFile(DXDataObject):
 
         '''
         self._pos = offset
+        self._read_buf = StringIO.StringIO()
         self._write_buf = StringIO.StringIO()
         self._request_iterator, self._response_iterator = None, None
 
