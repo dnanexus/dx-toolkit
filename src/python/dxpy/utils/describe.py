@@ -328,7 +328,7 @@ def print_job_desc(desc):
         print_field("App", desc["app"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
-    if "instanceType" in desc:
+    if "instanceType" in desc and desc['instanceType'] is not None:
         print_field("Instance Type", desc["instanceType"])
     print_field("State", JOB_STATES(desc["state"]))
     if desc["parentJob"] is None:
