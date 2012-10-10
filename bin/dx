@@ -1939,29 +1939,38 @@ def find_apps(args):
 
 def close(args):
     handlers = []
+    had_error = False
     for path in args.path:
         # Attempt to resolve name
-        project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                       path,
-                                                       expected='entity',
-                                                       allow_mult=True, all_mult=args.all)
+        try:
+            project, folderpath, entity_result = resolve_existing_path(path,
+                                                                       expected='entity',
+                                                                       allow_mult=True,
+                                                                       all_mult=args.all)
+        except:
+            project, folderpath, entity_result = None, None, None
 
         if entity_results is None:
-            parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
-
-        for result in entity_results:
-            try:
-                obj = dxpy.get_handler(result['id'], project=project)
-                obj.close()
-                handlers.append(obj)
-            except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+            print fill('Could not resolve \"' + args.path + '\" to a name or ID')
+            had_error = True
+        else:
+            for result in entity_results:
+                try:
+                    obj = dxpy.get_handler(result['id'], project=project)
+                    obj.close()
+                    handlers.append(obj)
+                except dxpy.DXAPIError as details:
+                    print fill(unicode(details))
 
     if args.wait:
         for handler in handlers:
             handler._wait_on_close()
 
+    if had_error:
+        parser.exit(1)
+
 def wait(args):
+    had_error = False
     for path in args.path:
         if is_job_id(path):
             dxjob = dxpy.DXJob(path)
@@ -1970,15 +1979,22 @@ def wait(args):
             print "Done"
         else:
             # Attempt to resolve name
-            project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                          path,
-                                                          expected='entity')
+            try:
+                project, folderpath, entity_result = resolve_existing_path(path, expected='entity')
+            except:
+                project, folderpath, entity_result = None, None, None
+            
             if entity_result is None:
-                parser.exit(1, fill('Could not resolve ' + path + ' to a data object') + '\n')
-            handler = dxpy.get_handler(entity_result['id'])
-            print "Waiting for " + path + " to close..."
-            try_call(handler._wait_on_close)
-            print "Done"
+                print fill('Could not resolve ' + path + ' to a data object')
+                had_error = True
+            else:
+                handler = dxpy.get_handler(entity_result['id'])
+                print "Waiting for " + path + " to close..."
+                try_call(handler._wait_on_close)
+                print "Done"
+
+    if had_error:
+        parser.exit(1)
 
 def build(args):
     from dxpy.scripts import dx_build_app
