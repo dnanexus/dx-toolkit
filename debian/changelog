@@ -1,3 +1,9 @@
+dx-toolkit (0.0.19-dnanexus.2) precise; urgency=low
+
+  * Introduce Conflicts for -beta and -unstable packages.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 10 Oct 2012 16:56:03 -0700
+
 dx-toolkit (0.0.19-dnanexus.1) precise; urgency=low
 
   * 0.0.19 release.
