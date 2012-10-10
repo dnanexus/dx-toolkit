@@ -2481,7 +2481,6 @@ def shell(orig_args):
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
     from ws4py.exc import HandshakeError
-    streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
     response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
     hskey = response.content.split(':')[0]
     ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
@@ -2490,6 +2489,7 @@ def watch(args):
     while True:
         try:
             ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, protocols=None, extensions=None)
+            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
             ws.set_dx_streaming_id(streaming_id)
             print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
             ws.connect()
