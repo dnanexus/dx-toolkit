@@ -198,8 +198,9 @@ class DXFile(DXDataObject):
         is a no-op if the file is open for writing.
 
         '''
+        # TODO: if seek is within the buffer, don't flush it
         self._pos = offset
-        self._write_buf = StringIO.StringIO()
+        self._read_buf = StringIO.StringIO()
         self._request_iterator, self._response_iterator = None, None
 
     def flush(self, multithread=True, **kwargs):

@@ -206,6 +206,8 @@ def print_app_desc(desc):
                 print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
             if "execDepends" in desc["runSpec"]:
                 print_json_field("execDepends", desc["runSpec"]["execDepends"])
+            if "systemRequirements" in desc['runSpec']:
+                print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
         if 'resources' in desc:
             print_field("Resources", desc['resources'])
         elif 'globalWorkspace' in desc:
@@ -274,6 +276,8 @@ def print_data_obj_desc(desc):
             print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
         if "execDepends" in desc['runSpec']:
             print_json_field("execDepends", desc["runSpec"]["execDepends"])
+        if "systemRequirements" in desc['runSpec']:
+            print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
 
     for field in desc:
         if field in recognized_fields:
@@ -303,7 +307,7 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependencies', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependencies', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name', 'instanceType', 'systemRequirements']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -324,6 +328,8 @@ def print_job_desc(desc):
         print_field("App", desc["app"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
+    if "instanceType" in desc and desc['instanceType'] is not None:
+        print_field("Instance Type", desc["instanceType"])
     print_field("State", JOB_STATES(desc["state"]))
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
@@ -354,6 +360,8 @@ def print_job_desc(desc):
         print_field("File of stdout", str(desc['stdout']))
     if 'stderr' in desc:
         print_field('File of stderr', str(desc['stderr']))
+    if 'systemRequirements' in desc:
+        print_json_field("Sys Requirements", desc['systemRequirements'])
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])

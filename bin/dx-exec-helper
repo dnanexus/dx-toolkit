@@ -23,11 +23,13 @@ HELPER2_PID=$!
 
 stop_helpers() {
     set +e
-    kill $HELPER1_PID 2>/dev/null
-    kill $HELPER2_PID 2>/dev/null
+    wait $HELPER1_PID
+    wait $HELPER2_PID
+#    kill $HELPER1_PID 2>/dev/null
+#    kill $HELPER2_PID 2>/dev/null
     pkill dhclient
-    kill -9 $HELPER1_PID 2>/dev/null
-    kill -9 $HELPER2_PID 2>/dev/null
+#    kill -9 $HELPER1_PID 2>/dev/null
+#    kill -9 $HELPER2_PID 2>/dev/null
 }
 
 trap stop_helpers EXIT
