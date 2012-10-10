@@ -1943,12 +1943,12 @@ def close(args):
     for path in args.path:
         # Attempt to resolve name
         try:
-            project, folderpath, entity_result = resolve_existing_path(path,
+            project, folderpath, entity_results = resolve_existing_path(path,
                                                                        expected='entity',
                                                                        allow_mult=True,
                                                                        all_mult=args.all)
         except:
-            project, folderpath, entity_result = None, None, None
+            project, folderpath, entity_results = None, None, None
 
         if entity_results is None:
             print fill('Could not resolve \"' + args.path + '\" to a name or ID')
