@@ -249,7 +249,7 @@ void uploadProgressHelper(vector<File> &files) {
     }
   }
   queueLock.unlock();
-  cerr << " ... Instantenous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+  cerr << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
 }
 
 void uploadProgress(vector<File> &files) {
