@@ -4,6 +4,7 @@ import sys, os, subprocess
 import json, re
 import argparse
 from dxpy.utils.printing import *
+from collections import OrderedDict
 
 API_VERSION = '1.0.0'
 
@@ -158,16 +159,8 @@ print fill('The ' + BOLD() + 'interpreter' + ENDC() + ' of your app indicates wh
 interpreter = prompt_for_var('Interpreter', 'python2.7', interpreter_choices)
 use_completer()
 
-app_json = {
-    "name": name,
-    "dxapi": API_VERSION,
-    "runSpec": {"interpreter": interpreter},
-    "version": version,
-    "details": {
-        "contactUrl": "http://wiki.dnanexus.com/Apps/" + name
-    },
-    "resources": []
-}
+app_json = OrderedDict()
+app_json["name"] = name
 
 if title != '':
     app_json["title"] = title
@@ -175,6 +168,12 @@ if summary != '':
     app_json['summary'] = summary
 if description != '':
     app_json['description'] = description
+
+app_json["dxapi"] = API_VERSION
+app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
+app_json["version"] = version
+app_json["details"] = OrderedDict({"contactUrl": "http://wiki.dnanexus.com/Apps/" + name})
+app_json["resources"] = []
 
 class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
                              'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
