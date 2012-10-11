@@ -15,22 +15,49 @@ typedef unsigned long long uint64;
 typedef long long int64;
 
 namespace dx {
+  // class provide some basic operations on the types of a DNAnexus object
   class TypesHandler {
     private:
-      bool duplicate;
-      set<string> types;
+      bool duplicate;  // Whether or not there the object has duplicate types
+      set<string> types; // List of types of the object
 
     public:
       TypesHandler() {};
 
+      /** This function takes a JSON array as input t, which should be the types
+        * of an DNAnexus object. It first clears the string set types and then
+        * stores unique entries in the array to this set. It also sets duplicate
+        * to be true if there are duplicate entries in the array.
+        */
       void Add(const JSON &t);
+
+      // Return whether or not the object has duplicate types
       bool HasDuplicate() { return duplicate; };
+
+      // Return whether or not the object has a particular type
       bool Has(const string &type) { return (types.find(type) != types.end()); }
   };
 
+  /** Basic class provide tools to validate columns of a gtable including two major
+    * functions:
+    *   1. Build the following list of columns for a particular type
+    *        a. Required columns - columns MUST exist in the gtable
+    *        b. Suggested columns - columns SHOULD exist in the gtable
+    *        c. Optional columns - columns MAY or MAY NOT exist in the gtable
+    *        d. Forbidden columns - columns MUST NOT exist in the gtable
+    *      and for columns in lists a, b, and c, set their proper types
+    *   2. Give a gtable with the corresponding type, populate the following arrays
+    *      with columns in the table:
+    *        a. Missing required columns
+    *        b. Missing suggested columns
+    *        c. Invalid columns - columns do not have proper types
+    *        d. Unrecognized columns - columns that are neither required nor suggested nor optional
+    *        e. Forbidden columns - columns that are forbidden
+    */
   class ColumnsHandler {
     private:
       map<string, string> columnTypes[3];
+
       set<string> intTypes;
 
       vector<string> columnLists[5];

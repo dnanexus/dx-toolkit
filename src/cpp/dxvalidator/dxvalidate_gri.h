@@ -4,13 +4,23 @@
 #include "dxvalidate_gtable.h"
 
 namespace dx {
+  class GriColumnsHandler : public ColumnsHandler {
+    protected:
+      virtual bool isRecognized() { return true; }
+
+    public:
+      void Init();
+  };
+
   class GriValidator : public GTableValidator {
     private: 
       bool hasGenomicIndex();
     
     protected:
       virtual bool validateTypes();
+      virtual bool validateColumns();
       virtual bool validateDetails();
+      virtual bool validateData();
   };
 
   class GriDataValidator {

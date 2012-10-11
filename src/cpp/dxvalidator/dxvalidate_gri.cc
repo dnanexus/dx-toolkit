@@ -2,6 +2,14 @@
 
 using namespace dx;
 
+void GriColumnsHandler::Init() {
+  clearColumns();
+
+  addColumn("chr", "string", 0);
+  addColumn("lo" , "integer", 0);
+  addColumn("hi" , "integer", 0);
+}
+
 bool GriValidator::validateTypes() {
   GTableValidator::validateTypes();
   if (! types.Has("gri")) return msg->setError("TYPE_NOT_GRI");
@@ -9,11 +17,50 @@ bool GriValidator::validateTypes() {
   return true;
 }
 
+bool GriValidator::validateColumns() {
+  columns = new GriColumnsHandler();
+  bool ret_val = processColumns();
+  delete columns;
+  return ret_val;
+}
+
 bool GriValidator::validateDetails() {
   if (! details.has("original_contigset")) return msg->setError("CONTIGSET_MISSING");
   if (details["original_contigset"].type() != JSON_OBJECT) return msg->setError("CONTIGSET_INVALID");
   if (! details["original_contigset"].has("$dnanexus_link")) return msg->setError("CONTIGSET_INVALID");
   if (details["original_contigset"]["$dnanexus_link"].type() != JSON_STRING) return msg->setError("CONTIGSET_INVALID");
+  return true;
+}
+
+bool GriValidator::validateData() {
+  cerr << "Total rows " << numRows << endl;
+
+  GriDataValidator v(msg);
+  if (! v.FetchContigSets(details["original_contigset"]["$dnanexus_link"].get<string>())) return false;
+ 
+  table.startLinearQuery(queryColumns);
+  int64_t offset = 0;
+  int count = 0;
+  
+  JSON data;
+  try {
+    while (table.getNextChunk(data)) {
+      for (int i = 0; i < data.size(); i++) {
+        msg->setRowIndex(offset + i);
+        if (! v.ValidateGri(data[i][0].get<string>(), int64_t(data[i][1]), int64_t(data[i][2]), 0)) return false;
+      }
+      
+      offset += data.size();
+      count ++;
+      
+      if ( (count % 10) == 0)  cerr << offset << "\n"; 
+    }
+    
+    table.stopLinearQuery();
+  } catch(DXError &e) {
+    return msg->setDXError(e.msg, "GTABLE_FETCH_FAIL");
+  }
+  
   return true;
 }
 
