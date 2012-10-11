@@ -1113,7 +1113,7 @@ def describe(args):
                     print get_result_str()
                     print_desc(desc)
             except dxpy.DXAPIError as details:
-                if details.code != requests.codes.not_found:
+                if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
                     raise
         else:
             try:
@@ -1127,7 +1127,7 @@ def describe(args):
                     print get_result_str()
                     print_desc(desc)
             except dxpy.DXAPIError as details:
-                if details.code != requests.codes.not_found:
+                if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
                     raise
 
         # Could be an org or team
@@ -1939,29 +1939,38 @@ def find_apps(args):
 
 def close(args):
     handlers = []
+    had_error = False
     for path in args.path:
         # Attempt to resolve name
-        project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                       path,
-                                                       expected='entity',
-                                                       allow_mult=True, all_mult=args.all)
+        try:
+            project, folderpath, entity_results = resolve_existing_path(path,
+                                                                       expected='entity',
+                                                                       allow_mult=True,
+                                                                       all_mult=args.all)
+        except:
+            project, folderpath, entity_results = None, None, None
 
         if entity_results is None:
-            parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
-
-        for result in entity_results:
-            try:
-                obj = dxpy.get_handler(result['id'], project=project)
-                obj.close()
-                handlers.append(obj)
-            except dxpy.DXAPIError as details:
-                print fill(unicode(details))
+            print fill('Could not resolve \"' + args.path + '\" to a name or ID')
+            had_error = True
+        else:
+            for result in entity_results:
+                try:
+                    obj = dxpy.get_handler(result['id'], project=project)
+                    obj.close()
+                    handlers.append(obj)
+                except dxpy.DXAPIError as details:
+                    print fill(unicode(details))
 
     if args.wait:
         for handler in handlers:
             handler._wait_on_close()
 
+    if had_error:
+        parser.exit(1)
+
 def wait(args):
+    had_error = False
     for path in args.path:
         if is_job_id(path):
             dxjob = dxpy.DXJob(path)
@@ -1970,15 +1979,22 @@ def wait(args):
             print "Done"
         else:
             # Attempt to resolve name
-            project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                          path,
-                                                          expected='entity')
+            try:
+                project, folderpath, entity_result = resolve_existing_path(path, expected='entity')
+            except:
+                project, folderpath, entity_result = None, None, None
+            
             if entity_result is None:
-                parser.exit(1, fill('Could not resolve ' + path + ' to a data object') + '\n')
-            handler = dxpy.get_handler(entity_result['id'])
-            print "Waiting for " + path + " to close..."
-            try_call(handler._wait_on_close)
-            print "Done"
+                print fill('Could not resolve ' + path + ' to a data object')
+                had_error = True
+            else:
+                handler = dxpy.get_handler(entity_result['id'])
+                print "Waiting for " + path + " to close..."
+                try_call(handler._wait_on_close)
+                print "Done"
+
+    if had_error:
+        parser.exit(1)
 
 def build(args):
     from dxpy.scripts import dx_build_app
@@ -2054,6 +2070,13 @@ parse_input = {'boolean': parse_bool,
                'app': (lambda string: {'$dnanexus_link': string}),
                'table': (lambda string: parse_obj(string, 'table'))}
 
+def parse_input_or_jbor(in_class, value):
+    val_substrings = split_unescaped(':', value)
+    if len(val_substrings) == 2 and is_job_id(val_substrings[0]):
+        return {"job": val_substrings[0], "field": val_substrings[1]}
+    else:
+        return parse_input[in_class](value)
+
 def get_input_array(param_desc):
     in_class = param_desc['class'][6:]
     typespec = param_desc.get('type', None)
@@ -2077,7 +2100,7 @@ def get_input_array(param_desc):
             elif len(user_input) == 0:
                 return input_array
             try:
-                input_array.append(parse_input[in_class](user_input[0]))
+                input_array.append(parse_input_or_jbor(in_class, user_input[0]))
             except ValueError as details:
                 print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
@@ -2112,7 +2135,7 @@ def get_input_single(param_desc):
             elif len(user_input) == 0:
                 user_input = ['']
             try:
-                value = parse_input[in_class](user_input[0])
+                value = parse_input_or_jbor(in_class, user_input[0])
             except ValueError as details:
                 print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
@@ -2478,7 +2501,6 @@ def shell(orig_args):
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
     from ws4py.exc import HandshakeError
-    streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
     response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
     hskey = response.content.split(':')[0]
     ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
@@ -2487,6 +2509,7 @@ def watch(args):
     while True:
         try:
             ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, protocols=None, extensions=None)
+            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
             ws.set_dx_streaming_id(streaming_id)
             print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
             ws.connect()

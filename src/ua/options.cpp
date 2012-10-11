@@ -33,7 +33,7 @@ Options::Options() {
   vector<string> defaultFolders;
   defaultFolders.push_back("/");
 
-  visible_opts = new po::options_description("Allowed options");
+  visible_opts = new po::options_description("Available options");
   visible_opts->add_options()
     ("help,h", "Produce a help message")
     ("version", "Print the version")

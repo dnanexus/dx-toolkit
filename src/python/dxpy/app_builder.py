@@ -184,13 +184,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                           "tag": "master",
                           "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
     elif dx_toolkit_autodep == "preprod":
+        # dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
         dx_toolkit_dep = {"name": "dx-toolkit",
                           "package_manager": "git",
                           "url": "git@github.com:dnanexus/dx-toolkit.git",
                           "tag": "cv_20120926",
                           "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
     else:
-        dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
+        dx_toolkit_dep = {"name": "dx-toolkit-beta", "package_manager": "apt"}
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
         dx_toolkit_dep_found = False
