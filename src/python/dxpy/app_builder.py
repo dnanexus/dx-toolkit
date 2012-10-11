@@ -109,7 +109,7 @@ def upload_resources(src_dir, project=None):
     else:
         return None
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True, dry_run=False):
     """
     Creates a new applet object.
 
@@ -133,7 +133,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if 'dxapi' not in applet_spec:
         applet_spec['dxapi'] = dxpy.API_VERSION
 
-    if check_name_collisions:
+    if check_name_collisions and not dry_run:
         logging.debug("Searching for applets with name " + applet_spec["name"])
         for result in dxpy.find_data_objects(classname="applet", properties={"name": applet_spec["name"]}, project=dest_project):
             if overwrite:
@@ -217,6 +217,12 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # -----
     # Now actually create the applet
+
+    if dry_run:
+        print "Would create the following applet:"
+        print json.dumps(applet_spec, indent=2)
+        print "*** DRY-RUN-- no applet was created ***"
+        return
 
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 

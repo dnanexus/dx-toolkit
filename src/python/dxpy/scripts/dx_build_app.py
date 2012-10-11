@@ -45,6 +45,20 @@ parser.add_argument("--dx-toolkit-apt-autodep", help=argparse.SUPPRESS, action="
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
+# --[no-]dry-run
+#
+# The --dry-run flag can be used to see the applet spec that would be
+# provided to /applet/new, for debugging purposes. However, the output
+# would deviate from a real run in the following ways:
+#
+# * Any bundled resources are NOT uploaded and are not reflected in the
+#   app(let) spec.
+# * No temporary project is created (if building an app) and the
+#   "project" field is not set in the app spec.
+parser.set_defaults(dry_run=False)
+parser.add_argument("--dry-run", help="Do not create an app(let), only show the spec of the applet that would have been created.", action="store_true", dest="dry_run")
+parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
+
 
 def get_timestamp_version_suffix():
     return "+build." + datetime.today().strftime('%Y%m%d.%H%M')
@@ -81,7 +95,7 @@ def main(**kwargs):
     if args.mode == "applet" and args.destination_project:
         # TODO: should -p be required when creating an applet?
         working_project = args.destination_project
-    elif args.mode == "app" and args.use_temp_build_project:
+    elif args.mode == "app" and args.use_temp_build_project and not args.dry_run:
         # Create a temp project
         working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
         print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
@@ -96,8 +110,8 @@ def main(**kwargs):
                 del app_json["buildOptions"]
 
         dxpy.app_builder.build(args.src_dir)
-        bundled_resources = dxpy.app_builder.upload_resources(args.src_dir,
-                                                              project=working_project)
+
+        bundled_resources = dxpy.app_builder.upload_resources(args.src_dir, project=working_project) if not args.dry_run else []
 
         if args.dx_toolkit_autodep == "auto":
             # "auto" means a tagged git version on preprod and True (i.e. apt,
@@ -111,7 +125,11 @@ def main(**kwargs):
                                                    check_name_collisions=(args.mode == "applet"),
                                                    overwrite=args.overwrite and args.mode == "applet",
                                                    project=working_project,
-                                                   dx_toolkit_autodep = args.dx_toolkit_autodep)
+                                                   dx_toolkit_autodep=args.dx_toolkit_autodep,
+                                                   dry_run=args.dry_run)
+
+        if args.dry_run:
+            return
 
         print >> sys.stderr, "Created applet " + applet_id + " successfully"
 
