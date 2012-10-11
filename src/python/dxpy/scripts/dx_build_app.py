@@ -41,8 +41,10 @@ parser.add_argument("--no-update", help="Never update an existing unpublished ap
 # --[no-]dx-toolkit-autodep
 parser.set_defaults(dx_toolkit_autodep="auto")
 parser.add_argument("--dx-toolkit-legacy-git-autodep", help="Auto-insert a dx-toolkit dependency on the latest git version (to be built from source at runtime)", action="store_const", dest="dx_toolkit_autodep", const="git")
-parser.add_argument("--dx-toolkit-apt-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
-parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_true", dest="dx_toolkit_autodep")
+parser.add_argument("--dx-toolkit-stable-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit (stable) apt package", action="store_const", dest="dx_toolkit_autodep", const="stable")
+parser.add_argument("--dx-toolkit-beta-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit-beta apt package", action="store_const", dest="dx_toolkit_autodep", const="beta")
+parser.add_argument("--dx-toolkit-unstable-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit-unstable apt package", action="store_const", dest="dx_toolkit_autodep", const="unstable")
+parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
 # --[no-]dry-run
@@ -114,12 +116,12 @@ def main(**kwargs):
         bundled_resources = dxpy.app_builder.upload_resources(args.src_dir, project=working_project) if not args.dry_run else []
 
         if args.dx_toolkit_autodep == "auto":
-            # "auto" means a tagged git version on preprod and True (i.e. apt,
-            # the default) on all other systems.
+            # "auto" (the default) means dx-toolkit (stable) on preprod
+            # and dx-toolkit-beta on all other systems.
             if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
-                args.dx_toolkit_autodep = "preprod"
+                args.dx_toolkit_autodep = "stable"
             else:
-                args.dx_toolkit_autodep = True
+                args.dx_toolkit_autodep = "beta"
 
         applet_id = dxpy.app_builder.upload_applet(args.src_dir, bundled_resources,
                                                    check_name_collisions=(args.mode == "applet"),
