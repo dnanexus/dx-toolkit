@@ -137,6 +137,8 @@ def parse_args_as_job_input(args, app_spec):
 
     inputs = {}
     for i, value in vars(parser.parse_args(args)).iteritems():
+        if value is None:
+            continue
         if i in json_inputs:
             inputs[i] = json.loads(value)
         else:
