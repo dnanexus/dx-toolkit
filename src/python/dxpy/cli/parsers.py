@@ -20,7 +20,7 @@ all_arg.add_argument('-a', '--all', help=fill('Apply to all results with the sam
 
 no_color_arg = argparse.ArgumentParser(add_help=False)
 no_color_arg.add_argument('--color',
-                          help=fill('Set when color is used (auto=color is used when stdout is a TTY)', width_adjustment=-24),
+                          help=fill('Set when color is used (color=auto is used when stdout is a TTY)', width_adjustment=-24),
                           choices=['off', 'on', 'auto'], default='auto')
 
 delim_arg = argparse.ArgumentParser(add_help=False)
