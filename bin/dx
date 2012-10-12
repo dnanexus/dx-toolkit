@@ -449,6 +449,21 @@ def env(args):
             print "export DX_APISERVER_HOST=" + dxpy.APISERVER_HOST
         if dxpy.APISERVER_PORT is not None:
             print "export DX_APISERVER_PORT=" + dxpy.APISERVER_PORT
+    elif args.dx_flags:
+        flags_str = ''
+        if dxpy.AUTH_HELPER is not None:
+            token = dxpy.AUTH_HELPER.security_context.get('auth_token', None)
+            if token is not None:
+                flags_str += ' --auth-token ' + token
+        if dxpy.APISERVER_PROTOCOL is not None:
+            flags_str += ' --apiserver-protocol ' + dxpy.APISERVER_PROTOCOL
+        if dxpy.APISERVER_HOST is not None:
+            flags_str += ' --apiserver-host ' + dxpy.APISERVER_HOST
+        if dxpy.APISERVER_PORT is not None:
+            flags_str += ' --apiserver-port ' + dxpy.APISERVER_PORT
+        if dxpy.WORKSPACE_ID is not None:
+            flags_str += ' --project-context-id ' + dxpy.WORKSPACE_ID
+        print flags_str
     else:
         if dxpy.AUTH_HELPER is not None:
             print "Auth token used\t\t" + dxpy.AUTH_HELPER.security_context.get("auth_token", "none")
@@ -2616,6 +2631,7 @@ parser_env = subparsers.add_parser('env', help='Prints all environment variables
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env',
                                    parents=[env_args])
 parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14), action='store_true')
+parser_env.add_argument('--dx-flags', help=fill('Prints the dx options to override the environment variables', width_adjustment=-14), action='store_true')
 parser_env.set_defaults(func=env)
 parser_map['env'] = (parser_env, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
