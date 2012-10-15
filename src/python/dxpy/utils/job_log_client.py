@@ -8,12 +8,16 @@ import dxpy
 from dxpy.utils.describe import get_find_jobs_string
 
 class DXJobLogStreamClient(WebSocketBaseClient):
+    def __init__(self, url, filter_stream=None, protocols=None, extensions=None):
+        self.filter_stream = filter_stream
+        self.seen_jobs = set()
+        super(DXJobLogStreamClient, self).__init__(url, protocols=protocols, extensions=extensions)
+
     def handshake_ok(self):
         self.run()
 
     def set_dx_streaming_id(self, dx_streaming_id):
         self.dx_streaming_id = dx_streaming_id
-        self.seen_jobs = set()
 
     def opened(self):
         self.send('5:1::' + json.dumps({"name": "streamingId", "args": [self.dx_streaming_id]}))
@@ -39,13 +43,21 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         if msg_type == '5':
             try:
                 msg_content = json.loads(msg_data)
-                if (msg_content["name"] == "log"):
-                    job_id_match = re.match("^\[.+?\] APP \w+ \[(job-.+?)\]", msg_content["args"][0])
-                    if job_id_match is not None:
-                        job_id = job_id_match.group(1)
+                if msg_content["name"] == "log":
+                    log_level, job_id, orig_msg = re.match("^\[.+?\] APP (\w+) \[(job-.+?)\] (.+)", msg_content["args"][0]).groups()
+
+                    if self.filter_stream == 'stdout':
+                        result = re.match("^stdout:(.+)", orig_msg)
+                        if result is not None:
+                            print result.group(1)
+                    elif self.filter_stream == 'stderr':
+                        result = re.match("^stderr:(.+)", orig_msg)
+                        if result is not None:
+                            print result.group(1)
+                    else:
                         if job_id not in self.seen_jobs:
                             print get_find_jobs_string(dxpy.describe(job_id), has_children=False)
                             self.seen_jobs.add(job_id)
-                    print msg_content["args"][0]
+                        print msg_content["args"][0]
             except:
                 print "Error while decoding message:", str(msg_content)
