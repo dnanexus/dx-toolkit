@@ -10,77 +10,6 @@ void GriColumnsHandler::Init() {
   addColumn("hi" , "integer", 0);
 }
 
-bool GriValidator::validateTypes() {
-  GTableValidator::validateTypes();
-  if (! types.Has("gri")) return msg->setError("TYPE_NOT_GRI");
-  if (! hasGenomicIndex()) return msg->setError("GRI_INDEX_MISSING");
-  return true;
-}
-
-bool GriValidator::validateColumns() {
-  columns = new GriColumnsHandler();
-  bool ret_val = processColumns();
-  delete columns;
-  return ret_val;
-}
-
-bool GriValidator::validateDetails() {
-  if (! details.has("original_contigset")) return msg->setError("CONTIGSET_MISSING");
-  if (details["original_contigset"].type() != JSON_OBJECT) return msg->setError("CONTIGSET_INVALID");
-  if (! details["original_contigset"].has("$dnanexus_link")) return msg->setError("CONTIGSET_INVALID");
-  if (details["original_contigset"]["$dnanexus_link"].type() != JSON_STRING) return msg->setError("CONTIGSET_INVALID");
-  return true;
-}
-
-bool GriValidator::validateData() {
-  cerr << "Total rows " << numRows << endl;
-
-  GriDataValidator v(msg);
-  if (! v.FetchContigSets(details["original_contigset"]["$dnanexus_link"].get<string>())) return false;
- 
-  table.startLinearQuery(queryColumns);
-  int64_t offset = 0;
-  int count = 0;
-  
-  JSON data;
-  try {
-    while (table.getNextChunk(data)) {
-      for (int i = 0; i < data.size(); i++) {
-        msg->setRowIndex(offset + i);
-        if (! v.ValidateGri(data[i][0].get<string>(), int64_t(data[i][1]), int64_t(data[i][2]), 0)) return false;
-      }
-      
-      offset += data.size();
-      count ++;
-      
-      if ( (count % 10) == 0)  cerr << offset << "\n"; 
-    }
-    
-    table.stopLinearQuery();
-  } catch(DXError &e) {
-    return msg->setDXError(e.msg, "GTABLE_FETCH_FAIL");
-  }
-  
-  return true;
-}
-
-bool GriValidator::hasGenomicIndex() {
-  if (! desc.has("indices")) return false; 
-  for (int i = 0; i < desc["indices"].size(); i++) {
-    if (desc["indices"][i]["name"] != "gri") continue;
-    if (desc["indices"][i]["type"] != "genomic") return false;
-    if (! desc["indices"][i].has("chr")) return false;
-    if (desc["indices"][i]["chr"].get<string>() != "chr") return false;
-    if (! desc["indices"][i].has("lo")) return false;
-    if (desc["indices"][i]["lo"].get<string>() != "lo") return false;
-    if (! desc["indices"][i].has("hi")) return false;
-    if (desc["indices"][i]["hi"].get<string>() != "hi") return false;
-    return true;
-  }
-
-  return false;
-}
-
 bool GriDataValidator::initFlatFile(const JSON &details) {
   try {
     flatFile.setIDs(details["flat_sequence_file"]["$dnanexus_link"].get<string>());
@@ -191,4 +120,85 @@ bool GriDataValidator::ValidateGri(const string &chr, int64_t lo, int64_t hi, in
   }
 
   return true;
+}
+
+bool GriValidator::validateTypes() {
+  GTableValidator::validateTypes();
+  if (! types.Has("gri")) return msg->setError("TYPE_NOT_GRI");
+  if (! hasGenomicIndex()) return msg->setError("GRI_INDEX_MISSING");
+  return true;
+}
+
+bool GriValidator::validateColumns() {
+  columns = new GriColumnsHandler();
+  bool ret_val = processColumns();
+  delete columns;
+  return ret_val;
+}
+
+bool GriValidator::validateDetails() {
+  if (! details.has("original_contigset")) return msg->setError("CONTIGSET_MISSING");
+  if (details["original_contigset"].type() != JSON_OBJECT) return msg->setError("CONTIGSET_INVALID");
+  if (! details["original_contigset"].has("$dnanexus_link")) return msg->setError("CONTIGSET_INVALID");
+  if (details["original_contigset"]["$dnanexus_link"].type() != JSON_STRING) return msg->setError("CONTIGSET_INVALID");
+  return true;
+}
+
+bool GriValidator::validateData() {
+  cerr << "Total rows " << numRows << endl;
+ 
+  SetValidator();
+  if (! v->IsReady()) {
+    delete v;
+    return false;
+  }
+ 
+  table.startLinearQuery(queryColumns);
+  int64_t offset = 0;
+  int count = 0;
+  
+  JSON data;
+  try {
+    while (table.getNextChunk(data)) {
+      for (int i = 0; i < data.size(); i++) {
+        msg->setRowIndex(offset + i);
+        if (! v->ValidateRow(data[i])) {
+          delete v;
+          return false;
+        }
+      }
+      
+      offset += data.size();
+      count ++;
+      
+      if ( (count % 10) == 0)  cerr << offset << "\n"; 
+    }
+
+    v->finalValidate();
+    
+    table.stopLinearQuery();
+  } catch(DXError &e) {
+    delete v;
+    return msg->setDXError(e.msg, "GTABLE_FETCH_FAIL");
+  }
+  
+  delete v;
+  return true;
+}
+
+bool GriValidator::hasGenomicIndex() {
+  if (! desc.has("indices")) return false; 
+  for (int i = 0; i < desc["indices"].size(); i++) {
+    if (desc["indices"][i]["name"] != "gri") continue;
+    if (desc["indices"][i]["type"] != "genomic") return false;
+    if (! desc["indices"][i].has("chr")) return false;
+    if (desc["indices"][i]["chr"].get<string>() != "chr") return false;
+    if (! desc["indices"][i].has("lo")) return false;
+    if (desc["indices"][i]["lo"].get<string>() != "lo") return false;
+    if (! desc["indices"][i].has("hi")) return false;
+    if (desc["indices"][i]["hi"].get<string>() != "hi") return false;
+    return true;
+  }
+
+  return false;
 }

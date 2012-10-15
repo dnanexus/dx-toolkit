@@ -12,17 +12,6 @@ namespace dx {
       void Init();
   };
 
-  class GriValidator : public GTableValidator {
-    private: 
-      bool hasGenomicIndex();
-    
-    protected:
-      virtual bool validateTypes();
-      virtual bool validateColumns();
-      virtual bool validateDetails();
-      virtual bool validateData();
-  };
-
   class GriDataValidator {
     private:
       vector<bool> chr_valid;
@@ -64,6 +53,37 @@ namespace dx {
         
         warningMsg["CHR_INVALID"] = "In some row, such as the {1} one, {2} does not match any contig name";
       }
+  };
+
+  class GriRowValidator : public GriDataValidator {
+    private:
+      bool ready;
+
+    public:
+      GriRowValidator(const string &source_id, ValidateInfo *m) : GriDataValidator(m) {
+        ready = FetchContigSets(source_id);
+      }
+
+      bool IsReady() { return ready; }
+
+      virtual bool ValidateRow(const JSON &row) { return (ready && ValidateGri(row[0].get<string>(), int64_t(row[1]), int64_t(row[2]), 0)); }
+
+      virtual bool finalValidate() { return true; }
+  };
+
+  class GriValidator : public GTableValidator {
+    private: 
+      bool hasGenomicIndex();
+
+    protected:
+      GriRowValidator *v;
+      virtual void SetValidator() { v = new GriRowValidator(details["original_contigset"]["$dnanexus_link"].get<string>(), msg); }
+
+    protected:
+      virtual bool validateTypes();
+      virtual bool validateColumns();
+      virtual bool validateDetails();
+      virtual bool validateData();
   };
 };
 

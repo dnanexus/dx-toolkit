@@ -27,6 +27,7 @@ namespace dx {
       virtual bool validateDetails() { return true; }
       virtual bool validateColumns();
       virtual bool validateData() { return true; }
+//      virtual bool finalValidate() { return true; }
 
     public:
       GTableValidator(){ }

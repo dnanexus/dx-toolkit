@@ -140,9 +140,9 @@ namespace dx {
     private:
       JSON info;
       ErrorMsg *msg;
-      int64_t rowIndex;
       
     public:
+      int64_t rowIndex;
       ValidateInfo(ErrorMsg &m);
 
       void setString(const string &key, const string &value) { info[key] = value; }
