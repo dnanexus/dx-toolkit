@@ -421,6 +421,7 @@ class DXFile(DXDataObject):
             orig_buf_pos = buf.tell()
             orig_file_pos = self._pos
             buf.seek(0, os.SEEK_END)
+            self._pos += buf_remaining_bytes
             while self._pos < orig_file_pos + length:
                 remaining_len = orig_file_pos + length - self._pos
                 content = self._next_response_content()
