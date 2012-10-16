@@ -9,6 +9,7 @@ make clean
 make
 make install
 rm Makefile
+rm -r debian
 mv build/Prebuilt-Readme.md Readme.md
 temp_archive=$(mktemp --suffix .tar.gz)
 (cd "${DNANEXUS_HOME}/.."; tar --exclude-vcs -czf $temp_archive dx-toolkit)
