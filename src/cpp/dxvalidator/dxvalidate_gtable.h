@@ -5,16 +5,30 @@
 #include "dxcpp/dxcpp.h"
 
 namespace dx {
+  /** Basic GTable validator. It validates a DNAnexus gtable object in the following steps
+    * 1. fetchHead(): Fetch description and details of this gtable
+    * 2. validateTypes(): Validate the types of this gtable with the designated TypesHandler
+    * 3. validateDetails(): Validate the details of this gtable
+    * 4. validateColumns(): Validate the schema of columns of this gtable with the designated
+    *                       ColumnsHandler
+    * 5. validateData(): Validate the actual content of this gtable
+    *
+    * To validate a child type of gtable, one shall
+    * a. If needed, develop a particular TypesHandler by inherit the basic TypesHandler
+    * b. If needed, develop a particular ColumnsHandler by inherit the basic ColumnsHandler
+    * c. Inherite this class and override any the of above validate functions if needed
+    */
   class GTableValidator {
     private:
+      // Fetch description and details of source_id
       bool fetchHead(const string &source_id);
 
     protected:
-      int64_t numRows;
+      int64_t numRows; // Total number of rows in the gtable
       JSON desc, details, queryColumns;
       DXGTable table;
       
-      TypesHandler types;
+      TypesHandler types; 
       ValidateInfo *msg;
       ColumnsHandler *columns;
       
@@ -24,18 +38,21 @@ namespace dx {
         if (types.HasDuplicate()) msg->addWarning("TYPE_DUPLICATE");
         return true;
       }
+
       virtual bool validateDetails() { return true; }
       virtual bool validateColumns();
       virtual bool validateData() { return true; }
-//      virtual bool finalValidate() { return true; }
+
+      virtual void Validate(const string &source_id);
 
     public:
       GTableValidator(){ }
 
+      // Public function perform the validation
       virtual JSON Validate(const string &source_id, ValidateInfo *m);
-      virtual void Validate(const string &source_id);
   };
 
+  // Class manages error and warning messages of gtable
   class GTableErrorMsg : public ErrorMsg {
     public:
       GTableErrorMsg() {
