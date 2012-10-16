@@ -40,11 +40,11 @@ Runtime dependencies
 
 ### Ubuntu 12.04
 
-sudo apt-get install libboost-regex1.46.1 libboost-thread1.46.1
+    sudo apt-get install libboost-regex1.46.1 libboost-thread1.46.1
 
 ### Ubuntu 10.04
 
-sudo apt-get install libboost-regex1.40.0 libboost-thread1.40.0 libgomp1
+    sudo apt-get install libboost-regex1.40.0 libboost-thread1.40.0 libgomp1
 
 ### OS X
 
