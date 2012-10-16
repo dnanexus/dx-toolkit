@@ -48,21 +48,23 @@ Runtime dependencies
 
 ### OS X
 
-* Install the [Command Line Tools for XCode](http://wiki.dnanexus.com/DNAnexus-SDK) (Free registration required with Apple)
-* The following packages can be installed either from their respective websites or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/).
-    * Boost >= 1.50 (```sudo port install boost``` or ```brew install boost```)
-    * GCC >= 4.6
-        * On MacPorts, install and select GCC with:
+Install the [Command Line Tools for XCode](http://wiki.dnanexus.com/DNAnexus-SDK). (Free registration required with Apple)
 
-            ```
-            sudo port install gcc47
-            sudo port select --set gcc mp-gcc47
-            ```
+Install the following packages, either from source or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/):
 
-        * On Homebrew, install and select an up-to-date version of GCC with:
-p
-            ```
-            brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
-            export CC=gcc-4.7
-            export CXX=g++-4.7
-            ```
+* Boost >= 1.50 (```sudo port install boost``` or ```brew install boost```)
+* GCC >= 4.6
+    * On MacPorts, install and select GCC with:
+
+        ```
+        sudo port install gcc47
+        sudo port select --set gcc mp-gcc47
+        ```
+
+    * On Homebrew, install and select an up-to-date version of GCC with:
+
+        ```
+        brew install --enable-cxx https://raw.github.com/Homebrew/homebrew-dupes/master/gcc.rb
+        export CC=gcc-4.7
+        export CXX=g++-4.7
+        ```
