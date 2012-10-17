@@ -2983,7 +2983,7 @@ Examples:
 parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 parser_run.set_defaults(func=run, verbose=False)
-parser_map['run'] = (parser_run, DXAppCompleter()) # TODOOO: Add applets
+parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet'])]))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 

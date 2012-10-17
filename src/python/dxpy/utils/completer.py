@@ -165,6 +165,11 @@ class DXPathCompleter():
         self.typespec = typespec
         self.include_current_proj = include_current_proj
 
+    def _populate_matches(self, prefix):
+        self.matches = path_completer(prefix, self.expected, self.classes,
+                                      typespec=self.typespec,
+                                      include_current_proj=self.include_current_proj)
+
     def get_matches(self, line, point, prefix, suffix):
         self.matches = path_completer(prefix, self.expected, self.classes,
                                       typespec=self.typespec,
@@ -241,6 +246,30 @@ class ListCompleter():
 
     def _populate_matches(self, prefix):
         self.matches = [ans for ans in self.completions if ans.startswith(prefix)]
+
+    def get_matches(self, line, point, prefix, suffix):
+        self._populate_matches(prefix)
+        return self.matches
+
+    def __call__(self, text, state):
+        if state == 0:
+            self._populate_matches(text)
+
+        if state < len(self.matches):
+            return self.matches[state]
+        else:
+            return None
+
+class MultiCompleter():
+    def __init__(self, completers):
+        self.completers = completers
+        self.matches = []
+
+    def _populate_matches(self, prefix):
+        self.matches = []
+        for completer in self.completers:
+            completer._populate_matches(prefix)
+            self.matches += completer.matches
 
     def get_matches(self, line, point, prefix, suffix):
         self._populate_matches(prefix)
