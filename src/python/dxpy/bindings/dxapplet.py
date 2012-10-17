@@ -96,7 +96,7 @@ class DXApplet(DXDataObject):
         """
         return dxpy.api.appletGet(self._dxid, **kwargs)
 
-    def run(self, applet_input, project=None, folder="/", name=None, **kwargs):
+    def run(self, applet_input, project=None, folder="/", name=None, instance_type=None, **kwargs):
         '''
         :param applet_input: Hash of the applet's input arguments
         :type applet_input: dict
@@ -106,6 +106,8 @@ class DXApplet(DXDataObject):
         :type folder: string
         :param name: Name for the new job (default is "<name of the applet>")
         :type name: string
+        :param instance_type: Instance type on which the job with entry point "main" will be run, or a dict mapping function names to instance type requests
+        :type instance_type: string or dict
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -120,6 +122,13 @@ class DXApplet(DXDataObject):
                      "folder": folder}
         if name is not None:
             run_input["name"] = name
+        if instance_type is not None:
+            if isinstance(instance_type, basestring):
+                run_input["systemRequirements"] = {"main": {"instanceType": instance_type}}
+            elif isinstance(instance_type, dict):
+                run_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
+            else:
+                raise DXError('Expected instance_type field to be either a string or a dict')
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project

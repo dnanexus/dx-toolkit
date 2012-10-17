@@ -297,7 +297,7 @@ class DXApp(DXObject):
         else:
             return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
 
-    def run(self, app_input, project=None, folder="/", name=None, **kwargs):
+    def run(self, app_input, project=None, folder="/", name=None, instance_type=None, **kwargs):
         '''
         :param app_input: Hash of the app's input arguments
         :type app_input: dict
@@ -307,6 +307,8 @@ class DXApp(DXObject):
         :type folder: string
         :param name: Name for the new job (default is "<name of the app>")
         :type name: string
+        :param instance_type: Instance type on which the job with entry point "main" will be run, or a dict mapping function names to instance type requests
+        :type instance_type: string or dict
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -324,6 +326,14 @@ class DXApp(DXObject):
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project
+
+        if instance_type is not None:
+            if isinstance(instance_type, basestring):
+                run_input["systemRequirements"] = {"main": {"instanceType": instance_type}}
+            elif isinstance(instance_type, dict):
+                run_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
+            else:
+                raise DXError('Expected instance_type field to be either a string or a dict')
 
         if self._dxid is not None:
             return DXJob(dxpy.api.appRun(
