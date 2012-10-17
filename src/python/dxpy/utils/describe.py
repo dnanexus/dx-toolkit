@@ -307,12 +307,14 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependencies', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name', 'instanceType', 'systemRequirements']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependencies', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if "name" in desc and desc['name'] is not None:
-        print_field("Name", desc['name'])
+        print_field("Job name", desc['name'])
+    if "executableName" in desc and desc['executableName'] is not None:
+        print_field("Executable name", desc['executableName'])
     print_field("Project context", desc["project"])
     if 'workspace' in desc:
         print_field("Workspace", desc["workspace"])
@@ -356,6 +358,8 @@ def print_job_desc(desc):
         print_field("Failure reason", desc["failureReason"])
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
+    if "failureFrom" in desc and desc['failureFrom'] is not None:
+        print_field("Failure was in", desc['failureFrom']['id'])
     if "stdout" in desc:
         print_field("File of stdout", str(desc['stdout']))
     if 'stderr' in desc:
