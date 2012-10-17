@@ -511,6 +511,7 @@ def api(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def invite(args):
+    print args
     project, none, none = try_call(resolve_existing_path,
                                    args.project, 'project')
     if args.invitee != 'PUBLIC' and not '-' in args.invitee:
@@ -2670,8 +2671,8 @@ parser_invite = subparsers.add_parser('invite',
                                       prog='dx invite',
                                       parents=[env_args])
 parser_invite.add_argument('invitee', help='Entity to invite')
-parser_invite.add_argument('project', help='Project to invite the invitee to')
-parser_invite.add_argument('level', help='Permissions level the new member should have', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'])
+parser_invite.add_argument('project', help='Project to invite the invitee to', default=':', nargs='?')
+parser_invite.add_argument('level', help='Permissions level the new member should have', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], default='VIEW', nargs='?')
 parser_invite.set_defaults(func=invite)
 parser_map['invite'] = (parser_invite, NoneCompleter()) # TODO
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
