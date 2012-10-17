@@ -19,7 +19,7 @@ _test_harness_jobs = {}
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, name=None, **kwargs):
+def new_dxjob(fn_input, fn_name, name=None, instance_type=None, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -27,6 +27,8 @@ def new_dxjob(fn_input, fn_name, name=None, **kwargs):
     :type fn_name: string
     :param name: Name for the new job (default is "<parent job name>:<fn_name>")
     :type name: string
+    :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
+    :type instance_type: string or dict
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -37,7 +39,7 @@ def new_dxjob(fn_input, fn_name, name=None, **kwargs):
     Note that this function is shorthand for::
 
         dxjob = DXJob()
-        dxjob.new(fn_input, fn_name)
+        dxjob.new(fn_input, fn_name, name, instance_type)
 
     .. note:: This method is intended for calls made from within
        already-executing jobs or apps. If it is called from outside of
@@ -50,7 +52,7 @@ def new_dxjob(fn_input, fn_name, name=None, **kwargs):
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name, **kwargs)
+    dxjob.new(fn_input, fn_name, name, instance_type, **kwargs)
     return dxjob
 
 class DXJob(DXObject):
@@ -65,7 +67,7 @@ class DXJob(DXObject):
         if dxid is not None:
             self.set_id(dxid)
 
-    def new(self, fn_input, fn_name, name=None, **kwargs):
+    def new(self, fn_input, fn_name, name=None, instance_type=None, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -73,6 +75,8 @@ class DXJob(DXObject):
         :type fn_name: string
         :param name: Name for the new job (default is "<parent job name>:<fn_name>")
         :type name: string
+        :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
+        :type instance_type: string or dict
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job
@@ -92,6 +96,13 @@ class DXJob(DXObject):
             req_input["function"] = fn_name
             if name is not None:
                 req_input["name"] = name
+            if instance_type is not None:
+                if isinstance(instance_type, basestring):
+                    req_input["systemRequirements"] = {fn_name: {"instanceType": instance_type}}
+                elif isinstance(instance_type, dict):
+                    req_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
+                else:
+                    raise DXError('Expected instance_type field to be either a string or a dict')
             resp = dxpy.api.jobNew(req_input, **kwargs)
             self.set_id(resp["id"])
         else:
