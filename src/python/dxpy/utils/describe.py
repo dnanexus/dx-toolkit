@@ -359,7 +359,7 @@ def print_job_desc(desc):
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
     if "failureFrom" in desc and desc['failureFrom'] is not None:
-        print_field("Failure was in", desc['failureFrom']['id'])
+        print_field("Failure is from", desc['failureFrom']['id'])
     if "stdout" in desc:
         print_field("File of stdout", str(desc['stdout']))
     if 'stderr' in desc:
