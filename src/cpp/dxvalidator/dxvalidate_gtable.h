@@ -71,7 +71,7 @@ namespace dx {
   };
 
   // Class manages error and warning messages of gtable
-  class GTableErrorMsg : public ErrorMsg {
+  class GTableErrorMsg : public virtual ErrorMsg {
     public:
       GTableErrorMsg() {
         errorMsg["OBJECT_INVALID"] = "Cannot find source object";
@@ -86,6 +86,7 @@ namespace dx {
 
         warningMsg["COLUMNS_NOT_RECOGNIZED"] = "Following columns are not recognized: ({1})";
         warningMsg["COLUMNS_MISSING"] = "Following columns are missing: ({1})";
+        warningMsg["TYPE_DUPLICATE"] = "Object has duplicated types";
       }
   };
 };

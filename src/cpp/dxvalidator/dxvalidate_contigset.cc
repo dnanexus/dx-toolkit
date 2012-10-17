@@ -261,3 +261,21 @@ bool ContigSetReader::validateChar(char &ch, bool &lowerCase) {
 
   return true;
 }
+
+int ContigSetReader::chrIndex(const string &name) {
+  map<string, int>::iterator it;
+  it = names.find(name);
+  if (it == names.end()) return -1;
+  return it->second;
+}
+
+int ContigSetReader::chrSize(int i) {
+  if ((i < 0) || (i >= sizes.size())) return -1;
+  return sizes[i];
+}
+
+int ContigSetReader::chrOffset(int i) {
+  if (! hasOffset) return -1;
+  if ((i < 0) || ( i >=offsets.size())) return -1;
+  return offsets[i];
+}

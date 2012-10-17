@@ -2,6 +2,7 @@
 #define DX_GRI_VALIDATE_H
 
 #include "dxvalidate_gtable.h"
+#include "dxvalidate_contigset.h"
 
 namespace dx {
   class GriColumnsHandler : public ColumnsHandler {
@@ -14,9 +15,9 @@ namespace dx {
       void Init();
   };
 
-  class GriErrorMsg : public GTableErrorMsg {
+  class GriErrorMsg : public GTableErrorMsg, public ContigsetErrorMsg {
     public:
-      GriErrorMsg() {
+      GriErrorMsg() : GTableErrorMsg(), ContigsetErrorMsg(true) {
         // Add gri specific error and warning messages
         errorMsg["TYPE_NOT_GRI"] = "Object is not a gri type";
         errorMsg["CONTIGSET_MISSING"] = "'Details' of this object does not contain 'original_contigset'";
@@ -36,27 +37,21 @@ namespace dx {
     private:
       vector<bool> chr_valid;
       vector<string> chrCols, loCols, hiCols;
-      DXFile flatFile;
       
-      bool initFlatFile(const JSON &details);
-      
-      bool fetchContigSets(const string &contigset_id); 
-      bool validateGri(const string &chr, int64_t lo, int64_t hi, int k);
-
     protected:
       int chrIndex;
-      bool hasFlat, hasOffset;
+      ContigSetReader *cReader;
 
-      vector<int64_t> offsets, sizes;
-      map<string,int> indices;
+      void addGri(const string &chr, const string &lo, const string &hi);
+      bool validateGri(const string &chr, int64_t lo, int64_t hi, int k);
 
-      void AddGri(const string &chr, const string &lo, const string &hi);
-      bool HasFlat() { return hasFlat; }
+      bool HasFlat() { return cReader->withFlat(); }
 
       bool FetchSeq(int64_t pos, char *buffer, int bufSize);
 
     public:
       GriRowValidator(const string &contigset_id, ValidateInfo *m);
+      virtual ~GriRowValidator() { delete cReader; }
       
       virtual bool validateRow(const JSON &row) { return (ready && validateGri(row[0].get<string>(), int64_t(row[1]), int64_t(row[2]), 0)); }
       virtual bool finalValidate() { return true; }
