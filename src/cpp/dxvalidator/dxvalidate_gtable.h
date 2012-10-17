@@ -5,6 +5,21 @@
 #include "dxcpp/dxcpp.h"
 
 namespace dx {
+  /** Basic class for validating a row in a gtable. To build a validator for a particular
+    * type, extend this class and override function validateRow and finalValidate
+    */
+  class GTableRowValidator {
+    protected:
+      ValidateInfo *msg;
+      bool ready;
+
+    public:
+      GTableRowValidator(ValidateInfo *m) : msg(m), ready(true) {};
+      bool isReady() { return ready; }
+      virtual bool validateRow(const JSON &row) { return row.type() != dx::JSON_NULL; }
+      virtual bool finalValidate() { return true; }
+  };
+
   /** Basic GTable validator. It validates a DNAnexus gtable object in the following steps
     * 1. fetchHead(): Fetch description and details of this gtable
     * 2. validateTypes(): Validate the types of this gtable with the designated TypesHandler
@@ -31,8 +46,11 @@ namespace dx {
       TypesHandler types; 
       ValidateInfo *msg;
       ColumnsHandler *columns;
+      GTableRowValidator *rowV;
       
       bool processColumns();
+
+      virtual void setRowValidator() { rowV = new GTableRowValidator(msg); }
       
       virtual bool validateTypes() { 
         if (types.HasDuplicate()) msg->addWarning("TYPE_DUPLICATE");
@@ -41,12 +59,12 @@ namespace dx {
 
       virtual bool validateDetails() { return true; }
       virtual bool validateColumns();
-      virtual bool validateData() { return true; }
+      virtual bool validateData();
 
       virtual void Validate(const string &source_id);
 
     public:
-      GTableValidator(){ }
+      GTableValidator(){}
 
       // Public function perform the validation
       virtual JSON Validate(const string &source_id, ValidateInfo *m);

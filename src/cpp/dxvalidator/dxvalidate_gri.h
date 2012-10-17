@@ -32,19 +32,21 @@ namespace dx {
       }
   };
 
-  class GriDataValidator {
+  class GriRowValidator : public GTableRowValidator {
     private:
       vector<bool> chr_valid;
       vector<string> chrCols, loCols, hiCols;
       DXFile flatFile;
       
       bool initFlatFile(const JSON &details);
+      
+      bool fetchContigSets(const string &contigset_id); 
+      bool validateGri(const string &chr, int64_t lo, int64_t hi, int k);
 
     protected:
       int chrIndex;
       bool hasFlat, hasOffset;
 
-      ValidateInfo *msg;
       vector<int64_t> offsets, sizes;
       map<string,int> indices;
 
@@ -52,27 +54,11 @@ namespace dx {
       bool HasFlat() { return hasFlat; }
 
       bool FetchSeq(int64_t pos, char *buffer, int bufSize);
-      bool ValidateGri(const string &chr, int64_t lo, int64_t hi, int k);
 
     public:
-      GriDataValidator(ValidateInfo *m);
+      GriRowValidator(const string &contigset_id, ValidateInfo *m);
       
-      bool FetchContigSets(const string &source_id); 
-  };
-  
-  class GriRowValidator : public GriDataValidator {
-    private:
-      bool ready;
-
-    public:
-      GriRowValidator(const string &source_id, ValidateInfo *m) : GriDataValidator(m) {
-        ready = FetchContigSets(source_id);
-      }
-
-      bool IsReady() { return ready; }
-
-      virtual bool ValidateRow(const JSON &row) { return (ready && ValidateGri(row[0].get<string>(), int64_t(row[1]), int64_t(row[2]), 0)); }
-
+      virtual bool validateRow(const JSON &row) { return (ready && validateGri(row[0].get<string>(), int64_t(row[1]), int64_t(row[2]), 0)); }
       virtual bool finalValidate() { return true; }
   };
 
@@ -81,14 +67,12 @@ namespace dx {
       bool hasGenomicIndex();
 
     protected:
-      GriRowValidator *v;
-      virtual void SetValidator() { v = new GriRowValidator(details["original_contigset"]["$dnanexus_link"].get<string>(), msg); }
+      virtual void setRowValidator() { rowV = new GriRowValidator(details["original_contigset"]["$dnanexus_link"].get<string>(), msg); }
 
     protected:
       virtual bool validateTypes();
       virtual bool validateColumns();
       virtual bool validateDetails();
-      virtual bool validateData();
   };
 };
 

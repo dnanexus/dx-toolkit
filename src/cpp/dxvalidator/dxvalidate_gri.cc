@@ -10,7 +10,7 @@ void GriColumnsHandler::Init() {
   addColumn("hi" , "integer", 0);
 }
 
-bool GriDataValidator::initFlatFile(const JSON &details) {
+bool GriRowValidator::initFlatFile(const JSON &details) {
   try {
     flatFile.setIDs(details["flat_sequence_file"]["$dnanexus_link"].get<string>());
 
@@ -31,18 +31,18 @@ bool GriDataValidator::initFlatFile(const JSON &details) {
   }
 }
 
-GriDataValidator::GriDataValidator(ValidateInfo *m) {
-  msg = m;
+GriRowValidator::GriRowValidator(const string &contigset_id, ValidateInfo *m) : GTableRowValidator(m) {
+  ready = fetchContigSets(contigset_id);
 
   chrCols.clear(); loCols.clear(); hiCols.clear(); chr_valid.clear();
   chrCols.push_back("chr"); loCols.push_back("lo"); hiCols.push_back("hi"); chr_valid.push_back(true);
 }
 
-void GriDataValidator::AddGri(const string &chr, const string &lo, const string &hi) {
+void GriRowValidator::AddGri(const string &chr, const string &lo, const string &hi) {
   chrCols.push_back(chr); loCols.push_back(lo); hiCols.push_back(hi); chr_valid.push_back(true);
 }
 
-bool GriDataValidator::FetchContigSets(const string &source_id) {
+bool GriRowValidator::fetchContigSets(const string &source_id) {
   DXRecord object(source_id);
   JSON details;
   try {
@@ -80,7 +80,7 @@ bool GriDataValidator::FetchContigSets(const string &source_id) {
   return true;
 }
 
-bool GriDataValidator::FetchSeq(int64_t pos, char *buffer, int bufSize) {
+bool GriRowValidator::FetchSeq(int64_t pos, char *buffer, int bufSize) {
   try {
     flatFile.seek(pos);
     flatFile.read(buffer, bufSize);
@@ -91,7 +91,7 @@ bool GriDataValidator::FetchSeq(int64_t pos, char *buffer, int bufSize) {
   return true;
 }
 
-bool GriDataValidator::ValidateGri(const string &chr, int64_t lo, int64_t hi, int k) {
+bool GriRowValidator::validateGri(const string &chr, int64_t lo, int64_t hi, int k) {
   if (lo < 0) {
     msg->setData(loCols[k], 1);
     return msg->setRowError("LO_TOO_SMALL");
@@ -141,48 +141,6 @@ bool GriValidator::validateDetails() {
   if (details["original_contigset"].type() != JSON_OBJECT) return msg->setError("CONTIGSET_INVALID");
   if (! details["original_contigset"].has("$dnanexus_link")) return msg->setError("CONTIGSET_INVALID");
   if (details["original_contigset"]["$dnanexus_link"].type() != JSON_STRING) return msg->setError("CONTIGSET_INVALID");
-  return true;
-}
-
-bool GriValidator::validateData() {
-  cerr << "Total rows " << numRows << endl;
- 
-  SetValidator();
-  if (! v->IsReady()) {
-    delete v;
-    return false;
-  }
- 
-  table.startLinearQuery(queryColumns);
-  int64_t offset = 0;
-  int count = 0;
-  
-  JSON data;
-  try {
-    while (table.getNextChunk(data)) {
-      for (int i = 0; i < data.size(); i++) {
-        msg->setRowIndex(offset + i);
-        if (! v->ValidateRow(data[i])) {
-          delete v;
-          return false;
-        }
-      }
-      
-      offset += data.size();
-      count ++;
-      
-      if ( (count % 10) == 0)  cerr << offset << "\n"; 
-    }
-
-    v->finalValidate();
-    
-    table.stopLinearQuery();
-  } catch(DXError &e) {
-    delete v;
-    return msg->setDXError(e.msg, "GTABLE_FETCH_FAIL");
-  }
-  
-  delete v;
   return true;
 }
 
