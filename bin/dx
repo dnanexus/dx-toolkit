@@ -607,56 +607,33 @@ def ls(args):
                     else:
                         print BOLD() + BLUE() + os.path.basename(folder) + '/' + ENDC()
             if not args.folders:
-                # if project not in cached_project_paths:
-                #     cached_project_paths[project] = {}
-                # cached_project_paths[project][folderpath] = {}
-
                 resp["objects"].sort(cmp=cmp_names)
-                last_name = None
-                next_name = None
                 if args.long:
                     if len(resp['objects']) > 0:
                         print BOLD() + 'State' + DELIMITER('\t') + 'Last modified' + DELIMITER('       ') + 'Size' + DELIMITER('     ') + 'Name' + DELIMITER(' (') + 'ID' + DELIMITER(')') + ENDC()
                     else:
                         print "No data objects found in the folder"
-                for i in range(len(resp["objects"])):
+                name_counts = collections.Counter(obj['describe']['name'] for obj in resp['objects'])
+                for obj in resp['objects']:
                     if args.brief:
-                        print resp['objects'][i]['id']
+                        print obj['id']
+                    elif args.long:
+                        print_ls_l_desc(obj['describe'], include_project=False)
                     else:
-                        current_name = resp['objects'][i]['describe']['name']
-                        if i < len(resp['objects']) - 1:
-                            next_name = resp['objects'][i + 1]['describe']['name']
-                        else:
-                            next_name = None
-                        addendum = ''
-
-                        if last_name is not None and last_name == current_name:
-                            addendum = ' : ' + resp['objects'][i]['id']
-                        #     cached_project_paths[project][folderpath][current_name].append(resp['objects'][i]['id'])
-                        else:
-                            #     cached_project_paths[project][folderpath][current_name] = [resp['objects'][i]['id']]
-                            if next_name is not None and current_name == next_name:
-                                addendum = ' : ' + resp['objects'][i]['id']
-
-                        if args.long:
-                            print_ls_l_desc(resp['objects'][i]['describe'], include_project=False)
-                        else:
-                            if resp['objects'][i]['describe']['class'] == 'applet':
-                                print BOLD() + GREEN() + resp['objects'][i]['describe']['name'] + ENDC() + addendum
-                            else:
-                                print resp['objects'][i]['describe']['name'] + addendum
-
-                        last_name = current_name
+                        print_ls_desc(obj['describe'], print_id=True if name_counts[obj['describe']['name']] > 1 else False)
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
     else:
         # We have results to describe
+        name_counts = collections.Counter(obj['describe']['name'] for obj in entity_results)
         for result in entity_results:
             if result['describe']['project'] == project:
                 if args.brief:
                     print result['id']
-                else:
+                elif args.long:
                     print_ls_l_desc(result['describe'], include_project=False)
+                else:
+                    print_ls_desc(result['describe'], print_id=True if name_counts[result['describe']['name']] > 1 else False)
 
 def mkdir(args):
     had_error = False

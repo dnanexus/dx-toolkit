@@ -403,6 +403,16 @@ def print_desc(desc):
     else:
         print_data_obj_desc(desc)
 
+def get_ls_desc(desc, print_id=False):
+    addendum = ' : ' + desc['id'] if print_id is True else ''
+    if desc['class'] == 'applet':
+        return BOLD() + GREEN() + desc['name'] + ENDC() + addendum
+    else:
+        return desc['name'] + addendum
+
+def print_ls_desc(desc, **kwargs):
+    print get_ls_desc(desc, **kwargs)
+
 def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
         state_len = len(desc['state'])
