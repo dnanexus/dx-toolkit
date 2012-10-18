@@ -138,7 +138,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     if check_name_collisions and not dry_run:
         logging.debug("Searching for applets with name " + applet_spec["name"])
-        for result in dxpy.find_data_objects(classname="applet", properties={"name": applet_spec["name"]}, project=dest_project):
+        for result in dxpy.find_data_objects(classname="applet", name=applet_spec["name"], project=dest_project):
             if overwrite:
                 logging.info("Deleting applet %s" % (result['id']))
                 # TODO: test me
@@ -227,7 +227,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 
-    properties = {"name": applet_spec["name"]}
+    properties = {}
     if "title" in applet_spec:
         properties["title"] = applet_spec["title"]
     if "summary" in applet_spec:
