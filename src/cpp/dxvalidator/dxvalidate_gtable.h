@@ -6,7 +6,11 @@
 
 namespace dx {
   /** Basic class for validating a row in a gtable. To build a validator for a particular
-    * type, extend this class and override function validateRow and finalValidate
+    * type, extend this class and override function validateRow and finalValidate. Where
+    *   a. validateRow: Validate a row based on the information of the row itself and stored
+    *      information from previous fetched rows
+    *   b. finalValidate: Shall be called when all rows are fetched. It may be used to
+    *      perform validation require information from all rows.
     */
   class GTableRowValidator {
     protected:
@@ -29,9 +33,11 @@ namespace dx {
     * 5. validateData(): Validate the actual content of this gtable
     *
     * To validate a child type of gtable, one shall
-    * a. If needed, develop a particular TypesHandler by inherit the basic TypesHandler
-    * b. If needed, develop a particular ColumnsHandler by inherit the basic ColumnsHandler
+    * a. If needed, implement a particular TypesHandler by inheriting the basic TypesHandler
+    * b. If needed, implement a particular ColumnsHandler by inheriting the basic ColumnsHandler
     * c. Inherite this class and override any the of above validate functions if needed
+    * d. Implement a particular GTableRowValidator by inheriting the basic GTableRowValidator
+    *    and overriding validateRow() and/or finalValidate() if needed
     */
   class GTableValidator {
     private:
@@ -50,6 +56,7 @@ namespace dx {
       
       bool processColumns();
 
+      // Set the proper row validator
       virtual void setRowValidator() { rowV = new GTableRowValidator(msg); }
       
       virtual bool validateTypes() { 
@@ -61,6 +68,10 @@ namespace dx {
       virtual bool validateColumns();
       virtual bool validateData();
 
+      /** Fetch individual rows and call rowV->validateRow() to validate each one
+        * and call rowV->finalValidate() to perform all validation requires information from
+        * all rows
+        */
       virtual void Validate(const string &source_id);
 
     public:
@@ -70,10 +81,10 @@ namespace dx {
       virtual JSON Validate(const string &source_id, ValidateInfo *m);
   };
 
-  // Class manages error and warning messages of gtable
   class GTableErrorMsg : public virtual ErrorMsg {
     public:
       GTableErrorMsg() {
+        // Add error and warning messages for gtable
         errorMsg["OBJECT_INVALID"] = "Cannot find source object";
         errorMsg["GTABLE_FETCH_FAIL"] = "Internal error: {1}. Fail to fetch the description, details, or content of the object";
         errorMsg["CLASS_NOT_GTABLE"] = "Object is not a gtable";

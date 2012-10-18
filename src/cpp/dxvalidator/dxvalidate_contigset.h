@@ -8,6 +8,7 @@ namespace dx {
   class ContigsetErrorMsg : public virtual ErrorMsg {
     public:
       ContigsetErrorMsg (bool gri = false) : ErrorMsg() {
+        // Add specific error and warning messages for contigset
         string head = (gri) ? "Original contigset is invalid: " : "";
         errorMsg["CONTIGSET_INVALID"] = head + "Cannot find the contigset object";
         errorMsg["CONTIGSET_FETCH_FAIL"] = head + "Internal error: {1}. Fail to fetch the description or details of the contigset";
@@ -55,24 +56,37 @@ namespace dx {
       }
   };
 
+  /** Class handles validation of contigset and fetching of flat sequence. When creating
+    * a new instance of this class with a contigset id, types and details of this contigset
+    * are validated by the constructor and private variable ready is set to be false if
+    * it detectes an error. Public function validateSequence() can be further called to
+    * validate flat sequence file.
+    */
   class ContigSetReader {
     private:
       bool ready, hasOffset, hasFlat;
       int64_t offsetShift;
 
+      // variables stores contigset data
       vector<int64_t> offsets, sizes;
       map<string,int> names;
 
       DXFile flatFile;
       
+      // Fetches description and details of a contigset
       bool fetchContigSet(const string &contigset_id);
+
+      // Validates types and details of a contigset
       bool validateType();
       bool validateDetails();
       bool validateContigSetName();
       bool validateContigSetSize();
       bool validateContigSetOffset();
+
+      // Fetches description of the flat sequence file and validates it
       bool initFlatFile(const JSON &details);
 
+      // Determines whether or not a character in the flat sequence file is valid
       bool validateChar(char &ch, bool &lowerCase);
 
     protected:
@@ -81,17 +95,26 @@ namespace dx {
       ValidateInfo *msg;
 
     public:
-      ContigSetReader(const string &id, ValidateInfo *m);
+      // Validates the description and details of a contigset and sets ready accordingly
+      ContigSetReader(const string &contigset_id, ValidateInfo *m);
       
       bool isReady() { return ready; }
       bool withOffset() { return hasOffset; }
       bool withFlat() { return hasFlat; }
 
+      // Fetch sequences from the flat sequence file and stores them into buffer
       bool fetchSeq(int64_t pos, char *buffer, int bufSize);
+
+      // Validate whether or not the flat sequence file containing valid characters
       bool validateSequence();
 
+      // Return the chromosome index given its name
       int chrIndex(const string &name);
+
+      // Return the size of a chromosome given its index
       int64_t chrSize(int i);
+
+      // Return the offset of a chromosome given its index
       int64_t chrOffset(int i);
   };
 };

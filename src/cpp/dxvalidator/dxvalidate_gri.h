@@ -33,6 +33,7 @@ namespace dx {
       }
   };
 
+  // Gri row validator
   class GriRowValidator : public GTableRowValidator {
     private:
       vector<bool> chr_valid;
@@ -43,11 +44,9 @@ namespace dx {
       ContigSetReader *cReader;
 
       void addGri(const string &chr, const string &lo, const string &hi);
+
+      // Validator whether or not chr, lo, and hi following gri type spec
       bool validateGri(const string &chr, int64_t lo, int64_t hi, int k);
-
-      bool HasFlat() { return cReader->withFlat(); }
-
-      bool FetchSeq(int64_t pos, char *buffer, int bufSize);
 
     public:
       GriRowValidator(const string &contigset_id, ValidateInfo *m);
@@ -58,7 +57,8 @@ namespace dx {
   };
 
   class GriValidator : public GTableValidator {
-    private: 
+    private:
+      // Return whether or not a object has genomic range index
       bool hasGenomicIndex();
 
     protected:
