@@ -9,15 +9,22 @@ from dxpy.bindings import *
 # DXRecord #
 ############
 
-def new_dxrecord(**kwargs):
+def new_dxrecord(details=None, **kwargs):
     '''
     :rtype: :class:`DXRecord`
 
+    :param details: The contents of the record to be created.
+    :type details: dict
+
     Additional optional parameters not listed: all those under
-    :func:`dxpy.bindings.DXDataObject.new`.
+    :func:`dxpy.bindings.DXDataObject.new`, except `details`.
 
     Creates a new remote record object with project set to *project*
     and returns the appropriate handler.
+
+    Example:
+
+        r = dxpy.new_dxrecord({"x": 1, "y": 2})
 
     Note that this function is shorthand for::
 
@@ -26,7 +33,7 @@ def new_dxrecord(**kwargs):
 
     '''
     dxrecord = DXRecord()
-    dxrecord.new(**kwargs)
+    dxrecord.new(details=details, **kwargs)
     return dxrecord
 
 class DXRecord(DXDataObject):
