@@ -91,8 +91,8 @@ namespace dx {
       bool validateSequence();
 
       int chrIndex(const string &name);
-      int chrSize(int i);
-      int chrOffset(int i);
+      int64_t chrSize(int i);
+      int64_t chrOffset(int i);
   };
 };
 
