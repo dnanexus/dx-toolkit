@@ -260,7 +260,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     :type path: string
     :param expected: one of the following: "folder", "entity", or None to indicate whether the expected path is a folder, a data object, or either
     :type expected: string or None
-    :type expected_classes: a list of DNAnexus data object classes (if any) by which the search can be filtered
+    :param expected_classes: a list of DNAnexus data object classes (if any) by which the search can be filtered
     :type expected_classes: list of strings or None
     :returns: A tuple of 3 values: container_ID, folderpath, entity_name
     :rtype: string, string, string
@@ -309,7 +309,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # 2) project-name-or-id:folderpath/to/possible/entity
         if is_job_id(substrings[0]):
             return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1]
-        
+
         if multi_projects:
             project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
         else:
