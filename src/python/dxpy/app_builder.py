@@ -112,10 +112,16 @@ def upload_resources(src_dir, project=None):
     else:
         return None
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep="stable", dry_run=False):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
     """
     Creates a new applet object.
 
+    :param project: ID of container in which to create the applet.
+    :type project: str, or None to use whatever is specified in dxapp.json
+    :param override_folder: folder name for the resulting applet which, if specified, overrides that given in dxapp.json
+    :type override_folder: str
+    :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
+    :type override_name: str
     :param dx_toolkit_autodep: What type of dx-toolkit dependency to inject if none is present. "stable", "beta", or "unstable" for the corresponding apt packages; "git" for HEAD of dx-toolkit master branch; or False for no dependency.
     :type dx_toolkit_autodep: boolean or string
     """
@@ -132,6 +138,12 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             applet_spec['name'] = os.path.basename(os.path.abspath(src_dir))
         except:
             raise AppletBuilderException("Could not resolve applet name from specification or working directory")
+
+    if override_folder:
+        applet_spec['folder'] = override_folder
+
+    if override_name:
+        applet_spec['name'] = override_name
 
     if 'dxapi' not in applet_spec:
         applet_spec['dxapi'] = dxpy.API_VERSION

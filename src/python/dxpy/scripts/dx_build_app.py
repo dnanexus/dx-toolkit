@@ -8,6 +8,8 @@ import os, sys, json, fileinput, re, subprocess, argparse
 from datetime import datetime
 import dxpy, dxpy.app_builder
 
+from dxpy.utils.resolver import resolve_path, is_container_id
+
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 # COMMON OPTIONS
@@ -16,7 +18,9 @@ parser.add_argument("src_dir", help="App or applet source directory (default: cu
 parser.set_defaults(mode="app")
 parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
-parser.add_argument("-p", "--destination-project", help="Insert the applet into the project with the specified project ID.", default=None)
+# TODO: remove -p/--destination-project and deprecation message below.
+parser.add_argument("-p", "--destination-project", help="(Deprecated) Insert the applet into the project with the specified project ID.", default=None)
+parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default=None)
 
 parser.set_defaults(use_temp_build_project=True)
 parser.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
@@ -75,6 +79,28 @@ def get_version_suffix(src_dir):
         pass
     return get_timestamp_version_suffix()
 
+def parse_destination(dest_str):
+    """
+    Parses dest_str, which is (roughly) of the form
+    PROJECT:/FOLDER/NAME, and returns a tuple (project, folder, name)
+    """
+    # Interpret strings of form "project-XXXX" (no colon) as project. If
+    # we pass these through to resolve_path they would get interpreted
+    # as folder names...
+    if is_container_id(dest_str):
+        return (dest_str, None, None)
+
+    # ...otherwise, defer to resolver.resolve_path. This handles the
+    # following forms:
+    #
+    # /FOLDER/
+    # /ENTITYNAME
+    # /FOLDER/ENTITYNAME
+    # [PROJECT]:
+    # [PROJECT]:/FOLDER/
+    # [PROJECT]:/ENTITYNAME
+    # [PROJECT]:/FOLDER/ENTITYNAME
+    return resolve_path(dest_str)
 
 def main(**kwargs):
 
@@ -94,9 +120,21 @@ def main(**kwargs):
 
     working_project = None
     using_temp_project = False
-    if args.mode == "applet" and args.destination_project:
-        # TODO: should -p be required when creating an applet?
-        working_project = args.destination_project
+    override_folder = None
+    override_applet_name = None
+
+    if args.destination_project:
+        if args.destination:
+            # We'll clobber destination below.
+            parser.error("Can't supply both --destination and --destination-project. Just use --destination.")
+        args.destination = args.destination_project
+        print "*"
+        print "* The -p/--destination-project flag has been deprecated. Instead please use"
+        print "* -d=project-XXXX or --destination=project-XXXX, which does the same and more."
+        print "*"
+
+    if args.mode == "applet" and args.destination:
+        working_project, override_folder, override_applet_name = parse_destination(args.destination)
     elif args.mode == "app" and args.use_temp_build_project and not args.dry_run:
         # Create a temp project
         working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
@@ -128,6 +166,8 @@ def main(**kwargs):
                                                    check_name_collisions=(args.mode == "applet"),
                                                    overwrite=args.overwrite and args.mode == "applet",
                                                    project=working_project,
+                                                   override_folder = override_folder,
+                                                   override_name = override_applet_name,
                                                    dx_toolkit_autodep=args.dx_toolkit_autodep,
                                                    dry_run=args.dry_run)
 
