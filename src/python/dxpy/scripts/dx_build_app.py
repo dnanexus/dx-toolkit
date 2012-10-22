@@ -106,10 +106,11 @@ def main(**kwargs):
     try:
         with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
             app_json = json.load(app_desc)
-            if "buildOptions" in app_json:
-                if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
-                    args.dx_toolkit_autodep = False
-                del app_json["buildOptions"]
+
+        if "buildOptions" in app_json:
+            if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
+                args.dx_toolkit_autodep = False
+            del app_json["buildOptions"]
 
         dxpy.app_builder.build(args.src_dir)
 
@@ -136,8 +137,6 @@ def main(**kwargs):
         print >> sys.stderr, "Created applet " + applet_id + " successfully"
 
         if args.mode == "app":
-            with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
-                app_json = json.load(app_desc)
             if 'version' not in app_json:
                 parser.error("dxapp.json contains no \"version\" field, but it is required to build an app")
             version = app_json['version']
