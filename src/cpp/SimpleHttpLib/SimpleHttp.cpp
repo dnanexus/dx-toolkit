@@ -1,5 +1,9 @@
 #include "SimpleHttp.h"
-#include "SSLThreads.h"
+
+#ifndef WINDOWS_BUILD
+  // We don't use openssl in windows, so do not use thread safety mechanism
+  // in SSLThreads.h/.cpp
+  #include "SSLThreads.h"
 
 class SSLThreadsInitializer
 {
@@ -21,6 +25,7 @@ public:
 // and SSLThreadsCleanup() at the end
 // See: http://horstr.blogspot.com/2008/04/on-libcurl-openssl-and-thread-safety.html
 SSLThreadsInitializer SSLThreads_initializer;
+#endif
 
 /*
  * This function serves as a callback for response headers read by libcurl

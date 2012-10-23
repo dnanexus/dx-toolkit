@@ -1,7 +1,11 @@
 #include <algorithm>
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
-#include <pwd.h>
+
+#ifndef WINDOWS_BUILD
+  #include <pwd.h>
+#endif
+
 #include "dxcpp.h"
 #include "SimpleHttp.h"
 
@@ -256,13 +260,26 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
 
 // Return path to user's home directory
 string getUserHomeDirectory() {
+#ifndef WINDOWS_BUILD
   // see if HOME env variable is set
   if (getenv("HOME") != NULL)
     return getenv("HOME");
-
-  // else get from password database
+  
+  // else get from password database (if POSIX system)
   struct passwd *pw = getpwuid(getuid());
   return pw->pw_dir;
+#else
+  // For windows system .. the user home directory path is
+  // concatenation of two env variables: %SYSTEMDIR% %HOMEPATH% variable
+  // http://en.wikipedia.org/wiki/Environment_variable#Default_Values_on_Microsoft_Windows
+  string sdir = "C:", hpath;
+  if (getenv("SYSTEMDIR") != NULL)
+    sdir = getenv("SYSTEMDIR");
+  if (getenv("HOMEPATH") != NULL)
+    hpath = getenv("HOMEPATH");
+  return sdir + hpath;
+  // TODO: Should we get home directory in windows using function SHGetFolderPath() in windows.h ?
+#endif
 }
 
 // First look in env variable to find the value
@@ -279,8 +296,11 @@ bool getFromEnvOrConfig(string key, string &val) {
     }
     return true;
   }
-
+#ifdef WINDOWS_BUILD
   const string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
+#else
+  const string user_config_file_path = getUserHomeDirectory() + "\\.dnanexus_config\\environment";
+#endif
   if (getVariableFromConfigFile(user_config_file_path, key, val)) {
     if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
       cerr << "Reading '" << key << "' value from file: '" << user_config_file_path << "'. Value = '" << val + "'" << endl;

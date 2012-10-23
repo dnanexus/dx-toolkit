@@ -20,6 +20,15 @@
 
 using namespace std;
 
+#ifdef WINDOWS_BUILD
+  // This additional code is requried for Windows build, since Magic database is not present
+  // by default, and rather packaged with the distribution
+  #include <windows.h>
+  bool setMagicEnvVariable_called = false; // whether we have called setMagicEnvVariable() once, to make the functions idempotent.
+  bool MAGIC_already_present = false; // true if MAGIC env variable is present already
+  string MAGIC_prev_value; // value of MAGIC env variable (if present already)
+#endif
+
 Options opt;
 
 /* Mutex for "bytesUploaded" member variable of "File" class
@@ -136,7 +145,7 @@ void uploadChunks(vector<File> &files) {
         c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds");
         --(c->triesLeft);
         c->clear(); // we will read & compress data again
-        sleep(timeout);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(timeout * 1000));
         // We push the chunk to retry to "chunksToRead" and not "chunksToUpload"
         // Since chunksToUpload queue is bounded, and chunksToUpload.produce() can block,
         // thus giving rise to deadlock
@@ -350,6 +359,45 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
+#ifdef WINDOWS_BUILD
+void setMagicEnvVariable() {
+  if (setMagicEnvVariable_called)
+    return;
+
+  // First store the previous value of env variable MAGIC
+  if (getenv("MAGIC") == NULL)
+    MAGIC_already_present = false;
+  else {
+    MAGIC_already_present = true;
+    MAGIC_prev_value = getenv("MAGIC");
+  }
+  
+  // Now set new value of MAGIC env variable
+  //   1. Find out the current process's directory
+  char buffer[32768] = {0}; // Maximum path length in windows (approx): http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
+  if (!GetModuleFileName(NULL, buffer, 32767)) {
+    throw runtime_error("Unable to get current process's directory using GetModuleFileName() .. GetLastError() = " + boost::lexical_cast<string>(GetLastError()) + "\n");
+  }
+  string processPath = buffer;
+  size_t found = processPath.find_last_of("\\");
+  found = (found == string::npos) ? found : 0;
+  string mPath = processPath.substr(0, found) + "\\resources\\magic.mgc";
+  setenv("MAGIC", mPath.c_str(), 1);
+  setMagicEnvVariable_called = true;
+}
+
+void resetMagicEnvVariable() {
+  if (!setMagicEnvVariable_called)
+    return;
+  if (!MAGIC_already_present) {
+    unsetenv("MAGIC");
+  } else {
+    setenv("MAGIC", MAGIC_prev_value.c_str(), 1);
+  }
+  setMagicEnvVariable_called = false;
+}
+#endif
+
 /* 
  * - Returns the MIME type for a file (of this format: "type/subType")
  * - Symlinks are followed (and MIME type of actual file being pointed is returned)
@@ -367,7 +415,6 @@ string getMimeType(string filePath) {
   string magic_output;
   magic_t magic_cookie;
   magic_cookie = magic_open(MAGIC_MIME | MAGIC_NO_CHECK_COMPRESS | MAGIC_SYMLINK);
-
   if (magic_cookie == NULL) {
     throw runtime_error("error allocating magic cookie (libmagic)");
   }
@@ -375,14 +422,17 @@ string getMimeType(string filePath) {
   if (magic_load(magic_cookie, NULL) != 0) {
     string errMsg = magic_error(magic_cookie);
     magic_close(magic_cookie);
+#ifndef WINDOWS_BUILD
     throw runtime_error("cannot load magic database - '" + errMsg + "'");
+#else
+    throw runtime_error("cannot load magic database - '" + errMsg + "'" + "\nEnv Variable MAGIC = " + ((getenv("MAGIC") != NULL) ? getenv("MAGIC") : "NOT SET"));
+#endif
   }
 
   magic_output = magic_file(magic_cookie, filePath.c_str());
   magic_close(magic_cookie);
   // magic_output will be of this format: "type/subType; charset=.."
   // we just want to return "type/subType"
-
   return magic_output.substr(0, magic_output.find(';'));
 }
 
@@ -457,6 +507,7 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
 }
 
 int main(int argc, char * argv[]) {
+  int exitCode = 0; // exit status code
   try {
     opt.parse(argc, argv);
   } catch (exception &e) {
@@ -500,6 +551,9 @@ int main(int argc, char * argv[]) {
     NUMTRIES_g = opt.tries;
 
     vector<File> files;
+#ifdef WINDOWS_BUILD
+    setMagicEnvVariable();
+#endif
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
       LOG << "Getting MIME type for local file " << opt.files[i] << "..." << endl;
       string mimeType = getMimeType(opt.files[i]);
@@ -521,7 +575,9 @@ int main(int argc, char * argv[]) {
       files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
       totalChunks += files[i].createChunks(chunksToRead, opt.tries);
     }
-
+#ifdef WINDOWS_BUILD
+    resetMagicEnvVariable();
+#endif
     if (opt.waitOnClose) {
       for (unsigned int i = 0; i < files.size(); ++i) {
         files[i].waitOnClose = true;
@@ -594,6 +650,7 @@ int main(int argc, char * argv[]) {
       }
       if (files[i].failed) {
         cout << "failed";
+        exitCode = 1;
       } else {
         cout << files[i].fileID;
       }
@@ -612,9 +669,12 @@ int main(int argc, char * argv[]) {
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
+#ifdef WINDOWS_BUILD
+    resetMagicEnvVariable();
+#endif
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
 
-  return 0;
+  return exitCode;
 }
