@@ -1,0 +1,54 @@
+# -*- mode: Makefile -*-
+
+# curl_build_dir := $(shell mktemp -d --tmpdir=/tmp curl-build-XXXXXX)
+
+# curl:
+# 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
+UNAME := $(shell uname)
+
+ifneq ($(UNAME), MINGW32_NT-6.1)
+	$(error This Makefile should be used only with MINGW32_NT-6.1)
+endif
+
+GITVERSION := $(shell git describe)
+VERSION = 0.0.2
+
+sw_dir = $(HOME)/sw/local
+curl_dir = $(sw_dir)/curl
+cpp_dir = $(DNANEXUS_HOME)/src/cpp
+dxjson_dir = $(cpp_dir)/dxjson
+dxhttp_dir = $(cpp_dir)/SimpleHttpLib
+dxcpp_dir = $(cpp_dir)/dxcpp
+ua_dir = $(DNANEXUS_HOME)/src/ua
+zlib_dir = $(sw_dir)/zlib-1.2.3-lib
+lmagic_dir = $(sw_dir)/file-5.03-lib
+boost_dir = $(sw_dir)/boost_1_51_0
+VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
+
+CFLAGS = -g -Wall -Wextra -I/include -I$(zlib_dir)/include -I$(lmagic_dir)/include
+CXXFLAGS = -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DGITVERSION=\"$(GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir) -I$(zlib_dir)/include -I$(lmagic_dir)/include 
+
+LDFLAGS := -static-libstdc++ -static-libgcc -DBOOST_THREAD_USE_LIB -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L/lib -L$(lmagic_dir)/lib $(LDFLAGS) -L$(zlib_dir)/lib -lboost_program_options-mgw47-mt-1_51 -lboost_filesystem-mgw47-mt-1_51 -lboost_regex-mgw47-mt-1_51 -lboost_system-mgw47-mt-1_51 -lcurl -lcrypto -lmagic -lz -lboost_thread-mgw47-mt-1_51 -lboost_chrono-mgw47-mt-1_51
+
+dxjson_objs = dxjson.o
+dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
+dxcpp_objs = api.o dxcpp.o SSLThreads.o
+ua_objs = compress.o options.o log.o chunk.o main.o File.o api_helper.o
+
+dxjson: $(dxjson_objs)
+dxhttp: $(dxhttp_objs)
+dxcpp: $(dxcpp_objs)
+ua: $(ua_objs)
+
+all: dxjson dxhttp dxcpp ua
+	g++ *.o $(LDFLAGS) -o ua
+
+dist: all
+	mkdir -p ua-$(VERSION)-windows
+	mv ua.exe ua-$(VERSION)-windows/
+	../windows_build/collect_ua_dlls.sh ua-$(VERSION)-windows
+	# Start zipping it too ?
+clean:
+	rm -v *.o ua
+
+.PHONY: all dxjson dxhttp dxcpp ua
