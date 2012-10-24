@@ -394,8 +394,6 @@ parser.add_argument('filename', help='local filename to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this BED file annotates')
 
 def import_BED(**args):
-
-    print args
     
     if len(args) == 0:
         cmd_line_args = parser.parse_args(sys.argv[1:])
@@ -428,7 +426,11 @@ def import_BED(**args):
             print "Importing as Spans Type"
             job_outputs.append(import_spans(import_filename, name, reference))
 
+    print job_outputs
     return job_outputs
+
+def main(**args):
+    import_BED(**args)
 
 if __name__ == '__main__':
     import_BED()
