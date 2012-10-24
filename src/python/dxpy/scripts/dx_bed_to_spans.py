@@ -303,10 +303,18 @@ def generate_gene_row(line, block_size, block_start, default_row, parent_id, spa
         row[11] = float(line[4])
 
         # thickStart
-        row[12] = int(line[6])
+        if parent_id == -1:
+            row[12] = int(line[6])
+        else:
+            # just use lo instead
+            row[12] = row[1]
 
         # thickEnd
-        row[13] = int(line[7])
+        if parent_id == -1:
+            row[13] = int(line[7])
+        else:
+            # just use lo instead
+            row[13] = row[2]
 
         # itemRgb
         row[14] = line[8]
