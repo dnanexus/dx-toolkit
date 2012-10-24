@@ -158,10 +158,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       }
       cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
 
-      // TODO: Should we use select() instead of sleep() - as sleep will return immediatly if a signal is passed to program ?
-      // (http://www.delorie.com/gnu/docs/glibc/libc_445.html)
-      // Also we do not check for buffer overflow while doubling sec_to_wait, since we would have to sleep ~6537year before hitting the limit!
-      sleep(sec_to_wait);
+	  boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
     } else {
       countTries++;
       break;
