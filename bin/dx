@@ -633,8 +633,9 @@ def ls(args):
         # We have results to describe
         name_counts = collections.Counter(obj['describe']['name'] for obj in entity_results)
         for result in entity_results:
-            if result['describe']['hidden'] and not args.all:
-                continue
+            # TODO: Figure out the right way to reason when to hide hidden files:
+            # if result['describe']['hidden'] and not args.all:
+            #     continue
             if result['describe']['project'] == project:
                 if args.brief:
                     print result['id']
