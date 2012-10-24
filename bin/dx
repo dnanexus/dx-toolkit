@@ -2275,9 +2275,9 @@ def run(args):
                                                                         expected='entity',
                                                                         ask_to_resolve=False,
                                                                         expected_classes=['applet'])
-        except:
+        except BaseException as details:
             if app_desc is None:
-                raise
+                parser.exit(1, fill(unicode(details)) + '\n')
             else:
                 project, folderpath, entity_results = None, None, None
 
