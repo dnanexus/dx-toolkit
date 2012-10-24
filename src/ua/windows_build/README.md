@@ -33,3 +33,11 @@ $ make dist
 This will create a zip archive ("ua-VERSION.zip") in ./build/ directory.
 
 Voila! You are all set to run UA on windows. Just unzip this file (which contains all the required DLLs, magic database, and the actual executable), and run ```ua``` from command line (the usual windows command prompt will work just fine).
+
+### Some technical notes about installation:
+
+- We use Windows Native SSL in libcurl installation (unlike openssl for Linux and Mac)
+- We do *NOT* use c-ares in libcurl.
+- We statically link GCC dependencies(libgcc_s_dx2-1.dll, libstdc++-6.dll).
+- We statically link Boost libraries.
+- We do *NOT* statically link libcurl, libmagic, zlib, msys dependencies.
