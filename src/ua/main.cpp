@@ -24,9 +24,7 @@ using namespace std;
   // This additional code is requried for Windows build, since Magic database is not present
   // by default, and rather packaged with the distribution
   #include <windows.h>
-  bool setMagicEnvVariable_called = false; // whether we have called setMagicEnvVariable() once, to make the functions idempotent.
-  bool MAGIC_already_present = false; // true if MAGIC env variable is present already
-  string MAGIC_prev_value; // value of MAGIC env variable (if present already)
+  string MAGIC_DATABASE_PATH;	
 #endif
 
 Options opt;
@@ -360,42 +358,21 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
 }
 
 #ifdef WINDOWS_BUILD
-void setMagicEnvVariable() {
-  if (setMagicEnvVariable_called)
+void setMagicDBPath() {
+  if (MAGIC_DATABASE_PATH.size() > 0)
     return;
 
-  // First store the previous value of env variable MAGIC
-  if (getenv("MAGIC") == NULL)
-    MAGIC_already_present = false;
-  else {
-    MAGIC_already_present = true;
-    MAGIC_prev_value = getenv("MAGIC");
-  }
-  
-  // Now set new value of MAGIC env variable
-  //   1. Find out the current process's directory
+  // Find out the current process's directory
   char buffer[32768] = {0}; // Maximum path length in windows (approx): http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
   if (!GetModuleFileName(NULL, buffer, 32767)) {
     throw runtime_error("Unable to get current process's directory using GetModuleFileName() .. GetLastError() = " + boost::lexical_cast<string>(GetLastError()) + "\n");
   }
   string processPath = buffer;
   size_t found = processPath.find_last_of("\\");
-  found = (found == string::npos) ? found : 0;
-  string mPath = processPath.substr(0, found) + "\\resources\\magic.mgc";
-  setenv("MAGIC", mPath.c_str(), 1);
-  setMagicEnvVariable_called = true;
+  found = (found != string::npos) ? found : 0;
+  MAGIC_DATABASE_PATH = processPath.substr(0, found) + "\\resources\\magic";
 }
 
-void resetMagicEnvVariable() {
-  if (!setMagicEnvVariable_called)
-    return;
-  if (!MAGIC_already_present) {
-    unsetenv("MAGIC");
-  } else {
-    setenv("MAGIC", MAGIC_prev_value.c_str(), 1);
-  }
-  setMagicEnvVariable_called = false;
-}
 #endif
 
 /* 
@@ -418,14 +395,19 @@ string getMimeType(string filePath) {
   if (magic_cookie == NULL) {
     throw runtime_error("error allocating magic cookie (libmagic)");
   }
-
-  if (magic_load(magic_cookie, NULL) != 0) {
+#ifndef WINDOWS_BUILD
+	const char *ptr_to_db = NULL; // NULL means look in default location (fine for POSIX systems)
+#else
+	setMagicDBPath();
+	const char *ptr_to_db = MAGIC_DATABASE_PATH.c_str();
+#endif
+  if (magic_load(magic_cookie, ptr_to_db) != 0) {
     string errMsg = magic_error(magic_cookie);
     magic_close(magic_cookie);
 #ifndef WINDOWS_BUILD
     throw runtime_error("cannot load magic database - '" + errMsg + "'");
 #else
-    throw runtime_error("cannot load magic database - '" + errMsg + "'" + "\nEnv Variable MAGIC = " + ((getenv("MAGIC") != NULL) ? getenv("MAGIC") : "NOT SET"));
+    throw runtime_error("cannot load magic database - '" + errMsg + "'" + " Magic DB path = '" + MAGIC_DATABASE_PATH + "'");
 #endif
   }
 
@@ -551,9 +533,7 @@ int main(int argc, char * argv[]) {
     NUMTRIES_g = opt.tries;
 
     vector<File> files;
-#ifdef WINDOWS_BUILD
-    setMagicEnvVariable();
-#endif
+
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
       LOG << "Getting MIME type for local file " << opt.files[i] << "..." << endl;
       string mimeType = getMimeType(opt.files[i]);
@@ -575,9 +555,7 @@ int main(int argc, char * argv[]) {
       files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
       totalChunks += files[i].createChunks(chunksToRead, opt.tries);
     }
-#ifdef WINDOWS_BUILD
-    resetMagicEnvVariable();
-#endif
+
     if (opt.waitOnClose) {
       for (unsigned int i = 0; i < files.size(); ++i) {
         files[i].waitOnClose = true;
@@ -669,9 +647,6 @@ int main(int argc, char * argv[]) {
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
-#ifdef WINDOWS_BUILD
-    resetMagicEnvVariable();
-#endif
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
