@@ -221,6 +221,12 @@ class DXFile(DXDataObject):
             self._request_iterator, self._response_iterator = None, None
 
     def tell(self):
+        '''
+        Returns the current position of the file read cursor.
+
+        Warning: Because of buffering semantics, this value will **not** be accurate when using the line iterator form
+        (`for line in file`).
+        '''
         return self._pos
 
     def flush(self, multithread=True, **kwargs):

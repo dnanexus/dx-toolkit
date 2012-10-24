@@ -173,6 +173,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     while True:
         buf = fd.read(dxfile._write_bufsize)
         if len(buf) == 0:
+            if show_progress:
+                sys.stderr.write("\n")
             break
         dxfile.write(buf, **remaining_kwargs)
 
@@ -187,8 +189,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                 sys.stderr.flush()
                 sys.stderr.write("\r")
                 sys.stderr.flush()
-            if len(buf) == 0:
-                sys.stderr.write("\n")
 
     if filename is not None:
         fd.close()
