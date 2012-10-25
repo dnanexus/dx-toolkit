@@ -57,7 +57,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type created_before: int or string
     :param describe: Whether to also return the output of calling describe() on the object
     :type describe: boolean
-    :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
+    :param level: The minimum permissions level for which results should be returned (one of "VIEW", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
@@ -234,7 +234,7 @@ def find_one_data_object(classname=None, state=None, visibility=None,
     :type created_before: int or string
     :param describe: Whether to also return the output of calling describe() on the object
     :type describe: boolean
-    :param level: The minimum permissions level for which results should be returned (one of "LIST", "VIEW", "CONTRIBUTE", or "ADMINISTER")
+    :param level: The minimum permissions level for which results should be returned (one of "VIEW", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
     :param return_handler: If True, returns the result as a dxpy object handler (otherwise, returns a dict with keys "id" and "project")
     :type return_handler: boolean
@@ -445,7 +445,7 @@ def find_projects(name=None, name_mode='exact', properties=None,
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
-    :param level: One of 'LIST', 'VIEW', 'CONTRIBUTE', or 'ADMINSTER'. If specified, only returns projects where the current user has at least the specified permission level.
+    :param level: One of "VIEW", "CONTRIBUTE", or "ADMINSTER". If specified, only returns projects where the current user has at least the specified permission level.
     :type level: string
     :param describe: Either false or the input to the describe call for the project
     :type describe: boolean or dict
