@@ -109,7 +109,7 @@ http_server_errors = set([requests.codes.server_error,
                           requests.codes.service_unavailable,
                           requests.codes.gateway_timeout])
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=600, config=None,
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
                   max_retries=DEFAULT_RETRIES, always_retry=False,
@@ -122,7 +122,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     :param headers: Names and values of HTTP headers to submit with the request (in addition to those needed for authentication, compression, or other options specified with the call).
     :type headers: dict
     :param auth: Overrides the *auth* value to pass through to :meth:`requests.request`. By default a token is obtained from the ``DX_SECURITY_CONTEXT``.
-    :type auth: tuple, object, or None
+    :type auth: tuple, object, True (default), or None
     :param timeout: HTTP request timeout, in seconds
     :type timeout: float
     :param config: *config* value to pass through to :meth:`requests.request`
@@ -153,10 +153,10 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
 
     '''
     url = APISERVER + resource if prepend_srv else resource
-    
+
     #print method, url, data
 
-    if auth is None:
+    if auth is True:
         auth = AUTH_HELPER
     if config is None:
         config = {}
