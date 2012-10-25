@@ -437,7 +437,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         else:
             return project, folderpath, [result]
     elif project is None:
-        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  You should either set a default project using dx select or cd, or add a colon (":") after your project ID or name.')
+        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name.')
     else:
         msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object

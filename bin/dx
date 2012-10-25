@@ -744,7 +744,7 @@ def rmproject(args):
         # Be forgiving if they offer an extraneous colon
         substrings = split_unescaped(':', project)
         if len(substrings) > 1 or (len(substrings) == 1 and project[0] == ':'):
-            print fill('Was unable to remove \"' + project + '\": a nonempty string was found to the right of an unescaped colon')
+            print fill('Unable to remove \"' + project + '\": a nonempty string was found to the right of an unescaped colon')
             had_error = True
             continue
         if len(substrings) == 0:
@@ -754,7 +754,7 @@ def rmproject(args):
                 continue
         proj_id = resolve_container_id_or_name(substrings[0])
         if proj_id is None:
-            print fill('Was unable to remove \"' + project + '\": could not resolve to a project ID')
+            print fill('Unable to remove \"' + project + '\": could not resolve to a project ID')
             had_error = True
             continue
         try:
@@ -816,7 +816,7 @@ def mv(args):
 
         if src_results is None:
             if src_path == '/':
-                parser.exit(1, fill('Cannot rename root folder; to rename the project, use the "dx rename" subcommand.') + '\n')
+                parser.exit(1, fill('Cannot rename root folder; to rename the project, please use the "dx rename" subcommand.') + '\n')
             try:
                 dxpy.DXHTTPRequest('/' + src_proj + '/renameFolder',
                                    {"folder": src_path,
@@ -849,7 +849,7 @@ def mv(args):
                                                          source,
                                                          allow_mult=True, all_mult=args.all)
         if src_proj != dest_proj:
-            parser.exit(1, fill('Using \"mv\" for moving something from one project to another is unsupported.  Use \"cp\" and \"rm\".') + '\n')
+            parser.exit(1, fill('Using \"mv\" for moving something from one project to another is unsupported.  Please use \"cp\" and \"rm\" instead.') + '\n')
 
         if src_results is None:
             src_folders.append(src_folderpath)
@@ -911,7 +911,7 @@ def cp(args):
                                            "project": dest_proj,
                                            "destination": dest_path})['exists']
                 if len(exists) > 0:
-                    print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(json.dumps(exists))
+                    print fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists))
                 return
             except BaseException as details:
                 parser.exit(1, fill(unicode(details)) + '\n')
@@ -923,7 +923,7 @@ def cp(args):
                                              "project": dest_proj,
                                              "destination": dest_folder})['exists']
                 if len(exists) > 0:
-                    print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(json.dumps(exists))
+                    print fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists))
                 for result in src_results:
                     if result['id'] not in exists:
                         dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
@@ -1404,7 +1404,7 @@ def rename(args):
             parser.exit(1,
                         'Could not resolve \"' + args.path + \
                             '''\" to an existing data object or folder; if you
-were attempting to refer to a project, append a colon ":" to indicate that it
+were attempting to refer to a project, please append a colon ":" to indicate that it
 is a project.\n''')
 
     if entity_results is not None:

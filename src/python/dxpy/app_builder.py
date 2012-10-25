@@ -156,7 +156,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             else:
-                raise AppletBuilderException("A applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
+                raise AppletBuilderException("An applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
 
     # -----
     # Override various fields from the pristine dxapp.json
@@ -169,7 +169,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 readme_filename = filename
                 break
         if readme_filename is None:
-            logging.warn("No description found; you should supply one in README.md")
+            logging.warn("No description found; please supply one in README.md")
         else:
             with open(os.path.join(src_dir, readme_filename)) as fh:
                 applet_spec['description'] = fh.read()
