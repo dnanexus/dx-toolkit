@@ -14,6 +14,7 @@
 *.a
 .DS_Store
 .coverage
+/bin/dx-bed-to-spans
 /bin/dx-build-app
 /bin/dx-build-applet
 /bin/dx-csv-to-gtable
