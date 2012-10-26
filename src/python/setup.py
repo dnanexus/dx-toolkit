@@ -26,6 +26,10 @@ import readline
 if 'libedit' in readline.__doc__:
     dependencies.append("readline==6.2.2")
 
+# If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
+if os.name == 'nt':
+    dependencies.append("colorama==0.2.4")
+
 setup(
     name='dxpy',
     version='0.1',

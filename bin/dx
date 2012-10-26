@@ -18,11 +18,11 @@ try:
 except:
     pass
 
-#try:
-#    import colorama
-#    colorama.init()
-#except:
-#    pass
+try:
+    import colorama
+    colorama.init()
+except:
+    pass
 
 if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
     try:
@@ -2529,7 +2529,10 @@ def watch(args):
             ws.set_dx_streaming_id(streaming_id)
             if filter_stream is None:
                 print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
-            ws.connect()
+            try:
+                ws.connect()
+            except KeyboardInterrupt:
+                sys.exit(1)
             break
         except HandshakeError: # HACK: Workaround for https://github.com/LearnBoost/socket.io/issues/438
             continue
