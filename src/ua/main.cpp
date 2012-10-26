@@ -21,11 +21,13 @@
 using namespace std;
 
 #ifdef WINDOWS_BUILD
-  // This additional code is requried for Windows build, since Magic database is not present
+  // This additional code is required for Windows build, since Magic database is not present
   // by default, and rather packaged with the distribution
   #include <windows.h>
   string MAGIC_DATABASE_PATH;	
 #endif
+
+int curlInit_call_count = 0;
 
 Options opt;
 
@@ -69,6 +71,8 @@ vector<boost::thread> compressThreads;
 vector<boost::thread> uploadThreads;
 
 int NUMTRIES_g; // Number of max tries for a chunk (to be given by user)
+
+string userAgentString; // definition (declared in chunk.h)
 
 bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
@@ -342,10 +346,14 @@ void curlInit() {
     throw runtime_error(msg.str());
   }
   LOG << " done." << endl;
+  curlInit_call_count++;
 }
 
 void curlCleanup() {
-  curl_global_cleanup();
+  // http://curl.haxx.se/libcurl/c/curl_global_cleanup.html
+  for (;curlInit_call_count > 0; --curlInit_call_count) {
+    curl_global_cleanup();
+  }
 }
 
 void markFileAsFailed(vector<File> &files, const string &fileID) {
@@ -488,8 +496,32 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
   }
 }
 
+void setUserAgentString() {
+  bool windows_env = false;
+#ifdef WINDOWS_BUILD
+  windows_env = true;
+#endif
+  // Include these things in user agent string: UA version, GIT version, a random hash (which will be unique per instance of UA)
+  // For windows build, also include that info
+  srand(clock() + time(NULL));
+  int r1 = rand(), r2 = rand();
+  stringstream iHash;
+  iHash << std::hex << r1 << "-" << std::hex << r2;
+  userAgentString = string("DNAnexus-Upload-Agent/") + UAVERSION;
+  userAgentString += (windows_env) ? " (WINDOWS_BUILD=true)" : "";
+  userAgentString += string(" git-version/") + GITVERSION + " Instance-Hash/" + iHash.str();
+}
+
+void printEnvironmentInfo() {
+  cout << "Environment info:" << endl
+       << "  API server protocol: " << opt.apiserverProtocol << endl
+       << "  API server host: " << opt.apiserverHost << endl
+       << "  API server port: " << opt.apiserverPort << endl
+       << "  Auth token: " << opt.authToken << endl; 
+  cout << "  Project:  " << ((opt.projects.size() > 0) ? opt.projects[0] : "") << endl; 
+}
+
 int main(int argc, char * argv[]) {
-  int exitCode = 0; // exit status code
   try {
     opt.parse(argc, argv);
   } catch (exception &e) {
@@ -497,19 +529,24 @@ int main(int argc, char * argv[]) {
     opt.printHelp(argv[0]);
     return 1;
   }
-
+  // Note: Verbose mode logging is now enabled by options parse()
+  if (opt.env()) {
+    printEnvironmentInfo();
+    return 0;
+  }
   if (opt.version()) {
-    cout << GITVERSION << endl;
+    cout << "Upload Agent Version: " << UAVERSION << endl
+         << "git version: " << GITVERSION << endl;
     return 0;
   } else if (opt.help() || opt.files.empty()) {
     opt.printHelp(argv[0]);
     return 1;
   }
 
-  Log::enabled = opt.verbose;
+  setUserAgentString();
 
-  LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
-
+  LOG << "DNAnexus Upload Agent " << UAVERSION << " (git version: " << GITVERSION << ")" << endl;
+  LOG << "User Agent string: '" << userAgentString << "'" << endl;
   LOG << opt;
   try {
     opt.validate();
@@ -525,7 +562,7 @@ int main(int argc, char * argv[]) {
 
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
-  
+  int exitCode = 0; 
   try {
     curlInit();
 
@@ -647,6 +684,7 @@ int main(int argc, char * argv[]) {
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
+    curlCleanup();
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }

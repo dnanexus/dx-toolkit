@@ -17,6 +17,7 @@ public:
 
   bool help();
   bool version();
+  bool env();
   void printHelp(char * programName);
   void validate();
 

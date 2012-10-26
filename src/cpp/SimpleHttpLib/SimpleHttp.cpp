@@ -1,4 +1,5 @@
 #include "SimpleHttp.h"
+#include <stdexcept>
 
 #ifndef WINDOWS_BUILD
   // We don't use openssl in windows, so do not use thread safety mechanism
@@ -26,6 +27,27 @@ public:
 // See: http://horstr.blogspot.com/2008/04/on-libcurl-openssl-and-thread-safety.html
 SSLThreadsInitializer SSLThreads_initializer;
 #endif
+
+class curlInitializer {
+public:
+  static int init_count; // number of instances of this class
+  curlInitializer() {
+    CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
+    if (code != 0) {
+      std::ostringstream msg;
+      msg << "An error occurred when initializing the HTTP library (" << curl_easy_strerror(code) << ")" << std::endl;
+      throw std::runtime_error(msg.str());
+    }
+    init_count++;
+  }
+  ~curlInitializer() {
+      // http://curl.haxx.se/libcurl/c/curl_global_cleanup.html
+    for (;init_count > 0; --init_count)
+      curl_global_cleanup();
+  }
+};
+int curlInitializer::init_count = 0; // definition
+curlInitializer curl_initializer_variable; // should be created just once
 
 /*
  * This function serves as a callback for response headers read by libcurl
