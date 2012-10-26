@@ -24,6 +24,9 @@ extern std::queue<std::pair<std::time_t, int64_t> > instantaneousBytesAndTimesta
 extern int64_t sumOfInstantaneousBytes;
 extern boost::mutex instantaneousBytesMutex;
 
+// Upload Agent string (declaration)
+extern std::string userAgentString;
+
 class Chunk {
 public:
 

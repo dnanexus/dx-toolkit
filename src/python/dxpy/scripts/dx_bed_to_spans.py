@@ -183,7 +183,7 @@ def import_named_spans(bed_file, table_name, ref_id):
                         ("thickEnd", "int32"),
                         ("itemRgb", "string")]
 
-    possible_default_row = ["", 0, 0, "", 0, "", 0, 0, ""]
+    possible_default_row = ["", 0, 0, "", 0, ".", 0, 0, ""]
 
     columns = possible_columns[:num_cols]
 
@@ -353,7 +353,7 @@ def import_genes(bed_file, table_name, ref_id):
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
     gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
 
-    default_row = ["", 0, 0, "", -1, "", "", False, -1, -1, "", 0, 0, 0, ""]
+    default_row = ["", 0, 0, "", -1, "", ".", False, -1, -1, "", 0, 0, 0, ""]
 
     with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index], mode='w') as span:
         span_table_id = span.get_id()
