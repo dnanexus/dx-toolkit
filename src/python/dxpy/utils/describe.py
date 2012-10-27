@@ -307,7 +307,7 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -316,6 +316,8 @@ def print_job_desc(desc):
     if "executableName" in desc and desc['executableName'] is not None:
         print_field("Executable name", desc['executableName'])
     print_field("Project context", desc["project"])
+    if 'billTo' in desc:
+        print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'workspace' in desc:
         print_field("Workspace", desc["workspace"])
     if 'projectWorkspace' in desc:
