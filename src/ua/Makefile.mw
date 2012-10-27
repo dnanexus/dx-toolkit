@@ -48,7 +48,7 @@ dist: all
 	mkdir -p ua-$(VERSION)-windows
 	mv ua.exe ua-$(VERSION)-windows/
 	../windows_build/collect_ua_dlls.sh ua-$(VERSION)-windows
-	cd ua-$(VERSION)-windows && zip -9 -r ../ua-$(VERSION)-windows.zip . && cp ua-($VERSION)-windows.zip ..
+	cd ua-$(VERSION)-windows && zip -9 -r ../ua-$(VERSION)-windows.zip .
 	rm -rf ua-$(VERSION)-windows
 clean:
 	rm -v *.o ua
