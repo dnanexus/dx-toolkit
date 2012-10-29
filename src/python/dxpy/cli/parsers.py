@@ -26,7 +26,7 @@ no_color_arg.add_argument('--color',
 delim_arg = argparse.ArgumentParser(add_help=False)
 delim_arg.add_argument('--delimiter', '--delim',
                        dest='delimiter',
-                       help=fill('Always use exactly one of DELIMITER to separate fields to be printed.  If no delimiter is provided with this flag, TAB will be used.', width_adjustment=-24),
+                       help=fill('Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, TAB will be used', width_adjustment=-24),
                        nargs='?',
                        const="\t")
 
@@ -35,8 +35,8 @@ json_arg.add_argument('--json', help='Display return value in JSON', action='sto
 
 stdout_args = argparse.ArgumentParser(add_help=False)
 stdout_args_gp = stdout_args.add_mutually_exclusive_group()
-stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value.  For most commands, prints a DNAnexus ID per line.', width_adjustment=-24), action='store_true')
-stdout_args_gp.add_argument('--summary', help='Display summary output (default).', action='store_true')
+stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value; for most commands, prints a DNAnexus ID per line', width_adjustment=-24), action='store_true')
+stdout_args_gp.add_argument('--summary', help='Display summary output (default)', action='store_true')
 stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
                             action='store_true')
 

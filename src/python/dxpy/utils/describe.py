@@ -447,8 +447,13 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
 
-def get_find_jobs_string(jobdesc, has_children):
-    is_origin_job = jobdesc['parentJob'] is None
+def get_find_jobs_string(jobdesc, has_children, single_result=False):
+    '''
+    :param jobdesc: hash of job describe output
+    :param has_children: whether the job has subjobs to be printed
+    :param single_result: whether the job is displayed as a single result or as part of a job tree
+    '''
+    is_origin_job = jobdesc['parentJob'] is None or single_result
     string = ("* " if is_origin_job and get_delimiter() is None else "")
     string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "<no name>") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
     string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
