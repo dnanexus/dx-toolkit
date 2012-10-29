@@ -5,6 +5,8 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
+import shutil
+import tempfile
 from datetime import datetime
 import dxpy, dxpy.app_builder
 
@@ -29,6 +31,11 @@ parser.add_argument("--no-temp-build-project", help="When building an app, build
 parser.set_defaults(publish=False)
 parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
 parser.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+
+# --[no-]remote
+parser.set_defaults(remote=False)
+parser.add_argument("--remote", help="Build the app remotely.", action="store_true", dest="remote")
+parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 parser.add_argument("-f", "--overwrite", help="If creating an applet, remove existing applets of the same name from the destination project.", action="store_true", default=False)
 parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None, dest="version_override", metavar='VERSION')
@@ -102,6 +109,48 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
+def _build_app_remote(src_dir, publish=False):
+    temp_dir = tempfile.mkdtemp()
+    try:
+        # Resolve relative paths and symlinks here so we have something
+        # reasonable to write in the job name below.
+        src_dir = os.path.realpath(src_dir)
+
+        app_tarball_file = os.path.join(temp_dir, "app_tarball.tar.gz")
+        # TODO: figure out if we can use --exclude-vcs here (conditional
+        # on presence of GNU tar). This might require propagating the
+        # --version directly to the interior dx-build-app since in
+        # general that can depend on the git metadata.
+        subprocess.check_call(["tar", "-czf", app_tarball_file, "."], cwd=src_dir)
+
+        build_project_id = dxpy.api.projectNew({"name": "dx-build-app --remote temporary project"})["id"]
+
+        try:
+            dxpy.DX_PROJECT_CONTEXT_ID = build_project_id
+            remote_file_id = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
+                                                    wait_on_close=True, show_progress=True)
+            app_run_result = dxpy.api.appRun(
+                "app-tarball_app_builder",
+                input_params={
+                    "name": "Remote build of %s" % (os.path.basename(src_dir),),
+                    "input": {
+                        "input_file": dxpy.dxlink(remote_file_id),
+                        "publish": publish
+                        },
+                    "project": build_project_id
+                    }
+                )
+            job_id = app_run_result["id"]
+            print "Started builder job %s" % (job_id,)
+            subprocess.check_call(["dx", "watch", job_id])
+
+        finally:
+            dxpy.api.projectDestroy(build_project_id)
+    finally:
+        shutil.rmtree(temp_dir)
+    return
+
+
 def main(**kwargs):
 
     if len(kwargs) == 0:
@@ -117,6 +166,26 @@ def main(**kwargs):
 
     if not os.path.exists(os.path.join(args.src_dir, "dxapp.json")):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % args.src_dir)
+
+    if args.remote:
+        # To enable these, the tarball builder app needs to learn how to
+        # pass these options through to the interior call of
+        # dx_build_app.
+        if args.mode == 'applet':
+            parser.error('--remote can only be used to create apps')
+        if args.version_override:
+            parser.error('--remote cannot be combined with --version')
+        if args.bill_to:
+            parser.error('--remote cannot be combined with --bill-to')
+        if not args.version_autonumbering:
+            parser.error('--remote cannot be combined with --no-version-autonumbering')
+        if not args.update:
+            parser.error('--remote cannot be combined with --no-update')
+        if args.dx_toolkit_autodep != 'auto':
+            parser.error('--remote cannot be combined with dx-toolkit autodep flags')
+        if args.dry_run:
+            parser.error('--remote cannot be combined with --dry-run')
+        return _build_app_remote(args.src_dir, args.publish)
 
     working_project = None
     using_temp_project = False
