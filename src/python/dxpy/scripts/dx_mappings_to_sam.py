@@ -85,11 +85,10 @@ def main(**kwargs):
         header += "@RG\tID:" + assignReadGroup + "\tSM:Sample_0"
     else:
         for i in range(len(mappingsTable.get_details()['read_groups'])):
-            header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)
-    
-    if opts.read_group_platform != '':
-        header += "\tPL:"+opts.read_group_platform
-    header += "\n"
+            header += "@RG\tID:"+str(i) + "\tSM:Sample_"+str(i)    
+            if opts.read_group_platform != '':
+                header += "\tPL:"+opts.read_group_platform
+            header += "\n"
 
     if outputFile != None:
         outputFile.write(header)
