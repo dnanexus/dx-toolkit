@@ -62,7 +62,7 @@ parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-t
 #
 # The --dry-run flag can be used to see the applet spec that would be
 # provided to /applet/new, for debugging purposes. However, the output
-# would deviate from a real run in the following ways:
+# would deviate from that of a real run in the following ways:
 #
 # * Any bundled resources are NOT uploaded and are not reflected in the
 #   app(let) spec.
