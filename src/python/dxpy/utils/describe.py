@@ -5,7 +5,7 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-import datetime, json, textwrap, math, sys
+import datetime, json, math, sys
 
 from dxpy.utils.printing import *
 

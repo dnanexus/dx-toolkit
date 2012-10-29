@@ -4,9 +4,7 @@ import dxpy
 import math
 import argparse
 import re
-import subprocess
 import sys
-import math
 
 #Usage: sample input: dx_MappingsTableToSamBwa --table_id <gtable_id> --output <filename>
 #Example: dx_MappingsTableToSamBwa --table_id gtable-9yZvF200000PYKJyV4k00005 --output mappings.sam

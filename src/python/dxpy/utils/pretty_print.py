@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import re
 import collections
 from dxpy.utils.printing import *
 

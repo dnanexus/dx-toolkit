@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os, sys, unittest, json, tempfile, filecmp, subprocess, re, csv
+import os, unittest, json, tempfile, subprocess, csv
 
 def run(command):
     # print "Running", command

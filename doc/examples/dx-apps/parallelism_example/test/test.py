@@ -3,7 +3,7 @@
 
 # TODO: make a test suite
 
-import os, sys, unittest, json, subprocess
+import os, unittest, json
 
 import dxpy, dxpy.app_builder
 from dxpy.exceptions import *

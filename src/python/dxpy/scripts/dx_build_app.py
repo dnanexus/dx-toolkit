@@ -4,7 +4,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
-import os, sys, json, fileinput, re, subprocess, argparse
+import os, sys, json, subprocess, argparse
 from datetime import datetime
 import dxpy, dxpy.app_builder
 

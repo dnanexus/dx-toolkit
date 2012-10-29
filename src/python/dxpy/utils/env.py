@@ -5,7 +5,7 @@ http://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-import os, shlex, sys, textwrap, json
+import os, shlex, sys, textwrap
 
 def parse_env_file(filename):
     env_vars = {}

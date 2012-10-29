@@ -3,7 +3,7 @@ This file contains utility functions for interactive scripts such as
 dx for tab-completion, resolving naming conflicts, etc.
 '''
 
-import sys, os
+import os
 import dxpy
 from dxpy.utils.resolver import *
 

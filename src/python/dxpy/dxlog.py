@@ -1,4 +1,4 @@
-import socket, json, time, os, sys, logging
+import socket, json, time, os, logging
 
 from logging.handlers import SysLogHandler
 

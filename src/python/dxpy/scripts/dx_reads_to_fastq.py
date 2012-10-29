@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, json, argparse
+import sys, argparse
 import dxpy
 
 arg_parser = argparse.ArgumentParser(description="Download a reads table into a FASTQ file")

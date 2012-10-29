@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, json, re
+import sys, json
 
 preamble = '''/* Do not modify this file by hand.
  *

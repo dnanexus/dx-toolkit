@@ -32,7 +32,7 @@
 
 # Copyright 2012 DNAnexus, Inc. All rights reserved.
 
-import sys, os, string, types, argparse
+import sys, os, types, argparse
 import dxpy.utils.completer
 
 def autocomplete(parser, arg_completer=None, subcommands=None):

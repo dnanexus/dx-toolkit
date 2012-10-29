@@ -2,7 +2,7 @@
 Utilities used in the DNAnexus execution environment and test harness.
 '''
 
-import os, sys, json, collections, logging, argparse
+import os, json, collections, logging, argparse
 from functools import wraps
 import dxpy
 
