@@ -1821,9 +1821,12 @@ def find_jobs(args):
             if args.origin_jobs:
                 output_ids = origin_jobs
                 for origin_job in origin_jobs:
-                    if origin_job not in job_descs:
+                    if not args.brief and (origin_job not in job_descs or include_io):
                         job_descs[origin_job] = dxpy.api.jobDescribe(origin_job, {'io': include_io})
-                    if not args.json and not args.brief:
+
+                    if args.json:
+                        json_output.append(job_descs[origin_job])
+                    elif not args.brief:
                         print format_tree({}, get_find_jobs_string(job_descs[origin_job], False))
             else: # args.trees
 
