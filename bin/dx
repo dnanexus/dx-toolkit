@@ -2634,7 +2634,7 @@ parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Cl
                                  formatter_class=argparse.RawTextHelpFormatter,
                                  parents=[env_args],
                                  usage='%(prog)s [-h] [--version] command ...')
-parser.add_argument('--version', action='version', version='dx 0.0.1')
+parser.add_argument('--version', action='version', version='dx %s' % (dxpy.TOOLKIT_VERSION,))
 
 subparsers = parser.add_subparsers(help=argparse.SUPPRESS)
 subparsers.metavar = 'command'

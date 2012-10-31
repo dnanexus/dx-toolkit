@@ -21,6 +21,10 @@ all: api_wrappers cpp src_libs python contigset2fasta reads_validator
 # Client bindings and wrappers
 # ============================
 
+toolkit_version:
+	echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"
+	test -d "$(DNANEXUS_HOME)/.git" && echo "version = \"`git describe`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"
+
 api_wrappers:
 	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
 	../bin/generateWrapperTable ../build/list_of_all_routes.txt > ../build/wrapper_table.json
@@ -50,7 +54,7 @@ src_libs: api_wrappers
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
 # setup.py doesn't complain.
-python: api_wrappers
+python: api_wrappers toolkit_version
 	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
 	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
@@ -167,4 +171,4 @@ clean:
 	-rm -rf ../lib
 	-rm -rf ../share
 
-.PHONY: all api_wrappers src_libs python perl java contigset2fasta reads_validator ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
+.PHONY: all toolkit_version api_wrappers src_libs python perl java contigset2fasta reads_validator ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java

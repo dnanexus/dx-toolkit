@@ -6,6 +6,7 @@
 /lib/
 /share/
 /src/java/target/
+/src/python/dxpy/toolkit_version.py
 *~
 *.log
 *.swp

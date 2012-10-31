@@ -370,6 +370,8 @@ from dxpy.bindings import *
 from dxpy.dxlog import *
 from dxpy.utils.exec_utils import run, entry_point
 
+from dxpy.toolkit_version import version as TOOLKIT_VERSION
+
 
 # This should be in exec_utils but fails because of circular imports
 # TODO: fix the imports
