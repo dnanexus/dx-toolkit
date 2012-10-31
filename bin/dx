@@ -1815,6 +1815,7 @@ def find_jobs(args):
                     if len(origin_jobs) == args.num_results:
                         more_results = True
                         break
+                    job_descs[job_result['id']] = job_result['describe']
                     origin_jobs.append(origin_job_found)
 
             if args.origin_jobs:
