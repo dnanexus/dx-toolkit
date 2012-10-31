@@ -86,6 +86,7 @@ def normalize_timedelta(timedelta):
     Given a string like "1w" or "-5d", convert it to an integer in milliseconds.
     Note: not related to the datetime timedelta class.
     '''
+    error_msg = "Error: Could not parse \"" + str(timedelta) + "\" as a timestamp or timedelta.  Expected either an integer with no suffix or with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. \"-10d\" indicates 10 days ago"
     try:
         return int(timedelta)
     except ValueError:
@@ -93,5 +94,8 @@ def normalize_timedelta(timedelta):
         suffix_multipliers = {'s': 1000, 'm': 1000*60, 'h': 1000*60*60, 'd': 1000*60*60*24, 'w': 1000*60*60*24*7,
                               'M': 1000*60*60*24*30, 'y': 1000*60*60*24*365}
         if suffix not in suffix_multipliers:
-            raise ValueError("Unrecognized timedelta "+str(timedelta))
-        return int(t) * suffix_multipliers[suffix]
+            raise ValueError(error_msg)
+        try:
+            return int(t) * suffix_multipliers[suffix]
+        except ValueError:
+            raise ValueError(error_msg)

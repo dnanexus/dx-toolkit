@@ -513,7 +513,7 @@ def api(args):
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                   json_input)
         print json.dumps(resp, indent=4)
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def invite(args):
@@ -1197,7 +1197,7 @@ def new_record(args):
             print dxrecord.get_id()
         else:
             print_desc(dxrecord.describe(incl_properties=True, incl_details=True))
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def new_gtable(args):
@@ -1241,7 +1241,7 @@ def new_gtable(args):
             print dxgtable.get_id()
         else:
             print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_visibility(args):
@@ -1259,7 +1259,7 @@ def set_visibility(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
                                {"hidden": (args.visibility == 'hidden')})
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             print fill(unicode(details))
             had_error = True
     if had_error:
@@ -1275,7 +1275,7 @@ def get_details(args):
 
     try:
         print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_details(args):
@@ -1297,7 +1297,7 @@ def set_details(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
                                args.details)
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             print(fill(unicode(details)))
             had_error = True
     if had_error:
@@ -1318,7 +1318,7 @@ def add_types(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
                                {"types": args.types})
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             print fill(unicode(details))
             had_error = True
     if had_error:
@@ -1339,7 +1339,7 @@ def remove_types(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
                                {"types": args.types})
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             print fill(unicode(details))
             had_error = True
     if had_error:
@@ -1424,7 +1424,7 @@ is a project.\n''')
         try:
             dxpy.DXHTTPRequest('/' + project + '/update',
                                {"name": args.name})
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def set_properties(args):
@@ -1456,7 +1456,7 @@ def set_properties(args):
         try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": args.properties})
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def unset_properties(args):
@@ -1490,7 +1490,7 @@ def unset_properties(args):
         try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def download(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
@@ -1517,7 +1517,7 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
             dxfile = dxpy.DXFile(entity_result['id'])
             for line in dxfile:
                 print line
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
     else:
         if not args.overwrite and os.path.exists(filename):
@@ -1528,7 +1528,7 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
             show_progress = False
         try:
             dxpy.download_dxfile(entity_result['id'], filename, show_progress=show_progress)
-        except dxpy.DXAPIError as details:
+        except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
 def get(args):
@@ -1873,7 +1873,7 @@ def find_jobs(args):
             print "\n".join(output_ids)
         elif more_results and get_delimiter() is None:
             print fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  ')
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_data(args):
@@ -1918,7 +1918,7 @@ def find_data(args):
                     print_data_obj_desc(result["describe"])
                 else:
                     print_ls_l_desc(result["describe"], include_folder=True, include_project=args.allprojects)
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_projects(args):
@@ -1942,7 +1942,7 @@ def find_projects(args):
                 print result["id"] + DELIMITER(" : ") + result['describe']['name'] + DELIMITER(' (') + result["level"] + DELIMITER(')')
         print ""
         return map(lambda result: result["id"], results)
-    except dxpy.DXAPIError as details:
+    except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_apps(args):
@@ -2005,7 +2005,7 @@ def close(args):
                     obj = dxpy.get_handler(result['id'], project=project)
                     obj.close()
                     handlers.append(obj)
-                except dxpy.DXAPIError as details:
+                except BaseException as details:
                     print fill(unicode(details))
 
     if args.wait:
@@ -3236,10 +3236,10 @@ parser_find_apps.add_argument('--installed', help='Whether to restrict the list 
 parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
-parser_find_apps.add_argument('--created-after', help='Timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--created-before', help='Timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--mod-after', help='Timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--mod-before', help='Timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--created-after', help='Integer timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--created-before', help='Integer timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--mod-after', help='Integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--mod-before', help='Integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = (parser_find_apps, NoneCompleter())
 parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_actions[-1].help))
@@ -3268,8 +3268,8 @@ parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executa
 parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
 parser_find_jobs.add_argument('--origin', help=fill('Job ID of the top-level (user-initiated) job', width_adjustment=-24)) # Redundant but might as well
 parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job, or the string \'none\' to indicate no parent', width_adjustment=-24))
-parser_find_jobs.add_argument('--created-after', help=fill('Timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y', width_adjustment=-24))
-parser_find_jobs.add_argument('--created-before', help=fill('Timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_find_jobs.add_argument('--created-after', help=fill('Integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_find_jobs.add_argument('--created-before', help=fill('Integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
 parser_find_jobs_search_gp = parser_find_jobs.add_argument_group('Search mode')
 parser_find_jobs_search = parser_find_jobs_search_gp.add_mutually_exclusive_group()
@@ -3295,10 +3295,10 @@ parser_find_data.add_argument('--allprojects', help='Extend search to all projec
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
 parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')
-parser_find_data.add_argument('--mod-after', help='Timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--mod-before', help='Timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--created-after', help='Timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--created-before', help='Timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--mod-after', help='Integer timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--mod-before', help='Integer timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--created-after', help='Integer timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--created-before', help='Integer timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
 parser_find_data.set_defaults(func=find_data)
 parser_map['find data'] = (parser_find_data, DXPathCompleter(expected='folder'))
 parser_categories['data']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
