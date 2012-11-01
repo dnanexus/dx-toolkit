@@ -109,8 +109,35 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _build_app_remote(src_dir, publish=False):
+def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
     temp_dir = tempfile.mkdtemp()
+
+    # We have to resolve the correct dx-toolkit dependency type here and
+    # explicitly pass it into the interior call of dx-build-app, because
+    # within the execution environment of tarball_app_builder,
+    # APISERVER_HOST is set to the address of the proxy (a 10.x.x.x
+    # address) and doesn't give us any information about whether we are
+    # talking to preprod.
+    if dx_toolkit_autodep == "auto":
+        # "auto" (the default) means dx-toolkit (stable) on preprod and
+        # dx-toolkit-beta on all other systems.
+        if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
+            dx_toolkit_autodep_flag = "--dx-toolkit-stable-autodep"
+        else:
+            dx_toolkit_autodep_flag = "--dx-toolkit-beta-autodep"
+    elif dx_toolkit_autodep == "git":
+        dx_toolkit_autodep_flag = "--dx-toolkit-legacy-git-autodep"
+    elif dx_toolkit_autodep == "stable":
+        dx_toolkit_autodep_flag = "--dx-toolkit-stable-autodep"
+    elif dx_toolkit_autodep == "beta":
+        dx_toolkit_autodep_flag = "--dx-toolkit-beta-autodep"
+    elif dx_toolkit_autodep == "unstable":
+        dx_toolkit_autodep_flag = "--dx-toolkit-unstable-autodep"
+    elif dx_toolkit_autodep == False:
+        dx_toolkit_autodep_flag = "--no-dx-toolkit-autodep"
+
+    extra_flags = " ".join([dx_toolkit_autodep_flag])
+
     try:
         # Resolve relative paths and symlinks here so we have something
         # reasonable to write in the job name below.
@@ -135,7 +162,8 @@ def _build_app_remote(src_dir, publish=False):
                     "name": "Remote build of %s" % (os.path.basename(src_dir),),
                     "input": {
                         "input_file": dxpy.dxlink(remote_file_id),
-                        "publish": publish
+                        "publish": publish,
+                        "extra_flags": extra_flags
                         },
                     "project": build_project_id
                     }
@@ -181,11 +209,9 @@ def main(**kwargs):
             parser.error('--remote cannot be combined with --no-version-autonumbering')
         if not args.update:
             parser.error('--remote cannot be combined with --no-update')
-        if args.dx_toolkit_autodep != 'auto':
-            parser.error('--remote cannot be combined with dx-toolkit autodep flags')
         if args.dry_run:
             parser.error('--remote cannot be combined with --dry-run')
-        return _build_app_remote(args.src_dir, args.publish)
+        return _build_app_remote(args.src_dir, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
 
     working_project = None
     using_temp_project = False
