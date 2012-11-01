@@ -24,7 +24,7 @@ public:
   /* Name of the local file to be uploaded. */
   std::string localFile;
 
-  /* File object ID. */
+  /* File object ID. (or string: "failed" if file upload couldn't be finished succesfuly) */
   std::string fileID;
 
   /* Destination project specifier (name or ID). */
@@ -75,6 +75,11 @@ public:
   /* This is a hack for displaying percentage complete for "empty" file correctly
    * As the name suggests, any succesful part upload will set it to true */
   bool atleastOnePartDone;
+  
+  /* - Job ID of the import app called for this file, OR.
+     - String "failed", if the import app could not be invoked for some reason (e.g., file upload couldn't finish, no ref genome found, etc)
+     - Empty string, if no import app was asked by user to be called */
+  std::string jobID;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
   

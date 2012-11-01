@@ -39,6 +39,12 @@ Options::Options() {
     ("verbose,v", po::bool_switch(&verbose), "Verbose logging")
     ("wait-on-close", po::bool_switch(&waitOnClose), "Wait for file objects to be closed before exiting")
     ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
+    // Options for running import apps
+    ("reads", po::bool_switch(&reads), "After uploading is complete, run import app to convert file(s) to Reads object(s)")
+    ("paired-reads", po::bool_switch(&pairedReads), "Same as --reads option, but assumes file sequence to be pairs of left, and right reads")
+    ("mappings", po::bool_switch(&mappings), "After uploading is complete, run import app to convert file(s) to Mappings object(s)")
+    ("variants", po::bool_switch(&variants), "After uploading is complete, run import app to convert file(s) to Variants object(s)")
+    ("ref-genome", po::value<string>(&refGenome), "ID or name of the reference genome (must be present iff --mappings, or, --variants flag is used)")
     ;
 
   hidden_opts = new po::options_description();
@@ -127,7 +133,7 @@ void Options::printHelp(char * programName) {
        << (*visible_opts) << endl;
 }
 
-void Options::validate() {
+void Options::validate() { 
   if (!files.empty()) {
     // - Check that all file actually exist
     // - Resolve all symlinks
@@ -236,6 +242,34 @@ void Options::validate() {
   if (tries < 1) {
     ostringstream msg;
     msg << "Number of tries per chunk must be positive: " << tries;
+    throw runtime_error(msg.str());
+  }
+
+  // Check that at most one import flag is present.
+  int countImportFlags = 0;
+  countImportFlags += (reads) ? 1 : 0;
+  countImportFlags += (pairedReads) ? 1 : 0;
+  countImportFlags += (mappings) ? 1 : 0;
+  countImportFlags += (variants) ? 1 : 0;
+  if (countImportFlags > 1) {
+    ostringstream msg;
+    msg << "Only one of these flags can be used in a single call: --reads, --paired-reads, --mappings, and --variants.";
+    throw runtime_error(msg.str());  
+  }
+  if ((mappings || variants) && refGenome.empty()) {
+    ostringstream msg;
+    msg << "Reference Genome must be specified (using --ref-genome flag) if --mappings, or --variants is present.";
+    throw runtime_error(msg.str());  
+  }
+  if (!mappings && !variants && !refGenome.empty()) {
+    ostringstream msg;
+    msg << "Reference Genome (--ref-genome) can only be specified if --mappings, or --variants is present.";
+    throw runtime_error(msg.str());  
+    
+  }
+  if (pairedReads && (files.size() % 2)) {
+    ostringstream msg;
+    msg << "Even number of files (pairs of left, and right reads) must be provided if --paired-reads flag is present";
     throw runtime_error(msg.str());
   }
 }

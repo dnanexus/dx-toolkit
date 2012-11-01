@@ -43,6 +43,13 @@ public:
   bool progress;
   bool verbose;
   bool waitOnClose;
+  
+  // Import flags
+  bool reads;
+  bool pairedReads;
+  bool mappings;
+  bool variants;
+  std::string refGenome;
 
 private:
 

@@ -15,6 +15,7 @@
 #include "File.h"
 #include "log.h"
 #include "dxcpp/dxcpp.h"
+#include "import_apps.h"
 
 #include <boost/filesystem.hpp>
 
@@ -557,7 +558,11 @@ int main(int argc, char * argv[]) {
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
-
+  const bool anyImportAppToBeCalled = (opt.reads || opt.pairedReads || opt.mappings || opt.variants);
+  if (anyImportAppToBeCalled) {
+    LOG << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)" << endl;
+    opt.waitOnClose = true;
+  }
   apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken);
 
   chunksToCompress.setCapacity(opt.compressThreads);
@@ -664,22 +669,25 @@ int main(int argc, char * argv[]) {
         cerr << endl;
       }
       if (files[i].failed) {
-        cout << "failed";
+        files[i].fileID = "failed";
         exitCode = 1;
-      } else {
-        cout << files[i].fileID;
       }
-      if (i != (files.size() - 1u)) {
-        cout << endl;
-      }
-    }
+    } 
 
     LOG << "Waiting for files to be closed..." << endl;
     boost::thread waitOnCloseThread(waitOnClose, boost::ref(files));
     LOG << "Joining wait-on-close thread..." << endl;
     waitOnCloseThread.join();
     LOG << "Wait-on-close thread finished." << endl;
-
+    if (anyImportAppToBeCalled) {
+      runImportApps(opt, files);  
+    }
+    for (unsigned i = 0; i < files.size(); ++i) {
+      cout << files[i].fileID;
+      if (anyImportAppToBeCalled)
+        cout << "\t" << files[i].jobID;
+      cout << endl;
+    }
     curlCleanup();
 
     LOG << "Exiting." << endl;
