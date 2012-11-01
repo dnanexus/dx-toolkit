@@ -45,7 +45,7 @@ all: dxjson dxhttp dxcpp ua
 	g++ *.o $(LDFLAGS) -o ua
 ifeq ($(UNAME), Darwin)
 	cp -v /opt/local/lib/gcc47/libstdc++.6.dylib /opt/local/lib/gcc47/libgcc_s.1.dylib .
-	install_name_tool -change /opt/local/lib/gcc47/libstdc++.6.dylib @executable_path/libstdc++.6.dylib ua
+	install_name_tool -change /opt/local/lib/libstdc++.6.dylib @executable_path/libstdc++.6.dylib ua
 	install_name_tool -change /opt/local/lib/gcc47/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib ua
 	install_name_tool -change /opt/local/lib/gcc47/libgcc_s.1.dylib @executable_path/libgcc_s.1.dylib libstdc++.6.dylib
 endif
