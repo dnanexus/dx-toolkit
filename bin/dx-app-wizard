@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, subprocess
+import sys, os, subprocess, shutil
 import json, re
 import argparse
 from dxpy.utils.printing import *
@@ -97,8 +97,12 @@ def prompt_for_yn(prompt_str, default=None):
             return default
 
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
-# parser.add_argument("-f", "--overwrite", help="Overwrite files that are in the way", action='store_true')
 args = parser.parse_args()
+
+template_dir = os.environ.get('DNANEXUS_HOME', None)
+if not isinstance(template_dir, basestring):
+    sys.stderr.write(fill('''Error: Environment variable DNANEXUS_HOME is not set; cannot find code templates''') + '\n')
+    exit(1)
 
 print DNANEXUS_LOGO() + ' App Wizard, API v' + API_VERSION
 print ''
@@ -118,19 +122,20 @@ while True:
     if name_pattern.match(name) is None:
         print fill('The name of your app must match /^[a-zA-Z0-9._-]+$/')
     else:
+        if os.path.exists(name):
+            remove_dir = prompt_for_yn('The directory %s already exists.  Would you like to remove all of its contents and create a new directory in its place?' % name)
+            if remove_dir:
+                shutil.rmtree(name)
+                print fill('Replacing all contents of directory %s...' % name)
+            else:
+                print ''
+                continue
         break
-
-#if os.path.exists(name) and not args.overwrite:
-#    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
-if os.path.exists(name):
-    sys.stderr.write('''The directory %s already exists, please move it or specify a different name.\n''' % name)
-    sys.exit(1)
 
 try:
     os.mkdir(name)
 except:
-    sys.stderr.write('''Unable to create a directory for %s, please check that it is a valid app name and the
-working directory exists and is writable.\n''' % name)
+    sys.stderr.write(fill('''Unable to create a directory for %s, please check that it is a valid app name and the working directory exists and is writable.''' % name) + '\n')
     sys.exit(1)
 
 print ''
@@ -152,12 +157,42 @@ print ''
 print fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).')
 version = prompt_for_var('Version', '0.0.1')
 
-interpreter_choices = ['python2.7']
-use_completer(Completer(interpreter_choices))
+language_options = {
+    "Python": {"interpreter": "python2.7",
+               "path": "python"},
+    "C++": {"interpreter": "bash",
+            "path": "cpp"},
+    "bash": {"interpreter": "bash",
+             "path": "bash"},
+    "Java": {"interpreter": "bash",
+             "path": "java"},
+    "Perl": {"interpreter": "bash",
+             "path": "perl"}
+}
+#language_choices = language_options.keys()
+language_choices = ["Python", "C++"]
+use_completer(Completer(language_choices))
 print ''
-print fill('The ' + BOLD() + 'interpreter' + ENDC() + ' of your app indicates which language you will be using and which code skeleton we will provide.') + '\n' + fill('Currently supported interpreters: ' + ', '.join(interpreter_choices))
-interpreter = prompt_for_var('Interpreter', 'python2.7', interpreter_choices)
+print fill('The ' + BOLD() + 'programming language' + ENDC() + ' of your app indicates which code skeleton we will provide.') + '\n' + fill('Currently supported languages: ' + ', '.join(language_choices))
+language = prompt_for_var('Programming language', 'Python', language_choices)
 use_completer()
+
+interpreter = language_options[language]["interpreter"]
+
+# Maybe at this time, prompt for what kind of app skeleton they want
+# (for now, only providing basic):
+#
+# Basic: Skeleton for a basic app which runs on only one machine
+#
+# Parallelized: Skeleton for an app that will parallelize across
+# multiple machines in the cloud.  It will have two additional entry
+# points: "solve_subproblem" which will be called to run on a subset
+# of the input, and "merge" for performing any necessary aggregation
+# of the results.
+
+template_dir = os.path.join(template_dir, 'doc', 'example-templates', language_options[language]['path'], "basic")
+
+# Ooh, at some point, maybe ask if they want to choose instance types?
 
 app_json = OrderedDict()
 app_json["name"] = name
@@ -310,8 +345,17 @@ array:gtable   array:record   file           int            table
             }
         app_json['outputSpec'].append(parameter_json)
 
-if interpreter == 'python2.7':
-    app_json['runSpec']['file'] = 'src/code.py'
+def fill_in_name_and_ver(template_string):
+    '''
+    TODO: Rename this.
+    '''
+    return template_string.replace('DX_APP_WIZARD_NAME', name).replace('DX_APP_WIZARD_VERSION', version)
+
+with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
+    file_text = fill_in_name_and_ver(template_app_json_file.read())
+    template_app_json = json.loads(file_text)
+    for key in template_app_json['runSpec']:
+        app_json['runSpec'][key] = template_app_json['runSpec'][key]
 
 print ''
 print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App... ***' + ENDC()
@@ -338,107 +382,98 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
-if interpreter == 'python2.7':
-    code_template = '''#!/usr/bin/env python
-# {app_name} {app_version}
-# Generated by dx-app-wizard.
-# See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for instructions on how to modify this file.
+# List all files in template_dir (other than dxapp.json) and add those
+# (after passing it through fill_in_name_and_ver).  For the code.* in
+# src,
 
-import dxpy
+def use_template_file(path):
+    '''
+    :param path: relative path from template_dir
+    '''
+    with open(os.path.join(template_dir, path), 'r') as template_file:
+        file_text = fill_in_name_and_ver(template_file.read())
+        filled_template_filename = os.path.join(name, path)
+        with open(filled_template_filename, 'w') as filled_template_file:
+            filled_template_file.write(file_text)
+        if filled_template_filename.endswith('.py') or filled_template_filename.endswith('.sh'):
+            subprocess.call(["chmod", "+x", filled_template_filename])
+        manifest.append(filled_template_filename)
 
-@dxpy.entry_point('main')
-def main({inputs}):
-    # Please fill in your application code here.
-    return {outputs}
+for template_filename in os.listdir(template_dir):
+    if template_filename in ['src', 'test', 'dxapp.json'] or template_filename.endswith('~'):
+        continue
+    use_template_file(template_filename)
 
-dxpy.run()
-'''
-    test_template = '''#!/usr/bin/env python
-# {app_name} {app_version} test suite
-# Generated by dx-app-wizard.
-# See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for instructions on how to modify this file.
+if os.path.exists(os.path.join(template_dir, 'test')):
+    for template_filename in os.listdir(os.path.join(template_dir, 'test')):
+        if template_filename.endswith('~'):
+            continue
+        use_template_file(os.path.join('test', template_filename))
 
-import os, sys, unittest, json, subprocess
+for template_filename in os.listdir(os.path.join(template_dir, 'src')):
+    if template_filename.endswith('~'):
+        continue
+    elif template_filename.startswith('code'):
+        # TODO: DO SOMETHING SPECIAL
+        with open(os.path.join(template_dir, 'src', template_filename), 'r') as code_template_file:
+            code_file_text = fill_in_name_and_ver(code_template_file.read())
+            inputs_str = ''
+            outputs_str = ''
 
-import dxpy, dxpy.app_builder
-from dxpy.exceptions import *
+            if "outputSpec" in app_json:
+                dummy_output_hash = {output["name"]: None for output in app_json["outputSpec"]}
+            else:
+                dummy_output_hash = {}
 
-src_dir = os.path.join(os.path.dirname(__file__), "..")
-test_resources_dir = os.path.join(src_dir, "test", "resources")
+            if language == 'Python':
+                inputs = []
+                if "inputSpec" in app_json:
+                    # First, add all non-keyword args
+                    for input_param in app_json["inputSpec"]:
+                        if ("optional" in input_param and input_param['optional']) or "default" in input_param:
+                            continue
+                        inputs.append(input_param["name"])
 
-def makeInputs():
-    # Please fill in this method to generate default inputs for your app.
-    return {{}}
+                    # Then, add keyword args
+                    for input_param in app_json["inputSpec"]:
+                        if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
+                            continue
+                        if "default" in input_param:
+                            inputs.append("{name}={default}".format(name=input_param["name"], default=input_param["default"]))
+                        else:
+                            inputs.append("{name}=None".format(name=input_param["name"]))
+                    inputs_str = ", ".join(inputs)
+                else:
+                    inputs_str = "**kwargs"
 
-class Test{app_name}(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.base_input = makeInputs()
-        bundled_resources = dxpy.app_builder.upload_resources(src_dir)
-        cls.app_id = dxpy.app_builder.upload_app(src_dir, bundled_resources, overwrite=True)
+                outputs_str = str(dummy_output_hash)
+            elif language == 'C++':
+                if len(dummy_output_hash) > 0:
+                    outputs_str = "\n  ".join(["JSON dummy_output = JSON(JSON_NULL);"] + \
+                                                  ["output[\"" + key + "\"] = dummy_output;" for key in dummy_output_hash.keys()])
 
-    def setUp(self):
-        pass
+            code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
 
-    def tearDown(self):
-        pass
+            filled_code_filename = os.path.join(name, 'src', template_filename.replace('code', name))
+            with open(filled_code_filename, 'w') as filled_code_file:
+                filled_code_file.write(code_file_text)
+            subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
+            manifest.append(filled_code_filename)
+    else:
+        use_template_file(os.path.join('src', template_filename))
 
-    def test_base_input(self):
-        job = dxpy.DXApp(self.app_id).run(self.base_input)
-        print "Waiting for job to complete"
-        job.wait_on_done()
-        print json.dumps(job.describe()["output"])
-'''
-
-    readme_template = '''# {app_name} (DNAnexus platform app)
+readme_template = '''# {app_name} (DNAnexus platform app)
 This app directory was generated by dx-app-wizard. Please edit this Readme file to include essential documentation about your app.
 
 For more info, see http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App.
 '''
-    inputs = []
-    inputs_str = ''
 
-    if "inputSpec" in app_json:
-        # First, add all non-keyword args
-        for input_param in app_json["inputSpec"]:
-            if ("optional" in input_param and input_param['optional']) or "default" in input_param:
-                continue
-            inputs.append(input_param["name"])
-
-        # Then, add keyword args
-        for input_param in app_json["inputSpec"]:
-            if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
-                continue
-            if "default" in input_param:
-                inputs.append("{name}={default}".format(name=input_param["name"], default=input_param["default"]))
-            else:
-                inputs.append("{name}=None".format(name=input_param["name"]))
-        if len(inputs) > 0:
-            inputs_str = ", ".join(inputs)
-    else:
-        inputs_str = "**kwargs"
-
-    if "outputSpec" in app_json:
-        outputs = {output["name"]: None for output in app_json["outputSpec"]}
-    else:
-        outputs = {}
-
-    with open(os.path.join(name, 'src/code.py'), 'w') as code_file:
-        code_file.write(code_template.format(app_name=name, app_version=version, inputs=inputs_str, outputs=outputs))
-    subprocess.call(["chmod", "+x", os.path.join(name, 'src/code.py')])
-    manifest.append(os.path.join(name, 'src/code.py'))
-
-    with open(os.path.join(name, 'test/test.py'), 'w') as test_file:
-        test_file.write(test_template.format(app_name=name, app_version=version, inputs=inputs_str, outputs=outputs))
-    subprocess.call(["chmod", "+x", os.path.join(name, 'test/test.py')])
-    manifest.append(os.path.join(name, 'test/test.py'))
-
-    with open(os.path.join(name, 'Readme.md'), 'w') as readme_file:
-        readme_file.write(readme_template.format(app_name=name, app_version=version))
-    manifest.append(os.path.join(name, 'Readme.md'))
+with open(os.path.join(name, 'Readme.md'), 'w') as readme_file:
+    readme_file.write(readme_template.format(app_name=name, app_version=version))
+manifest.append(os.path.join(name, 'Readme.md'))
 
 print "Created files:"
-for filename in manifest:
+for filename in sorted(manifest):
     print "\t", filename
 print fill('''App directory created! See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
 next steps, or run "dx-build-app %s".''' % name)
