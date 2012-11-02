@@ -330,6 +330,7 @@ def login(args):
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
     args.current = False
+    args.name = None
     args.level = 'CONTRIBUTE'
     args.public = False
 
@@ -401,6 +402,7 @@ def prompt_for_var(prompt_str, env_var_str):
 def pick_and_set_project(args):
     try:
         result_generator = dxpy.find_projects(describe=True,
+                                              name=args.name, name_mode='glob',
                                               level=('VIEW' if args.public else args.level),
                                               explicit_perms=(not args.public if not args.public else None),
                                               public=(args.public if args.public else None))
@@ -2799,6 +2801,7 @@ parser_select = subparsers.add_parser('select', help='List and select a project 
                                       description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
                                       prog='dx select',
                                       parents=[env_args])
+parser_select.add_argument('--name', help='Name of the project (wildcard patterns supported)')
 parser_select.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected', default='CONTRIBUTE')
 parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)', action='store_true')
 parser_select.set_defaults(func=pick_and_set_project, save=False)
