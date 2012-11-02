@@ -11,7 +11,7 @@ import dxpy
 import re, os, sys
 from dxpy.utils.describe import *
 
-def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False):
+def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
     :param choices: Strings between which the user will make a choice
     :type choices: list of strings
@@ -21,9 +21,15 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
     :type str_choices: list of strings
     :param prompt: A custom prompt to be used
     :type prompt: string
-    :returns: The user's choice as a numbered index of choices (e.g. 0 for the first item)
-    :rtype: int
+    :param allow_mult: Whether "*" is a valid option to select all choices
+    :type allow_mult: boolean
+    :param more_choices: Whether "m" is a valid option to ask for more options
+    :type more_choices: boolean
+    :returns: The user's choice, i.e. one of a numbered index of choices (e.g. 0 for the first item), "*" (only if allow_mult is True), or "m" (only if more_results is True)
+    :rtype: int or string
     :raises: :exc:`EOFError` to signify quitting the process
+
+    At most one of allow_mult and more_choices should be set to True.
     '''
     for i in range(len(choices)):
         print str(i) + ') ' + choices[i]
@@ -32,6 +38,8 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
         prompt = 'Pick a numbered choice'
         if allow_mult:
             prompt += ' or \"*\" for all'
+        elif more_choices:
+            prompt += ' or \"m\" for more options'
         if default is not None:
             prompt += ' [' + str(default) + ']'
         prompt += ': '
@@ -48,6 +56,8 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
             return default
         if allow_mult and value == '*':
             return value
+        if more_choices and value == 'm':
+            return value
         try:
             choice = str_choices.index(value)
             return choice
@@ -59,7 +69,6 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
                 raise IndexError()
             return choice
         except BaseException as details:
-            print str(details)
             print 'Not a valid selection'
 
 # The following caches project names to project IDs because they are

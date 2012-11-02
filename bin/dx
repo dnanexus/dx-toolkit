@@ -330,6 +330,8 @@ def login(args):
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
     args.current = False
+    args.level = 'CONTRIBUTE'
+    args.public = False
 
     if (args.host is not None or args.token) and not args.emtest:
         setenv(args)
@@ -398,32 +400,53 @@ def prompt_for_var(prompt_str, env_var_str):
 
 def pick_and_set_project(args):
     try:
-        results = list(dxpy.find_projects(describe=True))
+        result_generator = dxpy.find_projects(describe=True,
+                                              level=('VIEW' if args.public else args.level),
+                                              explicit_perms=(not args.public if not args.public else None),
+                                              public=(args.public if args.public else None))
+
     except BaseException as details:
         parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
+    any_results = False
+    while True:
+        results = []
+        for i in range(10):
+            try:
+                results.append(result_generator.next())
+                any_results = True
+            except StopIteration:
+                break
+            except BaseException as details:
+                parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
+        if not any_results:
+            parser.exit(1, 'No projects to choose from.  Please create one first using "dx new project".\n')
+        elif len(results) == 0:
+            parser.exit(1, 'No projects left to choose from.\n')
 
-    projects = map(lambda result: result['id'], results)
-    if len(projects) == 0:
-        parser.exit(1, 'No projects to choose from.  Please create one first using "dx new project".\n')
+        project_ids = [result['id'] for result in results]
 
-    # Eliminate current default if it is not a found project
-    try:
-        default = projects.index(dxpy.WORKSPACE_ID)
-    except:
-        default = None
+        # Eliminate current default if it is not a found project
+        try:
+            default = project_ids.index(dxpy.WORKSPACE_ID)
+        except:
+            default = None
 
-    print ""
-    print "Available projects:"
-    choice = try_call(pick,
-                      map(lambda result:
-                              result['describe']['name'] + ' (' + result['level'] + ')',
-                          results),
-                      default)
-
-    print 'Setting current project to: ' + results[choice]['describe']['name']
-    set_project(projects[choice], not state['interactive'])
-    state['currentproj'] = results[choice]['describe']['name']
-    set_wd('/', not state['interactive'])
+        print ""
+        print "Available projects:"
+        choice = try_call(pick,
+                          map(lambda result:
+                                  result['describe']['name'] + ' (' + result['level'] + ')',
+                              results),
+                          default,
+                          more_choices=(len(results) == 10))
+        if choice == 'm':
+            continue
+        else:
+            print 'Setting current project to: ' + results[choice]['describe']['name']
+            set_project(project_ids[choice], not state['interactive'])
+            state['currentproj'] = results[choice]['describe']['name']
+            set_wd('/', not state['interactive'])
+            return
 
 def setenv(args):
     if not state['interactive']:
@@ -2773,9 +2796,11 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_select = subparsers.add_parser('select', help='List and select a project to switch to',
-                                      description='Interactively list and select a project to switch to.  Only lists projects for which you have at least CONTRIBUTE permissions.',
+                                      description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
                                       prog='dx select',
                                       parents=[env_args])
+parser_select.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected', default='CONTRIBUTE')
+parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)', action='store_true')
 parser_select.set_defaults(func=pick_and_set_project, save=False)
 parser_map['select'] = (parser_select, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -3309,7 +3334,7 @@ parser_categories['data']['cmds'].append(('find data', subparsers_find._choices_
 parser_categories['metadata']['cmds'].append(('find data', subparsers_find._choices_actions[-1].help))
 
 parser_find_projects = subparsers_find.add_parser('projects', help='Finds projects',
-                                                  description='Finds projects with the given search parameters.  Use the --public flag to include only public projects in your search',
+                                                  description='Finds projects with the given search parameters.  Use the --public flag to list all public projects.',
                                                   parents=[stdout_args, json_arg, delim_arg, env_args],
                                                   prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
