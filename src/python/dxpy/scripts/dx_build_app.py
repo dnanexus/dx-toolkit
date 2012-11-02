@@ -153,7 +153,7 @@ def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
         build_project_id = dxpy.api.projectNew({"name": "dx-build-app --remote temporary project"})["id"]
 
         try:
-            dxpy.DX_PROJECT_CONTEXT_ID = build_project_id
+            dxpy.set_workspace_id(build_project_id)
             remote_file_id = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
                                                     wait_on_close=True, show_progress=True)
             app_run_result = dxpy.api.appRun(
