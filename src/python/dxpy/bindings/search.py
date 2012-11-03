@@ -13,6 +13,31 @@ import time
 def _now():
     return int(time.time()*1000)
 
+def _find(api_method, query, limit, return_handler, **kwargs):
+    ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its
+    output. Used by the methods below.
+    '''
+    num_results = 0
+
+    while True:
+        resp = api_method(query, **kwargs)
+        
+        for i in resp["results"]:
+            if num_results == limit:
+                raise StopIteration()
+            num_results += 1
+            if return_handler:
+                handler = dxpy.get_handler(i['id'], project=i.get('project'))
+                yield handler
+            else:
+                yield i
+
+        # set up next query
+        if resp["next"] is not None:
+            query["starting"] = resp["next"]
+        else:
+            raise StopIteration()
+
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, name_mode='exact', properties=None,
                       typename=None, tag=None,
@@ -171,59 +196,12 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if limit is not None:
         query["limit"] = limit
 
-    num_results = 0
-
-    while True:
-        resp = dxpy.api.systemFindDataObjects(query, **kwargs)
-        
-        for i in resp["results"]:
-            if num_results == limit:
-                raise StopIteration()
-            num_results += 1
-            if return_handler:
-                handler = dxpy.get_handler(i['id'], project=i['project'])
-                yield handler
-            else:
-                yield i
-
-        # set up next query
-        if resp["next"] is not None:
-            query["starting"] = resp["next"]
-        else:
-            raise StopIteration()
-
-def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
-    """
-    :param zero_ok: Specifies whether to raise an error or return None on 0 results for the search
-    :type zero_ok: boolean
-    :param more_ok: Specifies whether to raise an error on 2+ results for the search
-    :type more_ok: boolean
-    Returns one data object that satisfies the supplied constraints. Supports all search constraint arguments supported
-    by :meth:`find_data_objects()`. If *zero_ok* is set to False (default), returns None if there are no results,
-    otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
-    returned for the search, also raises :class:`~dxpy.exceptions.DXSearchError`.
-    """
-    kwargs["limit"] = 1 if more_ok else 2
-    response = find_data_objects(**kwargs)
-    try:
-        result = response.next()
-        if not more_ok:
-            try:
-                response.next()
-                raise DXSearchError("Expected one result, but found more")
-            except StopIteration:
-                pass
-    except StopIteration:
-        if zero_ok:
-            return None
-        else:
-            raise DXSearchError("Expected one result, but found none")
-    return result
+    return _find(dxpy.api.systemFindDataObjects, query, limit, return_handler, **kwargs)
 
 def find_jobs(launched_by=None, executable=None, project=None,
               state=None, origin_job=None, parent_job=None,
               created_after=None, created_before=None, describe=False,
-              name=None, name_mode="exact",
+              name=None, name_mode="exact", limit=None, return_handler=False,
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
@@ -248,6 +226,10 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
+    :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
+    :type limit: int
+    :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
+    :type return_handler: boolean
     :rtype: generator
 
     Returns a generator that yields all jobs that match the query. It
@@ -310,22 +292,14 @@ def find_jobs(launched_by=None, executable=None, project=None,
             query['name'] = {'regexp': name}
         else:
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
+    if limit is not None:
+        query["limit"] = limit
 
-    while True:
-        resp = dxpy.api.systemFindJobs(query, **kwargs)
-        
-        for i in resp["results"]:
-            yield i
-
-        # set up next query
-        if resp["next"] is not None:
-            query["starting"] = resp["next"]
-        else:
-            raise StopIteration()
+    return _find(dxpy.api.systemFindJobs, query, limit, return_handler, **kwargs)
 
 def find_projects(name=None, name_mode='exact', properties=None,
                   level=None, describe=None, explicit_perms=None,
-                  public=None, **kwargs):
+                  public=None, limit=None, return_handler=False, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -341,6 +315,10 @@ def find_projects(name=None, name_mode='exact', properties=None,
     :type explicit_perms: boolean
     :param public: If True, includes public projects in the results (default is False)
     :type public: boolean
+    :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
+    :type limit: int
+    :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
+    :type return_handler: boolean
     :rtype: generator
 
     Returns a generator that yields all projects that match the query.
@@ -350,8 +328,6 @@ def find_projects(name=None, name_mode='exact', properties=None,
 
     You can use the *level* parameter to find projects that the user has
     at least a specific level of access to (e.g. "CONTRIBUTE").
-
-    
 
     """
     query = {}
@@ -374,25 +350,17 @@ def find_projects(name=None, name_mode='exact', properties=None,
         query['explicitPermission'] = explicit_perms
     if public is not None:
         query['public'] = public
+    if limit is not None:
+        query["limit"] = limit
 
-    while True:
-        resp = dxpy.api.systemFindProjects(query, **kwargs)
-
-        for i in resp["results"]:
-            yield i
-
-        # set up next query
-        if resp["next"] is not None:
-            query["starting"] = resp["next"]
-        else:
-            raise StopIteration()
+    return _find(dxpy.api.systemFindProjects, query, limit, return_handler, **kwargs)
 
 def find_apps(name=None, name_mode='exact', category=None,
               all_versions=None, published=None,
               billed_to=None, created_by=None, developer=None,
               created_after=None, created_before=None,
               modified_after=None, modified_before=None,
-              describe=None, **kwargs):
+              describe=None, limit=None, return_handler=False, **kwargs):
     """
     :param name: Name of the app (also see *name_mode*)
     :type name: string
@@ -420,6 +388,10 @@ def find_apps(name=None, name_mode='exact', category=None,
     :type modified_before: int or string
     :param describe: If True, also returns the output of calling describe() on the object
     :type describe: boolean
+    :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
+    :type limit: int
+    :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
+    :type return_handler: boolean
     :rtype: generator
 
     Returns a generator that yields all apps that match the query. It
@@ -481,15 +453,64 @@ def find_apps(name=None, name_mode='exact', category=None,
                 query["created"]["before"] = _now() + created_before
     if describe is not None:
         query["describe"] = describe
+    if limit is not None:
+        query["limit"] = limit
 
-    while True:
-        resp = dxpy.api.systemFindApps(query, **kwargs)
-        
-        for i in resp["results"]:
-            yield i
+    return _find(dxpy.api.systemFindApps, query, limit, return_handler, **kwargs)
 
-        # set up next query
-        if resp["next"] is not None:
-            query["starting"] = resp["next"]
+def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
+    kwargs["limit"] = 1 if more_ok else 2
+    response = method(**kwargs)
+    try:
+        result = response.next()
+        if not more_ok:
+            try:
+                response.next()
+                raise DXSearchError("Expected one result, but found more")
+            except StopIteration:
+                pass
+    except StopIteration:
+        if zero_ok:
+            return None
         else:
-            raise StopIteration()
+            raise DXSearchError("Expected one result, but found none")
+    return result
+
+def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
+    """
+    :param zero_ok: Specifies whether to raise an error or return None on 0 results for the search
+    :type zero_ok: boolean
+    :param more_ok: Specifies whether to raise an error on 2+ results for the search
+    :type more_ok: boolean
+    Returns one data object that satisfies the supplied constraints. Supports all search constraint arguments supported
+    by :meth:`find_data_objects()`. If *zero_ok* is set to False (default), returns None if there are no results,
+    otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
+    returned for the search, also raises :class:`~dxpy.exceptions.DXSearchError`.
+    """
+    return _find_one(find_data_objects, zero_ok=zero_ok, more_ok=more_ok, **kwargs)
+
+def find_one_project(zero_ok=False, more_ok=True, **kwargs):
+    """
+    :param zero_ok: Specifies whether to raise an error or return None on 0 results for the search
+    :type zero_ok: boolean
+    :param more_ok: Specifies whether to raise an error on 2+ results for the search
+    :type more_ok: boolean
+    Returns one project that satisfies the supplied constraints. Supports all search constraint arguments supported
+    by :meth:`find_projects()`. If *zero_ok* is set to False (default), returns None if there are no results,
+    otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
+    returned for the search, also raises :class:`~dxpy.exceptions.DXSearchError`.
+    """
+    return _find_one(find_projects, zero_ok=zero_ok, more_ok=more_ok, **kwargs)
+
+def find_one_app(zero_ok=False, more_ok=True, **kwargs):
+    """
+    :param zero_ok: Specifies whether to raise an error or return None on 0 results for the search
+    :type zero_ok: boolean
+    :param more_ok: Specifies whether to raise an error on 2+ results for the search
+    :type more_ok: boolean
+    Returns one app that satisfies the supplied constraints. Supports all search constraint arguments supported
+    by :meth:`find_apps()`. If *zero_ok* is set to False (default), returns None if there are no results,
+    otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
+    returned for the search, also raises :class:`~dxpy.exceptions.DXSearchError`.
+    """
+    return _find_one(find_apps, zero_ok=zero_ok, more_ok=more_ok, **kwargs)
