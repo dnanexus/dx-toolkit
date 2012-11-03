@@ -192,145 +192,33 @@ def find_data_objects(classname=None, state=None, visibility=None,
         else:
             raise StopIteration()
 
-def find_one_data_object(classname=None, state=None, visibility=None,
-                         name=None, name_mode='exact',
-                         properties=None, typename=None, tag=None,
-                         link=None, project=None, folder=None, recurse=None,
-                         modified_after=None, modified_before=None,
-                         created_after=None, created_before=None,
-                         describe=None, return_handler=None, **kwargs):
+def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
     """
-    :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet"
-    :type classname: string
-    :param state: State of the object ("open", "closing", "closed", "any")
-    :type state: string
-    :param visibility: Visibility of the object ("hidden", "visible", "either")
-    :type visibility: string
-    :param name: Name of the object (also see *name_mode*)
-    :type name: string
-    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
-    :type name_mode: string
-    :param properties: Properties (key-value pairs) that each result must have
-    :type properties: dict
-    :param typename: Type that each result must conform to
-    :type typename: string
-    :param tag: Tag that each result must be tagged with
-    :type tag: string
-    :param link: ID of an object that each result must link to
-    :type link: string
-    :param project: ID of a project in which each result must appear
-    :type project: string
-    :param folder: If *project* is given, full path to a folder in which each result must belong (default is the root folder)
-    :type folder: string
-    :param recurse: If *project* is given, whether to look in subfolders of *folder* as well (default is True)
-    :type recurse: boolean
-    :param modified_after: Timestamp after which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
-    :type modified_after: int or string
-    :param modified_before: Timestamp before which each result was last modified (see note accompanying :meth:`find_data_objects()` for interpretation)
-    :type modified_before: int or string
-    :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
-    :type created_after: int or string
-    :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
-    :type created_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the object
-    :type describe: boolean
-    :param level: The minimum permissions level for which results should be returned (one of "VIEW", "CONTRIBUTE", or "ADMINISTER")
-    :type level: string
-    :param return_handler: If True, returns the result as a dxpy object handler (otherwise, returns a dict with keys "id" and "project")
-    :type return_handler: boolean
-    :rtype: dict, handler, or None
-
-    Returns the first data object found that satisfies all of the constraints
-    (or None if no results are found).
-
+    :param zero_ok: Specifies whether to raise an error or return None on 0 results for the search
+    :type zero_ok: boolean
+    :param more_ok: Specifies whether to raise an error on 2+ results for the search
+    :type more_ok: boolean
+    Returns one data object that satisfies the supplied constraints. Supports all search constraint arguments supported
+    by :meth:`find_data_objects()`. If *zero_ok* is set to False (default), returns None if there are no results,
+    otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
+    returned for the search, also raises :class:`~dxpy.exceptions.DXSearchError`.
     """
-
-    query = {}
-    if classname is not None:
-        query["class"] = classname
-    if state is not None:
-        query["state"] = state
-    if visibility is not None:
-        query["visibility"] = visibility
-    if name is not None:
-        if name_mode == 'exact':
-            query['name'] = name
-        elif name_mode == 'glob':
-            query['name'] = {'glob': name}
-        elif name_mode == 'regexp':
-            query['name'] = {'regexp': name}
+    kwargs["limit"] = 1 if more_ok else 2
+    response = find_data_objects(**kwargs)
+    try:
+        result = response.next()
+        if not more_ok:
+            try:
+                response.next()
+                raise DXSearchError("Expected one result, but found more")
+            except StopIteration:
+                pass
+    except StopIteration:
+        if zero_ok:
+            return None
         else:
-            raise DXError('find_one_data_object: Unexpected value found for argument name_mode')
-    if properties is not None:
-        query["properties"] = properties
-    if typename is not None:
-        query["type"] = typename
-    if tag is not None:
-        query["tag"] = tag
-    if link is not None:
-        query["link"] = link
-    if project is not None:
-        query["scope"] = {"project": project}
-        if folder is not None:
-            query["scope"]["folder"] = folder
-        if recurse is not None:
-            query["scope"]["recurse"] = recurse
-    elif folder is not None or recurse is not None:
-        if dxpy.WORKSPACE_ID is not None:
-            query['scope'] = {'project': dxpy.WORKSPACE_ID}
-            if folder is not None:
-                query['scope']['folder'] = folder
-            if recurse is not None:
-                query['scope']['recurse'] = recurse
-        else:
-            raise DXError("Cannot search within a folder or recurse if a project is not specified")
-    if modified_after is not None or modified_before is not None:
-        query["modified"] = {}
-        if modified_after is not None:
-            if isinstance(modified_after, basestring):
-                modified_after = dxpy.utils.normalize_timedelta(modified_after)
-            if modified_after >= 0:
-                query["modified"]["after"] = modified_after
-            else:
-                query["modified"]["after"] = _now() + modified_after
-        if modified_before is not None:
-            if isinstance(modified_before, basestring):
-                modified_before = dxpy.utils.normalize_timedelta(modified_before)
-            if modified_before >= 0:
-                query["modified"]["before"] = modified_before
-            else:
-                query["modified"]["before"] = _now() + modified_before
-    if created_after is not None or created_before is not None:
-        query["created"] = {}
-        if created_after is not None:
-            if isinstance(created_after, basestring):
-                created_after = dxpy.utils.normalize_timedelta(created_after)
-            if created_after >= 0:
-                query["created"]["after"] = created_after
-            else:
-                query["created"]["after"] = _now() + created_after
-        if created_before is not None:
-            if isinstance(created_before, basestring):
-                created_before = dxpy.utils.normalize_timedelta(created_before)
-            if created_before >= 0:
-                query["created"]["before"] = created_before
-            else:
-                query["created"]["before"] = _now() + created_before
-    if describe is not None:
-        query["describe"] = describe
-    query["limit"] = 1
-
-    resp = dxpy.api.systemFindDataObjects(query, **kwargs)
-
-    if len(resp['results']) == 0:
-        return None
-    else:
-        if return_handler:
-            handler = dxpy.get_handler(resp['results'][0]['id'],
-                                       project=resp['results'][0]['project'])
-            return handler
-        else:
-            return resp['results'][0]
+            raise DXSearchError("Expected one result, but found none")
+    return result
 
 def find_jobs(launched_by=None, executable=None, project=None,
               state=None, origin_job=None, parent_job=None,

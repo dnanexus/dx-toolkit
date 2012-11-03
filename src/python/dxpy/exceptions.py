@@ -37,6 +37,10 @@ class DXGTableError(DXError):
     '''Exception for :class:`dxpy.bindings.dxgtable.DXGTable`.'''
     pass
 
+class DXSearchError(DXError):
+    '''Exception for :module:`dxpy.bindings.search` methods.'''
+    pass
+
 class DXAppletError(DXError):
     '''Exception for :class:`dxpy.bindings.dxapplet.DXApplet`.'''
     pass
