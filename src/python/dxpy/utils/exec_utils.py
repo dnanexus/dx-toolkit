@@ -94,6 +94,8 @@ def run(function_name=None, function_input=None):
                 fh.write(json.dumps({"error": {"type": "AppInternalError", "message": str(e)}}) + "\n")
         raise
 
+    result = convert_handlers_to_dxlinks(result)
+
     if dxpy.JOB_ID is not None:
         # TODO: protect against client removing its original working directory
         os.chdir(dx_working_dir)
@@ -103,6 +105,18 @@ def run(function_name=None, function_input=None):
         result = resolve_job_refs_in_test(result)
 
     return result
+
+# TODO: make this less naive with respect to cycles and any other things json.dumps() can handle
+def convert_handlers_to_dxlinks(x):
+    if isinstance(x, dxpy.DXObject):
+        x = dxpy.dxlink(x)
+    elif isinstance(x, collections.Mapping):
+        for key, value in x.iteritems():
+            x[key] = convert_handlers_to_dxlinks(value)
+    elif isinstance(x, list):
+        for i in range(len(x)):
+            x[i] = convert_handlers_to_dxlinks(x[i])
+    return x
 
 def resolve_job_refs_in_test(x):
     if isinstance(x, collections.Mapping):
