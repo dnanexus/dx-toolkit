@@ -19,7 +19,7 @@ class DXObject(object):
     def __init__(self, dxid=None):
         raise NotImplementedError("DXObject is an abstract class; a subclass should be initialized instead.")
 
-    def __str__(self):
+    def _repr(self, use_name=False):
         dxid, dxproj_id = "no ID stored", ""
         try:
             dxid = self._dxid
@@ -31,12 +31,25 @@ class DXObject(object):
         except:
             pass
 
-        desc = "<{module}.{classname} object: {dxid}{dxproj_id}>".format(module=self.__module__,
-                                                                         classname=self.__class__.__name__,
-                                                                         dxid=dxid,
-                                                                         dxproj_id = dxproj_id)
+        if use_name:
+            desc = "<dxpy.{classname}: {name} ({dxid}{dxproj_id})>"
+        else:
+            desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid}{dxproj_id}>"
+
+        desc = desc.format(module=self.__module__,
+                           classname=self.__class__.__name__,
+                           dxid=dxid,
+                           dxproj_id = dxproj_id,
+                           mem_loc=id(self),
+                           name=None)
+                           #name=self._desc.get('name')
         return desc
 
+    def __str__(self):
+        return self._repr(use_name=True)
+
+    def __repr__(self):
+        return self._repr()
 
 class DXDataObject(DXObject):
     """Abstract base class for all remote data object handlers."""
