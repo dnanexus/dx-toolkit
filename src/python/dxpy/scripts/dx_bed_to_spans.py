@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 
 import dxpy
 import string
@@ -21,9 +21,8 @@ def unpack(input):
     # determine compression format
     try:
         file_type = m.from_file(input)
-    except:
-        raise dxpy.AppError("Unable to identify compression format")
-
+    except Exception as e:
+        raise dxpy.AppError("Error while identifying compression format: " + str(e))
     
     # if we find a tar file throw a program error telling the user to unpack it
     if file_type == 'application/x-tar':
@@ -43,8 +42,7 @@ def unpack(input):
         # just return input filename since it's already uncompressed
         return input
 
-    if uncomp_util != None:
-        
+    if uncomp_util != None:        
         # bzcat does not support -t.  Use non streaming decompressors for testing input
         test_util = None
         if uncomp_util == 'xzcat':
@@ -64,8 +62,8 @@ def unpack(input):
         with subprocess.Popen([uncomp_util, input], stdout=subprocess.PIPE).stdout as pipe:
             line = pipe.next()
         uncomp_type = m.from_buffer(line)
-    except:
-        raise dxpy.AppError("Error detecting file format after decompression")
+    except Exception as e:
+        raise dxpy.AppError("Error detecting file format after decompression: " + str(e))
 
     if uncomp_type == 'POSIX tar archive (GNU)' or 'tar' in uncomp_type:
         raise dxpy.AppError("Found a tar archive after decompression.  Please untar your files before importing")
@@ -75,8 +73,8 @@ def unpack(input):
     try:
         subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", "uncompressed.bed"]), shell=True)
         return "uncompressed.bed"
-    except:
-        raise dxpy.AppError("Unable to open compressed input for reading")
+    except Exception as e:
+        raise dxpy.AppError("Unable to open compressed input for reading: " + str(e))
 
 
 def detect_type(bed_file):
@@ -93,7 +91,6 @@ def detect_type(bed_file):
 
 # takes the whole bed file and splits into separate files for each track contained in it
 def split_on_track(bed_file):
-
     files = []
     current_filename = id_generator()
     # open bed file
@@ -121,7 +118,6 @@ def split_on_track(bed_file):
     return files
 
 def find_num_columns(bed_file):
-
     num_cols = 0
 
     with open(bed_file, "rU") as bf:
@@ -135,7 +131,6 @@ def find_num_columns(bed_file):
     return num_cols
 
 def import_spans(bed_file, table_name, ref_id):
-
     num_cols = find_num_columns(bed_file)
     if num_cols < 3:
         raise dxpy.AppError("BED file contains less than the minimum 3 columns.  Invalid BED file.")
@@ -198,7 +193,6 @@ def import_named_spans(bed_file, table_name, ref_id):
     gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
 
     with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index], mode='w') as span:
-
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         span.set_details(details)
 
@@ -251,7 +245,6 @@ def import_named_spans(bed_file, table_name, ref_id):
 ##########named spans###############END
 
 def generate_gene_row(line, block_size, block_start, default_row, parent_id, span_id):
-    
     row = list(default_row)
 
     try:
@@ -330,7 +323,6 @@ def generate_gene_row(line, block_size, block_start, default_row, parent_id, spa
 
 
 def import_genes(bed_file, table_name, ref_id):
-
     # implement BED importing from this format:
     # http://genome.ucsc.edu/FAQ/FAQformat.html#format1
 
@@ -402,7 +394,6 @@ parser.add_argument('filename', help='local filename to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this BED file annotates')
 
 def import_BED(**args):
-    
     if len(args) == 0:
         cmd_line_args = parser.parse_args(sys.argv[1:])
         args['filename'] = cmd_line_args.filename
@@ -438,7 +429,7 @@ def import_BED(**args):
     return job_outputs
 
 def main(**args):
-    import_BED(**args)
+    return import_BED(**args)
 
 if __name__ == '__main__':
     import_BED()
