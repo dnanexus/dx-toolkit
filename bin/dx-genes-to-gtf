@@ -1,0 +1,10 @@
+#!/usr/bin/python
+# EASY-INSTALL-ENTRY-SCRIPT: 'dxpy==0.1','console_scripts','dx-mappings-to-fastq'
+__requires__ = 'dxpy==0.1'
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.exit(
+        load_entry_point('dxpy==0.1', 'console_scripts', 'dx-genes-to-gtf')()
+    )
