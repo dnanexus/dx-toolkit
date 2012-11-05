@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+import json
+import argparse
+import os
+from dxpy.utils.resolver import *
+from dxpy.utils.printing import *
+
+# If it looks like a DXID, package it up in a $dnanexus_link?
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
+                                 description=fill('Reads and modifies job_output.json, the JSON output file to include the ouptut with key *name* and value *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values.'))
+parser.add_argument('name', help='Name of the output field name')
+parser.add_argument('value', help='Value of the output field')
+parser.add_argument('--class', dest='classname',
+                    choices=['int', 'float', 'string', 'boolean', 'hash', 'dxobject', 'auto'],
+                    help='Class of output for formatting purposes, default "auto"',
+                    nargs='?',
+                    default='auto')
+parser.add_argument('--array', help='Output field is an array', action='store_true')
+args = parser.parse_args()
+
+value = None
+
+if args.classname == 'auto':
+    if is_data_obj_id(args.value):
+        value = {'$dnanexus_link': args.value}
+    else:
+        try:
+            # works for int, float, boolean, hash, dxobject (when already in the hash)
+            value = json.loads(args.value)
+        except:
+            # string
+            value = args.value
+elif args.classname == 'int':
+    try:
+        value = int(args.value)
+    except:
+        parser.exit(1, 'Value could not be parsed as an int\n')
+elif args.classname == 'float':
+    try:
+        value = float(args.value)
+    except:
+        parser.exit(1, 'Value could not be parsed as a float\n')
+elif args.classname == 'string':
+    value = args.value
+elif args.classname == 'boolean':
+    if args.value.lower().startswith('t') or args.value == '1':
+        value = True
+    elif args.value.lower().startswith('f') or args.value == '0':
+        value = False
+    else:
+        parser.exit(1, 'Value could not be parsed as a boolean\n')
+elif args.classname == 'hash':
+    try:
+        value = json.loads(args.value)
+    except:
+        parser.exit(1, 'Value could not be parsed as a hash\n')
+elif args.classname == 'dxobject':
+    if is_data_obj_id(args.value):
+        value = {'$dnanexus_link': args.value}
+    else:
+        try:
+            value = json.loads(args.value)
+        except:
+            parser.exit(1, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
+        if not isinstance(value, dict) or value.get('$dnanexus_link', None) is None:
+            parser.exit(1, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
+
+output_json = {}
+if os.path.exists('job_output.json'):
+    with open('job_output.json', 'r') as output_json_file:
+        output_json = json.loads(output_json_file.read())
+
+if args.array:
+    if args.name in output_json:
+        if isinstance(output_json[args.name], list):
+            output_json[args.name].append(value)
+        else:
+            parser.exit(1, 'Key ' + args.name + ' was found in existing output but was not an array\n')
+    else:
+        output_json[args.name] = [value]
+else:
+    output_json[args.name] = value
+
+with open('job_output.json', 'w') as output_json_file:
+    output_json_file.write(json.dumps(output_json, indent=4) + '\n')
