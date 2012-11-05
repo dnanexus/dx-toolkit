@@ -1540,6 +1540,8 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
         filename = args.output
         if filename is None:
             filename = entity_result['describe']['name'].replace('/', '%2F')
+        elif os.path.isdir(filename):
+            filename += entity_result['describe']['name'].replace('/', '%2F')
 
     if use_stdout:
         try:
@@ -2928,7 +2930,7 @@ parser_download = subparsers.add_parser('download', help='Download a file',
                                         prog='dx download',
                                         parents=[env_args])
 parser_download.add_argument('path', help='Data object ID or name to access')
-parser_download.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_download.add_argument('-o', '--output', help='local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
