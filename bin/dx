@@ -1036,6 +1036,8 @@ def describe(args):
     # First, if it looks like a hash id, do that.
     json_input = {}
     json_input["properties"] = True
+    if args.name and (args.verbose or args.details or args.json):
+        parser.exit(1, fill('Cannot request --name in addition to one of --verbose, --details, or --json') + '\n')
     if args.details or args.verbose:
         json_input["details"] = True
     if is_data_obj_id(args.path):
@@ -1079,6 +1081,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1091,6 +1096,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1104,6 +1112,9 @@ def describe(args):
         for result in entity_results:
             if args.json:
                 json_output.append(result['describe'])
+            elif args.name:
+                print result['describe']['name']
+                return
             else:
                 print get_result_str()
                 print_desc(result['describe'])
@@ -1116,6 +1127,9 @@ def describe(args):
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1127,6 +1141,9 @@ def describe(args):
             for result in dxpy.find_apps(name=args.path, describe=True):
                 if args.json:
                     json_output.append(result['describe'])
+                elif args.name:
+                    print result['describe']['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(result['describe'])
@@ -1139,6 +1156,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1153,6 +1173,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1167,6 +1190,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['id']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1183,7 +1209,7 @@ def describe(args):
             parser.exit(1, fill('No match found for ' + args.path) + '\n')
         else:
             print json.dumps(json_output[0], indent=4)
-    elif not found_match:
+    elif not found_match and not args.name:
         print "No matches found for " + args.path
 
 def new_project(args):
@@ -2905,6 +2931,7 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
 parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
+parser_describe.add_argument('--name', help='Only print the name of the data object on one line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24), action='store_true')
 parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 parser_describe.set_defaults(func=describe)
