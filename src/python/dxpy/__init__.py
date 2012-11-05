@@ -154,7 +154,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     '''
     url = APISERVER + resource if prepend_srv else resource
 
-    #print method, url, data
+    if _DEBUG:
+        from repr import Repr
+        print >>sys.stderr, method, url, Repr().repr(data)
 
     if auth is True:
         auth = AUTH_HELPER
@@ -345,6 +347,11 @@ def _initialize(suppress_warning=False):
     :param suppress_warning: Whether to suppress the warning message for any mismatch found in the environment variables and the dx configuration file
     :type suppress_warning: boolean
     '''
+    global _DEBUG
+    _DEBUG = False
+    if '__DX_DEBUG__' in os.environ:
+        _DEBUG = True
+
     env_vars = get_env(suppress_warning)
     for var in env_vars:
         if env_vars[var] is not None:
