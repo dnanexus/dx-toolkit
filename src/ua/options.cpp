@@ -41,10 +41,10 @@ Options::Options() {
     ("do-not-resume", po::bool_switch(&doNotResume), "Do not attempt to resume any incomplete uploads")
     // Options for running import apps
     ("reads", po::bool_switch(&reads), "After uploading is complete, run import app to convert file(s) to Reads object(s)")
-    ("paired-reads", po::bool_switch(&pairedReads), "Same as --reads option, but assumes file sequence to be pairs of left, and right reads")
+    ("paired-reads", po::bool_switch(&pairedReads), "Same as --reads option, but assumes file sequence to be pairs of left, and right reads (e.g., L1 R1 L2 R2 L3 R3 ...)")
     ("mappings", po::bool_switch(&mappings), "After uploading is complete, run import app to convert file(s) to Mappings object(s)")
     ("variants", po::bool_switch(&variants), "After uploading is complete, run import app to convert file(s) to Variants object(s)")
-    ("ref-genome", po::value<string>(&refGenome), "ID or name of the reference genome (must be present iff --mappings, or, --variants flag is used)")
+    ("ref-genome", po::value<string>(&refGenome), "ID or name of the reference genome (must be present if and only if --mappings, or, --variants flag is used)")
     ;
 
   hidden_opts = new po::options_description();

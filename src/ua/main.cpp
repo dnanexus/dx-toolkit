@@ -668,10 +668,8 @@ int main(int argc, char * argv[]) {
         }
         cerr << endl;
       }
-      if (files[i].failed) {
+      if (files[i].failed)
         files[i].fileID = "failed";
-        exitCode = 1;
-      }
     } 
 
     LOG << "Waiting for files to be closed..." << endl;
@@ -684,8 +682,13 @@ int main(int argc, char * argv[]) {
     }
     for (unsigned i = 0; i < files.size(); ++i) {
       cout << files[i].fileID;
-      if (anyImportAppToBeCalled)
+      if (files[i].fileID == "failed")
+        exitCode = 1;
+      if (anyImportAppToBeCalled) {
+        if (files[i].jobID == "failed")
+          exitCode = 1;
         cout << "\t" << files[i].jobID;
+      }
       cout << endl;
     }
     curlCleanup();
