@@ -349,7 +349,7 @@ def _initialize(suppress_warning=False):
     '''
     global _DEBUG
     _DEBUG = False
-    if '__DX_DEBUG__' in os.environ:
+    if '_DX_DEBUG' in os.environ:
         _DEBUG = True
 
     env_vars = get_env(suppress_warning)
