@@ -83,15 +83,15 @@ def run(function_name=None, function_input=None):
         result = ENTRY_POINT_TABLE[job['function']](**job['input'])
     except dxpy.AppError as e:
         if dxpy.JOB_ID is not None:
-            os.chdir(dx_working_dir)           
+            os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": str(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
-            os.chdir(dx_working_dir)           
+            os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": str(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e)}}) + "\n")
         raise
 
     result = convert_handlers_to_dxlinks(result)
