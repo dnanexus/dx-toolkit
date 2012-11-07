@@ -1,136 +1,54 @@
 #!/usr/bin/env python
 
-import sys, os, subprocess, shutil
-import json, re
+import sys, os
+import json
 import argparse
+from dxpy.templating import *
 from dxpy.utils.printing import *
 from collections import OrderedDict
 
 API_VERSION = '1.0.0'
 
-USING_COMPLETER = False
 manifest = []
 
-class Completer():
-    def __init__(self, choices):
-        self.matches = None
-        self.choices = choices
-
-    def __call__(self, text, state):
-        if state == 0:
-            self.matches = filter(lambda choice: choice.startswith(text),
-                                  self.choices)
-
-        if self.matches is not None and state < len(self.matches):
-            return self.matches[state]
-        else:
-            return None
-
-try:
-    import readline
-    import rlcompleter
-    readline.parse_and_bind("tab: complete")
-    readline.set_completer_delims("")
-    USING_COMPLETER = True
-except ImportError:
-    print 'NOTE: readline module not available.  Install for tab-completion.'
-
-def clean(s):
-    return "\n".join(line.rstrip() for line in s.split("\n"))
-
-def use_completer(completer=None):
-    if USING_COMPLETER:
-        readline.set_completer(completer)
-
-# Expect default to be a default string value
-# Expect choices to be a list of strings
-def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
-    prompt = prompt_str
-    if default is not None:
-        prompt += ' [' + default + ']: '
-    else:
-        prompt += ': '
-    while True:
-        try:
-            value = raw_input(prompt)
-        except KeyboardInterrupt:
-            print ''
-            exit(1)
-        except EOFError:
-            print ''
-            exit(1)
-        if value != '':
-            if choices is not None and value not in choices:
-                print 'Error: unrecognized response, expected one of ' + json.dumps(choices)
-            else:
-                return value
-        elif default is not None:
-            return default
-        elif allow_empty:
-            return value
-
-def prompt_for_yn(prompt_str, default=None):
-    if default == True:
-        prompt = prompt_str + ' [Y/n]: '
-    elif default == False:
-        prompt = prompt_str + ' [y/N]: '
-    else:
-        prompt = prompt_str + ' [y/n]: '
-
-    while True:
-        try:
-            value = raw_input(prompt)
-        except KeyboardInterrupt:
-            print ''
-            exit(1)
-        except EOFError:
-            print ''
-            exit(1)
-        if value != '':
-            if value.lower()[0] == 'y':
-                return True
-            elif value.lower()[0] == 'n':
-                return False
-            else:
-                print 'Error: unrecognized response'
-        elif default is not None:
-            return default
-
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
+parser.add_argument('--debugfile', help='Generate the code file based on the IO spec found in the file')
+parser.add_argument('--debuglang', help='Language to test with')
 args = parser.parse_args()
+
+if args.debugfile is not None:
+    if args.debuglang is None:
+        parser.exit(1, 'If --debugfile is provided, so must --debuglang\n')
+    with open(args.debugfile, 'r') as debug_file:
+        app_json = json.loads(debug_file.read())
+        template_dir = os.path.join(os.environ.get('DNANEXUS_HOME'), 'doc', 'example-templates', language_options[args.debuglang].get_path(), 'basic')
+        try:
+            os.mkdir(app_json['name'])
+        except:
+            pass
+        try:
+            os.mkdir(os.path.join(app_json['name'], 'src'))
+        except:
+            pass
+        try:
+            os.mkdir(os.path.join(app_json['name'], 'test'))
+        except:
+            pass
+        try:
+            os.mkdir(os.path.join(app_json['name'], 'resources'))
+        except:
+            pass
+        create_files_from_templates(template_dir, app_json, args.debuglang, ['dummyfilevar', 'filevar2'])
+    parser.exit(0)
 
 template_dir = os.environ.get('DNANEXUS_HOME', None)
 if not isinstance(template_dir, basestring):
     sys.stderr.write(fill('''Error: Environment variable DNANEXUS_HOME is not set; cannot find code templates''') + '\n')
     exit(1)
 
-print DNANEXUS_LOGO() + ' App Wizard, API v' + API_VERSION
-print ''
+print_intro(API_VERSION)
 
-print BOLD() + 'Basic Metadata' + ENDC()
-print ''
-print fill('''Please enter basic metadata fields that will be used to
-describe your app.  Optional fields are denoted by options with square
-brackets.  At the end of this wizard, the files necessary for building your
-app will be generated from the answers you provide.''')
-print ''
-
-print fill('The ' + BOLD() + 'name' + ENDC() + ' of your app must be unique on the DNAnexus platform.  After creating your app for the first time, you will be able to publish new versions using the same app name.  App names are restricted to alphanumeric characters (a-z, A-Z, 0-9), and the characters ".", "_", and "-".')
-name_pattern = re.compile('^[a-zA-Z0-9._-]+$')
-while True:
-    name = prompt_for_var('App Name')
-    if name_pattern.match(name) is None:
-        print fill('The name of your app must match /^[a-zA-Z0-9._-]+$/')
-    else:
-        if os.path.exists(name):
-            remove_dir = prompt_for_yn('The directory %s already exists.  Would you like to remove all of its contents and create a new directory in its place?' % name)
-            if remove_dir:
-                shutil.rmtree(name)
-                print fill('Replacing all contents of directory %s...' % name)
-            else:
-                print ''
-                continue
-        break
+name = get_name()
 
 try:
     os.mkdir(name)
@@ -138,46 +56,11 @@ except:
     sys.stderr.write(fill('''Unable to create a directory for %s, please check that it is a valid app name and the working directory exists and is writable.''' % name) + '\n')
     sys.exit(1)
 
-print ''
-print fill('The ' + BOLD() + 'title' + ENDC() + ', if provided, is what is shown as the name of your app on the website.  It can be any valid UTF-8 string.')
-title = prompt_for_var('Title', '')
+title, summary, description, version = get_metadata(API_VERSION)
 
-print ''
-print fill('The ' + BOLD() + 'summary' + ENDC() + ' of your app is a short phrase or one-line description of what your app does.  It can be any UTF-8 human-readable string.')
-summary = prompt_for_var('Summary', '')
+language = get_language()
 
-print ''
-print fill('The ' + BOLD() + 'description' + ENDC() + ' of your app is a longer piece of text describing your app.  It can be any UTF-8 human-readable string, and it will be interpreted using Markdown (see http://daringfireball.net/projects/markdown/syntax/ for more details).')
-description = prompt_for_var('Description', '')
-
-print ''
-print fill('The ' + BOLD() + 'API version' + ENDC() + ' of your app indicates which version of the DNAnexus API your app complies to.  Automatically setting it to the latest version: ' + API_VERSION)
-
-print ''
-print fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).')
-version = prompt_for_var('Version', '0.0.1')
-
-language_options = {
-    "Python": {"interpreter": "python2.7",
-               "path": "python"},
-    "C++": {"interpreter": "bash",
-            "path": "cpp"},
-    "bash": {"interpreter": "bash",
-             "path": "bash"},
-    "Java": {"interpreter": "bash",
-             "path": "java"},
-    "Perl": {"interpreter": "bash",
-             "path": "perl"}
-}
-#language_choices = language_options.keys()
-language_choices = ["Python", "C++", "bash"]
-use_completer(Completer(language_choices))
-print ''
-print fill('The ' + BOLD() + 'programming language' + ENDC() + ' of your app indicates which code skeleton we will provide.') + '\n' + fill('Currently supported languages: ' + ', '.join(language_choices))
-language = prompt_for_var('Programming language', 'Python', language_choices)
-use_completer()
-
-interpreter = language_options[language]["interpreter"]
+interpreter = language_options[language].get_interpreter()
 
 # Maybe at this time, prompt for what kind of app skeleton they want
 # (for now, only providing basic):
@@ -190,9 +73,7 @@ interpreter = language_options[language]["interpreter"]
 # of the input, and "merge" for performing any necessary aggregation
 # of the results.
 
-template_dir = os.path.join(template_dir, 'doc', 'example-templates', language_options[language]['path'], "basic")
-
-# Ooh, at some point, maybe ask if they want to choose instance types?
+template_dir = os.path.join(template_dir, 'doc', 'example-templates', language_options[language].get_path(), "basic")
 
 app_json = OrderedDict()
 app_json["name"] = name
@@ -348,14 +229,8 @@ array:gtable   array:record   file           int            table
             }
         app_json['outputSpec'].append(parameter_json)
 
-def fill_in_name_and_ver(template_string):
-    '''
-    TODO: Rename this.
-    '''
-    return template_string.replace('DX_APP_WIZARD_NAME', name).replace('DX_APP_WIZARD_VERSION', version)
-
 with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
-    file_text = fill_in_name_and_ver(template_app_json_file.read())
+    file_text = fill_in_name_and_ver(template_app_json_file.read(), name, version)
     template_app_json = json.loads(file_text)
     for key in template_app_json['runSpec']:
         app_json['runSpec'][key] = template_app_json['runSpec'][key]
@@ -385,116 +260,7 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
-# List all files in template_dir (other than dxapp.json) and add those
-# (after passing it through fill_in_name_and_ver).  For the code.* in
-# src,
-
-def use_template_file(path):
-    '''
-    :param path: relative path from template_dir
-    '''
-    with open(os.path.join(template_dir, path), 'r') as template_file:
-        file_text = fill_in_name_and_ver(template_file.read())
-        filled_template_filename = os.path.join(name, path)
-        with open(filled_template_filename, 'w') as filled_template_file:
-            filled_template_file.write(file_text)
-        if filled_template_filename.endswith('.py') or filled_template_filename.endswith('.sh'):
-            subprocess.call(["chmod", "+x", filled_template_filename])
-        manifest.append(filled_template_filename)
-
-for template_filename in os.listdir(template_dir):
-    if template_filename in ['src', 'test', 'dxapp.json'] or template_filename.endswith('~'):
-        continue
-    use_template_file(template_filename)
-
-if os.path.exists(os.path.join(template_dir, 'test')):
-    for template_filename in os.listdir(os.path.join(template_dir, 'test')):
-        if template_filename.endswith('~'):
-            continue
-        use_template_file(os.path.join('test', template_filename))
-
-def get_output_fmt(output_class):
-    output_fmt = ''
-    base_class = output_class
-    if output_class.startswith('array'):
-        output_fmt = ' --array'
-        base_class = output_class[6:]
-    if base_class in ['int', 'float', 'string', 'boolean', 'hash']:
-        output_fmt = base_class + output_fmt
-    else:
-        output_fmt = 'dxobject' + output_fmt
-    return '--class ' + output_fmt
-
-for template_filename in os.listdir(os.path.join(template_dir, 'src')):
-    if template_filename.endswith('~'):
-        continue
-    elif template_filename.startswith('code'):
-        # TODO: DO SOMETHING SPECIAL
-        with open(os.path.join(template_dir, 'src', template_filename), 'r') as code_template_file:
-            code_file_text = fill_in_name_and_ver(code_template_file.read())
-            inputs_str = ''
-            outputs_str = ''
-
-            if "outputSpec" in app_json:
-                dummy_output_hash = {output["name"]: None for output in app_json["outputSpec"]}
-            else:
-                dummy_output_hash = {}
-
-            if language == 'Python':
-                inputs = []
-                if "inputSpec" in app_json:
-                    # First, add all non-keyword args
-                    for input_param in app_json["inputSpec"]:
-                        if ("optional" in input_param and input_param['optional']) or "default" in input_param:
-                            continue
-                        inputs.append(input_param["name"])
-
-                    # Then, add keyword args
-                    for input_param in app_json["inputSpec"]:
-                        if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
-                            continue
-                        if "default" in input_param:
-                            inputs.append("{name}={default}".format(name=input_param["name"], default=input_param["default"]))
-                        else:
-                            inputs.append("{name}=None".format(name=input_param["name"]))
-                    inputs_str = ", ".join(inputs)
-                else:
-                    inputs_str = "**kwargs"
-
-                outputs_str = str(dummy_output_hash)
-            elif language == 'C++':
-                if len(dummy_output_hash) > 0:
-                    outputs_str = "\n  ".join(["JSON dummy_output = JSON(JSON_NULL);"] + \
-                                                  ["output[\"" + key + "\"] = dummy_output;" for key in dummy_output_hash.keys()])
-            elif language == 'bash':
-                if 'inputSpec' in app_json:
-                    inputs_str = "\n".join(["echo \"$" + input_param['name'] + "\"" for input_param in app_json['inputSpec']])
-                    if len(file_input_names) > 0:
-                        inputs_str += "\n\n" + fill('The following line(s) use the dx command-line tool to download your file inputs to the local file system using variable names for the filenames.  To recover the original filenames, you can use the output of "dx describe "$variable" --name".', initial_indent='# ', subsequent_indent='# ') + '\n\n'
-                        inputs_str += "mkdir input_files\n" + "\n".join(['dx download "$' + name + '" -o input_files/' + name for name in file_input_names])
-                if 'outputSpec' in app_json and len(app_json['outputSpec']) > 0:
-                    outputs_str = fill("The following line(s) use the utility dx-job-util-add-output to format and add output variables to your job's output as appropriate for the output class.  Run \"dx-job-util-add-output -h\" for more information on what it does.", initial_indent='# ', subsequent_indent='# ') + '\n\n'
-                    outputs_str += "\n".join(["dx-jobutil-add-output " + output_param['name'] + ' "$' + output_param['name'] + '" ' + get_output_fmt(output_param['class']) for output_param in app_json['outputSpec']])
-
-            code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
-
-            filled_code_filename = os.path.join(name, 'src', template_filename.replace('code', name))
-            with open(filled_code_filename, 'w') as filled_code_file:
-                filled_code_file.write(code_file_text)
-            subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
-            manifest.append(filled_code_filename)
-    else:
-        use_template_file(os.path.join('src', template_filename))
-
-readme_template = '''# {app_name} (DNAnexus platform app)
-This app directory was generated by dx-app-wizard. Please edit this Readme file to include essential documentation about your app.
-
-For more info, see http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App.
-'''
-
-with open(os.path.join(name, 'Readme.md'), 'w') as readme_file:
-    readme_file.write(readme_template.format(app_name=name, app_version=version))
-manifest.append(os.path.join(name, 'Readme.md'))
+manifest += create_files_from_templates(template_dir, app_json, language, file_input_names)
 
 print "Created files:"
 for filename in sorted(manifest):

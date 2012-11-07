@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <vector>
+#include <stdint.h>
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
@@ -16,9 +17,8 @@
 using namespace std;
 using namespace dx;
 
-int main(int argc, char *argv[])
-{
-  JSON input, output;
+int main(int argc, char *argv[]) {
+  JSON input;
   ifstream ifs("job_input.json");
   input.read(ifs);
 
@@ -32,10 +32,12 @@ int main(int argc, char *argv[])
   //
   // See http://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
+  DX_APP_WIZARD_INPUT
+  DX_APP_WIZARD_FILE_INPUT
 
   // Fill in your application code here.  Dummy output provided below.
 
-  output = JSON(JSON_HASH);
+  JSON output = JSON(JSON_HASH);
   DX_APP_WIZARD_OUTPUT
 
   ofstream ofs("job_output.json");

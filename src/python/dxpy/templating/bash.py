@@ -1,0 +1,44 @@
+from dxpy.utils.printing import *
+
+# bash templating code
+
+def get_interpreter():
+    return 'bash'
+
+def get_path():
+    return 'bash'
+
+def get_output_fmt(output_class):
+    output_fmt = ''
+    base_class = output_class
+    if output_class.startswith('array'):
+        output_fmt = ' --array'
+        base_class = output_class[6:]
+    if base_class in ['int', 'float', 'string', 'boolean', 'hash']:
+        output_fmt = base_class + output_fmt
+    else:
+        output_fmt = 'dxobject' + output_fmt
+    return '--class ' + output_fmt
+
+def get_strings(app_json, file_input_names, dummy_output_hash):
+    inputs_str = ''
+    files_str = ''
+    outputs_str = ''
+    if 'inputSpec' in app_json:
+        inputs_str = "\n".join(["echo \"$" + input_param['name'] + "\"" for input_param in app_json['inputSpec']])
+    if len(file_input_names) > 0:
+        files_str = "\n" if inputs_str != '' else ""
+        files_str += fill('''The following line(s) use the dx command-line tool to download
+your file inputs to the local file system using variable names for the filenames.
+To recover the original filenames, you can use the output of "dx describe "$variable" --name".''',
+                                    initial_indent='# ', subsequent_indent='# ', width=80) + '\n\n'
+        files_str += "\n".join(['dx download "$' + name + '" -o ' + name for name in file_input_names])
+    if 'outputSpec' in app_json and len(app_json['outputSpec']) > 0:
+        outputs_str = "\n" if (inputs_str != "" or files_str != "") else ""
+        outputs_str += fill('''The following line(s) use the utility dx-job-util-add-output to format
+and add output variables to your job's output as appropriate for the output class.  Run
+\"dx-job-util-add-output -h\" for more information on what it does.''',
+                           initial_indent='# ', subsequent_indent='# ', width=80) + '\n\n'
+        outputs_str += "\n".join(["dx-jobutil-add-output " + output_param['name'] + ' "$' + output_param['name'] + '" ' + get_output_fmt(output_param['class']) for output_param in app_json['outputSpec']])
+
+    return inputs_str, files_str, outputs_str
