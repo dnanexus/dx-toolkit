@@ -6,10 +6,8 @@ import os
 from dxpy.utils.resolver import *
 from dxpy.utils.printing import *
 
-# If it looks like a DXID, package it up in a $dnanexus_link?
-
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
-                                 description=fill('Reads and modifies job_output.json, the JSON output file to include the ouptut with key *name* and value *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values.'))
+                                 description=fill('Reads and modifies job_output.json, the JSON output file to include the output with key *name* and value *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values.'))
 parser.add_argument('name', help='Name of the output field name')
 parser.add_argument('value', help='Value of the output field')
 parser.add_argument('--class', dest='classname',
