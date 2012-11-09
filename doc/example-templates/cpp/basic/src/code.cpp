@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   // See http://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
   DX_APP_WIZARD_INPUT
-  DX_APP_WIZARD_FILE_INPUT
+  DX_APP_WIZARD_DOWNLOAD_ANY_FILES
 
   // Fill in your application code here.  Dummy output provided below.
 

@@ -1,0 +1,8 @@
+{
+  "runSpec": {
+    "file": "src/run-DX_APP_WIZARD_NAME.sh",
+    "execDepends": [
+      {"name": "libcurl4-openssl-dev"}
+    ]
+  }
+}

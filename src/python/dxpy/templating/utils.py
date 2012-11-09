@@ -166,10 +166,44 @@ def get_language():
     language_choices = ["Python", "C++", "bash"]
     use_completer(Completer(language_choices))
     print ''
-    print fill('The ' + BOLD() + 'programming language' + ENDC() + ' of your app indicates which code skeleton we will provide.') + '\n' + fill('Currently supported languages: ' + ', '.join(language_choices))
+    print fill('You can write your app in any ' + BOLD() + 'programming language' + ENDC() + ', but we provide templates for the following supported languages' + ENDC() + ": " + ', '.join(language_choices))
     language = prompt_for_var('Programming language', 'Python', language_choices)
     use_completer()
     return language
+
+def get_pattern():
+    pattern_choices = ['basic', 'parallelized']
+    print ''
+    print fill('Choose one of the following common ' + BOLD() + 'execution patterns' + ENDC() + ' that best describes the app that you will write.')
+    print ' ' + BOLD() + 'basic' + ENDC()
+    print fill('Your app will run on a single machine from beginning to end.', initial_indent='   ', subsequent_indent='   ')
+    print ' ' + BOLD() + 'parallelized' + ENDC()
+    print fill('Your app will subdivide a large chunk of work into multiple pieces that can be processed in parallel and independently of each other, followed by a final stage that will merge and process the results as necessary.', initial_indent='   ', subsequent_indent='   ')
+
+    use_completer(Completer(pattern_choices))
+    pattern = prompt_for_var('Execution pattern', 'basic', ['basic', 'parallelized'])
+    use_completer()
+    return pattern
+
+def get_parallelized_io(file_input_names, gtable_input_names, gtable_output_names):
+    input_field = None
+    output_field = None
+
+    if len(file_input_names) > 0 or len(gtable_input_names) > 0:
+        print ''
+        print fill('Your app template can be initialized to split and process a ' + BOLD() + 'file' + ENDC() + ' or ' + BOLD() + 'gtable' + ENDC() + ' input.  The following of your input fields are eligible for this template pattern:')
+        print '  ' + '\n  '.join([name + ' (file)' for name in file_input_names] + [name + ' (gtable)' for name in gtable_input_names])
+        use_completer(Completer(file_input_names + gtable_input_names))
+        input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', (file_input_names + gtable_input_names))
+        use_completer()
+
+    if len(gtable_output_names) > 0:
+        print ''
+        print fill('Your app template can be initialized to build a ' + BOLD() + 'gtable' + ENDC() + ' in parallel for your output.  The following of your output fields are eligible for this template pattern:')
+        print '  ' + '\n  '.join(gtable_output_names)
+        use_completer(Completer(gtable_output_names))
+        output_field = prompt_for_var('Output gtable to build in parallel (press ENTER to skip)', '', (gtable_output_names))
+    return input_field, output_field
 
 def fill_in_name_and_ver(template_string, name, version):
     '''
@@ -227,7 +261,7 @@ def create_files_from_templates(template_dir, app_json, language, file_input_nam
                                                                                             file_input_names,
                                                                                             dummy_output_hash)
 
-                code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_FILE_INPUT', files_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
+                code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_DOWNLOAD_ANY_FILES', files_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
 
                 filled_code_filename = os.path.join(name, 'src', template_filename.replace('code', name))
                 with open(filled_code_filename, 'w') as filled_code_file:

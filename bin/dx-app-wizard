@@ -48,6 +48,10 @@ if not isinstance(template_dir, basestring):
 
 print_intro(API_VERSION)
 
+##################
+# BASIC METADATA #
+##################
+
 name = get_name()
 
 try:
@@ -57,23 +61,6 @@ except:
     sys.exit(1)
 
 title, summary, description, version = get_metadata(API_VERSION)
-
-language = get_language()
-
-interpreter = language_options[language].get_interpreter()
-
-# Maybe at this time, prompt for what kind of app skeleton they want
-# (for now, only providing basic):
-#
-# Basic: Skeleton for a basic app which runs on only one machine
-#
-# Parallelized: Skeleton for an app that will parallelize across
-# multiple machines in the cloud.  It will have two additional entry
-# points: "solve_subproblem" which will be called to run on a subset
-# of the input, and "merge" for performing any necessary aggregation
-# of the results.
-
-template_dir = os.path.join(template_dir, 'doc', 'example-templates', language_options[language].get_path(), "basic")
 
 app_json = OrderedDict()
 app_json["name"] = name
@@ -91,6 +78,10 @@ app_json["version"] = version
 app_json["details"] = OrderedDict({"contactUrl": "http://wiki.dnanexus.com/Apps/" + name})
 app_json["resources"] = []
 
+############
+# IO SPECS #
+############
+
 class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
                              'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
                              'record', 'file', 'gtable', 'table', 'applet',
@@ -106,6 +97,8 @@ print ''
 input_spec = prompt_for_yn('Specify inputs', True)
 input_names = []
 file_input_names = []
+gtable_input_names = []
+gtable_output_names = []
 if input_spec:
     app_json['inputSpec'] = []
     print ''
@@ -136,6 +129,8 @@ array:gtable   array:record   file           int            table
             if input_class in class_completer.choices:
                 if input_class == 'file':
                     file_input_names.append(input_name)
+                elif input_class == 'gtable':
+                    gtable_input_names.append(input_name)
                 break
             else:
                 print fill('Not a recognized class; please choose again.')
@@ -216,6 +211,8 @@ array:gtable   array:record   file           int            table
         while True:
             output_class = prompt_for_var('Choose a class')
             if output_class in class_completer.choices:
+                if output_class == 'gtable':
+                    gtable_output_names.append(output_name)
                 break
             else:
                 print fill('Not a recognized class; please choose again.')
@@ -229,11 +226,44 @@ array:gtable   array:record   file           int            table
             }
         app_json['outputSpec'].append(parameter_json)
 
+########################
+# LANGUAGE AND PATTERN #
+########################
+
+language = get_language()
+
+interpreter = language_options[language].get_interpreter()
+
+# Maybe at this time, prompt for what kind of app skeleton they want
+# (for now, only providing basic):
+#
+# Basic: Skeleton for a basic app which runs on only one machine
+#
+# Parallelized: Skeleton for an app that will parallelize across
+# multiple machines in the cloud.  It will have two additional entry
+# points: "solve_subproblem" which will be called to run on a subset
+# of the input, and "merge" for performing any necessary aggregation
+# of the results.
+
+pattern = get_pattern()
+
+subpattern = None
+if pattern == 'parallelized':
+    input_field, output_field = get_parallelized_io(file_input_names,
+                                                    gtable_input_names,
+                                                    gtable_output_names)
+
+template_dir = os.path.join(template_dir, 'doc', 'example-templates', language_options[language].get_path(), pattern)
+
 with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
     file_text = fill_in_name_and_ver(template_app_json_file.read(), name, version)
     template_app_json = json.loads(file_text)
     for key in template_app_json['runSpec']:
         app_json['runSpec'][key] = template_app_json['runSpec'][key]
+
+#################
+# WRITING FILES #
+#################
 
 print ''
 print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App... ***' + ENDC()
