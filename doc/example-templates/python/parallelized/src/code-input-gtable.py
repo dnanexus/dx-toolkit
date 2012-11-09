@@ -41,7 +41,6 @@ def process(gtable_id, start_row, end_row):
 @dxpy.entry_point('main')
 def main(DX_APP_WIZARD_INPUT):
 DX_APP_WIZARD_DOWNLOAD_ANY_FILES
-
     # Split your input to be solved by the next stage of your app.
     # The following assumes you are splitting the input by giving,
     # 10000 rows of a GenomicTable per subjob running the

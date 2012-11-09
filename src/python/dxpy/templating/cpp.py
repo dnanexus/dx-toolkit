@@ -37,7 +37,7 @@ def get_strings(app_json, file_input_names, dummy_output_hash):
         inputs_str += "\n  ".join(inputs)
 
     if len(file_input_names) > 0:
-        files_str = "\n  " + "\n  ".join(['DXFile::downloadDXFile({name}.getID(), "{name}")'.format(name=fname) for fname in file_input_names])
+        files_str = "\n  " + "\n  ".join(['DXFile::downloadDXFile({name}.getID(), "{name}")'.format(name=fname) for fname in file_input_names]) + '\n'
 
     if len(dummy_output_hash) > 0:
         outputs_str = "\n  ".join(["JSON dummy_output = JSON(JSON_NULL);"] + \

@@ -11,7 +11,7 @@
 # See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
 # instructions on how to modify this file.
 
-# TODO: Update this for gtable output
+# TODO: update to parallelize over a file (no gtable output)
 
 import os
 import dxpy

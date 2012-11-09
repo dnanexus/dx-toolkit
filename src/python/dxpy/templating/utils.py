@@ -116,11 +116,11 @@ brackets.  At the end of this wizard, the files necessary for building your
 app will be generated from the answers you provide.''')
     print ''
 
-def get_name():
+def get_name(default=None):
     print fill('The ' + BOLD() + 'name' + ENDC() + ' of your app must be unique on the DNAnexus platform.  After creating your app for the first time, you will be able to publish new versions using the same app name.  App names are restricted to alphanumeric characters (a-z, A-Z, 0-9), and the characters ".", "_", and "-".')
     name_pattern = re.compile('^[a-zA-Z0-9._-]+$')
     while True:
-        name = prompt_for_var('App Name')
+        name = prompt_for_var('App Name', default)
         if name_pattern.match(name) is None:
             print fill('The name of your app must match /^[a-zA-Z0-9._-]+$/')
         else:
@@ -155,11 +155,15 @@ def get_metadata(api_version):
     print ''
     print fill('The ' + BOLD() + 'API version' + ENDC() + ' of your app indicates which version of the DNAnexus API your app complies to.  Automatically setting it to the latest version: ' + api_version)
 
+    return title, summary, description
+
+def get_version(default=None):
+    if default is None:
+        default = '0.0.1'
     print ''
     print fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).')
-    version = prompt_for_var('Version', '0.0.1')
-
-    return title, summary, description, version
+    version = prompt_for_var('Version', default)
+    return version
 
 def get_language():
     #language_choices = language_options.keys()
@@ -186,8 +190,8 @@ def get_pattern():
     return pattern
 
 def get_parallelized_io(file_input_names, gtable_input_names, gtable_output_names):
-    input_field = None
-    output_field = None
+    input_field = ''
+    output_field = ''
 
     if len(file_input_names) > 0 or len(gtable_input_names) > 0:
         print ''
@@ -211,10 +215,11 @@ def fill_in_name_and_ver(template_string, name, version):
     '''
     return template_string.replace('DX_APP_WIZARD_NAME', name).replace('DX_APP_WIZARD_VERSION', version)
 
-def create_files_from_templates(template_dir, app_json, language, file_input_names):
+def create_files_from_templates(template_dir, app_json, language, file_input_names, pattern, pattern_suffix=''):
     manifest = []
     name = app_json['name']
     version = app_json['version']
+    pattern_suffix += '.'
 
     # List all files in template_dir (other than dxapp.json) and add
     # those (after passing it through fill_in_name_and_ver).  For the
@@ -248,26 +253,26 @@ def create_files_from_templates(template_dir, app_json, language, file_input_nam
         if template_filename.endswith('~'):
             continue
         elif template_filename.startswith('code'):
-            # TODO: DO SOMETHING SPECIAL
-            with open(os.path.join(template_dir, 'src', template_filename), 'r') as code_template_file:
-                code_file_text = fill_in_name_and_ver(code_template_file.read(), name, version)
+            if template_filename.startswith('code' + pattern_suffix):
+                with open(os.path.join(template_dir, 'src', template_filename), 'r') as code_template_file:
+                    code_file_text = fill_in_name_and_ver(code_template_file.read(), name, version)
 
-                if "outputSpec" in app_json:
-                    dummy_output_hash = {output["name"]: None for output in app_json["outputSpec"]}
-                else:
-                    dummy_output_hash = {}
+                    if "outputSpec" in app_json:
+                        dummy_output_hash = {output["name"]: None for output in app_json["outputSpec"]}
+                    else:
+                        dummy_output_hash = {}
 
-                inputs_str, files_str, outputs_str = language_options[language].get_strings(app_json,
-                                                                                            file_input_names,
-                                                                                            dummy_output_hash)
+                    inputs_str, files_str, outputs_str = language_options[language].get_strings(app_json,
+                                                                                                file_input_names,
+                                                                                                dummy_output_hash)
 
-                code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_DOWNLOAD_ANY_FILES', files_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_DOWNLOAD_ANY_FILES', files_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
 
-                filled_code_filename = os.path.join(name, 'src', template_filename.replace('code', name))
-                with open(filled_code_filename, 'w') as filled_code_file:
-                    filled_code_file.write(code_file_text)
-                subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
-                manifest.append(filled_code_filename)
+                    filled_code_filename = os.path.join(name, 'src', template_filename.replace('code' + pattern_suffix, name + '.'))
+                    with open(filled_code_filename, 'w') as filled_code_file:
+                        filled_code_file.write(code_file_text)
+                    subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
+                    manifest.append(filled_code_filename)
         else:
             use_template_file(os.path.join('src', template_filename))
 
