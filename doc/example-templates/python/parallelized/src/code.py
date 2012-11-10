@@ -9,6 +9,9 @@
 #
 # See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
 # instructions on how to modify this file.
+#
+# DNAnexus Python Bindings (dxpy) documentation:
+#   http://autodoc.dnanexus.com/bindings/python/current/
 
 import os
 import dxpy
@@ -25,13 +28,16 @@ def process(input1):
     return { "output": None }
 
 @dxpy.entry_point('main')
-def main(DX_APP_WIZARD_INPUT):
+def main(DX_APP_WIZARD_INPUT_SIGNATURE):
+DX_APP_WIZARD_INITIALIZE_INPUT
 DX_APP_WIZARD_DOWNLOAD_ANY_FILES
-    # Split your work into parallel tasks
+    # Split your work into parallel tasks.  As an example, the
+    # following generates 10 subjobs running with the same dummy
+    # input.
 
     subjobs = []
     for i in range(10):
-        subjob_input = { "input1": None }
+        subjob_input = { "input1": True }
         subjobs.append(new_dxjob(subjob_input, 'process'))
 
     # The following line creates the job that will perform the

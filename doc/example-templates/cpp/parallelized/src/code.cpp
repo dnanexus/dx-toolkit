@@ -25,16 +25,53 @@
 using namespace std;
 using namespace dx;
 
+// TODO: Consider putting the following two functions (or something
+// similar) into the dxcpp bindings.  Also, maybe a function to report
+// an AppError or AppInternalError in the bindings.
+void getInput(JSON &input) {
+  ifstream ifs("job_input.json");
+  input.read(ifs);
+}
+
+void writeOutput(const JSON &output) {
+  ofstream ofs("job_output.json");
+  ofs << output.toString();
+  ofs.close();
+}
+
 void postprocess() {
+  JSON input;
+  getInput(input);
+
+  JSON output;
+  writeOutput(output);
 }
 
 void process() {
+  JSON input;
+  getInput(input);
+
+  JSON output;
+  writeOutput(output);
 }
 
 int main(int argc, char *argv[]) {
+  if (argc > 1) {
+    switch (argv[1]) {
+    case "process":
+      process();
+      break;
+    case "postprocess":
+      postprocess();
+      break;
+    default:
+      return 1;
+    }
+    return 0;
+  }
+
   JSON input;
-  ifstream ifs("job_input.json");
-  input.read(ifs);
+  getInput(input);
 
   // The variable *input* should now contain the input fields given to
   // the app(let), with keys equal to the input field names.
@@ -46,16 +83,14 @@ int main(int argc, char *argv[]) {
   //
   // See http://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
-  DX_APP_WIZARD_INPUT
+  DX_APP_WIZARD_INITIALIZE_INPUT
   DX_APP_WIZARD_DOWNLOAD_ANY_FILES
   // Fill in your application code here.  Dummy output provided below.
 
   JSON output = JSON(JSON_HASH);
   DX_APP_WIZARD_OUTPUT
 
-  ofstream ofs("job_output.json");
-  ofs << output.toString();
-  ofs.close();
+  writeOutput(output);
 
   return 0;
 }

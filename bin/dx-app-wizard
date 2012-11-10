@@ -235,17 +235,19 @@ app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
 pattern = get_pattern()
 
 pattern_suffix = ''
+parallelized_input_field = ''
+parallelized_output_field = ''
 if pattern == 'parallelized':
-    input_field, output_field = get_parallelized_io(file_input_names,
-                                                    gtable_input_names,
-                                                    gtable_output_names)
+    parallelized_input_field, parallelized_output_field = get_parallelized_io(file_input_names,
+                                                                              gtable_input_names,
+                                                                              gtable_output_names)
     pattern_suffix = ''
-    if input_field != '':
-        if input_field in file_input_names:
+    if parallelized_input_field != '':
+        if parallelized_input_field in file_input_names:
             pattern_suffix += '-input-file'
         else:
             pattern_suffix += '-input-gtable'
-    if output_field != '':
+    if parallelized_output_field != '':
         pattern_suffix += '-output-gtable'
 
 template_dir = os.path.join(dx_home_dir, 'doc', 'example-templates', language_options[language].get_path(), pattern)
@@ -285,7 +287,7 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
-manifest += create_files_from_templates(template_dir, app_json, language, file_input_names, pattern, pattern_suffix)
+manifest += create_files_from_templates(template_dir, app_json, language, file_input_names, pattern, pattern_suffix, parallelized_input_field, parallelized_output_field)
 
 print "Created files:"
 for filename in sorted(manifest):

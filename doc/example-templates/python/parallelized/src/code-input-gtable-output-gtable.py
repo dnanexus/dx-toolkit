@@ -10,6 +10,9 @@
 #
 # See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
 # instructions on how to modify this file.
+#
+# DNAnexus Python Bindings (dxpy) documentation:
+#   http://autodoc.dnanexus.com/bindings/python/current/
 
 # TODO: Update this for gtable output
 
@@ -41,26 +44,21 @@ def process(gtable_id, start_row, end_row):
     return {"output": None}
 
 @dxpy.entry_point('main')
-def main(DX_APP_WIZARD_INPUT):
+def main(DX_APP_WIZARD_INPUT_SIGNATURE):
+DX_APP_WIZARD_INITIALIZE_INPUT
 DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # Split your input to be solved by the next stage of your app.
-    # The following assumes you are splitting the input by giving,
+    # The following assumes you are splitting the input by giving
     # 10000 rows of a GenomicTable per subjob running the
     # "process" entry point.
 
-    # To make this example work, fill in "gtable-xxxx" with the actual
-    # ID of the GenomicTable you would like to use as input.  This
-    # could either be from an input variable to this function, or
-    # perhaps the result of importing data into a gtable you've just
-    # created.
-
-    num_rows = DX_APP_WIZARD_GTABLE_INPUT.describe()["length"]
+    num_rows = DX_APP_WIZARD_PARALLELIZED_INPUT.describe()["length"]
 
     subjobs = []
-    for i in range(my_gtable_rows / row_chunk_size + (0 if my_gtable_rows % row_chunk_size == 0 else 1)):
-        subjob_input = { "gtable_id": my_gtable.get_id(),
+    for i in range(num_rows / row_chunk_size + (0 if my_gtable_rows % row_chunk_size == 0 else 1)):
+        subjob_input = { "gtable_id": DX_APP_WIZARD_PARALLELIZED_INPUT.get_id(),
                          "start_row": row_chunk_size * i,
-                         "end_row": min(row_chunk_size * (i + 1), my_gtable_rows)}
+                         "end_row": min(row_chunk_size * (i + 1), num_rows)}
         subjobs.append(new_dxjob(subjob_input, 'process'))
 
     # The following line creates the job that will perform the

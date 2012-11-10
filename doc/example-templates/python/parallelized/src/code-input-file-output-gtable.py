@@ -10,6 +10,9 @@
 #
 # See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
 # instructions on how to modify this file.
+#
+# DNAnexus Python Bindings (dxpy) documentation:
+#   http://autodoc.dnanexus.com/bindings/python/current/
 
 # TODO: Update this for file input and gtable output
 
@@ -41,7 +44,8 @@ def process(gtable_id, start_row, end_row):
     return {"output": None}
 
 @dxpy.entry_point('main')
-def main(DX_APP_WIZARD_INPUT):
+def main(DX_APP_WIZARD_INPUT_SIGNATURE):
+DX_APP_WIZARD_INITIALIZE_INPUT
 DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # Split your input to be solved by the next stage of your app.
     # The following assumes you are splitting the input by giving,

@@ -201,7 +201,7 @@ def get_parallelized_io(file_input_names, gtable_input_names, gtable_output_name
         input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', (file_input_names + gtable_input_names))
         use_completer()
 
-    if len(gtable_output_names) > 0:
+    if input_field != '' and len(gtable_output_names) > 0:
         print ''
         print fill('Your app template can be initialized to build a ' + BOLD() + 'gtable' + ENDC() + ' in parallel for your output.  The following of your output fields are eligible for this template pattern:')
         print '  ' + '\n  '.join(gtable_output_names)
@@ -215,7 +215,7 @@ def fill_in_name_and_ver(template_string, name, version):
     '''
     return template_string.replace('DX_APP_WIZARD_NAME', name).replace('DX_APP_WIZARD_VERSION', version)
 
-def create_files_from_templates(template_dir, app_json, language, file_input_names, pattern, pattern_suffix=''):
+def create_files_from_templates(template_dir, app_json, language, file_input_names, pattern, pattern_suffix='', parallelized_input='', parallelized_output=''):
     manifest = []
     name = app_json['name']
     version = app_json['version']
@@ -262,11 +262,16 @@ def create_files_from_templates(template_dir, app_json, language, file_input_nam
                     else:
                         dummy_output_hash = {}
 
-                    inputs_str, files_str, outputs_str = language_options[language].get_strings(app_json,
-                                                                                                file_input_names,
-                                                                                                dummy_output_hash)
+                    input_sig_str, init_inputs_str, files_str, outputs_str = language_options[language].get_strings(app_json,
+                                                                                                                    file_input_names,
+                                                                                                                    dummy_output_hash)
 
-                    code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT', inputs_str).replace('DX_APP_WIZARD_DOWNLOAD_ANY_FILES', files_str).replace('DX_APP_WIZARD_OUTPUT', outputs_str)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT_SIGNATURE', input_sig_str)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_INITIALIZE_INPUT', init_inputs_str)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_DOWNLOAD_ANY_FILES', files_str)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_OUTPUT', outputs_str)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_PARALLELIZED_INPUT', parallelized_input)
+                    code_file_text = code_file_text.replace('DX_APP_WIZARD_PARALLELIZED_OUTPUT', parallelized_output)
 
                     filled_code_filename = os.path.join(name, 'src', template_filename.replace('code' + pattern_suffix, name + '.'))
                     with open(filled_code_filename, 'w') as filled_code_file:

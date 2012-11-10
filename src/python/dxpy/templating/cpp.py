@@ -9,12 +9,12 @@ def get_path():
     return 'cpp'
 
 def get_strings(app_json, file_input_names, dummy_output_hash):
-    inputs_str = ''
+    init_inputs_str = ''
     files_str = ''
     outputs_str = ''
     inputs = []
     if 'inputSpec' in app_json and len(app_json['inputSpec']) > 0:
-        inputs_str = '\n  '
+        init_inputs_str = '\n  '
         for input_param in app_json['inputSpec']:
             if ("optional" in input_param and input_param['optional']) or "default" in input_param:
                 continue
@@ -34,7 +34,7 @@ def get_strings(app_json, file_input_names, dummy_output_hash):
                 inputs.append('DXRecord {name} = DXRecord(input["{name}"]["$dnanexus_link"].get<string>());'.format(name=input_param['name']))
             elif input_param['class'] == 'file':
                 inputs.append('DXFile {name} = DXFile(input["{name}"]["$dnanexus_link"].get<string>());'.format(name=input_param['name']))
-        inputs_str += "\n  ".join(inputs)
+        init_inputs_str += "\n  ".join(inputs)
 
     if len(file_input_names) > 0:
         files_str = "\n  " + "\n  ".join(['DXFile::downloadDXFile({name}.getID(), "{name}")'.format(name=fname) for fname in file_input_names]) + '\n'
@@ -42,4 +42,4 @@ def get_strings(app_json, file_input_names, dummy_output_hash):
     if len(dummy_output_hash) > 0:
         outputs_str = "\n  ".join(["JSON dummy_output = JSON(JSON_NULL);"] + \
                                       ["output[\"" + key + "\"] = dummy_output;" for key in dummy_output_hash.keys()])
-    return inputs_str, files_str, outputs_str
+    return '', init_inputs_str, files_str, outputs_str
