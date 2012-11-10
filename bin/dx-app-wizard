@@ -232,12 +232,14 @@ app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
 
 # Prompt for execution pattern
 
-pattern = get_pattern()
+template_dir = os.path.join(dx_home_dir, 'doc', 'example-templates', language_options[language].get_path())
+pattern = get_pattern(template_dir)
+template_dir = os.path.join(template_dir, pattern)
 
 pattern_suffix = ''
 parallelized_input_field = ''
 parallelized_output_field = ''
-if pattern == 'parallelized':
+if pattern == 'parallelized' and len([filename for filename in os.listdir(os.path.join(template_dir, 'src')) if filename.startswith('code-')]) > 0:
     parallelized_input_field, parallelized_output_field = get_parallelized_io(file_input_names,
                                                                               gtable_input_names,
                                                                               gtable_output_names)
@@ -249,8 +251,6 @@ if pattern == 'parallelized':
             pattern_suffix += '-input-gtable'
     if parallelized_output_field != '':
         pattern_suffix += '-output-gtable'
-
-template_dir = os.path.join(dx_home_dir, 'doc', 'example-templates', language_options[language].get_path(), pattern)
 
 with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
     file_text = fill_in_name_and_ver(template_app_json_file.read(), name, version)

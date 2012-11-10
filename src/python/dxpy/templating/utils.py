@@ -175,17 +175,26 @@ def get_language():
     use_completer()
     return language
 
-def get_pattern():
-    pattern_choices = ['basic', 'parallelized']
+def get_pattern(template_dir):
+    pattern_choices = []
     print ''
-    print fill('Choose one of the following common ' + BOLD() + 'execution patterns' + ENDC() + ' that best describes the app that you will write.')
+    print fill('The following common ' + BOLD() + 'execution patterns' + ENDC() + ' are currently available for your programming language:')
+
+    pattern_choices.append('basic')
     print ' ' + BOLD() + 'basic' + ENDC()
     print fill('Your app will run on a single machine from beginning to end.', initial_indent='   ', subsequent_indent='   ')
-    print ' ' + BOLD() + 'parallelized' + ENDC()
-    print fill('Your app will subdivide a large chunk of work into multiple pieces that can be processed in parallel and independently of each other, followed by a final stage that will merge and process the results as necessary.', initial_indent='   ', subsequent_indent='   ')
+
+    if os.path.isdir(os.path.join(template_dir, 'parallelized')):
+        pattern_choices.append('parallelized')
+        print ' ' + BOLD() + 'parallelized' + ENDC()
+        print fill('Your app will subdivide a large chunk of work into multiple pieces that can be processed in parallel and independently of each other, followed by a final stage that will merge and process the results as necessary.', initial_indent='   ', subsequent_indent='   ')
+
+    if len(pattern_choices) == 1:
+        print 'Automatically using the execution pattern "basic"'
+        return 'basic'
 
     use_completer(Completer(pattern_choices))
-    pattern = prompt_for_var('Execution pattern', 'basic', ['basic', 'parallelized'])
+    pattern = prompt_for_var('Execution pattern', 'basic', pattern_choices)
     use_completer()
     return pattern
 
