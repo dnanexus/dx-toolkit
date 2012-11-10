@@ -20,3 +20,5 @@ error_hash = {
 
 with open('job_error.json', 'w') as error_file:
     error_file.write(json.dumps(error_hash, indent=4) + '\n')
+
+parser.exit(1, 'Exiting with nonzero exit code to report error\n')
