@@ -3052,11 +3052,19 @@ SPECIFYING INPUTS
     Syntax :  -i<input name>=<input value>
     Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
 
-''' + fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the app MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided using the <job id>:<output name> syntax', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the app MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
 
     Syntax :  -i<input name>=<job id>:<output name>
     Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
-''' + '\n\n  JSON INPUTS\n\n' + fill('Inputs can be provided in JSON format using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + '\n\n' + fill('When executing workflows, stage inputs can be specified using the <stage name>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
+
+    Syntax :  -i<stage name>.<input name>=<input value>
+    Example:  dx run my_workflow -i1.reads="My reads file"
+''' 
+
+
+
++ '\n\n  JSON INPUTS\n\n' + fill('Inputs can be provided in JSON format using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
 
     1) -j/--input_json INPUT_JSON
     2) -f/--input_json_file FILENAME
