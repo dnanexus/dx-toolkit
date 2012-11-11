@@ -2522,7 +2522,6 @@ def run(args):
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
         for stage in workflow['stages']:
             print "Processing stage", stage['key'], "(id", stage['id'] + ")"
-            print "Launched jobs:", launched_jobs
             inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
             executable = dxpy.get_handler(stage['app']['id'])
             launched_jobs[stage['id']] = run_one(args, executable, dest_proj, dest_path,
