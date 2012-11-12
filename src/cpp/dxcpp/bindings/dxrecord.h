@@ -47,6 +47,15 @@ class DXRecord: public DXDataObject {
 	   const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
   /**
+   * Creates a new %DXRecord handler for the specified remote record object.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  DXRecord(const dx::JSON &dxlink) { setIDs(dxlink); }
+
+  /**
    * Creates a new remote record object. The handler is updated with the object ID.
    *
    * @param data_obj_fields JSON containing the optional fields with which to create the object

@@ -193,14 +193,21 @@ public:
    *
    * @param app_input A hash of name/value pairs specifying the input
    * that the app is to be launched with.
-   * @param project_context The project context in which the app is to be run.
    * @param output_folder The folder (within the project_context) in which the app's output objects will be placed.
+   * @param depends_on A list of Job ID's (string), representing jobs that must finish before this job should start running.
+   * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job with 
+   * the entry point "main" will be run, or a mapping of function names to instance types. (Note: you can pass a 
+   * std::map<string, string> as well)
+   * @param project_context The project context in which the app is to be run.
    *
    * @return Handler for the job that was launched.
    */
   DXJob run(const dx::JSON &app_input,
-            const std::string &project_context=g_WORKSPACE_ID,
-            const std::string &output_folder="/") const;
+            const std::string &output_folder="/", 
+            const std::vector<std::string> &depends_on=std::vector<std::string>(),
+            const dx::JSON &instance_type=dx::JSON(dx::JSON_NULL),
+            const std::string &project_context=g_WORKSPACE_ID
+            ) const;
 };
 
 #endif

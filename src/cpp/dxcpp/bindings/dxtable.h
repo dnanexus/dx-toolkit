@@ -28,6 +28,8 @@ class DXTable: public DXDataObject {
   DXTable() {}
   DXTable(const std::string &dxid,
           const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+  DXTable(const std::string &dxlink) { setIDs(dxlink); }
+  
   void create();
 
   static DXTable newDXTable();

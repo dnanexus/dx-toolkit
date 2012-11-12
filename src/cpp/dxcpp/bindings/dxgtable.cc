@@ -5,18 +5,29 @@
 using namespace std;
 using namespace dx;
 
+
 void DXGTable::reset_buffer_() {
   row_buffer_.str("");
   row_buffer_ << "{\"data\": [";
 }
 
-void DXGTable::setIDs(const string &dxid,
-		      const string &proj) {
+void DXGTable::reset() {
   flush();
+  reset_buffer_();
   stopLinearQuery();
   countThreadsNotWaitingOnConsume = 0;
   countThreadsWaitingOnConsume = 0;
+}
+
+void DXGTable::setIDs(const string &dxid,
+		      const string &proj) {
+  reset();
   DXDataObject::setIDs(dxid, proj);
+}
+
+void DXGTable::setIDs(const JSON &dxlink) {
+  reset();
+  DXDataObject::setIDs(dxlink);
 }
 
 void DXGTable::create(const vector<JSON> &columns,

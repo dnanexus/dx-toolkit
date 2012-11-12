@@ -13,6 +13,28 @@ void DXDataObject::setIDs(const std::string &dxid,
     proj_ = proj;
 }
 
+void DXDataObject::setIDs(const dx::JSON &dxlink) {
+  const string err_str = "The variable 'dxlink' must be a valid JSON hash of one of these two form: \n"
+                          "1. {\"$dnanexus_link\": \"obj_id\"} \n"
+                          "2. {\"$dnanexus_link\": {\"project\": \"proj-id\", \"id\": \"obj-id\"}";
+  if (dxlink.type() != JSON_HASH || dxlink.size() != 1)
+    throw DXError(err_str);
+  if (dxlink["$dnanexus_link"].type() == JSON_STRING) {
+    dxid_ = dxlink["$dnanexus_link"].get<string>();
+    proj_ = g_WORKSPACE_ID;
+  } else {
+    if (dxlink["$dnanexus_link"].type() == JSON_HASH) {
+      if (dxlink["$dnanexus_link"]["project"].type() != JSON_STRING || dxlink["$dnanexus_link"]["id"].type() != JSON_STRING) {
+        throw DXError(err_str);
+      }
+      dxid_ = dxlink["$dnanexus_link"]["id"].get<string>();
+      proj_ = dxlink["$dnanexus_link"]["project"].get<string>();
+    } else {
+      throw DXError(err_str);
+    }
+  }
+}
+
 void DXDataObject::waitOnState(const string &state,
                                const int timeout) const {
   int elapsed = 0;
@@ -122,7 +144,7 @@ void DXDataObject::move(const string &dest_folder) const {
 
 void DXDataObject::remove() {
   projectRemoveObjects(proj_, "{\"objects\":[\"" + dxid_ + "\"]}");
-  setIDs("");
+  setIDs(string(""));
 }
 
 JSON DXLink(const std::string &dxid, const std::string &proj) {

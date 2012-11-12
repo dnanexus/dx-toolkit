@@ -55,6 +55,15 @@ public:
    */
   DXApplet(const std::string &dxid,
            const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+  
+  /**
+   * Creates a %DXApplet handler for the specified remote applet.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  DXApplet(const dx::JSON &dxlink) { setIDs(dxlink); }
 
   /**
    * Creates a new remote applet with the input hash, as specified in the <a
@@ -76,14 +85,21 @@ public:
    * API method for more info.
    *
    * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
-   * @param project_context A string representing the project context in which the applet is to be run.
    * @param output_folder The folder (within the project_context) in which the applet's output objects will be placed.
+   * @param depends_on A list of Job ID's (string), representing jobs that must finish before this job should start running.
+   * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job with 
+   * the entry point "main" will be run, or a mapping of function names to instance types. (Note: you can pass a 
+   * std::map<string, string> as well)
+   * @param project_context A string representing the project context in which the applet is to be run.
    *
    * @return Handler for the job that was launched.
    */
   DXJob run(const dx::JSON &applet_input,
-            const std::string &project_context=g_WORKSPACE_ID,
-            const std::string &output_folder="/") const;
+            const std::string &output_folder="/", 
+            const std::vector<std::string> &depends_on=std::vector<std::string>(),
+            const dx::JSON &instance_type=dx::JSON(dx::JSON_NULL),
+            const std::string &project_context=g_WORKSPACE_ID
+            ) const;
 
   /**
    * Clones the applet into the specified project and folder.

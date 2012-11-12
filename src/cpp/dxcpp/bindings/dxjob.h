@@ -79,12 +79,17 @@ class DXJob {
    * @param fn_name Name of the function (in the current app or applet) to use as the entry point.
    * @param job_name Name for the resulting job. If blank string is given, then (default name of
    * parent job + ":fn_name") will be used instead.
-   * @param resources A hash specifying the minimum resources to be allocated to this job, as
-   * provided to the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Execution#API-method%3A-%2Fjob%2Fnew">/job/new</a>
-   * API method.
+   * @param depends_on A list of Job ID's (string), representing jobs that must finish before this job should start running.
+   * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job will 
+   * be run, or a mapping of function names to instance types. (Note: you can pass a 
+   * std::map<string, string> as well)
    */
-  void create(const dx::JSON &fn_input, const std::string &fn_name, const std::string &job_name="", const dx::JSON resources=dx::JSON(dx::JSON_NULL));
+  void create(const dx::JSON &fn_input, 
+              const std::string &fn_name, 
+              const std::string &job_name="",
+              const std::vector<std::string> &depends_on=std::vector<std::string>(),
+              const dx::JSON &instance_type=dx::JSON(dx::JSON_NULL)
+              );
 
   /**
    * Terminates the job and all its descendant jobs.

@@ -73,7 +73,7 @@ class DXFile: public DXDataObject {
   void removeTags_(const std::string &s)const{fileRemoveTags(dxid_,s);}
   void close_(const std::string &s)const{fileClose(dxid_,s);}
   dx::JSON listProjects_(const std::string &s)const{return fileListProjects(dxid_,s);}
-  
+
   // For async write() ///////////////////
   void joinAllWriteThreads_();
   void writeChunk_();
@@ -139,6 +139,7 @@ class DXFile: public DXDataObject {
    */
   mutable bool is_closed_;
 
+  void reset();
   void init_internals_();
 
   // TODO: Determine if this should be user-defined.
@@ -186,6 +187,17 @@ class DXFile: public DXDataObject {
   DXFile(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID) {
     setIDs(dxid, proj);
   }
+  
+  /**
+   * Creates a %DXFile handler for the specified File object.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  DXFile(const dx::JSON &dxlink) {
+    setIDs(dxlink);
+  }
 
   /**
    * Assignment operator.
@@ -212,6 +224,16 @@ class DXFile: public DXDataObject {
    * @param proj ID of project in which to access the File.
    */
   void setIDs(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID);
+  
+  /**
+   * Sets the remote File ID associated with this file handler. If the handler had data stored in
+   * its internal buffer to be written to the remote file, that data will be flushed.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  void setIDs(const dx::JSON &dxlink);
 
   /**
    * Creates a new remote file object and sets the object ID. Initially the object may be used for

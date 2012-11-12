@@ -489,7 +489,6 @@ TEST_F(DXRecordTest, CloneTest) {
   options["tags"] = JSON(JSON_ARRAY);
   options["tags"].push_back("tag");
   DXRecord dxrecord = DXRecord::newDXRecord(options);
-
   ASSERT_THROW(dxrecord.clone(second_proj_id), DXAPIError);
   dxrecord.close();
 
@@ -509,6 +508,25 @@ TEST_F(DXRecordTest, CloneTest) {
   ASSERT_EQ(first_desc["created"], second_desc["created"]);
   ASSERT_EQ(first_desc["state"].get<string>(), "closed");
   ASSERT_EQ(second_desc["state"].get<string>(), "closed");
+}
+
+TEST(ConstructFromDXLink_Tests, setIDAndConstructor) {
+  JSON options(JSON_OBJECT);
+  options["name"] = "firstname";
+  options["tags"] = JSON(JSON_ARRAY);
+  options["tags"].push_back("tag");
+ 
+  DXRecord dxr = DXRecord::newDXRecord(options);
+  DXRecord dxr2(JSON::parse("{\"$dnanexus_link\": \"" + dxr.getID() + + "\"}"));
+  ASSERT_EQ(dxr2.getID(), dxr.getID());
+  DXRecord dxr3;
+  ASSERT_NE(dxr3.getID(), dxr.getID());
+  JSON dxlink = JSON::parse("{\"$dnanexus_link\": {\"project\": \"" + proj_id + "\", \"id\": \"" + dxr.getID() + "\"}}");
+  dxr3.setIDs(dxlink);
+  ASSERT_EQ(dxr3.getID(), dxr.getID());
+  
+  JSON invalid_dxlink = JSON::parse("{\"$dnanexus_link\": 12122}");
+  ASSERT_THROW(dxr3.setIDs(invalid_dxlink), DXError);
 }
 
 TEST_F(DXRecordTest, MoveTest) {
@@ -602,6 +620,7 @@ TEST_F(DXFileTest, UploadEmptyFile) {
   DXFile dxf2 = DXFile::uploadLocalFile(fname);
   ASSERT_EQ(dxf2.describe()["size"], 0);
 }
+
 TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   // Upload a file with "file_size" number of '$' in it
   // and download it, check that it is same.
@@ -664,8 +683,9 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
   dxfile.close(true);
   ASSERT_EQ(dxfile.is_closed(), true);
 
-  dxfile.startLinearQuery();
   std::string chunk;
+  EXPECT_EQ(dxfile.getNextChunk(chunk), false);
+  dxfile.startLinearQuery();
   int64_t bytes_read = 0;
   while (dxfile.getNextChunk(chunk)) {
     for (int i = 0; i < chunk.size(); ++i)
@@ -677,6 +697,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
       dxfile.startLinearQuery(bytes_read);
     }
   }
+  ASSERT_EQ(dxfile.getNextChunk(chunk), false);
   ASSERT_EQ(bytes_read, file_size);
   dxfile.remove();
 }
@@ -954,9 +975,10 @@ TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
   JSON desc = dxgtable.describe();
   EXPECT_EQ(numRows, getRowCount(desc));
   dxgtable.close(true);
-  
-  dxgtable.startLinearQuery();
+
   JSON chunk;
+  EXPECT_EQ(dxgtable.getNextChunk(chunk), false);
+  dxgtable.startLinearQuery();
   int lq_row_count=0;
   while (dxgtable.getNextChunk(chunk)) {
     for (int i = 0; i < chunk.size(); ++i, lq_row_count++) {
@@ -969,6 +991,7 @@ TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
       dxgtable.startLinearQuery(JSON(JSON_NULL), lq_row_count);
     }
   }
+  EXPECT_EQ(dxgtable.getNextChunk(chunk), false);
   EXPECT_EQ(lq_row_count, numRows);
 
   // Try linear query with different chunk_size, etc than default
@@ -1074,6 +1097,10 @@ TEST_F(DXGTableTest, GRITest) {
 }
 
 TEST(DXSystemTest, findDataObjects) {
+  vector<DXGTable> dxg;
+  dxg.push_back(DXGTable("", ""));
+  dxg.push_back(DXGTable("", ""));
+
   // Note: Due to network delays, some of these test might fail.
   //       Be aware of this fact while debugging.
   usleep(1 * 1000000); // Sleep for 1s
@@ -1173,16 +1200,13 @@ TEST(DXSystemTest, findApps) {
 TEST(DXAppletTest, AllAppletTests) {
   DXApplet apl;
   createANewApplet(apl);
-   
   ASSERT_EQ(apl.get()["inputSpec"], applet_details["inputSpec"]);
-  ASSERT_EQ(apl.get()["runSpec"], applet_details["runSpec"]);
   ASSERT_EQ(apl.describe()["name"].get<string>(), "test_applet");
   
   // Run the applet
-  DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
+  DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/");
   ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
   job.terminate();
-
 
   // Clone the applet
   DXApplet apl2 = apl.clone(second_proj_id);
@@ -1200,11 +1224,13 @@ TEST(DXJobTest, AllJobTests_SLOW) {
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
   ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
   job.waitOnDone(3600);
-  // If state is not "done"i after even 1hr, that means job most prob "failed": 
+  // If state is not "done" after even 1hr, that means job most prob "failed": 
   // should not happen
   ASSERT_EQ(job.getState(), "done");
-   
-  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
+  
+  vector<string> depends;
+  depends.push_back(job.getID());
+  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "dx_m1.small");
   int64_t s1 = std::time(NULL); 
   int timeout = 3;
   job2.waitOnDone(timeout);

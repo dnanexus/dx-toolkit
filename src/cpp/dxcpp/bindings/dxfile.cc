@@ -76,11 +76,20 @@ void DXFile::init_internals_() {
   hasAnyPartBeenUploaded = false;
 }
 
-void DXFile::setIDs(const string &dxid, const string &proj) {
+void DXFile::reset() {
   stopLinearQuery();
   flush();
   init_internals_();
+}
+
+void DXFile::setIDs(const string &dxid, const string &proj) {
+  reset();
   DXDataObject::setIDs(dxid, proj);
+}
+
+void DXFile::setIDs(const JSON &dxlink) {
+  reset();
+  DXDataObject::setIDs(dxlink);
 }
 
 void DXFile::create(const std::string &media_type,
