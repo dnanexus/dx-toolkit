@@ -177,7 +177,17 @@ class DXFile: public DXDataObject {
   DXFile(const DXFile& to_copy) : DXDataObject(to_copy) {
     setIDs(to_copy.dxid_, to_copy.proj_);
   }
-
+  
+  /**
+   * Creates a %DXFile handler for the specified File object.
+   *
+   * @param dxid File object ID.
+   * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
+   */
+  DXFile(const char *dxid, const char *proj=NULL) {
+    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
+  }
+ 
   /**
    * Creates a %DXFile handler for the specified File object.
    *
@@ -221,10 +231,19 @@ class DXFile: public DXDataObject {
    * its internal buffer to be written to the remote file, that data will be flushed.
    *
    * @param dxid new File object ID
-   * @param proj ID of project in which to access the File.
+   * @param proj ID of the project in which to access the File (if NULL, then default workspace will be used).
    */
   void setIDs(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID);
   
+  /**
+   * Sets the remote File ID associated with this file handler. If the handler had data stored in
+   * its internal buffer to be written to the remote file, that data will be flushed.
+   *
+   * @param dxid new File object ID
+   * @param proj ID of project in which to access the File.
+   */ 
+  void setIDs(const char *dxid, const char *proj = NULL);
+
   /**
    * Sets the remote File ID associated with this file handler. If the handler had data stored in
    * its internal buffer to be written to the remote file, that data will be flushed.

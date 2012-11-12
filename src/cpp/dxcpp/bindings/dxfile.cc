@@ -87,10 +87,19 @@ void DXFile::setIDs(const string &dxid, const string &proj) {
   DXDataObject::setIDs(dxid, proj);
 }
 
+void DXFile::setIDs(const char *dxid, const char *proj) {
+  if (proj == NULL) {
+    setIDs(string(dxid));
+  } else {
+    setIDs(string(dxid), string(proj));
+  }
+}
+
 void DXFile::setIDs(const JSON &dxlink) {
   reset();
   DXDataObject::setIDs(dxlink);
 }
+
 
 void DXFile::create(const std::string &media_type,
 		    const dx::JSON &data_obj_fields) {

@@ -25,6 +25,14 @@ void DXGTable::setIDs(const string &dxid,
   DXDataObject::setIDs(dxid, proj);
 }
 
+void DXGTable::setIDs(const char *dxid, const char *proj) {
+  if (proj == NULL) {
+    setIDs(string(dxid));
+  } else {
+    setIDs(string(dxid), string(proj));
+  }
+}
+
 void DXGTable::setIDs(const JSON &dxlink) {
   reset();
   DXDataObject::setIDs(dxlink);

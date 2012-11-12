@@ -50,6 +50,16 @@ public:
   /**
    * Creates a %DXApplet handler for the specified remote applet.
    *
+   * @param dxid Applet ID.
+   * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
+   */
+  DXApplet(const char *dxid, const char *proj=NULL) {
+    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
+  }
+ 
+  /**
+   * Creates a %DXApplet handler for the specified remote applet.
+   *
    * @param dxid applet ID
    * @param proj ID of the project in which the applet should be accessed
    */

@@ -128,7 +128,17 @@ public:
   {
     reset_buffer_();
   }
-
+  
+  /**
+   * Creates a %DXGTable handler for the specified File object.
+   *
+   * @param dxid GTable ID.
+   * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
+   */
+  DXGTable(const char *dxid, const char *proj=NULL) {
+    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
+  }
+ 
   /**
    * Copy constructor.
    */
@@ -205,8 +215,17 @@ public:
    * @param dxid Remote object ID of the remote GTable to be accessed
    * @param proj Project ID of the remote GTable to be accessed.
    */
-  void setIDs(const std::string &dxid, const std::string &proj="default");
+  void setIDs(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID);
   
+  /**
+   * Sets the remote object ID associated with the remote GTable handler. If the handler had rows
+   * queued up in the internal buffer, they are flushed.
+   *
+   * @param dxid Remote object ID of the remote GTable to be accessed
+   * @param proj ID of the project in which to access the GTable (if NULL, then default workspace will be used).
+   */
+  void setIDs(const char *dxid, const char *proj = NULL);
+
   /**
    * Sets the remote object ID associated with the remote GTable handler. If the handler had rows
    * queued up in the internal buffer, they are flushed.

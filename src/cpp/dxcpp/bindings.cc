@@ -13,6 +13,14 @@ void DXDataObject::setIDs(const std::string &dxid,
     proj_ = proj;
 }
 
+void DXDataObject::setIDs(const char *dxid, const char *proj) {
+  if (proj == NULL) {
+    setIDs(string(dxid));
+  } else {
+    setIDs(string(dxid), string(proj));
+  }
+}
+
 void DXDataObject::setIDs(const dx::JSON &dxlink) {
   const string err_str = "The variable 'dxlink' must be a valid JSON hash of one of these two form: \n"
                           "1. {\"$dnanexus_link\": \"obj_id\"} \n"
