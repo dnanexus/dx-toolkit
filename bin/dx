@@ -3059,11 +3059,7 @@ SPECIFYING INPUTS
 
     Syntax :  -i<stage name>.<input name>=<input value>
     Example:  dx run my_workflow -i1.reads="My reads file"
-''' 
-
-
-
-+ '\n\n  JSON INPUTS\n\n' + fill('Inputs can be provided in JSON format using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + '\n\n  JSON INPUTS\n\n' + fill('Inputs can be provided in JSON format using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
 
     1) -j/--input_json INPUT_JSON
     2) -f/--input_json_file FILENAME
