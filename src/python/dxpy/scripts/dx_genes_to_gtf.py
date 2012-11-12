@@ -5,7 +5,7 @@ import argparse
 import sys
 
 global nullInt
-nullInt = 2147483647
+nullInt = -2**31
 global nullFloat
 nullFloat = float(nullInt)
 
@@ -79,7 +79,7 @@ def main(**kwargs):
         
     for row in table.iterate_rows(want_dict=True):
         if acceptedTypes.get(row["type"]) != None:
-            reservedColumns = ["chr", "lo", "hi", "span_id", "type", "strand", "score", "is_coding", "parent_id", "frame", "description", "source", "gene_id", "transcript_id", "__id__"]
+            reservedColumns = ["chr", "lo", "hi", "span_id", "type", "strand", "score", "is_coding", "parent_id", "frame", "source", "gene_id", "transcript_id", "__id__"]
             attributes = ""
             
             transcriptId = ''
@@ -134,5 +134,4 @@ def main(**kwargs):
             else:
                 sys.stdout.write(result)
 
-if __name__ == '__main__':
-    main()
+main()

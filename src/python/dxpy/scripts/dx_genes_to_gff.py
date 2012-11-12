@@ -5,7 +5,7 @@ import argparse
 import sys
 
 global nullInt
-nullInt = 2147483647
+nullInt = -2**31
 global nullFloat
 nullFloat = float(nullInt)
 
@@ -68,19 +68,20 @@ def main(**kwargs):
             if translatedTypes.get(typ) != None:
                 typ = translatedTypes[typ]
 
-            reservedColumns = ["chr", "lo", "hi", "span_id", "type", "strand", "score", "is_coding", "parent_id", "frame", "description", "source", "__id__", "ID", "Id", "id", "Parent", "PARENT", "parent"]
+            reservedColumns = ["chr", "lo", "hi", "span_id", "type", "strand", "score", "is_coding", "parent_id", "frame", "source", "__id__", "ID", "Id", "id", "Parent", "PARENT", "parent"]
             attributes = ""
             
             rowId = str(row[idColumn])
             parentId = str(row[parentColumn])
         
-            attributes += "ID=" + rowId + ";" 
+            attributes += "ID=\"" + rowId + "\";" 
             if not (parentColumn == "parent_id" and parentId == "-1"):
-                attributes += "Parent=" + parentId + ";"
+                attributes += "Parent=\"" + parentId + "\";"
             
             for k, v in row.iteritems():
                 if k not in reservedColumns and v != '':
                     attributes += k + "=" + '"'+str(v)+'";'
+
             chromosome = row["chr"]
             lo = str(row["lo"] + 1)
             hi = str(row["hi"] + 1)
@@ -108,5 +109,4 @@ def main(**kwargs):
             else:
                 sys.stdout.write(result)
 
-if __name__ == '__main__':
-    main()
+main()
