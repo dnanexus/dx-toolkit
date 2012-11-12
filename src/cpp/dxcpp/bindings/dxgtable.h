@@ -155,7 +155,7 @@ public:
    *
    * @param dxlink A JSON representing a <a
    * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
-   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": dxid}}.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
    */
   DXGTable(const dx::JSON &dxlink)
     : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
@@ -213,7 +213,7 @@ public:
    *
    * @param dxlink A JSON representing a <a
    * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
-   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": dxid}}.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
    */
   void setIDs(const dx::JSON &dxlink);
   /**

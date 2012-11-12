@@ -923,10 +923,10 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_2_SUPER_SLOW) {
   JSON data(JSON_ARRAY);
   JSON temp(JSON_ARRAY);
   
-  data.push_back(std::string(10000, 'X'));
+  data.push_back(std::string(1000, 'X'));
   data.push_back(0);
 
-  int numRows = 10000;
+  int numRows = 1000;
   for (int i = 0; i < numRows; i++) {
     temp = JSON::parse("[]");
     data[1] = i;

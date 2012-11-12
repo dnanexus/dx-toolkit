@@ -23,7 +23,7 @@ void DXDataObject::setIDs(const dx::JSON &dxlink) {
     dxid_ = dxlink["$dnanexus_link"].get<string>();
     proj_ = g_WORKSPACE_ID;
   } else {
-    if (dxlink["$dnanexus_link"].type() == JSON_HASH) {
+    if (dxlink["$dnanexus_link"].type() == JSON_HASH && dxlink["$dnanexus_link"].size() == 2) {
       if (dxlink["$dnanexus_link"]["project"].type() != JSON_STRING || dxlink["$dnanexus_link"]["id"].type() != JSON_STRING) {
         throw DXError(err_str);
       }
