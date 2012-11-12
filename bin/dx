@@ -2290,6 +2290,7 @@ class ExecutableInputs(object):
             else: # Skip inputs that don't start with prefix
                 return
         try:
+            # Resolve "job-xxxx:output-name" syntax into a canonical job ref
             job_id, field = split_unescaped(':', input_value)
             if is_job_id(job_id):
                 input_value = {"job": job_id, "field": field}
