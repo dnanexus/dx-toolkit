@@ -71,14 +71,16 @@ def unpack(input):
         raise dxpy.AppError("After decompression found file type other than plain text")
     
     try:
-        subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", "uncompressed.bed"]), shell=True)
-        return "uncompressed.bed"
+        out_name = id_generator()
+        subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", out_name]), shell=True)
+        #subprocess.check_call("cat uncompressed.bed", shell=True)
+        #print "*"*20
+        return out_name
     except Exception as e:
         raise dxpy.AppError("Unable to open compressed input for reading: " + str(e))
 
 
 def detect_type(bed_file):
-    #with open(bed_file, "r") as bf:
     num_cols = find_num_columns(bed_file)
     if num_cols == 12:
         bed_type = "genes"
@@ -123,10 +125,13 @@ def find_num_columns(bed_file):
     with open(bed_file, "rU") as bf:
         line = bf.readline()
         while line != "":
+            #print line
             line = line.split()
             if len(line) > num_cols:
                 num_cols = len(line)
             line = bf.readline()
+
+    print "Found num cols: " + str(num_cols)
 
     return num_cols
 
@@ -156,6 +161,8 @@ def import_spans(bed_file, table_name, ref_id):
                 continue
             line = line.rstrip("\n")
             line = line.split()
+            if len(line) == 0:
+                break
             if len(line) < 3:
                 raise dxpy.AppError("Line: "+"\t".join(line)+" in BED file contains less than the minimum 3 columns.  Invalid BED file.")
             line[1] = int(line[1])
@@ -207,6 +214,8 @@ def import_named_spans(bed_file, table_name, ref_id):
             line = line.rstrip("\n")
             line = line.split()
             # check to see if this is a weird line
+            if len(line) == 0:
+                break
             if len(line) < 3:
                 raise dxpy.AppError("Line: "+"\t".join(line)+" in BED file contains less than the minimum 3 columns.  Invalid BED file.")
 
@@ -406,6 +415,8 @@ def import_BED(**args):
     # uncompresses file if necessary.  Returns new filename
     bed_filename_uncomp = unpack( bed_filename )
 
+    #print "uncomp: " + bed_filename_uncomp
+
     current_file = 1
 
     for import_filename in split_on_track(bed_filename_uncomp):
@@ -414,7 +425,7 @@ def import_BED(**args):
         else:
             name = bed_filename+"_"+str(current_file)
         current_file += 1
-        bed_type = detect_type(bed_filename)
+        bed_type = detect_type(import_filename)
         if bed_type == "genes":
             print "Importing as Genes Type"
             job_outputs.append(import_genes(import_filename, name, reference))
@@ -425,7 +436,11 @@ def import_BED(**args):
             print "Importing as Spans Type"
             job_outputs.append(import_spans(import_filename, name, reference))
 
-    print job_outputs
+        subprocess.check_call(" ".join(["rm", import_filename]), shell=True)
+
+    if(bed_filename != bed_filename_uncomp):
+        subprocess.check_call(" ".join(["rm", bed_filename_uncomp]), shell=True)
+
     return job_outputs
 
 def main(**args):
