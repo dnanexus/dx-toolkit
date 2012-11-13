@@ -178,6 +178,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     if 'verify' not in kwargs and 'DX_CA_CERT' in os.environ:
         kwargs['verify'] = os.environ['DX_CA_CERT']
+        if os.environ['DX_CA_CERT'] == 'NOVERIFY':
+            kwargs['verify'] = False
 
     response, last_error = None, None
     for retry in range(max_retries + 1):

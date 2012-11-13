@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# EASY-INSTALL-ENTRY-SCRIPT: 'dxpy==0.1','console_scripts','dx-genes-to-gtf'
+# EASY-INSTALL-ENTRY-SCRIPT: 'dxpy==0.1','console_scripts','dx-genes-to-gff'
 __requires__ = 'dxpy==0.1'
 import sys
 from pkg_resources import load_entry_point

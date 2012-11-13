@@ -49,6 +49,12 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4):
     simultaneously. Unlike concurrent.futures.Executor.map, prevents new tasks from starting while there are
     *max_active_tasks* or more unconsumed results.
     '''
+
+    # Debug fallback
+    #for _callable, args, kwargs in request_iterator:
+    #    yield _callable(*args, **kwargs)
+    #return
+
     future_deque = collections.deque()
     for i in range(max_active_tasks):
         try:

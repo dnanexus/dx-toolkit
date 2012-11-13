@@ -115,6 +115,29 @@ class DXDataObject {
    */
   virtual void setIDs(const std::string &dxid,
 		      const std::string &proj=g_WORKSPACE_ID);
+  /**
+   * Sets the object and project IDs as specified. If not specified, the project ID will be set
+   * to the default workspace.
+   *
+   * See setWorkspaceID() and loadFromEnvironment() for more information.
+   *
+   * @param dxid ID of the associated object.
+   * @param proj ID of the project whose copy of the data object should be accessed.
+   * (if NULL, then default workspace will be used)
+   */
+  virtual void setIDs(const char *dxid, const char *proj=NULL);
+
+  /**
+   * Sets the object and project IDs as specified by dxlink. If project is not specified in dxlink, 
+   * the project ID will be set to the default workspace.
+   *
+   * See setWorkspaceID() and loadFromEnvironment() for more information.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  virtual void setIDs(const dx::JSON &dxlink);
 
   /**
    * Returns a JSON object with, at minimum, the keys "id", "class", "types", and "createdAt".

@@ -1,317 +1,268 @@
 #!/usr/bin/env python
 
-import sys, os, subprocess
-import json, re
+import sys, os
+import json
 import argparse
+from dxpy.templating import *
 from dxpy.utils.printing import *
 from collections import OrderedDict
 
 API_VERSION = '1.0.0'
 
-USING_COMPLETER = False
 manifest = []
 
-class Completer():
-    def __init__(self, choices):
-        self.matches = None
-        self.choices = choices
-
-    def __call__(self, text, state):
-        if state == 0:
-            self.matches = filter(lambda choice: choice.startswith(text),
-                                  self.choices)
-
-        if self.matches is not None and state < len(self.matches):
-            return self.matches[state]
-        else:
-            return None
-
-try:
-    import readline
-    import rlcompleter
-    readline.parse_and_bind("tab: complete")
-    readline.set_completer_delims("")
-    USING_COMPLETER = True
-except ImportError:
-    print 'NOTE: readline module not available.  Install for tab-completion.'
-
-def clean(s):
-    return "\n".join(line.rstrip() for line in s.split("\n"))
-
-def use_completer(completer=None):
-    if USING_COMPLETER:
-        readline.set_completer(completer)
-
-# Expect default to be a default string value
-# Expect choices to be a list of strings
-def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
-    prompt = prompt_str
-    if default is not None:
-        prompt += ' [' + default + ']: '
-    else:
-        prompt += ': '
-    while True:
-        try:
-            value = raw_input(prompt)
-        except KeyboardInterrupt:
-            print ''
-            exit(1)
-        except EOFError:
-            print ''
-            exit(1)
-        if value != '':
-            if choices is not None and value not in choices:
-                print 'Error: unrecognized response, expected one of ' + json.dumps(choices)
-            else:
-                return value
-        elif default is not None:
-            return default
-        elif allow_empty:
-            return value
-
-def prompt_for_yn(prompt_str, default=None):
-    if default == True:
-        prompt = prompt_str + ' [Y/n]: '
-    elif default == False:
-        prompt = prompt_str + ' [y/N]: '
-    else:
-        prompt = prompt_str + ' [y/n]: '
-
-    while True:
-        try:
-            value = raw_input(prompt)
-        except KeyboardInterrupt:
-            print ''
-            exit(1)
-        except EOFError:
-            print ''
-            exit(1)
-        if value != '':
-            if value.lower()[0] == 'y':
-                return True
-            elif value.lower()[0] == 'n':
-                return False
-            else:
-                print 'Error: unrecognized response'
-        elif default is not None:
-            return default
-
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
-# parser.add_argument("-f", "--overwrite", help="Overwrite files that are in the way", action='store_true')
+parser.add_argument('--json-file', help='Use the metadata and IO spec found in the given file')
+parser.add_argument('--language', help='Programming language of your app')
 args = parser.parse_args()
 
-print DNANEXUS_LOGO() + ' App Wizard, API v' + API_VERSION
-print ''
+dx_home_dir = os.environ.get('DNANEXUS_HOME', None)
+if not isinstance(dx_home_dir, basestring):
+    sys.stderr.write(fill('''Error: Environment variable DNANEXUS_HOME is not set; cannot find code templates''') + '\n')
+    exit(1)
 
-print BOLD() + 'Basic Metadata' + ENDC()
-print ''
-print fill('''Please enter basic metadata fields that will be used to
-describe your app.  Optional fields are denoted by options with square
-brackets.  At the end of this wizard, the files necessary for building your
-app will be generated from the answers you provide.''')
-print ''
+print_intro(API_VERSION)
 
-print fill('The ' + BOLD() + 'name' + ENDC() + ' of your app must be unique on the DNAnexus platform.  After creating your app for the first time, you will be able to publish new versions using the same app name.  App names are restricted to alphanumeric characters (a-z, A-Z, 0-9), and the characters ".", "_", and "-".')
-name_pattern = re.compile('^[a-zA-Z0-9._-]+$')
-while True:
-    name = prompt_for_var('App Name')
-    if name_pattern.match(name) is None:
-        print fill('The name of your app must match /^[a-zA-Z0-9._-]+$/')
-    else:
-        break
+if args.json_file is not None:
+    with open(args.json_file, 'r') as json_file:
+        app_json = json.loads(json_file.read())
+        # Re-confirm the name
+        name = get_name(default=app_json.get('name'))
+        app_json['name'] = name
+        version = get_version(default=app_json.get('version'))
+        app_json['version'] = version
+    try:
+        os.mkdir(app_json['name'])
+    except:
+        sys.stderr.write(fill('''Unable to create a directory for %s, please check that it is a valid app name and the working directory exists and is writable.''' % app_json['name']) + '\n')
+        sys.exit(1)
+else:
+    ##################
+    # BASIC METADATA #
+    ##################
 
-#if os.path.exists(name) and not args.overwrite:
-#    sys.stderr.write('''The directory %s already exists, please specify the --overwrite option to overwrite files in it.''' % name)
-if os.path.exists(name):
-    sys.stderr.write('''The directory %s already exists, please move it or specify a different name.\n''' % name)
-    sys.exit(1)
+    name = get_name()
 
-try:
-    os.mkdir(name)
-except:
-    sys.stderr.write('''Unable to create a directory for %s, please check that it is a valid app name and the
-working directory exists and is writable.\n''' % name)
-    sys.exit(1)
+    try:
+        os.mkdir(name)
+    except:
+        sys.stderr.write(fill('''Unable to create a directory for %s, please check that it is a valid app name and the working directory exists and is writable.''' % name) + '\n')
+        sys.exit(1)
 
-print ''
-print fill('The ' + BOLD() + 'title' + ENDC() + ', if provided, is what is shown as the name of your app on the website.  It can be any valid UTF-8 string.')
-title = prompt_for_var('Title', '')
+    title, summary, description = get_metadata(API_VERSION)
 
-print ''
-print fill('The ' + BOLD() + 'summary' + ENDC() + ' of your app is a short phrase or one-line description of what your app does.  It can be any UTF-8 human-readable string.')
-summary = prompt_for_var('Summary', '')
+    version = get_version()
 
-print ''
-print fill('The ' + BOLD() + 'description' + ENDC() + ' of your app is a longer piece of text describing your app.  It can be any UTF-8 human-readable string, and it will be interpreted using Markdown (see http://daringfireball.net/projects/markdown/syntax/ for more details).')
-description = prompt_for_var('Description', '')
+    app_json = OrderedDict()
+    app_json["name"] = name
 
-print ''
-print fill('The ' + BOLD() + 'API version' + ENDC() + ' of your app indicates which version of the DNAnexus API your app complies to.  Automatically setting it to the latest version: ' + API_VERSION)
+    if title != '':
+        app_json["title"] = title
+    if summary != '':
+        app_json['summary'] = summary
+    if description != '':
+        app_json['description'] = description
 
-print ''
-print fill('You can publish multiple versions of your app, and the ' + BOLD() + 'version' + ENDC() + ' of your app is a string with which to tag a particular version.  We encourage the use of Semantic Versioning for labeling your apps (see http://semver.org/ for more details).')
-version = prompt_for_var('Version', '0.0.1')
+    app_json["dxapi"] = API_VERSION
+    app_json["version"] = version
+    app_json["details"] = OrderedDict({"contactUrl": "http://wiki.dnanexus.com/Apps/" + name})
+    app_json["resources"] = []
 
-interpreter_choices = ['python2.7']
-use_completer(Completer(interpreter_choices))
-print ''
-print fill('The ' + BOLD() + 'interpreter' + ENDC() + ' of your app indicates which language you will be using and which code skeleton we will provide.') + '\n' + fill('Currently supported interpreters: ' + ', '.join(interpreter_choices))
-interpreter = prompt_for_var('Interpreter', 'python2.7', interpreter_choices)
-use_completer()
+    ############
+    # IO SPECS #
+    ############
 
-app_json = OrderedDict()
-app_json["name"] = name
+    class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
+                                 'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
+                                 'record', 'file', 'gtable', 'table', 'applet',
+                                 'array:record', 'array:file', 'array:gtable', 'array:table', 'array:applet'])
+    bool_completer = Completer(['true', 'false'])
 
-if title != '':
-    app_json["title"] = title
-if summary != '':
-    app_json['summary'] = summary
-if description != '':
-    app_json['description'] = description
-
-app_json["dxapi"] = API_VERSION
-app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
-app_json["version"] = version
-app_json["details"] = OrderedDict({"contactUrl": "http://wiki.dnanexus.com/Apps/" + name})
-app_json["resources"] = []
-
-class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
-                             'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
-                             'record', 'file', 'gtable', 'table', 'applet',
-                             'array:record', 'array:file', 'array:gtable', 'array:table', 'array:applet'])
-bool_completer = Completer(['true', 'false'])
-
-print ''
-print BOLD() + 'Input Specification' + ENDC()
-print ''
-print fill('Specifying the inputs is optional for applets, but required for apps.')
-print ''
-
-input_spec = prompt_for_yn('Specify inputs', True)
-input_names = []
-if input_spec:
-    app_json['inputSpec'] = []
     print ''
-    print fill('You will now be prompted for each input parameter to your app.  Each parameter should have a unique name that is valid as a variable name in your programming language of choice.')
+    print BOLD() + 'Input Specification' + ENDC()
+    print ''
+    print fill('Specifying the inputs is optional for applets, but required for apps.')
+    print ''
 
-    while True:
+    input_spec = prompt_for_yn('Specify inputs', True)
+    input_names = []
+    if input_spec:
+        app_json['inputSpec'] = []
         print ''
-        input_name = prompt_for_var('Variable name (leave empty to finish entering input parameters)', allow_empty=True)
-        if input_name in input_names:
-            print fill('Error: Cannot use the same input variable name twice.  Please choose again.')
-            continue
-        else:
-            input_names.append(input_name)
-        if input_name == '':
-            break
-        input_label = prompt_for_var('Label (if supplied, replaces the variable name in the UI)', '')
+        print fill('You will now be prompted for each input parameter to your app.  Each parameter should have a unique name that is valid as a variable name in your programming language of choice.')
 
-        use_completer(class_completer)
-        print 'Your input variable must be of one of the following classes:'
-        print '''array:boolean  array:hash     array:string   float          applet
+        while True:
+            print ''
+            input_name = prompt_for_var('Variable name (leave empty to finish entering input parameters)', allow_empty=True)
+            if input_name in input_names:
+                print fill('Error: Cannot use the same input variable name twice.  Please choose again.')
+                continue
+            else:
+                input_names.append(input_name)
+            if input_name == '':
+                break
+            input_label = prompt_for_var('Label (if supplied, replaces the variable name in the UI)', '')
+
+            use_completer(class_completer)
+            print 'Your input variable must be of one of the following classes:'
+            print '''array:boolean  array:hash     array:string   float          applet
 array:file     array:int      array:table    gtable         record
 array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
 '''
 
-        while True:
-            input_class = prompt_for_var('Choose a class')
-            if input_class in class_completer.choices:
-                break
-            else:
-                print fill('Not a recognized class; please choose again.')
+            while True:
+                input_class = prompt_for_var('Choose a class')
+                if input_class in class_completer.choices:
+                    break
+                else:
+                    print fill('Not a recognized class; please choose again.')
 
-        use_completer()
+            use_completer()
 
-        optional = prompt_for_yn('This is an optional parameter')
+            optional = prompt_for_yn('This is an optional parameter')
 
-        default_val = None
-        if optional and input_class in ['int', 'float', 'string', 'boolean']:
-            default_val = prompt_for_yn('A default value should be provided')
-            if default_val:
-                while True:
-                    if input_class == 'boolean':
-                        use_completer(bool_completer)
-                        default_val = prompt_for_var('  Default value', choices=['true', 'false'])
-                        use_completer()
-                    else:
-                        default_val = prompt_for_var('  Default value')
-
-                    try:
+            default_val = None
+            if optional and input_class in ['int', 'float', 'string', 'boolean']:
+                default_val = prompt_for_yn('A default value should be provided')
+                if default_val:
+                    while True:
                         if input_class == 'boolean':
-                            default_val = (default_val == 'true')
-                        elif input_class == 'int':
-                            default_val = int(default_val)
-                        elif input_class == 'float':
-                            default_val = float(default_val)
-                        break
-                    except:
-                        print 'Not a valid default value for the given class ' + input_class
-            else:
-                default_val = None
+                            use_completer(bool_completer)
+                            default_val = prompt_for_var('  Default value', choices=['true', 'false'])
+                            use_completer()
+                        else:
+                            default_val = prompt_for_var('  Default value')
 
-        # Fill in the input parameter's JSON
-        parameter_json = {
-            "name": input_name,
-            "class": input_class,
-            "optional": optional
-            }
-        if input_label != '':
-            parameter_json['label'] = input_label
-        if default_val is not None:
-            parameter_json['default'] = default_val
-        app_json['inputSpec'].append(parameter_json)
+                        try:
+                            if input_class == 'boolean':
+                                default_val = (default_val == 'true')
+                            elif input_class == 'int':
+                                default_val = int(default_val)
+                            elif input_class == 'float':
+                                default_val = float(default_val)
+                            break
+                        except:
+                            print 'Not a valid default value for the given class ' + input_class
+                else:
+                    default_val = None
 
-print ''
-print BOLD() + 'Output Specification' + ENDC()
-print ''
-print fill('Specifying the outputs is optional for applets, but required for apps.')
-print ''
+            # Fill in the input parameter's JSON
+            parameter_json = {
+                "name": input_name,
+                "class": input_class,
+                "optional": optional
+                }
+            if input_label != '':
+                parameter_json['label'] = input_label
+            if default_val is not None:
+                parameter_json['default'] = default_val
+            app_json['inputSpec'].append(parameter_json)
 
-output_spec = prompt_for_yn('Specify outputs', True)
-output_names = []
-if output_spec:
-    app_json['outputSpec'] = []
     print ''
-    print fill('You will now be prompted for each output parameter of your app.')
+    print BOLD() + 'Output Specification' + ENDC()
+    print ''
+    print fill('Specifying the outputs is optional for applets, but required for apps.')
+    print ''
 
-    while True:
+    output_spec = prompt_for_yn('Specify outputs', True)
+    output_names = []
+    if output_spec:
+        app_json['outputSpec'] = []
         print ''
-        output_name = prompt_for_var('Variable name (leave empty to finish entering output parameters)', allow_empty=True)
-        if output_name in output_names:
-            print fill('Error: Cannot use the same input variable name twice.  Please choose again.')
-            continue
-        else:
-            output_names.append(output_name)
-        if output_name == '':
-            break
-        output_label = prompt_for_var('Label (optional)', '')
+        print fill('You will now be prompted for each output parameter of your app.')
 
-        use_completer(class_completer)
-        print 'Your input variable must be of one of the following classes:'
-        print '''array:boolean  array:hash     array:string   float          applet
+        while True:
+            print ''
+            output_name = prompt_for_var('Variable name (leave empty to finish entering output parameters)', allow_empty=True)
+            if output_name in output_names:
+                print fill('Error: Cannot use the same input variable name twice.  Please choose again.')
+                continue
+            else:
+                output_names.append(output_name)
+            if output_name == '':
+                break
+            output_label = prompt_for_var('Label (optional)', '')
+
+            use_completer(class_completer)
+            print 'Your input variable must be of one of the following classes:'
+            print '''array:boolean  array:hash     array:string   float          applet
 array:file     array:int      array:table    gtable         record
 array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
 '''
-        while True:
-            output_class = prompt_for_var('Choose a class')
-            if output_class in class_completer.choices:
-                break
-            else:
-                print fill('Not a recognized class; please choose again.')
+            while True:
+                output_class = prompt_for_var('Choose a class')
+                if output_class in class_completer.choices:
+                    break
+                else:
+                    print fill('Not a recognized class; please choose again.')
 
-        use_completer()
+            use_completer()
 
-        # Fill in the output parameter's JSON
-        parameter_json = {
-            "name": output_name,
-            "class": output_class
-            }
-        app_json['outputSpec'].append(parameter_json)
+            # Fill in the output parameter's JSON
+            parameter_json = {
+                "name": output_name,
+                "class": output_class
+                }
+            app_json['outputSpec'].append(parameter_json)
 
-if interpreter == 'python2.7':
-    app_json['runSpec']['file'] = 'src/code.py'
+file_input_names = []
+file_output_names = []
+gtable_input_names = []
+gtable_output_names = []
+if 'inputSpec' in app_json:
+    file_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'file']
+    gtable_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'gtable']
+if 'outputSpec' in app_json:
+    file_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'file']
+    gtable_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'gtable']
+
+########################
+# LANGUAGE AND PATTERN #
+########################
+
+print ''
+print BOLD() + 'Template Options' + ENDC()
+
+# Prompt for programming language if not specified
+
+language = args.language if args.language is not None else get_language()
+
+interpreter = language_options[language].get_interpreter()
+app_json["runSpec"] = OrderedDict({"interpreter": interpreter})
+
+# Prompt for execution pattern
+
+template_dir = os.path.join(dx_home_dir, 'doc', 'example-templates', language_options[language].get_path())
+pattern = get_pattern(template_dir)
+template_dir = os.path.join(template_dir, pattern)
+
+pattern_suffix = ''
+parallelized_input_field = ''
+parallelized_output_field = ''
+if pattern == 'parallelized' and len([filename for filename in os.listdir(os.path.join(template_dir, 'src')) if filename.startswith('code-')]) > 0:
+    parallelized_input_field, parallelized_output_field = get_parallelized_io(file_input_names,
+                                                                              gtable_input_names,
+                                                                              gtable_output_names)
+    pattern_suffix = ''
+    if parallelized_input_field != '':
+        if parallelized_input_field in file_input_names:
+            pattern_suffix += '-input-file'
+        else:
+            pattern_suffix += '-input-gtable'
+    if parallelized_output_field != '':
+        pattern_suffix += '-output-gtable'
+
+with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_file:
+    file_text = fill_in_name_and_ver(template_app_json_file.read(), name, version)
+    template_app_json = json.loads(file_text)
+    for key in template_app_json['runSpec']:
+        app_json['runSpec'][key] = template_app_json['runSpec'][key]
+
+#################
+# WRITING FILES #
+#################
 
 print ''
 print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App... ***' + ENDC()
@@ -327,7 +278,7 @@ directly (see http://wiki.dnanexus.com/Developer-Portal for complete
 documentation).''' + ('''  Note that without an input and output specification,
 your app can only be built as an APPLET on the system.  To publish it to
 the DNAnexus community, you must first specify your inputs and outputs.
-''' if not (input_spec and output_spec) else ""))
+''' if not ('inputSpec' in app_json and 'outputSpec' in app_json) else ""))
 print ''
 
 for subdir in 'src', 'test', 'resources':
@@ -338,107 +289,10 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
-if interpreter == 'python2.7':
-    code_template = '''#!/usr/bin/env python
-# {app_name} {app_version}
-# Generated by dx-app-wizard.
-# See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for instructions on how to modify this file.
-
-import dxpy
-
-@dxpy.entry_point('main')
-def main({inputs}):
-    # Please fill in your application code here.
-    return {outputs}
-
-dxpy.run()
-'''
-    test_template = '''#!/usr/bin/env python
-# {app_name} {app_version} test suite
-# Generated by dx-app-wizard.
-# See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for instructions on how to modify this file.
-
-import os, sys, unittest, json, subprocess
-
-import dxpy, dxpy.app_builder
-from dxpy.exceptions import *
-
-src_dir = os.path.join(os.path.dirname(__file__), "..")
-test_resources_dir = os.path.join(src_dir, "test", "resources")
-
-def makeInputs():
-    # Please fill in this method to generate default inputs for your app.
-    return {{}}
-
-class Test{app_name}(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.base_input = makeInputs()
-        bundled_resources = dxpy.app_builder.upload_resources(src_dir)
-        cls.app_id = dxpy.app_builder.upload_app(src_dir, bundled_resources, overwrite=True)
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_base_input(self):
-        job = dxpy.DXApp(self.app_id).run(self.base_input)
-        print "Waiting for job to complete"
-        job.wait_on_done()
-        print json.dumps(job.describe()["output"])
-'''
-
-    readme_template = '''# {app_name} (DNAnexus platform app)
-This app directory was generated by dx-app-wizard. Please edit this Readme file to include essential documentation about your app.
-
-For more info, see http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App.
-'''
-    inputs = []
-    inputs_str = ''
-
-    if "inputSpec" in app_json:
-        # First, add all non-keyword args
-        for input_param in app_json["inputSpec"]:
-            if ("optional" in input_param and input_param['optional']) or "default" in input_param:
-                continue
-            inputs.append(input_param["name"])
-
-        # Then, add keyword args
-        for input_param in app_json["inputSpec"]:
-            if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
-                continue
-            if "default" in input_param:
-                inputs.append("{name}={default}".format(name=input_param["name"], default=input_param["default"]))
-            else:
-                inputs.append("{name}=None".format(name=input_param["name"]))
-        if len(inputs) > 0:
-            inputs_str = ", ".join(inputs)
-    else:
-        inputs_str = "**kwargs"
-
-    if "outputSpec" in app_json:
-        outputs = {output["name"]: None for output in app_json["outputSpec"]}
-    else:
-        outputs = {}
-
-    with open(os.path.join(name, 'src/code.py'), 'w') as code_file:
-        code_file.write(code_template.format(app_name=name, app_version=version, inputs=inputs_str, outputs=outputs))
-    subprocess.call(["chmod", "+x", os.path.join(name, 'src/code.py')])
-    manifest.append(os.path.join(name, 'src/code.py'))
-
-    with open(os.path.join(name, 'test/test.py'), 'w') as test_file:
-        test_file.write(test_template.format(app_name=name, app_version=version, inputs=inputs_str, outputs=outputs))
-    subprocess.call(["chmod", "+x", os.path.join(name, 'test/test.py')])
-    manifest.append(os.path.join(name, 'test/test.py'))
-
-    with open(os.path.join(name, 'Readme.md'), 'w') as readme_file:
-        readme_file.write(readme_template.format(app_name=name, app_version=version))
-    manifest.append(os.path.join(name, 'Readme.md'))
+manifest += create_files_from_templates(template_dir, app_json, language, file_input_names, file_output_names, pattern, pattern_suffix, parallelized_input_field, parallelized_output_field)
 
 print "Created files:"
-for filename in manifest:
+for filename in sorted(manifest):
     print "\t", filename
 print fill('''App directory created! See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
 next steps, or run "dx-build-app %s".''' % name)

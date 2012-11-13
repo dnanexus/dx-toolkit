@@ -4,11 +4,6 @@ import dxpy
 import argparse
 import sys
 
-global nullInt
-nullInt = -2**31
-global nullFloat
-nullFloat = float(nullInt)
-
 parser = argparse.ArgumentParser(description="Export Genes object to GFF File")
 parser.add_argument("genes_id", help="Genes table id to read from")
 parser.add_argument("--output", dest="file_name", default=None, help="Name of file to write GFF to.  If not given GFF file will be printed to stdout.")
@@ -95,7 +90,7 @@ def main(**kwargs):
                 frame = str(row["frame"])
             source = '.'
             
-            if row["score"] == nullFloat or row["score"] == nullFloat + 1.0:
+            if row["score"] == dxpy.NULL:
                 score = "."
             else:
                 score = str(row["score"])
