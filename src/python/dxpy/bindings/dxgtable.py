@@ -6,7 +6,6 @@ DXGTable Handler
 import os, sys, json, traceback
 import cStringIO as StringIO
 import concurrent.futures
-import math
 from dxpy.bindings import *
 
 # Number of rows to request at a time when reading.
@@ -28,7 +27,7 @@ DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*48 # bytes
 
 # Use this value for creating 'null' values in gtables.  Will be interpreted as null downstream.
 # Available in apps as dxpy.NULL
-NULL = -math.pow(2, 31)
+NULL = - (1 << 31)
 
 class DXGTable(DXDataObject):
     '''
