@@ -2499,7 +2499,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
-    return dxjob.get_id()
+    return dxjob
 
 def run(args):
     get_output_flag(args)
@@ -3043,49 +3043,42 @@ parser_map['uninstall'] = (parser_uninstall, DXAppCompleter(installed=True))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_run = subparsers.add_parser('run', help='Run an applet or app', description=(fill('Run an applet or app.  If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.') + '''
+parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
 
-SPECIFYING INPUTS
-
-''' + fill('Inputs can be set in multiple ways. In decreasing order of precedence, they are: inputs given in the interactive mode; inputs listed individually with the -i/--input command line argument; JSON given in --input-json; JSON given in --input-json-file; or any inputs set in a workflow (if running a workflow).  Use the empty hash "{}" to signify no inputs.') + '\n\n  BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by name and value.', initial_indent='  ', subsequent_indent='  ') + '''
+  1) inputs given in the interactive mode
+  2) inputs listed individually with the -i/--input command line argument
+  3) JSON given in --input-json
+  4) JSON given in --input-json-file
+  5) any inputs set in a workflow (if running a workflow).''' + '\n\nSPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD() + 'name' + ENDC() + ' and ' + BOLD() + 'value' + ENDC() + '.', initial_indent='  ', subsequent_indent='  ') + '''
 
     Syntax :  -i<input name>=<input value>
     Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
 
-''' + fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the app MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the app MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill(BOLD() + 'Job-based object references' + ENDC() + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
 
     Syntax :  -i<input name>=<job id>:<output name>
     Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
-''' + '\n\n' + fill('When executing workflows, stage inputs can be specified using the <stage name>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + '\n\n' + fill('When executing ' + BOLD() + 'workflows' + ENDC() + ', stage inputs can be specified using the <stage name>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
 
     Syntax :  -i<stage name>.<input name>=<input value>
     Example:  dx run my_workflow -i1.reads="My reads file"
-''' + '\n\n  JSON INPUTS\n\n' + fill('Inputs can be provided in JSON format using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
-
-    1) -j/--input_json INPUT_JSON
-    2) -f/--input_json_file FILENAME
-
-'''),
+''' + '\n\nSPECIFYING JSON INPUT\n\n' + fill('JSON input can be used directly when running a single app or applet using the -j/--input-json or -f/--input-json-file flags.  Use an empty JSON hash "{}" to represent empty input.', initial_indent='  ', subsequent_indent='  ') + '\n'),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[stdout_args, env_args])
 parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
-parser_run.add_argument('--folder', help=fill('The project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--dest', '--folder', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
-parser_run.add_argument('-i', '--input', help='''An input to be added using "<input name>=<input value>"
-Examples:
-  -ichunkSize=250000     # Numerical input
-  -iname=\"hello world\"   # Quotes required for spaces
-  -ireads=reads_name     # Names will be resolved''', action='append')
+parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>=<input value>"', width_adjustment=-24), action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 parser_run.set_defaults(func=run, verbose=False)
-parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet'])]))
+parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
