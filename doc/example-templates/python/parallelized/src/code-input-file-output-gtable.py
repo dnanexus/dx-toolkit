@@ -65,7 +65,7 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
         subjob_input = { "gtable_id": my_gtable.get_id(),
                          "start_row": row_chunk_size * i,
                          "end_row": min(row_chunk_size * (i + 1), my_gtable_rows)}
-        subjobs.append(new_dxjob(subjob_input, 'process'))
+        subjobs.append(dxpy.new_dxjob(subjob_input, 'process'))
 
     # The following line creates the job that will perform the
     # "postprocess" step of your app.  If you give it any inputs that
@@ -76,9 +76,9 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # "depends_on" field to the list of subjobs to wait for (it
     # accepts either DXJob objects are string job IDs in the list).
 
-    postprocess_job = new_dxjob(fn_input={"process_outputs": [subjob.get_output_ref("output") for subjob in subjobs]},
-                                fn_name='postprocess',
-                                depends_on=subjobs)
+    postprocess_job = dxpy.new_dxjob(fn_input={"process_outputs": [subjob.get_output_ref("output") for subjob in subjobs]},
+                                     fn_name='postprocess',
+                                     depends_on=subjobs)
 
     # If you would like to include any of the output fields from the
     # postprocess_job as the output of your app, you should return it
@@ -87,6 +87,8 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     #
     # return {"app_output_field": postprocess_job.get_output_ref("answer"), ...}
 
-    return DX_APP_WIZARD_OUTPUT
+    output = {}
+DX_APP_WIZARD_OUTPUT
+    return output
 
 dxpy.run()

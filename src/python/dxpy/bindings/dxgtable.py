@@ -3,10 +3,12 @@ DXGTable Handler
 ****************
 """
 
-import os, sys, json, traceback
+import os, sys, json, traceback, math
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
+
+NULL = -math.pow(2, 31)
 
 # Number of rows to request at a time when reading.
 #

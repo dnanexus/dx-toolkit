@@ -8,9 +8,21 @@ def get_interpreter():
 def get_path():
     return 'cpp'
 
-def get_strings(app_json, file_input_names, dummy_output_hash):
+def get_output_fmt(output_param):
+    output_class = output_param["class"]
+    output_fmt = ''
+    if output_class.startswith('array'):
+        output_fmt = "JSON(JSON_ARRAY)"
+    elif output_class in ['int', 'float', 'string', 'boolean', 'hash']:
+        output_fmt = output_param["name"]
+    else:
+        output_fmt = "DXLink({name}.getID())".format(name=output_param["name"])
+    return output_fmt
+
+def get_strings(app_json, file_input_names, file_output_names, dummy_output_hash):
     init_inputs_str = ''
-    files_str = ''
+    dl_files_str = ''
+    ul_files_str = ''
     outputs_str = ''
     inputs = []
     if 'inputSpec' in app_json and len(app_json['inputSpec']) > 0:
@@ -29,17 +41,23 @@ def get_strings(app_json, file_input_names, dummy_output_hash):
             elif input_param['class'] == 'string':
                 inputs.append('string {name} = input["{name}"].get<string>();'.format(name=input_param['name']))
             elif input_param['class'] == 'gtable':
-                inputs.append('DXGTable {name} = DXGTable(input["{name}"]["$dnanexus_link"].get<string>());'.format(name=input_param['name']))
+                inputs.append('DXGTable {name} = DXGTable(input["{name}"]);'.format(name=input_param['name']))
             elif input_param['class'] == 'record':
-                inputs.append('DXRecord {name} = DXRecord(input["{name}"]["$dnanexus_link"].get<string>());'.format(name=input_param['name']))
+                inputs.append('DXRecord {name} = DXRecord(input["{name}"]);'.format(name=input_param['name']))
             elif input_param['class'] == 'file':
-                inputs.append('DXFile {name} = DXFile(input["{name}"]["$dnanexus_link"].get<string>());'.format(name=input_param['name']))
+                inputs.append('DXFile {name} = DXFile(input["{name}"]);'.format(name=input_param['name']))
         init_inputs_str += "\n  ".join(inputs)
 
     if len(file_input_names) > 0:
-        files_str = "\n  " + "\n  ".join(['DXFile::downloadDXFile({name}.getID(), "{name}")'.format(name=fname) for fname in file_input_names]) + '\n'
+        dl_files_str = "\n" + fill('''The following line(s) use the C++ bindings to download your file inputs to the local file system using variable names for the filenames.  To recover the original filenames, you can use the output of "variable.describe()["name"].get<string>()".''', initial_indent="  // ", subsequent_indent="  // ")
+        dl_files_str += '\n\n  '
+        dl_files_str += "\n  ".join(['DXFile::downloadDXFile({name}.getID(), "{name}");'.format(name=fname) for fname in file_input_names]) + "\n"
 
-    if len(dummy_output_hash) > 0:
-        outputs_str = "\n  ".join(["JSON dummy_output = JSON(JSON_NULL);"] + \
-                                      ["output[\"" + key + "\"] = dummy_output;" for key in dummy_output_hash.keys()])
-    return '', init_inputs_str, files_str, outputs_str
+    if len(file_output_names) > 0:
+        ul_files_str = "\n" + fill('''The following line(s) use the C++ bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="  // ", subsequent_indent="  // ")
+        ul_files_str +='\n\n  '
+        ul_files_str += "\n  ".join(['DXFile {name} = DXFile::uploadLocalFile("{name}");'.format(name=name) for name in file_output_names]) + '\n'
+
+    if "outputSpec" in app_json and len(app_json['outputSpec']) > 0:
+        outputs_str = "  " + "\n  ".join(["output[\"" + param["name"] + "\"] = " + get_output_fmt(param) + ";" for param in app_json["outputSpec"]]) + '\n'
+    return '', init_inputs_str, dl_files_str, ul_files_str, outputs_str

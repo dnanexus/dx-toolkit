@@ -85,6 +85,8 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     #
     # return {"app_output_field": postprocess_job.get_output_ref("answer"), ...}
 
-    return DX_APP_WIZARD_OUTPUT
+    output = {}
+DX_APP_WIZARD_OUTPUT
+    return output
 
 dxpy.run()

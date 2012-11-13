@@ -9,15 +9,27 @@ def get_path():
     return 'python'
 
 class_to_dxclass = {
-    "file": "DXFile",
-    "gtable": "DXGTable",
-    "record": "DXRecord",
+    "file": "dxpy.DXFile",
+    "gtable": "dxpy.DXGTable",
+    "record": "dxpy.DXRecord",
     }
 
-def get_strings(app_json, file_input_names, dummy_output_hash):
+def get_output_fmt(output_param):
+    output_class = output_param["class"]
+    output_fmt = ''
+    if output_class.startswith('array'):
+        output_fmt = '[]'
+    elif output_class in ['int', 'float', 'string', 'boolean', 'hash']:
+        output_fmt = output_param["name"]
+    else:
+        output_fmt = "dxpy.dxlink(" + output_param["name"] + ")"
+    return output_fmt
+
+def get_strings(app_json, file_input_names, file_output_names, dummy_output_hash):
     input_sig_str = ''
     init_inputs_str = ''
-    files_str = ''
+    dl_files_str = ''
+    ul_files_str = ''
     outputs_str = ''
     inputs = []
     init_inputs = []
@@ -49,11 +61,18 @@ def get_strings(app_json, file_input_names, dummy_output_hash):
         init_inputs_str += "\n    ".join(init_inputs)
 
     if len(file_input_names) > 0:
-        files_str = '\n' if len(init_inputs) > 0 else ''
-        files_str += fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80)
-        files_str += "\n\n    "
-        files_str += "\n    ".join(['dxpy.download_dxfile(' + name + ', "' + name + '")' for name in file_input_names])
-        files_str += "\n"
+        dl_files_str = '\n' if len(init_inputs) > 0 else ''
+        dl_files_str += fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80)
+        dl_files_str += "\n\n    "
+        dl_files_str += "\n    ".join(['dxpy.download_dxfile(' + name + '.get_id(), "' + name + '")' for name in file_input_names])
+        dl_files_str += "\n"
 
-    outputs_str = str(dummy_output_hash)
-    return input_sig_str, init_inputs_str, files_str, outputs_str
+    if len(file_output_names) > 0:
+        ul_files_str = "\n" + fill('''The following line(s) use the Python bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="    # ", subsequent_indent="    # ", width=80)
+        ul_files_str +='\n\n    '
+        ul_files_str += "\n    ".join(['{name} = dxpy.upload_local_file("{name}");'.format(name=name) for name in file_output_names]) + '\n'
+
+    if 'outputSpec' in app_json and len(app_json['outputSpec']) > 0:
+        outputs_str = "    " + "\n    ".join(['output["{name}"] = {value}'.format(name=param["name"], value=get_output_fmt(param)) for param in app_json['outputSpec']]) + '\n'
+
+    return input_sig_str, init_inputs_str, dl_files_str, ul_files_str, outputs_str

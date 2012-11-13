@@ -22,22 +22,27 @@ void DXDataObject::setIDs(const char *dxid, const char *proj) {
 }
 
 void DXDataObject::setIDs(const dx::JSON &dxlink) {
-  const string err_str = "The variable 'dxlink' must be a valid JSON hash of one of these two form: \n"
+  const string err_str = "The variable 'dxlink' must be a valid JSON hash of one of these two forms: \n"
                           "1. {\"$dnanexus_link\": \"obj_id\"} \n"
                           "2. {\"$dnanexus_link\": {\"project\": \"proj-id\", \"id\": \"obj-id\"}";
-  if (dxlink.type() != JSON_HASH || dxlink.size() != 1)
+  if (dxlink.type() != JSON_HASH || dxlink.size() != 1) {
+    std::cerr << "Not a hash or not of only one key" << endl;
+    std::cerr << dxlink.toString() << endl;
     throw DXError(err_str);
+  }
   if (dxlink["$dnanexus_link"].type() == JSON_STRING) {
     dxid_ = dxlink["$dnanexus_link"].get<string>();
     proj_ = g_WORKSPACE_ID;
   } else {
     if (dxlink["$dnanexus_link"].type() == JSON_HASH && dxlink["$dnanexus_link"].size() == 2) {
       if (dxlink["$dnanexus_link"]["project"].type() != JSON_STRING || dxlink["$dnanexus_link"]["id"].type() != JSON_STRING) {
+        std::cerr << "project key is not string or id key is not string" << endl;
         throw DXError(err_str);
       }
       dxid_ = dxlink["$dnanexus_link"]["id"].get<string>();
       proj_ = dxlink["$dnanexus_link"]["project"].get<string>();
     } else {
+      std::cerr << "value is not a string, nor is it a hash with two keys" << endl;
       throw DXError(err_str);
     }
   }

@@ -43,6 +43,10 @@ void postprocess() {
   JSON input;
   getInput(input);
 
+  // You may want to copy and paste the logic to download and upload
+  // files here as well if this stage receives file input and/or makes
+  // file output.
+
   JSON output;
   writeOutput(output);
 }
@@ -50,6 +54,10 @@ void postprocess() {
 void process() {
   JSON input;
   getInput(input);
+
+  // You may want to copy and paste the logic to download and upload
+  // files here as well if this stage receives file input and/or makes
+  // file output.
 
   JSON output;
   writeOutput(output);
@@ -83,13 +91,16 @@ int main(int argc, char *argv[]) {
   //
   // See http://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
-  DX_APP_WIZARD_INITIALIZE_INPUT
-  DX_APP_WIZARD_DOWNLOAD_ANY_FILES
-  // Fill in your application code here.  Dummy output provided below.
+DX_APP_WIZARD_INITIALIZE_INPUT
+DX_APP_WIZARD_DOWNLOAD_ANY_FILES
+  // Fill in your application code here.
+DX_APP_WIZARD_UPLOAD_ANY_FILES
+  // The following line(s) fill in some basic dummy output and assumes
+  // that you have created variables to represent your output with the
+  // same name as your output fields.
 
   JSON output = JSON(JSON_HASH);
-  DX_APP_WIZARD_OUTPUT
-
+DX_APP_WIZARD_OUTPUT
   writeOutput(output);
 
   return 0;

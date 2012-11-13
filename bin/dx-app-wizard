@@ -208,12 +208,14 @@ array:gtable   array:record   file           int            table
             app_json['outputSpec'].append(parameter_json)
 
 file_input_names = []
+file_output_names = []
 gtable_input_names = []
 gtable_output_names = []
 if 'inputSpec' in app_json:
     file_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'file']
     gtable_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'gtable']
 if 'outputSpec' in app_json:
+    file_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'file']
     gtable_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'gtable']
 
 ########################
@@ -287,7 +289,7 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
-manifest += create_files_from_templates(template_dir, app_json, language, file_input_names, pattern, pattern_suffix, parallelized_input_field, parallelized_output_field)
+manifest += create_files_from_templates(template_dir, app_json, language, file_input_names, file_output_names, pattern, pattern_suffix, parallelized_input_field, parallelized_output_field)
 
 print "Created files:"
 for filename in sorted(manifest):

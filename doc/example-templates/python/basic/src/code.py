@@ -18,9 +18,14 @@ import dxpy
 def main(DX_APP_WIZARD_INPUT_SIGNATURE):
 DX_APP_WIZARD_INITIALIZE_INPUT
 DX_APP_WIZARD_DOWNLOAD_ANY_FILES
-    # Fill in your application code here.  Dummy output provided
-    # below.
+    # Fill in your application code here.
+DX_APP_WIZARD_UPLOAD_ANY_FILES
+    # The following line fills in some basic dummy output and assumes
+    # that you have created variables to represent your output with
+    # the same name as your output fields.
 
-    return DX_APP_WIZARD_OUTPUT
+    output = {}
+DX_APP_WIZARD_OUTPUT
+    return output
 
 dxpy.run()

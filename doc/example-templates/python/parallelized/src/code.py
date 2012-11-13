@@ -18,9 +18,11 @@ import dxpy
 
 @dxpy.entry_point('postprocess')
 def postprocess(process_outputs):
+    # Change the following to process whatever input this stage
+    # receives.
     for output in process_outputs:
         pass
-
+DX_APP_WIZARD_UPLOAD_ANY_FILES
     return { "answer": None }
 
 @dxpy.entry_point('process')
@@ -38,7 +40,7 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     subjobs = []
     for i in range(10):
         subjob_input = { "input1": True }
-        subjobs.append(new_dxjob(subjob_input, 'process'))
+        subjobs.append(dxpy.new_dxjob(subjob_input, 'process'))
 
     # The following line creates the job that will perform the
     # "postprocess" step of your app.  If you give it any inputs that
@@ -49,17 +51,20 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # "depends_on" field to the list of subjobs to wait for (it
     # accepts either DXJob objects are string job IDs in the list).
 
-    postprocess_job = new_dxjob(fn_input={ "process_outputs": [subjob.get_output_ref("output") for subjob in subjobs] },
-                                fn_name='postprocess',
-                                depends_on=subjobs)
+    postprocess_job = dxpy.new_dxjob(fn_input={ "process_outputs": [subjob.get_output_ref("output") for subjob in subjobs] },
+                                     fn_name='postprocess',
+                                     depends_on=subjobs)
 
     # If you would like to include any of the output fields from the
     # postprocess_job as the output of your app, you should return it
-    # here using a reference.  If the output field is called "answer",
-    # you can pass that on here as follows:
+    # here using a reference.  If the output field in the postprocess
+    # function is called "answer", you can pass that on here as
+    # follows:
     #
     # return { "app_output_field": postprocess_job.get_output_ref("answer"), ...}
 
-    return DX_APP_WIZARD_OUTPUT
+    output = {}
+DX_APP_WIZARD_OUTPUT
+    return output
 
 dxpy.run()
