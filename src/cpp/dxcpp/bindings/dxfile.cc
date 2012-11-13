@@ -76,12 +76,30 @@ void DXFile::init_internals_() {
   hasAnyPartBeenUploaded = false;
 }
 
-void DXFile::setIDs(const string &dxid, const string &proj) {
+void DXFile::reset() {
   stopLinearQuery();
   flush();
   init_internals_();
+}
+
+void DXFile::setIDs(const string &dxid, const string &proj) {
+  reset();
   DXDataObject::setIDs(dxid, proj);
 }
+
+void DXFile::setIDs(const char *dxid, const char *proj) {
+  if (proj == NULL) {
+    setIDs(string(dxid));
+  } else {
+    setIDs(string(dxid), string(proj));
+  }
+}
+
+void DXFile::setIDs(const JSON &dxlink) {
+  reset();
+  DXDataObject::setIDs(dxlink);
+}
+
 
 void DXFile::create(const std::string &media_type,
 		    const dx::JSON &data_obj_fields) {
@@ -511,9 +529,9 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type,
   }
   delete[] buf;
   localfile.close();
-  JSON name_prop(JSON_OBJECT);
-  name_prop["name"] = getBaseName(filename);
-  dxfile.setProperties(name_prop);
+  if (!data_obj_fields.has("name")) {
+    dxfile.rename(filename);
+  }
   dxfile.close(waitForClose);
   return dxfile;
 }

@@ -282,6 +282,16 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
 
     '''
 
+    try:
+        possible_hash = json.loads(path)
+        if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
+            if isinstance(possible_hash['$dnanexus_link'], basestring):
+                path = possible_hash['$dnanexus_link']
+            elif isinstance(possible_hash['$dnanexus_link'], dict) and isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring):
+                path = possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
+    except:
+        pass
+
     # Easy case: ":"
     if path == ':':
         if dxpy.WORKSPACE_ID is None:
