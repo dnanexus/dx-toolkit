@@ -1,3 +1,21 @@
+dx-toolkit (0.0.22-dnanexus.1) precise; urgency=low
+
+  * Add scripts dx-spans-to-bed, dx-genes-to-{gff,gtf}.
+
+  * Unified definition of sentinel values for GTables.
+
+  * Additional search methods dxpy.find_one_*.
+
+  * Improved options for selecting CAs.
+
+  * 'dx select' supports --level | --public | --name
+
+  * 'dx find jobs' supports --trees | --origin-jobs | --all-jobs
+
+  * Install sample application code.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 13 Nov 2012 11:09:51 -0800
+
 dx-toolkit (0.0.20-dnanexus.1) precise; urgency=low
 
   * Add 'dx-bed-to-spans' to import BED files.
