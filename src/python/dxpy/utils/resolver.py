@@ -33,6 +33,8 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
     '''
     for i in range(len(choices)):
         print str(i) + ') ' + choices[i]
+    if more_choices:
+        print 'm) More options not shown...'
     print ''
     if prompt is None:
         prompt = 'Pick a numbered choice'

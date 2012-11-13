@@ -415,6 +415,9 @@ def pick_and_set_project(args):
     except BaseException as details:
         parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
     any_results = False
+    if not args.public and args.level == "CONTRIBUTE":
+        print ''
+        print fill("Note: Use \"dx select --level VIEW\" or \"dx select --public\" to select from projects for which you only have VIEW permissions.")
     while True:
         results = []
         for i in range(10):
@@ -439,7 +442,10 @@ def pick_and_set_project(args):
             default = None
 
         print ""
-        print "Available projects:"
+        if args.public:
+            print "Available public projects:"
+        else:
+            print "Available projects ({level} or higher):".format(level=args.level)
         choice = try_call(pick,
                           map(lambda result:
                                   result['describe']['name'] + ' (' + result['level'] + ')',
