@@ -105,3 +105,26 @@ def normalize_timedelta(timedelta):
             return int(t) * suffix_multipliers[suffix]
         except ValueError:
             raise ValueError(error_msg)
+
+# See http://stackoverflow.com/questions/4126348
+class OrderedDefaultdict(collections.OrderedDict):
+    def __init__(self, *args, **kwargs):
+        newdefault = None
+        newargs = ()
+        if args:
+            newdefault = args[0]
+            if not (newdefault is None or callable(newdefault)):
+                raise TypeError('first argument must be callable or None')
+            newargs = args[1:]
+        self.default_factory = newdefault
+        super(self.__class__, self).__init__(*newargs, **kwargs)
+
+    def __missing__ (self, key):
+        if self.default_factory is None:
+            raise KeyError(key)
+        self[key] = value = self.default_factory()
+        return value
+
+    def __reduce__(self):
+        args = self.default_factory if self.default_factory else tuple()
+        return type(self), args, None, None, self.items()
