@@ -2595,18 +2595,18 @@ def watch(args):
     filter_stream = None
     if args.get_stdout:
         filter_stream = 'stdout'
-        args.no_subjobs = True
+        args.tree = False
     elif args.get_stderr:
         filter_stream = 'stderr'
-        args.no_subjobs = True
+        args.tree = False
 
     while True:
         try:
             ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, filter_stream=filter_stream)
-            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
+            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": args.tree})['streamingId']
             ws.set_dx_streaming_id(streaming_id)
             if filter_stream is None:
-                print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
+                print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
             try:
                 ws.connect()
             except KeyboardInterrupt:
@@ -3069,7 +3069,7 @@ parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs
                                      parents=[env_args])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=9999999999)
-parser_watch.add_argument('--no-subjobs', help='Do not watch messages from subjobs', action='store_true')
+parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.set_defaults(func=watch)
