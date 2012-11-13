@@ -3257,7 +3257,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish', description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  By default, waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
+parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish', description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
                                     prog='dx wait',
                                     parents=[env_args])
 parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+')
