@@ -9,8 +9,6 @@ import sys
 #Usage: sample input: dx_MappingsTableToSamBwa --table_id <gtable_id> --output <filename>
 #Example: dx_MappingsTableToSamBwa --table_id gtable-9yZvF200000PYKJyV4k00005 --output mappings.sam
 
-MAX_INT=2147483647
-
 parser = argparse.ArgumentParser(description="Export Mappings gtable to SAM format")
 parser.add_argument("mappings_id", help="Mappings table id to read from")
 parser.add_argument("--output", dest="file_name", default=None, help="Name of file to write SAM to.  If not given SAM file will be printed to stdout.")
@@ -178,8 +176,7 @@ def main(**kwargs):
         outputFile.close()
 
 def tag_value_is_default(value):
-    global MAX_INT
-    return value == MAX_INT or value == "" or (type(value) == float and math.isnan(value))
+    return value == dxpy.NULL or value == "" or (type(value) == float and math.isnan(value))
 
 def col_name_to_field_name(name):
     if name == 'sam_optional_fields':
@@ -267,34 +264,6 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, writeRowId, 
 
     out_row.extend([format_tag_field(name, value, sam_col_types) for name, value in tag_values.iteritems()])
 
-    ''' Old SAM tags code
-    if len(sam_cols) > 0:
-        for col_hash in sam_cols:
-            write_tag = True
-            tag_value = values[col_hash['name']]
-            field_name = col_hash['name'][10:]
-            if col_hash['type'] == 'int32':
-                # if we find the default, do not output tag
-                if tag_value == MAX_INT:
-                    write_tag = False
-                field_type = "i"
-            elif col_hash['type'] == 'float':
-                if math.isnan(tag_value):
-                    write_tag = False
-                field_type = "f"
-            else:
-                if tag_value == "":
-                    write_tag = False
-                field_type = "Z"
-
-            if write_tag:
-                if col_hash['name'] != "sam_optional_fields":
-                    out_row = "\t".join([out_row, ":".join([field_name, field_type, str(tag_value)])])
-                else:
-                    out_row = "\t".join([out_row, row["sam_optional_fields"]])
-    '''
-    
-    
     if assignReadGroup != "":
         out_row.append("RG:Z:" + assignReadGroup)
     else:
