@@ -19,14 +19,24 @@ import dxpy
 @dxpy.entry_point('postprocess')
 def postprocess(process_outputs):
     # Change the following to process whatever input this stage
-    # receives.
+    # receives.  You may also want to copy and paste the logic to download
+    # and upload files here as well if this stage receives file input
+    # and/or makes file output.
+
     for output in process_outputs:
         pass
-DX_APP_WIZARD_UPLOAD_ANY_FILES
+
     return { "answer": None }
 
 @dxpy.entry_point('process')
 def process(input1):
+    # Change the following to process whatever input this stage
+    # receives.  You may also want to copy and paste the logic to download
+    # and upload files here as well if this stage receives file input
+    # and/or makes file output.
+
+    print input1
+
     return { "output": None }
 
 @dxpy.entry_point('main')
@@ -54,7 +64,7 @@ DX_APP_WIZARD_DOWNLOAD_ANY_FILES
     postprocess_job = dxpy.new_dxjob(fn_input={ "process_outputs": [subjob.get_output_ref("output") for subjob in subjobs] },
                                      fn_name='postprocess',
                                      depends_on=subjobs)
-
+DX_APP_WIZARD_UPLOAD_ANY_FILES
     # If you would like to include any of the output fields from the
     # postprocess_job as the output of your app, you should return it
     # here using a reference.  If the output field in the postprocess

@@ -38,3 +38,21 @@ void DXJob::waitOnDone(const int timeout) const {
     elapsed += 2;
   } while (elapsed <= timeout);
 }
+
+JSON DXJob::getOutputRef(const string &field) {
+  JSON jbor = JSON(JSON_HASH);
+  jbor["job"] = dxid_;
+  jbor["field"] = field;
+  return jbor;
+}
+
+DXJob DXJob::newDXJob(const JSON &fn_input,
+                      const string &fn_name,
+                      const string &job_name,
+                      const vector<string> &depends_on,
+                      const JSON &instance_type
+                      ) {
+  DXJob dxjob;
+  dxjob.create(fn_input, fn_name, job_name, depends_on, instance_type);
+  return dxjob;
+}

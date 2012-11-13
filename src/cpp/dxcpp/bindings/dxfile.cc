@@ -529,9 +529,9 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type,
   }
   delete[] buf;
   localfile.close();
-  JSON name_prop(JSON_OBJECT);
-  name_prop["name"] = getBaseName(filename);
-  dxfile.setProperties(name_prop);
+  if (!data_obj_fields.has("name")) {
+    dxfile.rename(filename);
+  }
   dxfile.close(waitForClose);
   return dxfile;
 }

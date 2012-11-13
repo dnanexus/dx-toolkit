@@ -8,9 +8,9 @@ main() {
 }
 
 process() {
-        /DX_APP_WIZARD_NAME "process"
+        /DX_APP_WIZARD_NAME process
 }
 
 postprocess() {
-        /DX_APP_WIZARD_NAME "postprocess"
+        /DX_APP_WIZARD_NAME postprocess
 }

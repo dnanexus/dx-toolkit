@@ -111,6 +111,44 @@ class DXJob {
    * will block forever. Use with caution.
    */
   void waitOnDone(const int timeout=std::numeric_limits<int>::max()) const;
+
+  /**
+   * Constructs a JSON job-based object reference using the stored job
+   * ID and the given output field name.  The JSON will be of the form
+   *
+   * {"job": <job ID>, "field", <job output field name>}
+   *
+   * @param field The output field name to be referenced
+   *
+   * @return JSON of the requested job-based object reference
+   */
+  dx::JSON getOutputRef(const std::string &field);
+
+  /**
+   * Creates a new job whose entry point is any function in the currently running app or applet.
+   * The specified input is provided to the new job. The handler is updated to point to the ID of
+   * the newly created job.
+   *
+   * @note This function can only be called from within a currently running job.
+   *
+   * @param fn_input A hash of key/value pairs. This is a freeform JSON hash that will be passed
+   * verbatim to the job, after it is checked for the presence of links.
+   * @param fn_name Name of the function (in the current app or applet) to use as the entry point.
+   * @param job_name Name for the resulting job. If blank string is given, then (default name of
+   * parent job + ":fn_name") will be used instead.
+   * @param depends_on A list of Job ID's (string), representing jobs that must finish before this job should start running.
+   * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job will 
+   * be run, or a mapping of function names to instance types. (Note: you can pass a 
+   * std::map<string, string> as well)
+   *
+   * @return A DXJob handler for the newly created job.
+   */
+  static DXJob newDXJob(const dx::JSON &fn_input,
+                        const std::string &fn_name,
+                        const std::string &job_name="",
+                        const std::vector<std::string> &depends_on=std::vector<std::string>(),
+                        const dx::JSON &instance_type=dx::JSON(dx::JSON_NULL)
+                        );
 };
 
 #include "../bindings.h"

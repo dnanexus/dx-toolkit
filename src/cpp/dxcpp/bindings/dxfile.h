@@ -504,6 +504,8 @@ class DXFile: public DXDataObject {
 
   /**
    * Shorthand for uploading a local file and closing it when done.
+   * Sets the name to be equal to the filename if no name is provided
+   * in data_obj_fields.
    *
    * @param filename Local path for the file to upload.
    * @param media_type String representing the media type of the file.

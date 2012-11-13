@@ -13,8 +13,6 @@
  * the C++ bindings.
  */
 
-// TODO: Actually parallelize this
-
 #include <iostream>
 #include <vector>
 #include <stdint.h>
@@ -25,9 +23,6 @@
 using namespace std;
 using namespace dx;
 
-// TODO: Consider putting the following two functions (or something
-// similar) into the dxcpp bindings.  Also, maybe a function to report
-// an AppError or AppInternalError in the bindings.
 void getInput(JSON &input) {
   ifstream ifs("job_input.json");
   input.read(ifs);
@@ -39,6 +34,17 @@ void writeOutput(const JSON &output) {
   ofs.close();
 }
 
+void reportError(const string &message, const bool internal=false) {
+  ofstream ofs("job_error.json");
+  JSON error_json = JSON(JSON_HASH);
+  error_json["error"] = JSON(JSON_HASH);
+  error_json["error"]["type"] = internal ? "AppInternalError" : "AppError";
+  error_json["error"]["message"] = message;
+  ofs << error_json.toString();
+  ofs.close();
+  exit(1);
+}
+
 void postprocess() {
   JSON input;
   getInput(input);
@@ -47,7 +53,7 @@ void postprocess() {
   // files here as well if this stage receives file input and/or makes
   // file output.
 
-  JSON output;
+  JSON output = JSON(JSON_HASH);
   writeOutput(output);
 }
 
@@ -59,23 +65,21 @@ void process() {
   // files here as well if this stage receives file input and/or makes
   // file output.
 
-  JSON output;
+  JSON output = JSON(JSON_HASH);
   writeOutput(output);
 }
 
 int main(int argc, char *argv[]) {
   if (argc > 1) {
-    switch (argv[1]) {
-    case "process":
+    if (strcmp(argv[1], "process") == 0) {
       process();
-      break;
-    case "postprocess":
+      return 0;
+    } else if (strcmp(argv[1], "postprocess") == 0) {
       postprocess();
-      break;
-    default:
+      return 0;
+    } else if (strcmp(argv[1], "main") != 0) {
       return 1;
     }
-    return 0;
   }
 
   JSON input;
@@ -93,11 +97,40 @@ int main(int argc, char *argv[]) {
   // use the C++ JSON library.
 DX_APP_WIZARD_INITIALIZE_INPUT
 DX_APP_WIZARD_DOWNLOAD_ANY_FILES
-  // Fill in your application code here.
+  // Split your work into parallel tasks.  As an example, the
+  // following generates 10 subjobs running with the same dummy input.
+
+  JSON process_input = JSON(JSON_HASH);
+  process_input["input1"] = true;
+  vector<DXJob> subjobs;
+  for (int i = 0; i < 10; i++) {
+    subjobs.push_back(DXJob::newDXJob(process_input, "process"));
+  }
+
+  // The following line creates the job that will perform the
+  // "postprocess" step of your app.  If you give it any inputs that
+  // use outputs from the "process" jobs, then it will automatically
+  // wait for those jobs to finish before it starts running.  If you
+  // do not need to give it any such inputs, you can explicitly state
+  // the dependencies to wait for those jobs to finish by setting the
+  // "depends_on" field to the list of subjobs to wait for (it accepts
+  // either DXJob objects are string job IDs in the list).
+
+  vector<JSON> process_jbors;
+  for (int i = 0; i < subjobs.size(); i++) {
+    process_jbors.push_back(subjobs[i].getOutputRef("output"));
+  }
+  JSON postprocess_input = JSON(JSON_HASH);
+  postprocess_input["process_outputs"] = process_jbors;
+  DXJob postprocess_job = DXJob::newDXJob(postprocess_input, "postprocess");
 DX_APP_WIZARD_UPLOAD_ANY_FILES
-  // The following line(s) fill in some basic dummy output and assumes
-  // that you have created variables to represent your output with the
-  // same name as your output fields.
+  // If you would like to include any of the output fields from the
+  // postprocess_job as the output of your app, you should return it
+  // here using a reference.  If the output field in the postprocess
+  // function is called "answer", you can set that in the output hash
+  // as follows.
+  //
+  // output["app_output_field"] = postprocess_job.getOutputRef("answer");
 
   JSON output = JSON(JSON_HASH);
 DX_APP_WIZARD_OUTPUT
