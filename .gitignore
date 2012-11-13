@@ -24,6 +24,7 @@
 /bin/dx-mappings-to-fastq
 /bin/dx-mappings-to-sam
 /bin/dx-reads-to-fastq
+/bin/dx-spans-to-bed
 /bin/dx-tsv-to-gtable
 /bin/dx-workflow-to-applet
 /bin/pyrsa-*
