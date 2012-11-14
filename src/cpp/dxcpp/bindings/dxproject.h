@@ -238,7 +238,7 @@ class DXProject : public DXContainer {
    * @param invitee Username (of the form "user-USERNAME") or email of the
    * person to be invited to the project. Use "PUBLIC" to make the project
    * publicly available (in which case level must be set to "VIEW").
-   * @param level Permission level that the invitee would get ("LIST", "VIEW", "CONTRIBUTE", "ADMINISTER").
+   * @param level Permission level that the invitee would get ("VIEW", "CONTRIBUTE", "ADMINISTER").
    */
   void invite(const std::string &invitee, const std::string &level) const;
 
@@ -249,7 +249,7 @@ class DXProject : public DXContainer {
    *
    * @param member Username (of the form "user-USERNAME") of the project member
    * whose permissions will be decreased.
-   * @param level The new permission level for the user ("LIST", "VIEW", "CONTRIBUTE", "ADMINISTER").
+   * @param level The new permission level for the user ("VIEW", "CONTRIBUTE", "ADMINISTER").
    */
   // TODO: link to wiki docs
   void decreasePerms(const std::string &member, const std::string &level) const;

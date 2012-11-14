@@ -1,0 +1,8 @@
+{
+  "runSpec": {
+    "file": "src/run.sh",
+    "execDepends": [
+      {"name": "libcurl4-openssl-dev"}
+    ]
+  }
+}

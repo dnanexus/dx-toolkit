@@ -30,7 +30,7 @@ def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
 
       with open_dxgtable("table-xxxx") as dxgtable:
           for row in dxgtable.get_rows():
-	      print row[1] # Prints the value in the first column (after the row ID) for this row
+              print row[1] # Prints the value in the first column (after the row ID) for this row
 
     Note that this function is shorthand for the following::
 

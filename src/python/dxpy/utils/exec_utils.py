@@ -2,7 +2,7 @@
 Utilities used in the DNAnexus execution environment and test harness.
 '''
 
-import os, sys, json, collections, logging, argparse
+import os, json, collections, logging, argparse
 from functools import wraps
 import dxpy
 
@@ -83,16 +83,18 @@ def run(function_name=None, function_input=None):
         result = ENTRY_POINT_TABLE[job['function']](**job['input'])
     except dxpy.AppError as e:
         if dxpy.JOB_ID is not None:
-            os.chdir(dx_working_dir)           
+            os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": str(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
-            os.chdir(dx_working_dir)           
+            os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": str(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e)}}) + "\n")
         raise
+
+    result = convert_handlers_to_dxlinks(result)
 
     if dxpy.JOB_ID is not None:
         # TODO: protect against client removing its original working directory
@@ -103,6 +105,18 @@ def run(function_name=None, function_input=None):
         result = resolve_job_refs_in_test(result)
 
     return result
+
+# TODO: make this less naive with respect to cycles and any other things json.dumps() can handle
+def convert_handlers_to_dxlinks(x):
+    if isinstance(x, dxpy.DXObject):
+        x = dxpy.dxlink(x)
+    elif isinstance(x, collections.Mapping):
+        for key, value in x.iteritems():
+            x[key] = convert_handlers_to_dxlinks(value)
+    elif isinstance(x, list):
+        for i in range(len(x)):
+            x[i] = convert_handlers_to_dxlinks(x[i])
+    return x
 
 def resolve_job_refs_in_test(x):
     if isinstance(x, collections.Mapping):
@@ -137,6 +151,8 @@ def parse_args_as_job_input(args, app_spec):
 
     inputs = {}
     for i, value in vars(parser.parse_args(args)).iteritems():
+        if value is None:
+            continue
         if i in json_inputs:
             inputs[i] = json.loads(value)
         else:

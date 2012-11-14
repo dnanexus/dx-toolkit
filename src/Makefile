@@ -1,23 +1,29 @@
 SHELL=/bin/bash -e
 
+# If installing into the system directories you probably want to set
+#   DESTDIR=/ PREFIX=/usr
 ifndef DESTDIR
-	ifdef DNANEXUS_HOME
-		export DESTDIR=$(DNANEXUS_HOME)
-	else
-		export DESTDIR=$(CURDIR)/..
-	endif
+	export DESTDIR=/opt/dnanexus
+endif
+ifndef PREFIX
+	export PREFIX=/
 endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 
-# Build parallelism should not be handled in the makefile, but in the developer's configuration.
-# The line below can be added to the developer's .bashrc or other build environment initialization file.
-# export MAKEFLAGS=-j8
-ifndef PREFIX
-	export PREFIX=/usr
-endif
+# For parallel builds, add the following to your .bashrc or other build
+# environment initialization file:
+#
+#   export MAKEFLAGS=-j8
 
-all: api_wrappers src_libs python contigset2fasta reads_validator
+all: api_wrappers cpp src_libs python contigset2fasta reads_validator
+
+# Client bindings and wrappers
+# ============================
+
+toolkit_version:
+	echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"
+	test -d "$(DNANEXUS_HOME)/.git" && echo "version = \"`git describe`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"
 
 api_wrappers:
 	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
@@ -32,21 +38,52 @@ api_wrappers:
 		javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java
 	rm ../bin/generateWrapperTable
 
-src_libs:
-	mkdir -p "$(DNANEXUS_HOME)/lib"
-	cp -a bash perl javascript "$(DNANEXUS_HOME)/lib"
+cpp: api_wrappers
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
+	cp -a cpp "$(DNANEXUS_HOME)/share/dnanexus/src"
 
-python:
+src_libs: api_wrappers
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib/bash"
+	install -v bash/* "$(DNANEXUS_HOME)/share/dnanexus/lib/bash"
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib/javascript"
+	install -v javascript/*.* "$(DNANEXUS_HOME)/share/dnanexus/lib/javascript"
+	mkdir -p "$(DNANEXUS_HOME)/lib/perl5/DNAnexus"
+	install -v perl/lib/DNAnexus.pm "$(DNANEXUS_HOME)/lib/perl5"
+	install -v perl/lib/DNAnexus/API.pm "$(DNANEXUS_HOME)/lib/perl5/DNAnexus"
+
+# We are going to install libraries to lib/python2.7 and then move them
+# elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
+# setup.py doesn't complain.
+python: api_wrappers toolkit_version
+	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
 	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
-	(source ../environment; cd python; ./setup.py build; ./setup.py install --prefix="$(DNANEXUS_HOME)")
+	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
+	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; ./setup.py build; ./setup.py install --prefix="$(DNANEXUS_HOME)"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 
-perl:
+# TODO: fix up perl and java targets
+
+perl: api_wrappers
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl")
 
-java:
+java: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/java"
 	(cd java; mvn compile assembly:single)
 	cp -f java/target/*.jar "$(DNANEXUS_HOME)/lib/java"
+
+# Tools
+# =====
+
+contigset2fasta: api_wrappers
+	$(MAKE) -C contigset2fasta install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+
+reads_validator: api_wrappers
+	$(MAKE) -C reads_validator install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+
+ua:
+	$(MAKE) -C ua install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+
+# Tests
+# =====
 
 test: test_python test_perl
 
@@ -56,28 +93,40 @@ test_python:
 test_perl:
 	(cd perl; prove)
 
-contigset2fasta:
-	$(MAKE) -C contigset2fasta
+# Installation
+# ============
 
-reads_validator:
-	$(MAKE) -C reads_validator
+base_install: all
+	mkdir -p $(DESTDIR)/$(PREFIX)/bin
+	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
-ua:
-	$(MAKE) -C ua
+	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
+	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
+	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
-clean:
-	$(MAKE) -C contigset2fasta clean
-	$(MAKE) -C reads_validator clean
-	-rm -rf python/build
-	-rm -rf java/target
+	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 
-install: api_wrappers src_libs python
-	$(MAKE) -C contigset2fasta install
-	mkdir -p $(DESTDIR)/$(PREFIX)
-	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*
-	if [[ $(DNANEXUS_HOME) != $(DESTDIR) ]]; then \
-		cp -a $(DNANEXUS_HOME)/{bin,environment,lib} $(DESTDIR)/$(PREFIX); \
-	fi
+# Many apps have an autodep that says DESTDIR=/ PREFIX=/opt/dnanexus. Work
+# around that and install environment in the correct place until all those apps
+# have been replaced.
+install: base_install
+	(if [ "$(DESTDIR)" == "/" ]; then install -v $(DNANEXUS_HOME)/environment $(PREFIX); else install -v $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
+
+debian_install: base_install
+	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
+	install -v $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
+	virtualenv $(DESTDIR)/$(PREFIX)/share/dnanexus                           # Install dxpy into lib/python/dist-packages, deps under share/dnanexus
+	mkdir -p $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
+	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/dxpy* $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
+	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages/dxpy.pth
+	$(DESTDIR)/$(PREFIX)/share/dnanexus/bin/pip install -r python/requirements.txt
+	rm -rf $(DESTDIR)/$(PREFIX)/share/dnanexus/bin                           # Remove residual stuff left by pip/virtualenv
+	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/local/*
+
+# Documentation
+# =============
+
+doc: doc_python doc_dxcpp doc_dxjson doc_java
 
 setup_doc_virtualenv: build/doc_env/.setup_virtualenv
 
@@ -88,8 +137,6 @@ build/doc_env/.setup_virtualenv: ../build/doc_build_requirements.txt
 	(unset PYTHONPATH; source ../build/doc_env/bin/activate; pip install --requirement=../build/doc_build_requirements.txt)
 	virtualenv --relocatable ../build/doc_env
 	touch ../build/doc_env/.setup_virtualenv
-
-doc: doc_python doc_dxcpp doc_dxjson doc_java
 
 doc_python: python setup_doc_virtualenv
 	source ../build/doc_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
@@ -106,4 +153,23 @@ doc_java:
 	mkdir -p ../doc/java
 	(cd java; mvn compile javadoc:javadoc)
 
-.PHONY: api_wrappers python perl java contigset2fasta reads_validator ua src_libs test test_python test_perl setup_doc_build_virtualenv doc doc_python doc_dxcpp doc_dxjson
+# Clean
+# =====
+
+distclean: clean
+
+# TODO: clean up files in /bin, too
+clean:
+	$(MAKE) -C contigset2fasta clean
+	-rm -f ../bin/contigset2fasta
+	$(MAKE) -C reads_validator clean
+	-rm -f ../bin/dx-reads-validator
+	$(MAKE) -C ua clean
+	-rm -rf python/build
+	-rm -rf java/target
+	-rm -f ../bin/pyrsa-*
+	-rm -f ../build/wrapper_table.json
+	-rm -rf ../lib
+	-rm -rf ../share
+
+.PHONY: all toolkit_version api_wrappers src_libs python perl java contigset2fasta reads_validator ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java

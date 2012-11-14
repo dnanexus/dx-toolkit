@@ -5,7 +5,7 @@ http://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-import os, shlex, sys, textwrap, json
+import os, shlex, sys, textwrap
 
 def parse_env_file(filename):
     env_vars = {}
@@ -42,6 +42,7 @@ def get_env(suppress_warning=False):
         'DX_PROJECT_CONTEXT_ID': os.environ.get('DX_PROJECT_CONTEXT_ID', None),
         'DX_WORKSPACE_ID': os.environ.get('DX_WORKSPACE_ID', None),
         'DX_CLI_WD': os.environ.get('DX_CLI_WD', None),
+        'DX_USERNAME': os.environ.get('DX_USERNAME', None),
         'DX_SECURITY_CONTEXT': os.environ.get('DX_SECURITY_CONTEXT', None)
         }
 
@@ -55,12 +56,13 @@ def get_env(suppress_warning=False):
             elif var in installed_file_env_vars:
                 env_vars[var] = installed_file_env_vars[var]
 
-    if env_vars['DX_CLI_WD'] is None:
-        try:
-            with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD')) as fd:
-                env_vars['DX_CLI_WD'] = fd.read()
-        except:
-            pass
+    for standalone_var in 'DX_CLI_WD', 'DX_USERNAME':
+        if env_vars[standalone_var] is None:
+            try:
+                with open(os.path.expanduser('~/.dnanexus_config/' + standalone_var)) as fd:
+                    env_vars[standalone_var] = fd.read()
+            except:
+                pass
 
     if sys.stdout.isatty():
         already_set = []

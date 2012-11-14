@@ -26,8 +26,13 @@ class DXTable: public DXDataObject {
   // Table-specific functions
 
   DXTable() {}
+  DXTable(const char *dxid, const char *proj=NULL) {
+    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
+  }
   DXTable(const std::string &dxid,
           const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+  DXTable(const dx::JSON &dxlink) { setIDs(dxlink); }
+  
   void create();
 
   static DXTable newDXTable();

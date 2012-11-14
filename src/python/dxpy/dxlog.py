@@ -1,4 +1,4 @@
-import socket, json, time, os, sys, logging
+import socket, json, time, os, logging
 
 from logging.handlers import SysLogHandler
 
@@ -70,6 +70,9 @@ class DXLogHandler(SysLogHandler):
         except:
             self.handleError(record)
 
+class DXJSONLogFormatter(logging.Formatter):
+    def format(self, record):
+        return "DX_TAG_FIXME " + json.dumps(record.msg)
 
 '''
 Logging handler for DNAnexus service level logging.

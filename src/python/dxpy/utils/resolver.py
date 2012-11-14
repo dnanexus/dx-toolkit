@@ -11,7 +11,7 @@ import dxpy
 import re, os, sys
 from dxpy.utils.describe import *
 
-def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False):
+def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
     :param choices: Strings between which the user will make a choice
     :type choices: list of strings
@@ -21,17 +21,27 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
     :type str_choices: list of strings
     :param prompt: A custom prompt to be used
     :type prompt: string
-    :returns: The user's choice as a numbered index of choices (e.g. 0 for the first item)
-    :rtype: int
+    :param allow_mult: Whether "*" is a valid option to select all choices
+    :type allow_mult: boolean
+    :param more_choices: Whether "m" is a valid option to ask for more options
+    :type more_choices: boolean
+    :returns: The user's choice, i.e. one of a numbered index of choices (e.g. 0 for the first item), "*" (only if allow_mult is True), or "m" (only if more_results is True)
+    :rtype: int or string
     :raises: :exc:`EOFError` to signify quitting the process
+
+    At most one of allow_mult and more_choices should be set to True.
     '''
     for i in range(len(choices)):
         print str(i) + ') ' + choices[i]
+    if more_choices:
+        print 'm) More options not shown...'
     print ''
     if prompt is None:
         prompt = 'Pick a numbered choice'
         if allow_mult:
             prompt += ' or \"*\" for all'
+        elif more_choices:
+            prompt += ' or \"m\" for more options'
         if default is not None:
             prompt += ' [' + str(default) + ']'
         prompt += ': '
@@ -48,6 +58,8 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
             return default
         if allow_mult and value == '*':
             return value
+        if more_choices and value == 'm':
+            return value
         try:
             choice = str_choices.index(value)
             return choice
@@ -59,7 +71,6 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False)
                 raise IndexError()
             return choice
         except BaseException as details:
-            print str(details)
             print 'Not a valid selection'
 
 # The following caches project names to project IDs because they are
@@ -235,7 +246,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([cached_project_names[string]] if multi else cached_project_names[string])
 
     try:
-        results = list(dxpy.find_projects(name=string, describe=True, level='LIST'))
+        results = list(dxpy.find_projects(name=string, describe=True, level='VIEW'))
     except BaseException as details:
         raise ResolutionError(str(details))
 
@@ -260,7 +271,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     :type path: string
     :param expected: one of the following: "folder", "entity", or None to indicate whether the expected path is a folder, a data object, or either
     :type expected: string or None
-    :type expected_classes: a list of DNAnexus data object classes (if any) by which the search can be filtered
+    :param expected_classes: a list of DNAnexus data object classes (if any) by which the search can be filtered
     :type expected_classes: list of strings or None
     :returns: A tuple of 3 values: container_ID, folderpath, entity_name
     :rtype: string, string, string
@@ -272,6 +283,16 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     exist.  This method is primarily for parsing purposes.
 
     '''
+
+    try:
+        possible_hash = json.loads(path)
+        if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
+            if isinstance(possible_hash['$dnanexus_link'], basestring):
+                path = possible_hash['$dnanexus_link']
+            elif isinstance(possible_hash['$dnanexus_link'], dict) and isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring):
+                path = possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
+    except:
+        pass
 
     # Easy case: ":"
     if path == ':':
@@ -309,7 +330,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # 2) project-name-or-id:folderpath/to/possible/entity
         if is_job_id(substrings[0]):
             return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1]
-        
+
         if multi_projects:
             project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
         else:
@@ -437,7 +458,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         else:
             return project, folderpath, [result]
     elif project is None:
-        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  You should either set a default project using dx select or cd, or add a colon (":") after your project ID or name.')
+        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name.')
     else:
         msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object

@@ -4,7 +4,9 @@
 /doc/java/
 /doc/python/
 /lib/
+/share/
 /src/java/target/
+/src/python/dxpy/toolkit_version.py
 *~
 *.log
 *.swp
@@ -13,13 +15,16 @@
 *.a
 .DS_Store
 .coverage
+/bin/dx-bed-to-spans
 /bin/dx-build-app
 /bin/dx-build-applet
 /bin/dx-csv-to-gtable
 /bin/dx-gtable-to-csv
 /bin/dx-gtable-to-tsv
+/bin/dx-mappings-to-fastq
 /bin/dx-mappings-to-sam
 /bin/dx-reads-to-fastq
+/bin/dx-spans-to-bed
 /bin/dx-tsv-to-gtable
 /bin/dx-workflow-to-applet
 /bin/pyrsa-*

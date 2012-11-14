@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, json, argparse, csv
+import os, sys, argparse, csv
 import dxpy
 from dxpy.utils.resolver import *
 

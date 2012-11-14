@@ -1,9 +1,11 @@
 DNAnexus Python API
 ===================
 
-The Python library is called ```dxpy```. The autodocs are available at http://autodoc.dnanexus.com/.
+The Python library is called ```dxpy```.
 
-# Convention for Python scripts that are also modules
+Documentation is available at http://autodoc.dnanexus.com/bindings/python/current/.
+
+## Convention for Python scripts that are also modules
 
 Some scripts, such as format converters, are useful both as standalone executables and as importable modules.
 
@@ -41,4 +43,6 @@ We have the following convention for these scripts:
 
 ___
 
-TODO: intro, link to docserver; this file should also show up on pypi
+## TODO
+
+Intro; this file should also show up on pypi

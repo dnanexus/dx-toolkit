@@ -109,7 +109,7 @@ http_server_errors = set([requests.codes.server_error,
                           requests.codes.service_unavailable,
                           requests.codes.gateway_timeout])
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=600, config=None,
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
                   max_retries=DEFAULT_RETRIES, always_retry=False,
@@ -122,7 +122,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
     :param headers: Names and values of HTTP headers to submit with the request (in addition to those needed for authentication, compression, or other options specified with the call).
     :type headers: dict
     :param auth: Overrides the *auth* value to pass through to :meth:`requests.request`. By default a token is obtained from the ``DX_SECURITY_CONTEXT``.
-    :type auth: tuple, object, or None
+    :type auth: tuple, object, True (default), or None
     :param timeout: HTTP request timeout, in seconds
     :type timeout: float
     :param config: *config* value to pass through to :meth:`requests.request`
@@ -153,10 +153,12 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
 
     '''
     url = APISERVER + resource if prepend_srv else resource
-    
-    #print method, url, data
 
-    if auth is None:
+    if _DEBUG:
+        from repr import Repr
+        print >>sys.stderr, method, url, Repr().repr(data)
+
+    if auth is True:
         auth = AUTH_HELPER
     if config is None:
         config = {}
@@ -173,6 +175,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=None, timeout=
         if not snappy_available:
             raise DXError("Snappy compression requested, but the snappy module is unavailable")
         headers['accept-encoding'] = 'snappy'
+
+    if 'verify' not in kwargs and 'DX_CA_CERT' in os.environ:
+        kwargs['verify'] = os.environ['DX_CA_CERT']
+        if os.environ['DX_CA_CERT'] == 'NOVERIFY':
+            kwargs['verify'] = False
 
     response, last_error = None, None
     for retry in range(max_retries + 1):
@@ -342,6 +349,11 @@ def _initialize(suppress_warning=False):
     :param suppress_warning: Whether to suppress the warning message for any mismatch found in the environment variables and the dx configuration file
     :type suppress_warning: boolean
     '''
+    global _DEBUG
+    _DEBUG = False
+    if '_DX_DEBUG' in os.environ:
+        _DEBUG = True
+
     env_vars = get_env(suppress_warning)
     for var in env_vars:
         if env_vars[var] is not None:
@@ -369,6 +381,8 @@ _initialize()
 from dxpy.bindings import *
 from dxpy.dxlog import *
 from dxpy.utils.exec_utils import run, entry_point
+
+from dxpy.toolkit_version import version as TOOLKIT_VERSION
 
 
 # This should be in exec_utils but fails because of circular imports

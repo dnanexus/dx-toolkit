@@ -1,3 +1,4 @@
+#ifndef WINDOWS_BUILD
 #include "SSLThreads.h"
 
 #include <pthread.h>
@@ -75,3 +76,4 @@ unsigned long pthreads_thread_id(void)
   ret = (unsigned long) pthread_self();
   return (ret);
 }
+#endif

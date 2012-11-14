@@ -5,7 +5,7 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-import datetime, json, textwrap, math, sys
+import datetime, json, math, sys
 
 from dxpy.utils.printing import *
 
@@ -206,6 +206,8 @@ def print_app_desc(desc):
                 print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
             if "execDepends" in desc["runSpec"]:
                 print_json_field("execDepends", desc["runSpec"]["execDepends"])
+            if "systemRequirements" in desc['runSpec']:
+                print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
         if 'resources' in desc:
             print_field("Resources", desc['resources'])
         elif 'globalWorkspace' in desc:
@@ -274,6 +276,8 @@ def print_data_obj_desc(desc):
             print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
         if "execDepends" in desc['runSpec']:
             print_json_field("execDepends", desc["runSpec"]["execDepends"])
+        if "systemRequirements" in desc['runSpec']:
+            print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
 
     for field in desc:
         if field in recognized_fields:
@@ -303,13 +307,22 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependencies', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob',
+                         'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
+                         'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
+                         'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet',
+                         'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
+                         'startedRunning', 'stoppedRunning']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if "name" in desc and desc['name'] is not None:
-        print_field("Name", desc['name'])
+        print_field("Job name", desc['name'])
+    if "executableName" in desc and desc['executableName'] is not None:
+        print_field("Executable name", desc['executableName'])
     print_field("Project context", desc["project"])
+    if 'billTo' in desc:
+        print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'workspace' in desc:
         print_field("Workspace", desc["workspace"])
     if 'projectWorkspace' in desc:
@@ -324,6 +337,8 @@ def print_job_desc(desc):
         print_field("App", desc["app"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
+    if "instanceType" in desc and desc['instanceType'] is not None:
+        print_field("Instance Type", desc["instanceType"])
     print_field("State", JOB_STATES(desc["state"]))
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
@@ -341,19 +356,29 @@ def print_job_desc(desc):
         print_field('Output folder', desc['folder'])
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    if 'startedRunning' in desc:
+        print_field("Started running", datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime())
+    if 'stoppedRunning' in desc:
+        print_field("Stopped running", "{t} (Runtime: {rt})".format(
+            t=datetime.datetime.fromtimestamp(desc['stoppedRunning']/1000).ctime(),
+            rt=datetime.timedelta(milliseconds=desc['stoppedRunning']-desc['startedRunning'])))
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
-    if 'dependencies' in desc:
-        print_list_field('Dependencies', desc['dependencies'])
+    if 'dependsOn' in desc:
+        print_list_field('Depends on', desc['dependsOn'])
     if "failureReason" in desc:
         print_field("Failure reason", desc["failureReason"])
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
+    if "failureFrom" in desc and desc['failureFrom'] is not None:
+        print_field("Failure is from", desc['failureFrom']['id'])
     if "stdout" in desc:
         print_field("File of stdout", str(desc['stdout']))
     if 'stderr' in desc:
         print_field('File of stderr', str(desc['stderr']))
+    if 'systemRequirements' in desc:
+        print_json_field("Sys Requirements", desc['systemRequirements'])
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
@@ -391,6 +416,16 @@ def print_desc(desc):
     else:
         print_data_obj_desc(desc)
 
+def get_ls_desc(desc, print_id=False):
+    addendum = ' : ' + desc['id'] if print_id is True else ''
+    if desc['class'] == 'applet':
+        return BOLD() + GREEN() + desc['name'] + ENDC() + addendum
+    else:
+        return desc['name'] + addendum
+
+def print_ls_desc(desc, **kwargs):
+    print get_ls_desc(desc, **kwargs)
+
 def get_ls_l_desc(desc, include_folder=False, include_project=False):
     if 'state' in desc:
         state_len = len(desc['state'])
@@ -423,16 +458,21 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
 
-def get_find_jobs_string(jobdesc, has_children):
-    is_origin_job = jobdesc['parentJob'] is None
+def get_find_jobs_string(jobdesc, has_children, single_result=False):
+    '''
+    :param jobdesc: hash of job describe output
+    :param has_children: whether the job has subjobs to be printed
+    :param single_result: whether the job is displayed as a single result or as part of a job tree
+    '''
+    is_origin_job = jobdesc['parentJob'] is None or single_result
     string = ("* " if is_origin_job and get_delimiter() is None else "")
     string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "<no name>") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
     string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
     string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
     string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
     if jobdesc['state'] == 'done':
-        string += " .. {enddate} ({duration})".format(
-            enddate=str(datetime.datetime.fromtimestamp(jobdesc['modified']/1000)),
-            duration=str(datetime.timedelta(milliseconds=jobdesc['modified']-jobdesc['created'])))
+        # TODO: Remove this check once all jobs are migrated to have these values
+        if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
+            string += " (Runtime: {r})".format(r=str(datetime.timedelta(milliseconds=jobdesc['stoppedRunning']-jobdesc['startedRunning'])))
 
     return string

@@ -15,10 +15,20 @@
 #include "File.h"
 #include "log.h"
 #include "dxcpp/dxcpp.h"
+#include "import_apps.h"
 
 #include <boost/filesystem.hpp>
 
 using namespace std;
+
+#ifdef WINDOWS_BUILD
+  // This additional code is required for Windows build, since Magic database is not present
+  // by default, and rather packaged with the distribution
+  #include <windows.h>
+  string MAGIC_DATABASE_PATH;	
+#endif
+
+int curlInit_call_count = 0;
 
 Options opt;
 
@@ -62,6 +72,8 @@ vector<boost::thread> compressThreads;
 vector<boost::thread> uploadThreads;
 
 int NUMTRIES_g; // Number of max tries for a chunk (to be given by user)
+
+string userAgentString; // definition (declared in chunk.h)
 
 bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
@@ -136,7 +148,7 @@ void uploadChunks(vector<File> &files) {
         c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds");
         --(c->triesLeft);
         c->clear(); // we will read & compress data again
-        sleep(timeout);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(timeout * 1000));
         // We push the chunk to retry to "chunksToRead" and not "chunksToUpload"
         // Since chunksToUpload queue is bounded, and chunksToUpload.produce() can block,
         // thus giving rise to deadlock
@@ -249,7 +261,7 @@ void uploadProgressHelper(vector<File> &files) {
     }
   }
   queueLock.unlock();
-  cerr << " ... Instantenous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
+  cerr << " ... Instantaneous transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps2 << " MB/sec";
 }
 
 void uploadProgress(vector<File> &files) {
@@ -335,10 +347,14 @@ void curlInit() {
     throw runtime_error(msg.str());
   }
   LOG << " done." << endl;
+  curlInit_call_count++;
 }
 
 void curlCleanup() {
-  curl_global_cleanup();
+  // http://curl.haxx.se/libcurl/c/curl_global_cleanup.html
+  for (;curlInit_call_count > 0; --curlInit_call_count) {
+    curl_global_cleanup();
+  }
 }
 
 void markFileAsFailed(vector<File> &files, const string &fileID) {
@@ -349,6 +365,24 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
     }
   }
 }
+
+#ifdef WINDOWS_BUILD
+void setMagicDBPath() {
+  if (MAGIC_DATABASE_PATH.size() > 0)
+    return;
+
+  // Find out the current process's directory
+  char buffer[32768] = {0}; // Maximum path length in windows (approx): http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
+  if (!GetModuleFileName(NULL, buffer, 32767)) {
+    throw runtime_error("Unable to get current process's directory using GetModuleFileName() .. GetLastError() = " + boost::lexical_cast<string>(GetLastError()) + "\n");
+  }
+  string processPath = buffer;
+  size_t found = processPath.find_last_of("\\");
+  found = (found != string::npos) ? found : 0;
+  MAGIC_DATABASE_PATH = processPath.substr(0, found) + "\\resources\\magic";
+}
+
+#endif
 
 /* 
  * - Returns the MIME type for a file (of this format: "type/subType")
@@ -367,22 +401,29 @@ string getMimeType(string filePath) {
   string magic_output;
   magic_t magic_cookie;
   magic_cookie = magic_open(MAGIC_MIME | MAGIC_NO_CHECK_COMPRESS | MAGIC_SYMLINK);
-
   if (magic_cookie == NULL) {
     throw runtime_error("error allocating magic cookie (libmagic)");
   }
-
-  if (magic_load(magic_cookie, NULL) != 0) {
+#ifndef WINDOWS_BUILD
+	const char *ptr_to_db = NULL; // NULL means look in default location (fine for POSIX systems)
+#else
+	setMagicDBPath();
+	const char *ptr_to_db = MAGIC_DATABASE_PATH.c_str();
+#endif
+  if (magic_load(magic_cookie, ptr_to_db) != 0) {
     string errMsg = magic_error(magic_cookie);
     magic_close(magic_cookie);
+#ifndef WINDOWS_BUILD
     throw runtime_error("cannot load magic database - '" + errMsg + "'");
+#else
+    throw runtime_error("cannot load magic database - '" + errMsg + "'" + " Magic DB path = '" + MAGIC_DATABASE_PATH + "'");
+#endif
   }
 
   magic_output = magic_file(magic_cookie, filePath.c_str());
   magic_close(magic_cookie);
   // magic_output will be of this format: "type/subType; charset=.."
   // we just want to return "type/subType"
-
   return magic_output.substr(0, magic_output.find(';'));
 }
 
@@ -456,6 +497,31 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
   }
 }
 
+void setUserAgentString() {
+  bool windows_env = false;
+#ifdef WINDOWS_BUILD
+  windows_env = true;
+#endif
+  // Include these things in user agent string: UA version, GIT version, a random hash (which will be unique per instance of UA)
+  // For windows build, also include that info
+  srand(clock() + time(NULL));
+  int r1 = rand(), r2 = rand();
+  stringstream iHash;
+  iHash << std::hex << r1 << "-" << std::hex << r2;
+  userAgentString = string("DNAnexus-Upload-Agent/") + UAVERSION;
+  userAgentString += (windows_env) ? " (WINDOWS_BUILD=true)" : "";
+  userAgentString += string(" git-version/") + GITVERSION + " Instance-Hash/" + iHash.str();
+}
+
+void printEnvironmentInfo() {
+  cout << "Environment info:" << endl
+       << "  API server protocol: " << opt.apiserverProtocol << endl
+       << "  API server host: " << opt.apiserverHost << endl
+       << "  API server port: " << opt.apiserverPort << endl
+       << "  Auth token: " << opt.authToken << endl; 
+  cout << "  Project:  " << ((opt.projects.size() > 0) ? opt.projects[0] : "") << endl; 
+}
+
 int main(int argc, char * argv[]) {
   try {
     opt.parse(argc, argv);
@@ -464,19 +530,24 @@ int main(int argc, char * argv[]) {
     opt.printHelp(argv[0]);
     return 1;
   }
-
+  // Note: Verbose mode logging is now enabled by options parse()
+  if (opt.env()) {
+    printEnvironmentInfo();
+    return 0;
+  }
   if (opt.version()) {
-    cout << GITVERSION << endl;
+    cout << "Upload Agent Version: " << UAVERSION << endl
+         << "git version: " << GITVERSION << endl;
     return 0;
   } else if (opt.help() || opt.files.empty()) {
     opt.printHelp(argv[0]);
     return 1;
   }
 
-  Log::enabled = opt.verbose;
+  setUserAgentString();
 
-  LOG << "DNAnexus Upload Agent " << GITVERSION << endl;
-
+  LOG << "DNAnexus Upload Agent " << UAVERSION << " (git version: " << GITVERSION << ")" << endl;
+  LOG << "User Agent string: '" << userAgentString << "'" << endl;
   LOG << opt;
   try {
     opt.validate();
@@ -487,12 +558,16 @@ int main(int argc, char * argv[]) {
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
-
+  const bool anyImportAppToBeCalled = (opt.reads || opt.pairedReads || opt.mappings || opt.variants);
+  if (anyImportAppToBeCalled) {
+    LOG << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)" << endl;
+    opt.waitOnClose = true;
+  }
   apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken);
 
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
-  
+  int exitCode = 0; 
   try {
     curlInit();
 
@@ -500,6 +575,7 @@ int main(int argc, char * argv[]) {
     NUMTRIES_g = opt.tries;
 
     vector<File> files;
+
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
       LOG << "Getting MIME type for local file " << opt.files[i] << "..." << endl;
       string mimeType = getMimeType(opt.files[i]);
@@ -592,29 +668,37 @@ int main(int argc, char * argv[]) {
         }
         cerr << endl;
       }
-      if (files[i].failed) {
-        cout << "failed";
-      } else {
-        cout << files[i].fileID;
-      }
-      if (i != (files.size() - 1u)) {
-        cout << endl;
-      }
-    }
+      if (files[i].failed)
+        files[i].fileID = "failed";
+    } 
 
     LOG << "Waiting for files to be closed..." << endl;
     boost::thread waitOnCloseThread(waitOnClose, boost::ref(files));
     LOG << "Joining wait-on-close thread..." << endl;
     waitOnCloseThread.join();
     LOG << "Wait-on-close thread finished." << endl;
-
+    if (anyImportAppToBeCalled) {
+      runImportApps(opt, files);  
+    }
+    for (unsigned i = 0; i < files.size(); ++i) {
+      cout << files[i].fileID;
+      if (files[i].fileID == "failed")
+        exitCode = 1;
+      if (anyImportAppToBeCalled) {
+        if (files[i].jobID == "failed")
+          exitCode = 1;
+        cout << "\t" << files[i].jobID;
+      }
+      cout << endl;
+    }
     curlCleanup();
 
     LOG << "Exiting." << endl;
   } catch (exception &e) {
+    curlCleanup();
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
 
-  return 0;
+  return exitCode;
 }

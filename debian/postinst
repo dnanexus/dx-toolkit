@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+#DEBHELPER#
+
+if [ "$1" = "configure" ]; then
+  echo "*****"
+  echo "***** Please source /etc/profile.d/dnanexus.environment (or make"
+  echo "***** sure your shell does so) before using the DNAnexus tools."
+  echo "*****"
+fi

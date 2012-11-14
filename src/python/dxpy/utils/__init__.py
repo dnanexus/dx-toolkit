@@ -2,7 +2,8 @@
 Utilities shared by dxpy modules.
 '''
 
-import os, sys, collections, concurrent.futures, signal, traceback
+import os, sys, collections, concurrent.futures, signal, traceback, time
+import dateutil.parser
 from exec_utils import *
 
 def _force_quit(signum, frame):
@@ -49,6 +50,12 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4):
     simultaneously. Unlike concurrent.futures.Executor.map, prevents new tasks from starting while there are
     *max_active_tasks* or more unconsumed results.
     '''
+
+    # Debug fallback
+    #for _callable, args, kwargs in request_iterator:
+    #    yield _callable(*args, **kwargs)
+    #return
+
     future_deque = collections.deque()
     for i in range(max_active_tasks):
         try:
@@ -81,6 +88,26 @@ def string_buffer_length(buf):
     buf.seek(orig_pos)
     return buf_len
 
+def normalize_time_input(t):
+    ''' Converts inputs such as:
+       "2012-05-01"
+       "-5d"
+       1352863174
+    to milliseconds since epoch. See http://labix.org/python-dateutil and :meth:`normalize_timedelta`.
+    '''
+    error_msg = 'Error: Could not parse {t} as a timestamp or timedelta.  Expected a date format or an integer with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. "-10d" indicates 10 days ago'
+    if isinstance(t, basestring):
+        try:
+            t = normalize_timedelta(t)
+        except ValueError:
+            try:
+                t = int(time.mktime(dateutil.parser.parse(t).timetuple())*1000)
+            except ValueError:
+                raise ValueError(error_msg.format(t=t))
+    if t < 0:
+        t += int(time.time()*1000)
+    return t
+
 def normalize_timedelta(timedelta):
     '''
     Given a string like "1w" or "-5d", convert it to an integer in milliseconds.
@@ -93,5 +120,28 @@ def normalize_timedelta(timedelta):
         suffix_multipliers = {'s': 1000, 'm': 1000*60, 'h': 1000*60*60, 'd': 1000*60*60*24, 'w': 1000*60*60*24*7,
                               'M': 1000*60*60*24*30, 'y': 1000*60*60*24*365}
         if suffix not in suffix_multipliers:
-            raise ValueError("Unrecognized timedelta "+str(timedelta))
+            raise ValueError()
         return int(t) * suffix_multipliers[suffix]
+
+# See http://stackoverflow.com/questions/4126348
+class OrderedDefaultdict(collections.OrderedDict):
+    def __init__(self, *args, **kwargs):
+        newdefault = None
+        newargs = ()
+        if args:
+            newdefault = args[0]
+            if not (newdefault is None or callable(newdefault)):
+                raise TypeError('first argument must be callable or None')
+            newargs = args[1:]
+        self.default_factory = newdefault
+        super(self.__class__, self).__init__(*newargs, **kwargs)
+
+    def __missing__ (self, key):
+        if self.default_factory is None:
+            raise KeyError(key)
+        self[key] = value = self.default_factory()
+        return value
+
+    def __reduce__(self):
+        args = self.default_factory if self.default_factory else tuple()
+        return type(self), args, None, None, self.items()

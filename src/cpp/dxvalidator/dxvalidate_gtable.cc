@@ -72,6 +72,46 @@ bool GTableValidator::fetchHead(const string &source_id) {
   return true;
 }
 
+bool GTableValidator::validateData() {
+  cerr << "Total rows " << numRows << endl;
+
+  setRowValidator();
+  if (! rowV->isReady()) {
+    delete rowV;
+    return false;
+  }
+  
+  table.startLinearQuery(queryColumns);
+  int64_t offset = 0;
+  int count = 0;
+  
+  JSON data;
+  try {
+    while (table.getNextChunk(data)) {
+      for (int i = 0; i < data.size(); i++) {
+        msg->setRowIndex(offset + i);
+        if (! rowV->validateRow(data[i])) {
+          delete rowV;
+          return false;
+        }
+      }
+      
+      offset += data.size();
+      count ++;
+      if ( (count % 10) == 0)  cerr << offset << "\n";
+    }
+    
+    rowV->finalValidate();
+    table.stopLinearQuery();
+  } catch(DXError &e) {
+    delete rowV;
+    return msg->setDXError(e.msg, "GTABLE_FETCH_FAIL");
+  }
+  
+  delete rowV;
+  return true;
+}
+
 void GTableValidator::Validate(const string &source_id) {
   if (! fetchHead(source_id)) return;
   if (! validateTypes()) return;

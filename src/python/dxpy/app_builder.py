@@ -20,6 +20,9 @@ import dxpy
 
 NUM_CORES = multiprocessing.cpu_count()
 
+DX_TOOLKIT_PKGS = ['dx-toolkit', 'dx-toolkit-beta', 'dx-toolkit-unstable']
+DX_TOOLKIT_GIT_URLS = ["git@github.com:dnanexus/dx-toolkit.git"]
+
 class AppletBuilderException(Exception):
     """
     This exception is raised by the methods in this module when app or applet
@@ -109,11 +112,17 @@ def upload_resources(src_dir, project=None):
     else:
         return None
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, dx_toolkit_autodep=True):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
     """
     Creates a new applet object.
 
-    :param dx_toolkit_autodep: What type of dx-toolkit dependency to inject if none is present. True for apt package, "git" for HEAD of dx-toolkit master branch, "preprod" for a semi-frozen release of dx-toolkit, or False for no dependency.
+    :param project: ID of container in which to create the applet.
+    :type project: str, or None to use whatever is specified in dxapp.json
+    :param override_folder: folder name for the resulting applet which, if specified, overrides that given in dxapp.json
+    :type override_folder: str
+    :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
+    :type override_name: str
+    :param dx_toolkit_autodep: What type of dx-toolkit dependency to inject if none is present. "stable", "beta", or "unstable" for the corresponding apt packages; "git" for HEAD of dx-toolkit master branch; or False for no dependency.
     :type dx_toolkit_autodep: boolean or string
     """
     applet_spec = _get_applet_spec(src_dir)
@@ -130,18 +139,24 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         except:
             raise AppletBuilderException("Could not resolve applet name from specification or working directory")
 
+    if override_folder:
+        applet_spec['folder'] = override_folder
+
+    if override_name:
+        applet_spec['name'] = override_name
+
     if 'dxapi' not in applet_spec:
         applet_spec['dxapi'] = dxpy.API_VERSION
 
-    if check_name_collisions:
+    if check_name_collisions and not dry_run:
         logging.debug("Searching for applets with name " + applet_spec["name"])
-        for result in dxpy.find_data_objects(classname="applet", properties={"name": applet_spec["name"]}, project=dest_project):
+        for result in dxpy.find_data_objects(classname="applet", name=applet_spec["name"], project=dest_project):
             if overwrite:
                 logging.info("Deleting applet %s" % (result['id']))
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             else:
-                raise AppletBuilderException("A applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
+                raise AppletBuilderException("An applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
 
     # -----
     # Override various fields from the pristine dxapp.json
@@ -154,7 +169,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 readme_filename = filename
                 break
         if readme_filename is None:
-            logging.warn("No description found; you should supply one in README.md")
+            logging.warn("No description found; please supply one in README.md")
         else:
             with open(os.path.join(src_dir, readme_filename)) as fh:
                 applet_spec['description'] = fh.read()
@@ -183,20 +198,19 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                           "url": "git@github.com:dnanexus/dx-toolkit.git",
                           "tag": "master",
                           "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
-    elif dx_toolkit_autodep == "preprod":
-        dx_toolkit_dep = {"name": "dx-toolkit",
-                          "package_manager": "git",
-                          "url": "git@github.com:dnanexus/dx-toolkit.git",
-                          "tag": "cv_20120926",
-                          "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
-    else:
+    elif dx_toolkit_autodep == "stable":
         dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
+    elif dx_toolkit_autodep == "beta":
+        dx_toolkit_dep = {"name": "dx-toolkit-beta", "package_manager": "apt"}
+    elif dx_toolkit_autodep == "unstable":
+        dx_toolkit_dep = {"name": "dx-toolkit-unstable", "package_manager": "apt"}
+    elif dx_toolkit_autodep:
+        raise AppletBuilderException("dx_toolkit_autodep must be one of 'stable', 'beta', 'unstable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
+
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
-        dx_toolkit_dep_found = False
-        for dep in applet_spec["runSpec"]["execDepends"]:
-            if dep.get('name') == 'dx-toolkit' or dep.get('url') == "git@github.com:dnanexus/dx-toolkit.git":
-                dx_toolkit_dep_found = True
+        dx_toolkit_dep_found = any(dep.get('name') in DX_TOOLKIT_PKGS or dep.get('url') in DX_TOOLKIT_GIT_URLS
+                                   for dep in applet_spec["runSpec"]["execDepends"])
         if not dx_toolkit_dep_found:
             applet_spec["runSpec"]["execDepends"].append(dx_toolkit_dep)
             if dx_toolkit_autodep == "git":
@@ -217,9 +231,15 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     # -----
     # Now actually create the applet
 
+    if dry_run:
+        print "Would create the following applet:"
+        print json.dumps(applet_spec, indent=2)
+        print "*** DRY-RUN-- no applet was created ***"
+        return
+
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 
-    properties = {"name": applet_spec["name"]}
+    properties = {}
     if "title" in applet_spec:
         properties["title"] = applet_spec["title"]
     if "summary" in applet_spec:

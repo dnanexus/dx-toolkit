@@ -1,12 +1,19 @@
+ifndef DESTDIR
+	export DESTDIR=/opt/dnanexus
+endif
+ifndef PREFIX
+	export PREFIX=/
+endif
+
 all:
 	mkdir -pv build
 	cd build && cmake ..
-	make -C build
+	$(MAKE) -C build
 
 clean:
 	rm -rvf build
 
 install: all
-	cp -v build/contigset2fasta $(DNANEXUS_HOME)/bin
+	install -v build/contigset2fasta $(DESTDIR)/$(PREFIX)/bin
 
-.PHONY: all
+.PHONY: all clean install

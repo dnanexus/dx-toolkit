@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import os, sys, unittest, json, tempfile, filecmp
+
+import os, unittest, tempfile, filecmp
 
 import dxpy
 from dxpy.exceptions import *

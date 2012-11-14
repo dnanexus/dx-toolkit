@@ -37,7 +37,7 @@ boost::mutex instantaneousBytesMutex;
 // it takes roughly 30sec to reach queue size = 5000 on my computer.
 // Unfortunately, standard C++ does not allow time resolution
 // smaller than seconds, so we need to set it to some higher value
-// (like ~30sec) to mitigate rounding effects.
+// (like ~30sec) to mitigate rounding effect.
 const size_t MAX_QUEUE_SIZE = 5000;
 
 void Chunk::read() {
@@ -186,7 +186,7 @@ void Chunk::upload() {
   if (curl == NULL) {
     throw runtime_error("An error occurred when initializing the HTTP connection");
   }
-  
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()));
   // Internal CURL progressmeter must be disabled if we provide our own callback
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0));
   // Install the callback function

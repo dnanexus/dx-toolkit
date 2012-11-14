@@ -17,6 +17,7 @@ public:
 
   bool help();
   bool version();
+  bool env();
   void printHelp(char * programName);
   void validate();
 
@@ -42,6 +43,13 @@ public:
   bool progress;
   bool verbose;
   bool waitOnClose;
+  
+  // Import flags
+  bool reads;
+  bool pairedReads;
+  bool mappings;
+  bool variants;
+  std::string refGenome;
 
 private:
 

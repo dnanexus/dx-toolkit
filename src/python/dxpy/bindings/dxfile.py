@@ -198,9 +198,36 @@ class DXFile(DXDataObject):
         is a no-op if the file is open for writing.
 
         '''
+        orig_pos = self._pos
         self._pos = offset
-        self._write_buf = StringIO.StringIO()
-        self._request_iterator, self._response_iterator = None, None
+
+        in_buf = False
+        orig_buf_pos = self._read_buf.tell()
+        if offset < orig_pos:
+            if orig_buf_pos > orig_pos - offset:
+                # offset is less than original position but within the buffer
+                in_buf = True
+        else:
+            buf_len = dxpy.utils.string_buffer_length(self._read_buf)
+            if buf_len - orig_buf_pos > offset - orig_pos:
+                # offset is greater than original position but within the buffer
+                in_buf = True
+
+        if in_buf: # offset is within the buffer
+            self._read_buf.seek(orig_buf_pos - orig_pos + offset)
+        else: # offset is outside the buffer - reset buffer and queues. This is the failsafe behavior
+            self._read_buf = StringIO.StringIO()
+            # TODO: if the offset is within the next response(s), don't throw out the queues
+            self._request_iterator, self._response_iterator = None, None
+
+    def tell(self):
+        '''
+        Returns the current position of the file read cursor.
+
+        Warning: Because of buffering semantics, this value will **not** be accurate when using the line iterator form
+        (`for line in file`).
+        '''
+        return self._pos
 
     def flush(self, multithread=True, **kwargs):
         '''
@@ -420,6 +447,7 @@ class DXFile(DXDataObject):
             orig_buf_pos = buf.tell()
             orig_file_pos = self._pos
             buf.seek(0, os.SEEK_END)
+            self._pos += buf_remaining_bytes
             while self._pos < orig_file_pos + length:
                 remaining_len = orig_file_pos + length - self._pos
                 content = self._next_response_content()

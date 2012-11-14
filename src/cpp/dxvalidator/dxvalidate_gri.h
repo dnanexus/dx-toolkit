@@ -2,46 +2,23 @@
 #define DX_GRI_VALIDATE_H
 
 #include "dxvalidate_gtable.h"
+#include "dxvalidate_contigset.h"
 
 namespace dx {
-  class GriValidator : public GTableValidator {
-    private: 
-      bool hasGenomicIndex();
-    
+  class GriColumnsHandler : public ColumnsHandler {
     protected:
-      virtual bool validateTypes();
-      virtual bool validateDetails();
-  };
-
-  class GriDataValidator {
-    private:
-      vector<bool> chr_valid;
-      vector<string> chrCols, loCols, hiCols;
-      DXFile flatFile;
-      
-      bool initFlatFile(const JSON &details);
-
-    protected:
-      int chrIndex;
-      bool hasFlat, hasOffset;
-
-      ValidateInfo *msg;
-      vector<int64_t> offsets, sizes;
-      map<string,int> indices;
+      // Gri can have many other columns besides chr, hi, low
+      virtual bool isRecognized() { return true; }
 
     public:
-      GriDataValidator(ValidateInfo *m);
-      void AddGri(const string &chr, const string &lo, const string &hi);
-      bool HasFlat() { return hasFlat; }
-
-      bool FetchContigSets(const string &source_id); 
-      bool FetchSeq(int64_t pos, char *buffer, int bufSize);
-      bool ValidateGri(const string &chr, int64_t lo, int64_t hi, int k);
+      // Add chr, lo, and hi as required columns with proper types
+      void Init();
   };
 
-  class GriErrorMsg : public GTableErrorMsg {
+  class GriErrorMsg : public GTableErrorMsg, public ContigsetErrorMsg {
     public:
-      GriErrorMsg() {              
+      GriErrorMsg() : GTableErrorMsg(), ContigsetErrorMsg(true) {
+        // Add gri specific error and warning messages
         errorMsg["TYPE_NOT_GRI"] = "Object is not a gri type";
         errorMsg["CONTIGSET_MISSING"] = "'Details' of this object does not contain 'original_contigset'";
         errorMsg["CONTIGSET_INVALID"] = "In object details, 'original_contigset' is not a valid DNAnexus link to a contigset object";
@@ -54,6 +31,43 @@ namespace dx {
         
         warningMsg["CHR_INVALID"] = "In some row, such as the {1} one, {2} does not match any contig name";
       }
+  };
+
+  // Gri row validator
+  class GriRowValidator : public GTableRowValidator {
+    private:
+      vector<bool> chr_valid;
+      vector<string> chrCols, loCols, hiCols;
+      
+    protected:
+      int chrIndex;
+      ContigSetReader *cReader;
+
+      void addGri(const string &chr, const string &lo, const string &hi);
+
+      // Validator whether or not chr, lo, and hi following gri type spec
+      bool validateGri(const string &chr, int64_t lo, int64_t hi, int k);
+
+    public:
+      GriRowValidator(const string &contigset_id, ValidateInfo *m);
+      virtual ~GriRowValidator() { delete cReader; }
+      
+      virtual bool validateRow(const JSON &row) { return (ready && validateGri(row[0].get<string>(), int64_t(row[1]), int64_t(row[2]), 0)); }
+      virtual bool finalValidate() { return true; }
+  };
+
+  class GriValidator : public GTableValidator {
+    private:
+      // Return whether or not a object has genomic range index
+      bool hasGenomicIndex();
+
+    protected:
+      virtual void setRowValidator() { rowV = new GriRowValidator(details["original_contigset"]["$dnanexus_link"].get<string>(), msg); }
+
+    protected:
+      virtual bool validateTypes();
+      virtual bool validateColumns();
+      virtual bool validateDetails();
   };
 };
 

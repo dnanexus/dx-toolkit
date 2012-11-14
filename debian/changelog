@@ -1,0 +1,69 @@
+dx-toolkit (0.0.22-dnanexus.1) precise; urgency=low
+
+  * Add scripts dx-spans-to-bed, dx-genes-to-{gff,gtf}.
+
+  * Unified definition of sentinel values for GTables.
+
+  * Additional search methods dxpy.find_one_*.
+
+  * Improved options for selecting CAs.
+
+  * 'dx select' supports --level | --public | --name
+
+  * 'dx find jobs' supports --trees | --origin-jobs | --all-jobs
+
+  * Install sample application code.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 13 Nov 2012 11:09:51 -0800
+
+dx-toolkit (0.0.20-dnanexus.1) precise; urgency=low
+
+  * Add 'dx-bed-to-spans' to import BED files.
+
+  * 'dx-build-app' can build apps remotely with --remote.
+
+  * 'dx-build-applet --destination' sets destination folder and name.
+
+  * 'dx-mappings-to-sam' correctly handles multiple read groups.
+
+  * LIST permission is no longer supported by client bindings/tools.
+
+  * Job creation supports instance type requests.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Oct 2012 10:47:03 -0700
+
+dx-toolkit (0.0.19-dnanexus.2) precise; urgency=low
+
+  * Introduce Conflicts for -beta and -unstable packages.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 10 Oct 2012 16:56:03 -0700
+
+dx-toolkit (0.0.19-dnanexus.1) precise; urgency=low
+
+  * 0.0.19 release.
+
+ -- Phil Sung <support@dnanexus.com>  Tue, 09 Oct 2012 11:38:42 -0700
+
+dx-toolkit (0.0.18-dnanexus.1) precise; urgency=low
+
+  * 0.0.18 release.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 08 Oct 2012 15:54:28 -0700
+
+dx-toolkit (0.0.17-dnanexus.1) precise; urgency=low
+
+  * 0.0.17 release.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 08 Oct 2012 11:06:55 -0700
+
+dx-toolkit (0.0.14-dnanexus.2) precise; urgency=low
+
+  * Debian build system unification.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 03 Oct 2012 14:46:57 -0700
+
+dx-toolkit (0.0.14-dnanexus.1) precise; urgency=low
+
+  * 0.0.14 release.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 02 Oct 2012 11:00:18 -0700

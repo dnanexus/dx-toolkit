@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import os, sys, unittest, json, tempfile, filecmp, subprocess, re, csv
+import os, unittest, json, tempfile, subprocess, csv
 
 def run(command):
     # print "Running", command
@@ -39,7 +39,7 @@ class TestDXClient(unittest.TestCase):
             filename = folder_name
             run(u"echo xyzzt > {tf}".format(tf=local_filename))
             fileid = run(u"dx upload {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
-            self.assertEqual(fileid, run(u"dx ls '../{f}/{f}' -i".format(f=filename)))
+            self.assertEqual(fileid, run(u"dx ls '../{f}/{f}' --brief".format(f=filename)))
         run(u'dx pwd')
         run(u"dx cd ..")
         run(u'dx pwd')
@@ -75,7 +75,7 @@ class TestDXClient(unittest.TestCase):
 
         run(u"dx new record -o :foo --verbose")
         record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --properties foo=bar --tags onetag twotag --types foo --details '{\"hello\": \"world\"}'").strip()
-        self.assertEqual(record_id, run(u"dx ls :foo2 -i").strip())
+        self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
 
         # describe
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))

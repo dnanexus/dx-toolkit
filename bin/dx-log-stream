@@ -21,6 +21,11 @@ except Exception as e:
     print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
     sys.exit(1)
 
-for line in sys.stdin:
+while True:
+    line = sys.stdin.readline()
+    if line == '':
+        break
+    if len(line) > 8192:
+        line = line[:8192] + '... [truncated]'
     # print "Logging line:", line.rstrip("\n"), "to log handler w/level", args.level, "prefix", args.prefix
     log_function(args.prefix + line.rstrip("\n"))

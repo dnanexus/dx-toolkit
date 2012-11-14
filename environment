@@ -10,10 +10,21 @@ while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 
 export DNANEXUS_HOME="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-export PATH="${DNANEXUS_HOME}/bin:$PATH"
-export PYTHONPATH="${DNANEXUS_HOME}/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
-export PERL5LIB="${DNANEXUS_HOME}/lib/perl:$PERL5LIB"
-export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
+# Detect system installation of dx-toolkit
+if [ "$DNANEXUS_HOME" == "/etc/profile.d" ]; then
+
+  export DNANEXUS_HOME="/usr/share/dnanexus"
+  # Private Python packages. We really ought not pollute PYTHONPATH with these though.
+  export PYTHONPATH="/usr/share/dnanexus/lib/python2.7/site-packages:$PYTHONPATH"
+
+else
+
+  export PATH="${DNANEXUS_HOME}/bin:$PATH"
+  export PYTHONPATH="${DNANEXUS_HOME}/share/dnanexus/lib/python2.7/site-packages:${DNANEXUS_HOME}/lib/python:$PYTHONPATH"
+  export PERL5LIB="${DNANEXUS_HOME}/lib/perl5:$PERL5LIB"
+  export CLASSPATH="${DNANEXUS_HOME}/lib/java/*:${CLASSPATH}"
+
+fi
 
 # Note: The default I/O stream encoding in Python 2.7 (as configured on ubuntu) is ascii, not UTF-8 or the system locale
 # encoding. We reset it here to avoid having to set it for every I/O operation explicitly.
