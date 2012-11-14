@@ -101,7 +101,7 @@ def normalize_time_input(t):
             t = normalize_timedelta(t)
         except ValueError:
             try:
-                t = int(time.mktime(dateutil.parser.parse(t, fuzzy=False).timetuple())*1000)
+                t = int(time.mktime(dateutil.parser.parse(t).timetuple())*1000)
             except:
                 raise ValueError(error_msg)
     if t < 0:
