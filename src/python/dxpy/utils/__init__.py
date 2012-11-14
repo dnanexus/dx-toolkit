@@ -95,15 +95,15 @@ def normalize_time_input(t):
        1352863174
     to milliseconds since epoch. See http://labix.org/python-dateutil and :meth:`normalize_timedelta`.
     '''
-    error_msg = 'Error: Could not parse {t} as a timestamp or timedelta.  Expected a date format or an integer with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. "-10d" indicates 10 days ago'.format(t=t)
+    error_msg = 'Error: Could not parse {t} as a timestamp or timedelta.  Expected a date format or an integer with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. "-10d" indicates 10 days ago'
     if isinstance(t, basestring):
         try:
             t = normalize_timedelta(t)
         except ValueError:
             try:
                 t = int(time.mktime(dateutil.parser.parse(t).timetuple())*1000)
-            except:
-                raise ValueError(error_msg)
+            except ValueError:
+                raise ValueError(error_msg.format(t=t))
     if t < 0:
         t += int(time.time()*1000)
     return t
