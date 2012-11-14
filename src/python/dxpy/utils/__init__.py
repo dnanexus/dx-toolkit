@@ -2,7 +2,8 @@
 Utilities shared by dxpy modules.
 '''
 
-import os, sys, collections, concurrent.futures, signal, traceback
+import os, sys, collections, concurrent.futures, signal, traceback, time
+import dateutil.parser
 from exec_utils import *
 
 def _force_quit(signum, frame):
@@ -87,12 +88,31 @@ def string_buffer_length(buf):
     buf.seek(orig_pos)
     return buf_len
 
+def normalize_time_input(t):
+    ''' Converts inputs such as:
+       "2012-05-01"
+       "-5d"
+       1352863174
+    to milliseconds since epoch. See http://labix.org/python-dateutil and :meth:`normalize_timedelta`.
+    '''
+    error_msg = 'Error: Could not parse {t} as a timestamp or timedelta.  Expected a date format or an integer with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. "-10d" indicates 10 days ago'.format(t=t)
+    if isinstance(t, basestring):
+        try:
+            t = normalize_timedelta(t)
+        except ValueError:
+            try:
+                t = int(time.mktime(dateutil.parser.parse(t, fuzzy=False).timetuple())*1000)
+            except:
+                raise ValueError(error_msg)
+    if t < 0:
+        t += int(time.time()*1000)
+    return t
+
 def normalize_timedelta(timedelta):
     '''
     Given a string like "1w" or "-5d", convert it to an integer in milliseconds.
     Note: not related to the datetime timedelta class.
     '''
-    error_msg = "Error: Could not parse \"" + str(timedelta) + "\" as a timestamp or timedelta.  Expected either an integer with no suffix or with a single-letter suffix: s=seconds, m=minutes, h=hours, d=days, w=weeks, M=months, y=years, e.g. \"-10d\" indicates 10 days ago"
     try:
         return int(timedelta)
     except ValueError:
@@ -100,11 +120,8 @@ def normalize_timedelta(timedelta):
         suffix_multipliers = {'s': 1000, 'm': 1000*60, 'h': 1000*60*60, 'd': 1000*60*60*24, 'w': 1000*60*60*24*7,
                               'M': 1000*60*60*24*30, 'y': 1000*60*60*24*365}
         if suffix not in suffix_multipliers:
-            raise ValueError(error_msg)
-        try:
-            return int(t) * suffix_multipliers[suffix]
-        except ValueError:
-            raise ValueError(error_msg)
+            raise ValueError()
+        return int(t) * suffix_multipliers[suffix]
 
 # See http://stackoverflow.com/questions/4126348
 class OrderedDefaultdict(collections.OrderedDict):
