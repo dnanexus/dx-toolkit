@@ -10,9 +10,6 @@ import dxpy
 from dxpy.bindings import *
 import time
 
-def _now():
-    return int(time.time()*1000)
-
 def _find(api_method, query, limit, return_handler, **kwargs):
     ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its
     output. Used by the methods below.
@@ -160,35 +157,15 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
-            if isinstance(modified_after, basestring):
-                modified_after = dxpy.utils.normalize_timedelta(modified_after)
-            if modified_after >= 0:
-                query["modified"]["after"] = modified_after
-            else:
-                query["modified"]["after"] = _now() + modified_after
+            query["modified"]["after"] = dxpy.utils.normalize_time_input(modified_after)
         if modified_before is not None:
-            if isinstance(modified_before, basestring):
-                modified_before = dxpy.utils.normalize_timedelta(modified_before)
-            if modified_before >= 0:
-                query["modified"]["before"] = modified_before
-            else:
-                query["modified"]["before"] = _now() + modified_before
+            query["modified"]["before"] = dxpy.utils.normalize_time_input(modified_before)
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
-            if isinstance(created_after, basestring):
-                created_after = dxpy.utils.normalize_timedelta(created_after)
-            if created_after >= 0:
-                query["created"]["after"] = created_after
-            else:
-                query["created"]["after"] = _now() + created_after
+            query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
-            if isinstance(created_before, basestring):
-                created_before = dxpy.utils.normalize_timedelta(created_before)
-            if created_before >= 0:
-                query["created"]["before"] = created_before
-            else:
-                query["created"]["before"] = _now() + created_before
+            query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
     if describe is not None:
         query["describe"] = describe
     if level is not None:
@@ -269,19 +246,9 @@ def find_jobs(launched_by=None, executable=None, project=None,
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
-            if isinstance(created_after, basestring):
-                created_after = dxpy.utils.normalize_timedelta(created_after)
-            if created_after >= 0:
-                query["created"]["after"] = created_after
-            else:
-                query["created"]["after"] = _now() + created_after
+            query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
-            if isinstance(created_before, basestring):
-                created_before = dxpy.utils.normalize_timedelta(created_before)
-            if created_before >= 0:
-                query["created"]["before"] = created_before
-            else:
-                query["created"]["before"] = _now() + created_before
+            query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
     query["describe"] = describe
     if name is not None:
         if name_mode == 'exact':
@@ -426,31 +393,15 @@ def find_apps(name=None, name_mode='exact', category=None,
     if modified_after is not None or modified_before is not None:
         query["modified"] = {}
         if modified_after is not None:
-            if isinstance(modified_after, basestring):
-                modified_after = dxpy.utils.normalize_timedelta(modified_after)
-            if modified_after >= 0:
-                query["modified"]["after"] = modified_after
-            else:
-                query["modified"]["after"] = _now() + modified_after
+            query["modified"]["after"] = dxpy.utils.normalize_time_input(modified_after)
         if modified_before is not None:
-            if isinstance(modified_before, basestring):
-                modified_before = dxpy.utils.normalize_timedelta(modified_before)
-            if modified_before >= 0:
-                query["modified"]["before"] = modified_before
-            else:
-                query["modified"]["before"] = _now() + modified_before
+            query["modified"]["before"] = dxpy.utils.normalize_time_input(modified_before)
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
-            if created_after >= 0:
-                query["created"]["after"] = created_after
-            else:
-                query["created"]["after"] = _now() + created_after
+            query["created"]["after"] = dxpy.utils.normalize_time_input(created_after)
         if created_before is not None:
-            if created_before >= 0:
-                query["created"]["before"] = created_before
-            else:
-                query["created"]["before"] = _now() + created_before
+            query["created"]["before"] = dxpy.utils.normalize_time_input(created_before)
     if describe is not None:
         query["describe"] = describe
     if limit is not None:

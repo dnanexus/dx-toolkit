@@ -97,7 +97,8 @@ private:
   int64_t row_buffer_maxsize_;
 
   void reset_buffer_();
-  
+  void reset();
+
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
   // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
@@ -127,7 +128,17 @@ public:
   {
     reset_buffer_();
   }
-
+  
+  /**
+   * Creates a %DXGTable handler for the specified File object.
+   *
+   * @param dxid GTable ID.
+   * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
+   */
+  DXGTable(const char *dxid, const char *proj=NULL) {
+    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
+  }
+ 
   /**
    * Copy constructor.
    */
@@ -148,6 +159,20 @@ public:
   {
     setIDs(dxid, proj);
   }
+  
+  /**
+   * Creates a %DXGTable handler for the specified remote GTable.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  DXGTable(const dx::JSON &dxlink)
+    : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
+  {
+    setIDs(dxlink);
+  }
+
 
   /**
    * Assignment operator.
@@ -190,8 +215,26 @@ public:
    * @param dxid Remote object ID of the remote GTable to be accessed
    * @param proj Project ID of the remote GTable to be accessed.
    */
-  void setIDs(const std::string &dxid, const std::string &proj="default");
+  void setIDs(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID);
+  
+  /**
+   * Sets the remote object ID associated with the remote GTable handler. If the handler had rows
+   * queued up in the internal buffer, they are flushed.
+   *
+   * @param dxid Remote object ID of the remote GTable to be accessed
+   * @param proj ID of the project in which to access the GTable (if NULL, then default workspace will be used).
+   */
+  void setIDs(const char *dxid, const char *proj = NULL);
 
+  /**
+   * Sets the remote object ID associated with the remote GTable handler. If the handler had rows
+   * queued up in the internal buffer, they are flushed.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  void setIDs(const dx::JSON &dxlink);
   /**
    * Creates a new remote GTable and sets the object ID.
    *

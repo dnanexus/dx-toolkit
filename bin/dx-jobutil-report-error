@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+import json
+import argparse
+import os
+
+parser = argparse.ArgumentParser(description='Creates job_error.json, a JSON file to include the error type and message for the running job.  There are two types of errors you may report: 1) AppError (the default) for recognized actionable errors, and 2) AppInternalError for unexpected application errors.')
+parser.add_argument('message', help='Error message for the job')
+parser.add_argument('type', choices=['AppInternalError', 'AppError'], help='Error type', nargs='?', default='AppError')
+args = parser.parse_args()
+
+value = None
+
+error_hash = {
+    "error": {
+        "type": args.type,
+        "message": args.message
+        }
+    }
+
+with open('job_error.json', 'w') as error_file:
+    error_file.write(json.dumps(error_hash, indent=4) + '\n')
+
+parser.exit(1, 'Exiting with nonzero exit code to report error\n')

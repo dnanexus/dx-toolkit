@@ -19,7 +19,7 @@ _test_harness_jobs = {}
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, name=None, instance_type=None, **kwargs):
+def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -29,6 +29,8 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, **kwargs):
     :type name: string
     :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
     :type instance_type: string or dict
+    :param depends_on: List of DXJob objects or strings of job IDs representing jobs that must finish before this job should start running
+    :type depends_on: list
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -52,7 +54,7 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, **kwargs):
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name, name, instance_type, **kwargs)
+    dxjob.new(fn_input, fn_name, name, instance_type, depends_on, **kwargs)
     return dxjob
 
 class DXJob(DXObject):
@@ -67,7 +69,7 @@ class DXJob(DXObject):
         if dxid is not None:
             self.set_id(dxid)
 
-    def new(self, fn_input, fn_name, name=None, instance_type=None, **kwargs):
+    def new(self, fn_input, fn_name, name=None, instance_type=None, depends_on=None, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -77,6 +79,8 @@ class DXJob(DXObject):
         :type name: string
         :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
+        :param depends_on: List of DXJob objects or strings of job IDs representing jobs that must finish before this job should start running
+        :type depends_on: list
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job
@@ -103,6 +107,20 @@ class DXJob(DXObject):
                     req_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
                 else:
                     raise DXError('Expected instance_type field to be either a string or a dict')
+            if depends_on is not None:
+                req_input["dependsOn"] = []
+                if isinstance(depends_on, list):
+                    for item in depends_on:
+                        if isinstance(item, DXJob):
+                            if item.get_id() is None:
+                                raise DXError('A dxpy.DXJob object given in depends_on does not have a job ID set')
+                            req_input["dependsOn"].append(item.get_id())
+                        elif isinstance(item, basestring):
+                            req_input['dependsOn'].append(item)
+                        else:
+                            raise DXError('Expected elements of depends_on to only be either dxpy.DXJob objects or strings')
+                else:
+                    raise DXError('Expected depends_on field to be a list')                    
             resp = dxpy.api.jobNew(req_input, **kwargs)
             self.set_id(resp["id"])
         else:
@@ -182,6 +200,17 @@ class DXJob(DXObject):
         Terminates the associated job.
         '''
         dxpy.api.jobTerminate(self._dxid, **kwargs)
+
+    def get_output_ref(self, field):
+        '''
+        :param field: Output field name of this job
+        :type field: string
+
+        Returns a dict containing a valid job-based object reference
+        to refer to an output of this job.
+        '''
+
+        return {"job": self._dxid, "field": field}
 
     def _get_state(self, **kwargs):
         '''

@@ -36,15 +36,34 @@ class DXRecord: public DXDataObject {
   // Record-specific functions
 
   DXRecord() { }
+  
+  /**
+   * Creates a new %DXRecord handler for the specified remote record object.
+   *
+   * @param dxid Record ID.
+   * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
+   */
+  DXRecord(const char *dxid, const char *proj=NULL) {
+    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
+  }
 
   /**
    * Creates a new %DXRecord handler for the specified remote record object.
    *
    * @param dxid Record ID.
-   * @param proj Project in which to access the object.
+   * @param proj ID of the project in which to access the object.
    */
   DXRecord(const std::string &dxid,
 	   const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+
+  /**
+   * Creates a new %DXRecord handler for the specified remote record object.
+   *
+   * @param dxlink A JSON representing a <a
+   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+   */
+  DXRecord(const dx::JSON &dxlink) { setIDs(dxlink); }
 
   /**
    * Creates a new remote record object. The handler is updated with the object ID.

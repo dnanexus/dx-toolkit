@@ -154,6 +154,8 @@ from dxpy.utils.resolver import *
 from dxpy.utils.completer import *
 from dxpy.utils.describe import *
 from dxpy.cli.parsers import *
+from dxpy.utils import OrderedDefaultdict
+from dxpy.cli.exec_io import *
 
 # Loading other variables used for pretty-printing
 if "LESS" in os.environ:
@@ -413,6 +415,9 @@ def pick_and_set_project(args):
     except BaseException as details:
         parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
     any_results = False
+    if not args.public and args.level == "CONTRIBUTE":
+        print ''
+        print fill("Note: Use \"dx select --level VIEW\" or \"dx select --public\" to select from projects for which you only have VIEW permissions.")
     while True:
         results = []
         for i in range(10):
@@ -437,7 +442,10 @@ def pick_and_set_project(args):
             default = None
 
         print ""
-        print "Available projects:"
+        if args.public:
+            print "Available public projects:"
+        else:
+            print "Available projects ({level} or higher):".format(level=args.level)
         choice = try_call(pick,
                           map(lambda result:
                                   result['describe']['name'] + ' (' + result['level'] + ')',
@@ -1036,6 +1044,8 @@ def describe(args):
     # First, if it looks like a hash id, do that.
     json_input = {}
     json_input["properties"] = True
+    if args.name and (args.verbose or args.details or args.json):
+        parser.exit(1, fill('Cannot request --name in addition to one of --verbose, --details, or --json') + '\n')
     if args.details or args.verbose:
         json_input["details"] = True
     if is_data_obj_id(args.path):
@@ -1079,6 +1089,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1091,6 +1104,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1104,6 +1120,9 @@ def describe(args):
         for result in entity_results:
             if args.json:
                 json_output.append(result['describe'])
+            elif args.name:
+                print result['describe']['name']
+                return
             else:
                 print get_result_str()
                 print_desc(result['describe'])
@@ -1116,6 +1135,9 @@ def describe(args):
                 desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1127,6 +1149,9 @@ def describe(args):
             for result in dxpy.find_apps(name=args.path, describe=True):
                 if args.json:
                     json_output.append(result['describe'])
+                elif args.name:
+                    print result['describe']['name']
+                    return
                 else:
                     print get_result_str()
                     print_desc(result['describe'])
@@ -1139,6 +1164,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1153,6 +1181,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1167,6 +1198,9 @@ def describe(args):
                 found_match = True
                 if args.json:
                     json_output.append(desc)
+                elif args.name:
+                    print desc['id']
+                    return
                 else:
                     print get_result_str()
                     print_desc(desc)
@@ -1183,7 +1217,7 @@ def describe(args):
             parser.exit(1, fill('No match found for ' + args.path) + '\n')
         else:
             print json.dumps(json_output[0], indent=4)
-    elif not found_match:
+    elif not found_match and not args.name:
         print "No matches found for " + args.path
 
 def new_project(args):
@@ -1540,6 +1574,8 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
         filename = args.output
         if filename is None:
             filename = entity_result['describe']['name'].replace('/', '%2F')
+        elif os.path.isdir(filename):
+            filename += entity_result['describe']['name'].replace('/', '%2F')
 
     if use_stdout:
         try:
@@ -2102,16 +2138,6 @@ def uninstall(args):
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
-def get_exec_inputs(inputs):
-    required_inputs = []
-    optional_inputs = []
-    for input_spec in inputs:
-        if "default" in input_spec or ("optional" in input_spec and input_spec["optional"] == True):
-            optional_inputs.append(input_spec)
-        else:
-            required_inputs.append(input_spec)
-    return required_inputs, optional_inputs
-
 def parse_bool(string):
     if 'true'.startswith(string.lower()) or string == '1':
         return True
@@ -2229,14 +2255,14 @@ def get_input_single(param_desc):
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
-def get_input(input_hash, param):
-    if param['class'].startswith('array:'):
-        input_hash[param['name']] = get_input_array(param)
+def get_input(input_spec_atom):
+    if input_spec_atom['class'].startswith('array:'):
+        return get_input_array(input_spec_atom)
     else:
-        input_hash[param['name']] = get_input_single(param)
+        return get_input_single(input_spec_atom)
 
 def get_optional_inputs(input_hash, optional_inputs):
-    names = map(lambda spec: spec['name'], optional_inputs)
+    names = [spec['name'] for spec in optional_inputs]
     while True:
         print '\n' + fill('Select an optional parameter to set by its # (^D or empty string to finish):') + '\n'
         for i in range(len(optional_inputs)):
@@ -2265,95 +2291,179 @@ def get_optional_inputs(input_hash, optional_inputs):
             return
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
-        get_input(input_hash, optional_inputs[opt_num])
+        input_hash[optional_inputs[opt_num]['name']] = get_input(optional_inputs[opt_num])
 
-def add_input_to_json(inputs, input_json, input_specs):
-    '''
-    :param inputs: list of [name, value] lists or [name, job id, output name] lists
-    :param input_json: input JSON being built
-    :param input_specs: list of all input specs
-    '''
+class ExecutableInputs(object):
+    def __init__(self, executable, input_name_prefix=None):
+        self.executable = executable
+        self._desc = executable.describe()
+        self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc else None
+        self.required_inputs, self.optional_inputs, self.array_inputs = set(), set(), set()
+        self.input_name_prefix = input_name_prefix
 
-    if input_specs is not None:
-        # Input spec is provided.  Throw errors if name is not found,
-        # and respect the "array" class.
-        names = map(lambda spec: spec['name'], input_specs)
-        found_duplicates = False
-        for i in inputs:
-            isjobref = (len(i) == 3)
+        for spec_atom in self._desc.get('inputSpec', []):
+            if spec_atom['class'].startswith('array:'):
+                spec_atom['class'] = spec_atom['class'][6:]
+                self.array_inputs.add(spec_atom['name'])
+            self.input_spec[spec_atom['name']] = spec_atom
+            if "default" in spec_atom or spec_atom.get("optional") == True:
+                self.optional_inputs.add(spec_atom['name'])
+            else:
+                self.required_inputs.add(spec_atom['name'])
+
+        self.inputs = OrderedDefaultdict(list)
+
+    def update(self, new_inputs, strip_prefix=True):
+        if strip_prefix and self.input_name_prefix is not None:
+            for i in new_inputs:
+                if i.startswith(self.input_name_prefix):
+                    self.inputs[i[len(self.input_name_prefix):]] = new_inputs[i]
+        else:
+            self.inputs.update(new_inputs)
+
+    def add(self, input_name, input_value):
+        if self.input_name_prefix is not None:
+            if input_name.startswith(self.input_name_prefix):
+                input_name = input_name[len(self.input_name_prefix):]
+            else: # Skip inputs that don't start with prefix
+                return
+        try:
+            # Resolve "job-xxxx:output-name" syntax into a canonical job ref
+            job_id, field = split_unescaped(':', input_value)
+            if is_job_id(job_id):
+                input_value = {"job": job_id, "field": field}
+        except:
+            pass
+
+        if self.input_spec is None:
             try:
-                input_index = names.index(i[0])
-            except:
-                parser.exit(1, fill('Input field called ' + i[0] + ' was not found in the input spec') + '\n')
-
-            input_class = input_specs[input_index]['class']
-            if input_class.startswith('array:'):
-                input_class = input_class[6:]
-                is_array = True
-            else:
-                is_array = False
-
-            if isjobref:
-                # Already validated that i[1] is a job ID
-                parsed = {"job": i[1], "field": i[2]}
-            else:
-                try:
-                    parsed = parse_input[input_class](i[1])
-                except BaseException as details:
-                    parser.exit(1, fill(unicode(details)) + '\n')
-
-            if i[0] not in input_json:
-                if is_array:
-                    input_json[i[0]] = [parsed]
+                parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
+                if type(parsed_input_value) in (collections.OrderedDict, list):
+                    input_value = parsed_input_value
                 else:
-                    input_json[i[0]] = parsed
-            elif is_array:
-                input_json[i[0]].append(parsed)
-            else:
-                parser.exit(1, fill('Error: Found duplicate input field names for an input that does not expect an array of inputs') + '\n')
-    else:
-        # No input spec.  Make them all lists and then un-list them if
-        # there's only one element at the end.  (Since arbitrary JSON
-        # is valid input.)
-        for i in inputs:
-            try:
-                parsed = json.loads(i[1])
-                if i[0] not in input_json:
-                    input_json[i[0]] = [parsed]
-                else:
-                    input_json[i[0]].append(parsed)
+                    raise Exception()
             except:
-                # Not valid JSON, so resolve it as a name
+                # Not recognized JSON (list or dict), so resolve it as a name
                 project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                              i[1],
+                                                              input_value,
                                                               expected='entity')
                 if entity_result is None:
-                    parser.exit(1, 'Could not resolve ' + i[1] + ' to a value or object ID')
-                if is_hashid(i[1]):
-                    entity_link = {'$dnanexus_link': entity_result['id']}
+                    parser.exit(1, 'Could not resolve ' + input_value + ' to a value or object ID')
+                if is_hashid(input_value):
+                    input_value = {'$dnanexus_link': entity_result['id']}
                 else:
-                    entity_link = {"$dnanexus_link": {"project": entity_result['describe']['project'],
+                    input_value = {"$dnanexus_link": {"project": entity_result['describe']['project'],
                                                       "id": entity_result['id']}}
-                if i[0] not in input_json:
-                    input_json[i[0]] = [entity_link]
-                else:
-                    input_json[i[0]].append(entity_link)
-        for key in input_json:
-            if len(input_json[key]) == 1:
-                input_json[key] = input_json[key][0]
+            self.inputs[input_name].append(input_value)
+        else:
+            # Input spec is provided.  Throw errors if name is not found, and respect the "array" class.
+            if input_name not in self.input_spec:
+                parser.exit(1, fill('Input field called ' + input_name + ' was not found in the input spec') + '\n')
 
-def run(args):
-    get_output_flag(args)
-    handler = None
-    desc = None
-    if args.alias is None:
-        app_desc = get_app_from_path(args.path)
+            input_value = try_call(parse_input[self.input_spec[input_name]['class']], input_value)
+
+            if input_name in self.array_inputs:
+                self.inputs[input_name].append(input_value)
+            else:
+                self.inputs[input_name] = input_value
+
+    def init_completer(self):
         try:
-            # Attempt to resolve name (and only look for applets)
-            project, folderpath, entity_results = resolve_existing_path(args.path,
+            import rlcompleter
+            readline.parse_and_bind("tab: complete")
+
+            readline.set_completer_delims("")
+
+            readline.write_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
+            readline.clear_history()
+            readline.set_completer()
+        except:
+            pass
+
+    def uninit_completer(self):
+        try:
+            readline.set_completer()
+            readline.clear_history()
+        except:
+            pass
+
+    def prompt_for_missing(self):
+        # If running from the command-line (not in the shell), bring up the tab-completer
+        self.init_completer()
+
+        # Select input interactively
+        no_prior_inputs = True if len(self.inputs) == 0 else False
+        for i in self.required_inputs:
+            if i not in self.inputs:
+                if len(self.inputs) == 0:
+                    print 'Entering interactive mode for input selection.'
+                self.inputs[i] = get_input(self.input_spec[i])
+        if no_prior_inputs and len(self.optional_inputs) > 0:
+            get_optional_inputs(self.inputs, [self.input_spec[i] for i in self.optional_inputs])
+
+        self.uninit_completer()
+
+    def update_from_args(self, args, parser):
+        if args.filename is not None:
+            try:
+                if args.filename == "-":
+                    data = sys.stdin.read()
+                else:
+                    with open(args.filename, 'r') as fd:
+                        data = fd.read()
+                self.update(json.loads(data, object_pairs_hook=collections.OrderedDict))
+            except Exception as e:
+                parser.exit(1, fill('Error while parsing input JSON file: %s' % unicode(e)) + '\n')
+
+        if args.input_json is not None:
+            try:
+                self.update(json.loads(args.input_json, object_pairs_hook=collections.OrderedDict))
+            except Exception as e:
+                parser.exit(1, fill('Error while parsing input JSON: %s' % unicode(e)) + '\n')
+
+        if args.input is not None:
+            for keyeqval in args.input:
+                try:
+                    name, value = split_unescaped('=', keyeqval)
+                except:
+                    parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input name>=<input value>\n')
+                self.add(name, value)
+
+        if self.input_spec is None:
+            for i in self.inputs:
+                if type(self.inputs[i]) == list and len(self.inputs[i]) == 1:
+                    self.inputs[i] = self.inputs[i][0]
+        
+        if sys.stdout.isatty():
+            self.prompt_for_missing()
+        elif not all(i in self.inputs for i in self.required_inputs):
+            parser.exit(1, fill('Some inputs are missing, and interactive mode is not available') + '\n')
+
+        # if self.required_input_specs is not None and (len(self.required_input_specs) > 0 or len(self.optional_input_specs) > 0):
+        #     if sys.stdout.isatty():
+        #         self.prompt_for_missing()
+        # elif self.required_input_specs is not None:
+        #     if not args.brief:
+        #         print fill('No input given, and applet/app takes in no inputs.  Skipping interactive mode for input selection.')
+        # else:
+        #     if not args.brief:
+        #         print fill('No input given, and applet has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
+
+def get_exec_or_workflow_handler(path, alias):
+    handler = None
+    if alias is None:
+        app_desc = get_app_from_path(path)
+        try:
+            # Look for applets and workflows
+            project, folderpath, entity_results = resolve_existing_path(path,
                                                                         expected='entity',
                                                                         ask_to_resolve=False,
-                                                                        expected_classes=['applet'])
+                                                                        expected_classes=['applet', 'record'])
+            def is_applet(i):
+                return (i['describe']['class'] == 'applet')
+            def is_workflow(i):
+                return ('pipeline' in i['describe']['types'])
+            entity_results = [i for i in entity_results if is_applet(i) or is_workflow(i)]
         except BaseException as details:
             if app_desc is None:
                 parser.exit(1, fill(unicode(details)) + '\n')
@@ -2361,119 +2471,38 @@ def run(args):
                 project, folderpath, entity_results = None, None, None
 
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
-            handler = dxpy.DXApplet(entity_results[0]['id'])
-            desc = entity_results[0]['describe']
+            handler = dxpy.get_handler(entity_results[0]['id'])
         elif entity_results is None and app_desc is not None:
             handler = dxpy.DXApp(dxid=app_desc['id'])
-            desc = app_desc
         elif entity_results is not None and app_desc is not None:
             if not sys.stdout.isatty():
-                parser.exit(1, 'Found multiple executables with the path ' + args.path + '\n')
-            print 'Found multiple executables with the path ' + args.path
-            choice = try_call(pick, map(lambda result: get_ls_l_desc(result['describe']),
-                                        entity_results) + ['app-' + app_desc['name'] + ', version ' + app_desc['version']])
+                parser.exit(1, 'Found multiple executables with the path ' + path + '\n')
+            print 'Found multiple executables with the path ' + path
+            choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
+            choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
+            choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
                 handler = dxpy.get_handler(entity_results[choice]['id'], project)
-                desc = entity_results[choice]['describe']
             else:
                 handler = dxpy.DXApp(dxid=app_desc['id'])
                 desc = app_desc
         else:
-            parser.exit(1, "No matches found for " + args.path + '\n')
+            parser.exit(1, "No matches found for " + path + '\n')
     else:
-        if args.path.startswith('app-'):
-            args.path = args.path[4:]
-        handler = dxpy.DXApp(name=args.path, alias=args.alias)
-        desc = handler.describe()
+        if path.startswith('app-'):
+            path = path[4:]
+        handler = dxpy.DXApp(name=path, alias=alias)
+    return handler
 
-    if args.folder is None:
-        dest_proj = dxpy.WORKSPACE_ID
-        if dest_proj is None:
-            parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
-        dest_path = os.environ.get('DX_CLI_WD', '/').decode('utf-8')
-    else:
-        dest_proj, dest_path, none = try_call(resolve_existing_path,
-                                              args.folder,
-                                              expected='folder')
+def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
+    exec_inputs = ExecutableInputs(executable, input_name_prefix=input_name_prefix)
 
-    input_json = {}
-    if 'inputSpec' in desc:
-        required_inputs, optional_inputs = get_exec_inputs(desc["inputSpec"])
-    elif 'inputs' in desc:
-        required_inputs, optional_inputs = get_exec_inputs(desc["inputs"])
-    else:
-        required_inputs, optional_inputs = None, None
+    if preset_inputs is not None:
+        exec_inputs.update(preset_inputs, strip_prefix=False)
 
-    if args.input_json is not None:
-        try:
-            input_json = json.loads(args.input_json)
-        except:
-            parser.exit(1, 'Error: input could not be parsed as JSON\n')
-    elif args.filename is not None:
-        try:
-            if args.filename == "-":
-                data = sys.stdin.read()
-            else:
-                fd = open(args.filename, 'r')
-                data = fd.read()
-                fd.close()
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
-        try:
-            input_json = json.loads(data)
-        except:
-            parser.exit(1, 'Error: file could not be parsed as JSON\n')
-    elif args.input is not None:
-        input_inputs = []
-        try:
-            for keyeqval in args.input:
-                name, value = split_unescaped('=', keyeqval)
-                val_substrings = split_unescaped(':', value)
-                if len(val_substrings) == 2 and is_job_id(val_substrings[0]):
-                    input_inputs.append([name, val_substrings[0], val_substrings[1]])
-                else:
-                    input_inputs.append([name, value])
-        except:
-            parser.exit(1, fill('An input was found that did not conform to the syntax') + '\n -i<input name>=<input value>\n')
-        add_input_to_json(input_inputs, input_json,
-                          (required_inputs + optional_inputs) if required_inputs is not None else None)
+    exec_inputs.update_from_args(args, parser)
 
-    elif required_inputs is not None and (len(required_inputs) > 0 or len(optional_inputs) > 0):
-        if sys.stdout.isatty():
-            print 'No input given.  Entering interactive mode for input selection.'
-            try:
-                # If running from the command-line (not in the shell),
-                # bring up the tab-completer
-                import rlcompleter
-                readline.parse_and_bind("tab: complete")
-
-                readline.set_completer_delims("")
-
-                readline.write_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
-                readline.clear_history()
-                readline.set_completer()
-            except:
-                pass
-
-            # Select input interactively
-            if len(required_inputs) > 0:
-                for param in required_inputs:
-                    get_input(input_json, param)
-            if len(optional_inputs) > 0:
-                get_optional_inputs(input_json, optional_inputs)
-
-            # Set no completer
-            try:
-                readline.set_completer()
-                readline.clear_history()
-            except:
-                pass
-    elif required_inputs is not None:
-        if not args.brief:
-            print fill('No input given, and applet/app takes in no inputs.  Skipping interactive mode for input selection.')
-    else:
-        if not args.brief:
-            print fill('No input given, and applet has no input specification.  Skipping interactive mode for input selection (no input parameters will be set).  To provide input parameters anyway, please specify them explicitly using one of the input flags.')
+    input_json = exec_inputs.inputs
 
     if not args.brief:
         print ''
@@ -2492,9 +2521,9 @@ def run(args):
             parser.exit(0)
 
     if not args.brief:
-        print fill("Calling " + handler.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
+        print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
-        dxjob = handler.run(input_json, project=dest_proj, folder=dest_path, name=args.name)
+        dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -2507,6 +2536,38 @@ def run(args):
             watch(watch_args)
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
+
+    return dxjob
+
+def run(args):
+    get_output_flag(args)
+    handler = get_exec_or_workflow_handler(args.path, args.alias)
+
+    if args.folder is None:
+        dest_proj = dxpy.WORKSPACE_ID
+        if dest_proj is None:
+            parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
+        dest_path = os.environ.get('DX_CLI_WD', '/').decode('utf-8')
+    else:
+        dest_proj, dest_path, none = try_call(resolve_existing_path,
+                                              args.folder,
+                                              expected='folder')
+
+    if isinstance(handler, dxpy.bindings.DXRecord): # Identified as a workflow in get_exec_or_workflow_handler()
+        print "Executing workflow", handler
+        workflow = handler.get_details()
+        if workflow['version'] != 2:
+            parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
+        launched_jobs = {stage['id']: None for stage in workflow['stages']}
+        for stage in workflow['stages']:
+            print "Processing stage", stage['key'], "(id", stage['id'] + ")"
+            inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
+            executable = dxpy.get_handler(stage['app']['id'])
+            launched_jobs[stage['id']] = run_one(args, executable, dest_proj, dest_path,
+                                                 preset_inputs=inputs_from_stage,
+                                                 input_name_prefix=str(stage['key'])+".")
+    else:
+        run_one(args, handler, dest_proj, dest_path)
 
 def terminate(args):
     for jobid in args.jobid:
@@ -2595,18 +2656,18 @@ def watch(args):
     filter_stream = None
     if args.get_stdout:
         filter_stream = 'stdout'
-        args.no_subjobs = True
+        args.tree = False
     elif args.get_stderr:
         filter_stream = 'stderr'
-        args.no_subjobs = True
+        args.tree = False
 
     while True:
         try:
             ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, filter_stream=filter_stream)
-            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": not args.no_subjobs})['streamingId']
+            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": args.tree})['streamingId']
             ws.set_dx_streaming_id(streaming_id)
             if filter_stream is None:
-                print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, ("" if args.no_subjobs else " and sub-jobs"))
+                print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
             try:
                 ws.connect()
             except KeyboardInterrupt:
@@ -2903,6 +2964,7 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
 parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
+parser_describe.add_argument('--name', help='Only print the name of the data object on one line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24), action='store_true')
 parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 parser_describe.set_defaults(func=describe)
@@ -2928,7 +2990,7 @@ parser_download = subparsers.add_parser('download', help='Download a file',
                                         prog='dx download',
                                         parents=[env_args])
 parser_download.add_argument('path', help='Data object ID or name to access')
-parser_download.add_argument('-o', '--output', help='local filename to be saved ("-" indicates stdout output); if not supplied, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_download.add_argument('-o', '--output', help='local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
@@ -3020,47 +3082,42 @@ parser_map['uninstall'] = (parser_uninstall, DXAppCompleter(installed=True))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_run = subparsers.add_parser('run', help='Run an applet or app', description=(fill('Run an applet or app.  If no inputs are specified, an interactive mode for selecting inputs will be launched.') + '''
+parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
 
-SPECIFYING INPUTS
-
-''' + fill('Other than the interactive mode, inputs can be specified by listing each field on the command line, or by giving the entire JSON string (where keys=input field names, values=field values).  Use the empty hash "{}" to signify no inputs.  Inputs cannot be specified by a mix of the different input flags.') + '\n\n  BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by name and value.', initial_indent='  ', subsequent_indent='  ') + '''
+  1) inputs given in the interactive mode
+  2) inputs listed individually with the -i/--input command line argument
+  3) JSON given in --input-json
+  4) JSON given in --input-json-file
+  5) any inputs set in a workflow (if running a workflow).''' + '\n\nSPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD() + 'name' + ENDC() + ' and ' + BOLD() + 'value' + ENDC() + '.', initial_indent='  ', subsequent_indent='  ') + '''
 
     Syntax :  -i<input name>=<input value>
-    Example:  dx run foo -inum=34 -istr=foo -igtables=reads1 -igtables=reads2
+    Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
 
-''' + fill('The example above runs an applet called "foo" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the applet MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill('Job-based object references can also be provided using the <job id>:<output name> syntax', initial_indent='  ', subsequent_indent='  ') + '''
+''' + fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the app MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ') + '\n\n' + fill(BOLD() + 'Job-based object references' + ENDC() + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
 
     Syntax :  -i<input name>=<job id>:<output name>
     Example:  dx run mapper -ireads=job-B0fbxvGY00j9jqGQvj8Q0001:reads
-''' + '\n\n  FULL JSON\n\n' + fill('If providing the full input JSON, it can be done using one of the following flags:', initial_indent='  ', subsequent_indent='  ') + '''
+''' + '\n\n' + fill('When executing ' + BOLD() + 'workflows' + ENDC() + ', stage inputs can be specified using the <stage key>.<input name>=<value> syntax:', initial_indent='  ', subsequent_indent='  ') + '''
 
-    1) -j/--input_json INPUT_JSON
-    2) -f/--input_json_file FILENAME
-
-'''),
+    Syntax :  -i<stage key>.<input name>=<input value>
+    Example:  dx run my_workflow -i1.reads="My reads file"
+''' + '\n\nSPECIFYING JSON INPUT\n\n' + fill('JSON input can be used directly using the -j/--input-json or -f/--input-json-file flags.  When running an ' + BOLD() + 'app' + ENDC() + ' or ' + BOLD() + 'applet' + ENDC() + ', the keys should be the input field names for the app or applet.  When running a ' + BOLD() + 'workflow' + ENDC() + ', the keys should be the input field names for each stage, prefixed by the stage key and a period, e.g. "1.reads" for the "reads" input of stage "1".', initial_indent='  ', subsequent_indent='  ') + '\n'),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[stdout_args, env_args])
 parser_run.add_argument('path', help='Name or ID of applet or app to run')
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
-parser_run.add_argument('--folder', help=fill('The project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--destination', '--dest', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
-parser_run_input_gp = parser_run.add_argument_group('Input arguments')
-parser_run_input = parser_run_input_gp.add_mutually_exclusive_group()
-parser_run_input.add_argument('-i', '--input', help='''An input to be added using "<input name>=<input value>"
-Examples:
-  -ichunkSize=250000     # Numerical input
-  -iname=\"hello world\"   # Quotes required for spaces
-  -ireads=reads_name     # Names will be resolved''', action='append')
-parser_run_input.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
-parser_run_input.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>=<input value>"', width_adjustment=-24), action='append')
+parser_run.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
+parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 parser_run.set_defaults(func=run, verbose=False)
-parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet'])]))
+parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
@@ -3069,7 +3126,7 @@ parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs
                                      parents=[env_args])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=9999999999)
-parser_watch.add_argument('--no-subjobs', help='Do not watch messages from subjobs', action='store_true')
+parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.set_defaults(func=watch)
@@ -3228,7 +3285,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish', description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  By default, waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
+parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish', description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
                                     prog='dx wait',
                                     parents=[env_args])
 parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+')

@@ -3,10 +3,12 @@ DXGTable Handler
 ****************
 """
 
-import os, sys, json, traceback
+import os, sys, json, traceback, math
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
+
+NULL = -math.pow(2, 31)
 
 # Number of rows to request at a time when reading.
 #
@@ -24,6 +26,10 @@ DEFAULT_TABLE_READ_ROW_BUFFER_SIZE = 40000
 # stringified buffer.
 DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE = 10000
 DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*48 # bytes
+
+# Use this value for creating 'null' values in gtables.  Will be interpreted as null downstream.
+# Available in apps as dxpy.NULL
+NULL = - (1 << 31)
 
 class DXGTable(DXDataObject):
     '''

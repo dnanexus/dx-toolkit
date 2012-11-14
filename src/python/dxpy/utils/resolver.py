@@ -33,6 +33,8 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
     '''
     for i in range(len(choices)):
         print str(i) + ') ' + choices[i]
+    if more_choices:
+        print 'm) More options not shown...'
     print ''
     if prompt is None:
         prompt = 'Pick a numbered choice'
@@ -281,6 +283,16 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     exist.  This method is primarily for parsing purposes.
 
     '''
+
+    try:
+        possible_hash = json.loads(path)
+        if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
+            if isinstance(possible_hash['$dnanexus_link'], basestring):
+                path = possible_hash['$dnanexus_link']
+            elif isinstance(possible_hash['$dnanexus_link'], dict) and isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring):
+                path = possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
+    except:
+        pass
 
     # Easy case: ":"
     if path == ':':

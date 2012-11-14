@@ -307,7 +307,12 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob', 'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created', 'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren', 'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet', 'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo']
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob',
+                         'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
+                         'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
+                         'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet',
+                         'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
+                         'startedRunning', 'stoppedRunning']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -351,6 +356,12 @@ def print_job_desc(desc):
         print_field('Output folder', desc['folder'])
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    if 'startedRunning' in desc:
+        print_field("Started running", datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime())
+    if 'stoppedRunning' in desc:
+        print_field("Stopped running", "{t} (Runtime: {rt})".format(
+            t=datetime.datetime.fromtimestamp(desc['stoppedRunning']/1000).ctime(),
+            rt=datetime.timedelta(milliseconds=desc['stoppedRunning']-desc['startedRunning'])))
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
@@ -460,8 +471,8 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False):
     string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
     string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
     if jobdesc['state'] == 'done':
-        string += " .. {enddate} ({duration})".format(
-            enddate=str(datetime.datetime.fromtimestamp(jobdesc['modified']/1000)),
-            duration=str(datetime.timedelta(milliseconds=jobdesc['modified']-jobdesc['created'])))
+        # TODO: Remove this check once all jobs are migrated to have these values
+        if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
+            string += " (Runtime: {r})".format(r=str(datetime.timedelta(milliseconds=jobdesc['stoppedRunning']-jobdesc['startedRunning'])))
 
     return string
