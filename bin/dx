@@ -2565,7 +2565,7 @@ def run(args):
             executable = dxpy.get_handler(stage['app']['id'])
             launched_jobs[stage['id']] = run_one(args, executable, dest_proj, dest_path,
                                                  preset_inputs=inputs_from_stage,
-                                                 input_name_prefix=stage['key']+".")
+                                                 input_name_prefix=str(stage['key'])+".")
     else:
         run_one(args, handler, dest_proj, dest_path)
 
