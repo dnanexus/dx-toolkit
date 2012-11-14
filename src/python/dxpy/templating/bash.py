@@ -43,9 +43,9 @@ To recover the original filenames, you can use the output of "dx describe "$vari
 
     if 'outputSpec' in app_json and len(app_json['outputSpec']) > 0:
         outputs_str = "\n" if (init_inputs_str != "" or dl_files_str != "") else ""
-        outputs_str += fill('''The following line(s) use the utility dx-job-util-add-output to format
+        outputs_str += fill('''The following line(s) use the utility dx-jobutil-add-output to format
 and add output variables to your job's output as appropriate for the output class.  Run
-\"dx-job-util-add-output -h\" for more information on what it does.''',
+\"dx-jobutil-add-output -h\" for more information on what it does.''',
                            initial_indent='# ', subsequent_indent='# ', width=80) + '\n\n'
         outputs_str += "\n".join(["dx-jobutil-add-output " + output_param['name'] + ' "$' + output_param['name'] + '" ' + get_output_fmt(output_param['class']) for output_param in app_json['outputSpec']])
 
