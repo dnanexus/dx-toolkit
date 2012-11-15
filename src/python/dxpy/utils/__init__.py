@@ -2,7 +2,7 @@
 Utilities shared by dxpy modules.
 '''
 
-import os, sys, collections, concurrent.futures, signal, traceback, time
+import os, sys, collections, concurrent.futures, signal, traceback, time, gc
 import dateutil.parser
 from exec_utils import *
 
@@ -80,6 +80,9 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4):
         except StopIteration:
             pass
         yield f.result()
+        del f # Free the future we just consumed now, instead of next
+              # time around the loop
+        gc.collect()
 
 def string_buffer_length(buf):
     orig_pos = buf.tell()
