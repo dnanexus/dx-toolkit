@@ -14,23 +14,22 @@ import os
 def load_app_resource(**kwargs):
     '''
     :param kwargs: keyword args for :func:`~dxpy.bindings.search.find_one_data_object`, with the exception of "project"
-    :raises: :exc:`~dxpy.exceptions.DXError` if "project" is given, if this is called with dxpy.JOB_ID not set, or if "DX_RESOURCES_ID" is not found in the environment variables
+    :raises: :exc:`~dxpy.exceptions.DXError` if "project" is given, if this is called with dxpy.JOB_ID not set, or if "DX_RESOURCES_ID" or "DX_PROJECT_CONTEXT_ID" is not found in the environment variables
     :returns: None if no matching object is found; otherwise returns a dxpy object handler for that class of object
 
-    Searches for a data object in the project cache container matching
-    the given keyword arguments.  If found, the object will be cloned
-    into the running job's workspace container, and the handler for it
-    will be returned.
+    Searches for a data object in the app resources container matching the given keyword arguments.  If found, the
+    object will be cloned into the running job's workspace container, and the handler for it will be returned. If the
+    app resources container ID is not found in DX_RESOURCES_ID, falls back to looking in the current project.
     '''
 
     if 'project' in kwargs:
         raise DXError('Unexpected kwarg: "project"')
     if dxpy.JOB_ID is None:
         raise DXError('Not called by a job')
-    if 'DX_RESOURCES_ID' not in os.environ:
-        raise DXError('App resources container ID could not be found in the environment variable DX_RESOURCES_ID')
+    if 'DX_RESOURCES_ID' not in os.environ and 'DX_PROJECT_CONTEXT_ID' not in os.environ:
+        raise DXError('App resources container ID could not be found')
 
-    kwargs['project'] = os.environ.get('DX_RESOURCES_ID')
+    kwargs['project'] = os.environ.get('DX_RESOURCES_ID', os.environ.get('DX_PROJECT_CONTEXT_ID'))
     kwargs['get_handler'] = True
 
     return find_one_data_object(**kwargs)
