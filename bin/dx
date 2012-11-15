@@ -789,7 +789,7 @@ def rmproject(args):
                 print fill('Unable to remove \":\": to remove the current project, use its name or ID')
                 had_error = True
                 continue
-        proj_id = resolve_container_id_or_name(substrings[0])
+        proj_id = try_call(resolve_container_id_or_name, substrings[0])
         if proj_id is None:
             print fill('Unable to remove \"' + project + '\": could not resolve to a project ID')
             had_error = True
