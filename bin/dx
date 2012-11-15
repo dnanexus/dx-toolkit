@@ -1915,10 +1915,18 @@ def find_jobs(args):
                         print key
                         print_keys(hash_of_keys[key])
 
+#                def iterate_sub_find_jobs_requests(origin_jobs):
+#                    for origin_job in origin_jobs:
+#                        yield dxpy.find_jobs, [], {'origin_job': origin_job, 'describe': {'io': include_io}}
+                
+#                sub_find_jobs_responses = dxpy.utils.response_iterator(request_iterator=iterate_sub_find_jobs_requests(origin_jobs),
+#                                                                       worker_pool=dxpy.utils.get_futures_threadpool(max_workers=8),
+#                                                                       max_active_tasks=12)
 
                 for origin_job in origin_jobs:
                     job_children = {} # job ID -> list of child job IDs
                     job_strings = collections.OrderedDict() # for summary or verbose
+#                    for subjob in sub_find_jobs_responses.next():
                     for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
                         job_descs[subjob['id']] = subjob['describe']
                         parent = subjob['describe']['parentJob']
