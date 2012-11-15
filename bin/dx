@@ -1915,7 +1915,8 @@ def find_jobs(args):
                         print key
                         print_keys(hash_of_keys[key])
 
-                for origin_job in origin_jobs: 
+
+                for origin_job in origin_jobs:
                     job_children = {} # job ID -> list of child job IDs
                     job_strings = collections.OrderedDict() # for summary or verbose
                     for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
@@ -2474,12 +2475,13 @@ def get_exec_or_workflow_handler(path, alias):
             handler = dxpy.get_handler(entity_results[0]['id'])
         elif entity_results is None and app_desc is not None:
             handler = dxpy.DXApp(dxid=app_desc['id'])
-        elif entity_results is not None and app_desc is not None:
+        elif entity_results is not None:
             if not sys.stdout.isatty():
                 parser.exit(1, 'Found multiple executables with the path ' + path + '\n')
             print 'Found multiple executables with the path ' + path
             choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
-            choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
+            if app_desc is not None:
+                choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
             choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
                 handler = dxpy.get_handler(entity_results[choice]['id'], project)
