@@ -6,6 +6,41 @@ import os, sys, collections, concurrent.futures, signal, traceback, time, gc
 import dateutil.parser
 from exec_utils import *
 
+
+# Monkeypatch ThreadPoolExecutor with relevant logic from the patch for
+# Python issue 16284. See:
+#
+#   <http://bugs.python.org/issue16284>
+#   <http://hg.python.org/cpython/rev/70cef0a160cf/>
+#
+# We may need to apply the relevant parts of the patches to
+# ProcessPoolExecutor and multiprocessing.Queue if we ever start using
+# those, too.
+def _non_leaky_worker(executor_reference, work_queue):
+    try:
+        while True:
+            try:
+                work_item = work_queue.get(block=True, timeout=0.1)
+            except concurrent.futures.thread.queue.Empty:
+                executor = executor_reference()
+                # Exit if:
+                #   - The interpreter is shutting down OR
+                #   - The executor that owns the worker has been collected OR
+                #   - The executor that owns the worker has been shutdown.
+                if concurrent.futures.thread._shutdown or executor is None or executor._shutdown:
+                    return
+                del executor
+            else:
+                work_item.run()
+                del work_item # <= free this item before the next
+                              #    work_queue.get call runs, rather than
+                              #    after
+    except BaseException:
+        concurrent.futures.thread._base.LOGGER.critical('Exception in worker', exc_info=True)
+
+concurrent.futures.thread._worker = _non_leaky_worker
+
+
 def _force_quit(signum, frame):
     traceback.print_stack(frame)
     os._exit(os.EX_IOERR)
