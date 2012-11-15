@@ -8,13 +8,13 @@ if sys.version_info < (2, 7):
 
 # Don't import, but use execfile.
 # Importing would trigger interpretation of the dxpy entry point, which can fail if deps are not installed.
-execfile('dxpy/toolkit_version.py')
+execfile(os.path.join(os.path.dirname(__file__), 'dxpy', 'toolkit_version.py'))
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
 # See Readme.md for details.
 scripts = []
-for module in os.listdir('dxpy/scripts'):
+for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'scripts')):
     if module == '__init__.py' or module[-3:] != '.py':
         continue
     module = module[:-3]
