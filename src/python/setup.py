@@ -6,6 +6,8 @@ from setuptools import setup, find_packages
 if sys.version_info < (2, 7):
     raise Exception("dxpy requires Python >= 2.7")
 
+from dxpy.toolkit_version import version
+
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
 # See Readme.md for details.
@@ -32,7 +34,7 @@ if os.name == 'nt':
 
 setup(
     name='dxpy',
-    version='0.1',
+    version=version,
     description='DNAnexus Platform API bindings for Python',
     author='Katherine Lai, Phil Sung, Andrey Kislyuk',
     author_email='klai@dnanexus.com, psung@dnanexus.com, akislyuk@dnanexus.com',
