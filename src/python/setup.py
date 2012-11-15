@@ -6,7 +6,9 @@ from setuptools import setup, find_packages
 if sys.version_info < (2, 7):
     raise Exception("dxpy requires Python >= 2.7")
 
-from dxpy.toolkit_version import version
+# Don't import, but use execfile.
+# Importing would trigger interpretation of the dxpy entry point, which can fail if deps are not installed.
+execfile('dxpy/toolkit_version.py')
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
