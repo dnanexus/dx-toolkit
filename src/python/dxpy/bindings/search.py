@@ -433,6 +433,7 @@ def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
     :type zero_ok: boolean
     :param more_ok: Specifies whether to raise an error on 2+ results for the search
     :type more_ok: boolean
+    
     Returns one data object that satisfies the supplied constraints. Supports all search constraint arguments supported
     by :meth:`find_data_objects()`. If *zero_ok* is set to False (default), returns None if there are no results,
     otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
@@ -446,6 +447,7 @@ def find_one_project(zero_ok=False, more_ok=True, **kwargs):
     :type zero_ok: boolean
     :param more_ok: Specifies whether to raise an error on 2+ results for the search
     :type more_ok: boolean
+    
     Returns one project that satisfies the supplied constraints. Supports all search constraint arguments supported
     by :meth:`find_projects()`. If *zero_ok* is set to False (default), returns None if there are no results,
     otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
@@ -459,6 +461,7 @@ def find_one_app(zero_ok=False, more_ok=True, **kwargs):
     :type zero_ok: boolean
     :param more_ok: Specifies whether to raise an error on 2+ results for the search
     :type more_ok: boolean
+    
     Returns one app that satisfies the supplied constraints. Supports all search constraint arguments supported
     by :meth:`find_apps()`. If *zero_ok* is set to False (default), returns None if there are no results,
     otherwise raises :class:`~dxpy.exceptions.DXSearchError`. If *more_ok* is set to False and more than one result is
