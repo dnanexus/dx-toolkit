@@ -22,7 +22,7 @@ ifeq ($(UNAME), MINGW32_NT-6.1)
 else
 	make -C build -f ../Makefile.static dist
 endif
-	
+
 install: all
 	install -v build/ua $(DESTDIR)/$(PREFIX)/bin
 

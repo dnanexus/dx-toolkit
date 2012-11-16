@@ -25,8 +25,8 @@ It has the following external dependencies:
   http://code.google.com/p/pythonfutures/
 
 
-Package Initialization
-----------------------
+Package Configuration
+---------------------
 
 .. automodule:: dxpy
    :members:
