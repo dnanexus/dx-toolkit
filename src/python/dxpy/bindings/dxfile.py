@@ -16,6 +16,10 @@ if dxpy.snappy_available:
 
 # TODO: adaptive buffer size
 DEFAULT_BUFFER_SIZE = 1024*1024*32
+if dxpy.JOB_ID:
+    # Increase HTTP request buffer sizes when we are running within the
+    # platform.
+    DEFAULT_BUFFER_SIZE = 1024*1024*128
 
 class DXFile(DXDataObject):
     '''
