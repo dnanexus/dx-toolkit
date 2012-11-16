@@ -5,7 +5,7 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-import datetime, json, math, sys
+import datetime, time, json, math, sys
 
 from dxpy.utils.printing import *
 
@@ -357,7 +357,11 @@ def print_job_desc(desc):
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     if 'startedRunning' in desc:
-        print_field("Started running", datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime())
+        if 'stoppedRunning' in desc:
+            print_field("Started running", datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime())
+        else:
+            print_field("Started running", "{t} (running for {rt})".format(t=datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime(),
+                rt=datetime.timedelta(milliseconds=int(time.time()*1000)-desc['startedRunning'])))
     if 'stoppedRunning' in desc:
         print_field("Stopped running", "{t} (Runtime: {rt})".format(
             t=datetime.datetime.fromtimestamp(desc['stoppedRunning']/1000).ctime(),
@@ -474,5 +478,7 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False):
         # TODO: Remove this check once all jobs are migrated to have these values
         if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
             string += " (Runtime: {r})".format(r=str(datetime.timedelta(milliseconds=jobdesc['stoppedRunning']-jobdesc['startedRunning'])))
+    elif jobdesc['state'] == 'running':
+        string += " (running for {rt})".format(rt=datetime.timedelta(milliseconds=int(time.time()*1000)-jobdesc['startedRunning']))
 
     return string

@@ -530,7 +530,7 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type,
   delete[] buf;
   localfile.close();
   if (!data_obj_fields.has("name")) {
-    dxfile.rename(filename);
+    dxfile.rename(getBaseName(filename));
   }
   dxfile.close(waitForClose);
   return dxfile;

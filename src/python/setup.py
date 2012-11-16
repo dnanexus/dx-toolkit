@@ -6,11 +6,15 @@ from setuptools import setup, find_packages
 if sys.version_info < (2, 7):
     raise Exception("dxpy requires Python >= 2.7")
 
+# Don't import, but use execfile.
+# Importing would trigger interpretation of the dxpy entry point, which can fail if deps are not installed.
+execfile(os.path.join(os.path.dirname(__file__), 'dxpy', 'toolkit_version.py'))
+
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
 # Replace underscores with dashes.
 # See Readme.md for details.
 scripts = []
-for module in os.listdir('dxpy/scripts'):
+for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'scripts')):
     if module == '__init__.py' or module[-3:] != '.py':
         continue
     module = module[:-3]
@@ -32,7 +36,7 @@ if os.name == 'nt':
 
 setup(
     name='dxpy',
-    version='0.1',
+    version=version,
     description='DNAnexus Platform API bindings for Python',
     author='Katherine Lai, Phil Sung, Andrey Kislyuk',
     author_email='klai@dnanexus.com, psung@dnanexus.com, akislyuk@dnanexus.com',

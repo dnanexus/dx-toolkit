@@ -789,7 +789,7 @@ def rmproject(args):
                 print fill('Unable to remove \":\": to remove the current project, use its name or ID')
                 had_error = True
                 continue
-        proj_id = resolve_container_id_or_name(substrings[0])
+        proj_id = try_call(resolve_container_id_or_name, substrings[0])
         if proj_id is None:
             print fill('Unable to remove \"' + project + '\": could not resolve to a project ID')
             had_error = True
@@ -1915,9 +1915,18 @@ def find_jobs(args):
                         print key
                         print_keys(hash_of_keys[key])
 
-                for origin_job in origin_jobs: 
+#                def iterate_sub_find_jobs_requests(origin_jobs):
+#                    for origin_job in origin_jobs:
+#                        yield dxpy.find_jobs, [], {'origin_job': origin_job, 'describe': {'io': include_io}}
+                
+#                sub_find_jobs_responses = dxpy.utils.response_iterator(request_iterator=iterate_sub_find_jobs_requests(origin_jobs),
+#                                                                       worker_pool=dxpy.utils.get_futures_threadpool(max_workers=8),
+#                                                                       max_active_tasks=12)
+
+                for origin_job in origin_jobs:
                     job_children = {} # job ID -> list of child job IDs
                     job_strings = collections.OrderedDict() # for summary or verbose
+#                    for subjob in sub_find_jobs_responses.next():
                     for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
                         job_descs[subjob['id']] = subjob['describe']
                         parent = subjob['describe']['parentJob']
@@ -2183,7 +2192,9 @@ def parse_input_or_jbor(in_class, value):
         return parse_input[in_class](value)
 
 def get_input_array(param_desc):
-    in_class = param_desc['class'][6:]
+    in_class = param_desc['class']
+    if in_class.startswith("array:"):
+        in_class = in_class[6:]
     typespec = param_desc.get('type', None)
     input_array = []
     print '\n' + fill('Enter list of inputs (^D or empty string to finish) of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False) + ':') + '\n'
@@ -2255,50 +2266,12 @@ def get_input_single(param_desc):
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
-def get_input(input_spec_atom):
-    if input_spec_atom['class'].startswith('array:'):
-        return get_input_array(input_spec_atom)
-    else:
-        return get_input_single(input_spec_atom)
-
-def get_optional_inputs(input_hash, optional_inputs):
-    names = [spec['name'] for spec in optional_inputs]
-    while True:
-        print '\n' + fill('Select an optional parameter to set by its # (^D or empty string to finish):') + '\n'
-        for i in range(len(optional_inputs)):
-            opt_str = ' [' + str(i) + '] ' + \
-                get_io_desc(optional_inputs[i], show_opt=False)
-            if optional_inputs[i]['name'] in input_hash:
-                opt_str += ' [=' + GREEN()
-                opt_str += json.dumps(input_hash[optional_inputs[i]['name']])
-                opt_str += ENDC() + ']'
-            print opt_str
-        print ""
-        try:
-            while True:
-                selected = raw_input('Optional param #: ')
-                if selected == '':
-                    return
-                try:
-                    opt_num = int(selected)
-                    if opt_num < 0 or opt_num >= len(optional_inputs):
-                        raise ValueError('Error: Selection is out of range')
-                    break
-                except ValueError as details:
-                    print unicode(details)
-                    continue
-        except EOFError:
-            return
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
-        input_hash[optional_inputs[opt_num]['name']] = get_input(optional_inputs[opt_num])
-
 class ExecutableInputs(object):
     def __init__(self, executable, input_name_prefix=None):
         self.executable = executable
         self._desc = executable.describe()
         self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc else None
-        self.required_inputs, self.optional_inputs, self.array_inputs = set(), set(), set()
+        self.required_inputs, self.optional_inputs, self.array_inputs = [], [], set()
         self.input_name_prefix = input_name_prefix
 
         for spec_atom in self._desc.get('inputSpec', []):
@@ -2307,9 +2280,9 @@ class ExecutableInputs(object):
                 self.array_inputs.add(spec_atom['name'])
             self.input_spec[spec_atom['name']] = spec_atom
             if "default" in spec_atom or spec_atom.get("optional") == True:
-                self.optional_inputs.add(spec_atom['name'])
+                self.optional_inputs.append(spec_atom['name'])
             else:
-                self.required_inputs.add(spec_atom['name'])
+                self.required_inputs.append(spec_atom['name'])
 
         self.inputs = OrderedDefaultdict(list)
 
@@ -2397,11 +2370,48 @@ class ExecutableInputs(object):
             if i not in self.inputs:
                 if len(self.inputs) == 0:
                     print 'Entering interactive mode for input selection.'
-                self.inputs[i] = get_input(self.input_spec[i])
+                self.inputs[i] = self.prompt_for_input(i)
         if no_prior_inputs and len(self.optional_inputs) > 0:
-            get_optional_inputs(self.inputs, [self.input_spec[i] for i in self.optional_inputs])
+            self.prompt_for_optional_inputs()
 
         self.uninit_completer()
+
+    def prompt_for_input(self, input_name):
+        if input_name in self.array_inputs:
+            return get_input_array(self.input_spec[input_name])
+        else:
+            return get_input_single(self.input_spec[input_name])
+
+    def prompt_for_optional_inputs(self):
+        while True:
+            print '\n' + fill('Select an optional parameter to set by its # (^D or empty string to finish):') + '\n'
+            for i in range(len(self.optional_inputs)):
+                opt_str = ' [' + str(i) + '] ' + \
+                    get_io_desc(self.input_spec[self.optional_inputs[i]], show_opt=False)
+                if self.optional_inputs[i] in self.inputs:
+                    opt_str += ' [=' + GREEN()
+                    opt_str += json.dumps(self.inputs[self.optional_inputs[i]])
+                    opt_str += ENDC() + ']'
+                print opt_str
+            print ""
+            try:
+                while True:
+                    selected = raw_input('Optional param #: ')
+                    if selected == '':
+                        return
+                    try:
+                        opt_num = int(selected)
+                        if opt_num < 0 or opt_num >= len(self.optional_inputs):
+                            raise ValueError('Error: Selection is out of range')
+                        break
+                    except ValueError as details:
+                        print unicode(details)
+                        continue
+            except EOFError:
+                return
+            except BaseException as details:
+                parser.exit(1, fill(unicode(details)) + '\n')
+            self.inputs[self.optional_inputs[opt_num]] = self.prompt_for_input(self.optional_inputs[opt_num])
 
     def update_from_args(self, args, parser):
         if args.filename is not None:
@@ -2474,12 +2484,13 @@ def get_exec_or_workflow_handler(path, alias):
             handler = dxpy.get_handler(entity_results[0]['id'])
         elif entity_results is None and app_desc is not None:
             handler = dxpy.DXApp(dxid=app_desc['id'])
-        elif entity_results is not None and app_desc is not None:
+        elif entity_results is not None:
             if not sys.stdout.isatty():
                 parser.exit(1, 'Found multiple executables with the path ' + path + '\n')
             print 'Found multiple executables with the path ' + path
             choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
-            choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
+            if app_desc is not None:
+                choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
             choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
                 handler = dxpy.get_handler(entity_results[choice]['id'], project)
@@ -2720,7 +2731,7 @@ class SetEMTestEnv(argparse.Action):
 
 # TODO: Add a subcommand for clearing the cache
 
-parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v1.0.0' + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, upload data, navigate, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
+parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
                                  formatter_class=argparse.RawTextHelpFormatter,
                                  parents=[env_args],
                                  usage='%(prog)s [-h] [--version] command ...')
