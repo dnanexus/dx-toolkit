@@ -428,6 +428,7 @@ class DXGTable(DXDataObject):
                         request_data = self._string_row_buf.getvalue()
                         self._string_row_buf = None
                         self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
+                        del request_data
         else:
             dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
 
@@ -649,6 +650,7 @@ class DXGTable(DXDataObject):
             if future.exception() != None:
                 raise future.exception()
             self._http_threadpool_futures.remove(future)
+            del future
 
         future = self._http_threadpool.submit(dxpy.api.gtableAddRows, *args, **kwargs)
         self._http_threadpool_futures.add(future)
