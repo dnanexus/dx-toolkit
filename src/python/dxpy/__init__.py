@@ -156,7 +156,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     if _DEBUG:
         from repr import Repr
-        print >>sys.stderr, method, url, Repr().repr(data)
+        print >>sys.stderr, method, url, "=>", Repr().repr(data)
 
     if auth is True:
         auth = AUTH_HELPER
@@ -186,6 +186,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
         try:
             response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
                                         auth=auth, config=config, **kwargs)
+
+            if _DEBUG:
+                print >>sys.stderr, method, url, "<=", response.status_code, Repr().repr(response.content)
 
             # If HTTP code that is not 200 (OK) is received and the content is
             # JSON, parse it and throw the appropriate error.  Otherwise,
