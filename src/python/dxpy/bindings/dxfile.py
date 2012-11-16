@@ -5,7 +5,7 @@ DXFile Handler
 This remote file handler is a Python file-like object.
 '''
 
-import os, logging
+import os, logging, traceback
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *

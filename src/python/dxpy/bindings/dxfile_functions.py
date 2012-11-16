@@ -80,12 +80,30 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
         download_dxfile("file-xxxx", "localfilename.fastq")
 
     '''
+
+    def print_progress(bytes_downloaded, file_size):
+        num_ticks = 60
+
+        effective_file_size = file_size or 1
+        if bytes_downloaded > effective_file_size:
+            effective_file_size = bytes_downloaded
+
+        ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
+        percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
+
+        fmt = "[{0}{1}] Downloaded {2}{3} bytes ({4}%)"
+        sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes_downloaded, " of %d" % (file_size,) if file_size else "", percent))
+        sys.stderr.flush()
+        sys.stderr.write("\r")
+        sys.stderr.flush()
+
     file_size = None
-    num_ticks = 60
     bytes = 0
 
     mode = 'ab' if append else 'wb'
     with DXFile(dxid, read_buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
+        if show_progress:
+            print_progress(0, None)
         while True:
             file_content = dxfile.read(chunksize, **kwargs)
             if file_size is None:
@@ -93,15 +111,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
 
             if show_progress:
                 bytes += len(file_content)
-                if file_size > 0:
-                    ticks = int(round((bytes / float(file_size)) * num_ticks))
-                    percent = int(round((bytes / float(file_size)) * 100))
-
-                    fmt = "[{0}{1}] Downloaded ({2} of {3} bytes) {4}%"
-                    sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
-                    sys.stderr.flush()
-                    sys.stderr.write("\r")
-                    sys.stderr.flush()
+                print_progress(bytes, file_size)
 
             if len(file_content) == 0:
                 if show_progress:
