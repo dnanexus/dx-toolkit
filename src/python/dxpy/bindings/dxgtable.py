@@ -25,7 +25,7 @@ DEFAULT_TABLE_READ_ROW_BUFFER_SIZE = 40000
 # stringifying, but the larger the row buffer, the more we could exceed the max byte size of the
 # stringified buffer.
 DEFAULT_TABLE_WRITE_ROW_BUFFER_SIZE = 10000
-DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*48 # bytes
+DEFAULT_TABLE_WRITE_REQUEST_SIZE = 1024*1024*64 # bytes
 
 # Use this value for creating 'null' values in gtables.  Will be interpreted as null downstream.
 # Available in apps as dxpy.NULL
