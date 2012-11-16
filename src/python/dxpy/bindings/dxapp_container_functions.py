@@ -20,6 +20,13 @@ def load_app_resource(**kwargs):
     Searches for a data object in the app resources container matching the given keyword arguments.  If found, the
     object will be cloned into the running job's workspace container, and the handler for it will be returned. If the
     app resources container ID is not found in DX_RESOURCES_ID, falls back to looking in the current project.
+
+    Example::
+
+        @dxpy.entry_point('main')
+        def main(*args, **kwargs):
+            x = load_app_resource(name="Indexed genome", classname='file')
+            dxpy.download_dxfile(x)
     '''
 
     if 'project' in kwargs:
@@ -44,6 +51,15 @@ def load_from_cache(**kwargs):
     the given keyword arguments.  If found, the object will be cloned
     into the running job's workspace container, and the handler for it
     will be returned.
+
+    Example::
+
+        @dxpy.entry_point('main')
+        def main(*args, **kwargs):
+            x = load_from_cache(name="Indexed genome", classname='file')
+            if x is None:
+                x = compute_result(*args)
+                save_to_cache(x)
     '''
 
     if 'project' in kwargs:
@@ -70,6 +86,15 @@ def save_to_cache(dxobject):
     :raises: :exc:`~dxpy.exceptions.DXError` if this is called with dxpy.JOB_ID not set, or if "DX_PROJECT_CACHE_ID" is not found in the environment variables
 
     Clones the given object to the project cache.
+
+    Example::
+
+        @dxpy.entry_point('main')
+        def main(*args, **kwargs):
+            x = load_from_cache(name="Indexed genome", classname='file')
+            if x is None:
+                x = compute_result(*args)
+                save_to_cache(x)
     '''
 
     if dxpy.JOB_ID is None:
