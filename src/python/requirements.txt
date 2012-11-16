@@ -1,4 +1,4 @@
-requests==0.12.1
+requests==0.14.2
 futures==2.1.2
 ctypes-snappy==1.02
 ws4py==0.2.2
