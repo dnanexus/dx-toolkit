@@ -277,7 +277,32 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
+
+        def write_request(data):
+            if multithread:
+                self._async_upload_part_request(data, index=self._cur_part, **kwargs)
+            else:
+                self.upload_part(data, self._cur_part, **kwargs)
+            self._cur_part += 1
+
+        if self._write_buf.tell() == 0 and self._write_bufsize == len(string):
+            # In the special case of a write that is the same size as
+            # our write buffer size, and no unflushed data in the
+            # buffer, just directly dispatch the write and bypass the
+            # write buffer.
+            #
+            # This saves a buffer copy, which is especially helpful if
+            # 'string' is actually mmap'd from a file.
+            #
+            # TODO: an additional optimization could be made to allow
+            # the last request from an mmap'd upload to take this path
+            # too (in general it won't because it's not of length
+            # _write_bufsize). This is probably inconsequential though.
+            write_request(string)
+            return
+
         remaining_space = self._write_bufsize - self._write_buf.tell()
+
         if len(string) <= remaining_space:
             self._write_buf.write(string)
         else:
@@ -285,15 +310,10 @@ class DXFile(DXDataObject):
 
             data = self._write_buf.getvalue()
             self._write_buf = StringIO.StringIO()
+            write_request(data)
 
-            if multithread:
-                self._async_upload_part_request(data, index=self._cur_part, **kwargs)
-            else:
-                self.upload_part(data, self._cur_part, **kwargs)
-
-            self._cur_part += 1
-
-            # TODO: check if repeat string splitting is bad for performance when len(string) >> _write_bufsize
+            # TODO: check if repeat string splitting is bad for
+            # performance when len(string) >> _write_bufsize
             self.write(string[remaining_space:], **kwargs)
 
     def closed(self, **kwargs):

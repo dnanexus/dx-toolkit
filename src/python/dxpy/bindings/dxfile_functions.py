@@ -6,7 +6,7 @@ The following helper functions are useful shortcuts for interacting with File ob
 
 '''
 
-import os
+import os, math, mmap
 from dxpy.bindings import *
 from math import floor
 
@@ -161,12 +161,18 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     '''
     fd = file if filename is None else open(filename, 'rb')
 
-    # Prevent exceeding 10K parts limit
     try:
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-    buffer_size = max(DEFAULT_BUFFER_SIZE, file_size/9999)
+    # Raise buffer size (for files exceeding DEFAULT_BUFFER_SIZE * 10k
+    # bytes) in order to prevent us from exceeding 10k parts limit.
+    min_buffer_size = file_size / 10000 + 1
+    if file_size >= 0 and hasattr(fd, "fileno"):
+        # For mmap'd uploads the buffer size additionally must be a
+        # multiple of the ALLOCATIONGRANULARITY.
+        min_buffer_size = int(math.ceil(min_buffer_size / mmap.ALLOCATIONGRANULARITY)) * mmap.ALLOCATIONGRANULARITY
+    buffer_size = max(DEFAULT_BUFFER_SIZE, min_buffer_size)
 
     if use_existing_dxfile:
         dxfile = use_existing_dxfile
@@ -178,24 +184,44 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
     num_ticks = 60
-    bytes = 0
+    offset = 0
+
+    def read(num_bytes):
+        """
+        Returns a string or mmap'd data containing the next num_bytes of
+        the file, or up to the end if there are fewer than num_bytes
+        left.
+        """
+        # In order to do the mmap, fd has to point to a real file that
+        # has a fileno and a known size. If this is not the case, fall
+        # back to doing an actual read from the file.
+        if file_size == 0 or not hasattr(fd, "fileno"):
+            return fd.read(dxfile._write_bufsize)
+
+        bytes_available = max(file_size - offset, 0)
+        if bytes_available == 0:
+            return ""
+
+        return mmap.mmap(fd.fileno(), min(dxfile._write_bufsize, bytes_available), mmap.MAP_SHARED, mmap.PROT_READ, offset=offset)
 
     while True:
-        buf = fd.read(dxfile._write_bufsize)
+        buf = read(dxfile._write_bufsize)
+        offset += len(buf)
+
         if len(buf) == 0:
             if show_progress:
                 sys.stderr.write("\n")
             break
+
         dxfile.write(buf, **remaining_kwargs)
 
         if show_progress:
-            bytes += len(buf)
             if file_size > 0:
-                ticks = int(round((bytes / float(file_size)) * num_ticks))
-                percent = int(round((bytes / float(file_size)) * 100))
+                ticks = int(round((offset / float(file_size)) * num_ticks))
+                percent = int(round((offset / float(file_size)) * 100))
 
                 fmt = "[{0}{1}] Uploaded ({2} of {3} bytes) {4}%"
-                sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes, file_size, percent))
+                sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), offset, file_size, percent))
                 sys.stderr.flush()
                 sys.stderr.write("\r")
                 sys.stderr.flush()
