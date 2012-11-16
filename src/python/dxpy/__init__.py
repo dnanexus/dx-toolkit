@@ -41,6 +41,38 @@ The bindings are configured by the following environment variables:
    Indicates either the project context of a running job, or the default
    project to use for a user accessing the platform from the outside.
 
+The following fields can be used to read the current configuration
+values:
+
+.. py:data:: APISERVER_PROTOCOL
+
+   Protocol being used to access the DNAnexus API server. Either
+   ``http`` or ``https`` (usually ``https``).
+
+.. py:data:: APISERVER_HOST
+
+   Hostname of the DNAnexus API server.
+
+.. py:data:: APISERVER_PORT
+
+   Port of the DNAnexus API server.
+
+.. py:data:: JOB_ID
+
+   Indicates the ID of the currently running job, or None if we are not
+   in an Execution Environment.
+
+.. py:data:: WORKSPACE_ID
+
+   Indicates the temporary workspace ID of the currently running job, or
+   None if we are not in an Execution Environment.
+
+.. py:data:: PROJECT_CONTEXT_ID
+
+   Indicates either the project context of a running job, if there is
+   one, or the default project that is being used, for users accessing
+   the platform from the outside.
+
 The :func:`dxpy.DXHTTPRequest` function uses the ``DX_SECURITY_CONTEXT``
 and ``DX_APISERVER_*`` variables to select an API server and provide
 appropriate authentication headers to it. (Note: all methods in the
