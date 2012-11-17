@@ -30,7 +30,8 @@ if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
         if 'libedit' in readline.__doc__:
             print >>sys.stderr, 'Warning: incompatible readline module detected (libedit), tab completion disabled'
     except ImportError:
-        print >>sys.stderr, 'Warning: readline module is not available, tab completion disabled'
+        if os.name != 'nt':
+            print >>sys.stderr, 'Warning: readline module is not available, tab completion disabled'
 
 state = {"interactive": False,
          "colors": "auto",
