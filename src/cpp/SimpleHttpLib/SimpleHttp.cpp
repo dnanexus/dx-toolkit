@@ -6,6 +6,8 @@
   // in SSLThreads.h/.cpp
   #include "SSLThreads.h"
 
+std::string g_DX_CA_CERT = "";
+
 class SSLThreadsInitializer
 {
 public:
@@ -184,6 +186,16 @@ void HttpRequest::send() {
   curl = curl_easy_init();
 
   if (curl != NULL) {
+    if (g_DX_CA_CERT == "NOVERIFY") {
+      assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0));
+    } else {
+      if (!g_DX_CA_CERT.empty()) {
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_CAINFO, g_DX_CA_CERT.c_str()));
+      } else {
+        // Set verify on, and use default
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));
+      }
+    }
     // Set errorBuffer to recieve human readable error messages from libcurl
     // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
     assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, &errorBuffer));
