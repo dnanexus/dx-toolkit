@@ -202,7 +202,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         if bytes_available == 0:
             return ""
 
-        return mmap.mmap(fd.fileno(), min(dxfile._write_bufsize, bytes_available), mmap.MAP_SHARED, mmap.PROT_READ, offset=offset)
+        return mmap.mmap(fd.fileno(), min(dxfile._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
     while True:
         buf = read(dxfile._write_bufsize)
