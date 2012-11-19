@@ -8,6 +8,7 @@
 #include <ctime>
 #include <queue>
 #include <boost/thread.hpp>
+#include "SimpleHttp.h"
 
 /** The variables below are used for computing instanteneous transfer speed: 
   *  1) instantaneousBytesAndTimestampQueue: A queue for keeping track of bytes transferred

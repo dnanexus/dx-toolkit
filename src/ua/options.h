@@ -6,6 +6,8 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+#include "SimpleHttp.h"
+
 namespace po = boost::program_options;
 
 class Options {

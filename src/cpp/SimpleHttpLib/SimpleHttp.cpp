@@ -1,12 +1,24 @@
 #include "SimpleHttp.h"
 #include <stdexcept>
 
+// Returns reference to g_DX_CA_CERT which is used for storing value of
+// DX_CA_CERT env variable (set by dxcpp)
+//  Note:
+//   Why is this a function which returns a reference, rather than a global variable shared across all file
+//   (like all other g_* variables in dxcpp) ?
+//   Reason: Because dynamic initialization order of variables in C++ is not guaranteed in any order.
+//           (other than variables in same translation unit being initialized before any function called in the same unit).
+//           But since this variable: g_DX_CA_CERT is to be shared across various units (dxcpp.cc), initializing it in SimpleHttp.cpp
+//           and using it in dxcpp.cc's static function, can cause problem like: variable being uninitialized before being used (=> Seg faults), etc.
+std::string& get_g_DX_CA_CERT() {
+  static std::string g_DX_CA_CERT = "";
+  return g_DX_CA_CERT;
+}
+
 #ifndef WINDOWS_BUILD
   // We don't use openssl in windows, so do not use thread safety mechanism
   // in SSLThreads.h/.cpp
   #include "SSLThreads.h"
-
-std::string g_DX_CA_CERT = "";
 
 class SSLThreadsInitializer
 {
@@ -186,11 +198,11 @@ void HttpRequest::send() {
   curl = curl_easy_init();
 
   if (curl != NULL) {
-    if (g_DX_CA_CERT == "NOVERIFY") {
+    if (get_g_DX_CA_CERT() == "NOVERIFY") {
       assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0));
     } else {
-      if (!g_DX_CA_CERT.empty()) {
-        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_CAINFO, g_DX_CA_CERT.c_str()));
+      if (!get_g_DX_CA_CERT().empty()) {
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_CAINFO, get_g_DX_CA_CERT().c_str()));
       } else {
         // Set verify on, and use default
         assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));

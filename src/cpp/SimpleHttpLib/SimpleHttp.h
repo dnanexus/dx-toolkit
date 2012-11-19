@@ -16,6 +16,8 @@
 #include "SimpleHttpHeaders.h"
 #include "Utility.h"
 
+std::string& get_g_DX_CA_CERT();
+
 enum HttpMethod {
   HTTP_POST = 0,
   HTTP_HEAD = 1,

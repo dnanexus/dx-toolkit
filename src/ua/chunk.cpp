@@ -186,6 +186,17 @@ void Chunk::upload() {
   if (curl == NULL) {
     throw runtime_error("An error occurred when initializing the HTTP connection");
   }
+  // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
+  if (get_g_DX_CA_CERT() == "NOVERIFY") {
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0));
+  } else {
+    if (!get_g_DX_CA_CERT().empty()) {
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, get_g_DX_CA_CERT().c_str()));
+    } else {
+      // Set verify on, and use default path for certificate
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));
+    }
+  }
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()));
   // Internal CURL progressmeter must be disabled if we provide our own callback
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0));

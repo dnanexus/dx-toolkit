@@ -33,7 +33,6 @@ string g_JOB_ID;
 string g_WORKSPACE_ID;
 string g_PROJECT_CONTEXT_ID;
 string g_APISERVER_PROTOCOL;
-extern string g_DX_CA_CERT;
 
 map<string, string> g_config_file_contents;
 
@@ -353,7 +352,7 @@ bool loadFromEnvironment() {
   getFromEnvOrConfig("DX_APISERVER_HOST", apiserver_host);
   getFromEnvOrConfig("DX_APISERVER_PORT", apiserver_port);
   getFromEnvOrConfig("DX_APISERVER_PROTOCOL", apiserver_protocol);
-  getFromEnvOrConfig("DX_CA_CERT", g_DX_CA_CERT);
+  getFromEnvOrConfig("DX_CA_CERT", get_g_DX_CA_CERT());
 
   setAPIServerInfo(apiserver_host, boost::lexical_cast<int>(apiserver_port), apiserver_protocol);
 
@@ -384,7 +383,7 @@ bool loadFromEnvironment() {
     cerr << "7. g_WORKSPACE_ID: " << getVariableForPrinting(g_WORKSPACE_ID) << endl;
     cerr << "8. g_PROJECT_CONTEXT_ID: " << getVariableForPrinting(g_PROJECT_CONTEXT_ID) << endl;
     cerr << "9. g_API_VERSION: " << getVariableForPrinting(g_API_VERSION) << endl;
-    cerr << "10. g_DX_CA_CERT: " << getVariableForPrinting(g_DX_CA_CERT) << endl;
+    cerr << "10. g_DX_CA_CERT: " << getVariableForPrinting(get_g_DX_CA_CERT()) << endl;
     cerr << "***** Will exit dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****" << endl;
   }
   g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them

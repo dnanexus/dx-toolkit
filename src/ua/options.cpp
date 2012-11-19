@@ -315,6 +315,8 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  wait on close: " << opt.waitOnClose << endl
         << "  do-not-resume: " << opt.doNotResume << endl
       ;
+    // g_DX_CA_CERT is set by dxcpp, and used by UA to turn on/off certificate check
+    out << endl << "env variable DX_CA_CERT: '" << get_g_DX_CA_CERT() << "'" << endl;
   }
   return out;
 }
