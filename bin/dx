@@ -2570,10 +2570,16 @@ def run(args):
         if workflow['version'] != 2:
             parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
+        requested_job_name = args.name
         for stage in workflow['stages']:
             print "Processing stage", stage['key'], "(id", stage['id'] + ")"
             inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
             executable = dxpy.get_handler(stage['app']['id'])
+            if requested_job_name is None:
+                # TODO: name and describe caching in dxobject
+                # TODO: does apiserver append entry point name to parent/subjobs if job name is given? (or should we use :main here?)
+                #args.name = "{wf}.{key}:{exec}".format(wf=workflow['name'], key=stage['key'], exec=executable.name)
+                pass
             launched_jobs[stage['id']] = run_one(args, executable, dest_proj, dest_path,
                                                  preset_inputs=inputs_from_stage,
                                                  input_name_prefix=str(stage['key'])+".")
