@@ -50,9 +50,10 @@ toolkit that doesn't require them.
 
 ### Ubuntu 12.04
 
-    sudo apt-get install python-setuptools g++ cmake libboost-dev \
+    sudo apt-get install git python-setuptools python-pip \
+      python-virtualenv g++ cmake libboost-dev \
       libcurl4-openssl-dev libboost-regex-dev libboost-thread-dev \
-      libboost-system-dev
+      libboost-system-dev 
 
 ### OS X
 

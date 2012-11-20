@@ -9,6 +9,9 @@ using namespace std;
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
+#ifdef MAC_BUILD
+  #include <mach-o/dyld.h>
+#endif
 namespace fs = boost::filesystem;
 
 Options::Options() {
@@ -134,15 +137,43 @@ void Options::printHelp(char * programName) {
        << (*visible_opts) << endl;
 }
 
+#ifdef MAC_BUILD
+  // Returns path of executable on Mac (not portable)
+  string getExecutablePath() {
+    char path[1024 * 100];
+    uint32_t size = sizeof(path);
+    if (!_NSGetExecutablePath(path, &size) == 0)
+        throw runtime_error(" _NSGetExecutablePath() returned non-zero exit code. Unexpected.");
+    // now resolve any symlinks
+    // https://developer.apple.com/library/mac/#documentation/Darwin/Reference/ManPages/man3/realpath.3.html
+    char *resolved_path = realpath(path, NULL);
+    if (resolved_path == NULL)
+      throw runtime_error("realpath() returned NULL pointer. Unexpected.");
+    string toStr = resolved_path;
+    free(resolved_path); // memory was allocated by realpath()
+    return fs::path(toStr).remove_filename().string(); // return just the directory path
+  }
+#endif
 // Looks at either the 'certificate-file' flag's value,
 // or tries to find the certificate file in a few known
 // standard locations. Throws an error if not found anywhere.
 // Note: Do not call when protocol being used != https
 void setCertificateFile(const string &certificateFile) {
-  const char *const standardPathLocations[]= {
+  #ifdef MAC_BUILD
+    const unsigned ARR_SIZE = 3;
+  #else
+    const unsigned ARR_SIZE = 2;
+  #endif
+  const char *standardPathLocations[ARR_SIZE]= {
     "/etc/ssl/certs/ca-certificates.crt", // default on ubuntu
     "/etc/pki/tls/certs/ca-bundle.crt" // default on centos
   };
+  #ifdef MAC_BUILD
+    // If we are building on mac, then add one more path to look for certificate file, i.e.,
+    // the current executable path (since we bundle certificate file together with distribution)
+    string certpath = getExecutablePath() + "/ca-certificates.crt";
+    standardPathLocations[ARR_SIZE - 1] = certpath.c_str();
+  #endif
   if (!certificateFile.empty()) {
     LOG << "Option '--certificate-file' present, and value is: '" << certificateFile << "'" << endl;
     get_g_DX_CA_CERT() = certificateFile;
@@ -151,13 +182,12 @@ void setCertificateFile(const string &certificateFile) {
     if (get_g_DX_CA_CERT().empty()) {
       LOG << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
       #ifdef WINDOWS_BUILD
-        LOG << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default.";
+        LOG << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default." << endl;
         return;
       #else
         LOG << " Will look in standard locations for certificate file (to verify peers)" << endl;
         // Look into standard locations
-        unsigned numElems = sizeof standardPathLocations/sizeof(standardPathLocations[0]);
-        for (unsigned i = 0; i < numElems; ++i) {
+        for (unsigned i = 0; i < ARR_SIZE; ++i) {
           LOG << "\tChecking in location: '" << standardPathLocations[i] << "'";
           fs::path p (standardPathLocations[i]);
           if (fs::exists(p)) {

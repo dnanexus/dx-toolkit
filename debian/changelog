@@ -1,3 +1,9 @@
+dx-toolkit (0.0.24-dnanexus.1) precise; urgency=low
+
+  * Fix bug in dx run with shorthand JBORs
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Tue, 20 Nov 2012 13:31:46 -0800
+
 dx-toolkit (0.0.23-dnanexus.1) precise; urgency=low
 
   * Add dxpy.NULL, dxcpp DXGTable::NULL_VALUE
