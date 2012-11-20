@@ -293,7 +293,7 @@ bool getFromEnvOrConfig(string key, string &val) {
     }
     return true;
   }
-#ifdef WINDOWS_BUILD
+#ifndef WINDOWS_BUILD
   const string user_config_file_path = getUserHomeDirectory() + "/.dnanexus_config/environment";
 #else
   const string user_config_file_path = getUserHomeDirectory() + "\\.dnanexus_config\\environment";

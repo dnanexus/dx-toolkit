@@ -1,3 +1,17 @@
+dx-toolkit (0.0.23-dnanexus.1) precise; urgency=low
+
+  * Add dxpy.NULL, dxcpp DXGTable::NULL_VALUE
+
+  * App container accessors
+
+  * 'dx find jobs', 'dx describe <job-id>' print job runtime
+
+  * Performance improvements in dxpy network buffers
+
+  * Add various dx-jobutil-* scripts
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Mon, 19 Nov 2012 18:46:57 -0800
+
 dx-toolkit (0.0.22-dnanexus.1) precise; urgency=low
 
   * Add scripts dx-spans-to-bed, dx-genes-to-{gff,gtf}.
