@@ -54,8 +54,6 @@ toolkit that doesn't require them.
       libcurl4-openssl-dev libboost-regex-dev libboost-thread-dev \
       libboost-system-dev
 
-TODO: Verify that this list is sufficient
-
 ### OS X
 
 Install the [Command Line Tools for XCode](http://wiki.dnanexus.com/DNAnexus-SDK). (Free registration required with Apple)
