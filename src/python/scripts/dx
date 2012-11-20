@@ -63,8 +63,6 @@ class ResultCounter():
         return ('\n' if self.counter > 1 else '') + UNDERLINE() + 'Result ' + \
             str(self.counter) + ':' + ENDC()
 
-# TODO: Should we cache the user ID entered in the login phase?  or put it in an environment variable?
-
 def try_call(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
