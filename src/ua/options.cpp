@@ -52,7 +52,8 @@ Options::Options() {
     ("file", po::value<vector<string> >(&files), "File to upload")
     ("apiserver-protocol", po::value<string>(&apiserverProtocol), "API server protocol")
     ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
-    ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port") 
+    ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
+    ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.");
     ;
 
   command_line_opts = new po::options_description();
@@ -131,6 +132,52 @@ void Options::printHelp(char * programName) {
   cerr << "Usage: " << programName << " [options] <file> [...]" << endl
        << endl
        << (*visible_opts) << endl;
+}
+
+// Looks at either the 'certificate-file' flag's value,
+// or tries to find the certificate file in a few known
+// standard locations. Throws an error if not found anywhere.
+// Note: Do not call when protocol being used != https
+void setCertificateFile(const string &certificateFile) {
+  const char *const standardPathLocations[]= {
+    "/etc/ssl/certs/ca-certificates.crt", // default on ubuntu
+    "/etc/pki/tls/certs/ca-bundle.crt" // default on centos
+  };
+  if (!certificateFile.empty()) {
+    LOG << "Option '--certificate-file' present, and value is: '" << certificateFile << "'" << endl;
+    get_g_DX_CA_CERT() = certificateFile;
+    return;
+  } else {
+    if (get_g_DX_CA_CERT().empty()) {
+      LOG << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
+      #ifdef WINDOWS_BUILD
+        LOG << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default.";
+        return;
+      #else
+        LOG << " Will look in standard locations for certificate file (to verify peers)" << endl;
+        // Look into standard locations
+        unsigned numElems = sizeof standardPathLocations/sizeof(standardPathLocations[0]);
+        for (unsigned i = 0; i < numElems; ++i) {
+          LOG << "\tChecking in location: '" << standardPathLocations[i] << "'";
+          fs::path p (standardPathLocations[i]);
+          if (fs::exists(p)) {
+            LOG << " ... Found! Will use it." << endl;
+            get_g_DX_CA_CERT() = standardPathLocations[i];
+            return;
+          }
+          LOG << " ... not found." << endl;
+        }
+        // If we are here, we haven't found certificate file in any of the standard locations. Throw error
+        throw runtime_error("Unable to find certificate file (for verifying authenticity of the peer over SSL connection) in any of the standard locations.\n"
+                            "Please use the undocumented option: '--certificate-file' to specify it's location, or set it to string 'NOVERIFY' for disabling "
+                            "authenticity check of the remote host (not recommended).");
+      #endif
+    } else {
+      // use the DX_CA_CERT value (already set by dxcpp's static initializer).
+      LOG << "'--certificate-file' option is absent, but 'DX_CA_CERT' is present, value is: '" << get_g_DX_CA_CERT() << "'. Will use it." << endl;
+      return;
+    }
+  }
 }
 
 void Options::validate() { 
@@ -219,6 +266,15 @@ void Options::validate() {
     msg << "Invalid API server port: " << apiserverPort;
     throw runtime_error(msg.str());
   }
+  // ugly way to do case insensitive comparison, but works
+  // without adding additional dependencies, like boost string, etc
+  string lowerCaseApiserverProtocol = "";
+  for (unsigned i = 0; i < apiserverProtocol.length(); ++i)
+    lowerCaseApiserverProtocol += tolower(apiserverProtocol[i]);
+  
+  if (lowerCaseApiserverProtocol == "https") {
+    setCertificateFile(certificateFile);
+  }
   if (readThreads < 1) {
     ostringstream msg;
     msg << "Number of read threads must be positive: " << readThreads;
@@ -283,7 +339,6 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  API server protocol: " << opt.apiserverProtocol << endl
         << "  API server host: " << opt.apiserverHost << endl
         << "  API server port: " << opt.apiserverPort << endl;
-
     out << "  projects:";
     for (unsigned int i = 0; i < opt.projects.size(); ++i)
       out << " \"" << opt.projects[i] << "\"";
@@ -315,8 +370,6 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  wait on close: " << opt.waitOnClose << endl
         << "  do-not-resume: " << opt.doNotResume << endl
       ;
-    // g_DX_CA_CERT is set by dxcpp, and used by UA to turn on/off certificate check
-    out << endl << "env variable DX_CA_CERT: '" << get_g_DX_CA_CERT() << "'" << endl;
   }
   return out;
 }

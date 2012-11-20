@@ -29,6 +29,7 @@ public:
   std::string apiserverHost;
   int apiserverPort;
   std::string authToken;
+  std::string certificateFile;
 
   std::vector<std::string> projects;
   std::vector<std::string> folders;

@@ -6,7 +6,7 @@
 # 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 GITVERSION := $(shell git describe)
-VERSION = 1.1.0
+VERSION = 1.1.1
 
 curl_dir = $(HOME)/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
