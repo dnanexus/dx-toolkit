@@ -462,14 +462,6 @@ JSON DXGTable::lexicographicIndex(const vector<vector<string> > &columns,
   return index_desc;
 }
 
-JSON DXGTable::substringIndex(const string &column, const string &name) {
-  JSON index_desc(JSON_OBJECT);
-  index_desc["name"] = name;
-  index_desc["type"] = "substring";
-  index_desc["column"] = column;
-  return index_desc;
-}
-
 JSON DXGTable::genomicRangeQuery(const string &chr,
                                  const int64_t lo,
                                  const int64_t hi,
@@ -491,23 +483,6 @@ JSON DXGTable::lexicographicQuery(const JSON &mongo_query,
   JSON query(JSON_OBJECT);
   query["index"] = index;
   query["parameters"] = mongo_query;
-  return query;
-}
-
-JSON DXGTable::substringQuery(const string &match,
-                              const string &mode,
-                              const string &index) {
-  JSON query(JSON_OBJECT);
-  query["index"] = index;
-  query["parameters"] = JSON(JSON_OBJECT);
-  if (mode == "equal")
-    query["parameters"]["$eq"] = match;
-  else if (mode == "substring")
-    query["parameters"]["$substr"] = match;
-  else if (mode == "prefix")
-    query["parameters"]["$prefix"] = match;
-  else
-    throw DXGTableError("Unrecognized substring index query mode: " + mode);
   return query;
 }
 

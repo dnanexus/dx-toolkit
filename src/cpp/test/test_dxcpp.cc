@@ -718,7 +718,7 @@ TEST_F(DXFileTest, UploadDownloadFiles) {
   ASSERT_FALSE(dxfile.is_open());
 
   EXPECT_EQ(getBaseName(foofilename),
-  	    dxfile.describe(true)["properties"]["name"].get<string>());
+  	    dxfile.describe(true)["name"].get<string>());
 
   DXFile::downloadDXFile(dxfile.getID(), tempfilename);
 

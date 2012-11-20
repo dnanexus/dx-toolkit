@@ -751,17 +751,6 @@ public:
   static dx::JSON lexicographicIndex(const std::vector<std::vector<std::string> > &columns,
                                      const std::string &name);
 
-  /**
-   * Creates a substring index descriptor for use with the create() or extend() calls.
-   *
-   * @param column Column name to index by.
-   * @param name Name of the index.
-   *
-   * @return A JSON object containing the index descriptor.
-   */
-  static dx::JSON substringIndex(const std::string &column,
-                                 const std::string &name);
-
   // TODO: lo and hi are currently constrained by the API spec to be
   // columns of type int32, but if we ever change this, we should
   // change the data type as well.
@@ -794,17 +783,10 @@ public:
                                      const std::string &index);
 
   /**
-   * Constructs a query for a substring index of a GTable.
-   *
-   * @param match String to match.
-   * @param mode Mode in which to match the string ("equal", "substring", or "prefix").
-   * @param index Name of the substring index to use.
-   *
-   * @return A JSON object containing the query for use with getRows().
+   * Sentinel value that you can use as a null value for numerical
+   * columns (equal to -2^31).
    */
-  static dx::JSON substringQuery(const std::string &match,
-                                 const std::string &mode,
-                                 const std::string &index);
+  static const int NULL_VALUE = -2147483648;
 };
 
 #endif
