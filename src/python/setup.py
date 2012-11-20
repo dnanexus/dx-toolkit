@@ -23,16 +23,19 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
-# If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
-# See also http://stackoverflow.com/questions/7116038
-# Warning: This may not work as intended in cross-compilation scenarios
-import readline
-if 'libedit' in readline.__doc__:
-    dependencies.append("readline==6.2.2")
-
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if os.name == 'nt':
     dependencies.append("colorama==0.2.4")
+else:
+    # If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
+    # See also http://stackoverflow.com/questions/7116038
+    # Warning: This may not work as intended in cross-compilation scenarios
+    try:
+        import readline
+        if 'libedit' in readline.__doc__:
+            dependencies.append("readline==6.2.2")
+    except ImportError:
+        pass
 
 setup(
     name='dxpy',
