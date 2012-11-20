@@ -44,7 +44,7 @@ setup(
     zip_safe=False,
     license='as-is',
     packages = find_packages(),
-    #scripts = glob.glob('scripts/*.py'),
+    scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,
     },

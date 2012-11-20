@@ -33,3 +33,16 @@
 /bin/pyrsa-*
 /bin/contigset2fasta
 /bin/dx-reads-validator
+
+/bin/dx
+/bin/dx-app-wizard
+/bin/dx-get-job-streams
+/bin/dx-jobutil-add-output
+/bin/dx-jobutil-parse-link
+/bin/dx-jobutil-report-error
+/bin/dx-log-stream
+/bin/dx-sam-header-to-chr
+/bin/dx-sam-to-mappings
+/bin/dx-simplevar-to-vcf
+/bin/dx-vcf-to-simplevar
+/bin/dx-write-reference-index
