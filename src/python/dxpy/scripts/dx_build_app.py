@@ -239,7 +239,7 @@ def main(**kwargs):
         print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
         using_temp_project = True
 
-    if args.mode == "applet" and working_project is None:
+    if args.mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
         parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
     try:
