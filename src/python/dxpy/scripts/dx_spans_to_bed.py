@@ -32,11 +32,14 @@ class gene:
         self.add_data(founder)
 
     def add_data(self, data ):
-        if data['type'] == "gene":
+        if data['type'] == 'gene':
             self.gene = data
-        elif data['type'] == "transcript":
+        # this clause handles transcripts (or other typed spans) that are their
+        # own parents and also transcripts that are children of this gene
+        elif data['parent_id'] == -1 or (self.gene != None and data['parent_id'] == self.gene['span_id']):
             self.trans.append(transcript(data))
             self.parent_ids.append(data['span_id'])
+        # this captures all children such as exons, CDS, UTRs, etc
         else:
             for t in self.trans:
                 if data['parent_id'] == t.data['span_id']:
@@ -54,9 +57,14 @@ class gene:
             output_row[bed_col['chr']] = self.gene['name']
             output_row[bed_col['chr']] = self.gene['strand']
             if "thick_start" in self.gene:
-                output_row[bed_col['thick_start']] = str(self.gene['thick_start'])
+                if self.gene['thick_start'] != dxpy.NULL:
+                    output_row[bed_col['thick_start']] = str(self.gene['thick_start'])
             if "thick_end" in self.gene:
-                output_row[bed_col['thick_end']] = str(self.gene['thick_end'])
+                if self.gene['thick_end'] != dxpy.NULL:
+                    output_row[bed_col['thick_end']] = str(self.gene['thick_end'])
+            if "score" in self.gene:
+                if self.gene['score'] != dxpy.NULL:
+                    output_row[bed_col['score']] = str(self.gene['score'])
             return True
         elif current_lo > self.gene['hi']:
             for t in self.trans:
@@ -84,10 +92,15 @@ class transcript:
             output_row[bed_col['hi']] = str(self.data['hi'])
             output_row[bed_col['name']] = self.data['name']
             output_row[bed_col['strand']] = self.data['strand']
+            if "score" in self.data:
+                if self.data['score'] != dxpy.NULL:
+                    output_row[bed_col['score']] = str(self.data['score'])
             if "thick_start" in self.data:
-                output_row[bed_col['thick_start']] = str(self.data['thick_start'])
+                if self.data['thick_start'] != dxpy.NULL:
+                    output_row[bed_col['thick_start']] = str(self.data['thick_start'])
             if "thick_end" in self.data:
-                output_row[bed_col['thick_end']] = str(self.data['thick_end'])
+                if self.data['thick_end'] != dxpy.NULL:
+                    output_row[bed_col['thick_end']] = str(self.data['thick_end'])
 
         block_sizes = []
         block_starts = []
@@ -102,15 +115,12 @@ class transcript:
             output_row[bed_col["block_starts"]] = ",".join(block_starts)
 
         bed_file.write("\t".join(output_row) + "\n")
-        #print "\t".join(output_row)
         return True
 
 
 def main(**kwargs):
     if len(kwargs) == 0:
         kwargs = vars(arg_parser.parse_args(sys.argv[1:]))
-
-    #print kwargs
 
     try:
         spans = dxpy.DXGTable(kwargs['Spans'])
@@ -150,18 +160,19 @@ def export_genes(spans, out_name):
             except StopIteration:
                 entry = None
 
-            #print "current entry"
-            #print entry
             if entry != None:
                 # take founding members (those with no parents) place in gene model
                 if entry['parent_id'] == -1:
+                    #if entry['type'] in ['gene','transcipt']:
                     gene_model.append(gene(entry))
+                    # if it's a top level object other than these we don't handle it
+                    #else:
+                    #    continue
                 # otherwise they are to be added later
                 else:
                     incomplete_buffer.append(entry)
                 current_chr = entry['chr']
                 current_lo = entry['lo']
-                #print "Current lo: " + str(current_lo)
             else:
                 # switch these to different values to flush final genes out to file
                 current_chr = ""
@@ -179,7 +190,8 @@ def export_genes(spans, out_name):
                         g.add_data(orphan)
                         added = True
                 if not added:
-                    to_keep_exons.append(orphan)
+                    if not current_lo > orphan['hi']:
+                        to_keep_exons.append(orphan)
 
             incomplete_buffer = to_keep_exons[:]
 
@@ -195,60 +207,6 @@ def export_genes(spans, out_name):
                 return
 
 ##########################################
-'''
-            for buff in incomplete_buffer:
-                # if the current element is past your hi and you're a parent element then
-                # write yourself and your children down together as an element
-                if (buff['hi'] < current_lo or buff['chr'] != current_chr):
-                    # if we have a gene hierarchy
-                    if buff['type'] == "gene":
-                        parent_to_write[buff['span_id']] = {"gene":buff, "trans":{} }
-                    # else have lone transcript
-                    elif buff['type'] == "transcript" and buff['parent_id'] == -1:
-                        parent_to_write[buff['span_id']] = {"gene":None, "trans":{buff['span_id']:{"exons":[], "trans_info":buff}}}
-                # if we're a parent but not done yet, stay around until next entry
-                elif (buff['type'] == "gene" or buff['type'] == "transcript"):
-                    buff_to_keep.append(buff)
-
-            print "*"*20
-            for r in incomplete_buffer:
-                print " ".join([r['chr'], str(r['lo']), str(r['hi'])])
-            print "*"*20
-
-            # insert all transcripts into genes 
-            for buff in incomplete_buffer:
-                if buff['type'] == "transcript" and buff['parent_id'] in parent_to_write:
-                    parent_to_write[buff['parent_id']]['trans'][buff['span_id']] = {"trans_info":buff, "exons":[]}
-
-            # now write that parent and all children #
-            ##########################################
-
-            for buff in incomplete_buffer:
-                for current_parent in parent_to_write:
-                    # if we're writing out your parent, put you in the bucket
-                    # unless you're a transcript, then don't write
-                    if buff['parent_id'] in parent_to_write[current_parent]['trans']:
-                        parent_to_write[current_parent]['trans'][buff['parent_id']]['exons'].append(buff)
-                    # else, keep you around
-                    elif buff['parent_id'] != -1 and buff['type'] != "transcript":
-                        buff_to_keep.append(buff)
-
-            #print "buff_to_keep"
-            #print buff_to_keep
-
-            incomplete_buffer = buff_to_keep[:]
-                
-            for gene_obj in parent_to_write:
-                for trans_to_write in parent_to_write[gene_obj]['trans']:
-                    
-                    #print "incomplete_buffer"
-                    #print incomplete_buffer
-                    #print "buff_to_keep"
-                    #print buff_to_keep
-                    #print "parent_to_write"
-                    #print parent_to_write
-                    #return
-'''
 
 
 # this function exports any gri, Spans, or NamedSpans object but not a Genes object
@@ -273,7 +231,8 @@ def export_generic_bed(spans, out_name):
             for col in bed_col:
                 # if we have the column, add its value in the right place
                 if col in spans_columns:
-                    output_row[bed_col[col]] = str(entry[col])
+                    if entry[col] != dxpy.NULL:
+                        output_row[bed_col[col]] = str(entry[col])
             bed_file.write("\t".join(output_row)+"\n")
 
 
