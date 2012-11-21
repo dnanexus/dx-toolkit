@@ -181,6 +181,9 @@ def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
 
 def main(**kwargs):
 
+    if dxpy.AUTH_HELPER is None:
+        parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
+
     if len(kwargs) == 0:
         args = parser.parse_args()
     else:
@@ -235,6 +238,9 @@ def main(**kwargs):
         working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
         print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
         using_temp_project = True
+
+    if args.mode == "applet" and working_project is None:
+        parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
     try:
         with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
