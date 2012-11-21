@@ -477,8 +477,8 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False):
     if jobdesc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
         # TODO: Remove this check once all jobs are migrated to have these values
         if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
-            string += " (runtime: {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
+            string += " (runtime {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
     elif jobdesc['state'] == 'running':
-        string += " (running for: {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
+        string += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
 
     return string
