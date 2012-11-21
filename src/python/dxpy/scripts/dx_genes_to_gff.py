@@ -91,7 +91,7 @@ def main(**kwargs):
             source = '.'
             
             # 2**31 and 2**31-1 are legacy null values that will be removed when possible
-            if row["score"] == dxpy.NULL row["score"] == 2**31-1 or row["score"] == float(2**31)
+            if row["score"] == dxpy.NULL or row["score"] == 2**31-1 or row["score"] == float(2**31):
                 score = "."
             else:
                 score = str(row["score"])
