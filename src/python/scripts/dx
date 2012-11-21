@@ -2299,15 +2299,15 @@ class ExecutableInputs(object):
                 input_name = input_name[len(self.input_name_prefix):]
             else: # Skip inputs that don't start with prefix
                 return
-        try:
-            # Resolve "job-xxxx:output-name" syntax into a canonical job ref
-            job_id, field = split_unescaped(':', input_value)
-            if is_job_id(job_id):
-                input_value = {"job": job_id, "field": field}
-        except:
-            pass
 
         if self.input_spec is None:
+            try:
+                # Resolve "job-xxxx:output-name" syntax into a canonical job ref
+                job_id, field = split_unescaped(':', input_value)
+                if is_job_id(job_id):
+                    input_value = {"job": job_id, "field": field}
+            except:
+                pass
             try:
                 parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
                 if type(parsed_input_value) in (collections.OrderedDict, list):
@@ -2332,7 +2332,7 @@ class ExecutableInputs(object):
             if input_name not in self.input_spec:
                 parser.exit(1, fill('Input field called ' + input_name + ' was not found in the input spec') + '\n')
 
-            input_value = try_call(parse_input[self.input_spec[input_name]['class']], input_value)
+            input_value = try_call(parse_input_or_jbor, self.input_spec[input_name]['class'], input_value)
 
             if input_name in self.array_inputs:
                 self.inputs[input_name].append(input_value)
