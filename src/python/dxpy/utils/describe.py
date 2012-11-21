@@ -474,11 +474,11 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False):
     string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
     string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
     string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
-    if jobdesc['state'] == 'done':
+    if jobdesc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
         # TODO: Remove this check once all jobs are migrated to have these values
         if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
-            string += " (Runtime: {r})".format(r=str(datetime.timedelta(milliseconds=jobdesc['stoppedRunning']-jobdesc['startedRunning'])))
+            string += " (runtime: {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
     elif jobdesc['state'] == 'running':
-        string += " (running for {rt})".format(rt=datetime.timedelta(milliseconds=int(time.time()*1000)-jobdesc['startedRunning']))
+        string += " (running for: {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
 
     return string
