@@ -115,7 +115,8 @@ def main(**kwargs):
                 frame = str(row["frame"])
             source = '.'
             
-            if row["score"] == dxpy.NULL:
+            #Null values 2**31 and 2**31-1 are legacy values and will be removed when possible
+            if row["score"] == dxpy.NULL or row["score"] == 2**31-1 or row["score"] == float(2**31):
                 score = "."
             else:
                 score = str(row["score"])

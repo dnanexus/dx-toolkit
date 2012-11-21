@@ -1,3 +1,9 @@
+dx-toolkit (0.0.25-dnanexus.1) precise; urgency=low
+
+  * Backward compatibility fixes for null sentinels
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Tue, 20 Nov 2012 16:23:52 -0800
+
 dx-toolkit (0.0.24-dnanexus.1) precise; urgency=low
 
   * Fix bug in dx run with shorthand JBORs

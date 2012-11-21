@@ -33,9 +33,9 @@ else:
     try:
         import readline
         if 'libedit' in readline.__doc__:
-            dependencies.append("readline==6.2.2")
+            dependencies.append("readline==6.2.4.1")
     except ImportError:
-        pass
+        dependencies.append("readline==6.2.4.1")
 
 setup(
     name='dxpy',
