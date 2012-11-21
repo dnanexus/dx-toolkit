@@ -176,7 +176,8 @@ def main(**kwargs):
         outputFile.close()
 
 def tag_value_is_default(value):
-    return value == dxpy.NULL or value == "" or (type(value) == float and math.isnan(value))
+    #2**31 is a legacy Null value and will be removed when possible
+    return value == dxpy.NULL or value == 2**31-1 or value == "" or (type(value) == float and math.isnan(value))
 
 def col_name_to_field_name(name):
     if name == 'sam_optional_fields':
