@@ -31,20 +31,12 @@ fi
 export PYTHONIOENCODING=UTF-8
 
 _dx_argcomplete() {
-    if [[ ${!IFS[@]} ]]; then
-        DX_IFS_TEMP=$IFS
-    fi
-    IFS='`'
+    local IFS=$(echo -e '\v')
     COMPREPLY=( $( \
         IFS=$IFS \
         COMP_LINE=$COMP_LINE  COMP_POINT=$COMP_POINT \
         COMP_WORDS="${COMP_WORDS[*]}"  COMP_CWORD=$COMP_CWORD \
     ARGPARSE_AUTO_COMPLETE=1 $1 ) )
-
-    if [[ ${!DX_IFS_TEMP[@]} ]]; then
-        IFS=$DX_IFS_TEMP
-        unset DX_IFS_TEMP
-    fi
 
     # TODO: probably best done with an exit code, not special value
     if [[ "${COMPREPLY[0]}" == "__DX_STOP_COMPLETION__" ]]; then
