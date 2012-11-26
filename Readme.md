@@ -55,6 +55,48 @@ toolkit that doesn't require them.
       libcurl4-openssl-dev libboost-regex-dev libboost-thread-dev \
       libboost-system-dev 
 
+### CentOS 6.2
+
+- ```dx-tookit``` requires Python 2.7 (not available natively on CentOS 6.2), so the first step is to build Python 2.7 by running the script below:
+
+``` bash
+#!/bin/bash -ex
+
+# This script installs python2.7 into /usr/local on the system (required for running dx-toolkit)
+# <Tested on CentOS 6.2>
+
+sudo yum groupinstall -y "Development tools"
+sudo yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel readline
+
+# Install Python 2.7.3
+
+TEMPDIR=$(mktemp -d)
+
+pushd $TEMPDIR
+wget http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tar.bz2
+tar xf Python-2.7.3.tar.bz2
+cd Python-2.7.3
+./configure --prefix=/usr/local
+make
+sudo make altinstall
+
+PYTHON=/usr/local/bin/python2.7
+
+curl -O http://pypi.python.org/packages/source/d/distribute/distribute-0.6.30.tar.gz
+tar -xzf distribute-0.6.30.tar.gz
+(cd distribute-0.6.30; sudo $PYTHON setup.py install)
+
+curl -O http://pypi.python.org/packages/source/p/pip/pip-1.2.1.tar.gz
+tar xzf pip-1.2.1.tar.gz
+(cd pip-1.2.1; sudo $PYTHON setup.py install)
+```
+
+- Once you have installed Python 2.7, install ```boost```, and ```openmpi```:
+
+```
+sudo yum install boost openmpi
+```
+
 ### OS X
 
 Install the [Command Line Tools for XCode](http://wiki.dnanexus.com/DNAnexus-SDK). (Free registration required with Apple)
