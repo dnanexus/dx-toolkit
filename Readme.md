@@ -55,9 +55,9 @@ toolkit that doesn't require them.
       libcurl4-openssl-dev libboost-regex-dev libboost-thread-dev \
       libboost-system-dev 
 
-### CentOS 6.2
+### CentOS 5.x/6.x
 
-- ```dx-tookit``` requires Python 2.7 (not available natively on CentOS 6.2), so the first step is to build Python 2.7 by running the script below:
+- ```dx-tookit``` requires Python 2.7 (not available natively on CentOS), so the first step is to build Python 2.7 by running the script below:
 
 ``` bash
 #!/bin/bash -ex
@@ -96,6 +96,10 @@ tar xzf pip-1.2.1.tar.gz
 ```
 sudo yum install boost openmpi
 ```
+
+Note:
+  - On CentOS 5.x, two of the utilities: ```contigset2fasta```, and ```dx-reads-validator``` will not function correctly (as it lacks newer version of certain libraries).
+  - Tested on CentOS 5.4 and CentOS 6.2.
 
 ### OS X
 
