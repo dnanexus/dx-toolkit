@@ -80,19 +80,19 @@ void Chunk::compress() {
     throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
   }
 
-  /* Special case: If the chunk is compressed below 5MB, try compressing it with
-   *               level 1
+  /* Special case: If the chunk is compressed below 5MB, compress it with
+   *               level 0
    */
   if (!lastChunk && destLen < 5 * 1024 * 1024) {
     log("Compression at level 3, resulted in data size =" + boost::lexical_cast<string>(destLen) + " bytes. " +
-        "We cannot upload data less than 5MB in any chunk (except last). So will try to compress at level 1 now");
+        "We cannot upload data less than 5MB in any chunk (except last). So will compress at level 0 now (i.e., no compression).");
     destLen = gzCompressBound(sourceLen);
     dest.clear();
     dest.resize(destLen);
     destLen = gzCompressBound(sourceLen);
     compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
                                     (const Bytef *) (&(data[0])), (uLong) sourceLen,
-                                    1);  // 1 => fastest compression
+                                    0);  // 0 => no compression
 
     if (compressStatus == Z_MEM_ERROR) {
       throw runtime_error("compression failed: not enough memory");
@@ -102,11 +102,13 @@ void Chunk::compress() {
       throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
     }
     
-    if (destLen < 5 * 1024 * 1024) {
+    assert (destLen >= 5 * 1024 * 1024); // Chunk size should never decrease when 'compressing' at level 0, and chunk size is always >= 5mb
+
+/*    if (destLen < 5 * 1024 * 1024) {
       log("Compression at level 1, resulted in data size = " + boost::lexical_cast<string>(destLen) + " bytes. " +
           "We cannot upload data less than 5MB in any chunk (except last). The remote file: \"" + boost::lexical_cast<string>(fileID) + 
           "\" will fail to close at the end.");
-    }
+    }*/
   }
 
   if (destLen < (int64_t) dest.size()) {

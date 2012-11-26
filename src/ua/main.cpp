@@ -649,6 +649,11 @@ int main(int argc, char * argv[]) {
       } else {
         cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing...";
         if (files[i].isRemoteFileOpen) {
+          files[i].close();
+          
+          // The Code commented below, used to deal with the case that a chunk was compressed to less than 5MB.
+          // This case should never happen now (see chunk.cpp for details).
+          /*
           try {
             files[i].close();
           } catch (DXAPIError &e) {
@@ -664,7 +669,7 @@ int main(int argc, char * argv[]) {
             } else {
               throw;
             }
-          }
+          }*/
         }
         cerr << endl;
       }
