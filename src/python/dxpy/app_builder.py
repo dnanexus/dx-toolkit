@@ -216,8 +216,9 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             if dx_toolkit_autodep == "git":
                 applet_spec.setdefault("access", {})
                 applet_spec["access"].setdefault("network", [])
-                if "github.com" not in applet_spec["access"]["network"]:
-                    applet_spec["access"]["network"].append("github.com")
+                # Note: this can be set to "github.com" instead of "*" if the build doesn't download any deps
+                if "*" not in applet_spec["access"]["network"]:
+                    applet_spec["access"]["network"].append("*")
 
     # Supply a contactUrl if one is not provided
     if "details" not in applet_spec:
