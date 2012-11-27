@@ -2664,8 +2664,6 @@ def shell(orig_args):
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
     from ws4py.exc import HandshakeError
-    response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
-    hskey = response.content.split(':')[0]
     ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
     server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
 
@@ -2679,6 +2677,8 @@ def watch(args):
 
     while True:
         try:
+            response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
+            hskey = response.content.split(':')[0]
             ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, filter_stream=filter_stream)
             streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": args.tree})['streamingId']
             ws.set_dx_streaming_id(streaming_id)
@@ -2689,8 +2689,9 @@ def watch(args):
             except KeyboardInterrupt:
                 sys.exit(1)
             break
-        except HandshakeError: # HACK: Workaround for https://github.com/LearnBoost/socket.io/issues/438
-            print >>sys.stderr, "Handshake error. Retrying..."
+        except HandshakeError as e:
+            # HACK: Workaround for https://github.com/LearnBoost/socket.io/issues/438
+            print >>sys.stderr, "Handshake error: {e}. Retrying...".format(e=str(e))
             continue
 
 def print_help(args):
