@@ -324,7 +324,7 @@ def login(args):
         token_res = json.loads(res.content)
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
-        set_api('https', 'preprodapi.dnanexus.com', '443', True)
+        set_api('https', 'preprodapi.dnanexus.com', '443', args.save)
     else:
         sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
 
@@ -455,9 +455,9 @@ def pick_and_set_project(args):
             continue
         else:
             print 'Setting current project to: ' + results[choice]['describe']['name']
-            set_project(project_ids[choice], not state['interactive'])
+            set_project(project_ids[choice], not state['interactive'] or args.save)
             state['currentproj'] = results[choice]['describe']['name']
-            set_wd('/', not state['interactive'])
+            set_wd('/', not state['interactive'] or args.save)
             return
 
 def setenv(args):
@@ -2472,7 +2472,8 @@ def get_exec_or_workflow_handler(path, alias):
                 return (i['describe']['class'] == 'applet')
             def is_workflow(i):
                 return ('pipeline' in i['describe']['types'])
-            entity_results = [i for i in entity_results if is_applet(i) or is_workflow(i)]
+            if entity_results is not None:
+                entity_results = [i for i in entity_results if is_applet(i) or is_workflow(i)]
         except BaseException as details:
             if app_desc is None:
                 parser.exit(1, fill(unicode(details)) + '\n')
@@ -2733,7 +2734,7 @@ class SetEMTestEnv(argparse.Action):
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
         setattr(namespace, 'emtest', True)
-        set_api(protocol='https', host='emtest.dnanexus.com', port='443', write=True)
+        set_api(protocol='https', host='emtest.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
 # TODO: Add a subcommand for clearing the cache
 
