@@ -71,7 +71,6 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
             if choices is not None and value not in choices:
                 print 'Error: unrecognized response, expected one of ' + json.dumps(choices)
             else:
-                print 'RETURNING', value
                 return value
         elif default is not None:
             return default
