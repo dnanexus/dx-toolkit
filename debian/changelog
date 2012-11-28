@@ -1,3 +1,11 @@
+dx-toolkit (0.0.26-dnanexus.1) precise; urgency=low
+
+  * Build compatibility improvements
+
+  * Fix PTFM-4397, PTFM-4717, PTFM-4716, PTFM-4714
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Wed, 28 Nov 2012 08:15:22 -0800
+
 dx-toolkit (0.0.25-dnanexus.1) precise; urgency=low
 
   * Backward compatibility fixes for null sentinels
