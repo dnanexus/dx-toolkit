@@ -106,15 +106,15 @@ void Options::parse(int argc, char * argv[]) {
     }
   }
   if (projects.empty()) {
-    if (!g_PROJECT_CONTEXT_ID.empty()) {
-      LOG << "Adding to projects from g_PROJECT_CONTEXT_ID: " << g_PROJECT_CONTEXT_ID << endl;
-      projects.push_back(g_PROJECT_CONTEXT_ID);
-    }
-  }
-  if (projects.empty()) {
     if (!g_WORKSPACE_ID.empty()) {
       LOG << "Adding to projects from g_WORKSPACE_ID: " << g_WORKSPACE_ID << endl;
       projects.push_back(g_WORKSPACE_ID);
+    }
+  }
+  if (projects.empty()) {
+    if (!g_PROJECT_CONTEXT_ID.empty()) {
+      LOG << "Adding to projects from g_PROJECT_CONTEXT_ID: " << g_PROJECT_CONTEXT_ID << endl;
+      projects.push_back(g_PROJECT_CONTEXT_ID);
     }
   }
 }
