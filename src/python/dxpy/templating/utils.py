@@ -71,6 +71,7 @@ def prompt_for_var(prompt_str, default=None, allow_empty=False, choices=None):
             if choices is not None and value not in choices:
                 print 'Error: unrecognized response, expected one of ' + json.dumps(choices)
             else:
+                print 'RETURNING', value
                 return value
         elif default is not None:
             return default
@@ -171,7 +172,7 @@ def get_language():
     use_completer(Completer(language_choices))
     print ''
     print fill('You can write your app in any ' + BOLD() + 'programming language' + ENDC() + ', but we provide templates for the following supported languages' + ENDC() + ": " + ', '.join(language_choices))
-    language = prompt_for_var('Programming language', 'Python', language_choices)
+    language = prompt_for_var('Programming language', 'Python', choices=language_choices)
     use_completer()
     return language
 
@@ -194,7 +195,7 @@ def get_pattern(template_dir):
         return 'basic'
 
     use_completer(Completer(pattern_choices))
-    pattern = prompt_for_var('Execution pattern', 'basic', pattern_choices)
+    pattern = prompt_for_var('Execution pattern', 'basic', choices=pattern_choices)
     use_completer()
     return pattern
 
@@ -207,7 +208,7 @@ def get_parallelized_io(file_input_names, gtable_input_names, gtable_output_name
         print fill('Your app template can be initialized to split and process a ' + BOLD() + 'file' + ENDC() + ' or ' + BOLD() + 'gtable' + ENDC() + ' input.  The following of your input fields are eligible for this template pattern:')
         print '  ' + '\n  '.join([name + ' (file)' for name in file_input_names] + [name + ' (gtable)' for name in gtable_input_names])
         use_completer(Completer(file_input_names + gtable_input_names))
-        input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', (file_input_names + gtable_input_names))
+        input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', choices=file_input_names + gtable_input_names)
         use_completer()
 
     if input_field != '' and len(gtable_output_names) > 0:
@@ -215,7 +216,7 @@ def get_parallelized_io(file_input_names, gtable_input_names, gtable_output_name
         print fill('Your app template can be initialized to build a ' + BOLD() + 'gtable' + ENDC() + ' in parallel for your output.  The following of your output fields are eligible for this template pattern:')
         print '  ' + '\n  '.join(gtable_output_names)
         use_completer(Completer(gtable_output_names))
-        output_field = prompt_for_var('Output gtable to build in parallel (press ENTER to skip)', '', (gtable_output_names))
+        output_field = prompt_for_var('Output gtable to build in parallel (press ENTER to skip)', '', choices=gtable_output_names)
     return input_field, output_field
 
 def fill_in_name_and_ver(template_string, name, version):
