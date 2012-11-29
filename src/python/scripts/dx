@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap
+import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap, copy
 import shlex # respects quoted substrings when splitting
 import codecs
 import hashlib
@@ -1728,27 +1728,39 @@ def upload(args):
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
 
-    try:
-        dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
-                                        file=(sys.stdin if args.filename == '-' else None),
-                                        name=name,
-                                        tags=args.tags,
-                                        types=args.types,
-                                        hidden=args.hidden,
-                                        project=project,
-                                        properties=args.properties,
-                                        details=args.details,
-                                        folder=folder,
-                                        parents=args.parents,
-                                        show_progress=args.show_progress)
-        if args.wait:
-            dxfile._wait_on_close()
-        if args.brief:
-            print dxfile.get_id()
-        else:
-            print_desc(dxfile.describe(incl_properties=True, incl_details=True))
-    except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+    if os.path.isdir(args.filename):
+        if not args.recursive:
+            parser.exit("Error: {f} is a directory but the -r/--recursive option was not given".format(f=args.filename))
+        # TODO: detect loops
+        for f in os.listdir(args.filename):
+            sub_args = copy.copy(args)
+            sub_args.mute = True
+            sub_args.filename = os.path.join(args.filename, f)
+            sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=args.filename)
+            sub_args.parents = True
+            upload(sub_args)
+    else:
+        try:
+            dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
+                                            file=(sys.stdin if args.filename == '-' else None),
+                                            name=name,
+                                            tags=args.tags,
+                                            types=args.types,
+                                            hidden=args.hidden,
+                                            project=project,
+                                            properties=args.properties,
+                                            details=args.details,
+                                            folder=folder,
+                                            parents=args.parents,
+                                            show_progress=args.show_progress)
+            if args.wait:
+                dxfile._wait_on_close()
+            if args.brief:
+                print dxfile.get_id()
+            elif not args.mute:
+                print_desc(dxfile.describe(incl_properties=True, incl_details=True))
+        except BaseException as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def import_csv(args):
     sys.argv = [sys.argv[0] + ' import csv'] + args.importer_args
@@ -2991,14 +3003,15 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['metadata']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_upload = subparsers.add_parser('upload', help='Upload a file',
-                                      description='Upload a local file.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
+parser_upload = subparsers.add_parser('upload', help='Upload a file or directory',
+                                      description='Upload a local file or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
                                       parents=[parser_dataobject_args, stdout_args, env_args],
                                       prog="dx upload")
-parser_upload.add_argument('filename', help='local filename to upload ("-" indicates stdin input)')
+parser_upload.add_argument('filename', help='Local file or directory to upload ("-" indicates stdin input)')
+parser_upload.add_argument('-r', '--recursive', help='Upload directories recursively', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
-parser_upload.set_defaults(func=upload)
+parser_upload.set_defaults(func=upload, mute=False)
 parser_map['upload'] = (parser_upload, LocalCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -3008,7 +3021,7 @@ parser_download = subparsers.add_parser('download', help='Download a file',
                                         prog='dx download',
                                         parents=[env_args])
 parser_download.add_argument('path', help='Data object ID or name to access')
-parser_download.add_argument('-o', '--output', help='local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
+parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
