@@ -1,3 +1,11 @@
+dx-toolkit (0.0.27-dnanexus.1) precise; urgency=low
+
+  * Fast-track fix for PTFM-4789 (dx upload retry logic)
+
+  * Fix PTFM-4705 (Upload Agent uses DX_WORKSPACE_ID)
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Thu, 29 Nov 2012 15:24:45 -0800
+
 dx-toolkit (0.0.26-dnanexus.1) precise; urgency=low
 
   * Build compatibility improvements
