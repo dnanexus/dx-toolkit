@@ -62,6 +62,7 @@ class DXFile(DXDataObject):
 
     def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
                  read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
+        DXDataObject.__init__(self, dxid=dxid, project=project)
         if keep_open is not None:
             if keep_open:
                 print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the file open, please set mode to be one of 'r' or 'a' instead."
@@ -90,8 +91,6 @@ class DXFile(DXDataObject):
         self._download_url, self._download_url_expires = None, None
         self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
-
-        DXDataObject.set_ids(self, dxid, project)
 
         # Initialize state
         self._pos = 0
