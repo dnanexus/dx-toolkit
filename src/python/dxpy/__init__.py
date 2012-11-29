@@ -114,7 +114,7 @@ environment variables:
 # except:
 #     pass
 
-import os, json, requests, time
+import os, json, requests, time, mmap
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
 import httplib
@@ -269,6 +269,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                             ok_to_retry = True
 
                 if ok_to_retry:
+                    if isinstance(data, mmap.mmap):
+                        data.seek(0)
                     delay = 2 ** (retry+1)
                     logging.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
                     time.sleep(delay)
