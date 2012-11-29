@@ -45,6 +45,7 @@ class DXApp(DXObject):
     _class = "app"
 
     def __init__(self, dxid=None, name=None, alias=None):
+        DXObject.__init__(self)
         if dxid is not None or name is not None:
             self.set_id(dxid=dxid, name=name, alias=alias)
 
