@@ -66,8 +66,7 @@ class DXJob(DXObject):
 
     def __init__(self, dxid=None):
         self._test_harness_result = None
-        if dxid is not None:
-            self.set_id(dxid)
+        DXObject.__init__(self, dxid=dxid)
 
     def new(self, fn_input, fn_name, name=None, instance_type=None, depends_on=None, **kwargs):
         '''

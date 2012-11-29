@@ -60,7 +60,7 @@ class DXGTable(DXDataObject):
 
     def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
                  request_size=DEFAULT_TABLE_WRITE_REQUEST_SIZE):
-
+        DXDataObject.__init__(self, dxid=dxid, project=project)
         if keep_open is not None:
             if keep_open:
                 print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the table open, please set mode to be one of 'r' or 'a' instead."
@@ -83,8 +83,6 @@ class DXGTable(DXDataObject):
         self._string_row_buf = None
         self._http_threadpool_futures = set()
         self._columns, self._col_names = None, None
-
-        DXDataObject.set_ids(self, dxid, project)
 
     def __enter__(self):
         return self

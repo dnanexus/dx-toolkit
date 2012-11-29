@@ -16,33 +16,25 @@ NUM_HTTP_THREADS = 4
 class DXObject(object):
     """Abstract base class for all remote object handlers."""
 
-    def __init__(self, dxid=None):
-        raise NotImplementedError("DXObject is an abstract class; a subclass should be initialized instead.")
+    def __init__(self, dxid=None, project=None):
+        self._dxid, self._proj = dxid, project
+        self._desc = {}
 
     def _repr(self, use_name=False):
-        dxid, dxproj_id = "no ID stored", ""
-        try:
-            dxid = self._dxid
-            if isinstance(self, DXDataObject):
-                try:
-                    dxproj_id = " (%s)" % self._proj
-                except:
-                    dxproj_id = " (no project ID stored)"
-        except:
-            pass
+        dxid = self._dxid if self._dxid is not None else "no ID stored"
+        dxproj_id = self._proj if self._proj is not None else "no project ID stored"
 
         if use_name:
-            desc = "<dxpy.{classname}: {name} ({dxid}{dxproj_id})>"
+            desc = "<dxpy.{classname}: {name} ({dxid} ({dxproj_id})>"
         else:
-            desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid}{dxproj_id}>"
+            desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid} ({dxproj_id})>"
 
         desc = desc.format(module=self.__module__,
                            classname=self.__class__.__name__,
                            dxid=dxid,
                            dxproj_id = dxproj_id,
                            mem_loc=id(self),
-                           name=None)
-                           #name=self._desc.get('name')
+                           name=self._desc.get('name'))
         return desc
 
     def __str__(self):
@@ -55,13 +47,11 @@ class DXDataObject(DXObject):
     """Abstract base class for all remote data object handlers."""
 
     def __init__(self, dxid=None, project=None):
-        try:
-            self._class
-        except:
+        if not hasattr(self, '_class'):
             raise NotImplementedError(
-                "DXDataObject is an abstract class; a subclass should" + \
-                    "be initialized instead.")
+                "DXDataObject is an abstract class; a subclass should be initialized instead.")
 
+        DXObject.__init__(self)
         self.set_ids(dxid, project)
 
     @staticmethod
@@ -106,9 +96,7 @@ class DXDataObject(DXObject):
         each data object class.
 
         '''
-        try:
-            self._class
-        except:
+        if not hasattr(self, '_class'):
             raise NotImplementedError(
                 "DXDataObject is an abstract class; a subclass should" + \
                     "be initialized instead.")
@@ -191,14 +179,15 @@ class DXDataObject(DXObject):
         """
 
         if self._proj is not None:
-            return self._describe(self._dxid, {"project": self._proj,
-                                               "properties": incl_properties,
-                                               "details": incl_details},
-                                  **kwargs)
+            self._desc = self._describe(self._dxid, {"project": self._proj,
+                                                     "properties": incl_properties,
+                                                     "details": incl_details},
+                                        **kwargs)
         else:
-            return self._describe(self._dxid, {"properties": incl_properties,
-                                               "details": incl_details},
-                                  **kwargs)
+            self._desc = self._describe(self._dxid, {"properties": incl_properties,
+                                                     "details": incl_details},
+                                        **kwargs)
+        return self._desc
 
     def add_types(self, types, **kwargs):
         """
