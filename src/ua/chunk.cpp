@@ -70,7 +70,7 @@ void Chunk::compress() {
 
   int compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
                                   (const Bytef *) (&(data[0])), (uLong) sourceLen,
-                                  3);  // 3 is the compression level -- fast, not good
+                                  Z_DEFAULT_COMPRESSION);  // use default compression level value from ZLIB (usually 6)
 
   if (compressStatus == Z_MEM_ERROR) {
     throw runtime_error("compression failed: not enough memory");
@@ -84,7 +84,7 @@ void Chunk::compress() {
    *               level 0
    */
   if (!lastChunk && destLen < 5 * 1024 * 1024) {
-    log("Compression at level 3, resulted in data size =" + boost::lexical_cast<string>(destLen) + " bytes. " +
+    log("Compression at level Z_DEFAULT_COMPRESSION (usually 6), resulted in data size =" + boost::lexical_cast<string>(destLen) + " bytes. " +
         "We cannot upload data less than 5MB in any chunk (except last). So will compress at level 0 now (i.e., no compression).");
     destLen = gzCompressBound(sourceLen);
     dest.clear();
@@ -92,7 +92,7 @@ void Chunk::compress() {
     destLen = gzCompressBound(sourceLen);
     compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
                                     (const Bytef *) (&(data[0])), (uLong) sourceLen,
-                                    0);  // 0 => no compression
+                                    Z_NO_COMPRESSION);  // no compression = level 0
 
     if (compressStatus == Z_MEM_ERROR) {
       throw runtime_error("compression failed: not enough memory");
