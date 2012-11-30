@@ -73,8 +73,6 @@ def unpack(input):
     try:
         out_name = id_generator()
         subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", out_name]), shell=True)
-        #subprocess.check_call("cat uncompressed.bed", shell=True)
-        #print "*"*20
         return out_name
     except Exception as e:
         raise dxpy.AppError("Unable to open compressed input for reading: " + str(e))
@@ -125,7 +123,6 @@ def find_num_columns(bed_file):
     with open(bed_file, "rU") as bf:
         line = bf.readline()
         while line != "":
-            #print line
             line = line.split()
             if len(line) > num_cols:
                 num_cols = len(line)
@@ -253,7 +250,7 @@ def import_named_spans(bed_file, table_name, ref_id):
 
 ##########named spans###############END
 
-def generate_gene_row(line, block_size, block_start, default_row, parent_id, span_id):
+def generate_gene_row(line, block_size, block_start, span_type, default_row, parent_id, span_id):
     row = list(default_row)
 
     try:
@@ -280,16 +277,18 @@ def generate_gene_row(line, block_size, block_start, default_row, parent_id, spa
         row[4] = span_id
 
         # type
-        if parent_id == -1:
-            row[5] = "transcript"
-        else:
-            row[5] = "exon"
+        row[5] = span_type
 
         # strand
         row[6] = line[5]
 
         # is_coding
-        row[7] = True
+        if span_type == "CDS":
+            row[7] = True
+        elif "UTR" in span_type:
+            row[7] = False
+        else:
+            row[7] = False
 
         # parent_id
         row[8] = parent_id
@@ -308,15 +307,13 @@ def generate_gene_row(line, block_size, block_start, default_row, parent_id, spa
         if parent_id == -1:
             row[12] = int(line[6])
         else:
-            # just use lo instead
-            row[12] = row[1]
+            row[12] = dxpy.NULL
 
         # thickEnd
         if parent_id == -1:
             row[13] = int(line[7])
         else:
-            # just use lo instead
-            row[13] = row[2]
+            row[13] = dxpy.NULL
 
         # itemRgb
         row[14] = line[8]
@@ -378,7 +375,7 @@ def import_genes(bed_file, table_name, ref_id):
                 raise dxpy.AppError("Line: "+"\t".join(line)+" in gene model-like BED file contains less than 12 columns.  Invalid BED file.")
 
             # add parent gene track
-            row = generate_gene_row(line, 0, 0, default_row, -1, current_span_id)
+            row = generate_gene_row(line, 0, 0, "transcript", default_row, -1, current_span_id)
             if row != None:
                 span.add_row(row)
                 current_parent_id = current_span_id
@@ -391,10 +388,105 @@ def import_genes(bed_file, table_name, ref_id):
                 line[11] = line[11].rstrip(",").split(",")
                 blockStarts = [int(line[11][n]) for n in range(blockCount)]
 
+                thickStart = int(line[6])
+                thickEnd = int(line[7])
+
                 for i in range(blockCount):
-                    span.add_row(generate_gene_row(line, blockSizes[i], blockStarts[i], default_row, current_parent_id, current_span_id))
-                    current_span_id += 1
-            
+                    # look to thickStart and thickEnd to get information about the type of this region
+                    # if thick* are the same or cover the whole transcript then we ignore them
+                    # else, we partition the exons into CDS and UTR based on their boundaries
+                    if thickStart == thickEnd or (thickStart == line[1] and thickEnd == line[2]):
+                        span.add_row(generate_gene_row(line, 
+                                                       blockSizes[i], 
+                                                       blockStarts[i], 
+                                                       "exon", 
+                                                       default_row, 
+                                                       current_parent_id, 
+                                                       current_span_id))
+                        current_span_id += 1
+                    else:
+                        exon_lo = int(line[1])+blockStarts[i]
+                        exon_hi = int(exon_lo+blockSizes[i])
+
+                        # we're all UTR if we enter either of these
+                        if (exon_hi <= thickStart and line[5] == '+') or (exon_lo >= thickEnd and line[5] == '-'):
+                            span.add_row(generate_gene_row(line, 
+                                                           blockSizes[i], 
+                                                           blockStarts[i], 
+                                                           "5' UTR", 
+                                                           default_row, 
+                                                           current_parent_id, 
+                                                           current_span_id))
+                            current_span_id += 1
+                        elif (exon_hi <= thickStart and line[5] == '-') or (exon_lo >= thickEnd and line[5] == '+'):
+                            span.add_row(generate_gene_row(line, 
+                                                           blockSizes[i], 
+                                                           blockStarts[i], 
+                                                           "3' UTR", 
+                                                           default_row, 
+                                                           current_parent_id, 
+                                                           current_span_id))
+                            current_span_id += 1
+
+                        # if this is true then we overlap CDS partially or completely
+                        elif (exon_lo < thickEnd and exon_hi > thickStart):
+                            # entirely contained
+                            if exon_lo >= thickStart and exon_hi <= thickEnd:
+                                span.add_row(generate_gene_row(line, 
+                                                               blockSizes[i], 
+                                                               blockStarts[i], 
+                                                               "CDS", 
+                                                               default_row, 
+                                                               current_parent_id, 
+                                                               current_span_id))
+                                current_span_id += 1
+                            else:
+                                # left portion is UTR
+                                if exon_lo < thickStart:
+                                    if line[5] == '+':
+                                        UTR_type = "5' UTR"
+                                    else:
+                                        UTR_type = "3' UTR"
+                                    UTR_size = (min(blockSizes[i], thickStart - exon_lo))
+                                    span.add_row(generate_gene_row(line, 
+                                                                   UTR_size, 
+                                                                   blockStarts[i], 
+                                                                   UTR_type,
+                                                                   default_row, 
+                                                                   current_parent_id, 
+                                                                   current_span_id))
+                                    current_span_id += 1
+
+                                # CDS portion
+                                CDS_size = blockSizes[i] - (max(exon_lo, thickStart) - exon_lo)
+                                CDS_size -= (exon_hi - min(exon_hi, thickEnd))
+                                CDS_start = (max(exon_lo, thickStart) - exon_lo) + blockStarts[i]
+                                span.add_row(generate_gene_row(line, 
+                                                               CDS_size, 
+                                                               CDS_start, 
+                                                               "CDS",
+                                                               default_row, 
+                                                               current_parent_id, 
+                                                               current_span_id))
+                                current_span_id += 1
+
+                                # right portion is UTR
+                                if exon_hi > thickEnd:
+                                    if line[5] == '+':
+                                        UTR_type = "3' UTR"
+                                    else:
+                                        UTR_type = "5' UTR"
+                                    UTR_size = (min(blockSizes[i], exon_hi - thickEnd))
+                                    UTR_start = blockStarts[i] + thickEnd - exon_lo
+                                    span.add_row(generate_gene_row(line, 
+                                                                   UTR_size, 
+                                                                   UTR_start, 
+                                                                   UTR_type,
+                                                                   default_row, 
+                                                                   current_parent_id, 
+                                                                   current_span_id))
+                                    current_span_id += 1
+
     return dxpy.dxlink(span.get_id())
 
 
@@ -414,8 +506,6 @@ def import_BED(**args):
     job_outputs = []
     # uncompresses file if necessary.  Returns new filename
     bed_filename_uncomp = unpack( bed_filename )
-
-    #print "uncomp: " + bed_filename_uncomp
 
     current_file = 1
 
@@ -440,6 +530,8 @@ def import_BED(**args):
 
     if(bed_filename != bed_filename_uncomp):
         subprocess.check_call(" ".join(["rm", bed_filename_uncomp]), shell=True)
+
+    print job_outputs
 
     return job_outputs
 
