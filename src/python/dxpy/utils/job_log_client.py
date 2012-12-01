@@ -16,7 +16,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
     def __init__(self, url, filter_stream=None, protocols=None, extensions=None):
         self.filter_stream = filter_stream
         self.seen_jobs = set()
-        self.num_messages = 0
+        self.jobs_completed = False
         super(DXJobLogStreamClient, self).__init__(url, protocols=protocols, extensions=extensions)
 
     def handshake_ok(self):
@@ -29,7 +29,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         self.send('5:1::' + json.dumps({"name": "streamingId", "args": [self.dx_streaming_id]}))
 
     def closed(self, code, reason):
-        if self.num_messages == 0:
+        if not self.jobs_completed:
             raise HandshakeError("Connection dropped unexpectedly")
         if not self.filter_stream:
             print "Log socket closed:", code, reason
@@ -52,8 +52,8 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         if msg_type == '5':
             try:
                 msg_content = json.loads(msg_data)
+                        
                 if msg_content["name"] == "log":
-                    self.num_messages += 1
                     log_level, job_id, orig_msg = re.match("^\[.+?\] APP (\w+) \[(job-.+?)\] (.+)", msg_content["args"][0]).groups()
 
                     if self.filter_stream == 'stdout':
@@ -69,5 +69,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
                             print get_find_jobs_string(dxpy.describe(job_id), has_children=False)
                             self.seen_jobs.add(job_id)
                         print msg_content["args"][0]
+                elif msg_content["name"] == "system" and msg_content["args"][0] == "All Jobs completed":
+                    self.jobs_completed = True
             except:
                 print "Error while decoding message:", str(msg_content)
