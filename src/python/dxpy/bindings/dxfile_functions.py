@@ -220,8 +220,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                 ticks = int(round((offset / float(file_size)) * num_ticks))
                 percent = int(round((offset / float(file_size)) * 100))
 
-                fmt = "[{0}{1}] Uploaded ({2} of {3} bytes) {4}%"
-                sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), offset, file_size, percent))
+                fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
+                sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
+                                            pending=' ' * (num_ticks - ticks),
+                                            done_bytes=offset,
+                                            total=file_size,
+                                            percent=percent,
+                                            name=filename if filename is not None else ''))
                 sys.stderr.flush()
                 sys.stderr.write("\r")
                 sys.stderr.flush()
