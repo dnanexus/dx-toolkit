@@ -1,3 +1,9 @@
+dx-toolkit (0.0.28-dnanexus.1) precise; urgency=low
+
+  * Fix: avoid infinite loop in job log streaming error detection in some cases
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Fri, 30 Nov 2012 16:17:01 -0800
+
 dx-toolkit (0.0.27-dnanexus.1) precise; urgency=low
 
   * Fast-track fix for PTFM-4789 (dx upload retry logic)
