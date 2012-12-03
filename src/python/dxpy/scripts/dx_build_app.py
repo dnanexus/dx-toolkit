@@ -244,7 +244,10 @@ def main(**kwargs):
 
     try:
         with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
-            app_json = json.load(app_desc)
+            try:
+                app_json = json.load(app_desc)
+            except:
+                parser.error("Could not parse dxapp.json file as valid JSON")
 
         if "buildOptions" in app_json:
             if app_json["buildOptions"].get("dx_toolkit_autodep") == False:

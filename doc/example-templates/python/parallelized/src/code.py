@@ -41,8 +41,7 @@ def process(input1):
 
 @dxpy.entry_point('main')
 def main(DX_APP_WIZARD_INPUT_SIGNATURE):
-DX_APP_WIZARD_INITIALIZE_INPUT
-DX_APP_WIZARD_DOWNLOAD_ANY_FILES
+DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # Split your work into parallel tasks.  As an example, the
     # following generates 10 subjobs running with the same dummy
     # input.
@@ -72,6 +71,13 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
     # follows:
     #
     # return { "app_output_field": postprocess_job.get_output_ref("answer"), ...}
+    #
+    # Tip: you can include in your output at this point any open
+    # objects (such as gtables) which are closed by another entry
+    # point that finishes later.  The system will check to make sure
+    # that the output object is closed and will attempt to clone it
+    # out as output into the parent container only after all subjobs
+    # have finished.
 
     output = {}
 DX_APP_WIZARD_OUTPUT

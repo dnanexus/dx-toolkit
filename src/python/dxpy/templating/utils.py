@@ -224,7 +224,10 @@ def fill_in_name_and_ver(template_string, name, version):
     '''
     return template_string.replace('DX_APP_WIZARD_NAME', name).replace('DX_APP_WIZARD_VERSION', version)
 
-def create_files_from_templates(template_dir, app_json, language, file_input_names, file_output_names, pattern, pattern_suffix='', parallelized_input='', parallelized_output=''):
+def create_files_from_templates(template_dir, app_json, language,
+                                file_input_names, file_array_input_names, file_output_names,
+                                pattern, pattern_suffix='',
+                                parallelized_input='', parallelized_output=''):
     manifest = []
     name = app_json['name']
     version = app_json['version']
@@ -274,6 +277,7 @@ def create_files_from_templates(template_dir, app_json, language, file_input_nam
                     input_sig_str, init_inputs_str, dl_files_str, ul_files_str, outputs_str = \
                         language_options[language].get_strings(app_json,
                                                                file_input_names,
+                                                               file_array_input_names,
                                                                file_output_names,
                                                                dummy_output_hash)
 

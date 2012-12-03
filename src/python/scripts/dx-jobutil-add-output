@@ -7,7 +7,7 @@ from dxpy.utils.resolver import *
 from dxpy.utils.printing import *
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
-                                 description=fill('Reads and modifies job_output.json, the JSON output file to include the output with key *name* and value *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values.') + '\n\n' + fill('To use the output of another job as part of your output, use --class=jobref (which will throw an error if it is not formatted correctly), or use the automatic parsing which will recognize anything starting with a job ID as a job-based object reference.  You should format the value as follows:') + '''
+                                 description=fill('Reads and modifies job_output.json in your home directory to be a JSON hash with key *name* and value  *value*.') + '\n\n' + fill('If --class is not provided or is set to "auto", auto-detection of the output format will occur.  In particular, it will treat it as a number, hash, or boolean if it can be successfully parsed as such.  If it is a string which matches the pattern for a data object ID, it will encapsulate it in a DNAnexus link hash; otherwise it is treated as a simple string.') + '\n\n' + fill('Use --array to append to an array of values or prepend "array:" to the --class argument.') + '\n\n' + fill('To use the output of another job as part of your output, use --class=jobref (which will throw an error if it is not formatted correctly), or use the automatic parsing which will recognize anything starting with a job ID as a job-based object reference.  You should format the value as follows:') + '''
 
   Format: <job ID>:<output field name>
   Example: dx-jobutil-add-output myoutput job-B2JKYqK4Zg2K915yQxPQ0024:other_output --class=jobref
@@ -15,14 +15,25 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
 parser.add_argument('name', help='Name of the output field name')
 parser.add_argument('value', help='Value of the output field')
 parser.add_argument('--class', dest='classname',
-                    choices=['int', 'float', 'string', 'boolean', 'hash', 'dxobject', 'auto', 'jobref'],
-                    help='Class of output for formatting purposes, default "auto"',
+                    choices=['int', 'float', 'string', 'boolean', 'hash',
+                             'array:int', 'array:float', 'array:string', 'array:boolean',
+                             'file', 'gtable', 'table', 'record', 'applet',
+                             'array:file', 'array:gtable', 'array:table', 'array:record', 'array:applet',
+                             'jobref', 'array:jobref', 'auto', 'array:auto'],
+                    help=fill('Class of output for formatting purposes, default "auto"', width_adjustment=-24),
                     nargs='?',
                     default='auto')
 parser.add_argument('--array', help='Output field is an array', action='store_true')
 args = parser.parse_args()
 
 value = None
+
+if args.classname.startswith('array:'):
+    args.array = True
+    args.classname = args.classname[6:]
+
+if args.classname in ['file', 'gtable', 'table', 'record', 'applet']:
+    args.classname = 'dxobject'
 
 if args.classname == 'auto':
     if is_data_obj_id(args.value):
@@ -82,8 +93,9 @@ elif args.classname == 'jobref':
         parser.exit(1, fill('Value could not be recognized as a job-based object reference with format <job ID>:<job output field name>') + '\n')
 
 output_json = {}
-if os.path.exists('job_output.json'):
-    with open('job_output.json', 'r') as output_json_file:
+output_filename = os.path.expanduser(os.path.join('~', 'job_output.json'))
+if os.path.exists(output_filename):
+    with open(output_filename, 'r') as output_json_file:
         output_json = json.loads(output_json_file.read())
 
 if args.array:
@@ -97,5 +109,5 @@ if args.array:
 else:
     output_json[args.name] = value
 
-with open('job_output.json', 'w') as output_json_file:
+with open(output_filename, 'w') as output_json_file:
     output_json_file.write(json.dumps(output_json, indent=4) + '\n')

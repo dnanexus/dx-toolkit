@@ -23,8 +23,7 @@ using namespace dx;
 
 int main(int argc, char *argv[]) {
   JSON input;
-  ifstream ifs("job_input.json");
-  input.read(ifs);
+  loadInput(input);
 
   // The variable *input* should now contain the input fields given to
   // the app(let), with keys equal to the input field names.
@@ -36,9 +35,18 @@ int main(int argc, char *argv[]) {
   //
   // See http://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
-DX_APP_WIZARD_INITIALIZE_INPUT
-DX_APP_WIZARD_DOWNLOAD_ANY_FILES
+DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
   // Fill in your application code here.
+  //
+  // To report any recognized errors, you can use the reportError
+  // function in the dxcpp library as follows, which will also exit
+  // your application with exit code 1.
+  //
+  //   try {
+  //     <some code here>
+  //   } catch (...) {
+  //     reportError("My error message");
+  //   }
 DX_APP_WIZARD_UPLOAD_ANY_FILES
   // The following line(s) fill in some basic dummy output and assumes
   // that you have created variables to represent your output with the
@@ -46,9 +54,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
 
   JSON output = JSON(JSON_HASH);
 DX_APP_WIZARD_OUTPUT
-  ofstream ofs("job_output.json");
-  ofs << output.toString();
-  ofs.close();
+  writeOutput(output);
 
   return 0;
 }

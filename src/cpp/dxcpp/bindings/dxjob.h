@@ -79,7 +79,7 @@ class DXJob {
    * @param fn_name Name of the function (in the current app or applet) to use as the entry point.
    * @param job_name Name for the resulting job. If blank string is given, then (default name of
    * parent job + ":fn_name") will be used instead.
-   * @param depends_on A list of Job ID's (string), representing jobs that must finish before this job should start running.
+   * @param depends_on A list of job IDs and/or data object IDs (string), representing jobs that must finish and/or data objects that must close before this job should start running.
    * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job will 
    * be run, or a mapping of function names to instance types. (Note: you can pass a 
    * std::map<string, string> as well)
