@@ -50,9 +50,8 @@ toolkit that doesn't require them.
 
 ### Ubuntu 12.04
 
-    sudo apt-get install git python-setuptools python-pip \
-      python-virtualenv g++ cmake libboost1.48-all-dev \
-      libcurl4-openssl-dev 
+    sudo apt-get install python-setuptools python-pip g++ cmake \
+      libboost1.48-all-dev libcurl4-openssl-dev
 
 ### CentOS 5.x/6.x
 
