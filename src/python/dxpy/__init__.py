@@ -150,7 +150,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
     :param data: Content of the request body
-    :type data: list or dict, if *jsonify_data* is True; or string, otherwise
+    :type data: list or dict, if *jsonify_data* is True; or string or file-like object, otherwise
     :param headers: Names and values of HTTP headers to submit with the request (in addition to those needed for authentication, compression, or other options specified with the call).
     :type headers: dict
     :param auth: Overrides the *auth* value to pass through to :meth:`requests.request`. By default a token is obtained from the ``DX_SECURITY_CONTEXT``.
