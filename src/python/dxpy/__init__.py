@@ -114,7 +114,7 @@ environment variables:
 # except:
 #     pass
 
-import os, json, requests, time, mmap
+import os, json, requests, time
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
 import httplib
@@ -201,6 +201,14 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     if jsonify_data:
         data = json.dumps(data)
 
+    # If the input is a buffer, its data gets consumed by
+    # requests.request (moving the read position). Record the initial
+    # buffer position so that we can return to it if the request fails
+    # and needs to be retried.
+    rewind_input_buffer_offset = None
+    if hasattr(data, 'seek') and hasattr(data, 'tell'):
+        rewind_input_buffer_offset = data.tell()
+
     headers['DNAnexus-API'] = API_VERSION
 
     if use_compression == 'snappy':
@@ -255,7 +263,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                 return decoded_content
         except (DXAPIError, ConnectionError, HTTPError, httplib.HTTPException) as e:
             last_error = e
-            
+
             # TODO: support HTTP/1.1 503 Retry-After
             # TODO: if the socket was dropped mid-request, ConnectionError is raised, but non-idempotent requests are unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
@@ -269,8 +277,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                             ok_to_retry = True
 
                 if ok_to_retry:
-                    if isinstance(data, mmap.mmap):
-                        data.seek(0)
+                    if rewind_input_buffer_offset is not None:
+                        data.seek(rewind_input_buffer_offset)
                     delay = 2 ** (retry+1)
                     logging.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
                     time.sleep(delay)
