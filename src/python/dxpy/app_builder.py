@@ -13,6 +13,9 @@ ones taking precedence):
 * Supply the 'project' attribute in your ``dxapp.json``.
 * Set the ``DX_WORKSPACE_ID`` environment variable (when running in a job context).
 
+You can use the function :func:`get_destination_project` to determine
+the effective destination project.
+
 '''
 
 import os, sys, json, subprocess, tempfile, logging, multiprocessing
@@ -74,6 +77,21 @@ def build(src_dir):
         or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
         logging.debug("Building with make -j%d" % (NUM_CORES,))
         subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
+
+def get_destination_project(src_dir, project=None):
+    """
+    :returns: Project ID where applet specified by src_dir would be written
+    :rtype: str
+
+    Returns the project ID where the applet specified in *src_dir* (or
+    its associated resource bundles) would be written. This returns the
+    same project that would be used by :func:`upload_resources()` and
+    :func:`upload_applet()`, given the same *src_dir* and *project*
+    parameters.
+    """
+    if project is not None:
+        return project
+    return _get_applet_spec(src_dir)['project']
 
 def upload_resources(src_dir, project=None):
     """

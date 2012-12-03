@@ -255,22 +255,32 @@ def main(**kwargs):
 
         bundled_resources = dxpy.app_builder.upload_resources(args.src_dir, project=working_project) if not args.dry_run else []
 
-        if args.dx_toolkit_autodep == "auto":
-            # "auto" (the default) means dx-toolkit (stable) on preprod
-            # and dx-toolkit-beta on all other systems.
-            if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
-                args.dx_toolkit_autodep = "stable"
-            else:
-                args.dx_toolkit_autodep = "beta"
-
-        applet_id = dxpy.app_builder.upload_applet(args.src_dir, bundled_resources,
-                                                   check_name_collisions=(args.mode == "applet"),
-                                                   overwrite=args.overwrite and args.mode == "applet",
-                                                   project=working_project,
-                                                   override_folder = override_folder,
-                                                   override_name = override_applet_name,
-                                                   dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                                   dry_run=args.dry_run)
+        try:
+            if args.dx_toolkit_autodep == "auto":
+                # "auto" (the default) means dx-toolkit (stable) on preprod
+                # and dx-toolkit-beta on all other systems.
+                if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
+                    args.dx_toolkit_autodep = "stable"
+                else:
+                    args.dx_toolkit_autodep = "beta"
+            applet_id = dxpy.app_builder.upload_applet(args.src_dir, bundled_resources,
+                                                       check_name_collisions=(args.mode == "applet"),
+                                                       overwrite=args.overwrite and args.mode == "applet",
+                                                       project=working_project,
+                                                       override_folder = override_folder,
+                                                       override_name = override_applet_name,
+                                                       dx_toolkit_autodep=args.dx_toolkit_autodep,
+                                                       dry_run=args.dry_run)
+        except:
+            # Avoid leaking any bundled_resources files we may have
+            # created, if applet creation fails. Note that if
+            # using_temp_project, the entire project gets destroyed at
+            # the end, so we don't bother.
+            if not using_temp_project:
+                objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
+                dxpy.api.projectRemoveObjects(dxpy.app_builder.get_destination_project(args.src_dir, project=working_project),
+                                              input_params={"objects": objects_to_delete})
+            raise
 
         if args.dry_run:
             return
