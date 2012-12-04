@@ -19,6 +19,12 @@
 
 #include <boost/filesystem.hpp>
 
+#include <boost/version.hpp>
+// http://www.boost.org/doc/libs/1_48_0/libs/config/doc/html/boost_config/boost_macro_reference.html
+#if ((BOOST_VERSION / 100000) < 1 || ((BOOST_VERSION/100000) == 1 && ((BOOST_VERSION / 100) % 1000) < 48))
+  #error "Cannot compile Upload Agent using Boost version < 1.48"
+#endif
+
 using namespace std;
 
 #ifdef WINDOWS_BUILD
