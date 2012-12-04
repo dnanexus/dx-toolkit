@@ -102,7 +102,7 @@ void DXFile::setIDs(const JSON &dxlink) {
 
 
 void DXFile::create(const std::string &media_type,
-		    const dx::JSON &data_obj_fields) {
+                    const dx::JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
   if (!data_obj_fields.has("project"))
     input_params["project"] = g_WORKSPACE_ID;

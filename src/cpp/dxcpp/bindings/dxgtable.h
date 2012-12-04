@@ -282,7 +282,7 @@ public:
    * API method.
    */
   void create(const DXGTable &init_from,
-	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Creates a new remote GTable, initializing it using the schema and metadata from an existing
@@ -299,8 +299,8 @@ public:
    * API method.
    */
   void create(const DXGTable &init_from,
-	      const std::vector<dx::JSON> &columns,
-	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+              const std::vector<dx::JSON> &columns,
+              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Creates a new remote GTable, initializing it using the schema and metadata from an existing
@@ -321,9 +321,9 @@ public:
    * API method.
    */
   void create(const DXGTable &init_from,
-	      const std::vector<dx::JSON> &columns,
+              const std::vector<dx::JSON> &columns,
               const std::vector<dx::JSON> &indices,
-	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Creates a new remote GTable by extending the current GTable with additional columns. The only
@@ -555,7 +555,7 @@ public:
    * @return An object handler for the specified GTable.
    */
   static DXGTable openDXGTable(const std::string &dxid,
-			       const std::string &project="default");
+                               const std::string &project="default");
 
   /**
    * Creates a new remote GTable and returns a handler for it.
@@ -612,7 +612,7 @@ public:
    * @return An object handler for the newly created GTable.
    */
   static DXGTable newDXGTable(const DXGTable &init_from,
-			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+                              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Creates a new remote GTable using the metadata from an existing GTable.
@@ -634,8 +634,8 @@ public:
    * @return An object handler for the newly created GTable.
    */
   static DXGTable newDXGTable(const DXGTable &init_from,
-			      const std::vector<dx::JSON> &columns,
-			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+                              const std::vector<dx::JSON> &columns,
+                              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
   /**
    * Creates a new remote GTable using the metadata from an existing GTable.
    *
@@ -660,9 +660,9 @@ public:
    * @return An object handler for the newly created GTable.
    */
   static DXGTable newDXGTable(const DXGTable &init_from,
-			      const std::vector<dx::JSON> &columns,
-			      const std::vector<dx::JSON> &indices,
-			      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+                              const std::vector<dx::JSON> &columns,
+                              const std::vector<dx::JSON> &indices,
+                              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Creates a new remote GTable by extending the specified GTable with additional columns and

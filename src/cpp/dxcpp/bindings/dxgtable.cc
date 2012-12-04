@@ -20,7 +20,7 @@ void DXGTable::reset() {
 }
 
 void DXGTable::setIDs(const string &dxid,
-		      const string &proj) {
+                      const string &proj) {
   reset();
   DXDataObject::setIDs(dxid, proj);
 }
@@ -40,7 +40,7 @@ void DXGTable::setIDs(const JSON &dxlink) {
 
 void DXGTable::create(const vector<JSON> &columns,
                       const vector<JSON> &indices,
-		      const JSON &data_obj_fields) {
+                      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
   if (!data_obj_fields.has("project"))
     input_params["project"] = g_WORKSPACE_ID;
@@ -55,7 +55,7 @@ void DXGTable::create(const vector<JSON> &columns,
 }
 
 void DXGTable::create(const DXGTable &init_from,
-		      const JSON &data_obj_fields) {
+                      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
   input_params["initializeFrom"] = JSON(JSON_OBJECT);
   input_params["initializeFrom"]["id"] = init_from.getID();
@@ -70,8 +70,8 @@ void DXGTable::create(const DXGTable &init_from,
 }
 
 void DXGTable::create(const DXGTable &init_from,
-		      const vector<JSON> &columns,
-		      const JSON &data_obj_fields) {
+                      const vector<JSON> &columns,
+                      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
   input_params["initializeFrom"] = JSON(JSON_OBJECT);
   input_params["initializeFrom"]["id"] = init_from.getID();
@@ -87,9 +87,9 @@ void DXGTable::create(const DXGTable &init_from,
 }
 
 void DXGTable::create(const DXGTable &init_from,
-		      const vector<JSON> &columns,
-		      const vector<JSON> &indices,
-		      const JSON &data_obj_fields) {
+                      const vector<JSON> &columns,
+                      const vector<JSON> &indices,
+                      const JSON &data_obj_fields) {
   JSON input_params = data_obj_fields;
   input_params["initializeFrom"] = JSON(JSON_OBJECT);
   input_params["initializeFrom"]["id"] = init_from.getID();
@@ -389,7 +389,7 @@ void DXGTable::waitOnClose() const {
 }
 
 DXGTable DXGTable::openDXGTable(const string &dxid,
-				const string &proj) {
+                                const string &proj) {
   return DXGTable(dxid, proj);
 }
 
@@ -402,7 +402,7 @@ DXGTable DXGTable::newDXGTable(const vector<JSON> &columns,
 }
 
 DXGTable DXGTable::newDXGTable(const DXGTable &init_from,
-			       const JSON &data_obj_fields) {
+                               const JSON &data_obj_fields) {
   DXGTable gtable;
   gtable.create(init_from, data_obj_fields);
   return gtable;

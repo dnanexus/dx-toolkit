@@ -265,7 +265,7 @@ class DXFile: public DXDataObject {
    * API method.
    */
   void create(const std::string &media_type="",
-	      const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+              const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Reads the next <code>n</code> bytes in the remote file object (or all the bytes up to the end

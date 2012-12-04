@@ -176,8 +176,8 @@ class DXContainer {
    * @param dest_folder The full path of the destination folder in the destination container.
    */
   void cloneFolder(const std::string &folder,
-		   const std::string &dest_container,
-		   const std::string &dest_folder) const {
+                   const std::string &dest_container,
+                   const std::string &dest_folder) const {
     clone(dx::JSON(dx::JSON_ARRAY), dx::JSON::parse("[\"" + folder + "\"]"), dest_container, dest_folder);
   }
 

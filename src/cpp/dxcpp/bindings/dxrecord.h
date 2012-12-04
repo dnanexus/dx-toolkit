@@ -54,7 +54,7 @@ class DXRecord: public DXDataObject {
    * @param proj ID of the project in which to access the object.
    */
   DXRecord(const std::string &dxid,
-	   const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
+           const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
 
   /**
    * Creates a new %DXRecord handler for the specified remote record object.
@@ -100,7 +100,7 @@ class DXRecord: public DXDataObject {
    * @return A DXRecord remote object handler.
    */
   static DXRecord newDXRecord(const dx::JSON &data_obj_fields=
-			      dx::JSON(dx::JSON_OBJECT));
+                              dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Creates a new remote record object, initializing it from the specified record (and overriding
@@ -117,7 +117,7 @@ class DXRecord: public DXDataObject {
    */
   static DXRecord newDXRecord(const DXRecord &init_from,
                               const dx::JSON &data_obj_fields=
-			      dx::JSON(dx::JSON_OBJECT));
+                              dx::JSON(dx::JSON_OBJECT));
 
   /**
    * Clones the remote record into the specified project and folder.
