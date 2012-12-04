@@ -298,7 +298,7 @@ class DXApp(DXObject):
         else:
             return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
 
-    def run(self, app_input, project=None, folder="/", name=None, instance_type=None, **kwargs):
+    def run(self, app_input, project=None, folder="/", name=None, instance_type=None, depends_on=None, **kwargs):
         '''
         :param app_input: Hash of the app's input arguments
         :type app_input: dict
@@ -310,6 +310,8 @@ class DXApp(DXObject):
         :type name: string
         :param instance_type: Instance type on which the job with entry point "main" will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
+        :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
+        :type depends_on: list
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -335,6 +337,21 @@ class DXApp(DXObject):
                 run_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
             else:
                 raise DXError('Expected instance_type field to be either a string or a dict')
+
+        if depends_on is not None:
+            run_input["dependsOn"] = []
+            if isinstance(depends_on, list):
+                for item in depends_on:
+                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
+                        if item.get_id() is None:
+                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
+                        run_input["dependsOn"].append(item.get_id())
+                    elif isinstance(item, basestring):
+                        run_input['dependsOn'].append(item)
+                    else:
+                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
+            else:
+                raise DXError('Expected depends_on field to be a list')                    
 
         if self._dxid is not None:
             return DXJob(dxpy.api.appRun(

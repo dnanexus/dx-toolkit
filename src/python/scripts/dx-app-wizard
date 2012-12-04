@@ -21,6 +21,9 @@ if not isinstance(dx_home_dir, basestring):
     sys.stderr.write(fill('''Error: Environment variable DNANEXUS_HOME is not set; cannot find code templates''') + '\n')
     exit(1)
 
+if args.json_file is not None and not os.path.exists(args.json_file):
+    parser.error('File not found: ' + args.json_file)
+
 print_intro(API_VERSION)
 
 if args.json_file is not None:
@@ -73,7 +76,7 @@ else:
     ############
 
     class_completer = Completer(['int', 'float', 'string', 'boolean', 'hash',
-                                 'array:int', 'array:float', 'array:string', 'array:boolean', 'array:hash',
+                                 'array:int', 'array:float', 'array:string', 'array:boolean',
                                  'record', 'file', 'gtable', 'table', 'applet',
                                  'array:record', 'array:file', 'array:gtable', 'array:table', 'array:applet'])
     bool_completer = Completer(['true', 'false'])
@@ -105,7 +108,7 @@ else:
 
             use_completer(class_completer)
             print 'Your input variable must be of one of the following classes:'
-            print '''array:boolean  array:hash     array:string   float          applet
+            print '''array:boolean  array:string   float          applet
 array:file     array:int      array:table    gtable         record
 array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
@@ -185,8 +188,8 @@ array:gtable   array:record   file           int            table
             output_label = prompt_for_var('Label (optional)', '')
 
             use_completer(class_completer)
-            print 'Your input variable must be of one of the following classes:'
-            print '''array:boolean  array:hash     array:string   float          applet
+            print 'Your output variable must be of one of the following classes:'
+            print '''array:boolean  array:string   float          applet
 array:file     array:int      array:table    gtable         record
 array:float    array:applet   boolean        hash           string
 array:gtable   array:record   file           int            table
@@ -208,11 +211,13 @@ array:gtable   array:record   file           int            table
             app_json['outputSpec'].append(parameter_json)
 
 file_input_names = []
+file_array_input_names = []
 file_output_names = []
 gtable_input_names = []
 gtable_output_names = []
 if 'inputSpec' in app_json:
     file_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'file']
+    file_array_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'array:file']
     gtable_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'gtable']
 if 'outputSpec' in app_json:
     file_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'file']
@@ -289,10 +294,19 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
-manifest += create_files_from_templates(template_dir, app_json, language, file_input_names, file_output_names, pattern, pattern_suffix, parallelized_input_field, parallelized_output_field)
+manifest += create_files_from_templates(template_dir, app_json, language,
+                                        file_input_names, file_array_input_names, file_output_names,
+                                        pattern, pattern_suffix,
+                                        parallelized_input_field, parallelized_output_field)
 
 print "Created files:"
 for filename in sorted(manifest):
     print "\t", filename
-print fill('''App directory created! See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
-next steps, or run "dx-build-app %s".''' % name)
+print "\n" + fill('''App directory created!  See
+http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for next
+steps, or run "dx-build-app %s".''' % name) + "\n"
+print fill('''Running the DNAnexus build utility will create an
+executable on the DNAnexus platform.  Any files found in the ''' +
+BOLD() + 'resources' + ENDC() + ''' directory will be uploaded so that
+they will be present in the root directory when the executable is
+run.''')

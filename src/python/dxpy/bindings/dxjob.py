@@ -29,7 +29,7 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None,
     :type name: string
     :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
     :type instance_type: string or dict
-    :param depends_on: List of DXJob objects or strings of job IDs representing jobs that must finish before this job should start running
+    :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
     :type depends_on: list
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -78,7 +78,7 @@ class DXJob(DXObject):
         :type name: string
         :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
-        :param depends_on: List of DXJob objects or strings of job IDs representing jobs that must finish before this job should start running
+        :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
 
         Creates and enqueues a new job that will execute a particular
@@ -110,14 +110,14 @@ class DXJob(DXObject):
                 req_input["dependsOn"] = []
                 if isinstance(depends_on, list):
                     for item in depends_on:
-                        if isinstance(item, DXJob):
+                        if isinstance(item, DXJob) or isinstance(item, DXDataObject):
                             if item.get_id() is None:
-                                raise DXError('A dxpy.DXJob object given in depends_on does not have a job ID set')
+                                raise DXError('A dxpy handler given in depends_on does not have an ID set')
                             req_input["dependsOn"].append(item.get_id())
                         elif isinstance(item, basestring):
                             req_input['dependsOn'].append(item)
                         else:
-                            raise DXError('Expected elements of depends_on to only be either dxpy.DXJob objects or strings')
+                            raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
                 else:
                     raise DXError('Expected depends_on field to be a list')                    
             resp = dxpy.api.jobNew(req_input, **kwargs)

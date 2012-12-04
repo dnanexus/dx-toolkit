@@ -96,7 +96,7 @@ public:
    *
    * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
    * @param output_folder The folder (within the project_context) in which the applet's output objects will be placed.
-   * @param depends_on A list of Job ID's (string), representing jobs that must finish before this job should start running.
+   * @param depends_on A list of job IDs and/or data object IDs (string), representing jobs that must finish and/or data objects that must close before this job should start running.
    * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job with 
    * the entry point "main" will be run, or a mapping of function names to instance types. (Note: you can pass a 
    * std::map<string, string> as well)

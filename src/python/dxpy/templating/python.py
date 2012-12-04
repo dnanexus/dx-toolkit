@@ -25,7 +25,7 @@ def get_output_fmt(output_param):
         output_fmt = "dxpy.dxlink(" + output_param["name"] + ")"
     return output_fmt
 
-def get_strings(app_json, file_input_names, file_output_names, dummy_output_hash):
+def get_strings(app_json, file_input_names, file_array_input_names, file_output_names, dummy_output_hash):
     input_sig_str = ''
     init_inputs_str = ''
     dl_files_str = ''
@@ -59,10 +59,10 @@ def get_strings(app_json, file_input_names, file_output_names, dummy_output_hash
         init_inputs_str = '\n' + fill('The following line(s) initialize your data object inputs on the platform into dxpy.DXDataObject instances that you can start using immediately.', initial_indent='    # ', subsequent_indent='    # ', width=80)
         init_inputs_str += "\n\n    "
         init_inputs_str += "\n    ".join(init_inputs)
+        init_inputs_str += "\n"
 
     if len(file_input_names) > 0:
-        dl_files_str = '\n' if len(init_inputs) > 0 else ''
-        dl_files_str += fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80)
+        dl_files_str = '\n' + fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80)
         dl_files_str += "\n\n    "
         dl_files_str += "\n    ".join(['dxpy.download_dxfile(' + name + '.get_id(), "' + name + '")' for name in file_input_names])
         dl_files_str += "\n"
