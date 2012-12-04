@@ -155,6 +155,9 @@ def import_spans(bed_file, table_name, ref_id):
 
         for line in bed:
             if line.startswith("track"):
+                details = span.get_details()
+                details['track'] = line
+                span.set_details(details)
                 continue
             line = line.rstrip("\n")
             line = line.split()
@@ -207,6 +210,9 @@ def import_named_spans(bed_file, table_name, ref_id):
             row = list(default_row)
 
             if line.startswith("track"):
+                details = span.get_details()
+                details['track'] = line
+                span.set_details(details)
                 continue
             line = line.rstrip("\n")
             line = line.split()
@@ -367,6 +373,9 @@ def import_genes(bed_file, table_name, ref_id):
         # where the parsing magic happens
         for line in bed:
             if line.startswith("track"):
+                details = span.get_details()
+                details['track'] = line
+                span.set_details(details)
                 continue
             line = line.rstrip("\n")
             row = list(default_row)
@@ -388,9 +397,13 @@ def import_genes(bed_file, table_name, ref_id):
                 line[11] = line[11].rstrip(",").split(",")
                 blockStarts = [int(line[11][n]) for n in range(blockCount)]
 
-                thickStart = int(line[6])
-                thickEnd = int(line[7])
+                gene_lo = int(line[1])
+                gene_hi = int(line[2])
 
+                # set thick* to be within the gene if outside
+                thickStart = min(max(int(line[6]), gene_lo), gene_hi)
+                thickEnd = max(min(int(line[7]), gene_hi), gene_lo)
+                
                 for i in range(blockCount):
                     # look to thickStart and thickEnd to get information about the type of this region
                     # if thick* are the same or cover the whole transcript then we ignore them
