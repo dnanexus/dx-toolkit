@@ -34,7 +34,7 @@ endif
 
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
-dxcpp_objs = api.o dxcpp.o SSLThreads.o
+dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o
 ua_objs = compress.o options.o log.o chunk.o main.o File.o api_helper.o import_apps.o
 
 dxjson: $(dxjson_objs)
