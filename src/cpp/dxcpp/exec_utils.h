@@ -11,7 +11,7 @@
  *
  * @param input JSON variable to be set
  */
-void loadInput(dx::JSON &input);
+void dxLoadInput(dx::JSON &input);
 
 /**
  * This function serializes the given JSON variable and saves it to
@@ -19,7 +19,7 @@ void loadInput(dx::JSON &input);
  *
  * @param output JSON variable to be serialized
  */
-void writeOutput(const dx::JSON &output);
+void dxWriteOutput(const dx::JSON &output);
 
 /**
  * This function records the given error message into the local file
@@ -29,6 +29,6 @@ void writeOutput(const dx::JSON &output);
  * @param internal Whether the error should be reported as an
  * AppInternalError instead of AppError
  */
-void reportError(const std::string &message, const bool internal=false);
+void dxReportError(const std::string &message, const bool internal=false);
 
 #endif

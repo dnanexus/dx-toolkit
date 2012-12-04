@@ -32,7 +32,7 @@ void postprocess() {
   // file output.
 
   JSON output = JSON(JSON_HASH);
-  writeOutput(output);
+  dxWriteOutput(output);
 }
 
 void process() {
@@ -44,7 +44,7 @@ void process() {
   // file output.
 
   JSON output = JSON(JSON_HASH);
-  writeOutput(output);
+  dxWriteOutput(output);
 }
 
 int main(int argc, char *argv[]) {
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   }
 
   JSON input;
-  loadInput(input);
+  dxLoadInput(input);
 
   // The variable *input* should now contain the input fields given to
   // the app(let), with keys equal to the input field names.
@@ -118,7 +118,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
 
   JSON output = JSON(JSON_HASH);
 DX_APP_WIZARD_OUTPUT
-  writeOutput(output);
+  dxWriteOutput(output);
 
   return 0;
 }

@@ -23,7 +23,7 @@ using namespace dx;
 
 int main(int argc, char *argv[]) {
   JSON input;
-  loadInput(input);
+  dxLoadInput(input);
 
   // The variable *input* should now contain the input fields given to
   // the app(let), with keys equal to the input field names.
@@ -38,14 +38,14 @@ int main(int argc, char *argv[]) {
 DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
   // Fill in your application code here.
   //
-  // To report any recognized errors, you can use the reportError
+  // To report any recognized errors, you can use the dxReportError
   // function in the dxcpp library as follows, which will also exit
   // your application with exit code 1.
   //
   //   try {
   //     <some code here>
   //   } catch (...) {
-  //     reportError("My error message");
+  //     dxReportError("My error message");
   //   }
 DX_APP_WIZARD_UPLOAD_ANY_FILES
   // The following line(s) fill in some basic dummy output and assumes
@@ -54,7 +54,7 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
 
   JSON output = JSON(JSON_HASH);
 DX_APP_WIZARD_OUTPUT
-  writeOutput(output);
+  dxWriteOutput(output);
 
   return 0;
 }
