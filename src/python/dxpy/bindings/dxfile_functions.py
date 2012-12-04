@@ -32,10 +32,8 @@ def open_dxfile(dxid, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE):
     '''
     return DXFile(dxid, project=project, read_buffer_size=read_buffer_size)
 
-def new_dxfile(keep_open=None, mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
+def new_dxfile(mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     '''
-    :param keep_open: Deprecated. Use the *mode* parameter instead.
-    :type keep_open: boolean
     :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
     :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
@@ -58,7 +56,7 @@ def new_dxfile(keep_open=None, mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE,
         dxFile.new(**kwargs)
 
     '''
-    dx_file = DXFile(keep_open=keep_open, mode=mode, write_buffer_size=write_buffer_size)
+    dx_file = DXFile(mode=mode, write_buffer_size=write_buffer_size)
     dx_file.new(**kwargs)
     return dx_file
 
@@ -250,8 +248,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     return dxfile
 
-def upload_string(to_upload, media_type=None, keep_open=None, mode=None,
-                  wait_on_close=False, **kwargs):
+def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
     """
     :param to_upload: String to upload into a file
     :type to_upload: string
@@ -273,10 +270,15 @@ def upload_string(to_upload, media_type=None, keep_open=None, mode=None,
 
     """
 
-    dxfile = new_dxfile(media_type=media_type, keep_open=keep_open, mode=mode, **kwargs)
+    # Use 'a' mode because we will be responsible for closing the file
+    # ourselves later (if requested).
+    dxfile = new_dxfile(media_type=media_type, mode='a', **kwargs)
 
     creation_kwargs, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
 
     dxfile.write(to_upload, **remaining_kwargs)
-    dxfile.close(block=wait_on_close, **remaining_kwargs)
+
+    if not keep_open:
+        dxfile.close(block=wait_on_close, **remaining_kwargs)
+
     return dxfile

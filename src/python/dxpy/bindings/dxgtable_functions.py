@@ -10,12 +10,10 @@ these methods return a remote table handler.
 
 from dxpy.bindings import *
 
-def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
+def open_dxgtable(dxid, project=None, mode=None):
     '''
     :param dxid: table ID
     :type dxid: string
-    :param keep_open: Deprecated. Use the *mode* parameter instead.
-    :type keep_open: boolean
     :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
     :type mode: string
     :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
@@ -38,10 +36,9 @@ def open_dxgtable(dxid, project=None, keep_open=None, mode=None):
 
     '''
 
-    return DXGTable(dxid, project=project, keep_open=keep_open, mode=mode)
+    return DXGTable(dxid, project=project, mode=mode)
 
-def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mode=None,
-                 **kwargs):
+def new_dxgtable(columns=None, indices=None, init_from=None, mode=None, **kwargs):
     '''
     :param columns: An ordered list containing column descriptors.  See :meth:`~dxpy.bindings.dxgtable.DXGTable.make_column_desc` (required if *init_from* is not provided)
     :type columns: list of column descriptors
@@ -49,8 +46,6 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mod
     :type indices: list of index descriptors
     :param init_from: GTable from which to initialize the metadata including column and index specs
     :type init_from: :class:`~dxpy.bindings.dxgtable.DXGTable`
-    :param keep_open: Deprecated. Use the *mode* parameter instead.
-    :type keep_open: boolean
     :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
     :returns: Remote table handler for the newly created table
@@ -83,11 +78,11 @@ def new_dxgtable(columns=None, indices=None, init_from=None, keep_open=None, mod
 
     '''
 
-    dxgtable = DXGTable(keep_open=keep_open, mode=mode)
+    dxgtable = DXGTable(mode=mode)
     dxgtable.new(columns=columns, indices=indices, init_from=init_from, **kwargs)
     return dxgtable
 
-def extend_dxgtable(dxid, columns, indices=None, keep_open=None, mode=None, **kwargs):
+def extend_dxgtable(dxid, columns, indices=None, mode=None, **kwargs):
     '''
     :param dxid: Object ID of table to extend
     :type dxid: string
@@ -95,8 +90,6 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=None, mode=None, **kw
     :type columns: list of column descriptors
     :param indices: An ordered list containing index descriptors. See description in :func:`~dxpy.bindings.dxgtable.DXGTable.extend`.
     :type indices: list of index descriptors
-    :param keep_open: Deprecated. Use the *mode* parameter instead.
-    :type keep_open: boolean
     :param mode: One of "w" or "a" for write and append modes, respectively
     :type mode: string
     :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
@@ -121,4 +114,4 @@ def extend_dxgtable(dxid, columns, indices=None, keep_open=None, mode=None, **kw
 
     '''
 
-    return DXGTable(dxid).extend(columns, indices, keep_open=keep_open, mode=mode, **kwargs)
+    return DXGTable(dxid).extend(columns, indices, mode=mode, **kwargs)

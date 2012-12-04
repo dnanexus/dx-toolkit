@@ -27,8 +27,6 @@ class DXFile(DXDataObject):
     :type dxid: string
     :param project: Project ID
     :type project: string
-    :param keep_open: Deprecated. Use the mode parameter instead.
-    :type keep_open: boolean
     :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
     :type mode: string
 
@@ -60,19 +58,11 @@ class DXFile(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
-    def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
+    def __init__(self, dxid=None, project=None, mode=None,
                  read_buffer_size=DEFAULT_BUFFER_SIZE, write_buffer_size=DEFAULT_BUFFER_SIZE):
         DXDataObject.__init__(self, dxid=dxid, project=project)
-        if keep_open is not None:
-            if keep_open:
-                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the file open, please set mode to be one of 'r' or 'a' instead."
-            else:
-                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To close the file on exit, please supply mode='w' instead."
         if mode is None:
-            # Fall back on keep_open
-            if keep_open is None:
-                keep_open = False
-            self._close_on_exit = not keep_open
+            self._close_on_exit = True
         else:
             if mode not in ['r', 'w', 'a']:
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")

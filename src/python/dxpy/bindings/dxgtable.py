@@ -58,19 +58,10 @@ class DXGTable(DXDataObject):
     def set_http_threadpool_size(cls, num_threads):
         cls._http_threadpool_size = num_threads
 
-    def __init__(self, dxid=None, project=None, keep_open=None, mode=None,
-                 request_size=DEFAULT_TABLE_WRITE_REQUEST_SIZE):
+    def __init__(self, dxid=None, project=None, mode=None, request_size=DEFAULT_TABLE_WRITE_REQUEST_SIZE):
         DXDataObject.__init__(self, dxid=dxid, project=project)
-        if keep_open is not None:
-            if keep_open:
-                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To keep the table open, please set mode to be one of 'r' or 'a' instead."
-            else:
-                print >> sys.stderr, "WARNING: the keep_open option is being deprecated. To close the table on exit, please supply mode='w' instead."
         if mode is None:
-            # Fall back on keep_open
-            if keep_open is None:
-                keep_open = False
-            self._close_on_exit = not keep_open
+            self._close_on_exit = True
         else:
             if mode not in ['r', 'w', 'a']:
                 raise ValueError("mode must be one of 'r', 'w', or 'a'")
@@ -360,7 +351,7 @@ class DXGTable(DXDataObject):
     def __iter__(self):
         return self.iterate_rows()
 
-    def extend(self, columns, indices=None, keep_open=None, mode=None, **kwargs):
+    def extend(self, columns, indices=None, mode=None, **kwargs):
         '''
         :param columns: List of new column descriptors. See :meth:`make_column_desc`.
         :type columns: list of column descriptors
@@ -387,7 +378,7 @@ class DXGTable(DXDataObject):
         if indices is not None:
             dx_hash["indices"] = indices
         resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
-        return DXGTable(resp["id"], dx_hash["project"], keep_open=keep_open, mode=mode)
+        return DXGTable(resp["id"], dx_hash["project"], mode=mode)
 
     # TODO: make this consume recarrays
     def add_rows(self, data, part=None, validate=True, **kwargs):
