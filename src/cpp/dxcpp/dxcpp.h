@@ -7,6 +7,7 @@
 #include <string>
 #include "dxjson/dxjson.h"
 #include "exceptions.h"
+#include "exec_utils.h"
 
 /**
  * Default project or workspace ID to access.

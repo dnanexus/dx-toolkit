@@ -16,8 +16,7 @@ import dxpy
 
 @dxpy.entry_point('main')
 def main(DX_APP_WIZARD_INPUT_SIGNATURE):
-DX_APP_WIZARD_INITIALIZE_INPUT
-DX_APP_WIZARD_DOWNLOAD_ANY_FILES
+DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # Fill in your application code here.
 DX_APP_WIZARD_UPLOAD_ANY_FILES
     # The following line fills in some basic dummy output and assumes

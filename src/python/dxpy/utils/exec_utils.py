@@ -97,10 +97,11 @@ def run(function_name=None, function_input=None):
     result = convert_handlers_to_dxlinks(result)
 
     if dxpy.JOB_ID is not None:
-        # TODO: protect against client removing its original working directory
-        os.chdir(dx_working_dir)
-        with open("job_output.json", "w") as fh:
-            fh.write(json.dumps(result) + "\n")
+        if result is not None:
+            # TODO: protect against client removing its original working directory
+            os.chdir(dx_working_dir)
+            with open("job_output.json", "w") as fh:
+                fh.write(json.dumps(result) + "\n")
     else:
         result = resolve_job_refs_in_test(result)
 

@@ -23,28 +23,6 @@
 using namespace std;
 using namespace dx;
 
-void getInput(JSON &input) {
-  ifstream ifs("job_input.json");
-  input.read(ifs);
-}
-
-void writeOutput(const JSON &output) {
-  ofstream ofs("job_output.json");
-  ofs << output.toString();
-  ofs.close();
-}
-
-void reportError(const string &message, const bool internal=false) {
-  ofstream ofs("job_error.json");
-  JSON error_json = JSON(JSON_HASH);
-  error_json["error"] = JSON(JSON_HASH);
-  error_json["error"]["type"] = internal ? "AppInternalError" : "AppError";
-  error_json["error"]["message"] = message;
-  ofs << error_json.toString();
-  ofs.close();
-  exit(1);
-}
-
 void postprocess() {
   JSON input;
   getInput(input);
@@ -83,7 +61,7 @@ int main(int argc, char *argv[]) {
   }
 
   JSON input;
-  getInput(input);
+  loadInput(input);
 
   // The variable *input* should now contain the input fields given to
   // the app(let), with keys equal to the input field names.
@@ -95,8 +73,7 @@ int main(int argc, char *argv[]) {
   //
   // See http://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
-DX_APP_WIZARD_INITIALIZE_INPUT
-DX_APP_WIZARD_DOWNLOAD_ANY_FILES
+DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
   // Split your work into parallel tasks.  As an example, the
   // following generates 10 subjobs running with the same dummy input.
 
@@ -131,6 +108,13 @@ DX_APP_WIZARD_UPLOAD_ANY_FILES
   // as follows.
   //
   // output["app_output_field"] = postprocess_job.getOutputRef("answer");
+  //
+  // Tip: you can include in your output at this point any open
+  // objects (such as gtables) which are closed by another entry
+  // point that finishes later.  The system will check to make sure
+  // that the output object is closed and will attempt to clone it
+  // out as output into the parent container only after all subjobs
+  // have finished.
 
   JSON output = JSON(JSON_HASH);
 DX_APP_WIZARD_OUTPUT

@@ -8,6 +8,45 @@ def get_interpreter():
 def get_path():
     return 'cpp'
 
+cpp_classes = {
+    "int": "int64_t",
+    "float": "double",
+    "hash": "JSON",
+    "boolean": "bool",
+    "string": "string",
+    "gtable": "DXGTable",
+    "record": "DXRecord",
+    "file": "DXFile"
+    }
+
+def format_input_var_class(var, classname, cpp_class):
+    if classname in ["int", "float", "boolean", "string"]:
+        return var + ".get<{cpp_class}>()".format(cpp_class=cpp_class)
+    elif classname == "hash":
+        return var
+    elif classname in ["gtable", "record", "file"]:
+        return "{cpp_class}({var})".format(var=var, cpp_class=cpp_class)
+
+def get_input_fmt(input_param):
+    name = input_param['name']
+    is_array = input_param['class'].startswith('array:')
+    classname = input_param['class'][6:] if is_array else input_param['class']
+    cpp_class = cpp_classes[classname]
+
+    init_str = ''
+    if is_array:
+        init_str += 'vector<{cpp_class}> {name};\n'.format(name=name, cpp_class=cpp_class)
+        init_str += '  for (int i = 0; i < input["{name}"].size(); i++) {{'.format(name=name)
+        init_str += '\n    {name}.push_back('.format(name=name)
+        init_str += format_input_var_class('input["{name}"][i]'.format(name=name), classname, cpp_class)
+        init_str += ');\n  }'
+    else:
+        init_str += '{cpp_class} {name} = '.format(name=name, cpp_class=cpp_class)
+        init_str += format_input_var_class('input["{name}"]'.format(name=name), classname, cpp_class)
+        init_str += ';'
+
+    return init_str
+
 def get_output_fmt(output_param):
     output_class = output_param["class"]
     output_fmt = ''
@@ -19,7 +58,7 @@ def get_output_fmt(output_param):
         output_fmt = "DXLink({name}.getID())".format(name=output_param["name"])
     return output_fmt
 
-def get_strings(app_json, file_input_names, file_output_names, dummy_output_hash):
+def get_strings(app_json, file_input_names, file_array_input_names, file_output_names, dummy_output_hash):
     init_inputs_str = ''
     dl_files_str = ''
     ul_files_str = ''
@@ -30,23 +69,9 @@ def get_strings(app_json, file_input_names, file_output_names, dummy_output_hash
         for input_param in app_json['inputSpec']:
             if ("optional" in input_param and input_param['optional']) or "default" in input_param:
                 continue
-            if input_param['class'] == 'int':
-                inputs.append('int64_t {name} = input["{name}"].get<int64_t>();'.format(name=input_param['name']))
-            elif input_param['class'] == 'float':
-                inputs.append('double {name} = input["{name}"].get<double>();'.format(name=input_param['name']))
-            elif input_param['class'] == 'hash':
-                inputs.append('JSON {name} = input["{name}"];'.format(name=input_param['name']))
-            elif input_param['class'] == 'boolean':
-                inputs.append('bool {name} = input["{name}"].get<bool>();'.format(name=input_param['name']))
-            elif input_param['class'] == 'string':
-                inputs.append('string {name} = input["{name}"].get<string>();'.format(name=input_param['name']))
-            elif input_param['class'] == 'gtable':
-                inputs.append('DXGTable {name} = DXGTable(input["{name}"]);'.format(name=input_param['name']))
-            elif input_param['class'] == 'record':
-                inputs.append('DXRecord {name} = DXRecord(input["{name}"]);'.format(name=input_param['name']))
-            elif input_param['class'] == 'file':
-                inputs.append('DXFile {name} = DXFile(input["{name}"]);'.format(name=input_param['name']))
+            inputs.append(get_input_fmt(input_param))
         init_inputs_str += "\n  ".join(inputs)
+        init_inputs_str += "\n"
 
     if len(file_input_names) > 0:
         dl_files_str = "\n" + fill('''The following line(s) use the C++ bindings to download your file inputs to the local file system using variable names for the filenames.  To recover the original filenames, you can use the output of "variable.describe()["name"].get<string>()".''', initial_indent="  // ", subsequent_indent="  // ")

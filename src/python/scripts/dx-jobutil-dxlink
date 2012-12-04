@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+import json, argparse
+
+parser = argparse.ArgumentParser(description='Creates a DNAnexus link from an object ID or "<project ID>:<object ID>" string.  The result is of the form {"$dnanexus_link": "<object ID>"} or {"$dnanexus_link": {"project": <project ID>, "id": <object ID>}}, as appropriate.')
+parser.add_argument('object', help='Data object ID or "<Project ID>:<Data object ID>" to package into a DNAnexus link')
+args = parser.parse_args()
+
+if ':' in args.object:
+    proj_id, obj_id = args.object.split(":")
+    print json.dumps({"$dnanexus_link": {"project": proj_id, "id": obj_id}})
+else:
+    print json.dumps({"$dnanexus_link": args.object})
