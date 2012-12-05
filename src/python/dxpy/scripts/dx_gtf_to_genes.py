@@ -9,6 +9,7 @@ import sys
 sys.path.append('/usr/local/lib/')
 import magic
 import subprocess
+import argparse
 
 parser = argparse.ArgumentParser(description='Import a local GTF file as a Spans or Genes object.')
 parser.add_argument('fileName', help='local fileName to import')
@@ -26,7 +27,7 @@ def importGTF(**args):
     reference = args.reference
     outputName = args.outputName
 
-    inputFileName = unpack("file.gtf")
+    inputFileName = unpack(fileName)
     
     capturedTypes = {"5UTR": "5' UTR", "3UTR": "3' UTR", "CDS": "CDS", "inter": "intergenic", "inter_CNS": "intergenic_conserved", "intron_CNS": "intron_conserved", "exon": "exon", "transcript": "transcript", "gene":"gene"} 
     
@@ -51,7 +52,6 @@ def importGTF(**args):
     transcripts = {}
     spanId = 0
     
-    print "Isolating Gene Models"
     inputFile = open(inputFileName, 'r')
     for line in inputFile:
         if line[0] != "#":
@@ -93,7 +93,6 @@ def importGTF(**args):
                     entry.append('')
             spansTable.add_rows([entry])
 
-    print "Writing Entries"
     exons = {}      
     inputFile = open(inputFileName, 'r')
     for line in inputFile:
@@ -164,8 +163,6 @@ def parseLine(line, capturedTypes, discardedTypes):
     if len(tabSplit) == 1:
             tabSplit = line.split(" ")
             if len(tabSplit) < 9:
-                print "Error: One row did not have 9 entries, it had 1 instead. Offending line: "
-                print line
                 raise dxpy.AppError("One row did not have 9 entries, it had 1 instead. Offending line: " + line)
             tabSplit[8] = " ".join(tabSplit[8:])
             tabSplit = tabSplit[:9]
@@ -173,30 +170,20 @@ def parseLine(line, capturedTypes, discardedTypes):
     source = tabSplit[1]
     typ = tabSplit[2]
     if capturedTypes.get(typ) == None and discardedTypes.get(typ) == None:
-        print "Error: One row had a type which is not in the list of permitted types."
         message = 'Permitted types:'
         for x in [capturedTypes, discardedTypes]:
             for k, v in x.iteritems():
                 message += " " + k + ","
-        print message.rstrip(",")
-        print "Offending line: " + line
-        print "Offending type: " + typ
         raise dxpy.AppError("One row had a type which is not in the list of permitted types. " + message + "\nOffending line: " + line + "\nOffending type: " + typ)
     
     try:
         lo = int(tabSplit[3])-1
     except ValueError:
-        print "Error: One of the start values was could not be translated to an integer."
-        print "Offending line: " + line
-        print "Offending value: " + tabSplit[3]
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[3])
     
     try:
         hi = int(tabSplit[4])-1
     except ValueError:
-        print "Error: One of the start values was could not be translated to an integer."
-        print "Offending line: " + line
-        print "Offending value: " + tabSplit[4]
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[4])
 
     try:
@@ -205,15 +192,9 @@ def parseLine(line, capturedTypes, discardedTypes):
         if tabSplit[5] == "." or tabSplit[5] == '':
             score = dxpy.NULL
         else:
-            print "Error: The score for one line could not be translated into a number and was not \".\""
-            print "Offending line: " + line
-            print "Offending value: " + tabSplit[5]
             raise dxpy.AppError("The score for one line could not be translated into a number and was not \".\"" + "\nOffending line: " + line + "\nOffending value: " + tabSplit[5])
 
     if tabSplit[6] != "+" and tabSplit[6] != "-" and tabSplit[6] != ".":
-        print "Error: The strand indicated for an element was not \"+\", \"-\", or \".\""
-        print "Offending line: " + line
-        print "Offending value: " + tabSplit[6]
         raise dxpy.AppError("The strand indicated for an element was not \"+\", \"-\", or \".\"" + "\nOffending line: " + line + "\nOffending value: " + tabSplit[6])
     else:
         strand = tabSplit[6]
@@ -221,17 +202,11 @@ def parseLine(line, capturedTypes, discardedTypes):
     try:
         frame = int(tabSplit[7])
         if frame > 2 or frame < 0:
-            print "Error: The frame indicated for an element was not \".\", \"0\", \"1\", or \"2\""
-            print "Offending line: " + line
-            print "Offending value: " + tabSplit[7]
             raise dxpy.AppError("The frame indicated for an element was not \".\", \"0\", \"1\", or \"2\"" + "\nOffending line: " + line + "\nOffending value: " + tabSplit[7])
     except ValueError:
         if tabSplit[7] == ".":
             frame = -1
         else:
-            print "Error: The frame indicated for an element was not \".\", \"0\", \"1\", or \"2\""
-            print "Offending line: " + line
-            print "Offending value: " + tabSplit[7]
             raise dxpy.AppError("The frame indicated for an element was not \".\", \"0\", \"1\", or \"2\"" + "\nOffending line: " + line + "\nOffending value: " + tabSplit[7])
     
     lineAttributes = {}
@@ -261,24 +236,18 @@ def parseLine(line, capturedTypes, discardedTypes):
         
 def constructTable(inputFileName):
     inputFile = open(inputFileName, 'r')
-    print "Constructing table"
     attributes = {"gene_id" : True, "transcript_id": True}
     for line in inputFile:
         if line[0] != "#":
             tabSplit = line.split("\t")
             if len(tabSplit) == 1:
-                print "Input file does not appear tab delimited, trying space"
                 tabSplit = line.split(" ")
                 if len(tabSplit) < 9:
-                    print "Error: One row did not have 9 entries, it had 1 instead. Offending line: "
-                    print line
                     raise dxpy.AppError("One row did not have 9 entries, it had 1 instead. Offending line: " + line)
                 tabSplit[8] = " ".join(tabSplit[8:])
                 tabSplit = tabSplit[:9]
             
             if len(tabSplit) != 9:
-                print "Error: One row did not have 9 entries, it had " + str(len(tabSplit)) + " instead. Offending line: "
-                print line
                 raise dxpy.AppError("One row did not have 9 entries, it had " + str(len(tabSplit)) + " instead. Offending line: " + line)
             else:
                 entrySplit = tabSplit[8].split(";")
@@ -294,12 +263,8 @@ def constructTable(inputFileName):
                         transcriptIdPresent = True
                     attributes[key] = True
             if not geneIdPresent:
-                print "Error: One row did not a a gene_id"
-                print "Offending line: " + line
                 raise dxpy.AppError("One row did not a a gene_id Offending line: " + line)
             if not transcriptIdPresent:
-                print "Error: One row did not a a transcript_id"
-                print "Offending line: " + line
                 raise dxpy.AppError("One row did not a a gene_id Offending line: " + line)
     
     
@@ -327,13 +292,10 @@ def constructTable(inputFileName):
             schema.append({"name": k, "type": "string"})
             additionalColumns.append(k)
     
-    print schema
-            
     #When multiple indices are supported:
     #indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["description", "ASC"]], "description")]
     indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri')]
     spansTable = dxpy.new_dxgtable(columns=schema, indices=indices)
-    print "Created Table: " + spansTable.get_id()
     return spansTable, additionalColumns
 
 def unpack(input):
