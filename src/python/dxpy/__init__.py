@@ -269,7 +269,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
                 ok_to_retry = False
-                if isinstance(e, ConnectionError):
+                if isinstance(e, (ConnectionError, httplib.IncompleteRead)):
                     ok_to_retry = True
                 elif response is not None:
                     if response.status_code != 422:
