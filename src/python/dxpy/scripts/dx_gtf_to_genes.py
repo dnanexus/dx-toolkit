@@ -41,7 +41,7 @@ def importGTF(**args):
     if outputName != '':
         name =  outputName
     else:
-        name = dxpy.DXFile(fileName).describe()['name']
+        name = fileName
         for x in name.split(".")[1:-1]:
             if x != "gtf" and x != "GTF" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2":
                 name += "."+x
