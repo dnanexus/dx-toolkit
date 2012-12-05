@@ -36,7 +36,7 @@ def importGFF(**args):
     if outputName != "":
         name =  outputName
     else:
-        name = dxpy.DXFile(fileName).describe()['name']
+        name = fileName
         for x in name.split(".")[1:-1]:
             if x != "gff" and x != "GFF" and x != "gff3" and x != "GFF3" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2":
                 name += "."+x
