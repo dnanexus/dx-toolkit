@@ -40,7 +40,7 @@ Runtime dependencies
 
 ### Ubuntu 12.04
 
-    sudo apt-get install libboost-regex1.46.1 libboost-thread1.46.1
+    sudo apt-get install libboost-regex1.48.0 libboost-thread1.48.0
 
 ### Ubuntu 10.04
 
