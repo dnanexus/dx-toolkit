@@ -55,48 +55,26 @@ toolkit that doesn't require them.
 
 ### CentOS 5.x/6.x
 
-- ```dx-tookit``` requires Python 2.7 (not available natively on CentOS), so the first step is to build Python 2.7 by running the script below:
+- Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6.
+  The script ```build/centos_install_python27.sh``` installs it into
+  ```/usr/local/bin```.
 
-``` bash
-#!/bin/bash -ex
+- Install boost 1.48 or higher (at least the thread and regex libraries). This
+  version of boost is not available natively on CentOS 5 or 6. The script
+  ```build/centos_install_boost.sh``` installs it into ```/usr/local/lib```.
 
-# This script installs python2.7 into /usr/local on the system (required for running dx-toolkit)
-# <Tested on CentOS 6.2>
-
-sudo yum groupinstall -y "Development tools"
-sudo yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel readline
-
-# Install Python 2.7.3
-
-TEMPDIR=$(mktemp -d)
-
-pushd $TEMPDIR
-wget http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tar.bz2
-tar xf Python-2.7.3.tar.bz2
-cd Python-2.7.3
-./configure --prefix=/usr/local
-make
-sudo make altinstall
-
-PYTHON=/usr/local/bin/python2.7
-
-curl -O http://pypi.python.org/packages/source/d/distribute/distribute-0.6.30.tar.gz
-tar -xzf distribute-0.6.30.tar.gz
-(cd distribute-0.6.30; sudo $PYTHON setup.py install)
-
-curl -O http://pypi.python.org/packages/source/p/pip/pip-1.2.1.tar.gz
-tar xzf pip-1.2.1.tar.gz
-(cd pip-1.2.1; sudo $PYTHON setup.py install)
-```
-
-- Once you have installed Python 2.7, install ```boost```, and ```openmpi```:
+- Install ```openmpi```:
 
 ```
-sudo yum install boost openmpi
+sudo yum install openmpi
 ```
 
-Note:
-  - On CentOS 5.x, two of the utilities: ```contigset2fasta```, and ```dx-reads-validator``` will not function correctly (as it lacks newer version of certain libraries).
+Notes:
+
+  - On CentOS 5.x, two of the utilities: ```contigset2fasta```, and
+    ```dx-reads-validator``` will not function correctly, as some of the
+    library versions are too old.
+
   - Tested on CentOS 5.4 and CentOS 6.2.
 
 ### OS X
