@@ -66,8 +66,8 @@ toolkit that doesn't require them.
 
 Notes:
 
-  - On CentOS 5.x, two of the utilities: ```contigset2fasta```, and
-    ```dx-reads-validator``` will not function correctly, as some of the
+  - On CentOS 5.x, two of the utilities, ```contigset2fasta``` and
+    ```dx-reads-validator```, will not function correctly, as some of the
     library versions are too old.
 
   - Tested on CentOS 5.4 and CentOS 6.2.
