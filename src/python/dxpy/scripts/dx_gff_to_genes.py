@@ -32,15 +32,15 @@ def importGFF(**args):
     ##Isolate the attribute tags from the file and check integrity
     spansTable, additionalColumns = constructTable(inputFileName)
     
-    spansTable.set_details({'original_file': dxpy.dxlink(fileName), 'original_contigset': dxpy.dxlink(reference)})
-    if outputName != "":
-        name =  outputName
-    else:
-        name = fileName
-        for x in name.split(".")[1:-1]:
-            if x != "gff" and x != "GFF" and x != "gff3" and x != "GFF3" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2":
-                name += "."+x
-    spansTable.rename(name)
+    spansTable.set_details({'original_contigset': dxpy.dxlink(reference)})
+    
+    if outputName == '':
+        for x in fileName.split("."):
+            if x != "gff" and x != "GFF" and x != "gff3" and x != "GFF3" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
+                outputName += x+"."
+        outputName = outputName.rstrip(".")
+    
+    spansTable.rename(outputName)
     hasGenes = False
 
     #This pass through the file calculates the gene and transcript models 

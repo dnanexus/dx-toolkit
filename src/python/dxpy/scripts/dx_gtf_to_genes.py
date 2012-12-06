@@ -37,15 +37,13 @@ def importGTF(**args):
     ##Isolate the attribute tags from the file and check integrity
     spansTable, additionalColumns = constructTable(inputFileName)
     spansTable.add_types(["Spans", "NamedSpans", "Genes", "gri"])
-    spansTable.set_details({'original_file': dxpy.dxlink(fileName), 'original_contigset': dxpy.dxlink(reference)})
-    if outputName != '':
-        name =  outputName
-    else:
-        name = fileName
-        for x in name.split(".")[1:-1]:
-            if x != "gtf" and x != "GTF" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2":
-                name += "."+x
-    spansTable.rename(name)
+    spansTable.set_details({'original_contigset': dxpy.dxlink(reference)})
+    if outputName == '':
+        for x in fileName.split("."):
+            if x != "gtf" and x != "GTF" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
+                outputName += x+"."
+        outputName = outputName.rstrip(".")
+    spansTable.rename(outputName)
 
     #This pass through the file calculates the gene and transcript models 
     genes = {}
