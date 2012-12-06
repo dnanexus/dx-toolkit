@@ -22,7 +22,7 @@ all: api_wrappers cpp src_libs python contigset2fasta reads_validator
 # ============================
 
 toolkit_version:
-	echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"
+	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then echo "version = \"`git describe`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
 
 api_wrappers:
