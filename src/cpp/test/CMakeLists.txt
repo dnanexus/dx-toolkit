@@ -30,7 +30,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 
   add_subdirectory(../dxlog dxlog)
 
-  # dxlog requires openmp
+  # dxlog tests requires openmp
   add_executable(test_dxlog test_dxlog.cc ${GTEST_DIR}/src/gtest-all.cc)
   target_link_libraries(test_dxlog pthread dxlog dxjson)
 
