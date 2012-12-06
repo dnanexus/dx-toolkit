@@ -1,3 +1,21 @@
+dx-toolkit (0.0.29-dnanexus.1) precise; urgency=low
+
+  * dx upload supports -r (recursive upload)
+
+  * Updated dx-app-wizard templates, supporting parallelized bash apps.
+
+  * Improved support and documentation for CentOS.
+
+  * Fix PTFM-4703 (Don't leak resource file when applet building fails).
+
+  * Bug fixes for GTF import/export and BED import.
+
+  * Removed deprecated keep_open flag from DXFile/DXGTable constructors.
+
+  * Various components suggest more strongly (or require) boost >= 1.48.
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 06 Dec 2012 14:33:26 -0800
+
 dx-toolkit (0.0.28-dnanexus.1) precise; urgency=low
 
   * Fix: avoid infinite loop in job log streaming error detection in some cases
