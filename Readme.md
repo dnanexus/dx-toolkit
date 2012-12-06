@@ -56,12 +56,13 @@ toolkit that doesn't require them.
 ### CentOS 5.x/6.x
 
 - Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6.
-  The script ```build/centos_install_python27.sh``` installs it into
-  ```/usr/local/bin```.
+  You can use the script ```build/centos_install_python27.sh```, which installs
+  it into ```/usr/local/bin```.
 
-- Install boost 1.48 or higher (at least the thread and regex libraries). This
-  version of boost is not available natively on CentOS 5 or 6. The script
-  ```build/centos_install_boost.sh``` installs it into ```/usr/local/lib```.
+- Install boost 1.48 or higher (at least the ```thread``` and ```regex```
+  libraries). This version of boost is not available natively on CentOS 5 or 6.
+  You can use the script ```build/centos_install_boost.sh```, which installs it
+  into ```/usr/local/lib```.
 
 Notes:
 
