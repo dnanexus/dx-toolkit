@@ -63,12 +63,6 @@ toolkit that doesn't require them.
   version of boost is not available natively on CentOS 5 or 6. The script
   ```build/centos_install_boost.sh``` installs it into ```/usr/local/lib```.
 
-- Install ```openmpi```:
-
-```
-sudo yum install openmpi
-```
-
 Notes:
 
   - On CentOS 5.x, two of the utilities: ```contigset2fasta```, and
