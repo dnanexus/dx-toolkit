@@ -40,11 +40,39 @@ Runtime dependencies
 
 ### Ubuntu 12.04
 
-    sudo apt-get install libboost-regex1.48.0 libboost-thread1.48.0
+    sudo apt-get install libboost-regex1.48.0 libboost-thread1.48.0 libcurl3
 
 ### Ubuntu 10.04
 
-    sudo apt-get install libboost-regex1.40.0 libboost-thread1.40.0 libgomp1
+Install Python 2.7 for Ubuntu 10.04 (lucid) from the [deadsnakes
+PPA](https://launchpad.net/~fkrull/+archive/deadsnakes).
+
+Then:
+
+    sudo apt-get install libboost-regex1.40.0 libboost-thread1.40.0 libcurl3 libgomp1
+
+### CentOS 5.x/6.x
+
+Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
+can use the script ```build/centos_install_python27.sh```, which installs it
+into ```/usr/local/bin```.
+
+Install boost 1.48 or higher (at least the ```thread``` and ```regex```
+libraries). This version of boost is not available natively on CentOS 5 or 6.
+You can use the script ```build/centos_install_boost.sh```, which installs it
+into ```/usr/local/lib```.
+
+Then:
+
+    yum install libcurl
+
+Notes:
+
+- On CentOS 5.x, two of the utilities, ```contigset2fasta``` and
+  ```dx-reads-validator```, will not function correctly, as some of the library
+  versions are too old.
+
+- Tested on CentOS 5.4 and CentOS 6.2.
 
 ### OS X
 

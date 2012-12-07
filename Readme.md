@@ -50,19 +50,23 @@ toolkit that doesn't require them.
 
 ### Ubuntu 12.04
 
-    sudo apt-get install python-setuptools python-pip g++ cmake \
+    sudo apt-get install make python-setuptools python-pip g++ cmake \
       libboost1.48-all-dev libcurl4-openssl-dev
 
 ### CentOS 5.x/6.x
 
-- Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6.
-  You can use the script ```build/centos_install_python27.sh```, which installs
-  it into ```/usr/local/bin```.
+Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
+can use the script ```build/centos_install_python27.sh```, which installs it
+into ```/usr/local/bin```.
 
-- Install boost 1.48 or higher (at least the ```thread``` and ```regex```
-  libraries). This version of boost is not available natively on CentOS 5 or 6.
-  You can use the script ```build/centos_install_boost.sh```, which installs it
-  into ```/usr/local/lib```.
+Install boost 1.48 or higher (at least the ```thread``` and ```regex```
+libraries). This version of boost is not available natively on CentOS 5 or 6.
+You can use the script ```build/centos_install_boost.sh```, which installs it
+into ```/usr/local/lib```.
+
+Then:
+
+    yum install cmake libcurl-devel
 
 Notes:
 
