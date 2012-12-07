@@ -1,5 +1,6 @@
 #ifndef WINDOWS_BUILD
   #include <pwd.h>
+  #include <unistd.h>
 #endif
 
 #include "utils.h"
