@@ -12,7 +12,7 @@ cd "$root/.."
 # Build dx-toolkit (stable)
 git reset --hard
 git clean -dxf
-debuild -us -uc
+debuild --no-tgz-check -us -uc
 
 # Build dx-toolkit-beta
 git reset --hard
@@ -30,7 +30,7 @@ sed 's/debian\/dx-toolkit/debian\/dx-toolkit-beta/' < debian/rules > debian/rule
 chmod +x debian/rules.tmp
 mv debian/rules.tmp debian/rules
 
-debuild -us -uc
+debuild --no-tgz-check -us -uc
 
 # Build dx-toolkit-unstable
 git reset --hard
@@ -48,4 +48,4 @@ sed 's/debian\/dx-toolkit/debian\/dx-toolkit-unstable/' < debian/rules > debian/
 chmod +x debian/rules.tmp
 mv debian/rules.tmp debian/rules
 
-debuild -us -uc
+debuild --no-tgz-check -us -uc
