@@ -7,7 +7,6 @@ source "$(dirname $0)/../environment"
 cd "${DNANEXUS_HOME}"
 make clean
 make
-make install
 rm Makefile
 rm -r debian
 mv build/Prebuilt-Readme.md Readme.md
