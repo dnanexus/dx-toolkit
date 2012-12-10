@@ -1,4 +1,6 @@
 #!/bin/sh -ex
+#
+# Usage: build_curl.sh DIRECTORY_TO_BUILD_IN
 
 # This script builds a custom libcurl. Many of the protocols that are
 # enabled by default are disabled to limit dependencies. Some dependencies
@@ -9,6 +11,7 @@
 build_dir=$1
 cd $build_dir
 pwd
+rm -rf curl-7.27.0.tar.bz2 curl-7.27.0
 wget "http://curl.haxx.se/download/curl-7.27.0.tar.bz2"
 tar jxvf curl-7.27.0.tar.bz2
 rm -f curl
