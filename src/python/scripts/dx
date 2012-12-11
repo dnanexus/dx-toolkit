@@ -337,7 +337,7 @@ def login(args):
     args.level = 'CONTRIBUTE'
     args.public = False
 
-    if (args.host is not None or args.token) and not args.emtest:
+    if (args.host is not None or args.token) and not args.emtest and not args.staging:
         setenv(args)
     elif args.projects:
         pick_and_set_project(args)
@@ -2435,7 +2435,13 @@ class SetEMTestEnv(argparse.Action):
         setattr(namespace, 'emtest', True)
         set_api(protocol='https', host='emtest.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
-# TODO: Add a subcommand for clearing the cache
+class SetStagingEnv(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):        
+        setattr(namespace, 'host', 'stagingauth.dnanexus.com')
+        setattr(namespace, 'port', '443')
+        setattr(namespace, 'protocol', 'https')
+        setattr(namespace, 'staging', True)
+        set_api(protocol='https', host='stagingapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
 parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
                                  formatter_class=argparse.RawTextHelpFormatter,
@@ -2455,7 +2461,8 @@ parser_login.add_argument('--protocol', help='Use the given protocol to contact 
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.add_argument('--emtest', nargs=0, help=argparse.SUPPRESS, action=SetEMTestEnv)
-parser_login.set_defaults(emtest=False, func=login)
+parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
+parser_login.set_defaults(emtest=False, staging=False, func=login)
 parser_map['login'] = (parser_login, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['session']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
