@@ -1,3 +1,13 @@
+dx-toolkit (0.0.30-dnanexus.1) precise; urgency=low
+
+  * Many build process and OS compatibility improvements.
+
+  * 'dx describe' exits with code 1 if no matches are found.
+
+  * 'dx login' supports --staging.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 11 Dec 2012 13:19:16 -0800
+
 dx-toolkit (0.0.29-dnanexus.1) precise; urgency=low
 
   * dx upload supports -r (recursive upload)
