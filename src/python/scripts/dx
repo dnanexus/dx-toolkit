@@ -1216,7 +1216,7 @@ def describe(args):
         else:
             print json.dumps(json_output[0], indent=4)
     elif not found_match and not args.name:
-        print "No matches found for " + args.path
+        print parser.exit(1, fill("No matches found for " + args.path) + '\n')
 
 def new_project(args):
     get_output_flag(args)
