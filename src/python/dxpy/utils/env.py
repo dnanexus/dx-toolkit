@@ -43,6 +43,7 @@ def get_env(suppress_warning=False):
         'DX_WORKSPACE_ID': os.environ.get('DX_WORKSPACE_ID', None),
         'DX_CLI_WD': os.environ.get('DX_CLI_WD', None),
         'DX_USERNAME': os.environ.get('DX_USERNAME', None),
+        'DX_PROJECT_CONTEXT_NAME': os.environ.get('DX_PROJECT_CONTEXT_NAME', None),
         'DX_SECURITY_CONTEXT': os.environ.get('DX_SECURITY_CONTEXT', None)
         }
 
@@ -56,7 +57,7 @@ def get_env(suppress_warning=False):
             elif var in installed_file_env_vars:
                 env_vars[var] = installed_file_env_vars[var]
 
-    for standalone_var in 'DX_CLI_WD', 'DX_USERNAME':
+    for standalone_var in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
         if env_vars[standalone_var] is None:
             try:
                 with open(os.path.expanduser('~/.dnanexus_config/' + standalone_var)) as fd:
