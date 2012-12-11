@@ -53,6 +53,26 @@ toolkit that doesn't require them.
     sudo apt-get install make python-setuptools python-pip g++ cmake \
       libboost1.48-all-dev libcurl4-openssl-dev
 
+### Ubuntu 10.04
+
+Install Python2.7. Python 2.7 is not available natively on Ubuntu 10.04, but
+Felix Krull maintains the [deadsnakes
+PPA](https://launchpad.net/~fkrull/+archive/deadsnakes), which includes a build
+for Ubuntu 10.04. You can install Python from there as follows (as root):
+
+    echo "deb http://ppa.launchpad.net/fkrull/deadsnakes/ubuntu lucid main" > /etc/apt/sources.list.d/deadsnakes.list
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C
+    apt-get install --yes python2.7 python-pip python-setuptools-deadsnakes
+
+Install boost 1.48 or higher (at least the ```thread``` and ```regex```
+libraries). This version of boost is not available natively on Ubuntu 10.04.
+You can use the script ```build/lucid_install_boost.sh```, which installs it
+into ```/usr/local/lib```.
+
+The following additional dependencies are also needed:
+
+    sudo apt-get install make g++ cmake libcurl4-openssl-dev
+
 ### CentOS 5.x/6.x
 
 Install Python 2.7. Python 2.7 is not available natively on CentOS 5 or 6. You
