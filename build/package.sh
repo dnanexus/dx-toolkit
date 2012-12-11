@@ -14,7 +14,15 @@ rm -r debian
 mv build/Prebuilt-Readme.md Readme.md
 
 if [[ "$ostype" == 'Linux' ]]; then
-  temp_archive=$(mktemp --suffix .tar.gz)
+  osversion=$(lsb_release -c | sed s/Codename:.//)
+  # TODO: detect versions that do and don't support mktemp --suffix more
+  # reliably. What I know is that Ubuntu 12.04 supports --suffix and
+  # Ubuntu 10.04 doesn't.
+  if [[ "$osversion" == 'precise' ]]; then
+    temp_archive=$(mktemp --suffix .tar.gz)
+  else
+    temp_archive=$(mktemp -t dx-toolkit.tar.gz.XXXXXXXXXX)
+  fi
 elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
   temp_archive=$(mktemp -t dx-toolkit.tar.gz)
 else
