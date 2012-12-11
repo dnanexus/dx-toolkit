@@ -13,7 +13,7 @@ cd $build_dir
 pwd
 rm -rf curl-7.27.0.tar.bz2 curl-7.27.0
 wget "http://curl.haxx.se/download/curl-7.27.0.tar.bz2"
-tar jxvf curl-7.27.0.tar.bz2
+tar -xjf curl-7.27.0.tar.bz2
 rm -f curl
 ln -s curl-7.27.0 curl
 cd curl
