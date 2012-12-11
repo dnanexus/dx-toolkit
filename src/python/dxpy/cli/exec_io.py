@@ -329,7 +329,17 @@ class ExecutableInputs(object):
         if args.input is not None:
             for keyeqval in args.input:
                 try:
-                    name, value = split_unescaped('=', keyeqval)
+                    if '=' not in keyeqval:
+                        raise
+                    if keyeqval.count('=') == 1 and keyeqval[-1] == '=':
+                        [name] = split_unescaped('=', keyeqval)
+                        if '=' in name:
+                            # the "=" character was actually escaped
+                            # and there was no "=" character provided
+                            raise
+                        value = ''
+                    else:
+                        name, value = split_unescaped('=', keyeqval)
                 except:
                     raise Exception('An input was found that did not conform to the syntax: -i<input name>=<input value>')
                 self.add(name, value)
