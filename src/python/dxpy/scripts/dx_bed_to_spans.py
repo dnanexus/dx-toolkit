@@ -97,6 +97,8 @@ def split_on_track(bed_file):
     with open(bed_file, 'rU') as bf:
         curr_file = open(current_filename, "w")
         line = bf.readline()
+        if line.startswith("browser"):
+            line = bf.readline()
         curr_file.write(line)
         line = bf.readline()
         while True:
@@ -123,6 +125,8 @@ def find_num_columns(bed_file):
     with open(bed_file, "rU") as bf:
         line = bf.readline()
         while line != "":
+            if line.startswith("track"):
+                line = bf.readline()
             line = line.split()
             if len(line) > num_cols:
                 num_cols = len(line)
