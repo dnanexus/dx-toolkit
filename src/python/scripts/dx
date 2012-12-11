@@ -373,11 +373,19 @@ def set_api(protocol, host, port, write):
 def set_project(project, write, name=None):
     if dxpy.JOB_ID is None:
         os.environ['DX_PROJECT_CONTEXT_ID'] = project
+        if name is not None:
+            os.environ["DX_PROJECT_CONTEXT_NAME"] = name
+        else:
+            os.environ["DX_PROJECT_CONTEXT_NAME"] = None
         if write:
             write_env_var("DX_PROJECT_CONTEXT_ID", project)
             if name is not None:
-                os.environ["DX_PROJECT_CONTEXT_NAME"] = name
                 write_env_var("DX_PROJECT_CONTEXT_NAME", name)
+            else:
+                try:
+                    os.remove(os.path.expanduser('~/.dnanexus_config/DX_PROJECT_CONTEXT_NAME'))
+                except:
+                    pass
     else:
         os.environ['DX_WORKSPACE_ID'] = project
         if write:
@@ -586,15 +594,13 @@ def cd(args):
                                          args.path, 'folder')
 
     if project is not None:
+        project_name = try_call(dxpy.DXProject(project).describe)['name']
+
         # It is obvious what the project is
-        if project != dxpy.WORKSPACE_ID:
-            # And it's different so we need to take action
-            set_project(project, not state['interactive'])
-            proj_indicator = args.path[: get_last_pos_of_char(':', args.path) ]
-            if is_container_id(proj_indicator):
-                state['currentproj'] = None
-            else:
-                state['currentproj'] = proj_indicator
+        if project != dxpy.WORKSPACE_ID or 'DX_PROJECT_CONTEXT_NAME' not in os.environ:
+            # Cache ID and name if necessary
+            set_project(project, not state['interactive'], name=project_name)
+            state['currentproj'] = project_name
     else:
         parser.exit(1, 'Error: No current project was given\n')
 
