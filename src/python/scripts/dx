@@ -375,8 +375,6 @@ def set_project(project, write, name=None):
         os.environ['DX_PROJECT_CONTEXT_ID'] = project
         if name is not None:
             os.environ["DX_PROJECT_CONTEXT_NAME"] = name
-        else:
-            os.environ["DX_PROJECT_CONTEXT_NAME"] = None
         if write:
             write_env_var("DX_PROJECT_CONTEXT_ID", project)
             if name is not None:
