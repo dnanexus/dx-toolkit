@@ -6,6 +6,12 @@
 #include "SimpleHttp.h"
 #include "utils.h"
 
+#include <boost/version.hpp>
+// http://www.boost.org/doc/libs/1_48_0/libs/config/doc/html/boost_config/boost_macro_reference.html
+#if ((BOOST_VERSION / 100000) < 1 || ((BOOST_VERSION/100000) == 1 && ((BOOST_VERSION / 100) % 1000) < 48))
+  #error "Cannot compile dxcpp using Boost version < 1.48"
+#endif
+
 // Example environment variables
 //
 // DX_APISERVER_PORT=8124
