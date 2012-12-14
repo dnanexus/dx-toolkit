@@ -435,7 +435,14 @@ from dxpy.toolkit_version import version as TOOLKIT_VERSION
 current_job, current_applet, current_app = None, None, None
 if JOB_ID is not None:
     current_job = DXJob(JOB_ID)
-    job_desc = current_job.describe()
+    try:
+        job_desc = current_job.describe()
+    except DXAPIError as e:
+        if e.name == 'ResourceNotFound':
+            print "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job." % (JOB_ID,)
+            sys.exit(1)
+        else:
+            raise
     if 'applet' in job_desc:
         current_applet = DXApplet(job_desc['applet'])
     else:
