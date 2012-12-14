@@ -382,8 +382,15 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
             tried_versions = 'the requested version: ' + try_versions[0]
         raise EnvironmentError('Could not create %s' % (tried_versions,))
 
-    if "categories" in app_spec:
-        dxpy.api.appAddCategories(app_id, input_params={'categories': app_spec["categories"]})
+    # Set categories appropriately.
+    categories_to_set = app_spec.get("categories", [])
+    existing_categories = dxpy.api.appListCategories(app_id)['categories']
+    categories_to_add = set(categories_to_set).difference(set(existing_categories))
+    categories_to_remove = set(existing_categories).difference(set(categories_to_set))
+    if categories_to_add:
+        dxpy.api.appAddCategories(app_id, input_params={'categories': list(categories_to_add)})
+    if categories_to_remove:
+        dxpy.api.appRemoveCategories(app_id, input_params={'categories': list(categories_to_remove)})
 
     if publish:
         dxpy.api.appPublish(app_id, input_params={'makeDefault': set_default})

@@ -22,6 +22,7 @@
 /bin/dx-build-app
 /bin/dx-build-applet
 /bin/dx-csv-to-gtable
+/bin/dx-fastq-to-reads
 /bin/dx-genes-to-gff
 /bin/dx-genes-to-gtf
 /bin/dx-get-job-streams
