@@ -566,7 +566,7 @@ def invite(args):
     project, none, none = try_call(resolve_existing_path,
                                    args.project, 'project')
     if args.invitee != 'PUBLIC' and not '-' in args.invitee:
-        args.invitee = 'user-' + args.invitee
+        args.invitee = 'user-' + args.invitee.lower()
     try:
         resp = dxpy.DXHTTPRequest('/' + project + '/invite',
                                   {"invitee": args.invitee, "level": args.level})
@@ -578,7 +578,7 @@ def uninvite(args):
     project, none, none = try_call(resolve_existing_path,
                                    args.project, 'project')
     if args.entity != 'PUBLIC' and not '-' in args.entity:
-        args.entity = 'user-' + args.entity
+        args.entity = 'user-' + args.entity.lower()
     try:
         dxpy.DXHTTPRequest('/' + project + '/decreasePermissions',
                            {args.entity: None})
@@ -1182,7 +1182,7 @@ def describe(args):
                     raise
         else:
             try:
-                desc = dxpy.DXHTTPRequest('/user-' + args.path + '/describe',
+                desc = dxpy.DXHTTPRequest('/user-' + args.path.lower() + '/describe',
                                           {"appsInstalled": True,
                                            "subscriptions": True})
                 found_match = True
@@ -1849,7 +1849,7 @@ def find_jobs(args):
             project, none, none = try_call(resolve_existing_path,
                                            args.project, 'project')
         if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
-            args.user = 'user-' + args.user
+            args.user = 'user-' + args.user.lower()
         if args.allprojects:
             project = None
     print_launched_by = (args.user is None) or args.verbose
