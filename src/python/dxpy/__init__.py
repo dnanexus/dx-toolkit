@@ -265,7 +265,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             last_error = e
 
             # TODO: support HTTP/1.1 503 Retry-After
-            # TODO: if the socket was dropped mid-request, ConnectionError is raised, but non-idempotent requests are unsafe to retry
+            # TODO: if the socket was dropped mid-request, ConnectionError or httplib.IncompleteRead is raised,
+            # but non-idempotent requests can be unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
                 ok_to_retry = False
