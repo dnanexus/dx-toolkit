@@ -269,13 +269,12 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             # but non-idempotent requests can be unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                ok_to_retry = False
-                if isinstance(e, (ConnectionError, httplib.IncompleteRead)):
-                    ok_to_retry = True
-                elif response is not None:
-                    if response.status_code != 422:
-                        if always_retry or method == 'GET' or response.status_code in http_server_errors:
-                            ok_to_retry = True
+                # If a non-OK response is received from the server, we retry only if the response code is in the 5xx range.
+                # If we did not get a response back from the server, we retry if it's a GET request, OR if always_retry is True
+                if response is not None:
+                    ok_to_retry = (response.status_code >= 500 and response.status_code < 600)
+                else:
+                    ok_to_retry = always_retry or method == 'GET'
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:

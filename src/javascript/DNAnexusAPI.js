@@ -730,6 +730,11 @@ exports.systemFindUsers = function(input_params) {
 };
 
 
+exports.systemFindProjectMembers = function(input_params) {
+  return dx.DXHTTPRequest('/system/findProjectMembers', input_params);
+};
+
+
 exports.systemGetLog = function(input_params) {
   return dx.DXHTTPRequest('/system/getLog', input_params);
 };

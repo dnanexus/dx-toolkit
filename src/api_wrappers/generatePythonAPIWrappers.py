@@ -11,19 +11,19 @@ from dxpy import DXHTTPRequest
 '''
 
 class_method_template = '''
-def {method_name}(input_params={{}}, **kwargs):
-    return DXHTTPRequest('{route}', input_params, **kwargs)
+def {method_name}(input_params={{}}, always_retry={retry}, **kwargs):
+    return DXHTTPRequest('{route}', input_params, always_retry=always_retry, **kwargs)
 '''
 
 object_method_template = '''
-def {method_name}(object_id, input_params={{}}, **kwargs):
-    return DXHTTPRequest('/%s/{method_route}' % object_id, input_params, **kwargs)
+def {method_name}(object_id, input_params={{}}, always_retry={retry}, **kwargs):
+    return DXHTTPRequest('/%s/{method_route}' % object_id, input_params, always_retry=always_retry, **kwargs)
 '''
 
 app_object_method_template = '''
-def {method_name}(app_name_or_id, alias=None, input_params={{}}, **kwargs):
+def {method_name}(app_name_or_id, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
-    return DXHTTPRequest('/%s/{method_route}' % fully_qualified_version, input_params, **kwargs)
+    return DXHTTPRequest('/%s/{method_route}' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 '''
 
 print preamble
@@ -31,11 +31,12 @@ print preamble
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
     method_name = signature.split("(")[0]
+    retry = "True" if (opts['retryable']) else "False"
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, method_route=method_route)
+            print app_object_method_template.format(method_name=method_name, method_route=method_route, retry=retry)
         else:
-            print object_method_template.format(method_name=method_name, method_route=method_route)
+            print object_method_template.format(method_name=method_name, method_route=method_route, retry=retry)
     else:
-        print class_method_template.format(method_name=method_name, route=route)
+        print class_method_template.format(method_name=method_name, route=route, retry=retry)

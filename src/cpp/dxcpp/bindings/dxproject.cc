@@ -5,12 +5,10 @@ using namespace dx;
 
 JSON DXContainer::describe(bool folders) const {
   if (folders) {
-    return DXHTTPRequest("/" + dxid_ + "/describe",
-                         "{\"folders\": true}");
-  } else {
-    return DXHTTPRequest("/" + dxid_ + "/describe",
-                         "{}");
+    return projectDescribe(getID(), string("{\"folders\": true}"));
   }
+  //else 
+  return projectDescribe(getID(), string("{}"));
 }
 
 // Generic
@@ -21,8 +19,7 @@ void DXContainer::move(const JSON &objects,
   input_params["objects"] = objects;
   input_params["folders"] = folders;
   input_params["destination"] = dest_folder;
-  DXHTTPRequest("/" + dxid_ + "/move",
-                input_params.toString());
+  projectMove(getID(), input_params.toString());
 }
 
 void DXContainer::clone(const JSON &objects,
@@ -34,8 +31,7 @@ void DXContainer::clone(const JSON &objects,
   input_params["folders"] = folders;
   input_params["project"] = dest_container;
   input_params["destination"] = dest_folder;
-  DXHTTPRequest("/" + dxid_ + "/clone",
-                input_params.toString());
+  projectClone(getID(), input_params.toString());
 }
 
 // Folder-specific
@@ -43,34 +39,28 @@ void DXContainer::newFolder(const string &folder, bool parents) const {
   stringstream input_hash;
   input_hash << "{\"folder\": \"" + folder + "\",";
   input_hash << "\"parents\": " << (parents ? "true" : "false") << "}";
-  DXHTTPRequest("/" + dxid_ + "/newFolder",
-                input_hash.str());
+  projectNewFolder(getID(), input_hash.str());
 }
 
 JSON DXContainer::listFolder(const string &folder) const {
-  return DXHTTPRequest("/" + dxid_ + "/listFolder",
-                       "{\"folder\": \"" + folder + "\"}");
+  return projectListFolder(getID(), "{\"folder\": \"" + folder + "\"}");
 }
 
 void DXContainer::moveFolder(const string &folder,
                              const string &dest_folder) const {
-  DXHTTPRequest("/" + dxid_ + "/move",
-                "{\"folders\": [\"" + folder + "\"]," +
-                "\"destination\": \"" + dest_folder + "\"}");
+  projectMove(getID(), "{\"folders\": [\"" + folder + "\"]," + "\"destination\": \"" + dest_folder + "\"}");
 }
 
 void DXContainer::removeFolder(const string &folder, const bool recurse) const {
   string input = recurse ?
     "{\"folder\": \"" + folder + "\", \"recurse\": true}" :
     "{\"folder\": \"" + folder + "\"}";
-
-  DXHTTPRequest("/" + dxid_ + "/removeFolder", input);
+  projectRemoveFolder(getID(), input);
 }
 
 // Objects-specific
 void DXContainer::removeObjects(const JSON &objects) const {
-  DXHTTPRequest("/" + dxid_ + "/removeObjects",
-                "{\"objects\":" + objects.toString() + "}");
+  projectRemoveObjects(getID(), "{\"objects\":" + objects.toString() + "}");
 }
 
 // Project methods
