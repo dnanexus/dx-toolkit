@@ -563,14 +563,15 @@ def import_reads(job_input):
     # set link to original FASTQ file object
     details = readsTable.get_details()
 
-    details['original_files'] = [ args['file_link'] ]
-    if 'file2' in args:
-        details['original_files'].append(args['file2_link'])
-    if 'qual' in args:
-        details['original_files'].append(args['qual_link'])
+    if 'file_link' in args:
+        details['original_files'] = [ args['file_link'] ]
         if 'file2' in args:
-            assert('qual2' in args)
-            details['original_files'].append(args['qual2_link'])
+            details['original_files'].append(args['file2_link'])
+        if 'qual' in args:
+            details['original_files'].append(args['qual_link'])
+            if 'file2' in args:
+                assert('qual2' in args)
+                details['original_files'].append(args['qual2_link'])
 
     readsTable.set_details(details)
 
@@ -579,6 +580,8 @@ def import_reads(job_input):
     # place table in output
     return {'reads': dxpy.dxlink(readsTable.get_id())}
 
+def main(**kwargs):
+    import_reads(None)
 
 if __name__ == '__main__':
     import_reads(None)
