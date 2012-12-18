@@ -44,32 +44,32 @@ const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 boost::mutex g_loadFromEnvironment_mutex;
 volatile bool g_loadFromEnvironment_finished = false;
 
-static bool isRetriableHttpCode(int c) {
-  // Ref: Python bindings
-  return (c == 500 || c == 502 || c == 503 || c == 504);
+static bool isAlwaysRetryableHttpCode(int c) {
+  return (c >= 500 && c<=599); // assumption: always retry if a 5xx HTTP status code is received (irrespective of the route)
 }
 
-static bool isRetriableCurlError(int c) {
+static bool isAlwaysRetryableCurlError(int c) {
   // Return true, iff it is always safe to retry on given CURLerror.
 
   // Ref: http://curl.haxx.se/libcurl/c/libcurl-errors.html
-  // TODO: Add more retriable errors to this list (and sanity check existing ones)
+  // TODO: Add more retryable errors to this list (and sanity check existing ones)
   return (c == 2 || c == 5 || c == 6 || c == 7 || c == 35);
 }
 
-// load enviornment variables at very start
+// load environment variables at very start
 bool dummy = loadFromEnvironment();
 
+// Note: We only consider 200 as a successful response, all others are considered "failures"
 JSON DXHTTPRequest(const string &resource, const string &data,
                    const bool alwaysRetry, const map<string, string> &headers) {
-  // We use an atomic variable (C++11 feature) to avoid acquiring a lock
+  // We use an std::atomic variable (C++11 feature) to avoid acquiring a lock
   // every time in DXHTTPRequest(). Lock is instead acquired in loadFromEnvironment().
   // By checking g_loadFromEnvironment_finished value, we avoid calling
   // loadFromEnvironment() every time (and acquiring the expensive lock)
   // Note: In this case a regular variable instead of atomic, will also work correctly.
   //       (except can result in few extra short-circuited calls to loadFromEnvironment()).
   //
-  // Update: Removed atomics from everywhere, because Clang do not support them yet :(
+  // Update: Removed "std::atomic" from everywhere, because Clang do not support them yet :(
   if (g_loadFromEnvironment_finished == false) {
     loadFromEnvironment();
   }
@@ -79,9 +79,11 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   //               certainly multiple calls can mix output of various threads.
   //               For some relevant commentary see -> dxfile.cc: getChunkHttp_()
 
-  if (!g_APISERVER_SET || !g_SECURITY_CONTEXT_SET) {
-    cerr << "\nError: API server information (DX_APISERVER_HOST and DX_APISERVER_PORT) and/or security context (DX_SECURITY_CONTEXT) not set." << endl;
-    throw;
+  if (!g_APISERVER_SET) {
+    throw DXError("dxcpp::DXHTTPRequest()-> API server information not found (g_APISERVER is empty). Please set DX_APISERVER_HOST, DX_APISERVER_PORT, and DX_APISERVER_PROTOCOL.");
+  }
+  if (!g_SECURITY_CONTEXT_SET) {
+    throw DXError("dxcpp::DXHTTPRequest()-> No Authentication token found. Please set DX_SECURITY_CONTEXT.");
   }
 
   string url = g_APISERVER + resource;
@@ -114,8 +116,8 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
   unsigned int countTries;
   HttpRequest req;
-  unsigned int sec_to_wait = 2; // number of seconds to wait before retrying first time. will keep on doubling the wait time for each subsequent retry.
-  bool reqCompleted; // did last request actually went through (i.e., some response was recieved)
+  unsigned int sec_to_wait = 2; // number of seconds to wait before retrying first time. Will keep on doubling the wait time for each subsequent retry.
+  bool reqCompleted; // did last request actually went through, i.e., some response was received)
   HttpRequestException hre;
 
   // The HTTP Request is always executed at least once,
@@ -127,25 +129,29 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       // Attempt a POST request
       req = HttpRequest::request(HTTP_POST, url, req_headers, data.data(), data.size());
     } catch (HttpRequestException &e) {
-      toRetry = toRetry || (e.errorCode < 0) || isRetriableCurlError(e.errorCode);
+      // Retry the request in any of these three scenarios:
+      //  - alwaysRetry = true in the call to this function
+      //  - errorCode returned by HttpRequestException is < 0 (which implies that request was never made to the server)server
+      //  - isAlwaysRetryableCurlError() - A list of curl codes, which are *ALWAYS* safe to retry (irrespective of the request being made - idempotent or not, etc).
+      toRetry = toRetry || (e.errorCode < 0) || isAlwaysRetryableCurlError(e.errorCode);
       reqCompleted = false;
       hre = e;
     }
 
     if (reqCompleted) {
       if (req.responseCode != 200) {
-        toRetry = toRetry || isRetriableHttpCode(req.responseCode);
+        toRetry = isAlwaysRetryableHttpCode(req.responseCode);
       } else {
-        // Everything is fine, the request went through (and 200 recieved)
+        // Everything is fine, the request went through and 200 received
         // So return back the response now
-        if (countTries != 0u) // if atleast one retry was made, print eventual success on stderr
-          cerr << "\nRequest completed succesfuly in Retry #" << countTries << endl;
+        if (countTries != 0u) // if at least one retry was made, print eventual success on stderr
+          cerr << "\nRequest completed successfully in Retry #" << countTries << endl;
 
         try {
           return JSON::parse(req.respData); // we always return json output
         } catch (JSONException &je) {
           ostringstream errStr;
-          errStr << "\nERROR: Unable to parse output returned by APIServer as JSON" << endl;
+          errStr << "\nERROR: Unable to parse output returned by Apiserver as JSON" << endl;
           errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode + "; response body: '" + req.respData + "'" << endl;
           errStr << "JSONException: " << je.what() << endl;
           throw DXError(errStr.str());
@@ -161,22 +167,21 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       }
       cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
 
-	  boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
     } else {
       countTries++;
       break;
     }
   }
 
-  // We are here, implies, All retries were exhausted (or not made) with failure.
-
+  // We are here, implies, All retries were exhausted (or not attempted) with failure.
   if (reqCompleted) {
     cerr << "\nERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
     JSON respJSON;
     try {
       respJSON = JSON::parse(req.respData);
     } catch (...) {
-      // If invalid json
+      // If invalid json, throw general DXError
       throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + "'");
     }
     throw DXAPIError(respJSON["error"]["type"].get<string>(),
@@ -224,7 +229,7 @@ void setProjectContext(const string &project_id) {
 // Note: If key is not found in config file, then "val" remain unchanged
 bool getVariableFromConfigFile(string fname, string key, string &val) {
 
-  // Read file only if it hasn't been succesfuly read before
+  // Read file only if it hasn't been successfully read before
   if (g_config_file_contents[fname].size() == 0) {
     // Try reading in the contents of config file
     ifstream fp(fname.c_str());
@@ -236,7 +241,7 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
     fp.seekg(0, ios::beg);
 
     // copy the contents of file into the string
-    // Note: the extra parantheses around first parameter
+    // Note: the extra parentheses around first parameter
     //       are required (due to "most vexing parsing" problem in C++)
     g_config_file_contents[fname].assign((istreambuf_iterator<char>(fp)), istreambuf_iterator<char>());
     fp.close();
@@ -319,7 +324,7 @@ bool loadFromEnvironment() {
     return true; // Short circuit this call - env variables already loaded
 
 
-  // intiialized with default values, will be overridden by env variable/config file (if present)
+  // initialized with default values, will be overridden by env variable/config file (if present)
   string apiserver_host = "preprodapi.dnanexus.com";
   string apiserver_port = "443";
   string apiserver_protocol = "https";
