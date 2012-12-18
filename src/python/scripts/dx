@@ -563,6 +563,10 @@ def api(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def invite(args):
+    # If --project is a valid project (ID or name), then appending ":"
+    # should not hurt the path resolution.
+    if ':' not in args.project:
+        args.project += ':'
     project, none, none = try_call(resolve_existing_path,
                                    args.project, 'project')
     if args.invitee != 'PUBLIC' and not '-' in args.invitee:
