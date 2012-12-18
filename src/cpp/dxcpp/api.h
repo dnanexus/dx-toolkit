@@ -22,676 +22,680 @@
 #include "dxjson/dxjson.h"
 
 
-dx::JSON appAddCategories(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appAddCategories(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appAddCategories(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appAddCategories(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appAddDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appAddDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appAddDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appAddDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appAddDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appAddTags(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appAddTags(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appAddTags(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appAddTags(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appAddTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appDelete(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appDelete(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appDelete(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appDelete(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appDeleteWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appDescribe(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appDescribe(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appDescribe(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appDescribe(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appDescribeWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appGet(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appGet(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appGet(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appGet(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appGetWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appInstall(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appInstall(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appInstall(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appInstall(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appListCategories(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appListCategories(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appListCategories(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appListCategories(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appListDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appListDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appListDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appListDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appListDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appPublish(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appPublish(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appPublish(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appPublish(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appRemoveCategories(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appRemoveCategories(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appRemoveCategories(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appRemoveCategories(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appRemoveCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appRemoveDevelopers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appRemoveDevelopersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appRemoveTags(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appRemoveTags(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appRemoveTags(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appRemoveTags(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appRemoveTagsWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appRun(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appRun(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appRun(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=false);
+dx::JSON appRun(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=false);
+dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=false);
+dx::JSON appRunWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appUninstall(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appUninstall(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appUninstall(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appUninstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appUpdate(const std::string &app_id_or_name, const std::string &input_params="{}");
-dx::JSON appUpdate(const std::string &app_id_or_name, const dx::JSON &input_params);
-dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}");
-dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params);
+dx::JSON appUpdate(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appUpdate(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appUpdateWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appNew(const std::string &input_params="{}");
-dx::JSON appNew(const dx::JSON &input_params);
+dx::JSON appNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON appNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON appletAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletAddTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletAddTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletClose(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletClose(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletGet(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletGet(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletGet(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletGet(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletGetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletGetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletListProjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletListProjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletRename(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletRename(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletRun(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletRun(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletRun(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON appletRun(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON appletSetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletSetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletSetProperties(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletSetVisibility(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON appletSetVisibility(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON appletSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON appletSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON appletNew(const std::string &input_params="{}");
-dx::JSON appletNew(const dx::JSON &input_params);
+dx::JSON appletNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON appletNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON containerClone(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerClone(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerClone(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON containerClone(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON containerDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON containerDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON containerDestroy(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerDestroy(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerDestroy(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON containerDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON containerListFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerListFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerListFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON containerListFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON containerMove(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerMove(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerMove(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON containerMove(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON containerNewFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerNewFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerNewFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON containerNewFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON containerRemoveFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerRemoveFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerRemoveFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON containerRemoveFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON containerRemoveObjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerRemoveObjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerRemoveObjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON containerRemoveObjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON containerRenameFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON containerRenameFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON containerRenameFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON containerRenameFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileAddTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileAddTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileClose(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileClose(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileDownload(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileDownload(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileDownload(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileDownload(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileGetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileGetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileListProjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileListProjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileRename(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileRename(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileSetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileSetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileSetProperties(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileSetVisibility(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileSetVisibility(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileUpload(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON fileUpload(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON fileUpload(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON fileUpload(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON fileNew(const std::string &input_params="{}");
-dx::JSON fileNew(const dx::JSON &input_params);
+dx::JSON fileNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON fileNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON gtableAddRows(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableAddRows(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableAddRows(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableAddRows(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableAddTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableAddTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableClose(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableClose(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableExtend(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableExtend(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableExtend(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON gtableExtend(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON gtableGet(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableGet(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableGet(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableGet(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableGetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableGetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableListProjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableListProjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableNextPart(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableNextPart(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableNextPart(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableNextPart(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableRename(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableRename(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableSetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableSetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableSetProperties(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableSetVisibility(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON gtableSetVisibility(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON gtableSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON gtableSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableNew(const std::string &input_params="{}");
-dx::JSON gtableNew(const dx::JSON &input_params);
+dx::JSON gtableNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON gtableNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON inviteAccept(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON inviteAccept(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON inviteAccept(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON inviteAccept(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON inviteApprove(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON inviteApprove(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON inviteApprove(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON inviteApprove(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON inviteDecline(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON inviteDecline(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON inviteDecline(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON inviteDecline(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON inviteDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON inviteDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON inviteDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON inviteDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON inviteDestroy(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON inviteDestroy(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON inviteDestroy(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON inviteDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON inviteReject(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON inviteReject(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON inviteReject(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON inviteReject(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON jobStreamLog(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON jobStreamLog(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON jobStreamLog(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON jobStreamLog(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON jobTerminate(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON jobTerminate(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON jobTerminate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON jobTerminate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON jobNew(const std::string &input_params="{}");
-dx::JSON jobNew(const dx::JSON &input_params);
+dx::JSON jobNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON jobNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON notificationsGet(const std::string &input_params="{}");
-dx::JSON notificationsGet(const dx::JSON &input_params);
+dx::JSON notificationsGet(const std::string &input_params="{}", const bool retry=true);
+dx::JSON notificationsGet(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON notificationsMarkRead(const std::string &input_params="{}");
-dx::JSON notificationsMarkRead(const dx::JSON &input_params);
+dx::JSON notificationsMarkRead(const std::string &input_params="{}", const bool retry=true);
+dx::JSON notificationsMarkRead(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectClone(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectClone(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectClone(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectClone(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectDecreasePermissions(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectDecreasePermissions(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectDecreasePermissions(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectDecreasePermissions(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectDestroy(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectDestroy(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectDestroy(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectInvite(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectInvite(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectInvite(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectInvite(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectJoin(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectJoin(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectJoin(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectJoin(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectLeave(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectLeave(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectLeave(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectLeave(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectListFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectListFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectListFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectListFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectMove(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectMove(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectMove(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectMove(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectNewFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectNewFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectNewFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectNewFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectRemoveFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectRemoveFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectRemoveFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectRemoveFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectRemoveObjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectRemoveObjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectRemoveObjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectRenameFolder(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectRenameFolder(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectRenameFolder(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectRenameFolder(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectSetProperties(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectSubscribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectSubscribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectSubscribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectSubscribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectUnsubscribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectUnsubscribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectUnsubscribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectUnsubscribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON projectUpdate(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON projectUpdate(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON projectUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON projectUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON projectNew(const std::string &input_params="{}");
-dx::JSON projectNew(const dx::JSON &input_params);
+dx::JSON projectNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON projectNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON recordAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordAddTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordAddTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordClose(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordClose(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordGetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordGetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordListProjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordListProjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordRename(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordRename(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordSetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordSetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordSetProperties(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordSetVisibility(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON recordSetVisibility(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON recordSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON recordSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON recordNew(const std::string &input_params="{}");
-dx::JSON recordNew(const dx::JSON &input_params);
+dx::JSON recordNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON recordNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON requestApprove(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON requestApprove(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON requestApprove(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON requestApprove(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON requestDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON requestDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON requestDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON requestDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON requestDestroy(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON requestDestroy(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON requestDestroy(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON requestDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON requestReject(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON requestReject(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON requestReject(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON requestReject(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindAffiliates(const std::string &input_params="{}");
-dx::JSON systemFindAffiliates(const dx::JSON &input_params);
+dx::JSON systemFindAffiliates(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindAffiliates(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindApps(const std::string &input_params="{}");
-dx::JSON systemFindApps(const dx::JSON &input_params);
+dx::JSON systemFindApps(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindApps(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindDataObjects(const std::string &input_params="{}");
-dx::JSON systemFindDataObjects(const dx::JSON &input_params);
+dx::JSON systemFindDataObjects(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindDataObjects(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindDiscitems(const std::string &input_params="{}");
-dx::JSON systemFindDiscitems(const dx::JSON &input_params);
+dx::JSON systemFindDiscitems(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindDiscitems(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindFeeditems(const std::string &input_params="{}");
-dx::JSON systemFindFeeditems(const dx::JSON &input_params);
+dx::JSON systemFindFeeditems(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindFeeditems(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindInvites(const std::string &input_params="{}");
-dx::JSON systemFindInvites(const dx::JSON &input_params);
+dx::JSON systemFindInvites(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindInvites(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindJobs(const std::string &input_params="{}");
-dx::JSON systemFindJobs(const dx::JSON &input_params);
+dx::JSON systemFindJobs(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindJobs(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindProjects(const std::string &input_params="{}");
-dx::JSON systemFindProjects(const dx::JSON &input_params);
+dx::JSON systemFindProjects(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindProjects(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindRequests(const std::string &input_params="{}");
-dx::JSON systemFindRequests(const dx::JSON &input_params);
+dx::JSON systemFindRequests(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindRequests(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindUsers(const std::string &input_params="{}");
-dx::JSON systemFindUsers(const dx::JSON &input_params);
+dx::JSON systemFindUsers(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindUsers(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemGetLog(const std::string &input_params="{}");
-dx::JSON systemGetLog(const dx::JSON &input_params);
+dx::JSON systemFindProjectMembers(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemFindProjectMembers(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemGetProjectTags(const std::string &input_params="{}");
-dx::JSON systemGetProjectTags(const dx::JSON &input_params);
+dx::JSON systemGetLog(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemGetLog(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemGlobalSearch(const std::string &input_params="{}");
-dx::JSON systemGlobalSearch(const dx::JSON &input_params);
+dx::JSON systemGetProjectTags(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemGetProjectTags(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemShortenURL(const std::string &input_params="{}");
-dx::JSON systemShortenURL(const dx::JSON &input_params);
+dx::JSON systemGlobalSearch(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemGlobalSearch(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableAddColumns(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableAddColumns(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON systemShortenURL(const std::string &input_params="{}", const bool retry=true);
+dx::JSON systemShortenURL(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableAddIndices(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableAddIndices(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableAddColumns(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableAddColumns(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableAddRows(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableAddRows(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableAddIndices(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableAddIndices(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableAddTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableAddTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableAddRows(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON tableAddRows(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON tableAddTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableAddTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableClose(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableClose(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableGet(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableGet(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableGetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableGetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableGet(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableGet(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableListProjects(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableListProjects(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableModifyColumn(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableModifyColumn(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableRemoveColumns(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableRemoveColumns(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableModifyColumn(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON tableModifyColumn(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON tableRemoveIndices(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableRemoveIndices(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableRemoveColumns(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON tableRemoveColumns(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON tableRemoveRows(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableRemoveRows(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableRemoveIndices(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableRemoveIndices(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableRemoveTags(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableRemoveTags(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableRemoveRows(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON tableRemoveRows(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON tableRemoveTypes(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableRemoveTypes(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableRename(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableRename(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableSetDetails(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableSetDetails(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableSetProperties(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableSetProperties(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableSetVisibility(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableSetVisibility(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableUpdate(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON tableUpdate(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON tableSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON tableNew(const std::string &input_params="{}");
-dx::JSON tableNew(const dx::JSON &input_params);
+dx::JSON tableUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON tableUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON userDescribe(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON tableNew(const std::string &input_params="{}", const bool retry=false);
+dx::JSON tableNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON userUpdate(const std::string &object_id, const std::string &input_params="{}");
-dx::JSON userUpdate(const std::string &object_id, const dx::JSON &input_params);
+dx::JSON userDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+dx::JSON userDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+
+dx::JSON userUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+dx::JSON userUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
 #include "dxcpp.h"

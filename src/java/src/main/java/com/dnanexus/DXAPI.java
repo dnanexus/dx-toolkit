@@ -539,6 +539,10 @@ public class DXAPI {
         return new DXHTTPRequest().request("/system/findUsers", inputParams);
     }
 
+    public static JsonNode systemFindProjectMembers(JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/system/findProjectMembers", inputParams);
+    }
+
     public static JsonNode systemGetLog(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/getLog", inputParams);
     }
