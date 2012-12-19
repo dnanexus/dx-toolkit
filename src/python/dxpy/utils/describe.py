@@ -38,7 +38,7 @@ def get_size_str(size):
     else:
         magnitude = math.floor(math.log(size, 10))
         level = int(min(math.floor(magnitude / 3), 4))
-    return ('%d' if level == 0 else '%.2f') % (float(size) / 10**(level*3)) + ' ' + SIZE_LEVEL[level]
+    return ('%d' if level == 0 else '%.2f') % (float(size) / 2**(level*10)) + ' ' + SIZE_LEVEL[level]
 
 def parse_typespec(thing):
     if isinstance(thing, basestring):
