@@ -450,8 +450,12 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             if 'project' not in describe and dxpy.WORKSPACE_ID is not None:
                 describe['project'] = dxpy.WORKSPACE_ID
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
-        except BaseException as details:
-            raise ResolutionError(str(details))
+        except:
+            del describe['project']
+            try:
+                desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
+            except BaseException as details:
+                raise ResolutionError(str(details))
         result = {"id": entity_name, "describe": desc}
         if ask_to_resolve and not allow_mult:
             return project, folderpath, result
