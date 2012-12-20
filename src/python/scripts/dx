@@ -519,7 +519,7 @@ def env(args):
         print "API server protocol\t" + dxpy.APISERVER_PROTOCOL
         print "API server host\t\t" + dxpy.APISERVER_HOST
         print "API server port\t\t" + dxpy.APISERVER_PORT
-        print "Current workspace\t" + dxpy.WORKSPACE_ID
+        print "Current workspace\t" + str(dxpy.WORKSPACE_ID)
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
             print "Current workspace name\t\"{n}\"".format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME"))
         print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
