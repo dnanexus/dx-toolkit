@@ -312,7 +312,7 @@ def print_job_desc(desc):
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
                          'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
-                         'startedRunning', 'stoppedRunning']
+                         'startedRunning', 'stoppedRunning', 'stateTransitions']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
