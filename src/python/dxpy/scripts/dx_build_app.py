@@ -281,8 +281,9 @@ def main(**kwargs):
             # the end, so we don't bother.
             if not using_temp_project:
                 objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
-                dxpy.api.projectRemoveObjects(dxpy.app_builder.get_destination_project(args.src_dir, project=working_project),
-                                              input_params={"objects": objects_to_delete})
+                if objects_to_delete:
+                    dxpy.api.projectRemoveObjects(dxpy.app_builder.get_destination_project(args.src_dir, project=working_project),
+                                                  input_params={"objects": objects_to_delete})
             raise
 
         if args.dry_run:

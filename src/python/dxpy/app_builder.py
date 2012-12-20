@@ -95,13 +95,14 @@ def get_destination_project(src_dir, project=None):
 
 def upload_resources(src_dir, project=None):
     """
-    :returns: A reference to the generated archive
+    :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
 
-    Archives and uploads the contents of the ``resources/`` subdirectory
-    of *src_dir* to a new remote file object, and returns a list
-    describing a single bundled dependency in the form expected by the
-    ``bundledDepends`` field of a run specification.
+    If it exists, archives and uploads the contents of the
+    ``resources/`` subdirectory of *src_dir* to a new remote file
+    object, and returns a list describing a single bundled dependency in
+    the form expected by the ``bundledDepends`` field of a run
+    specification. Returns an empty list, if no archive was created.
     """
     applet_spec = _get_applet_spec(src_dir)
 
@@ -128,7 +129,7 @@ def upload_resources(src_dir, project=None):
             archive_link = dxpy.dxlink(dx_resource_archive.get_id())
             return [{'name': 'resources.tar.gz', 'id': archive_link}]
     else:
-        return None
+        return []
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
     """
