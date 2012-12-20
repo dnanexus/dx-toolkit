@@ -156,7 +156,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         try:
             applet_spec['name'] = os.path.basename(os.path.abspath(src_dir))
         except:
-            raise AppletBuilderException("Could not resolve applet name from specification or working directory")
+            raise AppletBuilderException("Could not determine applet name from the specification (dxapp.json) or from the name of the working directory (%r)" % (src_dir,))
 
     if override_folder:
         applet_spec['folder'] = override_folder
@@ -175,7 +175,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             else:
-                raise AppletBuilderException("An applet with name %s already exists (id %s) and the overwrite option was not given" % (applet_spec["name"], result['id']))
+                raise AppletBuilderException("An applet with name %s already exists (id %s) and the overwrite (-f/--overwrite) option was not given" % (applet_spec["name"], result['id']))
 
     # -----
     # Override various fields from the pristine dxapp.json
