@@ -321,6 +321,12 @@ def main(**kwargs):
         else:
             raise ValueError("Unrecognized mode %r" % (args.mode,))
 
+    except dxpy.app_builder.AppletBuilderException as e:
+        # AppletBuilderException represents errors during applet
+        # building that could reasonably have been anticipated.
+        print "Error: %s" % (e.message,)
+        sys.exit(1)
+
     finally:
         # Clean up after ourselves.
         if using_temp_project:
