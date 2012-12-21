@@ -326,49 +326,6 @@ public:
               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new remote GTable by extending the current GTable with additional columns. The only
-   * indices generated are those explicitly specified here, even if the current table has indices.
-   * Returns an object handler for the new GTable.
-   *
-   * @param columns Vector of column descriptors representing columns (to be added after the
-   * existing columns).
-   * @param indices Vector of index descriptors.
-   * @param data_obj_fields JSON hash containing the optional fields with which to create the
-   * object ("project" if not using the default project, "types", "details", "hidden", "name",
-   * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
-   * API method.
-   *
-   * @return An object handler for the new (extended) GTable.
-   */
-  DXGTable extend(const std::vector<dx::JSON> &columns,
-                  const std::vector<dx::JSON> &indices,
-                  const dx::JSON &data_obj_fields=
-                  dx::JSON(dx::JSON_OBJECT)) const;
-
-  /**
-   * Creates a new remote GTable by extending the current GTable with additional columns. The
-   * resulting table has no indices, even if the current table has indices (use
-   * extend(const std::vector<dx::JSON> &, const std::vector<dx::JSON> &, const dx::JSON &) const
-   * to declare indices on the extension table). Returns an object handler for the new GTable.
-   *
-   * @param columns Vector of column descriptors representing columns (to be added after the
-   * existing columns).
-   * @param data_obj_fields JSON hash containing the optional fields with which to create the
-   * object ("project" if not using the default project, "types", "details", "hidden", "name",
-   * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
-   * API method.
-   *
-   * @return An object handler for the new (extended) GTable.
-   */
-  DXGTable extend(const std::vector<dx::JSON> &columns,
-                  const dx::JSON &data_obj_fields=
-                  dx::JSON(dx::JSON_OBJECT)) const {
-    return extend(columns, std::vector<dx::JSON>(), data_obj_fields);
-  }
-
-  /**
    * Retrieves the requested rows and columns.
    *
    * @param query A JSON hash (created with genomicRangeQuery() or lexicographicQuery())
@@ -665,54 +622,6 @@ public:
                               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
 
   /**
-   * Creates a new remote GTable by extending the specified GTable with additional columns and
-   * indices. The only indices generated are those explicitly specified here, even if the current
-   * table has indices. Returns an object handler for the new GTable.
-   *
-   * @param dxgtable GTable to be extended.
-   * @param columns Vector of column descriptors representing columns (to be added after the
-   * existing columns in the specified GTable).
-   * @param indices Vector of index descriptors.
-   * @param data_obj_fields JSON hash containing the optional fields with which to create the
-   * object ("project" if not using the default project, "types", "details", "hidden", "name",
-   * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
-   * API method.
-   *
-   * @return An object handler for the new (extended) GTable.
-   */
-  static DXGTable extendDXGTable(const DXGTable &dxgtable,
-                                 const std::vector<dx::JSON> &columns,
-                                 const std::vector<dx::JSON> &indices,
-                                 const dx::JSON &data_obj_fields=
-                                 dx::JSON(dx::JSON_OBJECT));
-
-  /**
-   * Creates a new remote GTable by extending the specified GTable with additional columns. The
-   * resulting table has no indices, even if the current table has indices (use
-   * extendDXGTable(const DXGTable&, const std::vector<dx::JSON>&, const std::vector<dx::JSON>&, const dx::JSON&)
-   * to declare indices on the extension table). Returns an object handler for the new GTable.
-   *
-   * @param dxgtable GTable to be extended.
-   * @param columns Vector of column descriptors representing columns (to be added after the
-   * existing columns in the specified GTable).
-   * @param data_obj_fields JSON hash containing the optional fields with which to create the
-   * object ("project" if not using the default project, "types", "details", "hidden", "name",
-   * "properties", "tags"), as provided to the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">/gtable-xxxx/new</a>
-   * API method.
-   *
-   * @return An object handler for the new (extended) GTable.
-   */
-  static DXGTable extendDXGTable(const DXGTable &dxgtable,
-                                 const std::vector<dx::JSON> &columns,
-                                 const dx::JSON &data_obj_fields=
-                                 dx::JSON(dx::JSON_OBJECT)) {
-    return extendDXGTable(dxgtable, columns, std::vector<dx::JSON>(),
-                          data_obj_fields);
-  }
-
-  /**
    * Constructs a column descriptor from a column name and data type.
    *
    * @param name Name of the column.
@@ -724,7 +633,7 @@ public:
                              const std::string &type);
 
   /**
-   * Creates a genomic range index descriptor for use with the create() or extend() calls.
+   * Creates a genomic range index descriptor for use with the create() calls.
    *
    * @param chr Name of the column containing chromosome names (must be a column in the GTable, of
    * type string).
@@ -740,8 +649,9 @@ public:
                                     const std::string &lo,
                                     const std::string &hi,
                                     const std::string &name="gri");
+
   /**
-   * Creates a lexicographic index descriptor for use with the create() or extend() calls.
+   * Creates a lexicographic index descriptor for use with the create() calls.
    *
    * @param columns Vector of lists of the form [COLUMN_NAME, "ASC"|"DESC"].
    * @param name Name of the index.

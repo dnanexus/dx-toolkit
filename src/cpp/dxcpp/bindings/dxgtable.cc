@@ -107,22 +107,6 @@ void DXGTable::create(const DXGTable &init_from,
   setIDs(resp["id"].get<string>(), input_params["project"].get<string>());
 }
 
-DXGTable DXGTable::extend(const vector<JSON> &columns,
-                          const vector<JSON> &indices,
-                          const JSON &data_obj_fields) const {
-  JSON input_params = data_obj_fields;
-  if (!data_obj_fields.has("project"))
-    input_params["project"] = g_WORKSPACE_ID;
-  input_params["columns"] = columns;
-  if (indices.size() > 0) {
-    input_params["indices"] = indices;
-  }
-
-  const JSON resp = gtableExtend(dxid_, input_params);
-
-  return DXGTable(resp["id"].get<string>(), input_params["project"].get<string>());
-}
-
 JSON DXGTable::getRows(const JSON &query, const JSON &column_names,
                        const int64_t starting, const int64_t limit) const {
   JSON input_params(JSON_OBJECT);
@@ -423,13 +407,6 @@ DXGTable DXGTable::newDXGTable(const DXGTable &init_from,
   DXGTable gtable;
   gtable.create(init_from, columns, indices, data_obj_fields);
   return gtable;
-}
-
-DXGTable DXGTable::extendDXGTable(const DXGTable &dxgtable,
-                                  const vector<JSON> &columns,
-                                  const vector<JSON> &indices,
-                                  const JSON &data_obj_fields) {
-  return dxgtable.extend(columns, indices, data_obj_fields);
 }
 
 JSON DXGTable::columnDesc(const string &name,

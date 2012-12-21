@@ -301,7 +301,6 @@ class DXDataObject {
 dx::JSON DXLink(const std::string &dxid, const std::string &proj="");
 
 #include "bindings/dxrecord.h"
-//#include "bindings/dxtable.h"
 #include "bindings/dxfile.h"
 #include "bindings/dxgtable.h"
 #include "bindings/dxjob.h"
