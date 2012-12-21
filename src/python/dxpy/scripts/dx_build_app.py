@@ -181,13 +181,13 @@ def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
 
 def main(**kwargs):
 
-    if dxpy.AUTH_HELPER is None:
-        parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
-
     if len(kwargs) == 0:
         args = parser.parse_args()
     else:
         args = parser.parse_args(kwargs)
+
+    if dxpy.AUTH_HELPER is None:
+        parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
 
     if args.src_dir is None:
         args.src_dir = os.getcwd()
