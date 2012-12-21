@@ -139,7 +139,7 @@ void Options::printHelp(char * programName) {
 
 #ifdef MAC_BUILD
   // Returns path of executable on Mac (not portable)
-  string getExecutablePath() {
+  string getExecutablePathOnMac() {
     char path[1024 * 100];
     uint32_t size = sizeof(path);
     if (!_NSGetExecutablePath(path, &size) == 0)
@@ -171,7 +171,7 @@ void setCertificateFile(const string &certificateFile) {
   #ifdef MAC_BUILD
     // If we are building on mac, then add one more path to look for certificate file, i.e.,
     // the current executable path (since we bundle certificate file together with distribution)
-    string certpath = getExecutablePath() + "/ca-certificates.crt";
+    string certpath = getExecutablePathOnMac() + "/ca-certificates.crt";
     standardPathLocations[ARR_SIZE - 1] = certpath.c_str();
   #endif
   if (!certificateFile.empty()) {

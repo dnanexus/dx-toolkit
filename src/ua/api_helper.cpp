@@ -45,7 +45,7 @@ string urlEscape(const string &str) {
  * Important: Only projects with >=CONTRIBUTE access are considered 
  *            for resolution. Thus, this function is guranteed to do
  *            exactly one of the following:
- *            1) Throw an error is no such project exist.
+ *            1) Throw an error if no such project exist.
  *            2) Throw an error, if multiple projects match the criteria.
  *            3) Return a project ID with >=CONTRIBUTE access.
  *

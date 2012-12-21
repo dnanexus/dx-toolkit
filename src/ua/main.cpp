@@ -488,7 +488,9 @@ bool isCompressed(string mimeType) {
 void disallowDuplicateFiles(const vector<string> &files, const vector<string> &prjs) {
   map<string, int> hashTable; // a map for - hash string to index in files vector
   for (unsigned i = 0; i < files.size(); ++i) {
-    string hash = prjs[i] + " ";
+    //TODO: This results in calling "resolveProject" twice for each file -- not a big deal,
+    //      but ideally we should reuse the value retrieved in first call
+    string hash = resolveProject(prjs[i]) + " ";
     
     boost::filesystem::path p(files[i]);
     
@@ -557,6 +559,7 @@ int main(int argc, char * argv[]) {
   LOG << opt;
   try {
     opt.validate();
+    apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken); // sets g_APISERVER_*, g_SECURITY_CONTEXT variable (for dxcpp)
     if (!opt.doNotResume) {
       disallowDuplicateFiles(opt.files, opt.projects);
     }
@@ -569,7 +572,6 @@ int main(int argc, char * argv[]) {
     LOG << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)" << endl;
     opt.waitOnClose = true;
   }
-  apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken);
 
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
