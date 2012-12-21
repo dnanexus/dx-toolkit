@@ -12,7 +12,7 @@ parser.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify
 parser.add_argument('--indices', help='JSON for specifying any other indices')
 parser.add_argument('--wait', help='Wait until the GTable has finished closing', action='store_true')
 parser.add_argument('--csv', help='Interpret the file as a comma-separated format instead of tsv', action='store_true')
-parser.add_argument('--columns', metavar='COLUMN', nargs='+', help='List of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.')
+parser.add_argument('--columns', help='Comma-separated list of column names to use, e.g. "col1,col2,col3"; non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.')
 
 def parse_item(item, item_type):
     if item_type == 'string':
@@ -86,7 +86,7 @@ def main(**kwargs):
     column_specs = []
     types = []
     if args.columns is not None:
-        specs = args.columns
+        specs = split_unescaped(',', args.columns)
     else:
         specs = firstrow_data
     for spec in specs:

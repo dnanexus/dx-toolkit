@@ -46,11 +46,11 @@ def get_output_flag(args):
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
-parser_dataobject_args_gp.add_argument('-o', '--output', help='DNAnexus path for the new object (default uses current project and folder if not provided)')
+parser_dataobject_args_gp.add_argument('-o', '--output', help=fill('DNAnexus path for the new object (default uses current project and folder if not provided)', width_adjustment=-24))
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], dest='hidden', default='visible', help='Whether the object is hidden or not')
-parser_dataobject_args_gp.add_argument('--properties', nargs='+', metavar='KEY=VALUE', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
-parser_dataobject_args_gp.add_argument('--types', nargs='+', metavar='TYPE', help='Types of the data object')
-parser_dataobject_args_gp.add_argument('--tags', nargs='+', metavar='TAG', help='Tags of the data object')
+parser_dataobject_args_gp.add_argument('--property', dest='properties', metavar='KEY=VALUE', help=fill('Key-value pair to add as a property; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--property key1=val1 --property key2=val2"', width_adjustment=-24, initial_indent=' ', subsequent_indent=' ', break_on_hyphens=False), action='append')
+parser_dataobject_args_gp.add_argument('--type', metavar='TYPE', dest='types', help=fill('Type of the data object; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--type type1 --type type2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
+parser_dataobject_args_gp.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag of the data object; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--tag tag1 --tag tag2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
 parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
 parser_dataobject_args_gp.add_argument('-p', '--parents', help='Create any parent folders necessary', action='store_true')
 

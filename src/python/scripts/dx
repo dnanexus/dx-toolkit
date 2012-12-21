@@ -1280,7 +1280,7 @@ def new_record(args):
     dxrecord = None
     try:
         dxrecord = dxpy.new_dxrecord(project=project, name=name,
-                                     tags=args.tags, types=args.types, 
+                                     tags=args.tags, types=args.types,
                                      hidden=args.hidden, properties=args.properties,
                                      details=args.details,
                                      folder=folder,
@@ -1303,6 +1303,7 @@ def new_gtable(args):
     else:
         project, folder, name = resolve_path(args.output)
 
+    args.columns = split_unescaped(',', args.columns)
     for i in range(len(args.columns)):
         if ':' in args.columns[i]:
             try:
@@ -2774,7 +2775,6 @@ parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the
 head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
 head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
 head_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
-#head_gtable_args.add_argument('--columns', nargs='+', help='Specify a list of columns to display (default all columns)') TODO
 head_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
 head_gtable_args.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
 head_gtable_args.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
@@ -2922,6 +2922,7 @@ parser_map['new project'] = (parser_new_project, NoneCompleter())
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
                                               parents=[parser_dataobject_args, stdout_args, env_args],
+                                              formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new record')
 parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata')
 parser_new_record.set_defaults(func=new_record)
@@ -2930,10 +2931,11 @@ parser_map['new record'] = (parser_new_record, DXPathCompleter(classes=['record'
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
                                               parents=[parser_dataobject_args, stdout_args, env_args],
+                                              formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new gtable')
-parser_new_gtable.add_argument('--columns', metavar='COLUMN', nargs='+', help='List of column names to use; non-string types can be specified using "name:type" syntax.  If not given, the first line of the file will be used to infer column names.', required=True)
+parser_new_gtable.add_argument('--columns', help=fill('Comma-separated list of column names to use, e.g. "col1,col2,col3"; columns with non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.', width_adjustment=-24), required=True)
 new_gtable_indices_args = parser_new_gtable.add_mutually_exclusive_group()
-new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"')
+new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help=fill('Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"', width_adjustment=-24))
 new_gtable_indices_args.add_argument('--indices', help='JSON for specifying any other indices')
 parser_new_gtable.set_defaults(func=new_gtable)
 parser_map['new gtable'] = (parser_new_gtable, DXPathCompleter(classes=['gtable']))
@@ -3139,7 +3141,7 @@ parser_find_data.add_argument('--class', dest='classname', choices=['record', 'f
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')
-parser_find_data.add_argument('--properties', nargs='+', help='Key-value pairs of properties, e.g. \'--properties property_key=property_value another_property_key=another_property_value\'')
+parser_find_data.add_argument('--property', dest='properties', metavar='KEY=VALUE', help='Key-value pair of a property; repeat as necessary, e.g. "--property key1=val1 --property key2=val2"', action='append')
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--tag', help='Tag of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')

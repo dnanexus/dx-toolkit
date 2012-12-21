@@ -68,20 +68,21 @@ class TestDXClient(unittest.TestCase):
 
         run(u'dx tree')
         run(u"dx find data --name '{n}'".format(n=table_name))
+        run(u"dx find data --name '{n} --property foo=bar'".format(n=table_name))
         run(u"dx rename '{n}' '{n}'2".format(n=table_name))
         run(u"dx rename '{n}'2 '{n}'".format(n=table_name))
         run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
 
         run(u"dx new record -o :foo --verbose")
-        record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --properties foo=bar --tags onetag twotag --types foo --details '{\"hello\": \"world\"}'").strip()
+        record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --property foo=bar --property baz=quux --tag onetag --tag twotag --type foo --type bar --details '{\"hello\": \"world\"}'").strip()
         self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
 
         # describe
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
         self.assertEqual(desc['tags'], ['onetag', 'twotag'])
-        self.assertEqual(desc['types'], ['foo'])
-        self.assertEqual(desc['properties'], {"foo": "bar"})
+        self.assertEqual(desc['types'], ['foo', 'bar'])
+        self.assertEqual(desc['properties'], {"foo": "bar", "baz": "quux"})
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], True)
 
@@ -93,7 +94,7 @@ class TestDXClient(unittest.TestCase):
         run(u"dx find data --project :")
 
         # new gtable
-        gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr mylo:int32 myhi:int32 --brief --properties hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
+        gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr,mylo:int32,myhi:int32 --brief --property hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
         # Add rows to it (?)
         # TODO: make this better.
         add_rows_input = {"data": [["chr", 1, 10], ["chr2", 3, 13], ["chr1", 3, 10], ["chr1", 11, 13], ["chr1", 5, 12]]}
