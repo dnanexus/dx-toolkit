@@ -1,8 +1,56 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import re
 import collections
 from dxpy.utils.printing import *
+
+REPLACEMENT_TABLE = (
+    u'\\x00',    #  0x00 -> NULL
+    u'\\x01',    #  0x01 -> START OF HEADING
+    u'\\x02',    #  0x02 -> START OF TEXT
+    u'\\x03',    #  0x03 -> END OF TEXT
+    u'\\x04',    #  0x04 -> END OF TRANSMISSION
+    u'\\x05',    #  0x05 -> ENQUIRY
+    u'\\x06',    #  0x06 -> ACKNOWLEDGE
+    u'\\x07',    #  0x07 -> BELL
+    u'\\x08',    #  0x08 -> BACKSPACE
+    u'\\t',      #  0x09 -> HORIZONTAL TABULATION
+    u'\\n',      #  0x0A -> LINE FEED
+    u'\\x0b',    #  0x0B -> VERTICAL TABULATION
+    u'\\x0c',    #  0x0C -> FORM FEED
+    u'\\r',      #  0x0D -> CARRIAGE RETURN
+    u'\\x0e',    #  0x0E -> SHIFT OUT
+    u'\\x0f',    #  0x0F -> SHIFT IN
+    u'\\x10',    #  0x10 -> DATA LINK ESCAPE
+    u'\\x11',    #  0x11 -> DEVICE CONTROL ONE
+    u'\\x12',    #  0x12 -> DEVICE CONTROL TWO
+    u'\\x13',    #  0x13 -> DEVICE CONTROL THREE
+    u'\\x14',    #  0x14 -> DEVICE CONTROL FOUR
+    u'\\x15',    #  0x15 -> NEGATIVE ACKNOWLEDGE
+    u'\\x16',    #  0x16 -> SYNCHRONOUS IDLE
+    u'\\x17',    #  0x17 -> END OF TRANSMISSION BLOCK
+    u'\\x18',    #  0x18 -> CANCEL
+    u'\\x19',    #  0x19 -> END OF MEDIUM
+    u'\\x1a',    #  0x1A -> SUBSTITUTE
+    u'\\x1b',    #  0x1B -> ESCAPE
+    u'\\x1c',    #  0x1C -> FILE SEPARATOR
+    u'\\x1d',    #  0x1D -> GROUP SEPARATOR
+    u'\\x1e',    #  0x1E -> RECORD SEPARATOR
+    u'\\x1f'     #  0x1F -> UNIT SEPARATOR
+    )
+
+def escape_unicode_string(u):
+    """
+    Escapes the nonprintable chars 0-31 and 127, preferably with a
+    friendly equivalent such as \\n if available, but otherwise with a
+    Python-style backslashed hex escape.
+    """
+    def replacer(matchobj):
+        if ord(matchobj.group(1)) == 127:
+            return "\\x7f"
+        return REPLACEMENT_TABLE[ord(matchobj.group(1))]
+    return re.sub("([\\000-\\037\\177])", replacer, u)
 
 def format_tree(tree, root=None):
     ''' Tree pretty printer.
@@ -73,7 +121,7 @@ def format_table(table, column_names=None, column_specs=None, max_col_width=32,
     for row in table:
         my_row = []
         for i in range(len(row)):
-            my_item = unicode(row[i])
+            my_item = escape_unicode_string(unicode(row[i]))
             if len(my_item) > max_col_width:
                 my_item = my_item[:max_col_width-1] + u'…'
             my_row.append(my_item)

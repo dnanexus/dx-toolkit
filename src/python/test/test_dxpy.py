@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os, unittest, tempfile, filecmp
 
 import dxpy
 from dxpy.exceptions import *
+
+from dxpy.utils import pretty_print
 
 # Store the following in PROJECT_CONTEXT_ID to make some of the tests pass
 proj_id = "project-000000000000000000000001"
@@ -989,7 +992,15 @@ class TestDXSearch(unittest.TestCase):
         self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
         self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
         self.assertEqual(result["describe"]["parentJob"], None)
-    
+
+class TestPrettyPrint(unittest.TestCase):
+    def test_string_escaping(self):
+        self.assertEqual(pretty_print.escape_unicode_string("a"), u"a")
+        self.assertEqual(pretty_print.escape_unicode_string("foo\nbar"), u"foo\\nbar")
+        self.assertEqual(pretty_print.escape_unicode_string("foo\x11bar"), u"foo\\x11bar")
+        self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), u"foo\\n\\t\\rbar")
+        self.assertEqual(pretty_print.escape_unicode_string(u"ïñtérnaçiònale"), u"ïñtérnaçiònale")
+
 if __name__ == '__main__':
     print "NOTE: This test requires environment variables to be set for DX_APISERVER_*, DX_SECURITY_CONTEXT, and a DX_PROJECT_CONTEXT_ID with which the security context has ADMINISTER access.  It should be run against a running API server and with a Mongo DB initialized with test entities such as the public test project project-0000000000000000000000pb."
     unittest.main()
