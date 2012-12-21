@@ -81,37 +81,3 @@ def new_dxgtable(columns=None, indices=None, init_from=None, mode=None, **kwargs
     dxgtable = DXGTable(mode=mode)
     dxgtable.new(columns=columns, indices=indices, init_from=init_from, **kwargs)
     return dxgtable
-
-def extend_dxgtable(dxid, columns, indices=None, mode=None, **kwargs):
-    '''
-    :param dxid: Object ID of table to extend
-    :type dxid: string
-    :param columns: An ordered list containing column descriptors.  See :meth:`~dxpy.bindings.dxgtable.DXGTable.make_column_desc`.
-    :type columns: list of column descriptors
-    :param indices: An ordered list containing index descriptors. See description in :func:`~dxpy.bindings.dxgtable.DXGTable.extend`.
-    :type indices: list of index descriptors
-    :param mode: One of "w" or "a" for write and append modes, respectively
-    :type mode: string
-    :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
-
-    Additional optional parameters not listed: all those under
-    :func:`dxpy.bindings.DXDataObject.new`.
-
-    Given the object ID of an existing table and a list of new columns with
-    which to extend the table, creates a new remote table that is ready to be
-    written to.
-
-    Example::
-
-        new_cols = [dxpy.DXGTable.make_column_desc("newcol", "double"),
-                    dxpy.DXGTable.make_column_desc("anothercol", "int32")]
-        with extend_dxgtable(old_dxgtable.get_id(), columns=new_cols, name="extended") as dxgtable:
-            dxgtable.add_rows([[2.5498, 93]])
-
-    Note that this function is shorthand for the following::
-
-        DXGTable(dxid).extend(columns, **kwargs)
-
-    '''
-
-    return DXGTable(dxid).extend(columns, indices, mode=mode, **kwargs)

@@ -284,38 +284,6 @@ class TestDXGTable(unittest.TestCase):
                          [dxpy.DXGTable.make_column_desc("a", "string"),
                           dxpy.DXGTable.make_column_desc("b", "int32")])
 
-    def test_extend_table(self):
-        table_to_extend = dxpy.new_dxgtable(
-            [dxpy.DXGTable.make_column_desc("a", "string"),
-             dxpy.DXGTable.make_column_desc("b", "int32")])
-        try:
-            table_to_extend.add_rows([["Row 1", 1], ["Row 2", 2]], 1)
-            table_to_extend.close(block=True)
-        except:
-            self.fail("Error occurred when creating a table")
-            table_to_extend.remove()
-
-        try:
-            self.dxgtable = dxpy.extend_dxgtable(
-                table_to_extend.get_id(),
-                [dxpy.DXGTable.make_column_desc("c", "int32"),
-                 dxpy.DXGTable.make_column_desc("d", "string")])
-        except:
-            self.fail("Could not extend table");
-        finally:
-            table_to_extend.remove()
-
-        self.assertEqual(self.dxgtable.describe()["columns"],
-                         [dxpy.DXGTable.make_column_desc("a", "string"),
-                          dxpy.DXGTable.make_column_desc("b", "int32"),
-                          dxpy.DXGTable.make_column_desc("c", "int32"),
-                          dxpy.DXGTable.make_column_desc("d", "string")])
-        self.dxgtable.add_rows([[10, "End row 1"], [20, "End row 2"]])
-        try:
-            self.dxgtable.close(block=True)
-        except DXAPIError:
-            self.fail("Could not close table after table extension")
-
     def get_col_names(self):
         self.dxgtable = dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
