@@ -298,10 +298,6 @@ dx::JSON gtableDescribe(const std::string &object_id, const std::string &input_p
 dx::JSON gtableDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON gtableExtend(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON gtableExtend(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
 dx::JSON gtableGet(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
 dx::JSON gtableGet(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
@@ -600,94 +596,6 @@ dx::JSON systemGlobalSearch(const dx::JSON &input_params, const bool retry=true)
 
 dx::JSON systemShortenURL(const std::string &input_params="{}", const bool retry=true);
 dx::JSON systemShortenURL(const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableAddColumns(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableAddColumns(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableAddIndices(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableAddIndices(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableAddRows(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON tableAddRows(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON tableAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableGet(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableGet(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableModifyColumn(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON tableModifyColumn(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON tableRemoveColumns(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON tableRemoveColumns(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON tableRemoveIndices(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableRemoveIndices(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableRemoveRows(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON tableRemoveRows(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON tableRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON tableSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON tableUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON tableUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON tableNew(const std::string &input_params="{}", const bool retry=false);
-dx::JSON tableNew(const dx::JSON &input_params, const bool retry=false);
 
 
 dx::JSON userDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);

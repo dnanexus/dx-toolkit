@@ -72,7 +72,7 @@
 /gtable-xxxx/addTypes RETRYABLE
 /gtable-xxxx/close RETRYABLE
 /gtable-xxxx/describe RETRYABLE
-/gtable-xxxx/extend
+#/gtable-xxxx/extend
 /gtable-xxxx/get RETRYABLE
 /gtable-xxxx/getDetails RETRYABLE
 /gtable-xxxx/listProjects RETRYABLE
@@ -148,27 +148,27 @@
 /system/getProjectTags RETRYABLE
 /system/globalSearch RETRYABLE
 /system/shortenURL RETRYABLE
-/table-xxxx/addColumns RETRYABLE
-/table-xxxx/addIndices RETRYABLE
-/table-xxxx/addRows
-/table-xxxx/addTags RETRYABLE
-/table-xxxx/addTypes RETRYABLE
-/table-xxxx/close RETRYABLE
-/table-xxxx/describe RETRYABLE
-/table-xxxx/get RETRYABLE
-/table-xxxx/getDetails RETRYABLE
-/table-xxxx/listProjects RETRYABLE
-/table-xxxx/modifyColumn
-/table-xxxx/removeColumns
-/table-xxxx/removeIndices RETRYABLE
-/table-xxxx/removeRows
-/table-xxxx/removeTags RETRYABLE
-/table-xxxx/removeTypes RETRYABLE
-/table-xxxx/rename RETRYABLE
-/table-xxxx/setDetails RETRYABLE
-/table-xxxx/setProperties RETRYABLE
-/table-xxxx/setVisibility RETRYABLE
-/table-xxxx/update
-/table/new
+#/table-xxxx/addColumns RETRYABLE
+#/table-xxxx/addIndices RETRYABLE
+#/table-xxxx/addRows
+#/table-xxxx/addTags RETRYABLE
+#/table-xxxx/addTypes RETRYABLE
+#/table-xxxx/close RETRYABLE
+#/table-xxxx/describe RETRYABLE
+#/table-xxxx/get RETRYABLE
+#/table-xxxx/getDetails RETRYABLE
+#/table-xxxx/listProjects RETRYABLE
+#/table-xxxx/modifyColumn
+#/table-xxxx/removeColumns
+#/table-xxxx/removeIndices RETRYABLE
+#/table-xxxx/removeRows
+#/table-xxxx/removeTags RETRYABLE
+#/table-xxxx/removeTypes RETRYABLE
+#/table-xxxx/rename RETRYABLE
+#/table-xxxx/setDetails RETRYABLE
+#/table-xxxx/setProperties RETRYABLE
+#/table-xxxx/setVisibility RETRYABLE
+#/table-xxxx/update
+#/table/new
 /user-xxxx/describe RETRYABLE
 /user-xxxx/update

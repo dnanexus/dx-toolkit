@@ -533,13 +533,6 @@ sub gtableDescribe($;$%) {
 }
 
 
-sub gtableExtend($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/extend', $input_params, %kwargs);
-}
-
-
 sub gtableGet($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -1065,160 +1058,6 @@ sub systemShortenURL(;$%) {
 }
 
 
-sub tableAddColumns($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addColumns', $input_params, %kwargs);
-}
-
-
-sub tableAddIndices($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addIndices', $input_params, %kwargs);
-}
-
-
-sub tableAddRows($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addRows', $input_params, %kwargs);
-}
-
-
-sub tableAddTags($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
-}
-
-
-sub tableAddTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
-}
-
-
-sub tableClose($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
-}
-
-
-sub tableDescribe($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
-}
-
-
-sub tableGet($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/get', $input_params, %kwargs);
-}
-
-
-sub tableGetDetails($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
-}
-
-
-sub tableListProjects($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
-}
-
-
-sub tableModifyColumn($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/modifyColumn', $input_params, %kwargs);
-}
-
-
-sub tableRemoveColumns($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeColumns', $input_params, %kwargs);
-}
-
-
-sub tableRemoveIndices($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeIndices', $input_params, %kwargs);
-}
-
-
-sub tableRemoveRows($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeRows', $input_params, %kwargs);
-}
-
-
-sub tableRemoveTags($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
-}
-
-
-sub tableRemoveTypes($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
-}
-
-
-sub tableRename($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
-}
-
-
-sub tableSetDetails($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
-}
-
-
-sub tableSetProperties($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
-}
-
-
-sub tableSetVisibility($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
-}
-
-
-sub tableUpdate($;$%) {
-    my ($object_id, $input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
-}
-
-
-sub tableNew(;$%) {
-    my ($input_params, %kwargs) = @_;
-    %kwargs = () unless %kwargs;
-    return DXHTTPRequest('/table/new', $input_params, %kwargs);
-}
-
-
 sub userDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -1234,5 +1073,5 @@ sub userUpdate($;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListCategories appListDevelopers appPublish appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletAddTypes appletClose appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRemoveTypes appletRename appletRun appletSetDetails appletSetProperties appletSetVisibility appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableExtend gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew inviteAccept inviteApprove inviteDecline inviteDescribe inviteDestroy inviteReject jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectJoin projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectSubscribe projectUnsubscribe projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew requestApprove requestDescribe requestDestroy requestReject systemFindAffiliates systemFindApps systemFindDataObjects systemFindDiscitems systemFindFeeditems systemFindInvites systemFindJobs systemFindProjects systemFindRequests systemFindUsers systemFindProjectMembers systemGetLog systemGetProjectTags systemGlobalSearch systemShortenURL tableAddColumns tableAddIndices tableAddRows tableAddTags tableAddTypes tableClose tableDescribe tableGet tableGetDetails tableListProjects tableModifyColumn tableRemoveColumns tableRemoveIndices tableRemoveRows tableRemoveTags tableRemoveTypes tableRename tableSetDetails tableSetProperties tableSetVisibility tableUpdate tableNew userDescribe userUpdate);
+our @EXPORT_OK = qw(appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListCategories appListDevelopers appPublish appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletAddTypes appletClose appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRemoveTypes appletRename appletRun appletSetDetails appletSetProperties appletSetVisibility appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew inviteAccept inviteApprove inviteDecline inviteDescribe inviteDestroy inviteReject jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectJoin projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectSubscribe projectUnsubscribe projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew requestApprove requestDescribe requestDestroy requestReject systemFindAffiliates systemFindApps systemFindDataObjects systemFindDiscitems systemFindFeeditems systemFindInvites systemFindJobs systemFindProjects systemFindRequests systemFindUsers systemFindProjectMembers systemGetLog systemGetProjectTags systemGlobalSearch systemShortenURL userDescribe userUpdate);
 

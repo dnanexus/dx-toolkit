@@ -255,10 +255,6 @@ public class DXAPI {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
-    public static JsonNode gtableExtend(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "extend", inputParams);
-    }
-
     public static JsonNode gtableGet(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
@@ -557,94 +553,6 @@ public class DXAPI {
 
     public static JsonNode systemShortenURL(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/shortenURL", inputParams);
-    }
-
-    public static JsonNode tableAddColumns(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addColumns", inputParams);
-    }
-
-    public static JsonNode tableAddIndices(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addIndices", inputParams);
-    }
-
-    public static JsonNode tableAddRows(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addRows", inputParams);
-    }
-
-    public static JsonNode tableAddTags(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
-    }
-
-    public static JsonNode tableAddTypes(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
-    }
-
-    public static JsonNode tableClose(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
-    }
-
-    public static JsonNode tableDescribe(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
-    }
-
-    public static JsonNode tableGet(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
-    }
-
-    public static JsonNode tableGetDetails(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
-    }
-
-    public static JsonNode tableListProjects(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
-    }
-
-    public static JsonNode tableModifyColumn(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "modifyColumn", inputParams);
-    }
-
-    public static JsonNode tableRemoveColumns(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeColumns", inputParams);
-    }
-
-    public static JsonNode tableRemoveIndices(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeIndices", inputParams);
-    }
-
-    public static JsonNode tableRemoveRows(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeRows", inputParams);
-    }
-
-    public static JsonNode tableRemoveTags(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
-    }
-
-    public static JsonNode tableRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
-    }
-
-    public static JsonNode tableRename(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
-    }
-
-    public static JsonNode tableSetDetails(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
-    }
-
-    public static JsonNode tableSetProperties(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
-    }
-
-    public static JsonNode tableSetVisibility(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
-    }
-
-    public static JsonNode tableUpdate(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
-    }
-
-    public static JsonNode tableNew(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/table/new", inputParams);
     }
 
     public static JsonNode userDescribe(String objectId, JsonNode inputParams) throws Exception {

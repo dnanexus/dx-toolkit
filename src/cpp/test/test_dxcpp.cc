@@ -804,7 +804,7 @@ TEST_F(DXGTableTest, InitializeFromGTableTest) {
               desc["columns"][i]["type"].get<string>());
   }
 }
-
+/*
 TEST_F(DXGTableTest, ExtendDXGTableTest) {
   DXGTable table_to_extend = DXGTable::newDXGTable(DXGTableTest::columns);
   try {
@@ -837,7 +837,7 @@ TEST_F(DXGTableTest, ExtendDXGTableTest) {
     throw e;
   }
 }
-
+*/
 TEST_F(DXGTableTest, AddRowsTest) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
   dxgtable.addRows(JSON(JSON_ARRAY), 9999);

@@ -375,11 +375,6 @@ exports.gtableDescribe = function(object_id, input_params) {
 };
 
 
-exports.gtableExtend = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/extend', input_params);
-};
-
-
 exports.gtableGet = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/get', input_params);
 };
@@ -752,116 +747,6 @@ exports.systemGlobalSearch = function(input_params) {
 
 exports.systemShortenURL = function(input_params) {
   return dx.DXHTTPRequest('/system/shortenURL', input_params);
-};
-
-
-exports.tableAddColumns = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addColumns', input_params);
-};
-
-
-exports.tableAddIndices = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addIndices', input_params);
-};
-
-
-exports.tableAddRows = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addRows', input_params);
-};
-
-
-exports.tableAddTags = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
-};
-
-
-exports.tableAddTypes = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addTypes', input_params);
-};
-
-
-exports.tableClose = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/close', input_params);
-};
-
-
-exports.tableDescribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
-};
-
-
-exports.tableGet = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/get', input_params);
-};
-
-
-exports.tableGetDetails = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/getDetails', input_params);
-};
-
-
-exports.tableListProjects = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/listProjects', input_params);
-};
-
-
-exports.tableModifyColumn = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/modifyColumn', input_params);
-};
-
-
-exports.tableRemoveColumns = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeColumns', input_params);
-};
-
-
-exports.tableRemoveIndices = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeIndices', input_params);
-};
-
-
-exports.tableRemoveRows = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeRows', input_params);
-};
-
-
-exports.tableRemoveTags = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeTags', input_params);
-};
-
-
-exports.tableRemoveTypes = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeTypes', input_params);
-};
-
-
-exports.tableRename = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/rename', input_params);
-};
-
-
-exports.tableSetDetails = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setDetails', input_params);
-};
-
-
-exports.tableSetProperties = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
-};
-
-
-exports.tableSetVisibility = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setVisibility', input_params);
-};
-
-
-exports.tableUpdate = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/update', input_params);
-};
-
-
-exports.tableNew = function(input_params) {
-  return dx.DXHTTPRequest('/table/new', input_params);
 };
 
 

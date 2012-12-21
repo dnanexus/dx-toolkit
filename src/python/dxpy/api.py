@@ -266,10 +266,6 @@ def gtableDescribe(object_id, input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 
-def gtableExtend(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/extend' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
 def gtableGet(object_id, input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/%s/get' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -568,94 +564,6 @@ def systemGlobalSearch(input_params={}, always_retry=True, **kwargs):
 
 def systemShortenURL(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/shortenURL', input_params, always_retry=always_retry, **kwargs)
-
-
-def tableAddColumns(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/addColumns' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableAddIndices(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/addIndices' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableAddRows(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/addRows' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableAddTags(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableAddTypes(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableClose(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableDescribe(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableGet(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/get' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableGetDetails(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableListProjects(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableModifyColumn(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/modifyColumn' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableRemoveColumns(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/removeColumns' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableRemoveIndices(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/removeIndices' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableRemoveRows(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/removeRows' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableRemoveTags(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableRemoveTypes(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableRename(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableSetDetails(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableSetProperties(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableSetVisibility(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableUpdate(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def tableNew(input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/table/new', input_params, always_retry=always_retry, **kwargs)
 
 
 def userDescribe(object_id, input_params={}, always_retry=True, **kwargs):
