@@ -2,7 +2,7 @@
   #include <pwd.h>
   #include <unistd.h>
 #endif
-
+#include <cstdlib>
 #include "utils.h"
 
 using namespace std;
