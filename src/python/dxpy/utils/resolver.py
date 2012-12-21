@@ -297,12 +297,12 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     # Easy case: ":"
     if path == ':':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set.')
+            raise ResolutionError('Error: Cannot parse ":"; expected a project name or ID to the left of a colon or for a current project to be set')
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
     # Second easy case: empty string
     if path == '':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set.')
+            raise ResolutionError('Error: Expected a project name or ID to the left of a colon or for a current project to be set')
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), os.environ.get('DX_CLI_WD', '/'), None
     # Third easy case: hash ID
     if is_container_id(path):
@@ -320,7 +320,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     if last_colon >= 0:
         last_last_colon = get_last_pos_of_char(':', path[:last_colon])
         if last_last_colon >= 0:
-            raise ResolutionError('At most one colon expected in a path')
+            raise ResolutionError('Error: Cannot parse \"' + path + '\" as a path; at most one unescaped colon can be present')
 
     substrings = split_unescaped(':', path)
 
@@ -342,7 +342,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         wd = '/'
         if path.startswith(':'):
             if dxpy.WORKSPACE_ID is None:
-                raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set')
+                raise ResolutionError('Error: Cannot parse \"' + path + '\" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
             project = dxpy.WORKSPACE_ID
         else:
             # One nonempty string to the left of a colon
@@ -382,7 +382,7 @@ def resolve_job_ref(job_id, name, describe={}):
         if isinstance(output_field, list):
             if len(output_field) > 0:
                 if not isinstance(output_field[0], dict) or '$dnanexus_link' not in output_field[0]:
-                    raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an array of non-data objects.')
+                    raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an array of non-data objects')
                 ids = [link['$dnanexus_link'] for link in output_field]
                 try:
                     results = [{"id": out_id,
@@ -390,7 +390,7 @@ def resolve_job_ref(job_id, name, describe={}):
                 except BaseException as details:
                     raise ResolutionError(str(details))
             else:
-                raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an empty array.')
+                raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an empty array')
         elif isinstance(output_field, dict) and '$dnanexus_link' in output_field:
             obj_id = output_field['$dnanexus_link']
             try:
@@ -462,7 +462,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         else:
             return project, folderpath, [result]
     elif project is None:
-        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name.')
+        raise ResolutionError('Error: Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
     else:
         msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object
@@ -509,7 +509,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                 else:
                     return project, None, ([results[choice]] if allow_mult else results[choice])
             else:
-                raise ResolutionError('The given path \"' + path + '\" resolves to ' + str(len(results)) + ' data objects')
+                raise ResolutionError('Error: The given path \"' + path + '\" resolves to ' + str(len(results)) + ' data objects')
         elif len(results) == 1:
             return project, None, ([results[0]] if allow_mult else results[0])
 

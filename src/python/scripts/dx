@@ -864,7 +864,7 @@ def mv(args):
                                                    allow_mult=True, all_mult=args.all)
 
         if src_proj != dest_proj:
-            parser.exit(1, 'Using \"mv\" for moving something from one project to another is unsupported.\n')
+            parser.exit(1, fill('Error: Using \"mv\" for moving something from one project to another is unsupported.') + '\n')
 
         if src_results is None:
             if src_path == '/':
@@ -947,8 +947,14 @@ def cp(args):
         src_proj, src_path, src_results = try_call(resolve_existing_path,
                                                    args.sources[0],
                                                    allow_mult=True, all_mult=args.all)
+
         if src_proj == dest_proj:
-            parser.exit(1, fill('A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
+            if is_hashid(args.sources[0]):
+                # This is the only case in which the source project is
+                # purely assumed, so give a better error message.
+                parser.exit(1, fill('Error: You must specify a source project for ' + args.sources[0]) + '\n')
+            else:
+                parser.exit(1, fill('A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
 
         if src_results is None:
             try:
@@ -994,7 +1000,15 @@ def cp(args):
                                                          source,
                                                          allow_mult=True, all_mult=args.all)
         if src_proj == dest_proj:
-            parser.exit(1, fill('A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
+            if is_hashid(source):
+                # This is the only case in which the source project is
+                # purely assumed, so give a better error message.
+                parser.exit(1, fill('Error: You must specify a source project for ' + source) + '\n')
+            else:
+                parser.exit(1, fill('Error: A source path and the destination path resolved to the same project or container.  Please specify different source and destination containers, e.g.') + '\n  dx cp source-project:source-id-or-path dest-project:dest-path' + '\n')
+
+        if src_proj is None:
+            parser.exit(1, fill('Error: A source project must be specified or a current project set in order to clone objects between projects') + '\n')
 
         if src_results is None:
             src_folders.append(src_folderpath)
