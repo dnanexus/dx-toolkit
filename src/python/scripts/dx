@@ -278,9 +278,13 @@ def login(args):
         authserver += ':' + str(args.port)
         print 'Acquiring credentials from ' + authserver
 
-        username = raw_input('Username: ')
-        write_env_var('DX_USERNAME', username)
-        password = getpass.getpass()
+        try:
+            username = raw_input('Username: ')
+            write_env_var('DX_USERNAME', username)
+            password = getpass.getpass()
+        except:
+            print ''
+            parser.exit(1)
 
         session = requests.session()
 
