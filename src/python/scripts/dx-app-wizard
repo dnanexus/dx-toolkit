@@ -252,10 +252,7 @@ if pattern == 'parallelized' and len([filename for filename in os.listdir(os.pat
                                                                               gtable_output_names)
     pattern_suffix = ''
     if parallelized_input_field != '':
-        if parallelized_input_field in file_input_names:
-            pattern_suffix += '-input-file'
-        else:
-            pattern_suffix += '-input-gtable'
+        pattern_suffix += '-input-gtable'
     if parallelized_output_field != '':
         pattern_suffix += '-output-gtable'
 
