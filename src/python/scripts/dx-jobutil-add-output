@@ -17,8 +17,8 @@ parser.add_argument('value', help='Value of the output field')
 parser.add_argument('--class', dest='classname',
                     choices=['int', 'float', 'string', 'boolean', 'hash',
                              'array:int', 'array:float', 'array:string', 'array:boolean',
-                             'file', 'gtable', 'table', 'record', 'applet',
-                             'array:file', 'array:gtable', 'array:table', 'array:record', 'array:applet',
+                             'file', 'gtable', 'record', 'applet',
+                             'array:file', 'array:gtable', 'array:record', 'array:applet',
                              'jobref', 'array:jobref', 'auto', 'array:auto'],
                     help=fill('Class of output for formatting purposes, default "auto"', width_adjustment=-24),
                     nargs='?',
@@ -32,7 +32,7 @@ if args.classname.startswith('array:'):
     args.array = True
     args.classname = args.classname[6:]
 
-if args.classname in ['file', 'gtable', 'table', 'record', 'applet']:
+if args.classname in ['file', 'gtable', 'record', 'applet']:
     args.classname = 'dxobject'
 
 if args.classname == 'auto':
