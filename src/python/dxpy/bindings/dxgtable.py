@@ -351,35 +351,6 @@ class DXGTable(DXDataObject):
     def __iter__(self):
         return self.iterate_rows()
 
-    def extend(self, columns, indices=None, mode=None, **kwargs):
-        '''
-        :param columns: List of new column descriptors. See :meth:`make_column_desc`.
-        :type columns: list of column descriptors
-        :param indices: An ordered list containing index descriptors. See :meth:`genomic_range_index()` and :meth:`lexicographic_index()`. If not provided, no indices are created.
-        :type indices: list of index descriptors
-        :param mode: One of "w" or "a" for write and append modes, respectively
-        :type mode: string
-        :rtype: :class:`~dxpy.bindings.dxgtable.DXGTable`
-
-        Additional optional parameters not listed: all those under
-        :func:`dxpy.bindings.DXDataObject.new`.
-
-        Extends the current GTable object with the new columns specified
-        in *columns*, creating a new remote GTable as a result. Returns
-        the handler for this new GTable.
-
-        .. note:: Any indices on the original table are **not**
-           automatically carried over to this new table; all indices for
-           the new table must be specified at this time.
-
-        '''
-        dx_hash, remaining_kwargs = DXDataObject._get_creation_params(kwargs)
-        dx_hash["columns"] = columns
-        if indices is not None:
-            dx_hash["indices"] = indices
-        resp = dxpy.api.gtableExtend(self._dxid, dx_hash, **remaining_kwargs)
-        return DXGTable(resp["id"], dx_hash["project"], mode=mode)
-
     # TODO: make this consume recarrays
     def add_rows(self, data, part=None, validate=True, **kwargs):
         '''
@@ -560,7 +531,7 @@ class DXGTable(DXDataObject):
         :rtype: dict
 
         Returns a genomic range index descriptor, for use with the
-        :meth:`_new` or :meth:`extend` methods.
+        :meth:`_new` method.
 
         """
         return {"name": name, "type": "genomic",
@@ -577,7 +548,7 @@ class DXGTable(DXDataObject):
         :rtype: dict
 
         Returns a lexicographic index descriptor, for use with the
-        :meth:`_new` or :meth:`extend` methods.
+        :meth:`_new` method.
 
         """
 
