@@ -171,9 +171,17 @@ class DXPathCompleter():
                                       include_current_proj=self.include_current_proj)
 
     def get_matches(self, line, point, prefix, suffix):
+        # This implementation is reliant on bash behavior that ':' is
+        # treated as a word separator for determining prefix
+        if line[point - 1] != ' ':
+            prefix = split_unescaped(' ', line[:point])[-1]
         self.matches = path_completer(prefix, self.expected, self.classes,
                                       typespec=self.typespec,
                                       include_current_proj=self.include_current_proj)
+        if get_last_pos_of_char(':', prefix) != -1:
+            for i in range(len(self.matches)):
+                self.matches[i] = self.matches[i][get_last_pos_of_char(':', self.matches[i]) + 1:]
+                
         return self.matches
 
     def __call__(self, text, state):
