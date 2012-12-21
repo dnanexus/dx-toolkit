@@ -1677,8 +1677,8 @@ def head(args):
                                                   args.path, expected='entity')
     if entity_result is None:
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
-    if not entity_result['describe']['class'] in ['gtable', 'file', 'table']:
-        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class gtable, file, or table was expected\n')
+    if not entity_result['describe']['class'] in ['gtable', 'file']:
+        parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class gtable or file was expected\n')
 
     handler = dxpy.get_handler(entity_result['id'])
 
@@ -3121,7 +3121,7 @@ parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_
 parser_find_data = subparsers_find.add_parser('data', help='Finds data objects',
                                               description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects, use --allprojects (overrides --project, --folder, --norecurse).',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args], prog='dx find data')
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet', 'table'], help='Data object class')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')
