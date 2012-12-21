@@ -42,7 +42,7 @@ concurrent.futures.thread._worker = _non_leaky_worker
 
 
 def _force_quit(signum, frame):
-    traceback.print_stack(frame)
+    # traceback.print_stack(frame)
     os._exit(os.EX_IOERR)
     # os.abort()
 

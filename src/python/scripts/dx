@@ -2377,6 +2377,9 @@ def shell(orig_args):
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
     from ws4py.exc import HandshakeError
+    import signal
+    from dxpy.utils import _force_quit
+    signal.signal(signal.SIGINT, _force_quit)
     ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
     server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
 
