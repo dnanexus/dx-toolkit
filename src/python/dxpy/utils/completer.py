@@ -67,7 +67,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
         results = list(dxpy.find_data_objects(project=dxproj.get_id(),
                                               folder=folderpath,
                                               recurse=False,
-                                              visibility='either',
+                                              visibility='either' if text != '' and delim_pos != len(text) - 1 else 'visible',
                                               classname=classname,
                                               limit=100,
                                               describe=True,
@@ -173,7 +173,7 @@ class DXPathCompleter():
     def get_matches(self, line, point, prefix, suffix):
         # This implementation is reliant on bash behavior that ':' is
         # treated as a word separator for determining prefix
-        if line[point - 1] != ' ':
+        if get_last_pos_of_char(' ', line) != point - 1:
             prefix = split_unescaped(' ', line[:point])[-1]
         self.matches = path_completer(prefix, self.expected, self.classes,
                                       typespec=self.typespec,
