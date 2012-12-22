@@ -51,6 +51,27 @@ def get_futures_threadpool(max_workers):
     #    signal.signal(signal.SIGINT, _force_quit)
     return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
+def wait_for_a_future(futures, print_traceback=False):
+    '''
+    Return the next future that completes.  If a KeyboardInterrupt is
+    received, then the entire process is exited immediately.  See
+    wait_for_all_futures for more notes.
+    '''
+    while True:
+        try:
+            future = concurrent.futures.as_completed(futures, timeout=10000000000).next()
+            break
+        except concurrent.futures.TimeoutError:
+            pass
+        except KeyboardInterrupt as e:
+            if print_traceback:
+                traceback.print_stack()
+            else:
+                print ''
+            os._exit(os.EX_IOERR)
+
+    return future
+
 def wait_for_all_futures(futures):
     '''
     Wait indefinitely for all futures in the input iterable to complete.

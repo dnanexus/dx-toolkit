@@ -202,42 +202,38 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         return mmap.mmap(fd.fileno(), min(dxfile._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
-    try:
-        while True:
-            buf = read(dxfile._write_bufsize)
-            offset += len(buf)
+    while True:
+        buf = read(dxfile._write_bufsize)
+        offset += len(buf)
 
-            if len(buf) == 0:
-                if show_progress:
-                    sys.stderr.write("\n")
-                break
-
-            dxfile.write(buf, **remaining_kwargs)
-
+        if len(buf) == 0:
             if show_progress:
-                if file_size > 0:
-                    ticks = int(round((offset / float(file_size)) * num_ticks))
-                    percent = int(round((offset / float(file_size)) * 100))
+                sys.stderr.write("\n")
+            break
 
-                    fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
-                    sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
-                                                pending=' ' * (num_ticks - ticks),
-                                                done_bytes=offset,
-                                                total=file_size,
-                                                percent=percent,
-                                                name=filename if filename is not None else ''))
-                    sys.stderr.flush()
-                    sys.stderr.write("\r")
-                    sys.stderr.flush()
+        dxfile.write(buf, **remaining_kwargs)
 
-        if filename is not None:
-            fd.close()
+        if show_progress:
+            if file_size > 0:
+                ticks = int(round((offset / float(file_size)) * num_ticks))
+                percent = int(round((offset / float(file_size)) * 100))
 
-        if not keep_open:
-            dxfile.close(block=wait_on_close, **remaining_kwargs)
-    except KeyboardInterrupt:
-        print ''
-        os._exit(os.EX_IOERR)
+                fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
+                sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
+                                            pending=' ' * (num_ticks - ticks),
+                                            done_bytes=offset,
+                                            total=file_size,
+                                            percent=percent,
+                                            name=filename if filename is not None else ''))
+                sys.stderr.flush()
+                sys.stderr.write("\r")
+                sys.stderr.flush()
+
+    if filename is not None:
+        fd.close()
+
+    if not keep_open:
+        dxfile.close(block=wait_on_close, **remaining_kwargs)
 
     if 'name' in kwargs or use_existing_dxfile:
         pass # File has already been named
