@@ -4,8 +4,9 @@
 # Portions Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-
 unpack() {
+        local BUNZIP2_COMMAND=bunzip2
+        local BZIP2_COMMAND=bzip2
 	local x
 	local y
 	local myfail
@@ -38,7 +39,7 @@ unpack() {
 				tar xozf "$x" || die "$myfail"
 				;;
 			tbz|tbz2)
-				${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d} -c -- "$x" | tar xof -
+				${BUNZIP2_COMMAND:-${BZIP2_COMMAND} -d} -c -- "$x" | tar xof -
 				assert_sigpipe_ok "$myfail"
 				;;
 			ZIP|zip|jar)
@@ -51,7 +52,7 @@ unpack() {
 				_unpack_tar "gzip -d"
 				;;
 			bz2|bz)
-				_unpack_tar "${PORTAGE_BUNZIP2_COMMAND:-${PORTAGE_BZIP2_COMMAND} -d}"
+				_unpack_tar "${BUNZIP2_COMMAND:-${BZIP2_COMMAND} -d}"
 				;;
 			7Z|7z)
 				local my_output

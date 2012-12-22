@@ -1,5 +1,12 @@
 #!/bin/bash -e
 
+if [[ $# == 0 ]] || [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+    echo -e "$(basename $0): Extract files from archives."
+    echo -e "Usage: $(basename $0) ARCHIVE [ARCHIVE2 ...] [-o FILE]"
+    echo -e "Options:\n\t-o FILE, --output FILE\tExtract ARCHIVE into FILE instead of using a name based on ARCHIVE"
+    exit 1
+fi
+
 # Resolve symlinks, so we can use relative paths
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
@@ -9,4 +16,32 @@ DX_LIBDIR="${DX_BINDIR}/../share/dnanexus/lib/bash"
 
 source "${DX_LIBDIR}/dx_helpers.sh"
 
-unpack "$@"
+A=""
+while [[ $# > 0 ]]; do
+    if [[ $1 == "-o" ]] || [[ $1 == "--output" ]]; then
+        output="$2"
+        shift 2
+    else
+        A="$A $1"
+        shift
+    fi
+done
+eval set -- "$A"
+
+if [[ $output != "" ]] && [[ $# != 1 ]]; then
+    echo "-o/--output requires 1 input archive"
+    exit 1
+fi
+
+if [[ $output != "" ]]; then
+    tempdir=$(mktemp -d --tmpdir="$PWD" dx-unpack.XXXXX)
+    (cd "$tempdir"; unpack "../$1")
+    if [[ $(ls "$tempdir"|wc -l) != 1 ]]; then
+        echo "-o/--output requires 1 file or directory inside the input archive"
+        exit 1
+    fi
+    mv -f "$tempdir"/* "$output"/
+    rmdir "$tempdir"
+else
+    unpack "$@"
+fi
