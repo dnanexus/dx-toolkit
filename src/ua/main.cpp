@@ -397,6 +397,8 @@ void setMagicDBPath() {
  * - Throw runtime_error if the file path (fpath) is invalid, or if some other
  *   internal error occurs.
  */
+// Note: This function is NOT thread-safe (since it redirects "stderr" to /dev/null temporarily)
+//       At most one instance of this function should run at any time (else "stderr" might point to /dev/null forever)
 string getMimeType(string filePath) {
   // It's necessary to check file's existence
   // because if an invalid path is given,
@@ -410,13 +412,32 @@ string getMimeType(string filePath) {
   if (magic_cookie == NULL) {
     throw runtime_error("error allocating magic cookie (libmagic)");
   }
+
 #ifndef WINDOWS_BUILD
 	const char *ptr_to_db = NULL; // NULL means look in default location (fine for POSIX systems)
 #else
 	setMagicDBPath();
 	const char *ptr_to_db = MAGIC_DATABASE_PATH.c_str();
 #endif
-  if (magic_load(magic_cookie, ptr_to_db) != 0) {
+  // We redirect stderr momentarily, because "libmagic" prints bunch of warning (which we don't care about much)
+  // on stderr, and the easiest way to get rid of them is to redirect stderr to /dev/null (see PTFM-4636)
+  FILE *stderr_backup = stderr; // store original stderr FILE pointer
+  FILE *devnull = fopen("/dev/null", "w");
+  if (devnull == NULL) {
+    // If unable to open /dev/null, try opening "nul" (for Windows case): http://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html
+    devnull = fopen("nul", "w");
+    if (devnull == NULL) {
+      // TODO: Probably we should not throw runtime_error() for it, as we can carry on by creating a temp file somewhere too.
+      //       or at max, user will see some extra warnings on stderr .. not a big deal eitherway
+      throw runtime_error("Unable to open either: '/dev/null' or 'nul': Unexpected");
+    }
+  }
+  stderr = devnull; // redirect stderr to /dev/null, so that warning by magic_load() are not printed.
+  int errorCode = magic_load(magic_cookie, ptr_to_db);
+  stderr = stderr_backup; // restore original value of stderr
+  fclose(devnull);
+
+  if (errorCode) {
     string errMsg = magic_error(magic_cookie);
     magic_close(magic_cookie);
 #ifndef WINDOWS_BUILD
@@ -424,10 +445,10 @@ string getMimeType(string filePath) {
 #else
     throw runtime_error("cannot load magic database - '" + errMsg + "'" + " Magic DB path = '" + MAGIC_DATABASE_PATH + "'");
 #endif
-  }
-
+  } 
   magic_output = magic_file(magic_cookie, filePath.c_str());
   magic_close(magic_cookie);
+
   // magic_output will be of this format: "type/subType; charset=.."
   // we just want to return "type/subType"
   return magic_output.substr(0, magic_output.find(';'));
