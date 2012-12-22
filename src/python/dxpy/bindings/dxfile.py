@@ -249,7 +249,11 @@ class DXFile(DXDataObject):
             DXFile._http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=self._http_threadpool_size)
 
         while len(self._http_threadpool_futures) >= self._http_threadpool_size:
-            future = concurrent.futures.as_completed(self._http_threadpool_futures).next()
+            while True:
+                try:
+                    future = concurrent.futures.as_completed(self._http_threadpool_futures, timeout=60).next()
+                except concurrent.futures.TimeoutError:
+                    pass
             if future.exception() != None:
                 raise future.exception()
             self._http_threadpool_futures.remove(future)
