@@ -40,7 +40,7 @@ if [[ $output != "" ]]; then
         echo "-o/--output requires 1 file or directory inside the input archive"
         exit 1
     fi
-    mv -f "$tempdir"/* "$output"/
+    mv -f "$tempdir"/* "$output"
     rmdir "$tempdir"
 else
     unpack "$@"
