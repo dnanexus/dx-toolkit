@@ -1800,6 +1800,7 @@ def upload(args):
             if args.brief:
                 print dxfile.get_id()
             elif not args.mute:
+                print ''
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')

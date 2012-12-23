@@ -337,6 +337,9 @@ class DXFile(DXDataObject):
         if self._num_uploaded_parts == 0: # File is empty, upload an empty part (files with 0 parts cannot be closed)
             self.upload_part('', 1, **kwargs)
 
+        if 'report_progress_fn' in kwargs:
+            del kwargs['report_progress_fn']
+
         dxpy.api.fileClose(self._dxid, **kwargs)
 
         if block:
@@ -352,12 +355,16 @@ class DXFile(DXDataObject):
         '''
         self._wait_on_close(timeout, **kwargs)
 
-    def upload_part(self, data, index=None, display_progress=False, **kwargs):
+    def upload_part(self, data, index=None, display_progress=False, report_progress_fn=None, **kwargs):
         """
         :param data: Data to be uploaded in this part
         :type data: string
         :param index: Index of part to be uploaded; must be in [1, 10000]
         :type index: integer
+        :param display_progress: Whether to print "." to stderr when done
+        :type display_progress: boolean
+        :param report_progress_fn: Optional: a function to call that takes in two arguments (self, # bytes transmitted)
+        :type report_progress_fn: function or None
         :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is not in the correct range, :exc:`requests.exceptions.HTTPError` if upload fails
 
         Uploads the data in *data* as part number *index* for the
@@ -382,6 +389,9 @@ class DXFile(DXDataObject):
 
         if display_progress:
             print >> sys.stderr, "."
+
+        if report_progress_fn is not None:
+            report_progress_fn(self, len(data))
 
     def get_download_url(self, duration=24*3600, **kwargs):
         if self._download_url is None or self._download_url_expires > time.time():

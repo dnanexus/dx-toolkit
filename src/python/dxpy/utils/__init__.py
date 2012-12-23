@@ -72,7 +72,7 @@ def wait_for_a_future(futures, print_traceback=False):
 
     return future
 
-def wait_for_all_futures(futures):
+def wait_for_all_futures(futures, print_traceback=False):
     '''
     Wait indefinitely for all futures in the input iterable to complete.
     Use a timeout to enable interrupt handling.
@@ -92,7 +92,10 @@ def wait_for_all_futures(futures):
             if len(waited_futures.not_done) == 0:
                 break
     except KeyboardInterrupt as e:
-        traceback.print_stack()
+        if print_traceback:
+            traceback.print_stack()
+        else:
+            print ''
         os._exit(os.EX_IOERR)
 
 def response_iterator(request_iterator, worker_pool, max_active_tasks=4):

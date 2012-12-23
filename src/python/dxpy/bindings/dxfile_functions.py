@@ -202,38 +202,41 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
         return mmap.mmap(fd.fileno(), min(dxfile._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
+    dxfile._num_bytes_transmitted = 0
+
+    def report_progress(dxfile, num_bytes):
+        dxfile._num_bytes_transmitted += num_bytes
+        if file_size > 0:
+            ticks = int(round((dxfile._num_bytes_transmitted / float(file_size)) * num_ticks))
+            percent = int(round((dxfile._num_bytes_transmitted / float(file_size)) * 100))
+
+            fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
+            sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
+                                        pending=' ' * (num_ticks - ticks),
+                                        done_bytes=dxfile._num_bytes_transmitted,
+                                        total=file_size,
+                                        percent=percent,
+                                        name=filename if filename is not None else ''))
+            sys.stderr.flush()
+            sys.stderr.write("\r")
+            sys.stderr.flush()
+
+    report_progress(dxfile, 0)
+
     while True:
         buf = read(dxfile._write_bufsize)
         offset += len(buf)
 
         if len(buf) == 0:
-            if show_progress:
-                sys.stderr.write("\n")
             break
 
-        dxfile.write(buf, **remaining_kwargs)
-
-        if show_progress:
-            if file_size > 0:
-                ticks = int(round((offset / float(file_size)) * num_ticks))
-                percent = int(round((offset / float(file_size)) * 100))
-
-                fmt = "[{done}{pending}] Uploaded ({done_bytes} of {total} bytes) {percent}% {name}"
-                sys.stderr.write(fmt.format(done='=' * (ticks - 1) + '>' if ticks > 0 else '',
-                                            pending=' ' * (num_ticks - ticks),
-                                            done_bytes=offset,
-                                            total=file_size,
-                                            percent=percent,
-                                            name=filename if filename is not None else ''))
-                sys.stderr.flush()
-                sys.stderr.write("\r")
-                sys.stderr.flush()
+        dxfile.write(buf, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     if filename is not None:
         fd.close()
 
     if not keep_open:
-        dxfile.close(block=wait_on_close, **remaining_kwargs)
+        dxfile.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     if 'name' in kwargs or use_existing_dxfile:
         pass # File has already been named
