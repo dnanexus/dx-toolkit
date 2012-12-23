@@ -275,33 +275,14 @@ def login(args):
     if not state['interactive']:
         args.save = True
 
-    if args.host is not None or args.port is not None:
-        protocol = args.protocol or ("https" if (args.port == 443) else "http")
-        authserver = protocol + '://' + args.host
-        authserver += ':' + str(args.port)
-        print 'Acquiring credentials from ' + authserver
+    if args.host is not None or args.port is not None or args.token is None:
+        if args.host is not None or args.port is not None:
+            protocol = args.protocol or ("https" if (args.port == 443) else "http")
+            authserver = protocol + '://' + args.host
+            authserver += ':' + str(args.port)
+        else:
+            authserver = 'https://preprodauth.dnanexus.com'
 
-        try:
-            username = raw_input('Username: ')
-            write_env_var('DX_USERNAME', username)
-            password = getpass.getpass()
-        except:
-            print ''
-            parser.exit(1)
-
-        session = requests.session()
-
-        response = ""
-        try:
-            response = session.post(authserver + "/direct_token", data={"grant_type": "authorization_code", "redirect_uri": "/"}, headers={"Authorization": "Basic " + base64.b64encode(username + ":" + password)})
-            response.raise_for_status()
-        except requests.exceptions.RequestException as details:
-            print 'Error contacting the auth server: ' + unicode(details)
-            parser.exit(1)
-        token = json.loads(response.content)["access_token"]
-        sec_context = '{"auth_token":"' + token + '","auth_token_type":"Bearer"}'
-    elif args.token is None:
-        authserver = 'https://preprodauth.dnanexus.com'
         print 'Acquiring credentials from ' + authserver
 
         try:
@@ -330,7 +311,8 @@ def login(args):
         token_res = json.loads(res.content)
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
-        set_api('https', 'preprodapi.dnanexus.com', '443', args.save)
+        if 'preprodauth' in authserver:
+            set_api('https', 'preprodapi.dnanexus.com', '443', args.save)
     else:
         sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
 
