@@ -1740,6 +1740,7 @@ def head(args):
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
+upload_seen_paths=set()
 def upload(args):
     try_call(process_dataobject_args, args)
 
@@ -1755,12 +1756,17 @@ def upload(args):
     if os.path.isdir(args.filename):
         if not args.recursive:
             parser.exit("Error: {f} is a directory but the -r/--recursive option was not given".format(f=args.filename))
-        # TODO: detect loops
+        norm_path = os.path.realpath(args.filename)
+        if norm_path in upload_seen_paths:
+            print >>sys.stderr, "Skipping {f}: directory loop".format(f=args.filename)
+            return
+        else:
+            upload_seen_paths.add(norm_path)
         for f in os.listdir(args.filename):
             sub_args = copy.copy(args)
             sub_args.mute = True
             sub_args.filename = os.path.join(args.filename, f)
-            sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=args.filename)
+            sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
             sub_args.parents = True
             upload(sub_args)
     else:
@@ -1777,12 +1783,13 @@ def upload(args):
                                             folder=folder,
                                             parents=args.parents,
                                             show_progress=args.show_progress)
+            if args.show_progress:
+                print ''
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
                 print dxfile.get_id()
             elif not args.mute:
-                print ''
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
