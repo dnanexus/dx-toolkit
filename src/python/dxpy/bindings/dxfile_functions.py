@@ -221,7 +221,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.write("\r")
             sys.stderr.flush()
 
-    report_progress(dxfile, 0)
+    if show_progress:
+        report_progress(dxfile, 0)
 
     while True:
         buf = read(dxfile._write_bufsize)
