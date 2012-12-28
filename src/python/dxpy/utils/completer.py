@@ -11,7 +11,7 @@ def startswith(text):
     return (lambda string: string.startswith(text))
 
 def escape_completion_name_str(string):
-    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?')
+    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?').replace('(', '\\(').replace(')', '\\)')
 
 def get_folder_matches(text, delim_pos, dxproj, folderpath):
     '''
@@ -37,7 +37,7 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
         return filter(startswith(text),
                       map(lambda folder_name:
                               text[:delim_pos + 1] + \
-                              escape_folder_str(folder_name) + \
+                              escape_completion_name_str(folder_name) + \
                               '/',
                           folder_names + ['.', '..']))
     except:
