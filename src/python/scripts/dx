@@ -419,9 +419,7 @@ def pick_and_set_project(args):
     except BaseException as details:
         parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
     any_results = False
-    if not args.public and args.level == "CONTRIBUTE":
-        print ''
-        print fill("Note: Use \"dx select --level VIEW\" or \"dx select --public\" to select from projects for which you only have VIEW permissions.")
+    first_pass = True
     while True:
         results = []
         for i in range(10):
@@ -433,9 +431,15 @@ def pick_and_set_project(args):
             except BaseException as details:
                 parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
         if not any_results:
-            parser.exit(1, 'No projects to choose from.  Please create one first using "dx new project".\n')
+            parser.exit(0, '\n' + fill('No projects to choose from.  You can create one with the command "dx new project".  To pick from projects for which you only have VIEW permissions, use \"dx select --level VIEW\" or \"dx select --public\".') + '\n')
         elif len(results) == 0:
             parser.exit(1, 'No projects left to choose from.\n')
+
+        if first_pass:
+            if not args.public and args.level == "CONTRIBUTE":
+                print ''
+                print fill("Note: Use \"dx select --level VIEW\" or \"dx select --public\" to select from projects for which you only have VIEW permissions.")
+            first_pass = False
 
         project_ids = [result['id'] for result in results]
 
@@ -483,6 +487,10 @@ def setenv(args):
             parser.exit(1, '\n')
 
     if args.projects:
+        args.name = None
+        args.public = False
+        args.current = False
+        args.level = 'CONTRIBUTE'
         pick_and_set_project(args)
 
 def env(args):
