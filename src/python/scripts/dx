@@ -1702,7 +1702,7 @@ def head(args):
     if args.lines > 0:
         try:
             if handler._class == 'file':
-                handler._bufsize = 1024*32;
+                handler._read_bufsize = 1024*32;
                 for line in handler:
                     print line
                     counter += 1
