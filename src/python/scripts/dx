@@ -2406,13 +2406,19 @@ def shell(orig_args):
 
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
-    from ws4py.exc import HandshakeError
-    import signal
-    from dxpy.utils import _force_quit
-    signal.signal(signal.SIGINT, _force_quit)
-    ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
-    server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
 
+    log_client = DXJobLogStreamClient(args.jobid,
+                                     input_params = {"numRecentMessages": args.num_recent_messages,
+                                                     "recurseJobs": args.tree})
+    # Note: currently, the client is synchronous and blocks until the socket is closed.
+    # If this changes, some refactoring may be needed below
+    try:
+        log_client.connect()
+    except Exception as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
+#    except KeyboardInterrupt:
+#        sys.exit(1)
+'''
     filter_stream = None
     if args.get_stdout:
         filter_stream = 'stdout'
@@ -2421,24 +2427,9 @@ def watch(args):
         filter_stream = 'stderr'
         args.tree = False
 
-    while True:
-        try:
-            response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
-            hskey = response.content.split(':')[0]
-            ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, filter_stream=filter_stream)
-            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": args.tree})['streamingId']
-            ws.set_dx_streaming_id(streaming_id)
             if filter_stream is None:
                 print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
-            try:
-                ws.connect()
-            except KeyboardInterrupt:
-                sys.exit(1)
-            break
-        except HandshakeError as e:
-            # HACK: Workaround for https://github.com/LearnBoost/socket.io/issues/438
-            print >>sys.stderr, "Handshake error: {e}. Retrying...".format(e=str(e))
-            continue
+'''
 
 def print_help(args):
     if args.command_or_category is None:
