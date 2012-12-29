@@ -41,8 +41,8 @@ class DXJobLogStreamClient(WebSocketBaseClient):
                 error = json.loads(self.closed_reason)
                 raise DXJobLogStreamingException("Error while streaming job logs: {type}: {message}\n".format(**error))
             except (KeyError, ValueError):
-                error = "Error while streaming job logs: {code} {reason}\n".format(code=log_client.closed_code,
-                                                                                   reason=log_client.closed_reason)
+                error = "Error while streaming job logs: {code} {reason}\n".format(code=self.closed_code,
+                                                                                   reason=self.closed_reason)
                 raise DXJobLogStreamingException(error)
 
     def received_message(self, message):
