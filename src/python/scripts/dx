@@ -1752,6 +1752,8 @@ upload_seen_paths=set()
 def upload(args):
     try_call(process_dataobject_args, args)
 
+    args.show_progress = args.show_progress and not args.brief
+
     if args.output is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
