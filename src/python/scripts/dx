@@ -2407,9 +2407,14 @@ def shell(orig_args):
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
 
-    log_client = DXJobLogStreamClient(args.jobid,
-                                     input_params = {"numRecentMessages": args.num_recent_messages,
-                                                     "recurseJobs": args.tree})
+    input_params = {"numRecentMessages": args.num_recent_messages,
+                    "recurseJobs": args.tree}
+    
+    if args.levels:
+        input_params['levels'] = args.levels
+
+    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params)
+
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
@@ -2418,18 +2423,7 @@ def watch(args):
         parser.exit(3, fill(unicode(details)) + '\n')
 #    except KeyboardInterrupt:
 #        sys.exit(1)
-'''
-    filter_stream = None
-    if args.get_stdout:
-        filter_stream = 'stdout'
-        args.tree = False
-    elif args.get_stderr:
-        filter_stream = 'stderr'
-        args.tree = False
-
-            if filter_stream is None:
-                print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
-'''
+#        print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
 
 def print_help(args):
     if args.command_or_category is None:
@@ -2886,10 +2880,11 @@ parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs
                                      description='Monitors logging output from a running job',
                                      parents=[env_args])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
-parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=9999999999)
+parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
-parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
-parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
+parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', dest='levels', action='store_const', const=['STDOUT'])
+parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', dest='levels', action='store_const', const=['STDERR'])
 parser_watch.set_defaults(func=watch)
 parser_map['watch'] = (parser_watch, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
