@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 '''
 This submodule contains helper functions for parsing and printing the
 contents of describe hashes for various DNAnexus entities (projects,
