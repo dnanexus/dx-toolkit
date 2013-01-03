@@ -193,7 +193,7 @@ def parseLine(line):
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[3])
     
     try:
-        hi = int(tabSplit[4])-1
+        hi = int(tabSplit[4])
     except ValueError:
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[4])
 
