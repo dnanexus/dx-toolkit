@@ -104,7 +104,7 @@ def main(**kwargs):
                     attributes += " " + k + " " + '"'+str(v)+'";'
             chromosome = row["chr"]
             lo = str(row["lo"] + 1)
-            hi = str(row["hi"] + 1)
+            hi = str(row["hi"])
             typ = row["type"]
             strand = row["strand"]
             if strand == '':

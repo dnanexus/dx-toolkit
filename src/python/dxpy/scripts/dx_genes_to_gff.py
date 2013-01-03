@@ -79,7 +79,7 @@ def main(**kwargs):
 
             chromosome = row["chr"]
             lo = str(row["lo"] + 1)
-            hi = str(row["hi"] + 1)
+            hi = str(row["hi"])
     
             strand = row["strand"]
             if strand == '':
