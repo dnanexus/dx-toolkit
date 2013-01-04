@@ -5,7 +5,8 @@
  * Basic execution pattern: Your app will run on a single machine from
  * beginning to end.
  *
- * See http://wiki.dnanexus.com/Building-Apps-in-cpp for more details about writing C++ apps.
+ * See http://wiki.dnanexus.com/Developer-Portal for documentation and
+ * tutorials on how to modify this file.
  *
  * By default, this template uses the DNAnexus C++ JSON library and
  * the C++ bindings.

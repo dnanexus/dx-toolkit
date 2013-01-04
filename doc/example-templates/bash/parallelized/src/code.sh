@@ -13,6 +13,9 @@
 #
 # Any code outside of main() or any other entry point is ALWAYS
 # executed, followed by running the entry point itself.
+#
+# See http://wiki.dnanexus.com/Developer-Portal for tutorials on how
+# to modify this file.
 
 main() {
 DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES

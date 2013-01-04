@@ -8,8 +8,8 @@
 # and independently of each other, followed by a final "postprocess"
 # stage that will perform any additional computations as necessary.
 #
-# See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
-# instructions on how to modify this file.
+# See http://wiki.dnanexus.com/Developer-Portal for documentation and
+# tutorials on how to modify this file.
 #
 # DNAnexus Python Bindings (dxpy) documentation:
 #   http://autodoc.dnanexus.com/bindings/python/current/

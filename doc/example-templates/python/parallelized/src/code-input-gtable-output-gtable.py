@@ -11,8 +11,8 @@
 # finally the "postprocess" stage will close the GTable when all
 # "process" stages are done adding results to your output.
 #
-# See http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App for
-# instructions on how to modify this file.
+# See http://wiki.dnanexus.com/Developer-Portal for documentation and
+# tutorials on how to modify this file.
 #
 # DNAnexus Python Bindings (dxpy) documentation:
 #   http://autodoc.dnanexus.com/bindings/python/current/
