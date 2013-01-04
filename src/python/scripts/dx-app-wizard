@@ -267,7 +267,7 @@ with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_fi
 #################
 
 print ''
-print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App... ***' + ENDC()
+print BOLD() + '*** Generating ' + DNANEXUS_LOGO() + BOLD() + ' App Template... ***' + ENDC()
 
 with open(os.path.join(name, 'dxapp.json'), 'w') as prog_file:
     prog_file.write(clean(json.dumps(app_json, indent=2)) + '\n')
