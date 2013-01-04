@@ -42,15 +42,17 @@ REPLACEMENT_TABLE = (
 
 def escape_unicode_string(u):
     """
-    Escapes the nonprintable chars 0-31 and 127, preferably with a
-    friendly equivalent such as \\n if available, but otherwise with a
-    Python-style backslashed hex escape.
+    Escapes the nonprintable chars 0-31 and 127, and backslash;
+    preferably with a friendly equivalent such as '\n' if available, but
+    otherwise with a Python-style backslashed hex escape.
     """
     def replacer(matchobj):
         if ord(matchobj.group(1)) == 127:
             return "\\x7f"
+        if ord(matchobj.group(1)) == 92: # backslash
+            return "\\\\"
         return REPLACEMENT_TABLE[ord(matchobj.group(1))]
-    return re.sub("([\\000-\\037\\177])", replacer, u)
+    return re.sub("([\\000-\\037\\134\\177])", replacer, u)
 
 def format_tree(tree, root=None):
     ''' Tree pretty printer.
