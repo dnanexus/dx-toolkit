@@ -1959,7 +1959,7 @@ def find_jobs(args):
                     else:
                         parent_string = get_find_jobs_string(job_descs[parent_job],
                                                              has_children)
-                        parent_hash[parent_string] = {}
+                        parent_hash[parent_string] = collections.OrderedDict()
                     if has_children:
                         for child_job in job_children[parent_job]:
                             process_children(child_job,
@@ -1979,7 +1979,7 @@ def find_jobs(args):
 #                                                                       max_active_tasks=12)
 
                 for origin_job in origin_jobs:
-                    job_children = {} # job ID -> list of child job IDs
+                    job_children = collections.OrderedDict() # job ID -> list of child job IDs
                     job_strings = collections.OrderedDict() # for summary or verbose
 #                    for subjob in sub_find_jobs_responses.next():
                     for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
