@@ -21,7 +21,11 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         self.input_params = input_params
         self.msg_output_format = msg_output_format
         self.closed_code, self.closed_reason = None, None
-        url = "{server}/{job_id}/streamLog/websocket".format(server=dxpy.APISERVER, job_id=job_id)
+        ws_proto = 'wss' if dxpy.APISERVER_PROTOCOL == 'https' else 'ws'
+        url = "{protocol}://{host}:{port}/{job_id}/streamLog/websocket".format(protocol=ws_proto,
+                                                                        host=dxpy.APISERVER_HOST,
+                                                                        port=dxpy.APISERVER_PORT,
+                                                                        job_id=job_id)
         WebSocketBaseClient.__init__(self, url, protocols=None, extensions=None)
 
     def handshake_ok(self):
