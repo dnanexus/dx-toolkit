@@ -21,7 +21,8 @@ To enable the handler in a Python subprocess in the execution environment, use:
 '''
 class DXLogHandler(SysLogHandler):
     def __init__(self, priority_log_address="/opt/dnanexus/log/priority",
-                 bulk_log_address="/opt/dnanexus/log/bulk"):
+                 bulk_log_address="/opt/dnanexus/log/bulk",
+                 source="DX_APP"):
 
         if not os.path.exists(priority_log_address):
             raise DXError("The path %s does not exist, but is required for application logging" % (priority_log_address))
@@ -38,6 +39,8 @@ class DXLogHandler(SysLogHandler):
         self.bulk_log_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.bulk_log_socket.connect(bulk_log_address)
 
+        self.source = source
+
     def close(self):
         self.priority_log_socket.close()
         self.bulk_log_socket.close()
@@ -49,7 +52,7 @@ class DXLogHandler(SysLogHandler):
 
     def emit(self, record):
         level = self.encodePriority(record)
-        data = json.dumps({"source": "DX_APP", "timestamp": int(round(time.time() * 1000)),
+        data = json.dumps({"source": self.source, "timestamp": int(round(time.time() * 1000)),
                            "level": level, "msg": record.getMessage()})
 
         if int(record.levelno) > 40:

@@ -6,7 +6,7 @@ import dxpy
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
 parser = argparse.ArgumentParser(description="Redirects stdin to a DNAnexus log socket in the execution environment.")
-parser.add_argument("-p", "--prefix", help="Prefix lines from the stream with this tag", default='')
+parser.add_argument("-p", "--prefix", help="Deprecated")
 parser.add_argument("-l", "--level", help="Logging level to use", default='info')
 args = parser.parse_args()
 
@@ -16,7 +16,7 @@ except:
     log_function = logging.info
 
 try:
-    logging.getLogger().addHandler(dxpy.DXLogHandler())
+    logging.getLogger().addHandler(dxpy.DXLogHandler(source='DX_APP_STREAM'))
 except Exception as e:
     print >> sys.stderr, "dx_log_stream: Error while initializing logging:", str(e)
     sys.exit(1)
@@ -27,5 +27,5 @@ while True:
         break
     if len(line) > 8192:
         line = line[:8192] + '... [truncated]'
-    # print "Logging line:", line.rstrip("\n"), "to log handler w/level", args.level, "prefix", args.prefix
-    log_function(args.prefix + line.rstrip("\n"))
+    # print "Logging line:", line.rstrip("\n"), "to log handler w/level", args.level
+    log_function(line.rstrip("\n"))
