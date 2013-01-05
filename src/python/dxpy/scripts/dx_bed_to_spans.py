@@ -136,7 +136,7 @@ def find_num_columns(bed_file):
 
     return num_cols
 
-def import_spans(bed_file, table_name, ref_id):
+def import_spans(bed_file, table_name, ref_id, file_id):
     num_cols = find_num_columns(bed_file)
     if num_cols < 3:
         raise dxpy.AppError("BED file contains less than the minimum 3 columns.  Invalid BED file.")
@@ -152,6 +152,8 @@ def import_spans(bed_file, table_name, ref_id):
         span_table_id = span.get_id()
 
         details = {"original_contigset": dxpy.dxlink(ref_id)}
+        if file_id != None:
+            details["original_file"] = dxpy.dxlink(file_id)
         span.set_details(details)
 
         span.add_types(["Spans","gri"])
@@ -176,7 +178,7 @@ def import_spans(bed_file, table_name, ref_id):
 
     return dxpy.dxlink(span.get_id())
 
-def import_named_spans(bed_file, table_name, ref_id):
+def import_named_spans(bed_file, table_name, ref_id, file_id):
     num_cols = find_num_columns(bed_file)
     
     possible_columns = [("chr", "string"),
@@ -205,6 +207,8 @@ def import_named_spans(bed_file, table_name, ref_id):
 
     with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index], mode='w') as span:
         details = {"original_contigset": dxpy.dxlink(ref_id)}
+        if file_id != None:
+            details["original_file"] = dxpy.dxlink(file_id)
         span.set_details(details)
 
         span.add_types(["NamedSpans", "Spans", "gri"])
@@ -338,7 +342,7 @@ def generate_gene_row(line, block_size, block_start, span_type, default_row, par
     return row
 
 
-def import_genes(bed_file, table_name, ref_id):
+def import_genes(bed_file, table_name, ref_id, file_id):
     # implement BED importing from this format:
     # http://genome.ucsc.edu/FAQ/FAQformat.html#format1
 
@@ -367,6 +371,8 @@ def import_genes(bed_file, table_name, ref_id):
         span_table_id = span.get_id()
 
         details = {"original_contigset": dxpy.dxlink(ref_id)}
+        if file_id != None:
+            details["original_file"] = dxpy.dxlink(file_id)
         span.set_details(details)
 
         span.add_types(["gri", "Spans", "NamedSpans", "Genes"])
@@ -510,6 +516,7 @@ def import_genes(bed_file, table_name, ref_id):
 parser = argparse.ArgumentParser(description='Import a local BED file as a Spans, NamedSpans, or Genes object.  If multiple tracks exist in the BED file, one object will be created for each.')
 parser.add_argument('filename', help='local filename to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this BED file annotates')
+parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
 
 def import_BED(**args):
     if len(args) == 0:
@@ -519,6 +526,7 @@ def import_BED(**args):
 
     bed_filename = args['filename']
     reference = args['reference']
+    file_id = args['file_id']
 
     job_outputs = []
     # uncompresses file if necessary.  Returns new filename
@@ -535,13 +543,13 @@ def import_BED(**args):
         bed_type = detect_type(import_filename)
         if bed_type == "genes":
             print "Importing as Genes Type"
-            job_outputs.append(import_genes(import_filename, name, reference))
+            job_outputs.append(import_genes(import_filename, name, reference, file_id))
         elif bed_type == "named_spans":
             print "Importing as NamedSpans Type"
-            job_outputs.append(import_named_spans(import_filename, name, reference))
+            job_outputs.append(import_named_spans(import_filename, name, reference, file_id))
         else:
             print "Importing as Spans Type"
-            job_outputs.append(import_spans(import_filename, name, reference))
+            job_outputs.append(import_spans(import_filename, name, reference, file_id))
 
         subprocess.check_call(" ".join(["rm", import_filename]), shell=True)
 

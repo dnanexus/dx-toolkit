@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description='Import a local GTF file as a Spans
 parser.add_argument('fileName', help='local fileName to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this GTF file annotates')
 parser.add_argument('--outputName', dest='outputName', default='', help='what to name the output. if none provided, the name of the input file will be used with gTf file extension removed.')
-
+parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
 
 @dxpy.entry_point('main')
 def importGTF(**args):
@@ -37,7 +37,10 @@ def importGTF(**args):
     ##Isolate the attribute tags from the file and check integrity
     spansTable, additionalColumns = constructTable(inputFileName)
     spansTable.add_types(["Spans", "NamedSpans", "Genes", "gri"])
-    spansTable.set_details({'original_contigset': dxpy.dxlink(reference)})
+    details = {'original_contigset': dxpy.dxlink(reference)}
+    if args.file_id != None:
+        details['original_file'] = dxpy.dxlink(args.file_id)
+    spansTable.set_details(details)
     if outputName == '':
         for x in fileName.split("."):
             if x != "gtf" and x != "GTF" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
@@ -117,11 +120,11 @@ def importGTF(**args):
                 if values["type"] == "CDS":
                     if [values["lo"], values["hi"]] not in exons[values["transcriptId"]][values["chromosome"]]:
                         spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"], [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], True, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
-                
+                                
                 #If type is exon do calculation as to whether coding or non-coding
                 if values["type"] == "exon":
-                    if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1) and (values["lo"] >= transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] and values["lo"] <= transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"]) or (values["hi"] >= transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] and values["hi"] <= transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"]): 
-                        for x in splitExons(transcripts[values["transcriptId"]], values["chromosome"], values["lo"], values["hi"]):
+                    if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1): 
+                        for x in splitExons(transcripts[values["transcriptId"]], values["chromosome"], values["lo"], values["hi"], values["strand"]):
                             spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], x[1], x[2], values["attributes"], [values["chromosome"], x[1], x[2], values["transcriptName"], spanId, x[0], values["strand"], values["score"], x[3], transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
                     else:
                         spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"],  [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], False, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
@@ -129,8 +132,8 @@ def importGTF(**args):
     spansTable.flush()
     spansTable.close()
     print spansTable.get_id()
-    #job_outputs = {"genes" : dxpy.dxlink(spansTable.get_id())}
-    #return job_outputs
+    return spansTable.get_id()
+
 
 def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, hi, attributes, entry):
     if [lo, hi] not in exonInfo[chromosome]:
@@ -144,14 +147,24 @@ def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, 
         spansTable.add_rows([entry])
     return spanId
 
-def splitExons(transcriptInfo, chromosome, lo, hi):
+def splitExons(transcriptInfo, chromosome, lo, hi, strand):
+    upstream = "5' UTR"
+    downstream = "3' UTR"
+    if strand == "-":
+        upstream = "3' UTR"
+        downstream = "5' UTR"
+    
     result = [["CDS", lo, hi, True]]
-    if lo < transcriptInfo[chromosome]["codingLo"]:
+    if hi < transcriptInfo[chromosome]["codingLo"]:
+        result[0][0] = upstream
+    elif lo > transcriptInfo[chromosome]["codingHi"]:
+        result[0][0] = downstream
+    elif lo < transcriptInfo[chromosome]["codingLo"]:
         result[0][1] = transcriptInfo[chromosome]["codingLo"]
-        result.append(["5' UTR", lo, transcriptInfo[chromosome]["codingLo"], False])
-    if hi > transcriptInfo[chromosome]["codingHi"]:
+        result.append([upstream, lo, transcriptInfo[chromosome]["codingLo"], False])
+    elif hi > transcriptInfo[chromosome]["codingHi"]:
         result[0][2] = transcriptInfo[chromosome]["codingHi"]
-        result.append(["3' UTR", transcriptInfo[chromosome]["codingHi"], hi, False])
+        result.append([downstream, transcriptInfo[chromosome]["codingHi"], hi, False])
     return result
 
 
@@ -181,6 +194,8 @@ def parseLine(line, capturedTypes, discardedTypes):
     
     try:
         hi = int(tabSplit[4])
+        if typ == "stop_codon":
+            hi -= 3
     except ValueError:
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[4])
 

@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(description='Import a local GFF file as a Spans
 parser.add_argument('fileName', help='local fileName to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this GFF file annotates')
 parser.add_argument('--outputName', dest='outputName', default='', help='what to name the output. if none provided, the name of the input file will be used with gff file extension removed.')
+parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
 
 def importGFF(**args):
     
@@ -32,8 +33,10 @@ def importGFF(**args):
     ##Isolate the attribute tags from the file and check integrity
     spansTable, additionalColumns = constructTable(inputFileName)
     
-    spansTable.set_details({'original_contigset': dxpy.dxlink(reference)})
-    
+    details = {'original_contigset': dxpy.dxlink(reference)}
+    if args.file_id != None:
+            details['original_file'] = dxpy.dxlink(args.file_id)
+    spansTable.set_details(details)
     if outputName == '':
         for x in fileName.split("."):
             if x != "gff" and x != "GFF" and x != "gff3" and x != "GFF3" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
