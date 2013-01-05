@@ -258,8 +258,6 @@ def print_data_obj_desc(desc):
         print_field("Summary", desc['summary'])
     if "description" in desc:
         print_field("Description", desc["description"])
-    if 'summary' in desc:
-        print_field('Summary', desc['summary'])
     if 'access' in desc:
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
