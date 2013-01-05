@@ -1959,7 +1959,7 @@ def find_jobs(args):
                     else:
                         parent_string = get_find_jobs_string(job_descs[parent_job],
                                                              has_children)
-                        parent_hash[parent_string] = {}
+                        parent_hash[parent_string] = collections.OrderedDict()
                     if has_children:
                         for child_job in job_children[parent_job]:
                             process_children(child_job,
@@ -1979,7 +1979,7 @@ def find_jobs(args):
 #                                                                       max_active_tasks=12)
 
                 for origin_job in origin_jobs:
-                    job_children = {} # job ID -> list of child job IDs
+                    job_children = collections.OrderedDict() # job ID -> list of child job IDs
                     job_strings = collections.OrderedDict() # for summary or verbose
 #                    for subjob in sub_find_jobs_responses.next():
                     for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
@@ -2408,39 +2408,24 @@ def shell(orig_args):
 
 def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
-    from ws4py.exc import HandshakeError
-    import signal
-    from dxpy.utils import _force_quit
-    signal.signal(signal.SIGINT, _force_quit)
-    ws_proto = "wss" if dxpy.APISERVER_PROTOCOL == "https" else "ws"
-    server = "{proto}://{host}:{port}".format(proto=ws_proto, host=dxpy.APISERVER_HOST, port=dxpy.APISERVER_PORT)
 
-    filter_stream = None
-    if args.get_stdout:
-        filter_stream = 'stdout'
-        args.tree = False
-    elif args.get_stderr:
-        filter_stream = 'stderr'
-        args.tree = False
+    input_params = {"numRecentMessages": args.num_recent_messages,
+                    "recurseJobs": args.tree}
+    
+    if args.levels:
+        input_params['levels'] = args.levels
 
-    while True:
-        try:
-            response = dxpy.DXHTTPRequest('/socket.io/1/', '', jsonify_data=False, want_full_response=True)
-            hskey = response.content.split(':')[0]
-            ws = DXJobLogStreamClient(server + '/socket.io/1/websocket/' + hskey, filter_stream=filter_stream)
-            streaming_id = dxpy.api.jobStreamLog(args.jobid, {"numRecentMessages": args.num_recent_messages, "recurseJobs": args.tree})['streamingId']
-            ws.set_dx_streaming_id(streaming_id)
-            if filter_stream is None:
-                print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
-            try:
-                ws.connect()
-            except KeyboardInterrupt:
-                sys.exit(1)
-            break
-        except HandshakeError as e:
-            # HACK: Workaround for https://github.com/LearnBoost/socket.io/issues/438
-            print >>sys.stderr, "Handshake error: {e}. Retrying...".format(e=str(e))
-            continue
+    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params)
+
+    # Note: currently, the client is synchronous and blocks until the socket is closed.
+    # If this changes, some refactoring may be needed below
+    try:
+        log_client.connect()
+    except Exception as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
+#    except KeyboardInterrupt:
+#        sys.exit(1)
+#        print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
 
 def print_help(args):
     if args.command_or_category is None:
@@ -2906,10 +2891,11 @@ parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs
                                      description='Monitors logging output from a running job',
                                      parents=[env_args])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
-parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=9999999999)
+parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
-parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
-parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
+parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', dest='levels', action='store_const', const=['STDOUT'])
+parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', dest='levels', action='store_const', const=['STDERR'])
 parser_watch.set_defaults(func=watch)
 parser_map['watch'] = (parser_watch, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))

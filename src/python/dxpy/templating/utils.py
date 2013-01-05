@@ -189,6 +189,13 @@ def get_pattern(template_dir):
         print ' ' + BOLD() + 'parallelized' + ENDC()
         print fill('Your app will subdivide a large chunk of work into multiple pieces that can be processed in parallel and independently of each other, followed by a final stage that will merge and process the results as necessary.', initial_indent='   ', subsequent_indent='   ')
 
+    if os.path.isdir(os.path.join(template_dir, 'scatter-process-gather')):
+        pattern_choices.append('scatter-process-gather')
+        print ' ' + BOLD() + 'scatter-process-gather' + ENDC()
+        print fill('Similar to ' + BOLD() + 'parallelized' + ENDC() + ' but with the addition of a "scatter" entry point.  This allows you to break out the execution for splitting up the input, or you can call a separate app/applet to perform the splitting.',
+                   initial_indent='   ',
+                   subsequent_indent='   ')
+
     if len(pattern_choices) == 1:
         print 'Automatically using the execution pattern "basic"'
         return 'basic'

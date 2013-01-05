@@ -999,6 +999,7 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("foo\nbar"), u"foo\\nbar")
         self.assertEqual(pretty_print.escape_unicode_string("foo\x11bar"), u"foo\\x11bar")
         self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), u"foo\\n\\t\\rbar")
+        self.assertEqual(pretty_print.escape_unicode_string("\n\\"), u"\\n\\\\")
         self.assertEqual(pretty_print.escape_unicode_string(u"ïñtérnaçiònale"), u"ïñtérnaçiònale")
 
 if __name__ == '__main__':
