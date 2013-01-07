@@ -154,6 +154,10 @@ def import_spans(bed_file, table_name, ref_id, file_id):
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
+        if len(args.property_key) != len(args.property_value):
+            raise dxpy.AppError("Expected each provided property to have a corresponding value.")
+        for i in range(len(args.property_key)):
+            details[args.property_key[i]] = args.property_value[i]
         span.set_details(details)
 
         span.add_types(["Spans","gri"])
@@ -209,6 +213,11 @@ def import_named_spans(bed_file, table_name, ref_id, file_id):
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
+        if len(args.property_key) != len(args.property_value):
+            raise dxpy.AppError("Expected each provided property to have a corresponding value.")
+        for i in range(len(args.property_key)):
+            details[args.property_key[i]] = args.property_value[i]    
+    
         span.set_details(details)
 
         span.add_types(["NamedSpans", "Spans", "gri"])
@@ -373,6 +382,10 @@ def import_genes(bed_file, table_name, ref_id, file_id):
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
+        if len(args.property_key) != len(args.property_value):
+            raise dxpy.AppError("Expected each provided property to have a corresponding value.")
+        for i in range(len(args.property_key)):
+            details[args.property_key[i]] = args.property_value[i]
         span.set_details(details)
 
         span.add_types(["gri", "Spans", "NamedSpans", "Genes"])

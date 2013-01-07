@@ -15,6 +15,11 @@ parser.add_argument('fileName', help='local fileName to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this GFF file annotates')
 parser.add_argument('--outputName', dest='outputName', default='', help='what to name the output. if none provided, the name of the input file will be used with gff file extension removed.')
 parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
+parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the types \"Spans\", \"Named Spans\", and \"Genes\" which are added automatically')
+parser.add_argument('--property_key', default=[], action='append', help='The keys in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
+parser.add_argument('--property_value', default=[], action='append', help='The values in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
+
+
 
 def importGFF(**args):
     
@@ -36,7 +41,15 @@ def importGFF(**args):
     details = {'original_contigset': dxpy.dxlink(reference)}
     if args.file_id != None:
             details['original_file'] = dxpy.dxlink(args.file_id)
+    if len(args.property_key) != len(args.property_value):
+        raise dxpy.AppError("Expected each provided property to have a corresponding value.")
+    for i in range(len(args.property_key)):
+        details[args.property_key[i]] = args.property_value[i]
+
     spansTable.set_details(details)
+
+    
+
     if outputName == '':
         for x in fileName.split("."):
             if x != "gff" and x != "GFF" and x != "gff3" and x != "GFF3" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
@@ -148,6 +161,8 @@ def importGFF(**args):
     types = ["Spans", "NamedSpans", "gri"]
     if hasGenes:
         types.append("Genes")
+    for x in args.additional_type:
+        types.append(x)
     spansTable.add_types(types)
     spansTable.flush()
     spansTable.close()
