@@ -57,11 +57,9 @@ def importGTF(**args):
         details['original_file'] = dxpy.dxlink(args.file_id)
     spansTable.set_details(details)
     if outputName == '':
-        for x in fileName.split("."):
-            if x != "gtf" and x != "GTF" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
-                outputName += x+"."
-        outputName = outputName.rstrip(".")
-    spansTable.rename(outputName)
+        spansTable.rename(fileName)
+    else:
+        spansTable.rename(outputName)
 
     #This pass through the file calculates the gene and transcript models 
     genes = {}

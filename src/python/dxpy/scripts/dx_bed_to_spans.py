@@ -161,7 +161,7 @@ def import_spans(bed_file, table_name, ref_id, file_id):
         span.set_details(details)
 
         span.add_types(["Spans","gri"])
-        span.rename(table_name + " Spans")
+        span.rename(table_name)
 
         for line in bed:
             if line.startswith("track"):
@@ -221,7 +221,7 @@ def import_named_spans(bed_file, table_name, ref_id, file_id):
         span.set_details(details)
 
         span.add_types(["NamedSpans", "Spans", "gri"])
-        span.rename(table_name + " Spans")
+        span.rename(table_name)
 
         for line in bed:
             row = list(default_row)
@@ -389,7 +389,7 @@ def import_genes(bed_file, table_name, ref_id, file_id):
         span.set_details(details)
 
         span.add_types(["gri", "Spans", "NamedSpans", "Genes"])
-        span.rename(table_name + " Genes")
+        span.rename(table_name)
 
         current_span_id = 0
 

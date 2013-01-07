@@ -48,13 +48,10 @@ def importGFF(**args):
 
     spansTable.set_details(details)
 
-    
-
     if outputName == '':
-        for x in fileName.split("."):
-            if x != "gff" and x != "GFF" and x != "gff3" and x != "GFF3" and x != "gz" and x != "gz2" and x != ".tar" and x != ".bz" and x != ".bz2" and x != "tgz":
-                outputName += x+"."
-        outputName = outputName.rstrip(".")
+        spansTable.rename(fileName)
+    else:
+        spansTable.rename(outputName)
     
     spansTable.rename(outputName)
     hasGenes = False
