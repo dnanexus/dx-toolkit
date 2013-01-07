@@ -147,6 +147,34 @@ def get_last_pos_of_char(char, string):
             return pos
     return -1
 
+def get_first_pos_of_char(char, string):
+    '''
+    :param char: The character to find
+    :type char: string
+    :param string: The string in which to search for *char*
+    :type string: string
+    :returns: Index in *string* where *char* last appears (unescaped by a preceding "\\"), -1 if not found
+    :rtype: int
+
+    Finds the first occurrence of *char* in *string* in which *char* is
+    not present as an escaped character.
+
+    '''
+    first_pos = -1
+    pos = len(string)
+    while pos > 0:
+        pos = string[:pos].rfind(char)
+        if pos == -1:
+            return first_pos
+        num_backslashes = 0
+        test_index = pos - 1
+        while test_index >= 0 and string[test_index] == '\\':
+            num_backslashes += 1
+            test_index -= 1
+        if num_backslashes % 2 == 0:
+            first_pos = pos
+    return first_pos
+
 def split_unescaped(char, string):
     '''
     :param char: The character on which to split the string

@@ -197,30 +197,33 @@ class ExecutableInputs(object):
             input_class = self.input_spec[input_name]['class']
 
         if input_class is None:
+            done = False
             try:
                 # Resolve "job-xxxx:output-name" syntax into a canonical job ref
                 job_id, field = split_unescaped(':', input_value)
                 if is_job_id(job_id):
                     input_value = {"job": job_id, "field": field}
+                    done = True
             except:
                 pass
-            try:
-                parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
-                if type(parsed_input_value) in (collections.OrderedDict, list):
-                    input_value = parsed_input_value
-                else:
-                    raise Exception()
-            except:
-                # Not recognized JSON (list or dict), so resolve it as a name
-                project, folderpath, entity_result = resolve_existing_path(input_value,
-                                                                           expected='entity')
-                if entity_result is None:
-                    raise Exception('Could not resolve ' + input_value + ' to a value or object ID')
-                if is_hashid(input_value):
-                    input_value = {'$dnanexus_link': entity_result['id']}
-                else:
-                    input_value = {"$dnanexus_link": {"project": entity_result['describe']['project'],
-                                                      "id": entity_result['id']}}
+            if not done:
+                try:
+                    parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
+                    if type(parsed_input_value) in (collections.OrderedDict, list):
+                        input_value = parsed_input_value
+                    else:
+                        raise Exception()
+                except:
+                    # Not recognized JSON (list or dict), so resolve it as a name
+                    project, folderpath, entity_result = resolve_existing_path(input_value,
+                                                                               expected='entity')
+                    if entity_result is not None:
+                        #     raise Exception('Could not resolve ' + input_value + ' to a value or object ID')
+                        if is_hashid(input_value):
+                            input_value = {'$dnanexus_link': entity_result['id']}
+                        else:
+                            input_value = {"$dnanexus_link": {"project": entity_result['describe']['project'],
+                                                              "id": entity_result['id']}}
             self.inputs[input_name].append(input_value)
         else:
             # Input class is known.  Respect the "array" class.
@@ -329,17 +332,11 @@ class ExecutableInputs(object):
         if args.input is not None:
             for keyeqval in args.input:
                 try:
-                    if '=' not in keyeqval:
+                    first_eq_pos = get_first_pos_of_char('=', keyeqval)
+                    if first_eq_pos == -1:
                         raise
-                    if keyeqval.count('=') == 1 and keyeqval[-1] == '=':
-                        [name] = split_unescaped('=', keyeqval)
-                        if '=' in name:
-                            # the "=" character was actually escaped
-                            # and there was no "=" character provided
-                            raise
-                        value = ''
-                    else:
-                        name, value = split_unescaped('=', keyeqval)
+                    name = split_unescaped('=', keyeqval)[0]
+                    value = keyeqval[first_eq_pos + 1:]
                 except:
                     raise Exception('An input was found that did not conform to the syntax: -i<input name>=<input value>')
                 self.add(name, value)
