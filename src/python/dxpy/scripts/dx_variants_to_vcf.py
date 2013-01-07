@@ -1,49 +1,65 @@
 #!/usr/bin/env python
 
-# Copied verbatim from old version (0.0.54) of variants_to_vcf app.
-# Included here for a diff against the new version of the script.
-
 import dxpy
+from dxpy.utils.resolver import *
 import math
-from optparse import OptionParser
+import argparse
 import re
 import collections
 import sys
+import tempfile
 
-def main():
+parser = argparse.ArgumentParser(description='Export a Variants gtable into a VCF file.  WARNING: This can take a while because it downloads the entire reference genome.  It is recommended that this script only be called from within an application running on the cloud.')
+parser.add_argument("path", help="Path to the Variants gtable")
+parser.add_argument('-o', "--output", help='Name of file to write VCF to ("-" indicates stdout output)')
+parser.add_argument("--export-ref-calls", action="store_true" , help="If selected, rows confidently called as non-variants will also be written")
+parser.add_argument("--export-no-calls", action="store_true" , help="If selected, rows in which no confident call could be made will also be written")
+parser.add_argument("--chr", action="append" , help="If any chr are provided, export will only write rows of the specified chromosomes; repeat to include additional chromosomes")
+parser.add_argument("--no-write-header", dest="write_header", action="store_false", help="If selected, do not write the header the VCF file (useful for concatenating files together with chr")
+parser.add_argument("--reference", help="If present, take reference from this file instead of trying to download it")
 
-    parser = OptionParser("Usage: %prog table_id output quality_filter")
-    parser.add_option("--table_id", dest="variants_id", help="Variants table id to read from")
-    parser.add_option("--output", dest="file_name", help="Name of file to write VCF to")
-    parser.add_option("--export_ref_calls", dest="export_ref_calls", default=False, action="store_true" , help="If selected, rows confidently called as non-variants will also be written")
-    parser.add_option("--export_no_calls", dest="export_no_calls", default=False, action="store_true" , help="If selected, rows in which no confident call could be made will also be written")
-    parser.add_option("--chr", dest="chr", action="append" , help="If any chr are provided, export will only write rows of that chromosome")
-    parser.add_option("--no_write_header", dest="write_header", default=True, action="store_false", help="If selected, do not write the header the VCF file (useful for concatenating files together with chr")
-    parser.add_option("--reference", dest="reference", help="If present, take reference from this file instead of trying to download it")
+def main(**kwargs):
 
-    (opts, args) = parser.parse_args()
-    outputFile = open(opts.file_name, 'w')
-    exportRef = opts.export_ref_calls
-    exportNoCall = opts.export_no_calls
+    if len(kwargs) == 0:
+        kwargs = vars(parser.parse_args(sys.argv[1:]))
+
+    # Attempt to resolve variants gtable name
+    try:
+        project, folderpath, entity_result = resolve_existing_path(kwargs['path'], expected='entity')
+    except BaseException as details:
+        parser.exit(1, fill(unicode(details)) + '\n')
+
+    if entity_result is None:
+        parser.exit(1, fill('Could not resolve ' + kwargs['path'] + ' to a data object') + '\n')
+
+    filename = kwargs['output']
+    if filename is None:
+        filename = entity_result['describe']['name'].replace('/', '%2F') + ".vcf"
+
+    if kwargs['output'] == '-':
+        outputFile = sys.stdout
+    else:
+        outputFile = open(filename, 'w')
+    exportRef = kwargs['export_ref_calls']
+    exportNoCall = kwargs['export_no_calls']
     
-    variantsTable = dxpy.open_dxgtable(opts.variants_id)
+    variantsTable = dxpy.open_dxgtable(entity_result['id'])
     
-    refFileName = 'ref.txt'
-    if opts.reference != None:
-        refFileName = opts.reference
+    if kwargs['reference'] is not None:
+        refFileName = kwargs['reference']
         if not os.path.isfile(refFileName):
-            raise dxpy.AppError("The reference expected by variants to vcf script was not a valid file")
+            raise dxpy.AppError("The reference expected by the variants to vcf script was not a valid file")
     else:    
+        refFileName = tempfile.NamedTemporaryFile(prefix='reference_', suffix='.txt', delete=False).name
         try:
             originalContigSet = variantsTable.get_details()['original_contigset']
         except:
             raise dxpy.AppError("The original reference genome must be attached as a detail")
         
         contigDetails = dxpy.DXRecord(originalContigSet).get_details()
-        dxpy.download_dxfile(contigDetails['flat_sequence_file']['$dnanexus_link'], 'ref.txt')
-    
+        dxpy.download_dxfile(contigDetails['flat_sequence_file']['$dnanexus_link'], refFileName)
  
-    if opts.write_header:
+    if kwargs['write_header']:
     
        infos = variantsTable.get_details().get('infos')
        formats = variantsTable.get_details().get('formats')
@@ -51,7 +67,7 @@ def main():
        samples = variantsTable.get_details().get('samples')
     
        outputFile.write("##fileformat=VCFv4.1\n")
-       if infos != None:
+       if infos is not None:
            for k, v in collections.OrderedDict(sorted(infos.iteritems())).iteritems():
                outputFile.write("##INFO=<ID="+k+",Number="+v['number']+",Type="+v['type']+",Description=\""+v['description']+"\">\n")
 
@@ -59,10 +75,10 @@ def main():
            outputFile.write("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n")
            outputFile.write("##FORMAT=<ID=AD,Number=.,Type=Integer,Description=\"Allelic depths for the ref and alt alleles in the order listed\">\n")
            outputFile.write("##FORMAT=<ID=DP,Number=1,Type=String,Description=\"Approximate read depth (reads with MQ=255 or with bad mates are filtered)\">\n")
-       if formats != None:
+       if formats is not None:
            for k, v in collections.OrderedDict(sorted(formats.iteritems())).iteritems():
                outputFile.write("##FORMAT=<ID="+k+",Number="+v['number']+",Type="+v['type']+",Description=\""+v['description']+"\">\n")
-       if filters != None:
+       if filters is not None:
            for k, v in collections.OrderedDict(sorted(filters.iteritems())).iteritems():
                outputFile.write("##FILTER=<ID="+k+",Description=\""+v+"\">\n")
        for i in range(len(contigDetails['contigs']['names'])):
@@ -78,9 +94,9 @@ def main():
     chromosomeOffsets = {}
     for i in range(len(contigDetails['contigs']['names'])):
         chromosomeOffsets[contigDetails['contigs']['names'][i]] = contigDetails['contigs']['offsets'][i]
-        
+
     contigSequence = open(refFileName,'r').read()
-    
+
     col = {}
     names = variantsTable.get_col_names()   
     for i in range(len(names)):
@@ -88,10 +104,10 @@ def main():
     col = collections.OrderedDict(sorted(col.items()))
     
     chromosomeList = contigDetails['contigs']['names']
-    if opts.chr != None:
+    if kwargs['chr'] is not None:
         intersection = []
         for x in chromosomeList:
-            if x in opts.chr:
+            if x in kwargs['chr']:
                 intersection.append(x)
         chromosomeList = intersection[:]
  
@@ -157,19 +173,19 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     alt = row[col["alt"]]
 
     ids = '.'
-    if col.get("ids") != None:
+    if col.get("ids") is not None:
         if row[col["ids"]] != '':
             ids = row[col["ids"]]
 
     filt = '.'
-    if col.get("filter") != None:
+    if col.get("filter") is not None:
         if row[col["filter"]] != '':
             filt = row[col["filter"]]
         else:
             filt = "PASS"
             
     qual = '.'
-    if col.get("qual") != None:
+    if col.get("qual") is not None:
         if row[col["qual"]] != dxpy.NULL or row[col["qual"]] == -999999:
             qual = row[col["qual"]]
         
@@ -195,7 +211,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     infos = ''
     for x in col:
         if "info_" in x:
-            if col.get(x) != None:
+            if col.get(x) is not None:
                 if isinstance(row[col[x]], bool):
                     if row[col[x]] == True:
                         infos += x.lstrip("info_")+";"
@@ -210,7 +226,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     coverage = False
     totalCoverage = False
     while 1:
-        if col.get("type_"+str(sample)) == None:
+        if col.get("type_"+str(sample)) is None:
             break
         if coverage == False:
             coverage = col.get("coverage_"+str(sample))
@@ -222,13 +238,13 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     observedFormats = []
     for x in col:
         if "format_" in x:
-            if col.get(x) != None:
+            if col.get(x) is not None:
                 entrySplit = x.split("_")[1:]
                 entrySplit.pop()
                 tag = '_'.join(entrySplit)
                 if tag not in observedFormats:
                     observedFormats.append(tag)
-    if col.get("type_0") != None:
+    if col.get("type_0") is not None:
         outputFile.write("\t")
         formatOrdering = 'GT:'
         if coverage:
@@ -241,7 +257,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     
         sample = 0
         while 1:
-            if col.get("type_"+str(sample)) != None:
+            if col.get("type_"+str(sample)) is not None:
                 formats = row[col["genotype_"+str(sample)]]+":"
                 if coverage:
                     if col.get("coverage_"+str(sample)):
@@ -250,7 +266,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
                     else:
                         cov += ".:"
                 if totalCoverage:
-                    if col.get("total_coverage_"+str(sample)) != None:
+                    if col.get("total_coverage_"+str(sample)) is not None:
                         tCov = row[col.get("total_coverage_"+str(sample))]
                         if tCov == dxpy.NULL or tCov == -999999:
                             formats += "0:"
@@ -259,7 +275,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
                     else:
                         formats += ".:"
                 for x in observedFormats:
-                    if col.get("format_"+x+"_"+str(sample)) != None:
+                    if col.get("format_"+x+"_"+str(sample)) is not None:
                         if isinstance(row[col["format_"+x+"_"+str(sample)]], bool):
                             if row[col["format_"+x+"_"+str(sample)]]:
                                 formats += x
@@ -295,7 +311,7 @@ def isDefault(entry):
 def checkRowIsAllType(row, col, typ):
     sample = 0
     while 1:
-        if col.get("type_"+str(sample)) == None:
+        if col.get("type_"+str(sample)) is None:
             if sample > 0:
                 return True
             else:
@@ -304,4 +320,5 @@ def checkRowIsAllType(row, col, typ):
             return False
         sample += 1
 
-main()
+if __name__ == '__main__':
+    main()
