@@ -289,9 +289,9 @@ def constructTable(inputFileName):
                         transcriptIdPresent = True
                     attributes[key] = True
             if not geneIdPresent:
-                raise dxpy.AppError("One row did not a a gene_id Offending line: " + line)
+                raise dxpy.AppError("One row did not have a gene_id. Offending line: " + line)
             if not transcriptIdPresent:
-                raise dxpy.AppError("One row did not a a gene_id Offending line: " + line)
+                raise dxpy.AppError("One row did not have a transcript_id. Offending line: " + line)
     
     
     #Construct table
