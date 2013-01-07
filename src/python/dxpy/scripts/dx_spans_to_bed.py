@@ -95,26 +95,35 @@ class transcript:
             if "score" in self.data:
                 if self.data['score'] != dxpy.NULL:
                     output_row[bed_col['score']] = str(self.data['score'])
-            if "thick_start" in self.data:
-                if self.data['thick_start'] != dxpy.NULL:
-                    output_row[bed_col['thick_start']] = str(self.data['thick_start'])
-            if "thick_end" in self.data:
-                if self.data['thick_end'] != dxpy.NULL:
-                    output_row[bed_col['thick_end']] = str(self.data['thick_end'])
 
-        block_sizes = []
-        block_starts = []
+            # find and set thick_start and think_end
+            thick_start = self.data["lo"]
+            thick_end = self.data["hi"]
+            for e in self.exons:
+                if (e["type"] == "5' UTR" and e["strand"] == "+") or (e["type"] == "3' UTR" and e["strand"] == "-"):
+                    if e["hi"] > thick_start:
+                        thick_start = e["hi"]
 
-        output_row[bed_col['block_count']] = str(len(self.exons))
-        for i in range(len(self.exons)):
-            block_sizes.append(str(self.exons[i]['hi'] - self.exons[i]['lo']))
-            block_starts.append(str(self.exons[i]['lo'] - self.data['lo']))
+                if (e["type"] == "3' UTR" and e["strand"] == "+") or (e["type"] == "5' UTR" and e["strand"] == "-"):
+                    if e["lo"] < thick_end:
+                        thick_end = e["lo"]
 
-        if output_row[bed_col['block_count']] != 0:
-            output_row[bed_col["block_sizes"]] = ",".join(block_sizes)
-            output_row[bed_col["block_starts"]] = ",".join(block_starts)
+            output_row[bed_col['thick_start']] = str(thick_start)
+            output_row[bed_col['thick_end']] = str(thick_end)
 
-        bed_file.write("\t".join(output_row) + "\n")
+            block_sizes = []
+            block_starts = []
+
+            output_row[bed_col['block_count']] = str(len(self.exons))
+            for i in range(len(self.exons)):
+                block_sizes.append(str(self.exons[i]['hi'] - self.exons[i]['lo']))
+                block_starts.append(str(self.exons[i]['lo'] - self.data['lo']))
+
+            if output_row[bed_col['block_count']] != 0:
+                output_row[bed_col["block_sizes"]] = ",".join(block_sizes)
+                output_row[bed_col["block_starts"]] = ",".join(block_starts)
+
+            bed_file.write("\t".join(output_row) + "\n")
         return True
 
 

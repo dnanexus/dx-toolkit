@@ -323,24 +323,6 @@ def generate_gene_row(line, block_size, block_start, span_type, default_row, par
         row[10] = ""
         # BED files have no description?
 
-        # score
-        row[11] = float(line[4])
-
-        # thickStart
-        if parent_id == -1:
-            row[12] = int(line[6])
-        else:
-            row[12] = dxpy.NULL
-
-        # thickEnd
-        if parent_id == -1:
-            row[13] = int(line[7])
-        else:
-            row[13] = dxpy.NULL
-
-        # itemRgb
-        row[14] = line[8]
-
     # a misformed line can have string columns where they should be int
     except ValueError:
         return None
@@ -365,16 +347,12 @@ def import_genes(bed_file, table_name, ref_id, file_id):
                ("is_coding", "boolean"),
                ("parent_id", "int32"),
                ("frame", "int16"),
-               ("description", "string"),
-               ("score", "float"),
-               ("thick_start", "int32"),
-               ("thick_end", "int32"),
-               ("item_rgb", "string")]
+               ("description", "string")]
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
     gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
 
-    default_row = ["", 0, 0, "", -1, "", ".", False, -1, -1, "", 0, 0, 0, ""]
+    default_row = ["", 0, 0, "", -1, "", ".", False, -1, -1, ""]
 
     with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index], mode='w') as span:
         span_table_id = span.get_id()
@@ -431,7 +409,7 @@ def import_genes(bed_file, table_name, ref_id, file_id):
                     # look to thickStart and thickEnd to get information about the type of this region
                     # if thick* are the same or cover the whole transcript then we ignore them
                     # else, we partition the exons into CDS and UTR based on their boundaries
-                    if thickStart == thickEnd or (thickStart == line[1] and thickEnd == line[2]):
+                    if thickStart == thickEnd or (thickStart == gene_lo and thickEnd == gene_hi):
                         span.add_row(generate_gene_row(line, 
                                                        blockSizes[i], 
                                                        blockStarts[i], 
@@ -536,6 +514,7 @@ def import_BED(**args):
         cmd_line_args = parser.parse_args(sys.argv[1:])
         args['filename'] = cmd_line_args.filename
         args['reference'] = cmd_line_args.reference
+        args['file_id'] = cmd_line_args.file_id
 
     bed_filename = args['filename']
     reference = args['reference']
