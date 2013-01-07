@@ -93,12 +93,10 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     # wait until the object is CLOSED before starting to run the job.
     # If your intention is for the subjob to run on an OPEN object,
     # then the input ID MUST be given as a string.
-    process_input='-iadditional_input:string="gtable ID, for example"'
-    second_process_input='-ianother_input=32'
+    process_inputs='-iadditional_input:string="gtable ID, for example" -ianother_input=32'
     map_job=$(dx-jobutil-new-job map \
         -iarray_of_scattered_input="$scatter_job":array_of_scattered_input \
-        -iprocess_input:array:string="$process_input" \
-        -iprocess_input:array:string="$second_process_input")
+        -iprocess_inputs="$process_inputs")
 
     # Finally, we want the "postprocess" job to run after "map" is
     # done calling "process" on each of its inputs.  Note that a job
@@ -142,18 +140,20 @@ scatter() {
 
 map() {
     echo "Value of array_of_scattered_input: '${array_of_scattered_input[@]}'"
-    echo "Value of process_input: '${process_input[@]}'"
+    echo "Value of process_inputs: '${process_inputs}'"
 
     # The following calls "process" for each of the items in
     # *array_of_scattered_input*, using as input the item in the
     # array, as well as the rest of the input parameters given in
-    # *process_input*.
+    # *process_inputs*.
+
+    eval process_args=("$process_inputs")
 
     for scattered_input in "${array_of_scattered_input[@]}"
     do
         process_job=$(dx-jobutil-new-job process \
             -iscattered_input="$scattered_input" \
-            "${process_input[@]}")
+            "${process_args[@]}")
         dx-jobutil-add-output process_outputs --array \
             "$process_job":process_output
     done
