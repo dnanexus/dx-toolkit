@@ -99,8 +99,7 @@ def map_entry_point(array_of_scattered_input, process_input):
 @dxpy.entry_point("scatter")
 def scatter(input_to_scatter):
     # Fill in code here to do whatever is necessary to scatter the
-    # input and create each input hash on which "process" will be
-    # called.
+    # input.
     array_of_scattered_input = []
 
     return { "array_of_scattered_input": array_of_scattered_input }
