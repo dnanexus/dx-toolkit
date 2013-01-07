@@ -215,10 +215,13 @@ class ExecutableInputs(object):
                         raise Exception()
                 except:
                     # Not recognized JSON (list or dict), so resolve it as a name
-                    project, folderpath, entity_result = resolve_existing_path(input_value,
-                                                                               expected='entity')
+                    try:
+                        project, folderpath, entity_result = resolve_existing_path(input_value,
+                                                                                   expected='entity')
+                    except:
+                        # If not possible, then leave it as a string
+                        project, folderpath, entity_result = None, None, None
                     if entity_result is not None:
-                        #     raise Exception('Could not resolve ' + input_value + ' to a value or object ID')
                         if is_hashid(input_value):
                             input_value = {'$dnanexus_link': entity_result['id']}
                         else:
