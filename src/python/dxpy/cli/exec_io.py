@@ -209,7 +209,7 @@ class ExecutableInputs(object):
             if not done:
                 try:
                     parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
-                    if type(parsed_input_value) in (collections.OrderedDict, list):
+                    if type(parsed_input_value) in (collections.OrderedDict, list, int, long, float):
                         input_value = parsed_input_value
                     else:
                         raise Exception()
