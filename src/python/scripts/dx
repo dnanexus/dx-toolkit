@@ -2288,6 +2288,9 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
             dxjob.wait_on_done()
         if args.watch:
             watch_args = parser.parse_args(['watch', dxjob.get_id()])
+            print ''
+            print 'Job Log'
+            print '-------'
             watch(watch_args)
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
