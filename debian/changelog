@@ -1,3 +1,13 @@
+dx-toolkit (0.0.33-dnanexus.1) precise; urgency=low
+
+  * Fix off by one error in GTF/GFF import/export.
+
+  * Scatter/process/gather app wizard templates for C++ and Python.
+
+  * Replace socket.io for job log streaming.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 08 Jan 2013 15:44:40 -0800
+
 dx-toolkit (0.0.32-dnanexus.1) precise; urgency=low
 
   * dx login now supports --prod option.
