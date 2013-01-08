@@ -317,9 +317,7 @@ def constructTable(inputFileName):
             schema.append({"name": k, "type": "string"})
             additionalColumns.append(k)
     
-    #When multiple indices are supported:
-    #indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["description", "ASC"]], "description")]
-    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri')]
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")]
     spansTable = dxpy.new_dxgtable(columns=schema, indices=indices)
     return spansTable, additionalColumns
 

@@ -208,8 +208,8 @@ def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, 
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
     gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
-
-    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index], mode='w') as span:
+    name_index = dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")
+    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index, name_index], mode='w') as span:
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
@@ -351,10 +351,12 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
     gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
+    name_index = dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")
+
 
     default_row = ["", 0, 0, "", -1, "", ".", False, -1, -1, ""]
 
-    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index], mode='w') as span:
+    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index, name_index], mode='w') as span:
         span_table_id = span.get_id()
 
         details = {"original_contigset": dxpy.dxlink(ref_id)}
