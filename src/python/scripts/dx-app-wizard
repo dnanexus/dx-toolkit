@@ -153,15 +153,16 @@ array:file     array:record   float          record
                     default_val = None
 
             # Fill in the input parameter's JSON
-            parameter_json = {
-                "name": input_name,
-                "class": input_class,
-                "optional": optional
-                }
+            parameter_json = OrderedDict()
+
+            parameter_json["name"] = input_name
             if input_label != '':
                 parameter_json['label'] = input_label
+            parameter_json["class"] = input_class
+            parameter_json["optional"] = optional
             if default_val is not None:
                 parameter_json['default'] = default_val
+
             app_json['inputSpec'].append(parameter_json)
 
     print ''
@@ -206,10 +207,10 @@ array:file     array:record   float          record
             use_completer()
 
             # Fill in the output parameter's JSON
-            parameter_json = {
-                "name": output_name,
-                "class": output_class
-                }
+            parameter_json = OrderedDict()
+            parameter_json["name"] = output_name
+            parameter_json["class"] = output_class
+
             app_json['outputSpec'].append(parameter_json)
 
 file_input_names = []
