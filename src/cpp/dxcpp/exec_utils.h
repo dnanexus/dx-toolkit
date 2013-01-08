@@ -1,3 +1,8 @@
+/** \file
+ *
+ * \brief Useful utilities for interfacing with app(let)'s execution environment 
+ */
+
 #ifndef DXCPP_EXEC_UTILS_H
 #define DXCPP_EXEC_UTILS_H
 
