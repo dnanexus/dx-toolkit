@@ -135,12 +135,10 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
     postprocess_job = dxpy.new_dxjob(fn_input=postprocess_input,
                                      fn_name="postprocess",
                                      depends_on=[map_job])
-
+DX_APP_WIZARD_UPLOAD_ANY_FILES
     # If you would like to include any of the output fields from the
     # postprocess_job as the output of your app, you should return it
-    # here using a job-based object reference.  If the output field in
-    # the postprocess function is called "answer", you can pass that
-    # on here as follows:
+    # here using a job-based object reference.
     #
     # return { "app_output_field": postprocess_job.get_output_ref("final_output"), ...}
     #

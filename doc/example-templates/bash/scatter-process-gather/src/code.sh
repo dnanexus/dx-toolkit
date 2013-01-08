@@ -110,9 +110,7 @@ DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
 DX_APP_WIZARD_UPLOAD_ANY_FILES
     # If you would like to include any of the output fields from the
     # postprocess job as the output of your app, you should return it
-    # here using a reference.  If the output field in the postprocess
-    # function is called "answer", you can set that in the output hash
-    # as follows.
+    # here using a reference.
     #
     #   dx-jobutil-add-output app_output_field "$postprocess":final_output --class=jobref
     #

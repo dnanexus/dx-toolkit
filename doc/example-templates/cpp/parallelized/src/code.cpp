@@ -26,7 +26,7 @@ using namespace dx;
 
 void postprocess() {
   JSON input;
-  getInput(input);
+  dxLoadInput(input);
 
   // You may want to copy and paste the logic to download and upload
   // files here as well if this stage receives file input and/or makes
@@ -38,7 +38,7 @@ void postprocess() {
 
 void process() {
   JSON input;
-  getInput(input);
+  dxLoadInput(input);
 
   // You may want to copy and paste the logic to download and upload
   // files here as well if this stage receives file input and/or makes
