@@ -16,9 +16,9 @@ done
 [[ -e dx_stdout ]] || mkfifo dx_stdout 
 [[ -e dx_stderr ]] || mkfifo dx_stderr
 
-dx-log-stream -p stdout: < dx_stdout &
+dx-log-stream < dx_stdout &
 HELPER1_PID=$!
-dx-log-stream -p stderr: -l warn < dx_stderr &
+dx-log-stream -l error < dx_stderr &
 HELPER2_PID=$!
 
 stop_helpers() {
