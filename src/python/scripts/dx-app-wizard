@@ -109,10 +109,10 @@ else:
             use_completer(class_completer)
             if not printed_classes:
                 print 'Your input parameter must be of one of the following classes:'
-                print '''array:boolean  array:string   float          applet
-array:file     array:int      array:table    gtable         record
-array:float    array:applet   boolean        hash           string
-array:gtable   array:record   file           int            table
+                print '''applet         array:float    array:string   gtable         string
+array:applet   array:gtable   boolean        hash           
+array:boolean  array:int      file           int            
+array:file     array:record   float          record
 '''
                 printed_classes = True
 
