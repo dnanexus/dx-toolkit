@@ -1,3 +1,9 @@
+dx-toolkit (0.0.32-dnanexus.6) precise; urgency=low
+
+  * Rollback for erroneous stable package update.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 08 Jan 2013 13:57:26 -0800
+
 dx-toolkit (0.0.31-dnanexus.2) precise; urgency=low
 
   * Fix off-by-one error in GFF/GTF import/export.
