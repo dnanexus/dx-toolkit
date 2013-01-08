@@ -19,8 +19,7 @@ parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the
 parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the types \"Spans\", \"Named Spans\", and \"Genes\" which are added automatically')
 parser.add_argument('--property_key', default=[], action='append', help='The keys in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
 parser.add_argument('--property_value', default=[], action='append', help='The values in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
-
-
+parser.add_argument('--tag', default=[], action='append', help='"A set of tags (string labels) that will be added to the resulting Variants table object. (You can use tags and properties to better describe and organize your data)')
 
 @dxpy.entry_point('main')
 def importGTF(**args):
@@ -51,7 +50,7 @@ def importGTF(**args):
         raise dxpy.AppError("Expected each provided property to have a corresponding value")
     for i in range(len(args.property_key)):
         details[args.property_key[i]] = args.property_value[i]
-
+    spansTable.add_tags(args.tag)
 
     if args.file_id != None:
         details['original_file'] = dxpy.dxlink(args.file_id)
@@ -289,9 +288,9 @@ def constructTable(inputFileName):
                         transcriptIdPresent = True
                     attributes[key] = True
             if not geneIdPresent:
-                raise dxpy.AppError("One row did not have a gene_id. Offending line: " + line)
+                raise dxpy.AppError("One row did not have a gene_id Offending line: " + line)
             if not transcriptIdPresent:
-                raise dxpy.AppError("One row did not have a transcript_id. Offending line: " + line)
+                raise dxpy.AppError("One row did not have a gene_id Offending line: " + line)
     
     
     #Construct table

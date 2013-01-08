@@ -136,7 +136,7 @@ def find_num_columns(bed_file):
 
     return num_cols
 
-def import_spans(bed_file, table_name, ref_id, file_id):
+def import_spans(bed_file, table_name, ref_id, file_id, additional_types, property_keys, property_values, tags):
     num_cols = find_num_columns(bed_file)
     if num_cols < 3:
         raise dxpy.AppError("BED file contains less than the minimum 3 columns.  Invalid BED file.")
@@ -154,10 +154,10 @@ def import_spans(bed_file, table_name, ref_id, file_id):
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
-        if len(args.property_key) != len(args.property_value):
+        if len(property_keys) != len(property_values):
             raise dxpy.AppError("Expected each provided property to have a corresponding value.")
-        for i in range(len(args.property_key)):
-            details[args.property_key[i]] = args.property_value[i]
+        for i in range(len(property_keys)):
+            details[property_keys[i]] = property_values[i]
         span.set_details(details)
 
         span.add_types(["Spans","gri"])
@@ -182,7 +182,7 @@ def import_spans(bed_file, table_name, ref_id, file_id):
 
     return dxpy.dxlink(span.get_id())
 
-def import_named_spans(bed_file, table_name, ref_id, file_id):
+def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, property_keys, property_values, tags):
     num_cols = find_num_columns(bed_file)
     
     possible_columns = [("chr", "string"),
@@ -213,10 +213,10 @@ def import_named_spans(bed_file, table_name, ref_id, file_id):
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
-        if len(args.property_key) != len(args.property_value):
+        if len(property_keys) != len(property_values):
             raise dxpy.AppError("Expected each provided property to have a corresponding value.")
-        for i in range(len(args.property_key)):
-            details[args.property_key[i]] = args.property_value[i]    
+        for i in range(len(property_keys)):
+            details[property_keys[i]] = property_values[i]    
     
         span.set_details(details)
 
@@ -333,7 +333,7 @@ def generate_gene_row(line, block_size, block_start, span_type, default_row, par
     return row
 
 
-def import_genes(bed_file, table_name, ref_id, file_id):
+def import_genes(bed_file, table_name, ref_id, file_id, additional_types, property_keys, property_values, tags):
     # implement BED importing from this format:
     # http://genome.ucsc.edu/FAQ/FAQformat.html#format1
 
@@ -360,10 +360,10 @@ def import_genes(bed_file, table_name, ref_id, file_id):
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
-        if len(args.property_key) != len(args.property_value):
+        if len(property_keys) != len(property_values):
             raise dxpy.AppError("Expected each provided property to have a corresponding value.")
-        for i in range(len(args.property_key)):
-            details[args.property_key[i]] = args.property_value[i]
+        for i in range(len(property_keys)):
+            details[property_keys[i]] = property_values[i]
         span.set_details(details)
 
         span.add_types(["gri", "Spans", "NamedSpans", "Genes"])
@@ -508,6 +508,11 @@ parser = argparse.ArgumentParser(description='Import a local BED file as a Spans
 parser.add_argument('filename', help='local filename to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this BED file annotates')
 parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
+parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the types \"Spans\", \"Named Spans\", and \"Genes\" which are added automatically')
+parser.add_argument('--property_key', default=[], action='append', help='The keys in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
+parser.add_argument('--property_value', default=[], action='append', help='The values in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
+parser.add_argument('--tag', default=[], action='append', help='"A set of tags (string labels) that will be added to the resulting Variants table object. (You can use tags and properties to better describe and organize your data)')
+
 
 def import_BED(**args):
     if len(args) == 0:
@@ -515,10 +520,18 @@ def import_BED(**args):
         args['filename'] = cmd_line_args.filename
         args['reference'] = cmd_line_args.reference
         args['file_id'] = cmd_line_args.file_id
+        args['additional_type'] = cmd_line_args.additional_type
+        args['property_key'] = cmd_line_args.property_key
+        args['property_value'] = cmd_line_args.property_value
+        args['tag'] = cmd_line_args.tag
 
     bed_filename = args['filename']
     reference = args['reference']
     file_id = args['file_id']
+    additional_types = args['additional_type']
+    property_keys = args['property_key']
+    property_values = args['property_value']
+    tags = args['tag']
 
     job_outputs = []
     # uncompresses file if necessary.  Returns new filename
@@ -535,13 +548,13 @@ def import_BED(**args):
         bed_type = detect_type(import_filename)
         if bed_type == "genes":
             print "Importing as Genes Type"
-            job_outputs.append(import_genes(import_filename, name, reference, file_id))
+            job_outputs.append(import_genes(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         elif bed_type == "named_spans":
             print "Importing as NamedSpans Type"
-            job_outputs.append(import_named_spans(import_filename, name, reference, file_id))
+            job_outputs.append(import_named_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         else:
             print "Importing as Spans Type"
-            job_outputs.append(import_spans(import_filename, name, reference, file_id))
+            job_outputs.append(import_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
 
         subprocess.check_call(" ".join(["rm", import_filename]), shell=True)
 

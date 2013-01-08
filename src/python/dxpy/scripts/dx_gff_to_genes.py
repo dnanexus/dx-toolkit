@@ -18,6 +18,7 @@ parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the
 parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the types \"Spans\", \"Named Spans\", and \"Genes\" which are added automatically')
 parser.add_argument('--property_key', default=[], action='append', help='The keys in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
 parser.add_argument('--property_value', default=[], action='append', help='The values in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
+parser.add_argument('--tag', default=[], action='append', help='"A set of tags (string labels) that will be added to the resulting Variants table object. (You can use tags and properties to better describe and organize your data)')
 
 
 
@@ -47,13 +48,13 @@ def importGFF(**args):
         details[args.property_key[i]] = args.property_value[i]
 
     spansTable.set_details(details)
+    spansTable.add_tags(args.tag)
 
     if outputName == '':
         spansTable.rename(fileName)
     else:
         spansTable.rename(outputName)
-    
-    spansTable.rename(outputName)
+
     hasGenes = False
 
     #This pass through the file calculates the gene and transcript models 
