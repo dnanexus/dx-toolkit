@@ -317,7 +317,7 @@ def main(**kwargs):
                 print >> sys.stderr, "  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"])
 
         elif args.mode == "applet":
-            print json.dumps(dxpy.api.appletDescribe(applet_id))
+            pass
         else:
             raise ValueError("Unrecognized mode %r" % (args.mode,))
 
