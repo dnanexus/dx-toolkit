@@ -2426,6 +2426,22 @@ def shell(orig_args):
                 print unicode(details) + '\n'
 
 def watch(args):
+    level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
+    level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
+    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
+
+    msg_callback = None
+
+    if args.format is None:
+        args.format = BLUE() + "{job}" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+        if args.timestamps:
+            args.format = "{timestamp} " + args.format
+
+        def msg_callback(message):
+            message['timestamp'] = datetime.datetime.fromtimestamp(message.get('timestamp', 0)/1000).ctime()
+            message['level_color'] = level_colors.get(message.get('level', ''), '')
+            print args.format.format(**message)
+
     from dxpy.utils.job_log_client import DXJobLogStreamClient
 
     input_params = {"numRecentMessages": args.num_recent_messages,
@@ -2434,7 +2450,8 @@ def watch(args):
     if args.levels:
         input_params['levels'] = args.levels
 
-    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params)
+    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                      msg_output_format=args.format, print_job_info=args.job_info)
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
@@ -2909,13 +2926,17 @@ parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, 
 
 parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch',
                                      description='Monitors logging output from a running job',
-                                     parents=[env_args])
+                                     parents=[env_args, no_color_arg])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', dest='levels', action='store_const', const=['STDOUT'])
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', dest='levels', action='store_const', const=['STDERR'])
+parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', dest='levels', action='store_const', const=['STDOUT', 'STDERR'])
+parser_watch.add_argument('-t', '--timestamps', help='Print a timestamp for each message', action='store_true')
+parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false', dest='job_info')
+parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.set_defaults(func=watch)
 parser_map['watch'] = (parser_watch, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))

@@ -16,10 +16,12 @@ class DXJobLogStreamingException(Exception):
     pass
 
 class DXJobLogStreamClient(WebSocketBaseClient):
-    def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}"):
+    def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}", msg_callback=None, print_job_info=True):
         self.seen_jobs = set()
         self.input_params = input_params
         self.msg_output_format = msg_output_format
+        self.msg_callback = msg_callback
+        self.print_job_info = print_job_info
         self.closed_code, self.closed_reason = None, None
         ws_proto = 'wss' if dxpy.APISERVER_PROTOCOL == 'https' else 'ws'
         url = "{protocol}://{host}:{port}/{job_id}/streamLog/websocket".format(protocol=ws_proto,
@@ -48,11 +50,21 @@ class DXJobLogStreamClient(WebSocketBaseClient):
                 error = "Error while streaming job logs: {code} {reason}\n".format(code=self.closed_code,
                                                                                    reason=self.closed_reason)
                 raise DXJobLogStreamingException(error)
+        elif self.print_job_info:
+            for job_id in self.seen_jobs:
+                print get_find_jobs_string(dxpy.describe(job_id), has_children=False)
 
     def received_message(self, message):
         message = json.loads(str(message))
-        print self.msg_output_format.format(**message)
 
+        if self.print_job_info and message.get('job') not in self.seen_jobs:
+            print get_find_jobs_string(dxpy.describe(message['job']), has_children=False)
+            self.seen_jobs.add(message['job'])
+
+        if self.msg_callback:
+            self.msg_callback(message)
+        else:
+            print self.msg_output_format.format(**message)
 
 '''
                 if msg_content["name"] == "log":
