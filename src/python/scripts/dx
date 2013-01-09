@@ -597,6 +597,16 @@ def uninvite(args):
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
+def select(args):
+    if args.project is not None:
+        if get_last_pos_of_char(':', args.project) != -1:
+            args.path = args.project
+        else:
+            args.path = args.project + ':'
+        cd(args)
+    else:
+        pick_and_set_project(args)
+
 def cd(args):
     # entity_result should be None because expected='folder'
     project, folderpath, none = try_call(resolve_existing_path,
@@ -2641,11 +2651,12 @@ parser_select = subparsers.add_parser('select', help='List and select a project 
                                       description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
                                       prog='dx select',
                                       parents=[env_args])
+parser_select.add_argument('project', help='Name or ID of a project to switch to; if not provided a list will be provided for you', nargs='?', default=None)
 parser_select.add_argument('--name', help='Name of the project (wildcard patterns supported)')
 parser_select.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected', default='CONTRIBUTE')
 parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)', action='store_true')
-parser_select.set_defaults(func=pick_and_set_project, save=False)
-parser_map['select'] = (parser_select, NoneCompleter())
+parser_select.set_defaults(func=select, save=False)
+parser_map['select'] = (parser_select, DXPathCompleter(expected='project', include_current_proj=False))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
