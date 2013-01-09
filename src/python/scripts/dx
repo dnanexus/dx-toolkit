@@ -505,6 +505,8 @@ def env(args):
             print "export DX_APISERVER_HOST=" + dxpy.APISERVER_HOST
         if dxpy.APISERVER_PORT is not None:
             print "export DX_APISERVER_PORT=" + dxpy.APISERVER_PORT
+        if dxpy.WORKSPACE_ID is not None:
+            print "export DX_PROJECT_CONTEXT_ID=" + dxpy.WORKSPACE_ID
     elif args.dx_flags:
         flags_str = ''
         if dxpy.AUTH_HELPER is not None:
