@@ -368,7 +368,7 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
             details[property_keys[i]] = property_values[i]
         span.set_details(details)
 
-        span.add_types(["gri", "Spans", "NamedSpans", "Genes"])
+        span.add_types(["gri", "NamedSpans", "Genes"])
         span.rename(table_name)
 
         current_span_id = 0

@@ -156,9 +156,11 @@ def importGFF(**args):
                         entry.append('')
                 spansTable.add_rows([entry])
             spanId += 1
-    types = ["Spans", "NamedSpans", "gri"]
+    
     if hasGenes:
-        types.append("Genes")
+        types = ["Genes", "gri"]
+    else:
+        types = ["Spans", "NamedSpans", "gri"]
     for x in args.additional_type:
         types.append(x)
     spansTable.add_types(types)
