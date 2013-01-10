@@ -136,6 +136,8 @@ array:file     array:record   float          record
                             use_completer(bool_completer)
                             default_val = prompt_for_var('  Default value', choices=['true', 'false'])
                             use_completer()
+                        elif input_class == 'string':
+                            default_val = prompt_for_var('  Default value', allow_empty=True)
                         else:
                             default_val = prompt_for_var('  Default value')
 
@@ -209,6 +211,8 @@ array:file     array:record   float          record
             # Fill in the output parameter's JSON
             parameter_json = OrderedDict()
             parameter_json["name"] = output_name
+            if output_label != '':
+                parameter_json['label'] = output_label
             parameter_json["class"] = output_class
 
             app_json['outputSpec'].append(parameter_json)
