@@ -832,7 +832,18 @@ def rmproject(args):
                     had_error = True
                     print fill('Aborting deletion of project \"' + proj_desc['name'] + '\"')
                     continue
-            dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {})
+            try:
+                dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {})
+            except dxpy.DXAPIError as apierror:
+                if apierror.name == 'InvalidState':
+                    value = raw_input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
+                    if len(value) == 0 or value.lower()[0] != 'y':
+                        had_error = True
+                        print fill('Aborting deletion of project \"' + proj_desc['name'] + '\"')
+                        continue
+                    dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": True})
+                else:
+                    raise apierror
             print fill('Successfully deleted project \"' + proj_desc['name'] + '\"')
         except EOFError:
             print ''
