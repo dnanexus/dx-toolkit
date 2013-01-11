@@ -420,7 +420,8 @@ class DXFile(DXDataObject):
                                              'headers': headers,
                                              'jsonify_data': False,
                                              'prepend_srv': False,
-                                             'prefetch': True}
+                                             'prefetch': True,
+                                             'always_retry': True}
 
     def _next_response_content(self):
         if self._http_threadpool is None:
