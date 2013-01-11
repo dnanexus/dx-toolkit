@@ -1,3 +1,11 @@
+dx-toolkit (0.0.33-dnanexus.2) precise; urgency=low
+
+  * Preauthenticated file download routes should be retried.
+
+  * Fixes for GTF importer.
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 10 Jan 2013 17:39:59 -0800
+
 dx-toolkit (0.0.33-dnanexus.1) precise; urgency=low
 
   * Fix off by one error in GTF/GFF import/export.
