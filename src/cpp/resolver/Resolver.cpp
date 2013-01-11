@@ -112,6 +112,15 @@ ObjectInfo Resolver::ParsePath(const string &path) const
   return ObjectInfo(path, default_project);
 }
 
+ObjectInfo Resolver::DestinationPath(const string &path) const
+{
+  ObjectInfo oi = ObjectInfo(path, default_project);
+  if (oi.project.id == "")
+    oi.project.id = FindProject(oi.project.name);
+
+  return oi;
+}
+
 string Resolver::FindProject(const string &project) const
 {
   if (ObjectInfo::IsProjectId(project))

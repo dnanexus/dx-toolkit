@@ -42,7 +42,7 @@ using namespace std;
 // Object lookup helpers:
 // ----------------------
 //
-// To look up a path:
+// To look up a path (object must exist):
 //
 //   ObjectInfo oi = resolver.FindPath(object_path)
 //
@@ -116,11 +116,17 @@ using namespace std;
 // emulate this behavior here is by first calling PreparePath before you make
 // a new FOO).
 //
-// To parse a path:
+// To parse a path (no API calls are made):
 //
 //   ObjectInfo oi = resolver.ParsePath(object_path);
 //   
 //   Fills in only one of project.id/project.name, plus object.name, object.folder
+//
+// To parse a path and resolve a project:
+//
+//   ObjectInfo oi = resolver.DestinationPath(object_path);
+//
+//   Fills in project.id (and project.name, if given), object.name, object.folder
 
 class ObjectInfo
 {
@@ -167,6 +173,7 @@ class Resolver
   string EnsureProject(const string &project) const;
 
   ObjectInfo ParsePath(const string &path) const;
+  ObjectInfo DestinationPath(const string &path) const;
   ObjectInfo PreparePath(const string &path) const;
 
   private:
