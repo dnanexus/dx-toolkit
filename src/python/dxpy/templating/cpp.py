@@ -73,10 +73,12 @@ def get_strings(app_json, file_input_names, file_array_input_names, file_output_
         init_inputs_str += "\n  ".join(inputs)
         init_inputs_str += "\n"
 
-    if len(file_input_names) > 0:
-        dl_files_str = "\n" + fill('''The following line(s) use the C++ bindings to download your file inputs to the local file system using variable names for the filenames.  To recover the original filenames, you can use the output of "variable.describe()["name"].get<string>()".''', initial_indent="  // ", subsequent_indent="  // ")
-        dl_files_str += '\n\n  '
-        dl_files_str += "\n  ".join(['DXFile::downloadDXFile({name}.getID(), "{name}");'.format(name=fname) for fname in file_input_names]) + "\n"
+    if len(file_input_names) > 0 or len(file_array_input_names) > 0:
+        dl_files_str = "\n" + fill('''The following line(s) use the C++ bindings to download your file inputs to the local file system using variable names for the filenames.  To recover the original filenames, you can use the output of "variable.describe()["name"].get<string>()".''', initial_indent="  // ", subsequent_indent="  // ") + "\n\n"
+        if len(file_input_names) > 0:
+            dl_files_str += "\n  ".join(['  DXFile::downloadDXFile({name}.getID(), "{name}");'.format(name=fname) for fname in file_input_names]) + "\n"
+        if len(file_array_input_names) > 0:
+            dl_files_str += "\n  ".join(['  for (int i = 0; i < {name}.size(); i++) {{\n    DXFile::downloadDXFile({name}[i].getID(), "{name}-" + {name}[i].getID());\n  }}'.format(name=fname) for fname in file_array_input_names]) + "\n"
 
     if len(file_output_names) > 0:
         ul_files_str = "\n" + fill('''The following line(s) use the C++ bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="  // ", subsequent_indent="  // ")

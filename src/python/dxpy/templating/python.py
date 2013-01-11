@@ -42,6 +42,9 @@ def get_strings(app_json, file_input_names, file_array_input_names, file_output_
             if input_param["class"] in class_to_dxclass:
                 init_inputs.append("{name} = {dxclass}({name})".format(name=input_param["name"],
                                                                        dxclass=class_to_dxclass[input_param["class"]]))
+            elif input_param["class"].startswith("array:") and input_param["class"][6:] in class_to_dxclass:
+                init_inputs.append("{name} = [{dxclass}(item) for item in {name}]".format(name=input_param["name"],
+                                                                                         dxclass=class_to_dxclass[input_param["class"][6:]]))
 
         # Then, add keyword args
         for input_param in app_json["inputSpec"]:
@@ -61,11 +64,12 @@ def get_strings(app_json, file_input_names, file_array_input_names, file_output_
         init_inputs_str += "\n    ".join(init_inputs)
         init_inputs_str += "\n"
 
-    if len(file_input_names) > 0:
-        dl_files_str = '\n' + fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80)
-        dl_files_str += "\n\n    "
-        dl_files_str += "\n    ".join(['dxpy.download_dxfile(' + name + '.get_id(), "' + name + '")' for name in file_input_names])
-        dl_files_str += "\n"
+    if len(file_input_names) > 0 or len(file_array_input_names) > 0:
+        dl_files_str = '\n' + fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
+        if len(file_input_names) > 0:
+            dl_files_str += "\n".join(['    dxpy.download_dxfile(' + name + '.get_id(), "' + name + '")' for name in file_input_names]) + "\n"
+        if len(file_array_input_names) > 0:
+            dl_files_str += "\n".join(['    for i in range(len({name})):\n        dxpy.download_dxfile({name}[i].get_id(), "{name}-" + str(i))'.format(name=name) for name in file_array_input_names]) + "\n"
 
     if len(file_output_names) > 0:
         ul_files_str = "\n" + fill('''The following line(s) use the Python bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="    # ", subsequent_indent="    # ", width=80)
