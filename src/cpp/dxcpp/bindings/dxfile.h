@@ -11,6 +11,7 @@
 #include <boost/thread.hpp>
 #include "../bqueue.h"
 #include "../bindings.h"
+#include "../utils.h"
 
 //! A remote file handler.
 
@@ -138,13 +139,16 @@ class DXFile: public DXDataObject {
    * Defined as "mutable", since const member function is_closed() modified it's value.
    */
   mutable bool is_closed_;
-
-  void reset();
+  
+  void reset_data_processing_();
+  void reset_config_variables_();
+  void reset_everything_();
+  void copy_config_variables_(const DXFile &to_copy);
   void init_internals_();
 
-  // TODO: Determine if this should be user-defined.
-  static const int64_t max_buf_size_;
-  
+  int64_t max_buf_size_;
+  int max_write_threads_;
+
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
   // Ref https://parasol.tamu.edu/bjarnefest/program/boehm-slides.pdf (page 7)
@@ -153,7 +157,8 @@ class DXFile: public DXDataObject {
   volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
   boost::mutex countThreadsMutex;
   std::vector<boost::thread> writeThreads;
-  static const int MAX_WRITE_THREADS = 5;
+  static const int DEFAULT_WRITE_THREADS = 5;
+  static const int64_t DEFAULT_BUFFER_MAXSIZE = 100 * 1024 * 1024; // 100 MB
   BlockingQueue<std::pair<std::string, int> > uploadPartRequestsQueue;
   
   // For linear query
@@ -169,13 +174,17 @@ class DXFile: public DXDataObject {
 
  public:
 
-  DXFile() { init_internals_(); }
+  DXFile(): DXDataObject() {
+    reset_everything_(); 
+  }
 
   /**
    * Copy constructor.
    */
-  DXFile(const DXFile& to_copy) : DXDataObject(to_copy) {
+  DXFile(const DXFile& to_copy) : DXDataObject() {
+    reset_everything_();
     setIDs(to_copy.dxid_, to_copy.proj_);
+    copy_config_variables_(to_copy);
   }
   
   /**
@@ -184,7 +193,8 @@ class DXFile: public DXDataObject {
    * @param dxid File object ID.
    * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
    */
-  DXFile(const char *dxid, const char *proj=NULL) {
+  DXFile(const char *dxid, const char *proj=NULL): DXDataObject() {
+    reset_everything_();
     setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
   }
  
@@ -194,7 +204,8 @@ class DXFile: public DXDataObject {
    * @param dxid File object ID.
    * @param proj ID of the project in which the File should be accessed.
    */
-  DXFile(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID) {
+  DXFile(const std::string &dxid, const std::string &proj=g_WORKSPACE_ID): DXDataObject() {
+    reset_everything_();
     setIDs(dxid, proj);
   }
   
@@ -205,18 +216,23 @@ class DXFile: public DXDataObject {
    * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
    *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
    */
-  DXFile(const dx::JSON &dxlink) {
+  DXFile(const dx::JSON &dxlink): DXDataObject() {
+    reset_everything_();
     setIDs(dxlink);
   }
 
   /**
    * Assignment operator.
+   *
+   * @note Only ID of the file/project, and config params (max write threads, buffer size) are copied.
+   * No state information such as read pointer location, next part ID to upload, etc are copied.
    */
   DXFile& operator=(const DXFile& to_copy) {
     if (this == &to_copy)
       return *this;
 
-    this->setIDs(to_copy.dxid_, to_copy.proj_);
+    this->setIDs(to_copy.dxid_, to_copy.proj_); // setIDs() will call reset_data_processing_() & init_internals_()
+    this->copy_config_variables_(to_copy);
     return *this;
   }
 
@@ -266,6 +282,50 @@ class DXFile: public DXDataObject {
    */
   void create(const std::string &media_type="",
               const dx::JSON &data_obj_fields=dx::JSON(dx::JSON_OBJECT));
+  
+  /**
+   * Returns the buffer size (in bytes) that must be reached before
+   * data is flushed.
+   *
+   * @returns Buffer size, in bytes.
+   */
+  int64_t getMaxBufferSize() const {
+    return max_buf_size_;
+  }
+
+  /**
+   * Sets the buffer size (in bytes) that must
+   * be reached before data is flushed.
+   *
+   * @param buf_size New buffer size, in bytes, to use (must be >= 5242880 (5MB))
+   * \throw DXFileError() if buf_size < 5242880
+   */
+  void setMaxBufferSize(const int64_t buf_size) {
+    if (buf_size < (5 * 1024 * 1024)) { 
+      throw DXFileError("Maximum buffer size for DXFile must be >= 5242880 (5MB)");
+    }
+    max_buf_size_ = buf_size;
+  }
+  
+  /**
+   * Returns maximum number of write threads used by parallelized write()
+   * operation.
+   *
+   * @returns Number of threads
+   */
+  int getNumWriteThreads() const {
+    return max_write_threads_;
+  }
+
+  /**
+   * Sets the maximum number of threads used by parallelized write()
+   * operation.
+   *
+   * @param numThreads Number of threads
+   */
+  void setNumWriteThreads(const int numThreads) {
+    max_write_threads_ = numThreads;
+  }
 
   /**
    * Reads the next <code>n</code> bytes in the remote file object (or all the bytes up to the end
@@ -274,10 +334,10 @@ class DXFile: public DXDataObject {
    * reached, and gcount() will return how many bytes were actually read.
    *
    * @param ptr Location to which data should be written
+   * (user <b>must</b> ensure that sufficient amount of memory has been allocated for data to be written starting at "ptr",
+   * before calling this function)
    * @param n The maximum number of bytes to retrieve
    */
-   // TODO: Make clear that it's user's responsibility to allocate memory
-   //       before calling this function
   void read(char* ptr, int64_t n);
 
   /**

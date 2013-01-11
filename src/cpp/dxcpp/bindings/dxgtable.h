@@ -93,11 +93,16 @@ private:
   /////////////////////////////////////
   
   std::stringstream row_buffer_;
-
+  
+  // configurable params
   int64_t row_buffer_maxsize_;
+  int max_write_threads_;
 
   void reset_buffer_();
-  void reset();
+  void reset_data_processing_();
+  void reset_config_variables_();
+  void reset_everything_();
+  void copy_config_variables_(const DXGTable &to_copy);
 
   // To allow interleaving (without compiler optimization possibly changing order)
   // we use std::atomic (a c++11 feature)
@@ -107,7 +112,8 @@ private:
   volatile int countThreadsWaitingOnConsume, countThreadsNotWaitingOnConsume;
   boost::mutex countThreadsMutex;
   std::vector<boost::thread> writeThreads;
-  static const int MAX_WRITE_THREADS = 5;
+  static const int DEFAULT_WRITE_THREADS = 5;
+  static const int64_t DEFAULT_ROW_BUFFER_MAXSIZE = 104857600; // 100MB
   BlockingQueue<std::string> addRowRequestsQueue;
   
   // For linear query
@@ -124,9 +130,9 @@ private:
 public:
 
   DXGTable()
-    : DXDataObject(), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
+    : DXDataObject() 
   {
-    reset_buffer_();
+    reset_everything_();
   }
   
   /**
@@ -135,7 +141,9 @@ public:
    * @param dxid GTable ID.
    * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
    */
-  DXGTable(const char *dxid, const char *proj=NULL) {
+  DXGTable(const char *dxid, const char *proj=NULL): DXDataObject() 
+  {
+    reset_everything_();
     setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
   }
  
@@ -143,9 +151,11 @@ public:
    * Copy constructor.
    */
   DXGTable(const DXGTable &to_copy)
-    : DXDataObject(to_copy), row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
+    : DXDataObject() 
   {
+    reset_everything_();
     setIDs(to_copy.dxid_, to_copy.proj_);
+    copy_config_variables_(to_copy);
   }
 
   /**
@@ -155,8 +165,9 @@ public:
    * @param proj ID of the project in which to access the object.
    */
   DXGTable(const std::string & dxid, const std::string &proj=g_WORKSPACE_ID)
-    : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
+    : DXDataObject()
   {
+    reset_everything_();
     setIDs(dxid, proj);
   }
   
@@ -168,8 +179,9 @@ public:
    *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
    */
   DXGTable(const dx::JSON &dxlink)
-    : row_buffer_maxsize_(104857600), countThreadsWaitingOnConsume(0), countThreadsNotWaitingOnConsume(0)
+    : DXDataObject()
   {
+    reset_everything_();
     setIDs(dxlink);
   }
 
@@ -181,8 +193,8 @@ public:
     if (this == &to_copy)
       return *this;
 
-    this->row_buffer_maxsize_ = 104857600;
-    this->setIDs(to_copy.dxid_, to_copy.proj_);
+    this->setIDs(to_copy.dxid_, to_copy.proj_); // setIDs will stop any ongoing data processing, i.e., reset_data_processing_()
+    this->copy_config_variables_(to_copy);
     return *this;
   }
 
@@ -205,7 +217,27 @@ public:
   void setMaxBufferSize(const int64_t buf_size) {
     row_buffer_maxsize_ = buf_size;
   }
+  
+  /**
+   * Returns maximum number of write threads used by parallelized addRows(const dx::JSON&)
+   * operation.
+   *
+   * @returns Number of threads
+   */
+  int getNumWriteThreads() const {
+    return max_write_threads_;
+  }
 
+  /**
+   * Sets the maximum number of threads used by parallelized addRows(const dx::JSON&)
+   * operation.
+   *
+   * @param numThreads Number of threads
+   */
+  void setNumWriteThreads(const int numThreads) {
+    max_write_threads_ = numThreads;
+  }
+ 
   // Table-specific functions
 
   /**
@@ -235,6 +267,7 @@ public:
    *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
    */
   void setIDs(const dx::JSON &dxlink);
+
   /**
    * Creates a new remote GTable and sets the object ID.
    *

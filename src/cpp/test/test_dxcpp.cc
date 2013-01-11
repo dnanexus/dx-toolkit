@@ -586,6 +586,36 @@ protected:
 
 const string DXFileTest::foostr = "foo\n";
 
+TEST_F(DXFileTest, CheckCopyConstructorAndAssignmentOperator) {
+  std::vector<DXFile> fv;
+  DXFile dxf = DXFile::newDXFile();
+  ASSERT_EQ(104857600, dxf.getMaxBufferSize());
+  ASSERT_EQ(5, dxf.getNumWriteThreads());
+  
+  dxf.setMaxBufferSize(100);
+  dxf.setNumWriteThreads(10);
+  ASSERT_EQ(dxf.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxf.getNumWriteThreads(), 10);
+  
+  // Assignment operator test
+  DXFile dxcpy = dxf;
+  ASSERT_EQ(dxf.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxf.getNumWriteThreads(), 10);
+  ASSERT_EQ(dxcpy.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxcpy.getNumWriteThreads(), 10);
+  ASSERT_EQ(dxcpy.getID(), dxf.getID());
+  ASSERT_EQ(dxcpy.getProjectID(), dxf.getProjectID());
+
+  // Copy constructor
+  fv.push_back(dxf);
+  ASSERT_EQ(dxf.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxf.getNumWriteThreads(), 10);
+  ASSERT_EQ(fv[0].getMaxBufferSize(), dxf.getMaxBufferSize());
+  ASSERT_EQ(fv[0].getNumWriteThreads(), dxf.getNumWriteThreads());
+  ASSERT_EQ(fv[0].getID(), dxf.getID());
+  ASSERT_EQ(fv[0].getProjectID(), dxf.getProjectID()); 
+}
+
 TEST_F(DXFileTest, UploadPartMultipleTime) {
   DXFile dxf = DXFile::newDXFile();
   // If we do not specify a part id, it should be overwritten each time
@@ -671,7 +701,9 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_2_SLOW) {
   const int64_t file_size = 25.211 * 1024 * 1024;
 
   DXFile dxfile = DXFile::newDXFile();
-  int64_t chunkSize = 5*1024*1024 + 1; // minimum chunk size allowed by api
+  dxfile.setNumWriteThreads(1000);
+  dxfile.setMaxBufferSize(5 * 1024 * 1024);
+  int64_t chunkSize = 5*1024*1024; // minimum chunk size allowed by api
   for (int64_t i = 0; i < file_size; i += chunkSize) {
     string toWrite = string(std::min(chunkSize, (file_size - i)), '#');
     dxfile.write(toWrite);
@@ -789,6 +821,36 @@ TEST_F(DXGTableTest, CreateDXGTableTest) {
     ASSERT_EQ(DXGTableTest::columns[i]["type"].get<string>(),
               desc["columns"][i]["type"].get<string>());
   }
+}
+
+TEST_F(DXGTableTest, CheckCopyConstructorAndAssignmentOperator) {
+  std::vector<DXGTable> gv;
+  DXGTable dxg = DXGTable::newDXGTable(DXGTableTest::columns);
+  ASSERT_EQ(104857600, dxg.getMaxBufferSize());
+  ASSERT_EQ(5, dxg.getNumWriteThreads());
+  
+  dxg.setMaxBufferSize(100);
+  dxg.setNumWriteThreads(10);
+  ASSERT_EQ(dxg.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxg.getNumWriteThreads(), 10);
+  
+  // Assignment operator test
+  DXGTable dxcpy = dxg;
+  ASSERT_EQ(dxg.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxg.getNumWriteThreads(), 10);
+  ASSERT_EQ(dxcpy.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxcpy.getNumWriteThreads(), 10);
+  ASSERT_EQ(dxcpy.getID(), dxg.getID());
+  ASSERT_EQ(dxcpy.getProjectID(), dxg.getProjectID());
+
+  // Copy constructor
+  gv.push_back(dxg);
+  ASSERT_EQ(dxg.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxg.getNumWriteThreads(), 10);
+  ASSERT_EQ(gv[0].getMaxBufferSize(), dxg.getMaxBufferSize());
+  ASSERT_EQ(gv[0].getNumWriteThreads(), dxg.getNumWriteThreads());
+  ASSERT_EQ(gv[0].getID(), dxg.getID());
+  ASSERT_EQ(gv[0].getProjectID(), dxg.getProjectID()); 
 }
 
 TEST_F(DXGTableTest, InitializeFromGTableTest) {
@@ -1196,7 +1258,6 @@ TEST(DXSystemTest, findApps) {
 //  app.remove();
 }
 
-
 TEST(DXAppletTest, AllAppletTests) {
   DXApplet apl;
   createANewApplet(apl);
@@ -1223,8 +1284,16 @@ TEST(DXJobTest, AllJobTests_SLOW) {
   createANewApplet(apl);
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
   ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
-  job.waitOnDone(3600);
-  // If state is not "done" after even 1hr, that means job most prob "failed": 
+  
+  // Check state after one minute
+  job.waitOnDone(60);
+  if (job.getState() == "failed" || job.getState() == "terminated") {
+    ASSERT_TRUE(false); // Job has failed - unexpected
+  }
+  // otherwise give it 4 more minutes to finish
+  job.waitOnDone(240);
+
+  // If state is not "done" after even 5min, that means job most probably failed: 
   // should not happen
   ASSERT_EQ(job.getState(), "done");
   

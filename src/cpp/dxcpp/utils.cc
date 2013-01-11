@@ -3,6 +3,10 @@
   #include <unistd.h>
 #endif
 #include <cstdlib>
+#include <openssl/md5.h>
+#include <sstream>
+#include <string>
+#include <iomanip>
 #include "utils.h"
 
 using namespace std;
@@ -45,3 +49,30 @@ string joinPath(const string &first_path, const string &second_path, const strin
 #endif
   return result;
 }
+
+std::string getHexifiedMD5(const unsigned char *ptr, const unsigned long size) {
+  unsigned char md5[MD5_DIGEST_LENGTH];
+  MD5(ptr, size, md5);
+  
+  // convert to hex string & return
+  std::ostringstream oss; 
+  oss << std::setfill('0');    
+  for (unsigned i = 0; i < sizeof(md5)/sizeof(md5[0]); ++i) {   
+    oss << std::setw(2) << std::hex << static_cast<int>(md5[i]);
+  }
+  return oss.str();
+}
+
+std::string getHexifiedMD5(const vector<char> &inp) {
+  if (inp.size() == 0) {
+    return getHexifiedMD5(reinterpret_cast<const unsigned char*>(""), 0);
+  } else {
+    return getHexifiedMD5(reinterpret_cast<const unsigned char*>(&inp[0]), inp.size());
+  }
+  // not reachable
+}
+
+std::string getHexifiedMD5(const std::string &inp) {
+  return getHexifiedMD5(reinterpret_cast<const unsigned char*>(inp.data()), inp.size());
+}
+

@@ -11,17 +11,32 @@ void DXGTable::reset_buffer_() {
   row_buffer_ << "{\"data\": [";
 }
 
-void DXGTable::reset() {
-  flush();
-  reset_buffer_();
+void DXGTable::reset_data_processing_() {
+  flush(); // flush will call reset_buffer_() as well
   stopLinearQuery();
-  countThreadsNotWaitingOnConsume = 0;
   countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0;
+}
+
+void DXGTable::reset_config_variables_() {
+  row_buffer_maxsize_ = DEFAULT_ROW_BUFFER_MAXSIZE;
+  max_write_threads_ = DEFAULT_WRITE_THREADS;
+  DXDataObject::setIDs("", "");
+}
+
+void DXGTable::copy_config_variables_(const DXGTable &to_copy) {
+  row_buffer_maxsize_ = to_copy.row_buffer_maxsize_;
+  max_write_threads_ = to_copy.max_write_threads_;
+}
+
+void DXGTable::reset_everything_() {
+  reset_data_processing_();
+  reset_config_variables_();
 }
 
 void DXGTable::setIDs(const string &dxid,
                       const string &proj) {
-  reset();
+  reset_data_processing_(); // should never change ID during any data processing (addRows, getNextChunk)
   DXDataObject::setIDs(dxid, proj);
 }
 
@@ -34,7 +49,7 @@ void DXGTable::setIDs(const char *dxid, const char *proj) {
 }
 
 void DXGTable::setIDs(const JSON &dxlink) {
-  reset();
+  reset_data_processing_(); // should never change ID during any data processing (addRows, getNextChunk)
   DXDataObject::setIDs(dxlink);
 }
 
@@ -245,8 +260,11 @@ void DXGTable::joinAllWriteThreads_() {
    * --> We clear the thread pool (vector), and reset the counters.
    */
 
-  if (writeThreads.size() == 0)
+  if (writeThreads.size() == 0) {
+    // if no writeThreads are present, addRowRequestsQueue should be empty : sanity check
+    assert(addRowRequestsQueue.size() == 0);
     return; // Nothing to do (no thread has been started)
+  }
   
   // To avoid race condition
   // particularly the case when produce() has been called, but thread is still waiting on consume()
@@ -325,7 +343,11 @@ void DXGTable::writeChunk_(string gtableId) {
  */
 void DXGTable::createWriteThreads_() {
   if (writeThreads.size() == 0) {
-    for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
+    // reset counters if no previous threads exist
+    countThreadsNotWaitingOnConsume = 0;
+    countThreadsWaitingOnConsume = 0;
+    addRowRequestsQueue.setCapacity(max_write_threads_); // maximum number of addRows() requests to keep in memory
+    for (int i = 0; i < max_write_threads_; ++i) {
       writeThreads.push_back(boost::thread(boost::bind(&DXGTable::writeChunk_, this, _1), dxid_));
     }
   }

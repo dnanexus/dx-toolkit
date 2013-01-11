@@ -22,12 +22,13 @@ public:
   }
 
   void setCapacity(int capacity_);
+  int getCapacity() const;
   void produce(T chunk);
   T consume();
 
-  size_t size();
-  bool empty();
-
+  size_t size() const;
+  bool empty() const;
+  
 private:
 
   /* The capacity of the queue, or -1 if the capacity is unbounded. */
@@ -35,7 +36,7 @@ private:
 
   /* The underlying queue. */
   std::queue<T> chunks;
-
+  
   boost::mutex mut;
   boost::condition_variable canProduce;
   boost::condition_variable canConsume;
@@ -43,6 +44,10 @@ private:
 
 template<typename T> void BlockingQueue<T>::setCapacity(int capacity_) {
   capacity = capacity_;
+}
+
+template<typename T> int BlockingQueue<T>::getCapacity() const {
+  return capacity;
 }
 
 template<typename T> void BlockingQueue<T>::produce(T chunk) {
@@ -72,11 +77,11 @@ template<typename T> T BlockingQueue<T>::consume() {
   return chunk;
 }
 
-template<typename T> size_t BlockingQueue<T>::size() {
+template<typename T> size_t BlockingQueue<T>::size() const {
   return chunks.size();
 }
 
-template<typename T> bool BlockingQueue<T>::empty() {
+template<typename T> bool BlockingQueue<T>::empty() const {
   return chunks.empty();
 }
 

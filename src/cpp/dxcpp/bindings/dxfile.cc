@@ -8,8 +8,6 @@
 using namespace std;
 using namespace dx;
 
-const int64_t DXFile::max_buf_size_ = 104857600;
-
 // A helper function for making http requests with retry logic
 void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, const HttpHeaders &headers, const HttpMethod &method, const char *data = NULL, const size_t size=0u) {
   const int MAX_TRIES = 5;
@@ -25,13 +23,8 @@ void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, co
     }
     if (!someThingWentWrong && (resp.responseCode < 200 || resp.responseCode >= 300)) {
       someThingWentWrong = true;
-      wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode);
+      wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode) + ", Server response: '" + resp.respData + "'";
     }
-/*    if (!someThingWentWrong && resp.respData.size() == 0) {
-      someThingWentWrong = true;
-      wrongThingDescription = "Server returned HTTP response code =  " + boost::lexical_cast<string>(resp.responseCode) + ". But response size = 0 (unexpected)";
-    }*/
-
     if (someThingWentWrong) {
       retries++;
       if (retries >= MAX_TRIES) {
@@ -71,19 +64,35 @@ void DXFile::init_internals_() {
   cur_part_ = 1;
   eof_ = false;
   is_closed_ = false;
-  countThreadsWaitingOnConsume = 0;
-  countThreadsNotWaitingOnConsume = 0;
   hasAnyPartBeenUploaded = false;
 }
 
-void DXFile::reset() {
+void DXFile::reset_config_variables_() {
+  max_buf_size_ = DEFAULT_BUFFER_MAXSIZE;
+  max_write_threads_ = DEFAULT_WRITE_THREADS;
+}
+
+void DXFile::copy_config_variables_(const DXFile &to_copy) {
+  max_buf_size_ = to_copy.max_buf_size_;
+  max_write_threads_ = to_copy.max_write_threads_;
+}
+
+void DXFile::reset_data_processing_() {
+  flush(); // flush will call reset_buffer_() as well
   stopLinearQuery();
-  flush();
+  countThreadsWaitingOnConsume = 0;
+  countThreadsNotWaitingOnConsume = 0;
+}
+
+void DXFile::reset_everything_() {
+  reset_data_processing_();
   init_internals_();
+  reset_config_variables_();
 }
 
 void DXFile::setIDs(const string &dxid, const string &proj) {
-  reset();
+  reset_data_processing_();
+  init_internals_();
   DXDataObject::setIDs(dxid, proj);
 }
 
@@ -96,10 +105,10 @@ void DXFile::setIDs(const char *dxid, const char *proj) {
 }
 
 void DXFile::setIDs(const JSON &dxlink) {
-  reset();
+  reset_data_processing_();
+  init_internals_();
   DXDataObject::setIDs(dxlink);
 }
-
 
 void DXFile::create(const std::string &media_type,
                     const dx::JSON &data_obj_fields) {
@@ -294,9 +303,11 @@ void DXFile::joinAllWriteThreads_() {
    * --> We clear the thread pool (vector), and reset the counters.
    */
 
-  if (writeThreads.size() == 0)
+  if (writeThreads.size() == 0) {
+    // if no writeThreads are present, uploadPartRequestsQueue should be empty : sanity check
+    assert(uploadPartRequestsQueue.size() == 0);
     return; // Nothing to do (no thread has been started)
-
+  }
   // To avoid race condition
   // particularly the case when produce() has been called, but thread is still waiting on consume()
   // we don't want to incorrectly issue interrupt() that time
@@ -375,7 +386,11 @@ void DXFile::writeChunk_() {
  */
 void DXFile::createWriteThreads_() {
   if (writeThreads.size() == 0) {
-    for (int i = 0; i < MAX_WRITE_THREADS; ++i) {
+    //reset counters if no pevious threads exist
+    countThreadsWaitingOnConsume = 0;
+    countThreadsNotWaitingOnConsume = 0;
+    uploadPartRequestsQueue.setCapacity(max_write_threads_);
+    for (int i = 0; i < max_write_threads_; ++i) {
       writeThreads.push_back(boost::thread(boost::bind(&DXFile::writeChunk_, this)));
     }
   }
@@ -385,17 +400,14 @@ void DXFile::createWriteThreads_() {
 // append to buffer_ before uploading the next part.
 void DXFile::write(const char* ptr, int64_t n) {
   int64_t remaining_buf_size = max_buf_size_ - buffer_.tellp();
-//  std::cerr<<"\nwrite(): In write .. adding "<<n<<" bytes";
-//  std::cerr<<"\nBuffer size = "<<buffer_.tellp();
   if (n < remaining_buf_size) {
     buffer_.write(ptr, n);
   } else {
     buffer_.write(ptr, remaining_buf_size);
-//    std::cerr<<"Hitting buffer size in write(), length = buffer_.tellp()";
     // Create thread pool (if not already created)
     if (writeThreads.size() == 0)
       createWriteThreads_();
-
+    
     // add upload request for this part to blocking queue
     uploadPartRequestsQueue.produce(make_pair(buffer_.str(), cur_part_));
     buffer_.str(string()); // clear the buffer
@@ -439,9 +451,9 @@ void DXFile::uploadPart(const char *ptr, int64_t n, const int index) {
   const JSON resp = fileUpload(dxid_, input_params);
   HttpHeaders req_headers;
   req_headers["Content-Length"] = boost::lexical_cast<string>(n);
-  
+  req_headers["Content-MD5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n); // Add the content MD5 header 
   HttpRequest resp2;
-  makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), HttpHeaders(), HTTP_POST, ptr, n);
+  makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), req_headers, HTTP_POST, ptr, n);
   hasAnyPartBeenUploaded = true;
 }
 
@@ -515,10 +527,11 @@ DXFile DXFile::uploadLocalFile(const string &filename, const string &media_type,
                                const JSON &data_obj_fields, bool waitForClose) {
   DXFile dxfile = newDXFile(media_type, data_obj_fields);
   ifstream localfile(filename.c_str());
-  char * buf = new char [DXFile::max_buf_size_];
+  const int64_t buf_size = dxfile.getMaxBufferSize();
+  char * buf = new char [buf_size];
   try {
     while (!localfile.eof()) {
-      localfile.read(buf, DXFile::max_buf_size_);
+      localfile.read(buf, buf_size);
       int64_t num_bytes = localfile.gcount();
       dxfile.write(buf, num_bytes);
     }
