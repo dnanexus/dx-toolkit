@@ -220,7 +220,7 @@ def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, 
     
         span.set_details(details)
 
-        span.add_types(["NamedSpans", "Spans", "gri"])
+        span.add_types(["Spans", "gri"])
         span.rename(table_name)
 
         for line in bed:
@@ -368,7 +368,7 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
             details[property_keys[i]] = property_values[i]
         span.set_details(details)
 
-        span.add_types(["gri", "NamedSpans", "Genes"])
+        span.add_types(["gri", "Genes"])
         span.rename(table_name)
 
         current_span_id = 0
@@ -506,11 +506,11 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
     return dxpy.dxlink(span.get_id())
 
 
-parser = argparse.ArgumentParser(description='Import a local BED file as a Spans, NamedSpans, or Genes object.  If multiple tracks exist in the BED file, one object will be created for each.')
+parser = argparse.ArgumentParser(description='Import a local BED file as a Spans or Genes object.  If multiple tracks exist in the BED file, one object will be created for each.')
 parser.add_argument('filename', help='local filename to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this BED file annotates')
 parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
-parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the types \"Spans\", \"Named Spans\", and \"Genes\" which are added automatically')
+parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the type \"Spans\", or \"Genes\" which is added automatically')
 parser.add_argument('--property_key', default=[], action='append', help='The keys in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
 parser.add_argument('--property_value', default=[], action='append', help='The values in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
 parser.add_argument('--tag', default=[], action='append', help='"A set of tags (string labels) that will be added to the resulting Variants table object. (You can use tags and properties to better describe and organize your data)')
@@ -552,7 +552,7 @@ def import_BED(**args):
             print "Importing as Genes Type"
             job_outputs.append(import_genes(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         elif bed_type == "named_spans":
-            print "Importing as NamedSpans Type"
+            print "Importing as Spans Type (with names)"
             job_outputs.append(import_named_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         else:
             print "Importing as Spans Type"
