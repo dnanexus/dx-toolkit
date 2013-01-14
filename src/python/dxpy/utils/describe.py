@@ -93,17 +93,68 @@ def get_io_spec(spec):
                                                  width_adjustment=-18),
                                         spec))
 
-def get_io_field(io_hash):
+def is_job_ref(thing, reftype=dict):
+    '''
+    :param thing: something that might be a job-based object reference hash
+    :param reftype: type that a job-based object reference would be (default is dict)
+    '''
+    return isinstance(thing, reftype) and \
+        len(thing) == 2 and \
+        'field' in thing and \
+        'job' in thing and \
+        isinstance(thing['field'], basestring) and \
+        isinstance(thing['job'], basestring)
+
+def io_val_to_str(val):
+    if is_job_ref(val):
+        # Job-based object references
+        return val['job'] + ':' + val['field']
+    elif isinstance(val, dict) and '$dnanexus_link' in val:
+        # DNAnexus link
+        if isinstance(val['$dnanexus_link'], basestring):
+            # simple link
+            return val['$dnanexus_link']
+        elif 'project' in val['$dnanexus_link'] and 'id' in val['$dnanexus_link']:
+            return val['$dnanexus_link']['project'] + ':' + val['$dnanexus_link']['id']
+        else:
+            return json.dumps(val)
+    elif isinstance(val, list):
+        if len(val) == 0:
+            return '[]'
+        else:
+            return '[ ' + ', '.join([io_val_to_str(item) for item in val]) + ' ]'
+    elif isinstance(val, dict):
+        return '{ ' + ', '.join([key + ': ' + io_val_to_str(value) for key, value in val.iteritems()]) + ' }'
+    else:
+        return json.dumps(val)
+
+def get_io_field(io_hash, defaults={}, delim='='):
     if io_hash is None:
         return '-'
-    if len(io_hash) == 0:
+    if len(io_hash) == 0 and len(defaults) == 0:
         return '-'
     if get_delimiter() is not None:
-        return ('\n' + get_delimiter()).join([(key + '=' + json.dumps(value)) for key, value in io_hash.items()])
+        return ('\n' + get_delimiter()).join([(key + delim + io_val_to_str(value)) for key, value in io_hash.items()] +
+                                             [('[' + key + delim + io_val_to_str(value) + ']') for key, value in defaults.items()])
     else:
-        return ('\n').join([fill(key + '=' + json.dumps(value),
+        return ('\n').join([fill(key + ' ' + delim + ' ' + io_val_to_str(value),
                                  initial_indent=' '*16,
-                                 subsequent_indent=' '*20) for key, value in io_hash.items()])[16:]
+                                 subsequent_indent=' '*17,
+                                 break_long_words=False) for key, value in io_hash.items()] +
+                           [fill('[' + key + ' ' + delim + ' ' + io_val_to_str(value) + ']',
+                                 initial_indent=' '*16,
+                                 subsequent_indent=' '*17,
+                                 break_long_words=False) for key, value in defaults.items()])[16:]
+
+def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
+    if is_job_ref(orig_thing):
+        resolved_jbors[orig_thing['job'] + ':' + orig_thing['field']] = resolved_thing
+    elif isinstance(orig_thing, list):
+        for i in range(len(orig_thing)):
+            get_resolved_jbors(resolved_thing[i], orig_thing[i], resolved_jbors)
+    elif isinstance(orig_thing, dict) and '$dnanexus_link' not in orig_thing:
+        for key in orig_thing:
+            get_resolved_jbors(resolved_thing[key], orig_thing[key], resolved_jbors)
 
 def print_field(label, value):
     if get_delimiter() is not None:
@@ -345,11 +396,17 @@ def print_job_desc(desc):
     print_field("Origin job", desc["originJob"])
     print_field("Function", desc["function"])
     if 'runInput' in desc:
-        print_nofill_field("Run Input", get_io_field(desc["runInput"]))
-    if "originalInput" in desc:
-        print_nofill_field("Original Input", get_io_field(desc["originalInput"]))
-        print_nofill_field("Input", get_io_field(desc["input"]))
-        print_nofill_field("Output", get_io_field(desc["output"]))
+        default_fields = {k: v for k, v in desc["originalInput"].iteritems() if k not in desc["runInput"]}
+        print_nofill_field("Input", get_io_field(desc["runInput"], defaults=default_fields))
+    else:
+        print_nofill_field("Input", get_io_field(desc["originalInput"]))
+    resolved_jbors = {}
+    for k in desc["input"]:
+        if desc["input"][k] != desc["originalInput"][k]:
+            get_resolved_jbors(desc["input"][k], desc["originalInput"][k], resolved_jbors)
+    if len(resolved_jbors) != 0:
+        print_nofill_field("Resolved JBORs", get_io_field(resolved_jbors, delim=(GREEN() + '=>' + ENDC())))
+    print_nofill_field("Output", get_io_field(desc["output"]))
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
     print_field("Launched by", desc["launchedBy"][5:])
