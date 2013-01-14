@@ -592,28 +592,31 @@ TEST_F(DXFileTest, CheckCopyConstructorAndAssignmentOperator) {
   ASSERT_EQ(104857600, dxf.getMaxBufferSize());
   ASSERT_EQ(5, dxf.getNumWriteThreads());
   
-  dxf.setMaxBufferSize(100);
+  dxf.setMaxBufferSize(5*1024*1024);
   dxf.setNumWriteThreads(10);
-  ASSERT_EQ(dxf.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxf.getMaxBufferSize(), 5*1024*1024);
   ASSERT_EQ(dxf.getNumWriteThreads(), 10);
   
   // Assignment operator test
   DXFile dxcpy = dxf;
-  ASSERT_EQ(dxf.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxf.getMaxBufferSize(), 5*1024*1024);
   ASSERT_EQ(dxf.getNumWriteThreads(), 10);
-  ASSERT_EQ(dxcpy.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxcpy.getMaxBufferSize(), 5*1024*1024);
   ASSERT_EQ(dxcpy.getNumWriteThreads(), 10);
   ASSERT_EQ(dxcpy.getID(), dxf.getID());
   ASSERT_EQ(dxcpy.getProjectID(), dxf.getProjectID());
 
   // Copy constructor
   fv.push_back(dxf);
-  ASSERT_EQ(dxf.getMaxBufferSize(), 100);
+  ASSERT_EQ(dxf.getMaxBufferSize(), 5*1024*1024);
   ASSERT_EQ(dxf.getNumWriteThreads(), 10);
   ASSERT_EQ(fv[0].getMaxBufferSize(), dxf.getMaxBufferSize());
   ASSERT_EQ(fv[0].getNumWriteThreads(), dxf.getNumWriteThreads());
   ASSERT_EQ(fv[0].getID(), dxf.getID());
-  ASSERT_EQ(fv[0].getProjectID(), dxf.getProjectID()); 
+  ASSERT_EQ(fv[0].getProjectID(), dxf.getProjectID());
+  
+  // Check that exception is thrown if we try to set buffer size < 5 MB
+  ASSERT_THROW(dxf.setMaxBufferSize(5*1024*1024 - 1), DXFileError);
 }
 
 TEST_F(DXFileTest, UploadPartMultipleTime) {

@@ -19,8 +19,12 @@
 #include <cmath>
 #include <algorithm>
 #include <stdint.h>
+#include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "utf8/utf8.h"
+
+
 // NOTE:
 // 1) UTF-8 validity is checked while reading JSON from a string;
 // 2) UTF-8
@@ -45,6 +49,17 @@ namespace dx {
     ~JSONException() throw() { }
   };
   
+  /** @internal
+    * This function throws JSONException if a value is NaN or Infinity
+    * Note: This function should *NOT* be called for a type for which numeric_limits is not specialized (this fact is "asserted")
+    */
+  template<typename T> void assertValidityOfNumericType(const T &value) {
+    assert (std::numeric_limits<T>::is_specialized); // We should never call this function for non-numeric types
+    if (boost::math::isnan(value) || !boost::math::isfinite(value)) { 
+      throw JSONException("Illegal floating point value. JSON spec do not allow NaN/Inifnity values for numbers. Value provided = '" + boost::lexical_cast<std::string>(value) + "'");
+    }
+  }
+ 
   /** \enum JSONValue Enum for storing type of a particular JSON object.
     * See http://json.org/ for possible JSON values.
     * - JSON_UNDEFINED: Default type of an unintialized JSON object
@@ -574,7 +589,7 @@ namespace dx {
     int64_t val;
 
     Integer() {}
-    Integer(const int64_t &v):val(v) {}
+    Integer(const int64_t &v): val(v) {}
     void write(std::ostream &out) const { out << val; }
     JSONValue type() const { return JSON_INTEGER; }
     size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
@@ -594,7 +609,10 @@ namespace dx {
     double val;
 
     Real() {}
-    Real(const double &v):val(v) {}
+    Real(const double &v) {
+      assertValidityOfNumericType(v);
+      val = v;
+    }
     void write(std::ostream &out) const { out << val; }
     JSONValue type() const { return JSON_REAL; }
     size_t returnAsArrayIndex() const { return static_cast<size_t>(val);}
@@ -717,10 +735,14 @@ namespace dx {
     *this = operator=(x);
   }
 
+
   template<typename T>
   JSON& JSON::operator =(const T &x) {
     if (!std::numeric_limits<T>::is_specialized)
       throw JSONException("Sorry! We do not allow creating a JSON object from " + std::string(typeid(x).name()) + " type.");
+
+    if (!std::numeric_limits<T>::is_integer)
+      assertValidityOfNumericType(x);
 
     clear();
     if(std::numeric_limits<T>::is_integer)

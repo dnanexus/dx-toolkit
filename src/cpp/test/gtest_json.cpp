@@ -603,6 +603,9 @@ TEST(JSONTest, Numbers) {
   ASSERT_JSONEXCEPTION(JSON::parse("[.e-2]"));
   ASSERT_JSONEXCEPTION(JSON::parse("[0.2e-+23]"));
   ASSERT_JSONEXCEPTION(JSON::parse("[1+d2]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1.#QNAN]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[nan]"));
+  ASSERT_JSONEXCEPTION(JSON::parse("[1.#INF]"));
 }
 
 TEST(JSONTest, TestPerformance) {
@@ -661,6 +664,7 @@ TEST(JSONTest, Iterators) {
   // TODO: Add more iterators test, specially those which use stl algorithms heavily
 
 }
+
 TEST(JSONTest, RealNumberApproxComparisonTest) {
   double eps = JSON::getEpsilon();
   ASSERT_EQ(eps, std::numeric_limits<double>::epsilon());
@@ -697,6 +701,31 @@ TEST(JSONTest, RealNumberApproxComparisonTest) {
   // Even though absolute difference between them is quite high
   j1 = 1e30, j2 = 1e30 - (0.9e30 * eps);
   ASSERT_TRUE(j1 == j2);
+}
+
+TEST(JSONTest, InvalidFloatingPointValuesTest) {
+  JSON j1(JSON_HASH);
+ 
+  // We don't expect to run test on an architecture where floating point datatypes do not have NaNs or Inifinties
+  // Assert this fact
+  ASSERT_TRUE(numeric_limits<float>::has_quiet_NaN && numeric_limits<float>::has_signaling_NaN && numeric_limits<float>::has_infinity);
+  ASSERT_TRUE(numeric_limits<double>::has_quiet_NaN && numeric_limits<double>::has_signaling_NaN && numeric_limits<double>::has_infinity);
+  ASSERT_TRUE(numeric_limits<long double>::has_quiet_NaN && numeric_limits<long double>::has_signaling_NaN && numeric_limits<long double>::has_infinity);
+  
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<float>::quiet_NaN());
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<float>::signaling_NaN());
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<float>::infinity());
+  j1["1"] = numeric_limits<float>::denorm_min(); // This should not throw an exception
+  
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<double>::quiet_NaN());
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<double>::signaling_NaN());
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<double>::infinity());
+  j1["1"] = numeric_limits<double>::denorm_min(); // This should not throw an exception
+  
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<long double>::quiet_NaN());
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<long double>::signaling_NaN());
+  ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<long double>::infinity());
+  j1["1"] = numeric_limits<long double>::denorm_min(); // This should not throw an exception
 }
 
 int main(int argc, char **argv) {
