@@ -39,7 +39,7 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
                               text[:delim_pos + 1] + \
                               escape_completion_name_str(folder_name) + \
                               '/',
-                          folder_names + ['.', '..']))
+                          folder_names + (['.', '..'] if text != '' and delim_pos != len(text) - 1 else [])))
     except:
         return []
 
