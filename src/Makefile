@@ -16,7 +16,7 @@ export DNANEXUS_HOME=$(CURDIR)/..
 #
 #   export MAKEFLAGS=-j8
 
-all: api_wrappers cpp src_libs python contigset2fasta reads_validator
+all: api_wrappers cpp src_libs python contigset2fasta reads_validator dx-verify-file
 
 # Client bindings and wrappers
 # ============================
@@ -78,6 +78,9 @@ contigset2fasta: api_wrappers
 
 reads_validator: api_wrappers
 	$(MAKE) -C reads_validator install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+
+dx-verify-file: api_wrappers
+	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 ua:
 	$(MAKE) -C ua install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
