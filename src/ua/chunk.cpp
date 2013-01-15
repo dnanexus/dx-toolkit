@@ -10,6 +10,7 @@
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
+#include "dxcpp/utils.h"
 
 extern "C" {
 #include "compress.h"
@@ -103,12 +104,6 @@ void Chunk::compress() {
     }
     
     assert (destLen >= 5 * 1024 * 1024); // Chunk size should never decrease when 'compressing' at level 0, and chunk size is always >= 5mb
-
-/*    if (destLen < 5 * 1024 * 1024) {
-      log("Compression at level 1, resulted in data size = " + boost::lexical_cast<string>(destLen) + " bytes. " +
-          "We cannot upload data less than 5MB in any chunk (except last). The remote file: \"" + boost::lexical_cast<string>(fileID) + 
-          "\" will fail to close at the end.");
-    }*/
   }
 
   if (destLen < (int64_t) dest.size()) {
@@ -178,6 +173,18 @@ int progress_func(void* ptr, double UNUSED(TotalToDownload), double UNUSED(NowDo
   return 0;
 }
 
+/* Callback for response data */
+static size_t write_callback(void *buffer, size_t size, size_t nmemb, void *userdata) {
+  char *buf = reinterpret_cast<char*>(buffer);
+  std::string *response = reinterpret_cast<std::string*>(userdata);
+  size_t result = 0u;
+  if (userdata != NULL) {
+    response->append(buf, size * nmemb);
+    result = size * nmemb;
+  }
+  return result;
+}
+
 void Chunk::upload() {
   string url = uploadURL();
   log("Upload URL: " + url);
@@ -208,11 +215,22 @@ void Chunk::upload() {
   prog.curl = curl;
   prog.uploadedBytes = 0;
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog));
+  
+  /* Setting this option, since libcurl fails in multi-threaded environment otherwise */
+  /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l));
 
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1));
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()));
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction));
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this));
+  
+  // Set callback for recieving the response data
+  /** set callback function */
+  respData.clear();
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) );
+  /** "respData" is a member variable of Chunk class*/
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData));
 
   struct curl_slist * slist = NULL;
   /*
@@ -225,6 +243,14 @@ void Chunk::upload() {
   }
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist));
 
+  // Compute the MD5 sum of data, and add the Content-MD5 header
+  expectedMD5 = getHexifiedMD5(data);
+  {
+    ostringstream cmd5;
+    cmd5 << "Content-MD5: " << expectedMD5;
+    slist = curl_slist_append(slist, cmd5.str().c_str());
+  }
+
   log("Starting curl_easy_perform...");
   checkPerformCURLcode(curl_easy_perform(curl));
 
@@ -235,13 +261,34 @@ void Chunk::upload() {
   log("Performing curl cleanup");
   curl_slist_free_all(slist);
   curl_easy_cleanup(curl);
-
   if ((responseCode < 200) || (responseCode >= 300)) {
     log("Throwing runtime_error");
     ostringstream msg;
-    msg << "Request failed with HTTP status code " << responseCode;
+    msg << "Request failed with HTTP status code " << responseCode << ", server Response: '" << respData << "'";
     throw runtime_error(msg.str());
   }
+  
+  /************************************************************************************************************************************/
+  /*********** Assertions for testing APIservers checksum logic (in case of succesful /UPLOAD/xxxx request) ***************************/
+  /*********** Can be removed later (when we are relatively confident of apisever's checksum logic) ***********************************/
+  
+  // We check that /UPLOAD/xxxx returned back a hash of form {md5: xxxxx},
+  // and that value is equal to md5 we computed (and sent as Content-MD5 header).
+  // If the values differ - it's a MAJOR apiserver bug (since server must have rejected request with incorrect Content-MD5 anyway)
+  dx::JSON apiserverResp;
+  try {
+    apiserverResp = dx::JSON::parse(respData);
+  } catch(dx::JSONException &jexcp) {
+    cerr << "UNEXPECTED FATAL ERROR: Response from /UPLOAD/xxxx route could not be parsed as valid JSON" << endl
+         << "JSONException = '" << jexcp.what() << "'" << endl
+         << "APIServer response = '" << respData << "'" << endl;
+    assert(false); // This should not happen (apiserver response could not be parsed as JSON)
+  }
+  assert(apiserverResp.type() == dx::JSON_HASH);
+  assert(apiserverResp.has("md5") && apiserverResp["md5"].type() == dx::JSON_STRING);
+  assert(apiserverResp["md5"].get<string>() == expectedMD5);
+  /*************************************************************************************************************************************/
+  /*************************************************************************************************************************************/
 }
 
 void Chunk::clear() {
@@ -249,6 +296,7 @@ void Chunk::clear() {
   // memory from data into v; v will be destroyed when this function exits.
   vector<char> v;
   data.swap(v);
+  respData.clear();
 }
 
 string Chunk::uploadURL() const {

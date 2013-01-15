@@ -37,7 +37,7 @@ public:
       triesLeft(triesLeft_), start(start_), end(end_), uploadOffset(0), toCompress(toCompress_), lastChunk(lastChunk_), parentFileIndex(parentFileIndex_)
   {
   }
-
+  
   /* Name of the local file of which this chunk is a part */
   std::string localFile;
 
@@ -72,6 +72,12 @@ public:
 
   /* Index of parent file in Files vector (in main.cpp) */
   unsigned parentFileIndex;
+  
+  /* This stores the HTTP response body */
+  std::string respData;
+ 
+  /* This stores the md5 sum of chunk (computed by UA) */
+  std::string expectedMD5;
 
   void read();
   void compress();
@@ -79,7 +85,6 @@ public:
   void clear();
 
   void log(const std::string &message) const;
-  
   friend std::ostream &operator<<(std::ostream &out, const Chunk &chunk);
 
 private:

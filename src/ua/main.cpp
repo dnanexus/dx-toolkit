@@ -161,6 +161,9 @@ void uploadChunks(vector<File> &files) {
         chunksToRead.produce(c);
       } else {
         c->log("Not retrying");
+        // TODO: Should we print it on stderr or LOG (verbose only) ??
+        cerr << "Failed to upload Chunk [" << c->start << " - " << c->end << "] for local file ("
+             << files[c->parentFileIndex].localFile << "). APIServer response for last try: '" << c->respData << "'" << endl;
         c->clear();
         chunksFailed.produce(c);
       }
