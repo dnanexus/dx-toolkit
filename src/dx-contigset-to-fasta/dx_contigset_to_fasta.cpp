@@ -2,7 +2,7 @@
  * Write the contents of a ContigSet object to a local file in FASTA
  * format.
  *
- * Usage: contigset2fasta contigset_id fasta_filename
+ * Usage: dx-contigset-to-fasta contigset_id fasta_filename
  */
 
 #include <iostream>
@@ -56,7 +56,7 @@ void process(const char * contigset_id, const char * fasta_filename) {
 }
 
 int main(int argc, char * argv[]) {
-  cerr << "* Starting contigset2fasta..." << endl;
+  cerr << "* Starting dx-contigset-to-fasta..." << endl;
 
   if (argc != 3) {
     cerr << "Usage: " << argv[0] << " contigset_id fasta_filename" << endl;
@@ -65,6 +65,6 @@ int main(int argc, char * argv[]) {
 
   process(argv[1], argv[2]);
 
-  cerr << "* Finished contigset2fasta." << endl;
+  cerr << "* Finished dx-contigset-to-fasta." << endl;
   return 0;
 }

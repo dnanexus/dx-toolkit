@@ -548,7 +548,7 @@ int main(int argc, char **argv) {
     if (config["genome"].type() == dx::JSON_STRING) {
       genome_file = config["genome"].get<string>();
     } else {
-      system(("contigset2fasta " + config["genome"]["$dnanexus_link"].get<string>() + " genome.fa").c_str());
+      system(("dx-contigset-to-fasta " + config["genome"]["$dnanexus_link"].get<string>() + " genome.fa").c_str());
       genome_file = "genome.fa";
     } 
   } catch (dx::JSONException &e) {

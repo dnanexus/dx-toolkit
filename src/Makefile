@@ -16,7 +16,7 @@ export DNANEXUS_HOME=$(CURDIR)/..
 #
 #   export MAKEFLAGS=-j8
 
-all: api_wrappers cpp src_libs python contigset2fasta reads_validator dx-verify-file
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta reads_validator dx-verify-file
 
 # Client bindings and wrappers
 # ============================
@@ -73,8 +73,8 @@ java: api_wrappers
 # Tools
 # =====
 
-contigset2fasta: api_wrappers
-	$(MAKE) -C contigset2fasta install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+dx-contigset-to-fasta: api_wrappers
+	$(MAKE) -C dx-contigset-to-fasta install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 reads_validator: api_wrappers
 	$(MAKE) -C reads_validator install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
@@ -103,7 +103,7 @@ base_install: all
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
 	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
-	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
+	cp -a $(DNANEXUS_HOME)/bin/dx* $(DESTDIR)/$(PREFIX)/bin/                   # binaries
 	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
@@ -163,7 +163,8 @@ distclean: clean
 
 # TODO: clean up files in /bin, too
 clean:
-	$(MAKE) -C contigset2fasta clean
+	$(MAKE) -C dx-contigset-to-fasta clean
+	-rm -f ../bin/dx-contigset-to-fasta
 	-rm -f ../bin/contigset2fasta
 	$(MAKE) -C reads_validator clean
 	-rm -f ../bin/dx-reads-validator
@@ -175,4 +176,4 @@ clean:
 	-rm -rf ../lib
 	-rm -rf ../share
 
-.PHONY: all toolkit_version api_wrappers src_libs python perl java contigset2fasta reads_validator ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
+.PHONY: all toolkit_version api_wrappers src_libs python perl java dx-contigset-to-fasta reads_validator ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java

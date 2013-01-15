@@ -79,7 +79,7 @@ Then:
 
 Notes:
 
-- On CentOS 5.x, two of the utilities, ```contigset2fasta``` and
+- On CentOS 5.x, two of the utilities, ```dx-contigset-to-fasta``` and
   ```dx-reads-validator```, will not function correctly, as some of the library
   versions are too old.
 

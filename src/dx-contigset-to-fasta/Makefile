@@ -14,6 +14,7 @@ clean:
 	rm -rvf build
 
 install: all
-	install -v build/contigset2fasta $(DESTDIR)/$(PREFIX)/bin
+	install -v build/dx-contigset-to-fasta $(DESTDIR)/$(PREFIX)/bin
+	ln -s ./dx-contigset-to-fasta $(DESTDIR)/$(PREFIX)/bin/contigset2fasta
 
 .PHONY: all clean install
