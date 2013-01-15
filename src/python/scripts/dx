@@ -1894,13 +1894,19 @@ def find_jobs(args):
     if args.origin_jobs and args.parent is not None and args.parent != 'none':
         return
     project = dxpy.WORKSPACE_ID
-    name = None
     origin = None
     more_results = False
     include_io = args.verbose and args.json
     id_desc = None
+    need_to_requery = args.trees and (
+        args.state is not None or
+        args.name is not None or
+        args.created_after is not None or
+        args.created_before is not None)
+
+    # Now start parsing flags
     if args.id is not None:
-        id_desc = try_call(dxpy.api.jobDescribe, args.id, {"io": include_io})
+        id_desc = try_call(dxpy.api.jobDescribe, args.id, {"io": False})
         origin = id_desc.get('originJob', None)
         if args.origin_jobs and args.id != origin:
             return
@@ -1924,13 +1930,14 @@ def find_jobs(args):
              'state': args.state,
              'origin_job': origin,
              'parent_job': "none" if args.origin_jobs else args.parent,
-             'describe': {"io": include_io},
+             'describe': {"io": include_io and not need_to_requery},
              'created_after': args.created_after,
              'created_before': args.created_before,
              'name': args.name,
              'name_mode': 'glob'}
     json_output = []                        # for args.json
     output_ids = []                         # for args.brief
+
     try:
         if args.all_jobs:
             if args.id:
@@ -1956,23 +1963,56 @@ def find_jobs(args):
         else:
             origin_jobs = []  # List of origin job IDs (ordered by search results)
             job_descs = {}    # job ID -> job desc
+            job_children = collections.OrderedDict() # job ID -> list of child job IDs
 
-            query['describe']['io'] = False
             for job_result in dxpy.find_jobs(**query):
-                origin_job_found = job_result['describe']['originJob']
-                if origin_job_found not in origin_jobs:
+
+                if args.origin_jobs:
+                    # Guaranteed that all results are origin jobs already
                     if len(origin_jobs) == args.num_results:
                         more_results = True
                         break
                     job_descs[job_result['id']] = job_result['describe']
-                    origin_jobs.append(origin_job_found)
+                    origin_jobs.append(job_result['id'])
+
+                if args.trees:
+                    if not need_to_requery:
+                        parent = job_result['describe']['parentJob']
+                        if parent is None and len(origin_jobs) == args.num_results:
+                            # Found N + 1 origin jobs
+                            more_results = True
+                            break
+                        elif parent is None:
+                            # Found <=N origin jobs
+                            origin_jobs.append(job_result['id'])
+
+                        if len(origin_jobs) != args.num_results or job_result['describe']['originJob'] in origin_jobs:
+                            # Cache it if we might need it (in one of
+                            # the N trees, or haven't found all N
+                            # origin jobs yet)
+                            job_descs[job_result['id']] = job_result['describe']
+
+                            if parent is not None:
+                                if parent in job_children:
+                                    job_children[parent].append(job_result['id'])
+                                else:
+                                    job_children[parent] = [job_result['id']]
+                    else:
+                        # Will need to requery to get the whole tree,
+                        # so don't bother caching anything.
+
+                        # NOTE: these MIGHT NOT be ordered in order of
+                        # creation of origin jobs
+                        origin_job = job_result['describe']['originJob']
+                        if origin_job not in origin_jobs:
+                            if len(origin_jobs) == args.num_results:
+                                more_results = True
+                                break
+                            origin_jobs.append(origin_job)
 
             if args.origin_jobs:
-                output_ids = origin_jobs
+                output_ids = origin_jobs # for args.brief output
                 for origin_job in origin_jobs:
-                    if not args.brief and (origin_job not in job_descs or include_io):
-                        job_descs[origin_job] = dxpy.api.jobDescribe(origin_job, {'io': include_io})
-
                     if args.json:
                         json_output.append(job_descs[origin_job])
                     elif not args.brief:
@@ -1999,27 +2039,40 @@ def find_jobs(args):
                         print key
                         print_keys(hash_of_keys[key])
 
-#                def iterate_sub_find_jobs_requests(origin_jobs):
-#                    for origin_job in origin_jobs:
-#                        yield dxpy.find_jobs, [], {'origin_job': origin_job, 'describe': {'io': include_io}}
-                
-#                sub_find_jobs_responses = dxpy.utils.response_iterator(request_iterator=iterate_sub_find_jobs_requests(origin_jobs),
-#                                                                       worker_pool=dxpy.utils.get_futures_threadpool(max_workers=8),
-#                                                                       max_active_tasks=12)
+                if need_to_requery:
+                    # TODO: Following bit attempts to use a threadpool
+                    # to parallelize the find jobs requests, but it
+                    # does not seem to be any faster.
+                    #
+                    # def iterate_sub_find_jobs_requests(origin_jobs):
+                    #     for origin_job in origin_jobs:
+                    #         yield dxpy.find_jobs, [], {'origin_job': origin_job, 'describe': {'io': include_io}}
+                    #
+                    # sub_find_jobs_responses = dxpy.utils.response_iterator(
+                    #     request_iterator=iterate_sub_find_jobs_requests(origin_jobs),
+                    #     worker_pool=dxpy.utils.get_futures_threadpool(max_workers=8),
+                    #     max_active_tasks=12)
+                    #
+                    # for find_jobs_response in sub_find_jobs_responses:
+                    #     for subjob in find_jobs_response:
+
+                    # Get all the descs
+
+                    for origin_job in origin_jobs:
+                        for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
+                            job_descs[subjob['id']] = subjob['describe']
+
+                            parent = subjob['describe']['parentJob']
+                            if parent is not None:
+                                if parent in job_children:
+                                    job_children[parent].append(subjob['id'])
+                                else:
+                                    job_children[parent] = [subjob['id']]
+                    # Re-sort origin_jobs by their created time
+                    origin_jobs.sort(key=lambda jobid: -job_descs[jobid]['created'])
 
                 for origin_job in origin_jobs:
-                    job_children = collections.OrderedDict() # job ID -> list of child job IDs
                     job_strings = collections.OrderedDict() # for summary or verbose
-#                    for subjob in sub_find_jobs_responses.next():
-                    for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
-                        job_descs[subjob['id']] = subjob['describe']
-                        parent = subjob['describe']['parentJob']
-                        if parent is not None:
-                            if parent in job_children:
-                                job_children[parent].append(subjob['id'])
-                            else:
-                                job_children[parent] = [subjob['id']]
-
                     process_children(origin_job, job_strings if not args.json and not args.brief else None)
 
                     if not args.json and not args.brief:
@@ -3183,13 +3236,13 @@ parser_find_jobs.add_argument('--allprojects', help=fill('Extend search to all p
 parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help=fill('Applet or App ID that job is running', width_adjustment=-24))
 parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
 parser_find_jobs.add_argument('--origin', help=fill('Job ID of the top-level (user-initiated) job', width_adjustment=-24)) # Redundant but might as well
-parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job, or the string \'none\' to indicate no parent', width_adjustment=-24))
+parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
 parser_find_jobs.add_argument('--created-after', help=fill('Integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_find_jobs.add_argument('--created-before', help=fill('Integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
 parser_find_jobs_search_gp = parser_find_jobs.add_argument_group('Search mode')
 parser_find_jobs_search = parser_find_jobs_search_gp.add_mutually_exclusive_group()
-parser_find_jobs_search.add_argument('--trees', help=fill('Show entire job trees for all matching results', width_adjustment=-24), action='store_true')
+parser_find_jobs_search.add_argument('--trees', help=fill('Show entire job trees for all matching results (default)', width_adjustment=-24), action='store_true')
 parser_find_jobs_search.add_argument('--origin-jobs', help=fill('Search and display only top-level origin jobs', width_adjustment=-24), action='store_true')
 parser_find_jobs_search.add_argument('--all-jobs', help=fill('Search for jobs at all depths matching the query (no tree structure shown)', width_adjustment=-24), action='store_true')
 parser_find_jobs.set_defaults(func=find_jobs)
