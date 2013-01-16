@@ -38,4 +38,6 @@
 /bin/dx-reads-validator
 /bin/dx-spans-to-bed
 /bin/dx-tsv-to-gtable
+/bin/dx-variants-to-vcf
+/bin/dx-verify-file
 /bin/dx-workflow-to-applet
