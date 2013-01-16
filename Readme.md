@@ -64,9 +64,10 @@ for Ubuntu 10.04. You can install Python from there as follows (as root):
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C
     apt-get install --yes python2.7 python-pip python-setuptools-deadsnakes
 
-Install boost 1.48 or higher (at least the ```thread``` and ```regex```
-libraries). This version of boost is not available natively on Ubuntu 10.04.
-You can use the script ```build/lucid_install_boost.sh```, which installs it
+Install boost 1.48 or higher (at least the ```filesystem```,
+```program_options```, ```regex```, ```system``` and ```thread``` libraries).
+This version of boost is not available natively on Ubuntu 10.04. You can use
+the script ```build/lucid_install_boost.sh```, which installs it
 into ```/usr/local/lib```.
 
 The following additional dependencies are also needed:

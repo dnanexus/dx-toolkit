@@ -40,7 +40,8 @@ Runtime dependencies
 
 ### Ubuntu 12.04
 
-    sudo apt-get install libboost-regex1.48.0 libboost-thread1.48.0 libcurl3
+    sudo apt-get install libboost-filesystem1.48.0 libboost-program-options1.48.0 \
+        libboost-regex1.48.0 libboost-system1.48.0 libboost-thread1.48.0 libcurl3
 
 ### Ubuntu 10.04
 
