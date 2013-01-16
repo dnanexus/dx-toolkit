@@ -1,3 +1,9 @@
+dx-toolkit (0.34.1) precise; urgency=low
+
+  * Fix bug in installation of contigset2fasta symlink.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 15 Jan 2013 18:29:38 -0800
+
 dx-toolkit (0.34.0) precise; urgency=low
 
   * New version numbering scheme.
