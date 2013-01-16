@@ -257,12 +257,12 @@ class DXFile(DXDataObject):
         future = self._http_threadpool.submit(self.upload_part, *args, **kwargs)
         self._http_threadpool_futures.add(future)
 
-    def write(self, string, multithread=True, **kwargs):
+    def write(self, data, multithread=True, **kwargs):
         '''
-        :param str: String to be written
-        :type str: string
+        :param data: Data to be written
+        :type data: str or mmap object
 
-        Writes the string *string* to the file.
+        Writes the data *data* to the file.
 
         .. note::
 
@@ -278,36 +278,36 @@ class DXFile(DXDataObject):
                 self.upload_part(data, self._cur_part, **kwargs)
             self._cur_part += 1
 
-        if self._write_buf.tell() == 0 and self._write_bufsize == len(string):
+        if self._write_buf.tell() == 0 and self._write_bufsize == len(data):
             # In the special case of a write that is the same size as
             # our write buffer size, and no unflushed data in the
             # buffer, just directly dispatch the write and bypass the
             # write buffer.
             #
             # This saves a buffer copy, which is especially helpful if
-            # 'string' is actually mmap'd from a file.
+            # 'data' is actually mmap'd from a file.
             #
             # TODO: an additional optimization could be made to allow
             # the last request from an mmap'd upload to take this path
             # too (in general it won't because it's not of length
             # _write_bufsize). This is probably inconsequential though.
-            write_request(string)
+            write_request(data)
             return
 
         remaining_space = self._write_bufsize - self._write_buf.tell()
 
-        if len(string) <= remaining_space:
-            self._write_buf.write(string)
+        if len(data) <= remaining_space:
+            self._write_buf.write(data)
         else:
-            self._write_buf.write(string[:remaining_space])
+            self._write_buf.write(data[:remaining_space])
 
             data = self._write_buf.getvalue()
             self._write_buf = StringIO.StringIO()
             write_request(data)
 
             # TODO: check if repeat string splitting is bad for
-            # performance when len(string) >> _write_bufsize
-            self.write(string[remaining_space:], **kwargs)
+            # performance when len(data) >> _write_bufsize
+            self.write(data[remaining_space:], **kwargs)
 
     def closed(self, **kwargs):
         '''
@@ -358,7 +358,7 @@ class DXFile(DXDataObject):
     def upload_part(self, data, index=None, display_progress=False, report_progress_fn=None, **kwargs):
         """
         :param data: Data to be uploaded in this part
-        :type data: string
+        :type data: str or mmap object
         :param index: Index of part to be uploaded; must be in [1, 10000]
         :type index: integer
         :param display_progress: Whether to print "." to stderr when done
