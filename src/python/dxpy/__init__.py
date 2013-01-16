@@ -144,7 +144,7 @@ http_server_errors = set([requests.codes.server_error,
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
-                  max_retries=DEFAULT_RETRIES, always_retry=False,
+                  max_retries=DEFAULT_RETRIES, always_retry=False, retry_on_error_reponse_cb=None,
                   **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -167,10 +167,17 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :type want_full_response: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
-    :param max_retries: Number of retries to perform for requests that are safe to retry. Safe requests are GET requests and requests that produced a network error or HTTP/1.1 server error (500, 502, 503, 504).
+    :param max_retries: Maximum number of retries to perform for a request. Retryability of a failed request is determined as follows:
+
+                          - If a non-ok HTTP response is received, then output of callback function (*retry_on_error_reponse_cb*) is used, if provided, else "GET" requests, and server response in 5xx range are retried.
+                          - If no response is received from server (potentially due to network error), then the request is retried if it's a "GET" request, or *always_retry* is True.
     :type max_retries: int
-    :param always_retry: If True, attempts retries even for requests that are not considered safe to retry. As an exception, if the HTTP response has code 422, retries are never attempted (it is likely that the request is invalid and cannot be completed successfully with retries).
+    :param always_retry: If True, always attempt retry if no response was received from server.
+
+                         - *Note:* The value of this variable will not be considered if server returned back a response (see: *retry_on_error_reponse_cb* for that purpose)
     :type always_retry: boolean
+    :param retry_on_error_reponse_cb: If a callback function is provided, its output will determine if request should be retried in case of a non-ok HTTP response. "response" received from server will be passed as argument to the callback function: *retry_on_error_reponse_cb(response)*
+    :type retry_on_error_reponse_cb: callback function returning boolean value or None
     :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
     :raises: :exc:`requests.exceptions.HTTPError` if the response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
 
@@ -272,7 +279,10 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                 # If a non-OK response is received from the server, we retry only if the response code is in the 5xx range.
                 # If we did not get a response back from the server, we retry if it's a GET request, OR if always_retry is True
                 if response is not None:
-                    ok_to_retry = (response.status_code >= 500 and response.status_code < 600)
+                    if retry_on_error_reponse_cb is not None:
+                        ok_to_retry = retry_on_error_reponse_cb(response)
+                    else:
+                        ok_to_retry = (response.status_code >= 500 and response.status_code < 600) or method == 'GET'
                 else:
                     ok_to_retry = always_retry or method == 'GET'
 
