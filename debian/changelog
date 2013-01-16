@@ -1,3 +1,9 @@
+dx-toolkit (0.34.3) precise; urgency=low
+
+  * Fix installation of contigset2fasta symlink.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 16 Jan 2013 10:54:54 -0800
+
 dx-toolkit (0.34.2) precise; urgency=low
 
   * Fix boost deps in build scripts.
