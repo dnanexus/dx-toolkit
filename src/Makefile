@@ -103,7 +103,7 @@ base_install: all
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
 	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
-	cp -a $(DNANEXUS_HOME)/bin/dx* $(DESTDIR)/$(PREFIX)/bin/                   # binaries
+	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
 	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
