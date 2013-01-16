@@ -53,4 +53,4 @@ add_executable(dx-verify-file main.cpp options.cpp log.cpp chunk.cpp main.cpp Fi
 
 # Add dxcpp
 target_link_libraries(dx-verify-file dxcpp)
-target_link_libraries(dx-verify-file curl boost_system-mt boost_program_options-mt boost_system-mt boost_filesystem-mt boost_regex-mt)
+target_link_libraries(dx-verify-file curl boost_program_options-mt boost_system-mt boost_filesystem-mt boost_regex-mt)
