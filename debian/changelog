@@ -1,3 +1,13 @@
+dx-toolkit (0.34.0) precise; urgency=low
+
+  * New version numbering scheme.
+
+  * Added dx-verify-file.
+
+  * Fixes for GFF/GTF importers.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 15 Jan 2013 17:26:41 -0800
+
 dx-toolkit (0.0.33-dnanexus.1) precise; urgency=low
 
   * Fix off by one error in GTF/GFF import/export.
