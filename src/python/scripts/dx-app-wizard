@@ -69,7 +69,6 @@ else:
     app_json["dxapi"] = API_VERSION
     app_json["version"] = version
     app_json["details"] = OrderedDict({"contactUrl": "http://wiki.dnanexus.com/Apps/" + name})
-    app_json["resources"] = []
 
     ############
     # IO SPECS #
