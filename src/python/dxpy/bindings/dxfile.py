@@ -5,7 +5,7 @@ DXFile Handler
 This remote file handler is a Python file-like object.
 '''
 
-import os, logging, traceback
+import os, logging, traceback, hashlib
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
@@ -382,7 +382,24 @@ class DXFile(DXDataObject):
         headers = {}
         headers['Content-Length'] = str(len(data))
         headers['Content-Type'] = 'application/octet-stream'
+ 
+        md5 = hashlib.md5()
+        if hasattr(data, 'seek') and hasattr(data, 'tell'):
+            # data is a buffer
+            rewind_input_buffer_offset = data.tell() # record initial position (so we can rewind back)
+            while(True):
+                bytes_read = data.read(100 * 1024 * 1024) # TODO: What should be the value of this constant ?
+                if bytes_read:
+                    md5.update(bytes_read)
+                else:
+                    break
+            # rewind the buffer to original position
+            data.seek(rewind_input_buffer_offset)
+        else:
+            md5.update(data)
 
+        headers['Content-MD5'] = md5.hexdigest()
+        
         DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
 
         self._num_uploaded_parts += 1
