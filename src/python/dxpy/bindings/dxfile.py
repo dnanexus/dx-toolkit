@@ -400,12 +400,7 @@ class DXFile(DXDataObject):
 
         headers['Content-MD5'] = md5.hexdigest()
         
-        # A callback function, which is passed to DXHTTPRequest()
-        # Since, we always want to retry /UPLOAD/xxxx request, the callback always returns True (and we set always_retry=True)
-        def retry_cb(response):
-            return True
-        
-        DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True, retry_on_error_reponse_cb=retry_cb)
+        DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
 
         self._num_uploaded_parts += 1
 
@@ -443,7 +438,7 @@ class DXFile(DXDataObject):
                                              'jsonify_data': False,
                                              'prepend_srv': False,
                                              'prefetch': True,
-                                             'always_retry': True} # Note: we do not need to provide "retry_on_error_reponse_cb", since it's a GET request
+                                             'always_retry': True}
 
     def _next_response_content(self):
         if self._http_threadpool is None:

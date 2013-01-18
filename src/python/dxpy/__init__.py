@@ -167,17 +167,15 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :type want_full_response: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
-    :param max_retries: Maximum number of retries to perform for a request. Retryability of a failed request is determined as follows:
+    :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if either of the following is true:
+                        
+                        - *always_retry* is True
+                        - method.upper() == 'GET'
+                        - Server responded with HTTP status code in 5xx range (only applicable if response is received from server)
 
-                          - If a non-ok HTTP response is received, then output of callback function (*retry_on_error_reponse_cb*) is used, if provided, else "GET" requests, and server response in 5xx range are retried.
-                          - If no response is received from server (potentially due to network error), then the request is retried if it's a "GET" request, or *always_retry* is True.
     :type max_retries: int
-    :param always_retry: If True, always attempt retry if no response was received from server.
-
-                         - *Note:* The value of this variable will not be considered if server returned back a response (see: *retry_on_error_reponse_cb* for that purpose)
+    :param always_retry: If True, always attempt retry for failed requests.
     :type always_retry: boolean
-    :param retry_on_error_reponse_cb: If a callback function is provided, its output will determine if request should be retried in case of a non-ok HTTP response. "response" received from server will be passed as argument to the callback function: *retry_on_error_reponse_cb(response)*
-    :type retry_on_error_reponse_cb: callback function returning boolean value or None
     :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
     :raises: :exc:`requests.exceptions.HTTPError` if the response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
 
@@ -192,7 +190,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     '''
     url = APISERVER + resource if prepend_srv else resource
-
+    method = method.upper() # Convert method string to upper case, makes our life easier for comparing string later (POST, GET, etc)
     if _DEBUG:
         from repr import Repr
         print >>sys.stderr, method, url, "=>", Repr().repr(data)
@@ -276,16 +274,13 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             # but non-idempotent requests can be unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                # If a non-OK response is received from the server, we retry only if the response code is in the 5xx range.
-                # If we did not get a response back from the server, we retry if it's a GET request, OR if always_retry is True
-                if response is not None:
-                    if retry_on_error_reponse_cb is not None:
-                        ok_to_retry = retry_on_error_reponse_cb(response)
-                    else:
-                        ok_to_retry = (response.status_code >= 500 and response.status_code < 600) or method == 'GET'
-                else:
-                    ok_to_retry = always_retry or method == 'GET'
+                # If an error occurs, we retry if *either* of the following is true:
+                # 1) always_retry is True , 2) it was a GET request, 3) server responded with 5xx HTTP status code
+                ok_to_retry = always_retry or (method == 'GET')
 
+                if response is not None:
+                    ok_to_retry = ok_to_retry or (response.status_code >= 500 and response.status_code < 600) 
+                    
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
