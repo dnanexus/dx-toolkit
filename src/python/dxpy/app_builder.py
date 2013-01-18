@@ -193,6 +193,16 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
             with open(os.path.join(src_dir, readme_filename)) as fh:
                 applet_spec['description'] = fh.read()
 
+    # Inline developerNotes from Readme.developer.md
+    if 'developerNotes' not in applet_spec:
+        developer_readme_filename = None
+        for filename in 'README.developer.md', 'Readme.developer.md', 'readme.developer.md':
+            if os.path.exists(os.path.join(src_dir, filename)):
+                developer_readme_filename = filename
+                break
+        with open(os.path.join(src_dir, developer_readme_filename)) as fh:
+            applet_spec['developerNotes'] = fh.read()
+
     # Inline the code of the program
     if "runSpec" in applet_spec and "file" in applet_spec["runSpec"]:
         # Avoid using runSpec.file for now, it's not fully implemented
@@ -238,15 +248,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # Note: this can be set to "github.com" instead of "*" if the build doesn't download any deps
                 if "*" not in applet_spec["access"]["network"]:
                     applet_spec["access"]["network"].append("*")
-
-    # Supply a contactUrl if one is not provided
-    if "details" not in applet_spec:
-        applet_spec["details"] = {}
-    if "contactUrl" not in applet_spec["details"]:
-        new_contact_url = "http://wiki.dnanexus.com/Apps/%s" % (applet_spec["name"],)
-        logging.info("Setting contactUrl to %s" % (new_contact_url,))
-        logging.info('You can override this in your dxapp.json: {details: {contactUrl: "%s", ...}, ...' % (new_contact_url,))
-        applet_spec["details"]["contactUrl"] = new_contact_url
 
     # -----
     # Now actually create the applet
