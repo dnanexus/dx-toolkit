@@ -144,7 +144,7 @@ http_server_errors = set([requests.codes.server_error,
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
-                  max_retries=DEFAULT_RETRIES, always_retry=False,
+                  max_retries=DEFAULT_RETRIES, always_retry=False, retry_on_error_reponse_cb=None,
                   **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -167,9 +167,14 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :type want_full_response: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
-    :param max_retries: Number of retries to perform for requests that are safe to retry. Safe requests are GET requests and requests that produced a network error or HTTP/1.1 server error (500, 502, 503, 504).
+    :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if either of the following is true:
+                        
+                        - *always_retry* is True
+                        - method.upper() == 'GET'
+                        - Server responded with HTTP status code in 5xx range (only applicable if response is received from server)
+
     :type max_retries: int
-    :param always_retry: If True, attempts retries even for requests that are not considered safe to retry. As an exception, if the HTTP response has code 422, retries are never attempted (it is likely that the request is invalid and cannot be completed successfully with retries).
+    :param always_retry: If True, always attempt retry for failed requests.
     :type always_retry: boolean
     :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
     :raises: :exc:`requests.exceptions.HTTPError` if the response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
@@ -185,7 +190,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     '''
     url = APISERVER + resource if prepend_srv else resource
-
+    method = method.upper() # Convert method string to upper case, makes our life easier for comparing string later (POST, GET, etc)
     if _DEBUG:
         from repr import Repr
         print >>sys.stderr, method, url, "=>", Repr().repr(data)
@@ -269,13 +274,13 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             # but non-idempotent requests can be unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                # If a non-OK response is received from the server, we retry only if the response code is in the 5xx range.
-                # If we did not get a response back from the server, we retry if it's a GET request, OR if always_retry is True
-                if response is not None:
-                    ok_to_retry = (response.status_code >= 500 and response.status_code < 600)
-                else:
-                    ok_to_retry = always_retry or method == 'GET'
+                # If an error occurs, we retry if *either* of the following is true:
+                # 1) always_retry is True , 2) it was a GET request, 3) server responded with 5xx HTTP status code
+                ok_to_retry = always_retry or (method == 'GET')
 
+                if response is not None:
+                    ok_to_retry = ok_to_retry or (response.status_code >= 500 and response.status_code < 600) 
+                    
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
