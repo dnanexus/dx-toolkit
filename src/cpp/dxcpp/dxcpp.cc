@@ -123,7 +123,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // The HTTP Request is always executed at least once,
   // a maximum of NUM_MAX_RETRIES number of subsequent tries are made, if required and feasible.
   for (countTries = 0u; countTries <= NUM_MAX_RETRIES; ++countTries, sec_to_wait *= 2u) {
-    bool toRetry = alwaysRetry; // whether or not the request should be retried on failure
+    bool toRetry; // whether or not the request should be retried on failure
     reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
     try {
       // Attempt a POST request
@@ -133,14 +133,14 @@ JSON DXHTTPRequest(const string &resource, const string &data,
       //  - alwaysRetry = true in the call to this function
       //  - errorCode returned by HttpRequestException is < 0 (which implies that request was never made to the server)server
       //  - isAlwaysRetryableCurlError() - A list of curl codes, which are *ALWAYS* safe to retry (irrespective of the request being made - idempotent or not, etc).
-      toRetry = toRetry || (e.errorCode < 0) || isAlwaysRetryableCurlError(e.errorCode);
+      toRetry = alwaysRetry || (e.errorCode < 0) || isAlwaysRetryableCurlError(e.errorCode);
       reqCompleted = false;
       hre = e;
     }
 
     if (reqCompleted) {
       if (req.responseCode != 200) {
-        toRetry = isAlwaysRetryableHttpCode(req.responseCode);
+        toRetry = alwaysRetry || isAlwaysRetryableHttpCode(req.responseCode);
       } else {
         // Everything is fine, the request went through and 200 received
         // So return back the response now

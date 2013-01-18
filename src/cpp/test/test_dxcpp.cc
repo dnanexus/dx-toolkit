@@ -805,7 +805,8 @@ protected:
 };
 
 TEST_F(DXGTableTest, SimpleCloneTest) {
-  DXGTable dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  DXGTable dxgtable(DXGTable::newDXGTable(DXGTableTest::columns));
+  
   dxgtable.addRows(JSON::parse("[[\"foo\", 1], [\"foo\", 2]]"));
   dxgtable.close(true);
   dxgtable.clone(second_proj_id);
