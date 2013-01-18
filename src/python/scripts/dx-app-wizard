@@ -34,6 +34,7 @@ if args.json_file is not None:
         app_json['name'] = name
         version = get_version(default=app_json.get('version'))
         app_json['version'] = version
+    description = '<!-- Insert a description of your app here -->'
     try:
         os.mkdir(app_json['name'])
     except:
@@ -63,8 +64,6 @@ else:
         app_json["title"] = title
     if summary != '':
         app_json['summary'] = summary
-    if description != '':
-        app_json['description'] = description
 
     app_json["dxapi"] = API_VERSION
     app_json["version"] = version
@@ -296,10 +295,18 @@ for subdir in 'src', 'test', 'resources':
         sys.stderr.write("Unable to create subdirectory %s/%s" % (name, subdir))
         sys.exit(1)
 
+entry_points = ['main']
+
+if pattern == 'parallelized':
+    entry_points = ['main', 'process', 'postprocess']
+elif pattern == 'scatter-process-gather':
+    entry_points = ['main', 'scatter', 'map', 'process', 'postprocess']
+
 manifest += create_files_from_templates(template_dir, app_json, language,
                                         file_input_names, file_array_input_names, file_output_names,
                                         pattern, pattern_suffix,
-                                        parallelized_input_field, parallelized_output_field)
+                                        parallelized_input_field, parallelized_output_field,
+                                        entry_points=entry_points, description=description)
 
 print "Created files:"
 for filename in sorted(manifest):
