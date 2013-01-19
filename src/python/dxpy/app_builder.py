@@ -195,13 +195,11 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Inline developerNotes from Readme.developer.md
     if 'developerNotes' not in applet_spec:
-        developer_readme_filename = None
         for filename in 'README.developer.md', 'Readme.developer.md', 'readme.developer.md':
             if os.path.exists(os.path.join(src_dir, filename)):
-                developer_readme_filename = filename
+                with open(os.path.join(src_dir, filename)) as fh:
+                    applet_spec['developerNotes'] = fh.read()
                 break
-        with open(os.path.join(src_dir, developer_readme_filename)) as fh:
-            applet_spec['developerNotes'] = fh.read()
 
     # Inline the code of the program
     if "runSpec" in applet_spec and "file" in applet_spec["runSpec"]:
