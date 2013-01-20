@@ -45,7 +45,7 @@ Here is an example of writing to a GTable via a context-managed GTable
 handle::
 
   # Open a GTable for writing
-  with open_dxgtable('table-xxxx', mode='w') as gtable:
+  with open_dxgtable('gtable-xxxx', mode='w') as gtable:
       for line in input_file:
           gtable.add_row(line.split(','))
 
@@ -54,7 +54,7 @@ that is, you may use the object without a "with" block (and omit the
 *mode* parameter), for example::
 
   # Open a GTable for reading
-  gtable = open_dxgtable('table-xxxx')
+  gtable = open_dxgtable('gtable-xxxx')
   for row in gtable.iterate_rows(...):
       process(row)
 
@@ -67,7 +67,7 @@ that is, you may use the object without a "with" block (and omit the
    example::
 
      # Open a GTable for writing; we will flush it explicitly ourselves
-     gtable = open_dxgtable('table-xxxx')
+     gtable = open_dxgtable('gtable-xxxx')
      for line in input_file:
          gtable.add_row(line.split(','))
      gtable.flush()
