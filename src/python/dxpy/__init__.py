@@ -65,7 +65,7 @@ values:
 .. py:data:: WORKSPACE_ID
 
    Indicates the temporary workspace ID of the currently running job, or
-   None if we are not in an Execution Environment.
+   the current project if we are not in an Execution Environment.
 
 .. py:data:: PROJECT_CONTEXT_ID
 
