@@ -3,9 +3,12 @@
 import sys, os
 import json
 import argparse
+import re
 from dxpy.templating import *
 from dxpy.utils.printing import *
 from collections import OrderedDict
+
+IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
 
 API_VERSION = '1.0.0'
 
@@ -94,13 +97,16 @@ else:
             print ''
             ordinal = get_ordinal_str(len(app_json['inputSpec']) + 1)
             input_name = prompt_for_var(ordinal + ' input name (<ENTER> to finish)', allow_empty=True)
+            if input_name == '':
+                break
             if input_name in input_names:
                 print fill('Error: Cannot use the same input parameter name twice.  Please choose again.')
                 continue
-            else:
-                input_names.append(input_name)
-            if input_name == '':
-                break
+            if not IO_NAME_PATTERN.match(input_name):
+                print fill('Error: Parameter names may use only underscore "_", ASCII letters, and digits; and may not start with a digit.  Please choose again.')
+                continue
+            input_names.append(input_name)
+
             input_label = prompt_for_var('Label (optional human-readable name)', '')
 
             use_completer(class_completer)
@@ -178,13 +184,16 @@ array:file     array:record   float          record
             print ''
             ordinal = get_ordinal_str(len(app_json['outputSpec']) + 1)
             output_name = prompt_for_var(ordinal + ' output name (<ENTER> to finish)', allow_empty=True)
+            if output_name == '':
+                break
             if output_name in output_names:
                 print fill('Error: Cannot use the same output parameter name twice.  Please choose again.')
                 continue
-            else:
-                output_names.append(output_name)
-            if output_name == '':
-                break
+            if not IO_NAME_PATTERN.match(output_name):
+                print fill('Error: Parameter names may use only underscore "_", ASCII letters, and digits; and may not start with a digit.  Please choose again.')
+                continue
+            output_names.append(output_name)
+
             output_label = prompt_for_var('Label (optional human-readable name)', '')
 
             use_completer(class_completer)
