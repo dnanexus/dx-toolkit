@@ -340,7 +340,13 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
         app_spec['version'] = version
         app_describe = None
         try:
-            app_describe = dxpy.api.appDescribe("app-" + app_spec["name"], alias=version)
+            # 404, which is rather likely in this appDescribe request
+            # (the purpose of the request is to find out whether the
+            # version of interest exists), would ordinarily cause this
+            # request to be retried multiple times, introducing a
+            # substantial delay. So we disable retrying here for this
+            # request.
+            app_describe = dxpy.api.appDescribe("app-" + app_spec["name"], alias=version, always_retry=False)
         except dxpy.exceptions.DXAPIError as e:
             if e.name == 'ResourceNotFound':
                 pass
