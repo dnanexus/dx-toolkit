@@ -271,11 +271,11 @@ class DXFile(DXDataObject):
 
         '''
 
-        def write_request(data):
+        def write_request(data_for_write_req):
             if multithread:
-                self._async_upload_part_request(data, index=self._cur_part, **kwargs)
+                self._async_upload_part_request(data_for_write_req, index=self._cur_part, **kwargs)
             else:
-                self.upload_part(data, self._cur_part, **kwargs)
+                self.upload_part(data_for_write_req, self._cur_part, **kwargs)
             self._cur_part += 1
 
         if self._write_buf.tell() == 0 and self._write_bufsize == len(data):
@@ -301,9 +301,9 @@ class DXFile(DXDataObject):
         else:
             self._write_buf.write(data[:remaining_space])
 
-            data = self._write_buf.getvalue()
+            temp_data = self._write_buf.getvalue()
             self._write_buf = StringIO.StringIO()
-            write_request(data)
+            write_request(temp_data)
 
             # TODO: check if repeat string splitting is bad for
             # performance when len(data) >> _write_bufsize
