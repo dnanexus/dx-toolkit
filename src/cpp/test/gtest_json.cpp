@@ -135,6 +135,16 @@ TEST(JSONTest, CreationIndexingAndConstness) {
   ASSERT_JSONEXCEPTION(JSON::parse("[1"));
   ASSERT_JSONEXCEPTION(JSON::parse("[1,]"));
   ASSERT_JSONEXCEPTION(JSON::parse("{\"f\" 12}"));
+  
+  JSON j7(JSON_HASH);
+  j7["\n"] = 12;
+  JSON newline_str = "\n";
+  ASSERT_EQ(j7[newline_str], 12);
+  
+  JSON carriage_str = "\r";
+  j7[carriage_str] = 13;
+  ASSERT_EQ(j7[carriage_str], 13);
+  ASSERT_EQ(j7["\\n"].type(), JSON_UNDEFINED);
 }
 
 //TEST(JSONTest, "ArithmeticOnJSON")
@@ -726,6 +736,39 @@ TEST(JSONTest, InvalidFloatingPointValuesTest) {
   ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<long double>::signaling_NaN());
   ASSERT_JSONEXCEPTION(j1["1"] = numeric_limits<long double>::infinity());
   j1["1"] = numeric_limits<long double>::denorm_min(); // This should not throw an exception
+}
+
+TEST(JSONTest, UnableToCreateKeysInConstJSON) {
+  const JSON j1_c(JSON_HASH);
+  ASSERT_THROW(j1_c["blah"].type(), JSONException);
+  ASSERT_EQ(j1_c, JSON(JSON_HASH));
+  JSON jstr = "blah2";
+  ASSERT_THROW(j1_c[jstr], JSONException);
+  ASSERT_EQ(j1_c, JSON(JSON_HASH));
+
+  const JSON jstr_c = "blah3";
+  ASSERT_THROW(j1_c[jstr_c], JSONException);
+  ASSERT_EQ(j1_c, JSON(JSON_HASH));
+
+  const JSON j2_c = JSON::parse("{\"blah2\": 12}");
+  ASSERT_EQ(j2_c["blah2"], 12);
+  ASSERT_EQ(j2_c[jstr], 12);
+  ASSERT_THROW(j2_c["blah3"], JSONException);
+
+  JSON j2(JSON_HASH);
+  j2["blah"] = 12;
+  j2[jstr] = "blah2";
+  ASSERT_EQ(j2["blah2"], "blah2");
+  j2[jstr_c] = "blah3";
+  ASSERT_EQ(j2["blah3"], "blah3");
+
+  // Test out of bound
+  const JSON j3_c = JSON::parse("[0]");
+  ASSERT_EQ(j3_c[0], 0);
+  ASSERT_THROW(j3_c[1], JSONException);
+
+  // The line below should fail to compile
+  //j3_c[0] = 12;
 }
 
 int main(int argc, char **argv) {

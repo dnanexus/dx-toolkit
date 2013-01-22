@@ -168,7 +168,7 @@ namespace dx {
       */
     JSON(const JSONValue &rhs);
 
-    /** This constructor copy the parameter x's value using operator=().
+    /** This constructor copies the parameter x's value using operator=().
       * @throw JSONException If no suitable operator=() implementation found for copying
       * from a particular type.
       * @param x The new JSON object will be constructed from this value.
@@ -264,7 +264,6 @@ namespace dx {
 
     /** Access value stored inside JSON object by it's key
       * @param s A pre-existing Key inside current object
-      * @note The parameter "s" will be treated as serialized JSON string
       * @return A constant reference to JSON value stored under given Key
       * @throw JSONException if key does not exist or this->type() != JSON_HASH
       */
@@ -275,6 +274,7 @@ namespace dx {
       * or string (if this->type() == JSON_OBJECT).
       * @param j This JSON value will be used to index the current JSON object.
       * @return A constant reference to JSON value stored at given index.
+      * @note If j.type() == JSON_STRING, a non-serialized version of the string will be used. 
       * @throw JSONException if conditions specified in descriptions are not met, or if
       *            the referenced property/index does not exist.
       */
@@ -282,7 +282,6 @@ namespace dx {
 
     /** Same as const JSON& operator[](const std::string &s), just that c style string
       * "str" is converted to std::string, before calling it.
-      * @note The parameter "str" will be treated as serialized JSON string
       * @param str C style string, representing a key inside the object.
       * @return A constant reference to JSON value stored under given key.
       */
@@ -299,33 +298,37 @@ namespace dx {
     const JSON& operator [](const T&x) const;
 
     /** A non-constant version of const JSON& operator[](const size_t &indx)
-      * Returns a non-constant reference, and the value can modifed.
+      * @note Returns a non-constant JSON reference (can be modified).
+      * @see const JSON& operator[](const size_t &indx)
       */
     JSON& operator [](const size_t &indx);
 
     /** A non-constant version of const JSON& operator[](const std::string &indx)
-      * Returns a non-constant reference, and the value can modifed.
-      * @note If the specified key (parameter s) is not present, then it will be created
+      * @note Returns a non-constant JSON reference (can be modified).
+      * @note If the specified key (parameter s) is not present, then it will be created in the object
       *       and it's initial value will be set to JSON_UNDEFINED
-      * @note The parameter "s" will be treated as serialized JSON string
+      * @see const JSON& operator[](const std::string &s)
       */
     JSON& operator [](const std::string &s);
 
-    /** A non-constant version of const JSON& operator[](const JSON &indx)
-      * Returns a non-constant reference, and the value can modifed.
+    /** A non-constant version of const JSON& operator[](const JSON &j)
+      * @note Returns a non-constant JSON reference (value can be modifed).
+      * @note If the argument "j" is a JSON_STRING object, then effect will be similar to JSON& operator [](const std::string &s)
+      * where a non-serialized version of JSON_STRING "j" will be used as argument.
+      * @see const JSON& operator[](const JSON &j)
+      * @see JSON& operator [](const std::string &s)
       */
     JSON& operator [](const JSON &j);
 
     /** Same as JSON& operator[](const std::string &s), just that c style string
       * "str" is converted to std::string, before calling it.
-      * @note The parameter "str" will be treated as serialized JSON string
-      * @param str C style string, representing a key inside the object.
-      * @return A constant reference to JSON value stored under given key.
+      * @see JSON& operator [](const std::string &s);
       */
     JSON& operator [](const char *str);
 
     /** A non-constant version of const JSON& operator[](const JSON &indx)
-      * Returns a non-constant reference, and the value can modifed.
+      * @note Returns a non-constant reference (value can modifed).
+      * @see const JSON& operator[](const JSON &indx)
       */
     template<typename T>
     JSON& operator [](const T& x) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[x]); }
@@ -684,7 +687,6 @@ namespace dx {
       }
     }
 
-    JSON& jsonAtIndex(size_t i);
     const JSON& jsonAtIndex(size_t i) const;
     void write(std::ostream &out) const;
     JSONValue type() const { return JSON_ARRAY; }

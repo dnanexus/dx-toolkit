@@ -426,12 +426,6 @@ const JSON& Array::jsonAtIndex(size_t i) const {
   return val[i];
 }
 
-JSON& Array::jsonAtIndex(size_t i) {
-  if (val.size() == 0u || i >= val.size())
-    throw JSONException("Illegal: Out of bound JSON_ARRAY access");
-  return val[i];
-}
-
 // STL map's [] operator cannot be used on constant objects
 const JSON& Object::jsonAtKey(const std::string &s) const {
   std::map<std::string, JSON>::const_iterator it = this->val.find(s);
@@ -464,11 +458,27 @@ const JSON& JSON::operator[](const std::string &s) const {
 
   // No need for dynamic_cast (since I already checked for JSON_OBJECT case), and
   // dynamic_cast is expensive
+  const Object *o = static_cast<Object*>(val);
+  return o->jsonAtKey(s);
+}
+
+// For non-const JSON objects
+JSON& JSON::operator[](const std::string &s) {
+  if (this->type() != JSON_OBJECT)
+    throw JSONException("Cannot use string to index value of a non-JSON_OBJECT using [] operator");
+
+  // No need for dynamic_cast (since I already checked for JSON_OBJECT case), and
+  // dynamic_cast is expensive
   Object *o = static_cast<Object*>(val);
   return o->jsonAtKey(s);
 }
 
 const JSON& JSON::operator[](const char *str) const {
+  return operator[](std::string(str));
+}
+
+// For non-const JSON objects
+JSON& JSON::operator[](const char *str) {
   return operator[](std::string(str));
 }
 
@@ -493,11 +503,25 @@ const JSON& JSON::operator[](const JSON &j) const {
   throw JSONException("Only JSON_OBJECT and JSON_ARRAY can be indexed using []");
 }
 
-// A dirty hack for creating non-const versions of [] overload using const versions above
+JSON& JSON::operator[](const JSON &j) {
+  if (this->type() == JSON_ARRAY) {
+    return (*this)[size_t(j)];
+  }
+  if (this->type() == JSON_OBJECT) {
+    if (j.type() != JSON_STRING)
+      throw JSONException("Cannot use a non-string value to index JSON_OBJECT using []");
+
+    String *ptr = static_cast<String*>(j.val);
+    return (*this)[ptr->val];
+  }
+  throw JSONException("Only JSON_OBJECT and JSON_ARRAY can be indexed using []");
+}
+
+// A dirty hack for creating non-const versions of [] (for array indexing) overload using const versions above
 JSON& JSON::operator [](const size_t &indx) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[indx]); }
-JSON& JSON::operator [](const std::string &s) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[s]); }
-JSON& JSON::operator [](const JSON &j) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[j]); }
-JSON& JSON::operator [](const char *str) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[str]); }
+//JSON& JSON::operator [](const std::string &s) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[s]); }
+//JSON& JSON::operator [](const JSON &j) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[j]); }
+//JSON& JSON::operator [](const char *str) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[str]); }
 
 JSON::JSON(const JSONValue &rhs) {
   switch(rhs) {
