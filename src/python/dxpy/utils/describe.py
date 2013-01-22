@@ -172,7 +172,7 @@ def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
 def print_project_desc(desc):
-    recognized_fields = ['id', 'class', 'name', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo']
+    recognized_fields = ['id', 'class', 'name', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -189,6 +189,8 @@ def print_project_desc(desc):
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
+    if 'sponsoredDataUsage' in desc:
+        print_field("Sponsored data", ('%.2f' % desc["sponsoredDataUsage"]) + ' GB')
     if "objects" in desc:
         print_field("# Files", str(desc["objects"]))
     if 'tags' in desc:
@@ -274,7 +276,7 @@ def get_col_str(col_desc):
     return col_desc['name'] + DELIMITER(" (") + col_desc['type'] + DELIMITER(")")
 
 def print_data_obj_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored']
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'project' in desc:
@@ -282,6 +284,8 @@ def print_data_obj_desc(desc):
     if 'folder' in desc:
         print_field("Folder", desc["folder"])
     print_field("Name", desc["name"])
+    if 'sponsored' in desc and desc['sponsored']:
+        print_json_field("Sponsored", desc['sponsored'])
     if 'state' in desc:
         print_field("State", DATA_STATES(desc['state']))
     if 'hidden' in desc:
