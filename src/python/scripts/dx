@@ -297,19 +297,32 @@ def login(args):
         auth = HTTPBasicAuth(username, password)
 
         session = requests.session()
-        res = requests.post(authserver+"/oauth2/authorize",
-                            data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
-                            auth=auth,
-                            allow_redirects=False)
-        parsed_url = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])
+        error_msg = "Error: The authserver could not be contacted; if you are manually specifying the authserver, please check if your settings are correct"
+        try:
+            res = requests.post(authserver+"/oauth2/authorize",
+                                data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
+                                auth=auth,
+                                allow_redirects=False)
+        except:
+            # An error may be thrown here if the host is not reachable
+            # or if the port is not receiving connections
+            parser.exit(3, fill(error_msg) + "\n")
+        try:
+            parsed_url = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])
+        except:
+            # An error may be thrown here if the wrong port is specified
+            parser.exit(3, fill(error_msg) + "\n")
         if 'code' not in parsed_url:
             parser.exit(1, 'Error: Incorrect username and/or password\n')
         else:
             code = parsed_url['code'][0]
         
-        res = requests.post(authserver+"/oauth2/token",
-                            data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"})
-        assert(res.status_code == requests.codes.ok)
+        try:
+            res = requests.post(authserver+"/oauth2/token",
+                                data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"})
+            assert(res.status_code == requests.codes.ok)
+        except:
+            parser.exit(3, 'Error: Please try again' + "\n")
         token_res = json.loads(res.content)
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
