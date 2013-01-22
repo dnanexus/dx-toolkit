@@ -284,8 +284,6 @@ def print_data_obj_desc(desc):
     if 'folder' in desc:
         print_field("Folder", desc["folder"])
     print_field("Name", desc["name"])
-    if 'sponsored' in desc and desc['sponsored']:
-        print_json_field("Sponsored", desc['sponsored'])
     if 'state' in desc:
         print_field("State", DATA_STATES(desc['state']))
     if 'hidden' in desc:
@@ -340,7 +338,10 @@ def print_data_obj_desc(desc):
                 print_field("Media type", desc['media'])
             elif field == "size":
                 if desc["class"] == "file" or desc["class"] == "gtable":
-                    print_field("Size", get_size_str(desc['size']))
+                    sponsored_str = ""
+                    if 'sponsored' in desc and desc['sponsored']:
+                        sponsored_str = ", sponsored by DNAnexus"
+                    print_field("Size", get_size_str(desc['size']) + sponsored_str)
                 else:
                     print_field("Size", str(desc['size']))
             elif field == "length":
