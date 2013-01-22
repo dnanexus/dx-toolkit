@@ -163,7 +163,8 @@ ObjectInfo Resolver::FindPath(const string &path) const
     else
       oi.project.name = GetProjectName(oi.project.id);
 
-    LookupPath(oi.project.id, oi.object.name, oi.object.folder, oi);
+    if (oi.project.id != "")
+      LookupPath(oi.project.id, oi.object.name, oi.object.folder, oi);
   }
   return oi;
 }
@@ -195,7 +196,10 @@ void Resolver::LookupPath(const string &project_id, const string &name, const st
   input["scope"]["recurse"] = true;
   dx::JSON results = DXHTTPRequest("/system/findDataObjects", input.toString());
   if (results["results"].size() == 0)
+  {
+    oi.object.id = "";
     return;
+  }
   if (results["results"].size() > 1)
     throw "Object collision";
 
