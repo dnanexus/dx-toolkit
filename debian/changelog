@@ -1,3 +1,13 @@
+dx-toolkit (0.35.0) precise; urgency=low
+
+  * dx-app-wizard enforces new input/output name restrictions.
+
+  * Changes to retry logic in the bindings.
+
+  * dx-app-wizard now creates a Readme.developer.md file.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 22 Jan 2013 13:47:35 -0800
+
 dx-toolkit (0.34.3) precise; urgency=low
 
   * Fix installation of contigset2fasta symlink.
