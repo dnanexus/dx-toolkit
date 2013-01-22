@@ -131,7 +131,7 @@ AUTH_HELPER = None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
 APISERVER_PROTOCOL = 'https'
-APISERVER_HOST = 'preprodapi.dnanexus.com'
+APISERVER_HOST = 'api.dnanexus.com'
 APISERVER_PORT = '443'
 
 DEFAULT_RETRIES = 5

@@ -328,7 +328,7 @@ bool loadFromEnvironment() {
 
 
   // initialized with default values, will be overridden by env variable/config file (if present)
-  string apiserver_host = "preprodapi.dnanexus.com";
+  string apiserver_host = "api.dnanexus.com";
   string apiserver_port = "443";
   string apiserver_protocol = "https";
 

@@ -27,7 +27,7 @@ public class DXHTTPRequest {
     private JsonFactory dxJsonFactory;
 
     public DXHTTPRequest() throws Exception {
-        if (APISERVER_HOST == null) { APISERVER_HOST = "preprodapi.dnanexus.com"; }
+        if (APISERVER_HOST == null) { APISERVER_HOST = "api.dnanexus.com"; }
         if (APISERVER_PORT == null) { APISERVER_PORT = "443"; }
         if (APISERVER_PROTOCOL == null) { APISERVER_PROTOCOL = "https"; }
         if (SECURITY_CONTEXT == null) { System.err.println("Warning: No security context found"); }

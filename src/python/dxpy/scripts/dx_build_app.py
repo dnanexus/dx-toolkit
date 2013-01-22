@@ -119,9 +119,9 @@ def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
     # address) and doesn't give us any information about whether we are
     # talking to preprod.
     if dx_toolkit_autodep == "auto":
-        # "auto" (the default) means dx-toolkit (stable) on preprod and
+        # "auto" (the default) means dx-toolkit (stable) on preprod and prod, and
         # dx-toolkit-beta on all other systems.
-        if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
+        if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
             dx_toolkit_autodep_flag = "--dx-toolkit-stable-autodep"
         else:
             dx_toolkit_autodep_flag = "--dx-toolkit-beta-autodep"
@@ -260,9 +260,9 @@ def main(**kwargs):
 
         try:
             if args.dx_toolkit_autodep == "auto":
-                # "auto" (the default) means dx-toolkit (stable) on preprod
+                # "auto" (the default) means dx-toolkit (stable) on preprod and prod,
                 # and dx-toolkit-beta on all other systems.
-                if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com":
+                if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
                     args.dx_toolkit_autodep = "stable"
                 else:
                     args.dx_toolkit_autodep = "beta"
