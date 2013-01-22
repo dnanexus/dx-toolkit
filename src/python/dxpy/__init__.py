@@ -141,6 +141,10 @@ http_server_errors = set([requests.codes.server_error,
                           requests.codes.service_unavailable,
                           requests.codes.gateway_timeout])
 
+class ContentLengthError(HTTPError):
+    '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
+    pass
+
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
@@ -169,12 +173,14 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :type prepend_srv: boolean
     :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if either of the following is true:
                         
-                        - *always_retry* is True
-                        - method.upper() == 'GET'
+                        - Content length received does not match "Content-Length" header (only applicable if response is received from server)
                         - Server responded with HTTP status code in 5xx range (only applicable if response is received from server)
+                        - If no response is received from server, then we retry if *always_retry* is True, or *method* == "GET"
 
     :type max_retries: int
-    :param always_retry: If True, always attempt retry for failed requests.
+    :param always_retry: If True, indicates that it is safe to retry a request on failure 
+                      
+                        - Note: It is not guaranteed that the request will be *always* retried on failure, rather an indication to the function that it is safe to do so.
     :type always_retry: boolean
     :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
     :raises: :exc:`requests.exceptions.HTTPError` if the response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
@@ -251,7 +257,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             else:
                 if 'content-length' in response.headers:
                     if int(response.headers['content-length']) != len(response.content):
-                        raise HTTPError("Received response with content-length header set to %s but content length is %d"
+                        raise ContentLengthError("Received response with content-length header set to %s but content length is %d"
                             % (response.headers['content-length'], len(response.content)))
 
                 if use_compression and response.headers.get('content-encoding', '') == 'snappy':
@@ -274,13 +280,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             # but non-idempotent requests can be unsafe to retry
             # Distinguish between connection initiation errors and dropped socket errors
             if retry < max_retries:
-                # If an error occurs, we retry if *either* of the following is true:
-                # 1) always_retry is True , 2) it was a GET request, 3) server responded with 5xx HTTP status code
-                ok_to_retry = always_retry or (method == 'GET')
+                if (response is None) or isinstance(e, ContentLengthError):
+                    ok_to_retry = always_retry or (method == 'GET')
+                else:
+                    ok_to_retry = response.status_code >= 500 and response.status_code < 600 
 
-                if response is not None:
-                    ok_to_retry = ok_to_retry or (response.status_code >= 500 and response.status_code < 600) 
-                    
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)

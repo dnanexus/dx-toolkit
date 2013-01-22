@@ -124,6 +124,9 @@ JSON DXHTTPRequest(const string &resource, const string &data,
   // a maximum of NUM_MAX_RETRIES number of subsequent tries are made, if required and feasible.
   for (countTries = 0u; countTries <= NUM_MAX_RETRIES; ++countTries, sec_to_wait *= 2u) {
     bool toRetry; // whether or not the request should be retried on failure
+    
+    // TODO: Add check for Content-Length header (we should retry if content-length header mismatches with actual data received)
+
     reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
     try {
       // Attempt a POST request
@@ -140,7 +143,7 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
     if (reqCompleted) {
       if (req.responseCode != 200) {
-        toRetry = alwaysRetry || isAlwaysRetryableHttpCode(req.responseCode);
+        toRetry = isAlwaysRetryableHttpCode(req.responseCode);
       } else {
         // Everything is fine, the request went through and 200 received
         // So return back the response now
