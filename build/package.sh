@@ -13,6 +13,15 @@ rm Makefile
 rm -r debian
 mv build/Prebuilt-Readme.md Readme.md
 
+# setuptools bakes the path of the Python interpreter into all installed Python scripts. Rewrite it back to the more
+# portable form "/usr/bin/env python2.7", since we don't always know where the right interpreter is on the target
+# system.
+for f in bin/*; do
+    if head -n 1 "$f" | grep -q python; then
+        perl -i -pe 's|^#!/.+|#!/usr/bin/env python2.7| if $. == 1' "$f"
+    fi
+done
+
 if [[ "$ostype" == 'Linux' ]]; then
   osversion=$(lsb_release -c | sed s/Codename:.//)
   # TODO: detect versions that do and don't support mktemp --suffix more
