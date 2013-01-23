@@ -2368,7 +2368,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
     # Ask for confirmation if a tty and if input was not given as a
     # single JSON.
-    if args.confirm:
+    if args.confirm and sys.stdout.isatty():
         try:
             value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
         except BaseException as details:
