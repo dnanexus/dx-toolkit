@@ -258,16 +258,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 
-    properties = {}
-    if "title" in applet_spec:
-        properties["title"] = applet_spec["title"]
-    if "summary" in applet_spec:
-        properties["summary"] = applet_spec["summary"]
-    if "description" in applet_spec:
-        properties["description"] = applet_spec["description"]
-
-    dxpy.api.appletSetProperties(applet_id, {"project": dest_project, "properties": properties})
-
     if "categories" in applet_spec:
         dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
 
@@ -319,16 +309,9 @@ def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None
     app_spec = _get_app_spec(src_dir)
     print >> sys.stderr, "Will create app with spec: ", app_spec
 
-    applet_desc = dxpy.DXApplet(applet_id).describe(incl_properties=True)
+    applet_desc = dxpy.DXApplet(applet_id).describe()
     app_spec["applet"] = applet_id
     app_spec["name"] = applet_desc["name"]
-
-    if "title" in applet_desc["properties"]:
-        app_spec["title"] = applet_desc["properties"]["title"]
-    if "summary" in applet_desc["properties"]:
-        app_spec["summary"] = applet_desc["properties"]["summary"]
-    if "description" in applet_desc["properties"]:
-        app_spec["description"] = applet_desc["properties"]["description"]
 
     if billTo:
         app_spec["billTo"] = billTo
