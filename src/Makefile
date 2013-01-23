@@ -16,7 +16,7 @@ export DNANEXUS_HOME=$(CURDIR)/..
 #
 #   export MAKEFLAGS=-j8
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta reads_validator dx-verify-file
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file
 
 # Client bindings and wrappers
 # ============================
@@ -75,9 +75,6 @@ java: api_wrappers
 
 dx-contigset-to-fasta: api_wrappers
 	$(MAKE) -C dx-contigset-to-fasta install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
-
-reads_validator: api_wrappers
-	$(MAKE) -C reads_validator install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 dx-verify-file: api_wrappers
 	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
@@ -166,8 +163,6 @@ clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
 	-rm -f ../bin/dx-contigset-to-fasta
 	-rm -f ../bin/contigset2fasta
-	$(MAKE) -C reads_validator clean
-	-rm -f ../bin/dx-reads-validator
 	$(MAKE) -C ua clean
 	-rm -rf python/build
 	-rm -rf java/target
@@ -176,4 +171,4 @@ clean:
 	-rm -rf ../lib
 	-rm -rf ../share
 
-.PHONY: all toolkit_version api_wrappers src_libs python perl java dx-contigset-to-fasta reads_validator ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
+.PHONY: all toolkit_version api_wrappers src_libs python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
