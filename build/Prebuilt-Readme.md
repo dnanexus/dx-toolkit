@@ -1,7 +1,7 @@
 DNAnexus Platform Toolkit
 =========================
 
-**To build ```dx-toolkit``` from source, see http://wiki.dnanexus.com/DNAnexus-SDK.**
+**To build ```dx-toolkit``` from source, see http://wiki.dnanexus.com/Downloads.**
 
 ```dx-toolkit``` contains the DNAnexus API language bindings and utilities for
 interacting with the DNAnexus platform.
