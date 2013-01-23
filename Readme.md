@@ -97,6 +97,9 @@ Notes:
 
   - Tested on CentOS 5.4 and CentOS 6.2.
 
+  - TODO: Fedora/RHEL instructions; the CentOS instructions here may be a good
+    starting point.
+
 ### OS X
 
 Install the [Command Line Tools for XCode](http://wiki.dnanexus.com/DNAnexus-SDK). (Free registration required with Apple)
@@ -124,8 +127,6 @@ Install the following packages from source or via [Homebrew](http://mxcl.github.
 * **Note:** There is an incompatibility when using GCC 4.7.1 and Boost 1.49.
   Please use either the GCC 4.6 series or Boost 1.50+ in this case.
 
-### TODO: Fedora/RHEL
-
 Java bindings
 -------------
 
@@ -143,8 +144,3 @@ The Java bindings are not built by default.
 ### Installing
 
     mvn install
-
-Test dependencies
------------------
-
-TODO
