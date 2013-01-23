@@ -1,7 +1,7 @@
 DNAnexus Platform Toolkit
 =========================
 
-**To download pre-built packages for your platform, see http://wiki.dnanexus.com/DNAnexus-SDK.**
+**To download pre-built packages for your platform, see http://wiki.dnanexus.com/Downloads.**
 
 Welcome to the `dx-toolkit` repository! This repository contains the DNAnexus
 API language bindings and utilities for interacting with the DNAnexus platform.
