@@ -30,7 +30,7 @@
 #* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #******************************************************************************\
 
-# Copyright 2012 DNAnexus, Inc. All rights reserved.
+# Copyright 2012-2013 DNAnexus, Inc. All rights reserved.
 
 import sys, os, types, argparse
 import dxpy.utils.completer
