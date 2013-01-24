@@ -1,3 +1,13 @@
+dx-toolkit (0.35.1) precise; urgency=low
+
+  * Removed reads_validator from dx-toolkit.
+
+  * Use more portable Python interpreter path in distributed pkgs.
+
+  * Many minor tweaks.
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 24 Jan 2013 11:47:55 -0800
+
 dx-toolkit (0.35.0) precise; urgency=low
 
   * dx-app-wizard enforces new input/output name restrictions.
