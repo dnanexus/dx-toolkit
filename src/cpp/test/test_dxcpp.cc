@@ -827,6 +827,19 @@ TEST_F(DXGTableTest, CreateDXGTableTest) {
   }
 }
 
+TEST_F(DXGTableTest, CheckNullValueInDXGTable) {
+  ASSERT_EQ(DXGTable::NULL_VALUE, -2147483648); // sanity check
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  string rowstr = "[[\"Row1\", " + boost::lexical_cast<string>(DXGTable::NULL_VALUE) + "]]";
+  dxgtable.addRows(JSON::parse(rowstr));
+  dxgtable.close(true);
+  
+  JSON rows = dxgtable.getRows();
+  ASSERT_EQ(rows["data"].length(), rows["length"].get<size_t>());
+  ASSERT_EQ(rows["length"], 1);
+  ASSERT_EQ(rows["data"][0][2], DXGTable::NULL_VALUE);
+}
+
 TEST_F(DXGTableTest, CheckCopyConstructorAndAssignmentOperator) {
   std::vector<DXGTable> gv;
   DXGTable dxg = DXGTable::newDXGTable(DXGTableTest::columns);
@@ -858,10 +871,19 @@ TEST_F(DXGTableTest, CheckCopyConstructorAndAssignmentOperator) {
 }
 
 TEST_F(DXGTableTest, InitializeFromGTableTest) {
-  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
+  JSON metadata(JSON_HASH);
+  metadata["name"] = "my dxgtable";
+  metadata["tags"] = JSON(JSON_ARRAY);
+  metadata["tags"].push_back("blah");
 
-  DXGTable second_table = DXGTable::newDXGTable(dxgtable);
+  dxgtable = DXGTable::newDXGTable(DXGTableTest::columns, metadata);
+
+  DXGTable second_table = DXGTable::newDXGTable(dxgtable, JSON::parse("{\"name\": \"my dxgtable2\"}"));
   JSON desc = second_table.describe();
+  
+  ASSERT_EQ(desc["tags"][0], "blah"); // "blah" should have been copied from parent gtable
+  ASSERT_EQ(desc["name"], "my dxgtable2"); // name should have been overridden 
+  
   ASSERT_EQ(DXGTableTest::columns.size(), desc["columns"].size());
   for (int i = 0; i < DXGTableTest::columns.size(); i++) {
     ASSERT_EQ(DXGTableTest::columns[i]["name"].get<string>(),
