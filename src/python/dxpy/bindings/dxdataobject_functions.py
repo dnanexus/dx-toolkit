@@ -66,7 +66,7 @@ def _guess_link_target_type(link):
 def get_handler(id_or_link, project=None):
     '''
     :param id_or_link: String containing an object ID or dict containing a DXLink
-    :rtype: :class:`~dxpy.bindings.DXDataObject`
+    :rtype: :class:`~dxpy.bindings.DXDataObject` or :class:`~dxpy.bindings.DXProject`
 
     Parses a string or DXLink dict. Creates and returns an object handler for it.
 
