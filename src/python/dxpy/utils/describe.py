@@ -81,17 +81,18 @@ def get_io_desc(parameter, include_class=True, show_opt=True):
         desc += "]"
     return desc
 
-def get_io_spec(spec):
-    if len(spec) == 0:
+def get_io_spec(spec, skip_fields=None):
+    if skip_fields is None:
+        skip_fields = []
+    list_of_params = [get_io_desc(param) for param in spec if param["name"] not in skip_fields]
+    if len(list_of_params) == 0:
         return '-'
     if get_delimiter() is not None:
-        return ('\n' + get_delimiter()).join([get_io_desc(param) for param in spec])
+        return ('\n' + get_delimiter()).join(list_of_params)
     else:
-        return ('\n' + ' '*16).join(map(lambda param:
-                                            fill(get_io_desc(param),
-                                                 subsequent_indent=' '*18,
-                                                 width_adjustment=-18),
-                                        spec))
+        return ('\n' + ' '*16).join([fill(param,
+                                          subsequent_indent=' '*18,
+                                          width_adjustment=-18) for param in list_of_params])
 
 def is_job_ref(thing, reftype=dict):
     '''
@@ -156,6 +157,21 @@ def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
         for key in orig_thing:
             get_resolved_jbors(resolved_thing[key], orig_thing[key], resolved_jbors)
 
+def render_bundleddepends(thing):
+    return [item["name"] + " (" + item["id"]["$dnanexus_link"] + ")" for item in thing]
+
+def render_execdepends(thing):
+    rendered = []
+    for item in thing:
+        if len(item) == 1:
+            rendered.append(item['name'])
+        elif 'package_manager' in item:
+            if item['package_manager'] == 'apt':
+                rendered.append(item['name'])
+            else:
+                rendered.append(item['package_manager'] + ":" + item['name'])
+    return rendered
+
 def print_field(label, value):
     if get_delimiter() is not None:
         sys.stdout.write(label + get_delimiter() + value + '\n')
@@ -210,9 +226,13 @@ def print_project_desc(desc):
         if field not in recognized_fields:
             print_json_field(field, desc[field])
 
-def print_app_desc(desc):
-    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details']
+def print_app_desc(desc, verbose=False):
+    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes']
     # NOTE: Hiding "billing" for now
+
+    advanced_inputs = [] if verbose else desc["details"].get("advancedInputs")
+    if "advancedInputs" in desc["details"]:
+        del desc["details"]["advancedInputs"]
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -242,29 +262,25 @@ def print_app_desc(desc):
             print_field("Subtitle", desc["subtitle"])
         if 'summary' in desc and desc['summary'] is not None:
             print_field("Summary", desc['summary'])
-        if "description" in desc and desc['description'] is not None:
-            print_field("Description", desc["description"])
         print_list_field("Categories", desc["categories"])
         if 'details' in desc:
             print_json_field("Details", desc["details"])
         print_json_field("Access", desc["access"])
         print_field("API version", desc["dxapi"])
         if 'inputSpec' in desc:
-            print_nofill_field("Input Spec", get_io_spec(desc["inputSpec"]))
+            print_nofill_field("Input Spec", get_io_spec(desc["inputSpec"], skip_fields=advanced_inputs))
             print_nofill_field("Output Spec", get_io_spec(desc["outputSpec"]))
             print_field("Interpreter", desc["runSpec"]["interpreter"])
             if "resources" in desc["runSpec"]:
                 print_json_field("Resources", desc["runSpec"]["resources"])
             if "bundledDepends" in desc["runSpec"]:
-                print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
+                print_list_field("bundledDepends", render_bundleddepends(desc["runSpec"]["bundledDepends"]))
             if "execDepends" in desc["runSpec"]:
-                print_json_field("execDepends", desc["runSpec"]["execDepends"])
+                print_list_field("execDepends", render_execdepends(desc["runSpec"]["execDepends"]))
             if "systemRequirements" in desc['runSpec']:
                 print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
         if 'resources' in desc:
             print_field("Resources", desc['resources'])
-        elif 'globalWorkspace' in desc:
-            print_field("GlobalWorkspace", desc["globalWorkspace"])
     if 'installs' in desc:
         print_field('# Installs', str(desc['installs']))
 
@@ -276,7 +292,7 @@ def get_col_str(col_desc):
     return col_desc['name'] + DELIMITER(" (") + col_desc['type'] + DELIMITER(")")
 
 def print_data_obj_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes']
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'project' in desc:
@@ -309,8 +325,6 @@ def print_data_obj_desc(desc):
         print_field("Subtitle", desc["subtitle"])
     if 'summary' in desc:
         print_field("Summary", desc['summary'])
-    if "description" in desc:
-        print_field("Description", desc["description"])
     if 'access' in desc:
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
@@ -323,10 +337,10 @@ def print_data_obj_desc(desc):
         print_field("Interpreter", desc["runSpec"]["interpreter"])
         if "resources" in desc['runSpec']:
             print_json_field("Resources", desc["runSpec"]["resources"])
-        if "bundledDepends" in desc['runSpec']:
-            print_json_field("bundledDepends", desc["runSpec"]["bundledDepends"])
-        if "execDepends" in desc['runSpec']:
-            print_json_field("execDepends", desc["runSpec"]["execDepends"])
+        if "bundledDepends" in desc["runSpec"]:
+            print_list_field("bundledDepends", render_bundleddepends(desc["runSpec"]["bundledDepends"]))
+        if "execDepends" in desc["runSpec"]:
+            print_list_field("execDepends", render_execdepends(desc["runSpec"]["execDepends"]))
         if "systemRequirements" in desc['runSpec']:
             print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
 
@@ -459,7 +473,7 @@ def print_generic_desc(desc):
     for field in desc:
         print_json_field(field, desc[field])
 
-def print_desc(desc):
+def print_desc(desc, verbose=False):
     '''
     :param desc: The describe hash of a DNAnexus entity
     :type desc: dict
@@ -470,7 +484,7 @@ def print_desc(desc):
     if desc['class'] in ['project', 'workspace', 'container']:
         print_project_desc(desc)
     elif desc['class'] == 'app':
-        print_app_desc(desc)
+        print_app_desc(desc, verbose=verbose)
     elif desc['class'] == 'job':
         print_job_desc(desc)
     elif desc['class'] == 'user':

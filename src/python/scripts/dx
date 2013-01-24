@@ -1168,7 +1168,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(desc)
+                    print_desc(desc, args.verbose)
             except:
                 pass
         elif is_container_id(args.path):
@@ -1183,7 +1183,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(desc)
+                    print_desc(desc, args.verbose)
             except:
                 pass
 
@@ -1199,7 +1199,7 @@ def describe(args):
                 return
             else:
                 print get_result_str()
-                print_desc(result['describe'])
+                print_desc(result['describe'], args.verbose)
 
     if not is_hashid(args.path) and ':' not in args.path:
 
@@ -1214,7 +1214,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(desc)
+                    print_desc(desc, args.verbose)
                 found_match = True
             except dxpy.DXAPIError as details:
                 if details.code != requests.codes.not_found:
@@ -1228,7 +1228,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(result['describe'])
+                    print_desc(result['describe'], args.verbose)
                 found_match = True
 
         # Could be a user
@@ -1243,7 +1243,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(desc)
+                    print_desc(desc, args.verbose)
             except dxpy.DXAPIError as details:
                 if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
                     raise
@@ -1260,7 +1260,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(desc)
+                    print_desc(desc, args.verbose)
             except dxpy.DXAPIError as details:
                 if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
                     raise
@@ -1277,7 +1277,7 @@ def describe(args):
                     return
                 else:
                     print get_result_str()
-                    print_desc(desc)
+                    print_desc(desc, args.verbose)
             except dxpy.DXAPIError as details:
                 if details.code != requests.codes.not_found:
                     raise
@@ -1333,7 +1333,7 @@ def new_record(args):
         if args.brief:
             print dxrecord.get_id()
         else:
-            print_desc(dxrecord.describe(incl_properties=True, incl_details=True))
+            print_desc(dxrecord.describe(incl_properties=True, incl_details=True), args.verbose)
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2855,7 +2855,7 @@ parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, su
 # data
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
-                                        description=fill('Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.') + '\n\n' + fill('NOTE: the project found in the path is used as a HINT when you are using an object ID; you may still get a result if you have access to a copy of the object in some other project, but if it exists in the specified project, its description will be returned.'),
+                                        description=fill('Describe a DNAnexus entity.  Use this command to describe data objects by name or ID, jobs, apps, users, organizations, etc.  If using the "--json" flag, it will thrown an error if more than one match is found (but if you would like a JSON array of the describe hashes of all matches, then provide the "--multi" flag).  Otherwise, it will always display all results it finds.') + '\n\nNOTES:\n\n- ' + fill('The project found in the path is used as a HINT when you are using an object ID; you may still get a result if you have access to a copy of the object in some other project, but if it exists in the specified project, its description will be returned.') + '\n\n- ' + fill('Options marked as advanced inputs will be hidden unless --verbose is provided'),
                                         formatter_class=argparse.RawTextHelpFormatter,
                                         parents=[json_arg, no_color_arg, delim_arg, env_args],
                                         prog='dx describe')
