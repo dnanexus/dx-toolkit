@@ -729,7 +729,7 @@ public:
    * Sentinel value that you can use as a null value for numerical
    * columns (equal to -2^31).
    */
-  static const int NULL_VALUE = -2147483648;
+  static const int NULL_VALUE;
 };
 
 #endif
