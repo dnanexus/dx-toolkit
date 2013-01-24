@@ -53,7 +53,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type visibility: string
     :param name: Name of the object (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
@@ -127,6 +127,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
             query["name"] = name
         elif name_mode == 'glob':
             query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
         else:
             raise DXError('find_data: Unexpected value found for argument name_mode')
     if properties is not None:
@@ -199,7 +201,7 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type describe: boolean or dict
     :param name: Name of the job to search by (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
@@ -253,6 +255,8 @@ def find_jobs(launched_by=None, executable=None, project=None,
             query['name'] = name
         elif name_mode == 'glob':
             query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
         else:
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
     if limit is not None:
@@ -266,7 +270,7 @@ def find_projects(name=None, name_mode='exact', properties=None,
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
@@ -299,6 +303,8 @@ def find_projects(name=None, name_mode='exact', properties=None,
             query['name'] = name
         elif name_mode == 'glob':
             query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
         else:
             raise DXError('find_projects: Unexpected value found for argument name_mode')
     if properties is not None:
@@ -325,7 +331,7 @@ def find_apps(name=None, name_mode='exact', category=None,
     """
     :param name: Name of the app (also see *name_mode*)
     :type name: string
-    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards)
+    :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
     :param category: If specified, only returns apps that are in the specified category
     :type category: string
@@ -368,6 +374,8 @@ def find_apps(name=None, name_mode='exact', category=None,
             query['name'] = name
         elif name_mode == 'glob':
             query['name'] = {'glob': name}
+        elif name_mode == 'regexp':
+            query['name'] = {'regexp': name}
         else:
             raise DXError('find_apps: Unexpected value found for argument name_mode')
     if category is not None:
