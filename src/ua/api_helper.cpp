@@ -23,12 +23,21 @@ void apiInit(const string &apiserverHost, const int apiserverPort, const string 
 
 void testServerConnection() {
   LOG << "Testing connection to API server...";
+
   try {
-    dx::JSON result = systemFindProjects();
+    dx::JSON result = systemFindProjects(dx::JSON::parse("{\"limit\": 1}"), false); // don't retry this request
     LOG << " success." << endl;
-  } catch (exception &e) {
+  } catch (DXAPIError &aerr) {
     LOG << " failure." << endl;
-    throw;
+    if (aerr.resp_code == 401) {
+      throw runtime_error("Invalid Authentication token, please provide a correct auth token (you may use --auth-token option). (" + string(aerr.what()) + ")");
+    }
+    throw runtime_error("Unable to connect to apiserver -- an unexpected error occurred. (" + string(aerr.what()) + ")");
+  }
+  catch (exception &e) {
+    LOG << " failure." << endl;
+    throw runtime_error("Unable to connect to DNAnexus apiserver. Please list your environment variables (--env flag) to see the current apiserver configuration.\n\n"
+                        "Detailed message (for advanced users only):\n" + string(e.what()));
   }
 }
 
@@ -95,7 +104,7 @@ string resolveProject(const string &projectSpec) {
 
   if (matchingProjectIdToName.size() == 0) {
     LOG << " failure." << endl;
-    throw runtime_error("\"" + projectSpec + "\" is not a valid project name or ID (with >=CONTRIBUTE access)");
+    throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=CONTRIBUTE access)");
   }
 
   if (matchingProjectIdToName.size() > 1) {
@@ -104,7 +113,7 @@ string resolveProject(const string &projectSpec) {
     for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
       LOG << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")" << endl;
     }
-    throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project");
+    throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project (multiple matches found)");
   }
   
   LOG << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corrosponding to project identifer \"" << projectSpec << "\"" << endl;
@@ -147,7 +156,7 @@ void createFolder(const string &projectID, const string &folder) {
     LOG << " success." << endl;
   } catch (DXAPIError &e) {
     LOG << " failure." << endl;
-    throw runtime_error("Could not create folder " + folder + " in project " + projectID + " (" + e.what() + ")");
+    throw runtime_error("Could not create folder with path '" + folder + "' in project '" + projectID + "' (" + e.what() + ")");
   }
 }
 

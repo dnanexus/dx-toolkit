@@ -30,6 +30,8 @@ extern std::string g_APISERVER_HOST;
 extern std::string g_APISERVER_PORT;
 extern std::string g_APISERVER;
 
+extern bool g_dxcpp_mute_retry_cerrs; // dirty hack
+
 extern dx::JSON g_SECURITY_CONTEXT;
 
 extern bool g_APISERVER_SET;

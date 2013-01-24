@@ -112,12 +112,12 @@ void File::init(const bool tryResuming) {
       LOG << "Remote resume target is in state: \"" << state << "\"" << endl;
     }
     if (findResult.size() > 1) {
-      cerr << "More than one resumable targets for local file \"" << localFile << "\" found: " << endl;
+      cerr << "More than one resumable targets for local file \"" << localFile << "\" found in the project '" + projectID + "', candidates: " << endl;
       for (unsigned i = 0; i < findResult.size(); ++i) {
         cerr << "\t" << (i + 1) << ". " << findResult[i]["describe"]["name"].get<string>() << " (" << findResult[i]["id"].get<string>() << ")" << endl;
       }
-      cerr << "Won't upload: \"" << localFile << "\""
-           << "Please try cleaning up resumable targets listed above, or run upload agent with --do-not-resume option" << endl;
+      cerr << "Unable to upload: \"" << localFile << "\""
+           << "\nPlease either clean up the potential candidate files, or run upload agent with '--do-not-resume' option" << endl;
       failed = true;
     }
   }
@@ -157,7 +157,7 @@ unsigned int File::createChunks(BlockingQueue<Chunk *> &queue, const int tries) 
   LOG << "Creating chunks:" << endl;
   fs::path p(localFile);
   unsigned int countChunks = 0; // to iterate over chunks
-  unsigned int actualChunksCreated = 0; // won't be incremented for case when a chunk is already "complete" while resuming
+  unsigned int actualChunksCreated = 0; // is not incremented for chunks which are already in "complete" state (when resuming)
 
   for (int64_t start = 0; start < size; start += chunkSize) {
     string partIndex = boost::lexical_cast<string>(countChunks + 1); // minimum part index is 1

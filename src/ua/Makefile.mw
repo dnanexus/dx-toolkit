@@ -11,7 +11,7 @@ ifneq ($(UNAME), MINGW32_NT-6.1)
 endif
 
 GITVERSION := $(shell git describe)
-VERSION = 1.1.1
+VERSION = 1.2.0
 
 sw_dir = $(HOME)/sw/local
 curl_dir = $(sw_dir)/curl

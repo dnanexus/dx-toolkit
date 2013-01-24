@@ -28,6 +28,8 @@ const string g_API_VERSION = "1.0.0";
 bool g_APISERVER_SET = false;
 bool g_SECURITY_CONTEXT_SET = false;
 
+bool g_dxcpp_mute_retry_cerrs = false; // dirty hack -> only used by UA (for muting the "cerr" by DXHTTPRequest()). Figure a better mechanism soon.
+
 string g_APISERVER_HOST;
 string g_APISERVER_PORT;
 string g_APISERVER;
@@ -148,7 +150,8 @@ JSON DXHTTPRequest(const string &resource, const string &data,
         // Everything is fine, the request went through and 200 received
         // So return back the response now
         if (countTries != 0u) // if at least one retry was made, print eventual success on stderr
-          cerr << "\nRequest completed successfully in Retry #" << countTries << endl;
+          if (!g_dxcpp_mute_retry_cerrs)
+            cerr << "\nRequest completed successfully in Retry #" << countTries << endl;
 
         try {
           return JSON::parse(req.respData); // we always return json output
@@ -164,11 +167,14 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
     if (toRetry && (countTries < NUM_MAX_RETRIES)) {
       if (reqCompleted) {
-        cerr << "\nWARNING: POST " << url << " returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'" << endl;
+        if (!g_dxcpp_mute_retry_cerrs)
+          cerr << "\nWARNING: POST " << url << " returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'" << endl;
       } else {
-        cerr << "\nWARNING: Unable to complete request: POST " << url << ". Details: '" << hre.what() << "'" << endl;
+        if (!g_dxcpp_mute_retry_cerrs)
+          cerr << "\nWARNING: Unable to complete request: POST " << url << ". Details: '" << hre.what() << "'" << endl;
       }
-      cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
+      if (!g_dxcpp_mute_retry_cerrs)
+        cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
 
       boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
     } else {
@@ -179,7 +185,9 @@ JSON DXHTTPRequest(const string &resource, const string &data,
 
   // We are here, implies, All retries were exhausted (or not attempted) with failure.
   if (reqCompleted) {
-    cerr << "\nERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
+    if (!g_dxcpp_mute_retry_cerrs)
+      cerr << "\nERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
+
     JSON respJSON;
     try {
       respJSON = JSON::parse(req.respData);
@@ -191,7 +199,9 @@ JSON DXHTTPRequest(const string &resource, const string &data,
                      respJSON["error"]["message"].get<string>(),
                      req.responseCode);
   } else {
-    cerr << "\nERROR: Unable to complete request: POST " << url << " in " << countTries << " attempts. Will throw DXError." << endl;
+    if (!g_dxcpp_mute_retry_cerrs)
+      cerr << "\nERROR: Unable to complete request: POST " << url << " in " << countTries << " attempts. Will throw DXError." << endl;
+
     throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
   }
   // Unreachable line

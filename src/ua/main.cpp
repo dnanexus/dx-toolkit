@@ -584,6 +584,8 @@ int main(int argc, char * argv[]) {
   try {
     opt.validate();
     apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken); // sets g_APISERVER_*, g_SECURITY_CONTEXT variable (for dxcpp)
+    g_dxcpp_mute_retry_cerrs = !opt.verbose; // a dirty hack, to silent dxcpp's error messages (printed when retrying)
+    testServerConnection();
     if (!opt.doNotResume) {
       disallowDuplicateFiles(opt.files, opt.projects);
     }
@@ -601,9 +603,8 @@ int main(int argc, char * argv[]) {
   chunksToUpload.setCapacity(opt.uploadThreads);
   int exitCode = 0; 
   try {
-    curlInit();
+    curlInit(); // for curl requests to be made by upload chunk request
 
-    testServerConnection();
     NUMTRIES_g = opt.tries;
 
     vector<File> files;
@@ -682,26 +683,6 @@ int main(int argc, char * argv[]) {
         cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing...";
         if (files[i].isRemoteFileOpen) {
           files[i].close();
-          
-          // The Code commented below, used to deal with the case that a chunk was compressed to less than 5MB.
-          // This case should never happen now (see chunk.cpp for details).
-          /*
-          try {
-            files[i].close();
-          } catch (DXAPIError &e) {
-            if (e.name == "InvalidState") {
-              // TODO: Make sure, that a file can never be in "InvalidState" other than < 5MB case
-              cerr << "One of the chunks for file \"" << files[i].localFile << "\" was compressed to less than 5MB. Upload to fileID " 
-                   << files[i].fileID << ", cannot be completed (will remove the incomplete remote file)" << endl
-                   << "Here are some of the things you can try for uploading file: \"" << files[i].localFile << "\":" << endl
-                   << "  1. Upload without compression (--do-not-compress flag)" << endl
-                   << "  2. Try increasing chunk size to a larger value. (--chunk-size option)" << endl;
-              removeFromProject(files[i].projectID, files[i].fileID);
-              files[i].failed = true;
-            } else {
-              throw;
-            }
-          }*/
         }
         cerr << endl;
       }
