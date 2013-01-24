@@ -26,7 +26,7 @@ def open_dxgtable(dxid, project=None, mode=None):
 
     Example::
 
-      with open_dxgtable("table-xxxx") as dxgtable:
+      with open_dxgtable("gtable-xxxx") as dxgtable:
           for row in dxgtable.get_rows():
               print row[1] # Prints the value in the first column (after the row ID) for this row
 
