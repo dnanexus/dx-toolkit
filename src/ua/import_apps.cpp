@@ -12,22 +12,16 @@ string findRefGenomeProjID() {
     params["name"] = "Reference Genomes";
     params["level"] = "VIEW";
     params["public"] = true;
-    params["describe"] = true;
-    do {
-      dx::JSON findResult = systemFindProjects(params);
-      dx::JSON projects = findResult["results"];
-      for (unsigned i = 0; i < projects.size(); ++i) {
-        if (projects[i]["describe"]["billTo"].get<string>() == "user-dnanexus") {
-          return projects[i]["id"].get<string>();
-        }
-      }
-      params["starting"] = findResult["next"];
-    } while((params["starting"].type() != dx::JSON_NULL));
+    params["describe"] = false;
+    params["billTo"] = "org-dnanexus";
+    dx::JSON findResult = systemFindProjects(params);
+    if (findResult["results"].size() != 1)
+      throw runtime_error("Expected name = 'Reference Genomes', and, billTo = 'org-dnanexus', to return exactly one public project, but instead recieved " + boost::lexical_cast<string>(findResult["results"].size()) + " projects instead. Unable to resolve --ref-genome parameter.");
+    return findResult["results"][0]["id"].get<string>();
   } catch (DXAPIError &e) {
     LOG << "Call to findProjects failed." << endl;
     throw;  
   }
-  throw runtime_error("Unable to find public project named: 'Reference Genome', won't be able to resolve --ref-genome");
 }
 
 string getRefGenomeID(const string &refGenome) {
