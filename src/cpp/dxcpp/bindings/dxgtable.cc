@@ -490,3 +490,5 @@ DXGTable DXGTable::clone(const string &dest_proj_id,
   clone_(dest_proj_id, dest_folder);
   return DXGTable(dxid_, dest_proj_id);
 }
+
+const int DXGTable::NULL_VALUE = -2147483648;
