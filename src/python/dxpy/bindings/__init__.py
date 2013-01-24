@@ -25,9 +25,15 @@ class DXObject(object):
         dxproj_id = self._proj if self._proj is not None else "no project ID stored"
 
         if use_name:
-            desc = "<dxpy.{classname}: {name} ({dxid} ({dxproj_id})>"
+            if self._class not in ["container", "project", "app"]:
+                desc = "<dxpy.{classname}: {name} ({dxid} ({dxproj_id}))>"
+            else:
+                desc = "<dxpy.{classname}: {name} ({dxid})>"
         else:
-            desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid} ({dxproj_id})>"
+            if self._class not in ["container", "project", "app"]:
+                desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid} ({dxproj_id})>"
+            else:
+                desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid}>"
 
         desc = desc.format(module=self.__module__,
                            classname=self.__class__.__name__,

@@ -26,7 +26,11 @@ from dxpy.bindings import *
 class DXContainer(DXObject):
     '''Remote container handler.'''
 
+    _class = "container"
+
     def __init__(self, dxid=None):
+        DXObject.__init__(self)
+
         if dxid is not None:
             self.set_id(dxid)
         else:
@@ -270,6 +274,8 @@ class DXContainer(DXObject):
 
 class DXProject(DXContainer):
     '''Remote project handler.'''
+
+    _class = "project"
 
     def update(self, name=None, description=None, protected=None,
                restricted=None, **kwargs):
