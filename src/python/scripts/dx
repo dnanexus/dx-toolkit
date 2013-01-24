@@ -2979,7 +2979,7 @@ parser_map['uninstall'] = (parser_uninstall, DXAppCompleter(installed=True))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
+parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "dx find apps" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
 
   1) inputs given in the interactive mode
   2) inputs listed individually with the -i/--input command line argument
