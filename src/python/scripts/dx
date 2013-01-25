@@ -2531,16 +2531,17 @@ def watch(args):
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
 
-    msg_callback = None
+    msg_callback, log_client = None, None
 
     if args.format is None:
-        args.format = BLUE() + "{job}" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+        args.format = BLUE() + "{job_name} ({job})" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
             args.format = "{timestamp} " + args.format
 
         def msg_callback(message):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)/1000))
             message['level_color'] = level_colors.get(message.get('level', ''), '')
+            message['job_name'] = log_client.seen_jobs[message['job']]['name']
             print args.format.format(**message)
 
     from dxpy.utils.job_log_client import DXJobLogStreamClient
