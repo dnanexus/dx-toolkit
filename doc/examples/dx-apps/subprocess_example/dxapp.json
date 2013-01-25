@@ -17,11 +17,7 @@
       "class": "gtable"
     }
   ],
-  "summary": "Reads the output of a Python subprocess and inserts it into a GTable.",
+  "summary": "Reads the output of a Python subprocess and inserts it into a GTable",
   "version": "0.0.1",
-  "details": {
-    "contactUrl": "http://develop.dnanexus.com/Apps/subprocess_example"
-  },
-  "dxapi": "1.0.0",
-  "resources": []
+  "dxapi": "1.0.0"
 }

@@ -2,7 +2,7 @@
   "name": "hello_world_app",
   "title": "Hello, world!",
   "summary": "The obligatory Hello, world app!",
-  "description": "This app returns a hash: '{\"greeting\": \"Hello, world!\"}' or Hello, Name, if a name is specified in input",
+  "description": "This app returns a hash: '{\"greeting\": \"Hello, world!\"}' or Hello, Name, if a name is specified in the input.",
   "dxapi": "1.0.0",
   "folder": "/programs/hello_world",
   "inputSpec": [
@@ -18,6 +18,5 @@
       {"name": "openjdk-6-jre"}
     ]
   },
-  "version": "0.0.1",
-  "resources": []
+  "version": "0.0.1"
 }
