@@ -23,7 +23,6 @@ import sys
 import argparse
 
 # to find the magic library
-sys.path.append('/usr/local/lib/')
 import magic
 
 import subprocess

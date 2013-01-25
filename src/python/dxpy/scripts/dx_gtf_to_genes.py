@@ -22,7 +22,6 @@ import random
 import sys
 
 # to find the magic library
-sys.path.append('/usr/local/lib/')
 import magic
 import subprocess
 import argparse

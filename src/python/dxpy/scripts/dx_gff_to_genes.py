@@ -23,7 +23,6 @@ import sys
 import re
 import argparse
 
-sys.path.append('/usr/local/lib/')
 import magic
 
 parser = argparse.ArgumentParser(description='Import a local GFF file as a Spans or Genes object.')
