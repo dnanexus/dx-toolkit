@@ -2629,10 +2629,15 @@ class SetPreprodEnv(argparse.Action):
         setattr(namespace, 'preprod', True)
         set_api(protocol='https', host='preprodapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
-parser = argparse.ArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
-                                 formatter_class=argparse.RawTextHelpFormatter,
-                                 parents=[env_args],
-                                 usage='%(prog)s [-h] [--version] command ...')
+class DXArgumentParser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_help(sys.stderr)
+        self.exit(2, '%s: error: %s\n' % (self.prog, message))
+
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
+                          formatter_class=argparse.RawTextHelpFormatter,
+                          parents=[env_args],
+                          usage='%(prog)s [-h] [--version] command ...')
 parser.add_argument('--version', action='version', version='dx %s' % (dxpy.TOOLKIT_VERSION,))
 
 subparsers = parser.add_subparsers(help=argparse.SUPPRESS)
@@ -3064,7 +3069,7 @@ parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, 
 
 parser_new = subparsers.add_parser('new', help='Create a new project or data object',
                                    description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files, \'dx build\' for applets, and \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.', prog="dx new")
-subparsers_new = parser_new.add_subparsers()
+subparsers_new = parser_new.add_subparsers(parser_class=DXArgumentParser)
 subparsers_new.metavar = 'class'
 parser_map['new'] = (parser_new, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
@@ -3232,7 +3237,7 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 parser_find = subparsers.add_parser('find', help='Search functionality over various DNAnexus entities',
                                     description='Search functionality over various DNAnexus entities.',
                                     prog='dx find')
-subparsers_find = parser_find.add_subparsers()
+subparsers_find = parser_find.add_subparsers(parser_class=DXArgumentParser)
 subparsers_find.metavar = 'category'
 parser_map['find'] = (parser_find, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
