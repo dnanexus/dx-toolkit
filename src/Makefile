@@ -63,7 +63,7 @@ python: api_wrappers toolkit_version
 # TODO: fix up perl and java targets
 
 perl: api_wrappers
-	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl")
+	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl5" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl5")
 
 java: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/java"
