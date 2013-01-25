@@ -1,4 +1,21 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
 '''
 This submodule contains helper functions for parsing and printing the
 contents of describe hashes for various DNAnexus entities (projects,
@@ -85,6 +102,9 @@ def get_io_spec(spec, skip_fields=None):
     if skip_fields is None:
         skip_fields = []
     list_of_params = [get_io_desc(param) for param in spec if param["name"] not in skip_fields]
+    if len(skip_fields) > 0:
+        list_of_params.append("<advanced inputs hidden; use --verbose to see more>")
+
     if len(list_of_params) == 0:
         return '-'
     if get_delimiter() is not None:
@@ -227,7 +247,7 @@ def print_project_desc(desc):
             print_json_field(field, desc[field])
 
 def print_app_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'program', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'globalWorkspace', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes']
+    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes']
     # NOTE: Hiding "billing" for now
 
     advanced_inputs = [] if verbose else desc["details"].get("advancedInputs")
@@ -244,10 +264,7 @@ def print_app_desc(desc, verbose=False):
     print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
-    if "program" in desc:
-        print_field("Created from", desc["program"])
-    elif "applet" in desc:
-        print_field("Created from", desc["applet"])
+    print_field("Created from", desc["applet"])
     print_json_field('Installed', desc['installed'])
     print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc['deleted'])
@@ -375,10 +392,10 @@ def print_data_obj_desc(desc):
                 print_json_field(field, desc[field])
 
 def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'program', 'app', 'state', 'parentJob', 'originJob',
+    recognized_fields = ['id', 'class', 'project', 'workspace', 'app', 'state', 'parentJob', 'originJob',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
-                         'dependsOn', 'projectWorkspace', 'globalWorkspace', 'resources', 'projectCache', 'applet',
+                         'dependsOn', 'resources', 'projectCache', 'applet',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions']
 
@@ -393,15 +410,10 @@ def print_job_desc(desc):
         print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'workspace' in desc:
         print_field("Workspace", desc["workspace"])
-    if 'projectWorkspace' in desc:
-        print_field('Cache workspace', desc['projectWorkspace'])
-        print_field('GlobalWorkspace', desc['globalWorkspace'])
-    elif 'projectCache' in desc:
+    if 'projectCache' in desc:
         print_field('Cache workspace', desc['projectCache'])
         print_field('Resources', desc['resources'])
-    if "program" in desc:
-        print_field("Program", desc["program"])
-    elif "app" in desc:
+    if "app" in desc:
         print_field("App", desc["app"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
@@ -496,7 +508,7 @@ def print_desc(desc, verbose=False):
 
 def get_ls_desc(desc, print_id=False):
     addendum = ' : ' + desc['id'] if print_id is True else ''
-    if desc['class'] == 'applet':
+    if desc['class'] == 'applet' or (desc['class'] == 'record' and 'pipeline' in desc['types']):
         return BOLD() + GREEN() + desc['name'] + ENDC() + addendum
     else:
         return desc['name'] + addendum
@@ -521,15 +533,15 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 
     name_str += desc['name']
 
+    if desc['class'] == 'applet' or (desc['class'] == 'record' and 'pipeline' in desc['types']):
+        name_str = BOLD() + GREEN() + name_str + ENDC()
+
     size_str = ''
     if 'size' in desc and desc['class'] == 'file':
         size_str = get_size_str(desc['size'])
     elif 'length' in desc:
         size_str = str(desc['length']) + ' rows'
     size_padding = ' '*(max(0, 8 - len(size_str)))
-
-    if desc['class'] == 'program':
-        name_str = BOLD() + GREEN() + name_str + ENDC()
 
     return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
 

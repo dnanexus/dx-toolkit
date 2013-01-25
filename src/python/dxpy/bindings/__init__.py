@@ -1,3 +1,19 @@
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
 """
 The :class:`DXObject` class is the abstract base class for all remote
 object handlers, and its subclass :class:`DXDataObject` is the abstract
@@ -25,9 +41,15 @@ class DXObject(object):
         dxproj_id = self._proj if self._proj is not None else "no project ID stored"
 
         if use_name:
-            desc = "<dxpy.{classname}: {name} ({dxid} ({dxproj_id})>"
+            if self._class not in ["container", "project", "app"]:
+                desc = "<dxpy.{classname}: {name} ({dxid} ({dxproj_id}))>"
+            else:
+                desc = "<dxpy.{classname}: {name} ({dxid})>"
         else:
-            desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid} ({dxproj_id})>"
+            if self._class not in ["container", "project", "app"]:
+                desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid} ({dxproj_id})>"
+            else:
+                desc = "<{module}.{classname} object at 0x{mem_loc:x}: {dxid}>"
 
         desc = desc.format(module=self.__module__,
                            classname=self.__class__.__name__,

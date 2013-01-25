@@ -1,4 +1,20 @@
 # -*- mode: Makefile -*-
+#
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
 
 # curl_build_dir := $(shell mktemp -d --tmpdir=/tmp curl-build-XXXXXX)
 
@@ -11,7 +27,7 @@ ifneq ($(UNAME), MINGW32_NT-6.1)
 endif
 
 GITVERSION := $(shell git describe)
-VERSION = 1.1.1
+VERSION = 1.2.0
 
 sw_dir = $(HOME)/sw/local
 curl_dir = $(sw_dir)/curl
@@ -26,7 +42,7 @@ boost_dir = $(sw_dir)/boost_1_51_0
 VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 
 CFLAGS = -g -Wall -Wextra -I/include -I$(zlib_dir)/include -I$(lmagic_dir)/include
-CXXFLAGS = -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DGITVERSION=\"$(GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir) -I$(zlib_dir)/include -I$(lmagic_dir)/include 
+CXXFLAGS = -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DGITVERSION=\"$(GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir) -I$(zlib_dir)/include -I$(lmagic_dir)/include -I/include
 
 LDFLAGS := -static-libstdc++ -static-libgcc -DBOOST_THREAD_USE_LIB -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L/lib -L$(lmagic_dir)/lib $(LDFLAGS) -L$(zlib_dir)/lib -lboost_program_options-mgw47-mt-1_51 -lboost_filesystem-mgw47-mt-1_51 -lboost_regex-mgw47-mt-1_51 -lboost_system-mgw47-mt-1_51 -lcurl -lcrypto -lmagic -lz -lboost_thread-mgw47-mt-1_51 -lboost_chrono-mgw47-mt-1_51
 

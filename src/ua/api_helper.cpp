@@ -1,3 +1,19 @@
+// Copyright (C) 2013 DNAnexus, Inc.
+//
+// This file is part of dx-toolkit (DNAnexus platform client libraries).
+//
+//   Licensed under the Apache License, Version 2.0 (the "License"); you may
+//   not use this file except in compliance with the License. You may obtain a
+//   copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+//   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+//   License for the specific language governing permissions and limitations
+//   under the License.
+
 #include "api_helper.h"
 
 #include <curl/curl.h>
@@ -23,12 +39,21 @@ void apiInit(const string &apiserverHost, const int apiserverPort, const string 
 
 void testServerConnection() {
   LOG << "Testing connection to API server...";
+
   try {
-    dx::JSON result = systemFindProjects();
+    dx::JSON result = systemFindProjects(dx::JSON::parse("{\"limit\": 1}"), false); // don't retry this request
     LOG << " success." << endl;
-  } catch (exception &e) {
+  } catch (DXAPIError &aerr) {
     LOG << " failure." << endl;
-    throw;
+    if (aerr.resp_code == 401) {
+      throw runtime_error("Invalid Authentication token, please provide a correct auth token (you may use --auth-token option). (" + string(aerr.what()) + ")");
+    }
+    throw runtime_error("Unable to connect to apiserver -- an unexpected error occurred. (" + string(aerr.what()) + ")");
+  }
+  catch (exception &e) {
+    LOG << " failure." << endl;
+    throw runtime_error("Unable to connect to DNAnexus apiserver. Please list your environment variables (--env flag) to see the current apiserver configuration.\n\n"
+                        "Detailed message (for advanced users only):\n" + string(e.what()));
   }
 }
 
@@ -95,7 +120,7 @@ string resolveProject(const string &projectSpec) {
 
   if (matchingProjectIdToName.size() == 0) {
     LOG << " failure." << endl;
-    throw runtime_error("\"" + projectSpec + "\" is not a valid project name or ID (with >=CONTRIBUTE access)");
+    throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=CONTRIBUTE access)");
   }
 
   if (matchingProjectIdToName.size() > 1) {
@@ -104,7 +129,7 @@ string resolveProject(const string &projectSpec) {
     for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
       LOG << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")" << endl;
     }
-    throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project");
+    throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project (multiple matches found)");
   }
   
   LOG << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corrosponding to project identifer \"" << projectSpec << "\"" << endl;
@@ -147,7 +172,7 @@ void createFolder(const string &projectID, const string &folder) {
     LOG << " success." << endl;
   } catch (DXAPIError &e) {
     LOG << " failure." << endl;
-    throw runtime_error("Could not create folder " + folder + " in project " + projectID + " (" + e.what() + ")");
+    throw runtime_error("Could not create folder with path '" + folder + "' in project '" + projectID + "' (" + e.what() + ")");
   }
 }
 

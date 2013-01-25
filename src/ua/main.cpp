@@ -1,3 +1,19 @@
+// Copyright (C) 2013 DNAnexus, Inc.
+//
+// This file is part of dx-toolkit (DNAnexus platform client libraries).
+//
+//   Licensed under the Apache License, Version 2.0 (the "License"); you may
+//   not use this file except in compliance with the License. You may obtain a
+//   copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+//   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+//   License for the specific language governing permissions and limitations
+//   under the License.
+
 #include <cstdint>
 #include <iostream>
 #include <queue>
@@ -422,6 +438,7 @@ string getMimeType(string filePath) {
 	setMagicDBPath();
 	const char *ptr_to_db = MAGIC_DATABASE_PATH.c_str();
 #endif
+#ifndef WINDOWS_BUILD
   // We redirect stderr momentarily, because "libmagic" prints bunch of warning (which we don't care about much)
   // on stderr, and the easiest way to get rid of them is to redirect stderr to /dev/null (see PTFM-4636)
   FILE *stderr_backup = stderr; // store original stderr FILE pointer
@@ -436,9 +453,12 @@ string getMimeType(string filePath) {
     }
   }
   stderr = devnull; // redirect stderr to /dev/null, so that warning by magic_load() are not printed.
+#endif
   int errorCode = magic_load(magic_cookie, ptr_to_db);
+#ifndef WINDOWS_BUILD
   stderr = stderr_backup; // restore original value of stderr
   fclose(devnull);
+#endif
 
   if (errorCode) {
     string errMsg = magic_error(magic_cookie);
@@ -584,6 +604,8 @@ int main(int argc, char * argv[]) {
   try {
     opt.validate();
     apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken); // sets g_APISERVER_*, g_SECURITY_CONTEXT variable (for dxcpp)
+    g_dxcpp_mute_retry_cerrs = !opt.verbose; // a dirty hack, to silent dxcpp's error messages (printed when retrying)
+    testServerConnection();
     if (!opt.doNotResume) {
       disallowDuplicateFiles(opt.files, opt.projects);
     }
@@ -601,9 +623,8 @@ int main(int argc, char * argv[]) {
   chunksToUpload.setCapacity(opt.uploadThreads);
   int exitCode = 0; 
   try {
-    curlInit();
+    curlInit(); // for curl requests to be made by upload chunk request
 
-    testServerConnection();
     NUMTRIES_g = opt.tries;
 
     vector<File> files;
@@ -682,26 +703,6 @@ int main(int argc, char * argv[]) {
         cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing...";
         if (files[i].isRemoteFileOpen) {
           files[i].close();
-          
-          // The Code commented below, used to deal with the case that a chunk was compressed to less than 5MB.
-          // This case should never happen now (see chunk.cpp for details).
-          /*
-          try {
-            files[i].close();
-          } catch (DXAPIError &e) {
-            if (e.name == "InvalidState") {
-              // TODO: Make sure, that a file can never be in "InvalidState" other than < 5MB case
-              cerr << "One of the chunks for file \"" << files[i].localFile << "\" was compressed to less than 5MB. Upload to fileID " 
-                   << files[i].fileID << ", cannot be completed (will remove the incomplete remote file)" << endl
-                   << "Here are some of the things you can try for uploading file: \"" << files[i].localFile << "\":" << endl
-                   << "  1. Upload without compression (--do-not-compress flag)" << endl
-                   << "  2. Try increasing chunk size to a larger value. (--chunk-size option)" << endl;
-              removeFromProject(files[i].projectID, files[i].fileID);
-              files[i].failed = true;
-            } else {
-              throw;
-            }
-          }*/
         }
         cerr << endl;
       }

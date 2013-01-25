@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 # coding: utf-8
+#
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
 
 import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap, copy
 import shlex # respects quoted substrings when splitting
@@ -1105,7 +1121,7 @@ def tree(args):
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
-                if item['describe']['class'] == 'applet':
+                if item['describe']['class'] == 'applet' or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
@@ -2979,7 +2995,7 @@ parser_map['uninstall'] = (parser_uninstall, DXAppCompleter(installed=True))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
+parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "dx find apps" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
 
   1) inputs given in the interactive mode
   2) inputs listed individually with the -i/--input command line argument
