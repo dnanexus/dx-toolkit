@@ -1121,7 +1121,7 @@ def tree(args):
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
-                if item['describe']['class'] == 'applet':
+                if item['describe']['class'] == 'applet' or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
