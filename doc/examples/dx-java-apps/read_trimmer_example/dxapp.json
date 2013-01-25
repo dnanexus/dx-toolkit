@@ -16,7 +16,7 @@
     "code": "export CLASSPATH=/:/lib:/opt/dnanexus/java/lib/*:$CLASSPATH; java DXTrimReads",
     "interpreter": "bash",
     "execDepends": [
-      {"name": "openjdk-6-jre"}
+      {"name": "openjdk-6-jre-headless"}
     ]
   },
   "version": "0.0.1"
