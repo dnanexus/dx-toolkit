@@ -10,3 +10,4 @@ cp $SWPATH/file-5.03-bin/share/misc/magic.mgc ./resources/.
 cp $SWPATH/zlib-1.2.3-bin/bin/zlib1.dll .
 cp $SWPATH/regex-2.7-bin/bin/regex2.dll .
 cp /bin/msys-1.0.dll .
+cp /bin/msys-crypto-1.0.0.dll .

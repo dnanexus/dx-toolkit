@@ -26,7 +26,7 @@ boost_dir = $(sw_dir)/boost_1_51_0
 VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 
 CFLAGS = -g -Wall -Wextra -I/include -I$(zlib_dir)/include -I$(lmagic_dir)/include
-CXXFLAGS = -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DGITVERSION=\"$(GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir) -I$(zlib_dir)/include -I$(lmagic_dir)/include 
+CXXFLAGS = -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DGITVERSION=\"$(GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir) -I$(zlib_dir)/include -I$(lmagic_dir)/include -I/include
 
 LDFLAGS := -static-libstdc++ -static-libgcc -DBOOST_THREAD_USE_LIB -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L/lib -L$(lmagic_dir)/lib $(LDFLAGS) -L$(zlib_dir)/lib -lboost_program_options-mgw47-mt-1_51 -lboost_filesystem-mgw47-mt-1_51 -lboost_regex-mgw47-mt-1_51 -lboost_system-mgw47-mt-1_51 -lcurl -lcrypto -lmagic -lz -lboost_thread-mgw47-mt-1_51 -lboost_chrono-mgw47-mt-1_51
 

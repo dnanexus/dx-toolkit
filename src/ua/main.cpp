@@ -422,6 +422,7 @@ string getMimeType(string filePath) {
 	setMagicDBPath();
 	const char *ptr_to_db = MAGIC_DATABASE_PATH.c_str();
 #endif
+#ifndef WINDOWS_BUILD
   // We redirect stderr momentarily, because "libmagic" prints bunch of warning (which we don't care about much)
   // on stderr, and the easiest way to get rid of them is to redirect stderr to /dev/null (see PTFM-4636)
   FILE *stderr_backup = stderr; // store original stderr FILE pointer
@@ -436,9 +437,12 @@ string getMimeType(string filePath) {
     }
   }
   stderr = devnull; // redirect stderr to /dev/null, so that warning by magic_load() are not printed.
+#endif
   int errorCode = magic_load(magic_cookie, ptr_to_db);
+#ifndef WINDOWS_BUILD
   stderr = stderr_backup; // restore original value of stderr
   fclose(devnull);
+#endif
 
   if (errorCode) {
     string errMsg = magic_error(magic_cookie);
