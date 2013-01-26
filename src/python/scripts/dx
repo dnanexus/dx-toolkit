@@ -1136,8 +1136,8 @@ def describe(args):
     json_input["properties"] = True
     if args.name and (args.verbose or args.details or args.json):
         parser.exit(1, fill('Cannot request --name in addition to one of --verbose, --details, or --json') + '\n')
-    if args.details or args.verbose:
-        json_input["details"] = True
+    # Always retrieve details too (just maybe don't render them)
+    json_input["details"] = True
     if is_data_obj_id(args.path):
         # Should prefer the current project's version if possible
         if dxpy.WORKSPACE_ID is not None:
@@ -2414,9 +2414,182 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
     return dxjob
 
+def print_run_help(executable="", alias=None):
+    if executable == "":
+        parser_map['run'][0].print_help()
+    else:
+        exec_help = 'usage: dx run ' + executable + ('' if alias is None else ' --alias ' + alias)
+        handler = get_exec_or_workflow_handler(executable, alias)
+
+        if isinstance(handler, dxpy.bindings.DXRecord):
+            exec_help += ' [-iSTAGE_NUM.INPUT_NAME=VALUE ...]\n\n'
+            exec_help += "Workflow: " + handler.describe()['name'] + "\n\n"
+
+            workflow = handler.get_details()
+            if workflow.get('version') != 2:
+                parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
+
+            exec_help += fill("To run this workflow, you will need to specify inputs for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
+            exec_help += '  -i0.input_name=3\n\n'
+            exec_help += fill('gives the value 3 to stage 0 for an input called "input_name".') + '\n\n'
+
+            exec_help += fill("Not all inputs and outputs are shown for each stage.  For a list of all inputs and outputs for each stage and additional help, run") + '\n\n'
+            exec_help += '  dx run EXECUTABLE -h\n\n'
+            exec_help += fill("where EXECUTABLE is the stage's app(let) name or ID, along with any --version flags given.") + '\n'
+
+            for stage in workflow['stages']:
+                exec_help += '\nStage ' + unicode(stage['key']) + ': '
+                if stage['app']['class'] == 'app':
+                    exec_help += stage['app']['name'] + ' --version ' + stage['app']['version']
+                elif stage['app']['class'] == 'applet':
+                    exec_help += stage['app']['name'] + ' (' + stage['app']['id']+ ')'
+
+                def render_workflow_val(val):
+                    if isinstance(val, dict) and 'connectedTo' in val:
+                        for stage in workflow['stages']:
+                            if stage['id'] == val['connectedTo']['stage']:
+                                key = stage['key']
+                                break
+                        return '<Stage ' + unicode(key) + ' output:' + val['connectedTo']['output'] + '>'
+                    else:
+                        return json.dumps(val)
+
+                # Go over required inputs
+                if 'inputSpec' in stage['app']:
+                    exec_help += '\n  Inputs: '
+                    if len(stage['app']['inputSpec']) == 0:
+                        exec_help += '<none>'
+                    else:
+                        classes_to_ignore_by_default = [
+                            'int', 'array:int',
+                            'double', 'array:double',
+                            'boolean', 'array:boolean',
+                            'string', 'array:string',
+                            'float', 'array:float',
+                            'hash']
+
+                        # ALWAYS show bound and required inputs
+                        # IGNORE those that are in the things to ignore and are optional and unbound
+                        for param in stage['app']['inputSpec']:
+                            if (stage['inputs'][param['name']] is None or stage['inputs'][param['name']] == param.get('default', None)) and \
+                                    param['class'] in classes_to_ignore_by_default and \
+                                    (param.get('optional', False) or 'default' in param):
+                                continue
+                            exec_help += '\n    ' + ('[' if param.get('optional', False) or 'default' in param else '') + param['name'] + (']' if param.get('optional', False) or 'default' in param else '') + '='
+                            if stage['inputs'][param['name']] is None:
+                                if 'default' in param:
+                                    exec_help += '<' + json.dumps(param['default']) + ' by default>'
+                                exec_help += '<unbound>'
+                            else:
+                                if param['class'].startswith('array'):
+                                    # array input
+                                    rendered_vals = [render_workflow_val(val) for val in stage['inputs'][param['name']]]
+                                    exec_help += '[' + ", ".join(rendered_vals) + ']'
+                                else:
+                                    # non-array input
+                                    exec_help += render_workflow_val(stage['inputs'][param['name']])
+
+                # Also list outputs
+                if 'outputSpec' in stage['app']:
+                    exec_help += '\n  Outputs: '
+                    if len(stage['app']['outputSpec']) == 0:
+                        exec_help += "<none>"
+                    else:
+                        for param in stage['app']['outputSpec']:
+                            exec_help += '\n    ' + param['name']
+
+                exec_help += "\n"
+        else:
+            exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
+
+            exec_desc = handler.describe()
+            if isinstance(handler, dxpy.bindings.DXApp):
+                exec_help += "App: "
+                exec_details = exec_desc['details']
+            else:
+                exec_help += "Applet: "
+                exec_details = handler.get_details()
+            advanced_inputs = exec_details.get("advancedInputs", [])
+            exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
+            summary = exec_desc.get('summary', '')
+            if summary != '':
+                exec_help += fill(summary) + "\n\n"
+
+            # Contact URL here
+            if isinstance(handler, dxpy.bindings.DXApp):
+                exec_help += "See App Library page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
+
+            exec_help += "Inputs:"
+            advanced_inputs_help = "Advanced Inputs:"
+            if 'inputSpec' in exec_desc:
+                if len(exec_desc['inputSpec']) == 0:
+                    exec_help += " <none>\n"
+                else:
+                    for param in exec_desc['inputSpec']:
+                        param_string = "\n  "
+                        param_string += param.get('label', param['name']) + ": "
+                        param_string += get_io_desc(param, app_help_version=True) + "\n"
+                        helpstring = param.get('help', '')
+                        if helpstring != '':
+                            param_string += fill(helpstring,
+                                                 initial_indent='        ',
+                                                 subsequent_indent='        ') + "\n"
+                            
+                        if param['name'] in advanced_inputs:
+                            advanced_inputs_help += param_string
+                        else:
+                            exec_help += param_string
+                    if len(advanced_inputs) > 0:
+                        exec_help += "\n" + advanced_inputs_help
+            else:
+                exec_help += " no specification provided"
+            exec_help += "\n"
+
+            exec_help += "Outputs:"
+            if 'outputSpec' in exec_desc:
+                if len(exec_desc['outputSpec']) == 0:
+                    exec_help += " <none>\n"
+                else:
+                    for param in exec_desc['outputSpec']:
+                        exec_help += "\n  "
+                        exec_help += param.get('label', param['name']) + ": "
+                        exec_help += get_io_desc(param) + "\n"
+                        helpstring = param.get('help', '')
+                        if helpstring != '':
+                            exec_help += fill(helpstring,
+                                              initial_indent='        ',
+                                              subsequent_indent='        ') + "\n"
+            else:
+                exec_help += " no specification provided"
+
+        if sys.stdout.isatty():
+            if tty_rows <= exec_help.count("\n"):
+                try:
+                    pipe = os.popen('less -RS', 'w')
+                    pipe.write(exec_help.encode('utf-8'))
+                    pipe.close()
+                    parser.exit(0)
+                except:
+                    pass
+        sys.stdout.write(exec_help + '\n')
+
+    parser.exit(0)
+
 def run(args):
+    if args.executable == "" or args.help or '-h' in args.run_args or '--help' in args.run_args:
+        alias = None
+        alias_flag = '--alias' if '--alias' in args.run_args else ('--version' if '--version' in args.run_args else ('--tag' if '--tag' in args.run_args else None))
+        if alias_flag is not None:
+            index_of_alias = args.run_args.index(alias_flag)
+            if len(args.run_args) >= index_of_alias + 2:
+                alias = args.run_args[index_of_alias + 1]
+        # Will exit once done printing help
+        print_run_help(args.executable, alias=alias)
+
+    executable = args.executable
+    args = run_args.parse_args(args.run_args)
     get_output_flag(args)
-    handler = get_exec_or_workflow_handler(args.path, args.alias)
+    handler = get_exec_or_workflow_handler(executable, args.alias)
 
     if args.folder is None:
         dest_proj = dxpy.WORKSPACE_ID
@@ -2587,6 +2760,11 @@ def print_help(args):
         new_args = argparse.Namespace()
         setattr(new_args, 'importer_args', ['-h'])
         importers[args.subcommand](new_args)
+    elif args.command_or_category == 'run':
+        if args.subcommand is None:
+            parser_map[args.command_or_category][0].print_help()
+        else:
+            print_run_help(args.subcommand)
     elif args.subcommand is None:
         parser_map[args.command_or_category][0].print_help()
     elif (args.command_or_category + ' ' + args.subcommand) not in parser_map:
@@ -3001,7 +3179,7 @@ parser_map['uninstall'] = (parser_uninstall, DXAppCompleter(installed=True))
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow', description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "dx find apps" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
+run_args = argparse.ArgumentParser(description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "dx find apps" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  In decreasing order of precedence, they are:') + '''
 
   1) inputs given in the interactive mode
   2) inputs listed individually with the -i/--input command line argument
@@ -3024,21 +3202,25 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[stdout_args, env_args])
-parser_run.add_argument('path', help='Name or ID of applet or app to run')
-parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
+run_args.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
-parser_run.add_argument('--destination', '--dest', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
-parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
-parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
-parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
-parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
-parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
-parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
-parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+run_args.add_argument('--destination', '--dest', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+run_args.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
+run_args.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
+run_args.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
+run_args.add_argument('--watch', help="Watch the job after launching it", action='store_true')
+run_args.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
+run_args.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
+run_args.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+parser_map['run'] = (run_args, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
+parser_categories['all']['cmds'].append(('run', 'Run an applet, app, or workflow'))
+parser_categories['exec']['cmds'].append(('run', 'Run an applet, app, or workflow'))
+
+parser_run = subparsers.add_parser('run', add_help=False)
+parser_run.add_argument('executable', help='Name or ID of an applet, app, or workflow to run', default="", nargs='?')
+parser_run.add_argument('run_args', help='Arguments passed to run a DNAnexus executable', nargs=argparse.REMAINDER)
+parser_run.add_argument('-h', '--help', help='Display help message', action='store_true')
 parser_run.set_defaults(func=run, verbose=False)
-parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch',
                                      description='Monitors logging output from a running job',

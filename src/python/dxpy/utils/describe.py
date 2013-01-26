@@ -67,17 +67,17 @@ def parse_typespec(thing):
     else:
         return 'Type spec could not be parsed'
 
-def get_io_desc(parameter, include_class=True, show_opt=True):
+def get_io_desc(parameter, include_class=True, show_opt=True, app_help_version=False):
     desc = ""
     is_optional = False;
     if show_opt:
         if "default" in parameter or ("optional" in parameter and parameter["optional"]):
             is_optional = True
             desc += "["
-    desc += parameter["name"]
+    desc += ('-i' if app_help_version else '') + parameter["name"]
     include_parens = include_class or 'type' in parameter or 'default' in parameter
     if include_parens:
-        desc += " ("
+        desc += ("=" if app_help_version else " ") + "("
     is_first = True
     if include_class:
         desc += parameter["class"]
@@ -308,8 +308,11 @@ def print_app_desc(desc, verbose=False):
 def get_col_str(col_desc):
     return col_desc['name'] + DELIMITER(" (") + col_desc['type'] + DELIMITER(")")
 
-def print_data_obj_desc(desc):
+def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes']
+
+    advanced_inputs = [] if verbose else desc["details"].get("advancedInputs") if "details" in desc else []
+
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'project' in desc:
@@ -328,7 +331,7 @@ def print_data_obj_desc(desc):
                                            desc['properties'].keys()))
     if 'tags' in desc:
         print_list_field("Tags", desc['tags'])
-    if 'details' in desc:
+    if verbose and 'details' in desc:
         print_json_field("Details", desc["details"])
     if 'links' in desc:
         print_list_field("Outgoing links", desc['links'])
@@ -347,7 +350,7 @@ def print_data_obj_desc(desc):
     if 'dxapi' in desc:
         print_field("API version", desc["dxapi"])
     if "inputSpec" in desc:
-        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec']))
+        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=advanced_inputs))
     if "outputSpec" in desc:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if 'runSpec' in desc:
@@ -504,7 +507,7 @@ def print_desc(desc, verbose=False):
     elif desc['class'] in ['org', 'team']:
         print_generic_desc(desc)
     else:
-        print_data_obj_desc(desc)
+        print_data_obj_desc(desc, verbose=verbose)
 
 def get_ls_desc(desc, print_id=False):
     addendum = ' : ' + desc['id'] if print_id is True else ''
