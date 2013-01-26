@@ -2420,10 +2420,14 @@ def print_run_help(executable="", alias=None):
     else:
         exec_help = 'usage: dx run ' + executable + ('' if alias is None else ' --alias ' + alias)
         handler = get_exec_or_workflow_handler(executable, alias)
+        try:
+            exec_desc = handler.describe()
+        except BaseException as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
 
         if isinstance(handler, dxpy.bindings.DXRecord):
             exec_help += ' [-iSTAGE_NUM.INPUT_NAME=VALUE ...]\n\n'
-            exec_help += "Workflow: " + handler.describe()['name'] + "\n\n"
+            exec_help += "Workflow: " + exec_desc['name'] + "\n\n"
 
             workflow = handler.get_details()
             if workflow.get('version') != 2:
@@ -2502,7 +2506,6 @@ def print_run_help(executable="", alias=None):
         else:
             exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
 
-            exec_desc = handler.describe()
             if isinstance(handler, dxpy.bindings.DXApp):
                 exec_help += "App: "
                 exec_details = exec_desc['details']
