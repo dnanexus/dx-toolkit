@@ -2517,7 +2517,7 @@ def print_run_help(executable="", alias=None):
 
             # Contact URL here
             if isinstance(handler, dxpy.bindings.DXApp):
-                exec_help += "See App Library page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
+                exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
 
             exec_help += "Inputs:"
             advanced_inputs_help = "Advanced Inputs:"
