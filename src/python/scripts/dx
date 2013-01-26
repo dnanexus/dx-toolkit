@@ -2607,6 +2607,9 @@ SPECIFYING JSON INPUT
     parser.exit(0)
 
 def run(args):
+    if args.help:
+        print_run_help(args.executable, args.alias)
+
     get_output_flag(args)
     handler = get_exec_or_workflow_handler(args.executable, args.alias)
 
@@ -2797,7 +2800,9 @@ def exit_shell(args):
 
 class runHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print_run_help(namespace.executable, namespace.alias)
+        if namespace.executable is None:
+            setattr(namespace, 'executable', '')
+        setattr(namespace, 'help', True)
 
 class runInputHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -3224,7 +3229,7 @@ parser_run.add_argument('--input-help', help=fill('Print help and examples for h
 parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
-parser_run.set_defaults(func=run, verbose=False)
+parser_run.set_defaults(func=run, verbose=False, help=False)
 parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
 parser_categories['all']['cmds'].append(('run', 'Run an applet, app, or workflow'))
 parser_categories['exec']['cmds'].append(('run', 'Run an applet, app, or workflow'))
