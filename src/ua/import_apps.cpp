@@ -96,7 +96,7 @@ inline dx::JSON getDnanexusLinkFormat(const string &objID) {
 void runImportApps(const Options &opt, vector<File> &files) {
   const char *const readsImporter = "app-reads_importer";
   const char *const mappingsImporter = "app-sam_bam_importer";
-  const char *const variantsImporter = "app-vcf_to_variants";
+  const char *const variantsImporter = "app-vcf_importer";
   string refGenomeID;
   if (opt.mappings || opt.variants) {
     LOG << "Obtaining record ID of reference genome from flag --ref-genome";
