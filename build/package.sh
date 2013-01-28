@@ -33,7 +33,7 @@ mv build/Prebuilt-Readme.md Readme.md
 # portable form "/usr/bin/env python2.7", since we don't always know where the right interpreter is on the target
 # system.
 for f in bin/*; do
-    if head -n 1 "$f" | grep -q python; then
+    if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
         perl -i -pe 's|^#!/.+|#!/usr/bin/env python2.7| if $. == 1' "$f"
     fi
 done
