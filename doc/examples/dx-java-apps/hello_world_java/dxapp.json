@@ -1,10 +1,10 @@
 {
-  "name": "hello_world_app",
+  "name": "hello_world_java",
   "title": "Hello, world!",
   "summary": "The obligatory Hello, world app!",
   "description": "This app returns a hash: '{\"greeting\": \"Hello, world!\"}' or Hello, Name, if a name is specified in the input.",
   "dxapi": "1.0.0",
-  "folder": "/programs/hello_world",
+  "folder": "/programs/hello_world_java",
   "inputSpec": [
     {"optional": true, "name": "name", "class": "string"}
   ],
