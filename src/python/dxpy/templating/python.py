@@ -60,14 +60,14 @@ def get_strings(app_json, file_input_names, file_array_input_names, file_output_
                                                                        dxclass=class_to_dxclass[input_param["class"]]))
             elif input_param["class"].startswith("array:") and input_param["class"][6:] in class_to_dxclass:
                 init_inputs.append("{name} = [{dxclass}(item) for item in {name}]".format(name=input_param["name"],
-                                                                                         dxclass=class_to_dxclass[input_param["class"][6:]]))
+                                                                                          dxclass=class_to_dxclass[input_param["class"][6:]]))
 
         # Then, add keyword args
         for input_param in app_json["inputSpec"]:
             if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
                 continue
             if "default" in input_param:
-                inputs.append("{name}={default}".format(name=input_param["name"], default=input_param["default"]))
+                inputs.append("{name}={default}".format(name=input_param["name"], default=(input_param["default"] if input_param['class'] != 'string' else '"' + input_param['default'] + '"')))
             else:
                 inputs.append("{name}=None".format(name=input_param["name"]))
         input_sig_str = ", ".join(inputs)
