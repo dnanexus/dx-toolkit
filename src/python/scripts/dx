@@ -295,7 +295,7 @@ def login(args):
 
     # API server should have already been set up if --host or one of
     # the --special-host flags has been set.
-    if (args.host is not None or args.port is not None) and args.token is None:
+    if args.token is None:
         if args.host is not None or args.port is not None:
             protocol = args.protocol or ("https" if (args.port == 443) else "http")
             authserver = protocol + '://' + args.host
@@ -346,7 +346,7 @@ def login(args):
 
         if authserver == default_authserver:
             set_api('https', 'api.dnanexus.com', '443', args.save)
-    if args.token is not None:
+    else:
         sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
         # Ensure correct API server
         if args.host is None:
