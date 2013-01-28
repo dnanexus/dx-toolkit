@@ -2230,10 +2230,10 @@ def find_apps(args):
                 print result['id']
         elif args.summary:
             for result in results:
-                print result["describe"]["name"] + DELIMITER(" (v") + result["describe"]["version"] + DELIMITER(")")
+                print result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"]
         else:
             for result in results:
-                print result["id"] + DELIMITER(" ") + result["describe"]["name"] + DELIMITER(' v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"]["published"] > 0 else "unpublished") + DELIMITER(")")
+                print result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"]["published"] > 0 else "unpublished") + DELIMITER(")")
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -3462,11 +3462,11 @@ parser_map['find'] = (parser_find, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps',
-                                              description='Finds apps with the given search parameters.',
+                                              description='Finds apps with the given search parameters.  Use --category to restrict by a category ("Alignment", "Export", "Import", or "Variation calling").',
                                               parents=[stdout_args, json_arg, delim_arg, env_args],
                                               prog='dx find apps')
 parser_find_apps.add_argument('--name', help='Name of the app')
-parser_find_apps.add_argument('--category', help='Category of the app')
+parser_find_apps.add_argument('--category', choices=['Alignment', 'Export', 'Import', 'Variation calling'], help='Category of the app')
 parser_find_apps.add_argument('-a', '--all', help='Whether to return all versions of the app', action='store_true')
 parser_find_apps.add_argument('--unpublished', help='Whether to return unpublished apps as well', action='store_true')
 parser_find_apps.add_argument('--installed', help='Whether to restrict the list to installed apps only', action='store_true')
