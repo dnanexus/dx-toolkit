@@ -1,3 +1,11 @@
+dx-toolkit (0.35.4) precise; urgency=low
+
+  * Default string values are now quoted in Python template.
+
+  * Bugfix: fix dx login with no arguments.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 28 Jan 2013 15:05:55 -0800
+
 dx-toolkit (0.35.3) precise; urgency=low
 
   * Fix shebang update pattern for nonstandard Python installations.
