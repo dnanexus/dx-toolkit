@@ -1,0 +1,21 @@
+{
+  "name": "hello_world_java",
+  "title": "Hello, world!",
+  "summary": "The obligatory Hello, world app!",
+  "description": "This app returns a hash: '{\"greeting\": \"Hello, world!\"}' or Hello, Name, if a name is specified in the input.",
+  "dxapi": "1.0.0",
+  "inputSpec": [
+    {"optional": true, "name": "name", "class": "string"}
+  ],
+  "outputSpec": [
+    {"name": "greeting", "class": "string"}
+  ],
+  "runSpec": {
+    "code": "export CLASSPATH=/:/lib:/opt/dnanexus/lib/java/*:$CLASSPATH; java DXHelloWorld",
+    "interpreter": "bash",
+    "execDepends": [
+      {"name": "openjdk-6-jre-headless"}
+    ]
+  },
+  "version": "0.0.1"
+}

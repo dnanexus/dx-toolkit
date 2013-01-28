@@ -28,9 +28,5 @@
       "class": "file"
     }
   ],
-  "details": {
-    "contactUrl": "http://wiki.dnanexus.com/Apps/ncbi_blast_example"
-  },
-  "dxapi": "1.0.0",
-  "resources": []
+  "dxapi": "1.0.0"
 }

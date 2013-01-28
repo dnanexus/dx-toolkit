@@ -1,3 +1,19 @@
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
 '''
 This file contains all the utilities needed for escaping and parsing
 names in the syntax of
@@ -32,7 +48,10 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
     At most one of allow_mult and more_choices should be set to True.
     '''
     for i in range(len(choices)):
-        print str(i) + ') ' + choices[i]
+        prefix = str(i) + ') '
+        lines = choices[i].split("\n")
+        joiner = "\n" + " " * len(prefix)
+        print prefix + joiner.join(lines)
     if more_choices:
         print 'm) More options not shown...'
     print ''
@@ -72,6 +91,37 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
             return choice
         except BaseException as details:
             print 'Not a valid selection'
+
+def paginate_and_pick(generator, render_fn=unicode, filter_fn=None, page_len=10, **pick_opts):
+    any_results = False
+    while True:
+        results = []
+        while len(results) < page_len:
+            try:
+                if filter_fn is None:
+                    results.append(generator.next())
+                else:
+                    possible_next = generator.next()
+                    if filter_fn(possible_next):
+                        results.append(possible_next)
+                any_results = True
+            except StopIteration:
+                break
+        if not any_results:
+            return "none found"
+        elif len(results) == 0:
+            return "none picked"
+
+        try:
+            choice = pick([render_fn(result) for result in results],
+                          more_choices=(len(results) == page_len),
+                          **pick_opts)
+        except KeyboardInterrupt:
+            return "none picked"
+        if choice == 'm':
+            continue
+        else:
+            return results[choice]
 
 # The following caches project names to project IDs because they are
 # unlikely to change.
@@ -475,15 +525,20 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if not found_valid_class:
             return None, None, None
         try:
-            if 'project' not in describe and dxpy.WORKSPACE_ID is not None:
-                describe['project'] = dxpy.WORKSPACE_ID
+            if 'project' not in describe:
+                if project != dxpy.WORKSPACE_ID:
+                    describe['project'] = project
+                elif dxpy.WORKSPACE_ID is not None:
+                    describe['project'] = dxpy.WORKSPACE_ID
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
         except:
-            del describe['project']
-            try:
-                desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
-            except BaseException as details:
-                raise ResolutionError(str(details))
+            if 'project' in describe:
+                # Now try it without the hint
+                del describe['project']
+                try:
+                    desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
+                except BaseException as details:
+                    raise ResolutionError(str(details))
         result = {"id": entity_name, "describe": desc}
         if ask_to_resolve and not allow_mult:
             return project, folderpath, result

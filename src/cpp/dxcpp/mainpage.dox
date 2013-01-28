@@ -14,7 +14,7 @@ useful as you develop your own scripts and apps:</p>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/Execution-Environment-Reference">Execution Environment Reference</a></dt>
   <dd>How applets and apps are run within the DNAnexus Platform.</dd>
   <dt><a class="reference external" href="http://wiki.dnanexus.com/Home">Developer Portal</a></dt>
-  <dd>Links to all other docs, e.g. useful command-line tools.</dd>
+  <dd>Links to all other docs and reference materials for DNAnexus app developers.</dd>
 </dl>
 
 <h4>dxcpp provides the following handler classes for DNAnexus objects:</h4>
@@ -28,6 +28,13 @@ useful as you develop your own scripts and apps:</p>
   <li>DXProject</li>
   <li>DXRecord</li>
   <li>DXSystem</li>
+</ul>
+
+<h4>The following helpers will provide assistance with interfacing between your
+app(let) and the execution environment:</h4>
+
+<ul>
+  <li>exec_utils.h</li>
 </ul>
 
 <h4>The following classes are used for throwing exceptions (all derive eventually from std::exception):</h4>

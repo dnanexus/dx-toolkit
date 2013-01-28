@@ -1,8 +1,8 @@
 {
   "name": "random_gtable",
   "title": "Random String GTable",
-  "summary": "Creates a Random GTable with one column (integer), and computes average of the column.",
-  "description": "Creates a Random GTable with one column (integer), and computes average of the column.\nThe app returns: GTable created, a floating point value (average), and a file which is written by the app during execution.",
+  "summary": "Creates a Random GTable with one column (integer), and computes the average of the column",
+  "description": "Creates a Random GTable with one column (integer), and computes the average of the column.\nThe app returns: GTable created, a floating point value (average), and a file which is written by the app during execution.",
   "dxapi": "1.0.0",
   "folder": "/programs/random_gtable",
   "inputSpec": [
@@ -20,6 +20,5 @@
       {"name": "libcurl4-openssl-dev"}
     ]
   },
-  "version": "0.0.1",
-  "resources": []
+  "version": "0.0.1"
 }

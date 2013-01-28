@@ -3,3 +3,4 @@ futures==2.1.2
 ctypes-snappy==1.02
 ws4py==0.2.2
 python-dateutil==2.1
+python-magic==0.4.3

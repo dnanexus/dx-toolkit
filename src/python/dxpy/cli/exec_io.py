@@ -1,3 +1,19 @@
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
 '''
 Functions and classes used when launching platform executables from the CLI.
 '''
@@ -13,7 +29,12 @@ def stage_to_job_refs(x, launched_jobs):
     ''' Used by run() to parse stage inputs bound to other stages when executing a workflow '''
     if isinstance(x, collections.Mapping):
         if "connectedTo" in x:
-            return {'job': launched_jobs[x['connectedTo']['stage']].get_id(), "field": x['connectedTo']['output']}
+            if x['connectedTo']['stage'] in launched_jobs and launched_jobs[x['connectedTo']['stage']] is not None:
+                return {'job': launched_jobs[x['connectedTo']['stage']].get_id(), "field": x['connectedTo']['output']}
+            else:
+                # TODO: Make this better
+                sys.stderr.write(fill("Error: An input is connected to a stage that has not yet been launched.  You will need to reorder the stages before they can be run.") + "\n")
+                exit(1)
         for key, value in x.iteritems():
             x[key] = stage_to_job_refs(value, launched_jobs)
     elif isinstance(x, list):
@@ -26,12 +47,12 @@ def stage_to_job_refs(x, launched_jobs):
 ####################
 
 def parse_bool(string):
-    if 'true'.startswith(string.lower()) or string == '1':
-        return True
-    elif 'false'.startswith(string.lower()) or string == '0':
-        return False
-    else:
-        raise ValueError('Could not resolve \"' + string +  '\" to a boolean')
+    if len(string) > 0:
+        if 'true'.startswith(string.lower()) or string == '1':
+            return True
+        elif 'false'.startswith(string.lower()) or string == '0':
+            return False
+    raise ValueError('Could not resolve \"' + string +  '\" to a boolean')
 
 def parse_obj(string, klass):
     if string == '':
@@ -75,27 +96,162 @@ def parse_input_or_jbor(in_class, value):
 # Interactive Run Input Methods #
 #################################
 
+def print_param_help(param_desc):
+    print fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ':' + ENDC() + ' ' + (param_desc['help'] if 'help' in param_desc else '<no extra help available>'), initial_indent='  ', subsequent_indent='  ')
+
+def interactive_help(in_class, param_desc, prompt):
+    is_array = param_desc['class'].startswith("array:")
+    print_param_help(param_desc)
+    print
+    array_help_str = ', or <ENTER> to finish the list of inputs'
+    if in_class in dx_data_classes:
+        # Class is some sort of data object
+        if dxpy.WORKSPACE_ID is not None:
+            proj_name = None
+            try:
+                proj_name = dxpy.DXHTTPRequest('/' + dxpy.WORKSPACE_ID + '/describe', {})['name']
+            except:
+                pass
+            if proj_name is not None:
+                print 'Your current working directory is ' + proj_name + ':' + os.environ.get('DX_CLI_WD', '/')
+        while True:
+            print 'Pick an option to find input data:'
+            try:
+                opt_num = pick(['List and choose from available data in the current project',
+                                'List and choose from available data in the DNAnexus Reference Genomes project',
+                                'Select another project to list and choose available data',
+                                'Select an output from a previously-run job (current project only)',
+                                'Return to original prompt (specify an ID or path directly)'])
+            except KeyboardInterrupt:
+                opt_num = 4
+            if opt_num == 0:
+                query_project = dxpy.WORKSPACE_ID
+            elif opt_num == 1:
+                query_project = dxpy.find_one_project(name="Reference Genomes", public=True, level="VIEW")['id']
+            elif opt_num == 2:
+                project_generator = dxpy.find_projects(level='VIEW', describe=True, explicit_perms=True)
+                print '\nProjects to choose from:'
+                query_project = paginate_and_pick(project_generator, (lambda result: result['describe']['name']))['id']
+            if opt_num in range(3):
+                result_generator = dxpy.find_data_objects(classname=in_class,
+                                                          typename=param_desc.get('type'),
+                                                          describe=True,
+                                                          project=query_project)
+                print '\nAvailable data:'
+                result_choice = paginate_and_pick(result_generator,
+                                                  (lambda result: get_ls_l_desc(result['describe'])))
+                if result_choice == 'none found':
+                    print 'No compatible data found'
+                    continue
+                elif result_choice == 'none picked':
+                    continue
+                else:
+                    return [result_choice['project'] + ':' + result_choice['id']]
+            elif opt_num == 3:
+                # Select from previous jobs in current project
+                result_generator = dxpy.find_jobs(project=dxpy.WORKSPACE_ID,
+                                                  describe=True,
+                                                  parent_job="none")
+                print
+                print 'Previously-run jobs to choose from:'
+                result_choice = paginate_and_pick(result_generator,
+                                                  (lambda result: get_find_jobs_string(result['describe'],
+                                                                                       has_children=False,
+                                                                                       single_result=True)),
+                                                  filter_fn=(lambda result: result['describe']['state'] not in ['unresponsive', 'terminating', 'terminated', 'failed']))
+                if result_choice == 'none found':
+                    print 'No jobs found'
+                    continue
+                elif result_choice == 'none picked':
+                    continue
+                else:
+                    if 'output' in result_choice['describe'] and result_choice['describe']['output'] != None:
+                        keys = result_choice['describe']['output'].keys()
+                    else:
+                        exec_handler = dxpy.get_handler(result_choice.get('app', result_choice['applet']))
+                        exec_desc = exec_handler.describe()
+                        if 'outputSpec' not in exec_desc:
+                            # This if block will either continue, return, or raise
+                            print 'No output spec found for the executable'
+                            try:
+                                field = raw_input('Output field to use (^C or <ENTER> to cancel): ')
+                                if field == '':
+                                    continue
+                                else:
+                                    return [result_choice['id'] + ':' + field]
+                            except KeyboardInterrupt:
+                                continue
+                        else:
+                            keys = exec_desc['outputSpec'].keys()
+                    if len(keys) > 1:
+                        print '\nOutput fields to choose from:'
+                        field_choice = pick(keys)
+                        return [result_choice['id'] + ':' + keys[field_choice]]
+                    elif len(keys) == 1:
+                        print 'Using the only output field: ' + keys[0]
+                        return [result_choice['id'] + ':' + keys[0]]
+                    else:
+                        print 'No available output fields'
+            else:
+                print fill('Enter an ID or path (<TAB> twice for compatible ' + in_class + 's in current directory)' + (array_help_str if is_array else ''))
+                return shlex.split(raw_input(prompt))
+    else:
+        if in_class == 'boolean':
+            if is_array:
+                print fill('Enter "true", "false"' + array_help_str)
+            else:
+                print fill('Enter "true" or "false"')
+        elif in_class == 'string' and is_array:
+                print fill('Enter a nonempty string' + array_help_str)
+        elif (in_class == 'float' or in_class == 'int') and is_array:
+            print fill('Enter a number' + array_help_str)
+        elif in_class == 'hash':
+            print fill('Enter a quoted JSON hash')
+        result = raw_input(prompt)
+        if in_class == 'string':
+            return [result]
+        else:
+            return shlex.split(result)
+
 def get_input_array(param_desc):
     in_class = param_desc['class']
     if in_class.startswith("array:"):
         in_class = in_class[6:]
     typespec = param_desc.get('type', None)
     input_array = []
-    print '\n' + fill('Enter list of inputs (^D or empty string to finish) of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False) + ':') + '\n'
+    print '\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')')
+    print 'Class:   ' + param_desc['class']
+    if 'type' in param_desc:
+        print 'Type(s): ' + parse_typespec(param_desc['type'])
+    print
+    print fill('Enter ' + in_class + ' values, one at a time (^D or <ENTER> to finish,' + (' <TAB> twice for compatible ' + in_class + 's in current directory,' if in_class in dx_data_classes else '')  + ' \'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
     try:
         import readline
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
                                                    typespec=typespec))
+        elif in_class == 'boolean':
+            from dxpy.utils.completer import ListCompleter
+            readline.set_completer(ListCompleter(completions=['true', 'false']))
         else:
-            readline.set_completer()
+            from dxpy.utils.completer import NoneCompleter
+            readline.set_completer(NoneCompleter())
     except:
         pass
     try:
         while True:
-            user_input = raw_input(param_desc['name'] + '[' + str(len(input_array)) + "]: ")
-            user_input = shlex.split(user_input)
+            prompt = param_desc['name'] + '[' + str(len(input_array)) + "]: "
+            user_input = raw_input(prompt)
+            if in_class == 'string':
+                if user_input == '':
+                    user_input = []
+                else:
+                    user_input = [user_input]
+            else:
+                user_input = shlex.split(user_input)
+            while user_input == ['?']:
+                user_input = interactive_help(in_class, param_desc, prompt)
             if len(user_input) > 1:
                 print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
                 continue
@@ -115,7 +271,12 @@ def get_input_array(param_desc):
 def get_input_single(param_desc):
     in_class = param_desc['class']
     typespec = param_desc.get('type', None)
-    print '\nEnter input of class ' + BOLD() + in_class + ENDC() + ' for ' + get_io_desc(param_desc, include_class=False, show_opt=False) +  ' (press Tab twice to see choices):'
+    print '\nInput:   ' + fill(UNDERLINE() + param_desc.get('label', param_desc['name']) + ENDC() + ' (' + param_desc['name'] + ')')
+    print 'Class:   ' + param_desc['class']
+    if 'type' in param_desc:
+        print 'Type(s): ' + parse_typespec(param_desc['type'])
+    print
+    print fill('Enter ' + in_class + (' ID or path' if in_class in dx_data_classes else ' value') + ' (' + ('<TAB> twice for compatible ' + in_class + 's in current directory,' if in_class in dx_data_classes else '')  + '\'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
 
     try:
         import readline
@@ -123,14 +284,27 @@ def get_input_single(param_desc):
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
                                                    typespec=typespec))
+        elif in_class == 'boolean':
+            from dxpy.utils.completer import ListCompleter
+            readline.set_completer(ListCompleter(completions=['true', 'false']))
         else:
-            readline.set_completer()
+            from dxpy.utils.completer import NoneCompleter
+            readline.set_completer(NoneCompleter())
     except:
         pass
     try:
         while True:
-            user_input = raw_input(param_desc['name'] + ': ')
-            user_input = shlex.split(user_input)
+            prompt = param_desc['name'] + ': '
+            user_input = raw_input(prompt)
+            if in_class == 'string':
+                if user_input == '':
+                    user_input = []
+                else:
+                    user_input = [user_input]
+            else:
+                user_input = shlex.split(user_input)
+            while user_input == ["?"]:
+                user_input = interactive_help(in_class, param_desc, prompt)
             if len(user_input) > 1:
                 print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
                 continue
@@ -149,6 +323,9 @@ def get_input_single(param_desc):
         raise Exception('')
     except KeyboardInterrupt:
         raise Exception('')
+
+def get_optional_input_str(param_desc):
+    return param_desc.get('label', param_desc['name']) + ' (' + param_desc['name'] + ')'
 
 class ExecutableInputs(object):
     def __init__(self, executable=None, input_name_prefix=None):
@@ -287,14 +464,16 @@ class ExecutableInputs(object):
 
     def prompt_for_optional_inputs(self):
         while True:
-            print '\n' + fill('Select an optional parameter to set by its # (^D or empty string to finish):') + '\n'
+            print '\n' + fill('Select an optional parameter to set by its # (^D or <ENTER> to finish):') + '\n'
             for i in range(len(self.optional_inputs)):
                 opt_str = ' [' + str(i) + '] ' + \
-                    get_io_desc(self.input_spec[self.optional_inputs[i]], show_opt=False)
+                    get_optional_input_str(self.input_spec[self.optional_inputs[i]])
                 if self.optional_inputs[i] in self.inputs:
                     opt_str += ' [=' + GREEN()
                     opt_str += json.dumps(self.inputs[self.optional_inputs[i]])
                     opt_str += ENDC() + ']'
+                elif 'default' in self.input_spec[self.optional_inputs[i]]:
+                    opt_str += ' [default=' + json.dumps(self.input_spec[self.optional_inputs[i]]['default']) + ']'
                 print opt_str
             print ""
             try:
@@ -312,7 +491,10 @@ class ExecutableInputs(object):
                         continue
             except EOFError:
                 return
-            self.inputs[self.optional_inputs[opt_num]] = self.prompt_for_input(self.optional_inputs[opt_num])
+            try:
+                self.inputs[self.optional_inputs[opt_num]] = self.prompt_for_input(self.optional_inputs[opt_num])
+            except:
+                pass
 
     def update_from_args(self, args):
         if args.filename is not None:

@@ -21,9 +21,5 @@
       "class": "string"
     }
   ],
-  "details": {
-    "contactUrl": "http://develop.dnanexus.com/Apps/hello_world_example"
-  },
-  "dxapi": "1.0.0",
-  "resources": []
+  "dxapi": "1.0.0"
 }

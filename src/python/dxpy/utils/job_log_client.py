@@ -1,3 +1,19 @@
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
 '''
 Utilities for client-side usage of the streaming log API
 (http://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FstreamLog).
@@ -17,7 +33,7 @@ class DXJobLogStreamingException(Exception):
 
 class DXJobLogStreamClient(WebSocketBaseClient):
     def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}", msg_callback=None, print_job_info=True):
-        self.seen_jobs = set()
+        self.seen_jobs = {}
         self.input_params = input_params
         self.msg_output_format = msg_output_format
         self.msg_callback = msg_callback
@@ -58,8 +74,8 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         message = json.loads(str(message))
 
         if self.print_job_info and message.get('job') not in self.seen_jobs:
-            print get_find_jobs_string(dxpy.describe(message['job']), has_children=False)
-            self.seen_jobs.add(message['job'])
+            self.seen_jobs[message['job']] = dxpy.describe(message['job'])
+            print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False)
 
         if self.msg_callback:
             self.msg_callback(message)
