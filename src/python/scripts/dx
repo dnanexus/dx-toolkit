@@ -2335,6 +2335,8 @@ def get_exec_or_workflow_handler(path, alias):
                 return ('pipeline' in i['describe']['types'])
             if entity_results is not None:
                 entity_results = [i for i in entity_results if is_applet(i) or is_workflow(i)]
+                if len(entity_results) == 0:
+                    entity_results = None
         except BaseException as details:
             if app_desc is None:
                 parser.exit(1, fill(unicode(details)) + '\n')

@@ -1,10 +1,9 @@
 {
-  "name": "read_trimmer_app",
+  "name": "read_trimmer_java",
   "title": "Read Trimmer",
   "summary": "Java sample app 2",
   "description": "This example Java app demonstrates use of the Java API bindings with a basic read trimmer.",
   "dxapi": "1.0.0",
-  "folder": "/programs/read_trimmer_example",
   "inputSpec": [
     {"name": "reads", "class": "gtable"},
     {"name": "trimLength", "class": "int", "default": 10}
@@ -13,7 +12,7 @@
     {"name": "trimmedReads", "class": "gtable"}
   ],
   "runSpec": {
-    "code": "export CLASSPATH=/:/lib:/opt/dnanexus/java/lib/*:$CLASSPATH; java DXTrimReads",
+    "code": "export CLASSPATH=/:/lib:/opt/dnanexus/lib/java/*:$CLASSPATH; java DXTrimReads",
     "interpreter": "bash",
     "execDepends": [
       {"name": "openjdk-6-jre-headless"}
