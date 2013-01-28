@@ -91,7 +91,7 @@ def get_io_desc(parameter, include_class=True, show_opt=True, app_help_version=F
     if "default" in parameter:
         if not is_first:
             desc += ', '
-        desc += json.dumps(parameter['default'])
+        desc += 'default=' + json.dumps(parameter['default'])
     if include_parens:
         desc += ")"
     if show_opt and is_optional:

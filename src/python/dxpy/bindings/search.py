@@ -73,8 +73,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
-    :param typename: Type that each result must conform to
-    :type typename: string
+    :param typename: Type constraint that each result must conform to
+    :type typename: string or dict
     :param tag: Tag that each result must be tagged with
     :type tag: string
     :param link: ID of an object that each result must link to

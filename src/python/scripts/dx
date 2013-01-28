@@ -1952,6 +1952,8 @@ def find_jobs(args):
     else:
         origin = args.origin
         if args.project is not None:
+            if get_last_pos_of_char(':', args.project) == -1:
+                args.project = args.project + ':'
             project, none, none = try_call(resolve_existing_path,
                                            args.project, 'project')
         if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
@@ -2136,6 +2138,8 @@ def find_data(args):
     elif args.project is None:
         args.project = dxpy.WORKSPACE_ID
     else:
+        if get_last_pos_of_char(':', args.project) == -1:
+            args.project = args.project + ':'
         args.project, none, none = try_call(resolve_existing_path,
                                             args.project, 'project')
     try:
@@ -3235,7 +3239,7 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[stdout_args, env_args])
-parser_run.add_argument('executable', help='Name or ID of an applet, app, or workflow to run', default='')
+parser_run.add_argument('executable', help='Name or ID of an applet, app, or workflow to run')
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
@@ -3514,7 +3518,7 @@ parser_map['find jobs'] = (parser_find_jobs, DXPathCompleter(expected='project')
 parser_categories['exec']['cmds'].append(('find jobs', subparsers_find._choices_actions[-1].help))
 
 parser_find_data = subparsers_find.add_parser('data', help='Finds data objects',
-                                              description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects, use --allprojects (overrides --project, --folder, --norecurse).',
+                                              description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --allprojects (overrides --project, --folder, --norecurse).',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
@@ -3524,7 +3528,7 @@ parser_find_data.add_argument('--property', dest='properties', metavar='KEY=VALU
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--tag', help='Tag of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
-parser_find_data.add_argument('--allprojects', help='Extend search to all projects', action='store_true')
+parser_find_data.add_argument('--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
 parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)')
 parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')
@@ -3590,6 +3594,7 @@ parser_help.add_argument('command_or_category', help=fill('Display the help mess
 parser_help.add_argument('subcommand', help=fill('Display the help message for the given subcommand of the command', width_adjustment=-23), nargs='?', default=None)
 parser_help.set_defaults(func=print_help)
 parser_map['help'] = (parser_help, NoneCompleter()) # TODO: a special help completer
+parser_map['help run'] = (parser_help, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
 for cat in parser_categories:
     parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()

@@ -48,7 +48,10 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
     At most one of allow_mult and more_choices should be set to True.
     '''
     for i in range(len(choices)):
-        print str(i) + ') ' + choices[i]
+        prefix = str(i) + ') '
+        lines = choices[i].split("\n")
+        joiner = "\n" + " " * len(prefix)
+        print prefix + joiner.join(lines)
     if more_choices:
         print 'm) More options not shown...'
     print ''
@@ -88,6 +91,37 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
             return choice
         except BaseException as details:
             print 'Not a valid selection'
+
+def paginate_and_pick(generator, render_fn=unicode, filter_fn=None, page_len=10, **pick_opts):
+    any_results = False
+    while True:
+        results = []
+        for i in range(page_len):
+            try:
+                if filter_fn is None:
+                    results.append(generator.next())
+                else:
+                    possible_next = generator.next()
+                    if filter_fn(possible_next):
+                        results.append(possible_next)
+                any_results = True
+            except StopIteration:
+                break
+        if not any_results:
+            return "none found"
+        elif len(results) == 0:
+            return "none picked"
+
+        try:
+            choice = pick([render_fn(result) for result in results],
+                          more_choices=(len(results) == page_len),
+                          **pick_opts)
+        except KeyboardInterrupt:
+            return "none picked"
+        if choice == 'm':
+            continue
+        else:
+            return results[choice]
 
 # The following caches project names to project IDs because they are
 # unlikely to change.
