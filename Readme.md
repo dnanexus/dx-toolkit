@@ -138,9 +138,4 @@ The Java bindings are not built by default.
 
 ### Building
 
-    cd src/java
-    mvn package
-
-### Installing
-
-    mvn install
+    make && make java
