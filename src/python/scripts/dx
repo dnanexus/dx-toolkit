@@ -2759,7 +2759,7 @@ def watch(args):
         def msg_callback(message):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)/1000))
             message['level_color'] = level_colors.get(message.get('level', ''), '')
-            message['job_name'] = log_client.seen_jobs[message['job']]['name']
+            message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
             print args.format.format(**message)
 
     from dxpy.utils.job_log_client import DXJobLogStreamClient
