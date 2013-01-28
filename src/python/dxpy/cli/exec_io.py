@@ -116,11 +116,14 @@ def interactive_help(in_class, param_desc, prompt):
                 print 'Your current working directory is ' + proj_name + ':' + os.environ.get('DX_CLI_WD', '/')
         while True:
             print 'Pick an option to find input data:'
-            opt_num = pick(['List and choose from available data in the current project',
-                            'List and choose from available data in the DNAnexus Reference Genomes project',
-                            'Select another project to list and choose available data',
-                            'Select an output from a previously-run job (current project only)',
-                            'Return to original prompt (specify an ID or path directly)'])
+            try:
+                opt_num = pick(['List and choose from available data in the current project',
+                                'List and choose from available data in the DNAnexus Reference Genomes project',
+                                'Select another project to list and choose available data',
+                                'Select an output from a previously-run job (current project only)',
+                                'Return to original prompt (specify an ID or path directly)'])
+            except KeyboardInterrupt:
+                opt_num = 4
             if opt_num == 0:
                 query_project = dxpy.WORKSPACE_ID
             elif opt_num == 1:
@@ -247,7 +250,7 @@ def get_input_array(param_desc):
                     user_input = [user_input]
             else:
                 user_input = shlex.split(user_input)
-            if len(user_input) == 1 and user_input[0] == "?":
+            while user_input == ['?']:
                 user_input = interactive_help(in_class, param_desc, prompt)
             if len(user_input) > 1:
                 print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')
@@ -300,7 +303,7 @@ def get_input_single(param_desc):
                     user_input = [user_input]
             else:
                 user_input = shlex.split(user_input)
-            if len(user_input) == 1 and user_input[0] == "?":
+            while user_input == ["?"]:
                 user_input = interactive_help(in_class, param_desc, prompt)
             if len(user_input) > 1:
                 print fill('Error: more than one argument given.  Please quote your entire input or escape your whitespace with a backslash \'\\\'.')

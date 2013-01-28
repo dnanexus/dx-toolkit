@@ -96,7 +96,7 @@ def paginate_and_pick(generator, render_fn=unicode, filter_fn=None, page_len=10,
     any_results = False
     while True:
         results = []
-        for i in range(page_len):
+        while len(results) < page_len:
             try:
                 if filter_fn is None:
                     results.append(generator.next())
