@@ -193,7 +193,7 @@ def interactive_help(in_class, param_desc, prompt):
                     else:
                         print 'No available output fields'
             else:
-                print fill('Enter an ID or path (<TAB> twice for compatible ' + in_class + 's in your current directory)' + (array_help_str if is_array else ''))
+                print fill('Enter an ID or path (<TAB> twice for compatible ' + in_class + 's in current directory)' + (array_help_str if is_array else ''))
                 return shlex.split(raw_input(prompt))
     else:
         if in_class == 'boolean':
@@ -209,7 +209,7 @@ def interactive_help(in_class, param_desc, prompt):
             print fill('Enter a quoted JSON hash')
         result = raw_input(prompt)
         if in_class == 'string':
-            return result
+            return [result]
         else:
             return shlex.split(result)
 
@@ -224,7 +224,7 @@ def get_input_array(param_desc):
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
     print
-    print fill('Enter ' + in_class + ' values, one at a time (^D or <ENTER> to finish, \'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
+    print fill('Enter ' + in_class + ' values, one at a time (^D or <ENTER> to finish,' + (' <TAB> twice for compatible ' + in_class + 's in current directory,' if in_class in dx_data_classes else '')  + ' \'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
     try:
         import readline
         if in_class in dx_data_classes:
@@ -276,7 +276,7 @@ def get_input_single(param_desc):
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
     print
-    print fill('Enter ' + in_class + (' ID or path' if in_class in dx_data_classes else ' value') + ' (\'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
+    print fill('Enter ' + in_class + (' ID or path' if in_class in dx_data_classes else ' value') + ' (' + ('<TAB> twice for compatible ' + in_class + 's in current directory,' if in_class in dx_data_classes else '')  + '\'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
 
     try:
         import readline
