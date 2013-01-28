@@ -525,8 +525,11 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if not found_valid_class:
             return None, None, None
         try:
-            if 'project' not in describe and dxpy.WORKSPACE_ID is not None:
-                describe['project'] = dxpy.WORKSPACE_ID
+            if 'project' not in describe:
+                if project != dxpy.WORKSPACE_ID:
+                    describe['project'] = project
+                elif dxpy.WORKSPACE_ID is not None:
+                    describe['project'] = dxpy.WORKSPACE_ID
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
         except:
             if 'project' in describe:
