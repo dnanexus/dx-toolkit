@@ -39,10 +39,10 @@ parser.add_argument('--tag', default=[], action='append', help='"A set of tags (
 @dxpy.entry_point('main')
 def importGTF(**args):
 
+    if len(args) == 0:
+        args = parser.parse_args(sys.argv[1:])
+
     try:
-        if len(args) == 0:
-            args = parser.parse_args(sys.argv[1:])
-    
         fileName = args.fileName
         reference = args.reference
         outputName = args.outputName
