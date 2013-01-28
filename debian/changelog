@@ -1,3 +1,11 @@
+dx-toolkit (0.35.3) precise; urgency=low
+
+  * Fix shebang update pattern for nonstandard Python installations.
+
+  * Fix more wiki links.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 28 Jan 2013 11:49:55 -0800
+
 dx-toolkit (0.35.2) precise; urgency=low
 
   * Many, many improvements to dx, including online help.
