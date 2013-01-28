@@ -45,7 +45,7 @@ Build dependencies
 
 The following packages are required to build the toolkit. You can avoid having
 to install them by either downloading a compiled release from
-http://wiki.dnanexus.com/DNAnexus-SDK, or by building only a portion of the
+http://wiki.dnanexus.com/Downloads, or by building only a portion of the
 toolkit that doesn't require them.
 
 ### Ubuntu 12.04
@@ -102,7 +102,7 @@ Notes:
 
 ### OS X
 
-Install the [Command Line Tools for XCode](http://wiki.dnanexus.com/DNAnexus-SDK). (Free registration required with Apple)
+Install the [Command Line Tools for XCode](https://developer.apple.com/downloads/). (Free registration required with Apple)
 
 Install the following packages from source or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/):
 
