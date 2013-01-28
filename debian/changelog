@@ -1,3 +1,11 @@
+dx-toolkit (0.35.2) precise; urgency=low
+
+  * Many, many improvements to dx, including online help.
+
+  * Lots of bugs squashed.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 28 Jan 2013 11:29:56 -0800
+
 dx-toolkit (0.35.1) precise; urgency=low
 
   * Removed reads_validator from dx-toolkit.
