@@ -2730,9 +2730,23 @@ def watch(args):
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
 
     msg_callback, log_client = None, None
-
-    if args.format is None:
-        args.format = BLUE() + "{job_name} ({job})" + ENDC() + " {level_color}{level}" + ENDC() + " {msg}"
+    if args.get_stdout:
+        args.levels = ['STDOUT']
+        args.format = "{msg}"
+        args.job_info = False
+    elif args.get_stderr:
+        args.levels = ['STDERR']
+        args.format = "{msg}"
+        args.job_info = False
+    elif args.get_streams:
+        args.levels = ['STDOUT', 'STDERR']
+        args.format = "{msg}"
+        args.job_info = False
+    elif args.format is None:
+        if args.job_ids:
+            args.format = BLUE() + "{job_name} ({job})" + ENDC() + " {level_color}{level}" + ENDC() + "\t{msg}"
+        else:
+            args.format = BLUE() + "{job_name}" + ENDC() + " {level_color}{level}" + ENDC() + "\t{msg}"
         if args.timestamps:
             args.format = "{timestamp} " + args.format
 
@@ -3244,10 +3258,11 @@ parser_watch.add_argument('jobid', help='ID of the job to watch')
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
-parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', dest='levels', action='store_const', const=['STDOUT'])
-parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', dest='levels', action='store_const', const=['STDERR'])
-parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', dest='levels', action='store_const', const=['STDOUT', 'STDERR'])
-parser_watch.add_argument('-t', '--timestamps', help='Print a timestamp for each message', action='store_true')
+parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
+parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
+parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
+parser_watch.add_argument('--no-timestamps', help='Omit timestamps from messages', action='store_false', dest='timestamps')
+parser_watch.add_argument('--job-ids', help='Print job ID in each message', action='store_true')
 parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false', dest='job_info')
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.set_defaults(func=watch)
