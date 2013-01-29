@@ -32,9 +32,16 @@ mv build/Prebuilt-Readme.md Readme.md
 # setuptools bakes the path of the Python interpreter into all installed Python scripts. Rewrite it back to the more
 # portable form "/usr/bin/env python2.7", since we don't always know where the right interpreter is on the target
 # system.
+# Also, insert a stub that tries to detect when the user hasn't sourced the environment file and prints a warning.
+py_header='#!/usr/bin/env python2.7
+import os, sys
+if "DNANEXUS_HOME" not in os.environ:
+    sys.stderr.write("""***\n*** WARNING: DNANEXUS_HOME is not set. Please source the environment file at the root of dx-toolkit.\n***\n""")
+'
+
 for f in bin/*; do
     if head -n 1 "$f" | egrep -iq "(python|pypy)"; then
-        perl -i -pe 's|^#!/.+|#!/usr/bin/env python2.7| if $. == 1' "$f"
+        perl -i -pe 's|^#!/.+|'"$py_header"'| if $. == 1' "$f"
     fi
 done
 
