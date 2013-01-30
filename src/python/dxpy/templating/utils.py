@@ -338,7 +338,8 @@ def create_files_from_templates(template_dir, app_json, language,
                     filled_code_filename = os.path.join(name, 'src', template_filename.replace('code' + pattern_suffix, name + '.'))
                     with open(filled_code_filename, 'w') as filled_code_file:
                         filled_code_file.write(code_file_text)
-                    subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
+                    if filled_code_filename.endswith('.sh') or filled_code_filename.endswith('.py'):
+                        subprocess.call(["chmod", "+x", os.path.join(filled_code_filename)])
                     manifest.append(filled_code_filename)
         else:
             use_template_file(os.path.join('src', template_filename))
