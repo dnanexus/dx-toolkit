@@ -39,11 +39,12 @@ use HTTP::Request;
 use JSON;
 
 use DNAnexus::API;
+use DNAnexus::Utils::Env qw(get_env);
 
 our @ISA = "Exporter";
 our @EXPORT_OK = qw(DXHTTPRequest);
 
-our ($APISERVER_HOST, $APISERVER_PORT, $APISERVER, $SECURITY_CONTEXT);
+our ($APISERVER_HOST, $APISERVER_PORT, $APISERVER_PROTOCOL, $APISERVER, $SECURITY_CONTEXT, $PROJECT_CONTEXT_ID, $_DEBUG);
 
 sub DXHTTPRequest($;$%) {
     my ($resource, $data, %kwargs) = @_;
@@ -91,14 +92,31 @@ sub set_security_context($) {
     $SECURITY_CONTEXT = $sc;
 }
 
-if (exists $ENV{DX_APISERVER_HOST} and exists $ENV{DX_APISERVER_PORT}) {
-    set_api_server_info($ENV{DX_APISERVER_HOST}, $ENV{DX_APISERVER_PORT});
-} else {
-    set_api_server_info();
+sub _initialize() {
+    print "DNAnexus initializing...";
+
+    if (exists $ENV{DX_DEBUG}) {
+        $_DEBUG = 1;
+    }
+
+    my $env_vars = get_env();
+    for my $var (keys %$env_vars) {
+        $ENV{$var} = $$env_vars{$var} unless exists $ENV{$var};
+    }
+
+    if (exists $ENV{DX_APISERVER_HOST} and exists $ENV{DX_APISERVER_PORT}) {
+        set_api_server_info($ENV{DX_APISERVER_HOST}, $ENV{DX_APISERVER_PORT});
+    } else {
+        set_api_server_info();
+    }
+
+    if (exists $ENV{DX_SECURITY_CONTEXT}) {
+        set_security_context(decode_json($ENV{DX_SECURITY_CONTEXT}));
+    }
+
+    print $APISERVER_HOST, $APISERVER_PORT, $APISERVER_PROTOCOL, $APISERVER, $SECURITY_CONTEXT, $PROJECT_CONTEXT_ID, $_DEBUG;
 }
 
-if (exists $ENV{DX_SECURITY_CONTEXT}) {
-    set_security_context(decode_json($ENV{DX_SECURITY_CONTEXT}));
-}
+_initialize();
 
 1;
