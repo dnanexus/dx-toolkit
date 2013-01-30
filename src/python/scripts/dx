@@ -1220,7 +1220,7 @@ def describe(args):
                 return
             else:
                 print get_result_str()
-                print_desc(result['describe'], args.verbose)
+                print_desc(result['describe'], args.verbose or args.details)
 
     if not is_hashid(args.path) and ':' not in args.path:
 
