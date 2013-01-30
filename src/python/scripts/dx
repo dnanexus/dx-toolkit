@@ -3101,17 +3101,6 @@ parser_map['rm'] = (parser_rm, DXPathCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_rmproject = subparsers.add_parser('rmproject', help='Delete projects',
-                                         description='Delete projects and all their associated data',
-                                         prog='dx rmproject',
-                                         parents=[env_args])
-parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
-parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
-parser_rmproject.set_defaults(func=rmproject)
-parser_map['rmproject'] = (parser_rmproject, DXPathCompleter(expected='project', include_current_proj=True))
-parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
-
 # data
 
 parser_describe = subparsers.add_parser('describe', help='Describe a remote object',
@@ -3306,6 +3295,18 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
 parser_new_project.add_argument('name', help='Name of the new project')
 parser_new_project.set_defaults(func=new_project)
 parser_map['new project'] = (parser_new_project, NoneCompleter())
+parser_categories['fs']['cmds'].append(('new project', subparsers_new._choices_actions[-1].help))
+
+parser_rmproject = subparsers.add_parser('rmproject', help='Delete a project',
+                                         description='Delete projects and all their associated data',
+                                         prog='dx rmproject',
+                                         parents=[env_args])
+parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+')
+parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
+parser_rmproject.set_defaults(func=rmproject)
+parser_map['rmproject'] = (parser_rmproject, DXPathCompleter(expected='project', include_current_proj=True))
+parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
+parser_categories['fs']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
