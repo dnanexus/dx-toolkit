@@ -33,7 +33,6 @@ Supported languages
 * C++
 * Perl
 * Java
-* Ruby (FIXME)
 
 Runtime dependencies
 --------------------

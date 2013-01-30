@@ -38,7 +38,6 @@ platforms:
 * C++
 * Perl
 * Java
-* Ruby (FIXME)
 
 Build dependencies
 ------------------
