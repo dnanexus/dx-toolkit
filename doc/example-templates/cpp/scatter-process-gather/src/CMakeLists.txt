@@ -25,4 +25,4 @@ add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp EXCLUDE_FROM_ALL)
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(DX_APP_WIZARD_NAME DX_APP_WIZARD_NAME.cpp)
-target_link_libraries(DX_APP_WIZARD_NAME dxjson dxcpp)
+target_link_libraries(DX_APP_WIZARD_NAME dxjson dxcpp crypto)
