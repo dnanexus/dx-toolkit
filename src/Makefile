@@ -59,13 +59,11 @@ cpp: api_wrappers
 	cp -a cpp "$(DNANEXUS_HOME)/share/dnanexus/src"
 
 src_libs: api_wrappers
-	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib/bash"
-	install -v bash/* "$(DNANEXUS_HOME)/share/dnanexus/lib/bash"
-	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib/javascript"
-	install -v javascript/*.* "$(DNANEXUS_HOME)/share/dnanexus/lib/javascript"
-	mkdir -p "$(DNANEXUS_HOME)/lib/perl5/DNAnexus"
-	install -v perl/lib/DNAnexus.pm "$(DNANEXUS_HOME)/lib/perl5"
-	install -v perl/lib/DNAnexus/API.pm "$(DNANEXUS_HOME)/lib/perl5/DNAnexus"
+	$(eval DNANEXUS_LIBDIR := "$(DNANEXUS_HOME)/share/dnanexus/lib")
+	mkdir -p "$(DNANEXUS_LIBDIR)"
+	cp -R -v bash javascript "$(DNANEXUS_LIBDIR)"
+	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
+	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
