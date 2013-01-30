@@ -65,7 +65,7 @@ parser_categories = {"all": {"desc": "\t\tAll commands",
                               "cmds": []},
                      "metadata": {"desc": "\tView and modify metadata for projects and data objects",
                                  "cmds": []},
-                     "exec": {"desc": "\t\tManage and run your apps and applets",
+                     "exec": {"desc": "\t\tManage and run apps, applets, and workflows",
                               "cmds": []},
                      "other": {"desc": "\t\tMiscellaneous advanced utilities",
                                "cmds": []}}
@@ -3210,7 +3210,7 @@ parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, 
 
 from dxpy.scripts.dx_build_app import parser as build_parser
 
-parser_build = subparsers.add_parser('build', help='Build an applet/app',
+parser_build = subparsers.add_parser('build', help='Upload and build a new applet/app',
                                      description='Build an applet or app object from a local source directory.  You can use dx-app-wizard to generate a skeleton directory with the necessary files.',
                                      prog='dx build',
                                      add_help=False,
@@ -3222,7 +3222,7 @@ parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, s
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
 parser_install = subparsers.add_parser('install', help='Install an app',
-                                       description='Install an app by name.', prog='dx install',
+                                       description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.', prog='dx install',
                                        parents=[env_args])
 parser_install.add_argument('app', help='ID or name of app to install')
 parser_install.set_defaults(func=install)
@@ -3262,7 +3262,7 @@ parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathComplet
 parser_categories['all']['cmds'].append(('run', 'Run an applet, app, or workflow'))
 parser_categories['exec']['cmds'].append(('run', 'Run an applet, app, or workflow'))
 
-parser_watch = subparsers.add_parser('watch', help='Watch a job and its sub-jobs', prog='dx watch',
+parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
                                      description='Monitors logging output from a running job',
                                      parents=[env_args, no_color_arg])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
@@ -3281,7 +3281,7 @@ parser_map['watch'] = (parser_watch, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['exec']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_terminate = subparsers.add_parser('terminate', help='Terminate jobs',
+parser_terminate = subparsers.add_parser('terminate', help='Terminate job(s)',
                                          description='Terminate a job or jobs that have not yet finished',
                                          prog='dx terminate',
                                          parents=[env_args])
@@ -3466,7 +3466,7 @@ subparsers_find.metavar = 'category'
 parser_map['find'] = (parser_find, NoneCompleter())
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
-parser_find_apps = subparsers_find.add_parser('apps', help='Finds apps',
+parser_find_apps = subparsers_find.add_parser('apps', help='List available apps',
                                               description='Finds apps with the given search parameters.  Use --category to restrict by a category.  Common categories include: "Alignment", "Annotation", "Debugging", "Export", "Import", "RNA-Seq", "Reports", "Statistics", "Variation calling".',
                                               parents=[stdout_args, json_arg, delim_arg, env_args],
                                               prog='dx find apps')
@@ -3486,7 +3486,7 @@ parser_find_apps.set_defaults(func=find_apps)
 parser_map['find apps'] = (parser_find_apps, NoneCompleter())
 parser_categories['exec']['cmds'].append(('find apps', subparsers_find._choices_actions[-1].help))
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='Finds jobs', description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
+parser_find_jobs = subparsers_find.add_parser('jobs', help='List jobs in your project', description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
 
 EXAMPLES
 
