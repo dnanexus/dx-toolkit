@@ -187,7 +187,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :type want_full_response: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
-    :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if either of the following is true:
+    :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if any of the following is true:
                         
                         - Content length received does not match "Content-Length" header (only applicable if response is received from server)
                         - Server responded with HTTP status code in 5xx range (only applicable if response is received from server)
