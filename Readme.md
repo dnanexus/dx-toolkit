@@ -1,5 +1,5 @@
-DNAnexus Platform Toolkit
-=========================
+DNAnexus Platform SDK
+=====================
 
 **To download pre-built packages for your platform, see http://wiki.dnanexus.com/Downloads.**
 
@@ -38,7 +38,6 @@ platforms:
 * C++
 * Perl
 * Java
-* Ruby (FIXME)
 
 Build dependencies
 ------------------

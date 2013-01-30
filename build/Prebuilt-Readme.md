@@ -1,5 +1,5 @@
-DNAnexus Platform Toolkit
-=========================
+DNAnexus Platform SDK
+=====================
 
 **To build ```dx-toolkit``` from source, see http://wiki.dnanexus.com/Downloads.**
 
@@ -33,7 +33,6 @@ Supported languages
 * C++
 * Perl
 * Java
-* Ruby (FIXME)
 
 Runtime dependencies
 --------------------
