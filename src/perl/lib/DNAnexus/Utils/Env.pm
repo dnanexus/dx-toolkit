@@ -8,7 +8,6 @@ sub parse_env_file($) {
     my ($filename) = @_;
     my $env_vars;
     
-    print $filename."\n";
     open(my $fd, '<', $filename) or return $env_vars;
     while (<$fd>) {
         if (/export (DX.+?)='(.+)'/) {
@@ -36,9 +35,6 @@ sub get_env(;$) {
             $env_vars{$var} = $ENV{$var};
         }
     }
-    for my $var (keys %env_vars) {
-        print "$var =\t$env_vars{$var}\n";
-    }
 
     my $user_file_env_vars = parse_user_env_file();
     my $installed_file_env_vars = parse_installed_env_file();
@@ -47,7 +43,6 @@ sub get_env(;$) {
         next if exists $env_vars{$var};
         if (defined $$user_file_env_vars{$var}) {
             $env_vars{$var} = $$user_file_env_vars{$var};
-            print "setting $var =\t$env_vars{$var}\n";
         } elsif (defined $$installed_file_env_vars{$var}) {
             $env_vars{$var} = $$installed_file_env_vars{$var};
         }
