@@ -2884,7 +2884,7 @@ parser.add_argument('--version', action='version', version='dx %s' % (dxpy.TOOLK
 subparsers = parser.add_subparsers(help=argparse.SUPPRESS)
 subparsers.metavar = 'command'
 
-parser_login = subparsers.add_parser('login', help='Log in and acquire credentials', description='Log in interactively and acquire credentials', prog='dx login',
+parser_login = subparsers.add_parser('login', help='Log in (interactively or with an existing API token)', description='Log in interactively and acquire credentials.  Use "--token" to log in with an existing API token.', prog='dx login',
                                      parents=[env_args])
 parser_login.add_argument('--token', help='Authentication token to use')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
