@@ -2781,6 +2781,8 @@ def watch(args):
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
+        if not args.quiet:
+            print >>sys.stderr, "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
         log_client.connect()
     except Exception as details:
         parser.exit(3, fill(unicode(details)) + '\n')
@@ -3264,6 +3266,7 @@ parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr 
 parser_watch.add_argument('--no-timestamps', help='Omit timestamps from messages', action='store_false', dest='timestamps')
 parser_watch.add_argument('--job-ids', help='Print job ID in each message', action='store_true')
 parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false', dest='job_info')
+parser_watch.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.set_defaults(func=watch)
 parser_map['watch'] = (parser_watch, NoneCompleter())

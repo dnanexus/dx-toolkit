@@ -32,7 +32,8 @@ class DXJobLogStreamingException(Exception):
     pass
 
 class DXJobLogStreamClient(WebSocketBaseClient):
-    def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}", msg_callback=None, print_job_info=True):
+    def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}", msg_callback=None,
+                 print_job_info=True):
         self.seen_jobs = {}
         self.input_params = input_params
         self.msg_output_format = msg_output_format
@@ -73,34 +74,13 @@ class DXJobLogStreamClient(WebSocketBaseClient):
     def received_message(self, message):
         message = json.loads(str(message))
 
-        if self.print_job_info and message.get('job') not in self.seen_jobs:
+        if self.print_job_info and 'job' in message and message['job'] not in self.seen_jobs:
             self.seen_jobs[message['job']] = dxpy.describe(message['job'])
             print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False)
 
-        if self.msg_callback:
+        if message.get('source') == 'SYSTEM' and message.get('msg') == 'END_LOG':
+            self.close()
+        elif self.msg_callback:
             self.msg_callback(message)
         else:
             print self.msg_output_format.format(**message)
-
-'''
-                if msg_content["name"] == "log":
-                    log_level, job_id, orig_msg = re.match("^\[.+?\] APP (\w+) \[(job-.+?)\] (.+)", msg_content["args"][0]).groups()
-
-                    if self.filter_stream == 'stdout':
-                        result = re.match("^stdout:(.+)", orig_msg)
-                        if result is not None:
-                            print result.group(1)
-                    elif self.filter_stream == 'stderr':
-                        result = re.match("^stderr:(.+)", orig_msg)
-                        if result is not None:
-                            print result.group(1)
-                    else:
-                        if job_id not in self.seen_jobs:
-                            print get_find_jobs_string(dxpy.describe(job_id), has_children=False)
-                            self.seen_jobs.add(job_id)
-                        print msg_content["args"][0]
-                elif msg_content["name"] == "system" and msg_content["args"][0] == "All Jobs completed":
-                    self.jobs_completed = True
-            except:
-                print "Error while decoding message:", str(msg_content)
-'''
