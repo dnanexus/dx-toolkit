@@ -61,11 +61,23 @@ setup(
     author_email='klai@dnanexus.com, psung@dnanexus.com, akislyuk@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
-    license='as-is',
+    license='Apache Software License',
     packages = find_packages(),
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,
     },
     install_requires = dependencies,
+    use_2to3 = True,
+    classifiers=[
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: POSIX',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Unix Shell',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+    ]
 )
