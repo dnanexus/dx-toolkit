@@ -7,7 +7,7 @@ Follow instructions here : http://mingw.org/
 Once you have installed msys and MinGW, run following commands on mingw shell
 ```bash
 $ mingw-get update
-$ mingw-get install msys-wget msys-bzip2
+$ mingw-get install msys-wget msys-bzip2 msys-crypto
 ```
 Note: You may need these packages as well (not sure): ```libopenssl msys-openssl msys-libmagic msys-zlib```
 

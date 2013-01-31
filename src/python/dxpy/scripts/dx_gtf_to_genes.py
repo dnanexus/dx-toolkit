@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2013 DNAnexus, Inc.
 #
-# This file is part of dx-toolkit (DNAnexus platform client libraries).
+# This file is part of gtf_importer.
 #
 #   Licensed under the Apache License, Version 2.0 (the "License"); you may not
 #   use this file except in compliance with the License. You may obtain a copy
@@ -21,7 +21,6 @@ import string
 import random
 import sys
 
-# to find the magic library
 import magic
 import subprocess
 import argparse
@@ -39,132 +38,165 @@ parser.add_argument('--tag', default=[], action='append', help='"A set of tags (
 @dxpy.entry_point('main')
 def importGTF(**args):
 
+    print args
     if len(args) == 0:
-        args = parser.parse_args(sys.argv[1:])
+        command_line_args = parser.parse_args(sys.argv[1:])
+        fileName = command_line_args.fileName
+        reference = command_line_args.reference
+        outputName = command_line_args.outputName
+        tag = command_line_args.tag
+        property_key = command_line_args.property_key
+        property_value = command_line_args.property_value
+        additional_type = command_line_args.additional_type
+        file_id = command_line_args.file_id
+    else:
+        fileName = args['fileName']
+        reference = args['reference']
+        outputName = ''
+        if args.get('outputName') != None:
+            outputName = args['outputName']
+        tag = []
+        if args.get('tag'):
+            tag = args['tag']
+        if args.get('property_key') != None:
+            property_key = args['property_key']
+        if args.get('property_value') != None:
+            property_value = args['property_value']
+        if args.get('additional_type') != None:
+            additional_type = args['additional_type']
+        if args.get('file_id') != None:
+            file_id = args['file_id']
 
-    try:
-        fileName = args.fileName
-        reference = args.reference
-        outputName = args.outputName
+    inputFileName = unpack(fileName)
+
+    capturedTypes = {"5UTR": "5' UTR", "3UTR": "3' UTR", "CDS": "CDS", "inter": "intergenic", "inter_CNS": "intergenic_conserved", "intron_CNS": "intron_conserved", "exon": "exon", "transcript": "transcript", "gene":"gene"}
+
+    #Rows of this type will not be written to the gtable as their information is fully encompassed by the rest of the data
+    discardedTypes = {"start_codon": True, "stop_codon": True}
+
+    ##Isolate the attribute tags from the file and check integrity
+    spansTable, additionalColumns = constructTable(inputFileName)
+    spansTable.add_tags(tag)
+
+    types = ["Genes", "gri"]
+    for x in additional_type:
+        types.append(x)
+    spansTable.add_types(types)
+    details = {'original_contigset': dxpy.dxlink(reference)}
+
+    if len(property_key) != len(property_value):
+        raise dxpy.AppError("Expected each provided property to have a corresponding value")
+    for i in range(len(property_key)):
+        details[property_key[i]] = property_value[i]
+    for x in additional_type:
+        types.append(x)
+
+    if file_id != None:
+        details['original_file'] = dxpy.dxlink(file_id)
+    spansTable.set_details(details)
+    if outputName == '':
+        spansTable.rename(fileName)
+    else:
+        spansTable.rename(outputName)
+
+    #This passes through the file calculates the gene and transcript models 
+    genes = {}
+    transcripts = {}
+    spanId = 0
+    frames = {}
     
-        inputFileName = unpack(fileName)
-        
-        capturedTypes = {"5UTR": "5' UTR", "3UTR": "3' UTR", "CDS": "CDS", "inter": "intergenic", "inter_CNS": "intergenic_conserved", "intron_CNS": "intron_conserved", "exon": "exon", "transcript": "transcript", "gene":"gene"} 
-        
-        #Rows of this type will not be written to the gtable as their information is fully encompassed by the rest of the data
-        discardedTypes = {"start_codon": True, "stop_codon": True}
-       
-        ##Isolate the attribute tags from the file and check integrity
-        spansTable, additionalColumns = constructTable(inputFileName)
-        types = ["Genes", "gri"]
-        for x in args.additional_type:
-            types.append(x)
-        spansTable.add_types(types)
-        details = {'original_contigset': dxpy.dxlink(reference)}
-    
-        if len(args.property_key) != len(args.property_value):
-            raise dxpy.AppError("Expected each provided property to have a corresponding value")
-        for i in range(len(args.property_key)):
-            details[args.property_key[i]] = args.property_value[i]
-        spansTable.add_tags(args.tag)
-    
-        if args.file_id != None:
-            details['original_file'] = dxpy.dxlink(args.file_id)
-        spansTable.set_details(details)
-        if outputName == '':
-            spansTable.rename(fileName)
-        else:
-            spansTable.rename(outputName)
-    
-        #This pass through the file calculates the gene and transcript models 
-        genes = {}
-        transcripts = {}
-        spanId = 0
-        
-        inputFile = open(inputFileName, 'r')
-        for line in inputFile:
-            if line[0] != "#":
-                values = parseLine(line, capturedTypes, discardedTypes)
-        
-                for [element, hashId] in [[genes, values["geneId"]], [transcripts, values["transcriptId"]]]:   
-                    if element.get(hashId) == None:
-                        element[hashId] = {values["chromosome"]: {"lo":values["lo"], "hi":values["hi"], "codingLo": -1, "codingHi": -1, "strand":values["strand"], "score":values["score"], "geneId":values["geneId"], "coding":False, "spanId": spanId, "name":values["geneName"], "originalGeneId": values["attributes"]["gene_id"], "originalTranscriptId": values["attributes"]["transcript_id"]}}
-                        spanId += 1
-                    elif element[hashId].get(values["chromosome"]) == None:
-                        element[hashId][values["chromosome"]] = {"lo":values["lo"], "hi":values["hi"], "codingLo": -1, "codingHi": -1, "strand":values["strand"], "score":values["score"], "geneId":values["geneId"], "coding":False, "spanId": spanId, "name":values["transcriptName"], "originalGeneId": values["attributes"]["gene_id"], "originalTranscriptId": values["attributes"]["transcript_id"]}
-                        spanId += 1
-                    else:
-                        if values["lo"] < element[hashId][values["chromosome"]]["lo"]:
-                            element[hashId][values["chromosome"]]["lo"] = values["lo"]
-                        if values["hi"] > element[hashId][values["chromosome"]]["hi"]:
-                            element[hashId][values["chromosome"]]["hi"] = values["hi"]
-            
-                if values["type"] == "CDS" or values["type"] == "start_codon" or values["type"] == "stop_codon":
-                    if values["hi"] > transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"]:
-                        transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] = values["hi"]
-                    if values["lo"] < transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] or transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] == -1:
-                        transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] = values["lo"]
-                    genes[values["geneId"]][values["chromosome"]]["coding"] = True
-                    transcripts[values["transcriptId"]][values["chromosome"]]["coding"] = True
-        
-        for gId, chrList in genes.iteritems():
-            for k, v in chrList.iteritems():          
-                entry = [k, v["lo"], v["hi"], v["name"], v["spanId"], "gene", v["strand"], v["score"], v["coding"], -1, -1, '', '', v["originalGeneId"], '']
-                for x in additionalColumns:
-                    if x != "gene_id" and x != "transcript_id":
-                        entry.append('')
-                spansTable.add_rows([entry])
-        for gId, chrList in transcripts.iteritems():
-            for k, v in chrList.iteritems():
-                entry = [k, v["lo"], v["hi"], v["name"], v["spanId"], "transcript", v["strand"], v["score"], genes[v["geneId"]][k]["coding"], genes[v["geneId"]][k]["spanId"], -1, '', '', v["originalGeneId"], v["originalTranscriptId"]]
-                for x in additionalColumns:
-                    if x != "gene_id" and x != "transcript_id":
-                        entry.append('')
-                spansTable.add_rows([entry])
-    
-        exons = {}      
-        inputFile = open(inputFileName, 'r')
-        for line in inputFile:
-            if line[0] != "#":
-                values = parseLine(line, capturedTypes, discardedTypes)
-                
-                if exons.get(values["transcriptId"]) != None:
-                    if exons[values["transcriptId"]].get(values["chromosome"]) == None:
-                        exons[values["transcriptId"]][values["chromosome"]] = []
+
+    inputFile = open(inputFileName, 'r')
+    for line in inputFile:
+        if line[0] != "#":
+            values = parseLine(line, capturedTypes, discardedTypes)
+
+            if values["type"] == "CDS":
+                if frames.get(values["transcriptId"]) == None:
+                    frames[values["transcriptId"]] = {}
+                frames[values["transcriptId"]][values["lo"]] = values["frame"]
+
+            for [element, hashId, elementType] in [[genes, values["geneId"], "geneName"], [transcripts, values["transcriptId"], "transcriptName"]]:   
+
+                if element.get(hashId) == None:
+                    element[hashId] = {values["chromosome"]: {"lo":values["lo"], "hi":values["hi"], "codingLo": -1, "codingHi": -1, "strand":values["strand"], "score":values["score"], "geneId":values["geneId"], "coding":False, "spanId": spanId, "name":values[elementType], "originalGeneId": values["attributes"]["gene_id"], "originalTranscriptId": values["attributes"]["transcript_id"]}}
+                    spanId += 1
+                elif element[hashId].get(values["chromosome"]) == None:
+                    element[hashId][values["chromosome"]] = {"lo":values["lo"], "hi":values["hi"], "codingLo": -1, "codingHi": -1, "strand":values["strand"], "score":values["score"], "geneId":values["geneId"], "coding":False, "spanId": spanId, "name":values[elementType], "originalGeneId": values["attributes"]["gene_id"], "originalTranscriptId": values["attributes"]["transcript_id"]}
+                    spanId += 1
                 else:
-                    exons[values["transcriptId"]] = {values["chromosome"] : []}
-            
-                if capturedTypes.get(values["type"]) != None:
-                    #If type is 5'UTR, 3'UTR, intergenic, or conserved intron, type is always noncoding
-                    if values["type"] == "5UTR" or values["type"] == "3UTR" or values["type"] == "inter" or values["type"] == "inter_CNS" or values["type"] == "intron_CNS":
-                        writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"], [values["chromosome"], values["lo"], values["hi"], values["name"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], False, transcripts[values["transcriptId"]]["spanId"], values["frame"], '', values["source"]])
-                    
-                    if "exon_number" in values["attributes"]:
-                        values["transcriptName"] += "." + values["attributes"]["exon_number"]
-                    
-                    #If type is CDS, always of type coding                
-                    if values["type"] == "CDS":
-                        if [values["lo"], values["hi"]] not in exons[values["transcriptId"]][values["chromosome"]]:
-                            spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"], [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], True, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
-                                    
-                    #If type is exon do calculation as to whether coding or non-coding
-                    if values["type"] == "exon":
-                        if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1): 
-                            for x in splitExons(transcripts[values["transcriptId"]], values["chromosome"], values["lo"], values["hi"], values["strand"]):
-                                spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], x[1], x[2], values["attributes"], [values["chromosome"], x[1], x[2], values["transcriptName"], spanId, x[0], values["strand"], values["score"], x[3], transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
-                        else:
-                            spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"],  [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], False, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
-    
-        spansTable.flush()
-        spansTable.close()
-        print spansTable.get_id()
-        return spansTable.get_id()
-    except:
-        # Write Error Message
-        errorFile = open("AppError.txt", 'w')
-        errorFile.write("A failure occurred during import. Please see the job log for more details.")
-        errorFile.close()
-        sys.exit(1)
+                    if values["lo"] < element[hashId][values["chromosome"]]["lo"]:
+                        element[hashId][values["chromosome"]]["lo"] = values["lo"]
+                    if values["hi"] > element[hashId][values["chromosome"]]["hi"]:
+                        element[hashId][values["chromosome"]]["hi"] = values["hi"]
+
+            if values["type"] == "CDS" or values["type"] == "start_codon" or values["type"] == "stop_codon":
+                if values["hi"] > transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"]:
+                    transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] = values["hi"]
+                if values["lo"] < transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] or transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] == -1:
+                    transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] = values["lo"]
+                genes[values["geneId"]][values["chromosome"]]["coding"] = True
+                transcripts[values["transcriptId"]][values["chromosome"]]["coding"] = True
+
+    for gId, chrList in genes.iteritems():
+        for k, v in chrList.iteritems():
+            entry = [k, v["lo"], v["hi"], v["name"], v["spanId"], "gene", v["strand"], v["score"], v["coding"], -1, -1, '', '', v["originalGeneId"], '']
+            for x in additionalColumns:
+                if x != "gene_id" and x != "transcript_id":
+                    entry.append('')
+            spansTable.add_rows([entry])
+    for gId, chrList in transcripts.iteritems():
+        for k, v in chrList.iteritems():
+            entry = [k, v["lo"], v["hi"], v["name"], v["spanId"], "transcript", v["strand"], v["score"], genes[v["geneId"]][k]["coding"], genes[v["geneId"]][k]["spanId"], -1, '', '', v["originalGeneId"], v["originalTranscriptId"]]
+            for x in additionalColumns:
+                if x != "gene_id" and x != "transcript_id":
+                    entry.append('')
+            spansTable.add_rows([entry])
+
+    exons = {}
+    inputFile = open(inputFileName, 'r')
+    for line in inputFile:
+        if line[0] != "#":
+            values = parseLine(line, capturedTypes, discardedTypes)
+
+            if exons.get(values["transcriptId"]) != None:
+                if exons[values["transcriptId"]].get(values["chromosome"]) == None:
+                    exons[values["transcriptId"]][values["chromosome"]] = []
+            else:
+                exons[values["transcriptId"]] = {values["chromosome"] : []}
+
+            if capturedTypes.get(values["type"]) != None:
+                #If type is 5'UTR, 3'UTR, intergenic, or conserved intron, type is always noncoding
+                if values["type"] == "5UTR" or values["type"] == "3UTR" or values["type"] == "inter" or values["type"] == "inter_CNS" or values["type"] == "intron_CNS":
+                    writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"], [values["chromosome"], values["lo"], values["hi"], values["name"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], False, transcripts[values["transcriptId"]]["spanId"], values["frame"], '', values["source"]])
+
+                if "exon_number" in values["attributes"]:
+                    values["transcriptName"] += "." + values["attributes"]["exon_number"]
+
+                #If type is CDS, always of type coding
+                if values["type"] == "CDS":
+                    if [values["lo"], values["hi"]] not in exons[values["transcriptId"]][values["chromosome"]]:
+                        spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"], [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], True, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
+
+                #If type is exon do calculation as to whether coding or non-coding
+                if values["type"] == "exon":
+                    if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1):
+                        if frames.get(values["transcriptId"]) != None:
+                            if frames[values["transcriptId"]].get(values["lo"]) != None:
+                                values["frame"] = frames[values["transcriptId"]][values["lo"]]
+
+                        for x in splitExons(transcripts[values["transcriptId"]], values["chromosome"], values["lo"], values["hi"], values["strand"]):
+                            spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], x[1], x[2], values["attributes"], [values["chromosome"], x[1], x[2], values["transcriptName"], spanId, x[0], values["strand"], values["score"], x[3], transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
+                    else:
+                        spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"],  [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], False, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
+
+    spansTable.flush()
+    spansTable.close()
+    outputFile = open("result.txt", 'w')
+    outputFile.write(spansTable.get_id())
+    outputFile.close()
+    print spansTable.get_id()
+    return spansTable.get_id()
 
 def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, hi, attributes, entry):
     if [lo, hi] not in exonInfo[chromosome] and [lo, hi-2] not in exonInfo[chromosome]:
@@ -176,7 +208,7 @@ def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, 
                 entry[10] = int(entry[10]) + checkOverlap["hiChange"]%3
             else:
                 entry[10] = int(entry[10]) + checkOverlap["loChange"]%3
-            
+
             exonInfo[chromosome].append([lo, hi])
             spanId += 1
             for x in additionalColumns:
@@ -198,7 +230,7 @@ def trimOverlap(exons, lo, hi):
             hiChange  = hi - x[0]
             hi = x[0]
     return {"lo": lo, "hi": hi, "loChange": loChange, "hiChange": hiChange}
-        
+
 
 
 
@@ -208,7 +240,7 @@ def splitExons(transcriptInfo, chromosome, lo, hi, strand):
     if strand == "-":
         upstream = "3' UTR"
         downstream = "5' UTR"
-    
+
     result = [["CDS", lo, hi, True]]
     if hi < transcriptInfo[chromosome]["codingLo"]:
         result[0][0] = upstream
@@ -241,7 +273,7 @@ def parseLine(line, capturedTypes, discardedTypes):
             for k, v in x.iteritems():
                 message += " " + k + ","
         raise dxpy.AppError("One row had a type which is not in the list of permitted types. " + message + "\nOffending line: " + line + "\nOffending type: " + typ)
-    
+
     try:
         score = float(tabSplit[5])
     except ValueError:
@@ -261,7 +293,7 @@ def parseLine(line, capturedTypes, discardedTypes):
             lo += 3
     except ValueError:
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[3])
-    
+
     try:
         hi = int(tabSplit[4])
         if typ == "stop_codon" and strand == "+":
@@ -280,7 +312,7 @@ def parseLine(line, capturedTypes, discardedTypes):
             frame = -1
         else:
             raise dxpy.AppError("The frame indicated for an element was not \".\", \"0\", \"1\", or \"2\"" + "\nOffending line: " + line + "\nOffending value: " + tabSplit[7])
-    
+
     lineAttributes = {}
 
     ##Extract the attributes from the file
@@ -292,20 +324,20 @@ def parseLine(line, capturedTypes, discardedTypes):
         if key != '':
             if len(key) < 100:
                 lineAttributes[key.strip('"')] = keyValue[1].strip('"')
-        
+
     geneId = lineAttributes["gene_id"]
     transcriptId = lineAttributes["transcript_id"]
-                
+
     geneName = geneId
     if "gene_name" in lineAttributes:
         geneName = lineAttributes["gene_name"]
     transcriptName = transcriptId
     if "transcript_name" in lineAttributes:
-        transcriptName = transcriptName
+        transcriptName = lineAttributes["transcript_name"]
 
     values = {"chromosome": chromosome, "lo": lo, "hi": hi, "geneName": geneName, "transcriptName": transcriptName, "source": source, "type": typ, "strand": strand, "score": score, "frame": frame, "geneId": geneId, "transcriptId": transcriptId, "attributes": lineAttributes}
     return values
-        
+
 def constructTable(inputFileName):
     inputFile = open(inputFileName, 'r')
     attributes = {"gene_id" : True, "transcript_id": True}
@@ -318,7 +350,7 @@ def constructTable(inputFileName):
                     raise dxpy.AppError("One row did not have 9 entries, it had 1 instead. Offending line: " + line)
                 tabSplit[8] = " ".join(tabSplit[8:])
                 tabSplit = tabSplit[:9]
-            
+
             if len(tabSplit) != 9:
                 raise dxpy.AppError("One row did not have 9 entries, it had " + str(len(tabSplit)) + " instead. Offending line: " + line)
             else:
@@ -338,11 +370,11 @@ def constructTable(inputFileName):
                 raise dxpy.AppError("One row did not have a gene_id Offending line: " + line)
             if not transcriptIdPresent:
                 raise dxpy.AppError("One row did not have a gene_id Offending line: " + line)
-    
-    
+
+
     #Construct table
     schema = [
-            {"name": "chr", "type": "string"}, 
+            {"name": "chr", "type": "string"},
             {"name": "lo", "type": "uint32"},
             {"name": "hi", "type": "uint32"},
             {"name": "name", "type": "string"},
@@ -357,13 +389,13 @@ def constructTable(inputFileName):
             {"name": "source", "type": "string"},
             {"name": "gene_id", "type": "string"},
             {"name": "transcript_id", "type": "string"}]
-    
+
     additionalColumns = ['gene_id', 'transcript_id']
     for k, v in attributes.iteritems():
         if k != '' and k != 'gene_id' and k != 'transcript_id' and len(k) < 100:
             schema.append({"name": k, "type": "string"})
             additionalColumns.append(k)
-    
+
     indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")]
     #indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri')]
     spansTable = dxpy.new_dxgtable(columns=schema, indices=indices)
@@ -423,8 +455,8 @@ def unpack(input):
 
     if uncomp_type == 'POSIX tar archive (GNU)' or 'tar' in uncomp_type:
         raise dxpy.AppError("Found a tar archive after decompression.  Please untar your files before importing")
-    elif 'ASCII text' not in uncomp_type:
-        raise dxpy.AppError("After decompression found file type other than plain text")
+    #elif 'ASCII text' not in uncomp_type:
+        #raise dxpy.AppError("After decompression found file type other than plain text")
 
     try:
         subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", "uncompressed.gtf"]), shell=True)
