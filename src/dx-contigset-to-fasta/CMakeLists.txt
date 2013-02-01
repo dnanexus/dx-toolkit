@@ -3,13 +3,16 @@ cmake_policy(VERSION 2.6)
 
 project(dx-contigset-to-fasta)
 
+IF (APPLE)
+  FIND_PACKAGE(Boost REQUIRED)
+  IF (Boost_FOUND)
+       INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+       LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+  ENDIF()
+ENDIF()
+
 # Default build type.
 set (CMAKE_BUILD_TYPE, Release)
-FIND_PACKAGE(Boost REQUIRED)
-IF (Boost_FOUND)
-     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-ENDIF()
 
 # ==================== FLAGS ====================
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Wno-overloaded-virtual -Werror=return-type")
@@ -26,8 +29,4 @@ add_subdirectory("$ENV{DNANEXUS_HOME}/src/cpp/dxcpp" dxcpp)
 include_directories("$ENV{DNANEXUS_HOME}/src/cpp")
 
 add_executable(dx-contigset-to-fasta dx_contigset_to_fasta.cpp)
-if (APPLE)
-  target_link_libraries(dx-contigset-to-fasta dxcpp boost_system-mt)
-else()
-  target_link_libraries(dx-contigset-to-fasta dxcpp)
-endif()
+target_link_libraries(dx-contigset-to-fasta dxcpp)

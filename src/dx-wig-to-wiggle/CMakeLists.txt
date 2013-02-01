@@ -3,6 +3,14 @@ cmake_policy(VERSION 2.6)
 
 project(dx-wig-to-wiggle)
 
+IF (APPLE)
+  FIND_PACKAGE(Boost 1.48 REQUIRED)
+  IF (Boost_FOUND)
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+    LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
+  ENDIF()
+ENDIF()
+
 # Default build type.
 set (CMAKE_BUILD_TYPE, Release)
 
