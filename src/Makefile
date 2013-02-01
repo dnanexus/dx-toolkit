@@ -32,7 +32,7 @@ export DNANEXUS_HOME=$(CURDIR)/..
 #
 #   export MAKEFLAGS=-j8
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle
 
 # Client bindings and wrappers
 # ============================
