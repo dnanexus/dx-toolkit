@@ -1,3 +1,4 @@
+distribute
 requests==0.14.2
 futures==2.1.2
 ctypes-snappy==1.02
