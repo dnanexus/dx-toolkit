@@ -93,6 +93,9 @@ dx-contigset-to-fasta: api_wrappers
 dx-verify-file: api_wrappers
 	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
+dx-wig-to-wiggle: api_wrappers
+	$(MAKE) -C dx-wig-to-wiggle install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+
 ua:
 	$(MAKE) -C ua install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 

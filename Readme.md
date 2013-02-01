@@ -50,7 +50,7 @@ toolkit that doesn't require them.
 ### Ubuntu 12.04
 
     sudo apt-get install make python-setuptools python-pip g++ cmake \
-      libboost1.48-all-dev libcurl4-openssl-dev
+      libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
 
 ### Ubuntu 10.04
 
