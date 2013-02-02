@@ -23,7 +23,7 @@ endif
 
 all:
 	mkdir -pv build
-	cd build && cmake ..
+	cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
 	$(MAKE) -C build
 
 clean:

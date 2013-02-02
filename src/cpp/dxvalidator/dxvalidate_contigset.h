@@ -133,6 +133,6 @@ namespace dx {
       // Return the offset of a chromosome given its index
       int64_t chrOffset(int i);
   };
-};
+}
 
 #endif
