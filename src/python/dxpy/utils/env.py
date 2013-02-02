@@ -21,7 +21,16 @@ http://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-import os, shlex, sys, textwrap
+import os, shlex, sys, textwrap, json
+
+def parse_env_jsonfile(filename):
+    env_vars = {}
+    try:
+        with open(filename, 'r') as fd:
+            return json.load(fd)
+    except:
+        pass
+    return env_vars
 
 def parse_env_file(filename):
     env_vars = {}
@@ -33,6 +42,8 @@ def parse_env_file(filename):
     except:
         pass
     return env_vars
+
+user_env_jsonfile_path = os.path.expanduser('~/.dnanexus_config/environment.json')
 
 def parse_user_env_file():
     return parse_env_file(os.path.expanduser('~/.dnanexus_config/environment'))
@@ -63,13 +74,16 @@ def get_env(suppress_warning=False):
         'DX_SECURITY_CONTEXT': os.environ.get('DX_SECURITY_CONTEXT', None)
         }
 
-    user_file_env_vars = parse_user_env_file()
+    user_file_env_vars = parse_env_jsonfile(user_env_jsonfile_path)
+    old_user_file_env_vars = parse_user_env_file()
     installed_file_env_vars = parse_installed_env_file()
 
     for var in env_vars:
         if env_vars[var] is None:
             if var in user_file_env_vars:
                 env_vars[var] = user_file_env_vars[var]
+            elif var in old_user_file_env_vars:
+                env_vars[var] = old_user_file_env_vars[var]
             elif var in installed_file_env_vars:
                 env_vars[var] = installed_file_env_vars[var]
 
