@@ -142,10 +142,13 @@ string Resolver::FindProject(const string &project) const
   if (ObjectInfo::IsProjectId(project))
     return project;
 
-  dx::JSON results = DXHTTPRequest("/system/findProjects", "{\"describe\": true}")["results"];
-  for (unsigned i = 0; i != results.size(); ++i)
-    if (results[i]["describe"]["name"].get<string>() == project)
-      return results[i]["id"].get<string>();
+  dx::JSON input = dx::JSON(dx::JSON_HASH);
+  input["describe"] = true;
+  input["level"] = "VIEW";
+  input["name"] = project;
+  dx::JSON results = DXHTTPRequest("/system/findProjects", input.toString())["results"];
+  if (results.size() > 0)
+    return results[0]["id"].get<string>();
 
   return "";
 }

@@ -328,6 +328,19 @@ string TrimSuffix(const string &str, const string &suffix)
   return str;
 }
 
+bool isWigFile(const string &file)
+{
+  unsigned char sig[4] = {0,0,0,0};
+  FILE *f = fopen(file.c_str(), "r");
+  if (f != NULL)
+  {
+    fread(sig, 4, 1, f);
+    fclose(f);
+  }
+
+  return (sig[0] == 0x26 && sig[1] == 0xFC && sig[2] == 0x8F && sig[3] == 0x88);
+}
+
 void Usage()
 {
   cerr << "Converts a wig/bedGraph file to a Wiggle object. Returns (in standard" << endl
@@ -356,188 +369,205 @@ void Usage()
        << "  dx-wig-to-wiggle myfile.wig 'Reference Genomes:/b37/b37' myproject:mywiggle" << endl;
 }
 
-int main(int argc, char *argv[])
+int applet_main(int /* argc */, char ** /* argv */)
 {
-  if ((argc == 2) && (argv[1] == string("--as-applet")))
+  try
   {
-    try
+    JSON input;
+    dxLoadInput(input);
+
+    DXFile file(input["file"]);
+    cerr << "* Downloading " << file.getID() << endl;
+    DXFile::downloadDXFile(file.getID(), "wigfile");
+
+    string filename = "wigfile";
+    if (isWigFile("wigfile"))
     {
-      JSON input;
-      dxLoadInput(input);
-
-      DXFile file(input["file"]);
-      cerr << "* Downloading " << file.getID() << endl;
-      DXFile::downloadDXFile(file.getID(), "wigfile");
-
-      DXRecord contigset(input["reference_genome"]);
-
-      string output_project = getenv("DX_WORKSPACE_ID");
-      string output_folder = "/";
-      string output_name = "";
-      if (input.has("output_name") && input["output_name"].type() == JSON_STRING)
-        output_name = input["output_name"].get<string>();
-      if (output_name == "")
-      {
-        output_name = DXFile(file.getID(), output_project).describe()["name"].get<string>();
-        output_name = TrimSuffix(output_name, ".wig");
-      }
-
-      map<string,string> properties;
-      if (input.has("properties") && input["properties"].type() == JSON_HASH)
-      {
-        for (JSON::const_object_iterator i = input["properties"].object_begin(); i != input["properties"].object_end(); ++i)
-        {
-          if ((i->second).type() != JSON_STRING)
-            throw AppError("Invalid property value in the input; properties should be strings");
-          properties[i->first] = (i->second).get<string>();
-        }
-      }
-
-      vector<string> tags;
-      if (input.has("tags") && input["tags"].type() == JSON_ARRAY)
-      {
-        for (unsigned i = 0; i != input["tags"].size(); ++i)
-          tags.push_back(input["tags"][i].get<string>());
-      }
-
-      string output_id = Process<float>("wigfile", contigset.getID(), output_project, output_folder, output_name, properties, tags, file.getID());
-
-      JSON output = JSON(JSON_HASH);
-      output["wiggle"] = DXLink(output_id);
-      dxWriteOutput(output);
+      int retval = system("/bigWigToWig wigfile out.wig");
+      if ((retval == -1) || !(WIFEXITED(retval)) || (WEXITSTATUS(retval) != 0))
+        throw AppError("The input file was detected to be of bigWig type, but bigWigToWig failed to convert it.");
+      filename = "out.wig";
     }
-    catch (Compress::FileTypeError &e)
+
+    DXRecord contigset(input["reference_genome"]);
+
+    string output_project = getenv("DX_WORKSPACE_ID");
+    string output_folder = "/";
+    string output_name = "";
+    if (input.has("output_name") && input["output_name"].type() == JSON_STRING)
+      output_name = input["output_name"].get<string>();
+    if (output_name == "")
     {
-      cerr << "ERROR: Invalid compressed data";
-      dxReportError("Error uncompressing the input file");
-      return 1;
+      output_name = DXFile(file.getID(), output_project).describe()["name"].get<string>();
+      output_name = TrimSuffix(output_name, ".wig");
     }
-    catch (AppError &e)
+
+    map<string,string> properties;
+    if (input.has("properties") && input["properties"].type() == JSON_HASH)
     {
-      cerr << "ERROR: " << e.what();
-      dxReportError(e.what());
-      return 1;
+      for (JSON::const_object_iterator i = input["properties"].object_begin(); i != input["properties"].object_end(); ++i)
+      {
+        if ((i->second).type() != JSON_STRING)
+          throw AppError("Invalid property value in the input; properties should be strings");
+        properties[i->first] = (i->second).get<string>();
+      }
     }
+
+    vector<string> tags;
+    if (input.has("tags") && input["tags"].type() == JSON_ARRAY)
+    {
+      for (unsigned i = 0; i != input["tags"].size(); ++i)
+        tags.push_back(input["tags"][i].get<string>());
+    }
+
+    string output_id = Process<float>(filename, contigset.getID(), output_project, output_folder, output_name, properties, tags, file.getID());
+
+    JSON output = JSON(JSON_HASH);
+    output["wiggle"] = DXLink(output_id);
+    dxWriteOutput(output);
   }
-  else
+  catch (Compress::FileTypeError &e)
   {
-    try
-    {
-      struct option opts[4];
-      // --file-id
-      opts[0].name = "file-id";
-      opts[0].has_arg = 1;
-      opts[0].flag = NULL;
-      opts[0].val = 'f';
-      // --tag
-      opts[1].name = "tag";
-      opts[1].has_arg = 1;
-      opts[1].flag = NULL;
-      opts[1].val = 't';
-      // --property
-      opts[2].name = "property";
-      opts[2].has_arg = 1;
-      opts[2].flag = NULL;
-      opts[2].val = 'p';
-      // NULL
-      opts[3].name = 0;
-      opts[3].has_arg = 0;
-      opts[3].flag = 0;
-      opts[3].val = 0;
-
-      string file_id = "";
-      vector<string> tags;
-      map<string,string> properties;
-
-      int option;
-
-      while ((option = getopt_long(argc, argv, "", opts, NULL)) != -1)
-      {
-        string tag, key, value;
-        size_t pos;
-        switch (option)
-        {
-          case 'f':
-            file_id = string(optarg);
-            if (file_id.substr(0, 5) != "file-")
-            {
-              cerr << "Invalid file id. File ids should start with 'file-'." << endl;
-              return 1;
-            }
-            break;
-
-          case 't':
-            tag = string(optarg);
-            if (tag == "")
-            {
-              cerr << "Invalid tag. Tags should be non-empty strings." << endl;
-              return 1;
-            }
-            tags.push_back(tag);
-            break;
-
-          case 'p':
-            tag = string(optarg);
-            pos = tag.find(':');
-            if (pos == string::npos)
-            {
-              cerr << "Invalid property. Properties should be of the form key:value." << endl;
-              return 1;
-            }
-            key = tag.substr(0, pos);
-            if (pos + 1 < tag.size())
-              value = tag.substr(pos + 1);
-            else
-              value.clear();
-            properties[key] = value;
-            break;
-
-          default:
-            Usage();
-            return 1;
-        }
-      }
-
-      if (optind + 3 != argc)
-      {
-        Usage();
-        return 1;
-      }
-
-      argv += optind;
-
-      //Resolver r(getenv("DX_PROJECT_CONTEXT_ID"));
-      Resolver r("");
-
-      ObjectInfo contigset = r.FindPath(argv[1]);
-      if (contigset.object.id == "")
-      {
-        cerr << "ContigSet object not found (" << argv[1] << ")" << endl;
-        return 1;
-      }
-      ObjectInfo output = r.DestinationPath(argv[2]);
-      if (output.project.id == "")
-      {
-        cerr << "No such project (" << output.project.name << ")" << endl;
-        return 1;
-      }
-
-      string output_id = Process<float>(argv[0], contigset.object.id, output.project.id, output.object.folder, output.object.name, properties, tags, file_id);
-
-      cout << output_id << endl;
-    }
-    catch (Compress::FileTypeError &e)
-    {
-      cerr << "ERROR: Invalid compressed data";
-      return 1;
-    }
-    catch (RuntimeError &e)
-    {
-      cerr << "ERROR: " << e.what();
-      return 1;
-    }
+    cerr << "ERROR: Invalid compressed data";
+    dxReportError("Error uncompressing the input file");
+    return 1;
+  }
+  catch (AppError &e)
+  {
+    cerr << "ERROR: " << e.what();
+    dxReportError(e.what());
+    return 1;
   }
 
   return 0;
+}
+
+int cmdline_main(int argc, char *argv[])
+{
+  try
+  {
+    struct option opts[4];
+    // --file-id
+    opts[0].name = "file-id";
+    opts[0].has_arg = 1;
+    opts[0].flag = NULL;
+    opts[0].val = 'f';
+    // --tag
+    opts[1].name = "tag";
+    opts[1].has_arg = 1;
+    opts[1].flag = NULL;
+    opts[1].val = 't';
+    // --property
+    opts[2].name = "property";
+    opts[2].has_arg = 1;
+    opts[2].flag = NULL;
+    opts[2].val = 'p';
+    // NULL
+    opts[3].name = 0;
+    opts[3].has_arg = 0;
+    opts[3].flag = 0;
+    opts[3].val = 0;
+
+    string file_id = "";
+    vector<string> tags;
+    map<string,string> properties;
+
+    int option;
+
+    while ((option = getopt_long(argc, argv, "", opts, NULL)) != -1)
+    {
+      string tag, key, value;
+      size_t pos;
+      switch (option)
+      {
+        case 'f':
+          file_id = string(optarg);
+          if (file_id.substr(0, 5) != "file-")
+          {
+            cerr << "Invalid file id. File ids should start with 'file-'." << endl;
+            return 1;
+          }
+          break;
+
+        case 't':
+          tag = string(optarg);
+          if (tag == "")
+          {
+            cerr << "Invalid tag. Tags should be non-empty strings." << endl;
+            return 1;
+          }
+          tags.push_back(tag);
+          break;
+
+        case 'p':
+          tag = string(optarg);
+          pos = tag.find(':');
+          if (pos == string::npos)
+          {
+            cerr << "Invalid property. Properties should be of the form key:value." << endl;
+            return 1;
+          }
+          key = tag.substr(0, pos);
+          if (pos + 1 < tag.size())
+            value = tag.substr(pos + 1);
+          else
+            value.clear();
+          properties[key] = value;
+          break;
+
+        default:
+          Usage();
+          return 1;
+      }
+    }
+
+    if (optind + 3 != argc)
+    {
+      Usage();
+      return 1;
+    }
+
+    argv += optind;
+
+    //Resolver r(getenv("DX_PROJECT_CONTEXT_ID"));
+    Resolver r("");
+
+    ObjectInfo contigset = r.FindPath(argv[1]);
+    if (contigset.object.id == "")
+    {
+      cerr << "ContigSet object not found (" << argv[1] << ")" << endl;
+      return 1;
+    }
+    ObjectInfo output = r.DestinationPath(argv[2]);
+    if (output.project.id == "")
+    {
+      cerr << "No such project (" << output.project.name << ")" << endl;
+      return 1;
+    }
+
+    string output_id = Process<float>(argv[0], contigset.object.id, output.project.id, output.object.folder, output.object.name, properties, tags, file_id);
+
+    cout << output_id << endl;
+  }
+  catch (Compress::FileTypeError &e)
+  {
+    cerr << "ERROR: Invalid compressed data";
+    return 1;
+  }
+  catch (RuntimeError &e)
+  {
+    cerr << "ERROR: " << e.what();
+    return 1;
+  }
+
+  return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  if ((argc == 2) && (argv[1] == string("--as-applet")))
+    return applet_main(argc, argv);
+  else
+    return cmdline_main(argc, argv);
 }
 

@@ -16,7 +16,7 @@ set (CMAKE_BUILD_TYPE, Release)
 
 # ==================== FLAGS ==================== 
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-unused-result")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS} -Wno-deprecated")
 
 set (CMAKE_C_FLAGS_RELEASE "-O3")
