@@ -188,7 +188,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if check_name_collisions and not dry_run:
         destination_path = applet_spec['folder'] + ('/' if not applet_spec['folder'].endswith('/') else '') + applet_spec['name']
         logging.debug("Checking for existing applet at " + destination_path)
-        for result in dxpy.find_data_objects(classname="applet", name=applet_spec["name"], folder=applet_spec['folder'], project=dest_project):
+        for result in dxpy.find_data_objects(classname="applet", name=applet_spec["name"], folder=applet_spec['folder'], project=dest_project, recurse=False):
             if overwrite:
                 logging.info("Deleting applet %s" % (result['id']))
                 # TODO: test me
