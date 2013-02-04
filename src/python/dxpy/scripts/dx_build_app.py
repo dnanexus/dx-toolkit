@@ -74,6 +74,22 @@ parser.add_argument("--dx-toolkit-unstable-autodep", help="Auto-insert a dx-tool
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
+# --[no-]build (undocumented): perform the ./configure && make step
+parser.set_defaults(build_step=True)
+parser.add_argument("--build-step", help=argparse.SUPPRESS, action="store_true", dest="build_step")
+parser.add_argument("--no-build-step", help=argparse.SUPPRESS, action="store_false", dest="build_step")
+
+# --[no-]upload (undocumented): perform the actual upload
+parser.set_defaults(upload_step=True)
+parser.add_argument("--upload-step", help=argparse.SUPPRESS, action="store_true", dest="upload_step")
+parser.add_argument("--no-upload-step", help=argparse.SUPPRESS, action="store_false", dest="upload_step")
+
+# --[no-]json (undocumented): dumps the JSON describe of the app or
+# --applet that was created
+parser.set_defaults(json=False)
+parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
+parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
+
 # --[no-]dry-run
 #
 # The --dry-run flag can be used to see the applet spec that would be
@@ -270,7 +286,11 @@ def main(**kwargs):
                 args.dx_toolkit_autodep = False
             del app_json["buildOptions"]
 
-        dxpy.app_builder.build(args.src_dir)
+        if args.build_step:
+            dxpy.app_builder.build(args.src_dir)
+
+        if not args.upload_step:
+            return
 
         bundled_resources = dxpy.app_builder.upload_resources(args.src_dir, project=working_project) if not args.dry_run else []
 
@@ -323,7 +343,8 @@ def main(**kwargs):
                                                  try_update=args.update)
 
             app_describe = dxpy.api.appDescribe(app_id)
-            print json.dumps(app_describe)
+            if args.json:
+                print json.dumps(app_describe)
 
             if args.publish:
                 print >> sys.stderr, "Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
@@ -333,7 +354,8 @@ def main(**kwargs):
                 print >> sys.stderr, "  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"])
 
         elif args.mode == "applet":
-            pass
+            if args.json:
+                print json.dumps(dxpy.api.appletDescribe(applet_id))
         else:
             raise ValueError("Unrecognized mode %r" % (args.mode,))
 
