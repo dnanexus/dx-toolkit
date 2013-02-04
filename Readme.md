@@ -71,7 +71,8 @@ into ```/usr/local/lib```.
 
 The following additional dependencies are also needed:
 
-    sudo apt-get install make g++ cmake libcurl4-openssl-dev
+    sudo apt-get install make g++ cmake libcurl4-openssl-dev zlib1g-dev \
+      libbz2-dev
 
 ### CentOS 5.x/6.x
 

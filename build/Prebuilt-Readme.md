@@ -61,7 +61,7 @@ into ```/usr/local/lib```.
 
 Then:
 
-    sudo apt-get install libcurl3
+    sudo apt-get install libcurl3 libbz2 zlib1g
 
 ### CentOS 5.x/6.x
 
