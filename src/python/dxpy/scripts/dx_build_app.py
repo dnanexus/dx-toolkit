@@ -242,10 +242,10 @@ def main(**kwargs):
             # We'll clobber destination below.
             parser.error("Can't supply both --destination and --destination-project. Just use --destination.")
         args.destination = args.destination_project
-        print "*"
-        print "* The -p/--destination-project flag has been deprecated. Instead please use"
-        print "* -d=project-XXXX or --destination=project-XXXX, which does the same and more."
-        print "*"
+        print >> sys.stderr, "*"
+        print >> sys.stderr, "* The -p/--destination-project flag has been deprecated. Instead please use"
+        print >> sys.stderr, "* -d=project-XXXX or --destination=project-XXXX, which does the same and more."
+        print >> sys.stderr, "*"
 
     if args.mode == "applet" and args.destination:
         working_project, override_folder, override_applet_name = parse_destination(args.destination)
