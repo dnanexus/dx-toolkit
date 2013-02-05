@@ -141,12 +141,17 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
+def _build_app_remote(mode, src_dir, publish=False, dx_toolkit_autodep="auto"):
+    if mode == 'app':
+        builder_app = 'app-tarball_app_builder'
+    else:
+        builder_app = 'app-tarball_applet_builder'
+
     temp_dir = tempfile.mkdtemp()
 
     # We have to resolve the correct dx-toolkit dependency type here and
     # explicitly pass it into the interior call of dx-build-app, because
-    # within the execution environment of tarball_app_builder,
+    # within the execution environment of tarball_app(let)_builder,
     # APISERVER_HOST is set to the address of the proxy (a 10.x.x.x
     # address) and doesn't give us any information about whether we are
     # talking to preprod.
@@ -188,15 +193,17 @@ def _build_app_remote(src_dir, publish=False, dx_toolkit_autodep="auto"):
             dxpy.set_workspace_id(build_project_id)
             remote_file_id = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
                                                     wait_on_close=True, show_progress=True)
+            input_hash = {
+                "input_file": dxpy.dxlink(remote_file_id),
+                "extra_flags": extra_flags
+                }
+            if mode == 'app':
+                input_hash["publish"] = publish
             app_run_result = dxpy.api.appRun(
-                "app-tarball_app_builder",
+                builder_app,
                 input_params={
                     "name": "Remote build of %s" % (os.path.basename(src_dir),),
-                    "input": {
-                        "input_file": dxpy.dxlink(remote_file_id),
-                        "publish": publish,
-                        "extra_flags": extra_flags
-                        },
+                    "input": input_hash,
                     "project": build_project_id
                     }
                 )
@@ -234,8 +241,6 @@ def main(**kwargs):
         # To enable these, the tarball builder app needs to learn how to
         # pass these options through to the interior call of
         # dx_build_app.
-        if args.mode == 'applet':
-            parser.error('--remote can only be used to create apps')
         if args.version_override:
             parser.error('--remote cannot be combined with --version')
         if args.bill_to:
@@ -246,7 +251,7 @@ def main(**kwargs):
             parser.error('--remote cannot be combined with --no-update')
         if args.dry_run:
             parser.error('--remote cannot be combined with --dry-run')
-        return _build_app_remote(args.src_dir, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
+        return _build_app_remote(args.mode, args.src_dir, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
 
     working_project = None
     using_temp_project = False
