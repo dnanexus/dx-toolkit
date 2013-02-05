@@ -65,13 +65,22 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
 	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
+python_deps: python/requirements.txt
+	$(eval DNANEXUS_PY27_ENV := "$(DNANEXUS_HOME)/build/py27_env")
+	rm -rf "$(DNANEXUS_PY27_ENV)"
+	virtualenv --python=python2.7 --distribute "$(DNANEXUS_PY27_ENV)"
+	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
+	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --requirement python/requirements.txt)
+
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
 # setup.py doesn't complain.
-python: api_wrappers toolkit_version
+python: api_wrappers toolkit_version python_deps
+	$(eval DNANEXUS_PY27_ENV := "$(DNANEXUS_HOME)/build/py27_env")
 	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
 	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
+	cp -a "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
 	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python2.7 ./setup.py build; python2.7 ./setup.py install --prefix="$(DNANEXUS_HOME)"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 
 # TODO: fix up perl and java targets
