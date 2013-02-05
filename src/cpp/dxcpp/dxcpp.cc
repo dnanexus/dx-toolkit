@@ -55,7 +55,8 @@ string g_WORKSPACE_ID;
 string g_PROJECT_CONTEXT_ID;
 string g_APISERVER_PROTOCOL;
 
-map<string, string> g_config_file_contents;
+map<string, string> g_config_file_contents_old;
+JSON g_json_config_file_contents;
 
 const unsigned int NUM_MAX_RETRIES = 5u; // For DXHTTPRequest()
 
@@ -256,32 +257,31 @@ void setProjectContext(const string &project_id) {
 // If the key is not found (or file does not exist) then "false" is returned (else "true")
 // Note: Reads the config file only the first time (save contents in a global variable)
 // Note: If key is not found in config file, then "val" remain unchanged
-bool getVariableFromConfigFile(string fname, string key, string &val) {
-
-  // Read file only if it hasn't been successfully read before
-  if (g_config_file_contents[fname].size() == 0) {
+bool getVariableFromConfigFile_old(string fname, string key, string &val) {
+  // Read file only if it hasn't been read before
+  if (g_config_file_contents_old.count(fname) == 0) {
+    g_config_file_contents_old[fname] = "";
     // Try reading in the contents of config file
     ifstream fp(fname.c_str());
     if (!fp.is_open()) // file could not be opened
       return false;
     // Reserve memory for string upfront (to avoid having reallocation multiple time)
     fp.seekg(0, ios::end);
-    g_config_file_contents[fname].reserve(fp.tellg());
+    g_config_file_contents_old[fname].reserve(fp.tellg());
     fp.seekg(0, ios::beg);
 
     // copy the contents of file into the string
     // Note: the extra parentheses around first parameter
     //       are required (due to "most vexing parsing" problem in C++)
-    g_config_file_contents[fname].assign((istreambuf_iterator<char>(fp)), istreambuf_iterator<char>());
+    g_config_file_contents_old[fname].assign((istreambuf_iterator<char>(fp)), istreambuf_iterator<char>());
     fp.close();
   }
   // Since regex (C++11 feature) are not implemented in g++ yet,
   // we use boost::regex
   boost::regex expression(string("^\\s*export\\s*") + key + string("\\s*=\\s*'([^'\\r\\n]+)'$"), boost::regex::perl);
   boost::match_results<string::const_iterator> what;
-  string::const_iterator itb = g_config_file_contents[fname].begin();
-  string::const_iterator ite = g_config_file_contents[fname].end();
-
+  string::const_iterator itb = g_config_file_contents_old[fname].begin();
+  string::const_iterator ite = g_config_file_contents_old[fname].end();
   if (!boost::regex_search(itb, ite, what, expression, boost::match_default)) {
     return false;
   }
@@ -292,12 +292,67 @@ bool getVariableFromConfigFile(string fname, string key, string &val) {
   return true;
 }
 
-// First look in env variable to find the value
-// If not found, then look into user's config file (in home directory) for the value
-// If still not found, then look into /opt/dnanexus/environment
+// This function populates input param "val" with the value of particular
+// field "key" in the config file.
+// If the key is not found, or file does not exist, or file is invalid JSON, then "false" is returned (else "true")
+// Note: Reads the config file only the first time (save contents in a global variable)
+// Note: If key is not found in config file, then "val" remain unchanged
+bool getVariableFromJsonConfigFile(string fname, string key, string &val) {
+  if (g_json_config_file_contents.type() == JSON_NULL) {
+    // Already tried opening/parsing the file, and failed
+    // don't try again, just return false
+    return false;
+  }
+  if (g_json_config_file_contents.type() == JSON_UNDEFINED) {
+    // This is the first time this function is called, so parse the file, sanity check etc   
+    ifstream fp(fname, std::fstream::in);
+    if (!fp.is_open()) {
+      // file not found
+      g_json_config_file_contents = JSON(JSON_NULL);
+      return false;
+    }
+    try {
+      g_json_config_file_contents.read(fp);
+    } catch (JSONException &j) {
+      cerr << "An error occured while trying to parse the JSON file '" << fname << "'. Will ignore contents of this file."
+           << "Error = '" << j.what() << "'";
+      g_json_config_file_contents = JSON(JSON_NULL); // don't attempt to parse file again
+      return false;
+    }
+    if (g_json_config_file_contents.type() != JSON_HASH) {
+      cerr << "The file '" << fname << "' does not contain a valid JSON hash. Will ignore contents fo this file.";
+      g_json_config_file_contents = JSON(JSON_NULL); // don't attempt to parse file again
+      return false;
+    }
+    // Sanity check thru file, assert that values are either strings or integers
+    // If anything else if found print error, and ignore file conents
+    for (JSON::object_iterator it = g_json_config_file_contents.object_begin(); it != g_json_config_file_contents.object_end(); ++it) {
+      if (it->second.type() != JSON_STRING && it->second.type() != JSON_INTEGER) {
+        cerr << "The file '" << fname << "' contains a an invalid key (neither string, nor integer). Will ignore contents of this file.";
+        g_json_config_file_contents = JSON(JSON_NULL); // don't attempt to parse file again
+        return false;
+      }
+      if (it->second.type() == JSON_INTEGER) {
+        // convert to integer
+        it->second = boost::lexical_cast<string>(it->second.get<int64_t>());
+        assert(it->second.type() == JSON_STRING); // just a sanity check
+      }
+    }
+  } 
+  if (!g_json_config_file_contents.has(key))
+    return false;
+  val = g_json_config_file_contents[key].get<string>();
+  return true;
+}
+
+// Order of evaluation
+// 1) Env variables
+// 2) New style (JSON) config file in user's home directory: environment.json
+// 3) Old style (export=BLAH) config file in user's home directory: environment
 //
 // Returns false if not found in either of the 3 places, else true
 // "val" contain the value of variable if function returned "true", unchanged otherwise
+// Note: We have DISCONTINUED looking into "/opt/dnanexus/environment" file
 bool getFromEnvOrConfig(string key, string &val) {
   if (getenv(key.c_str()) != NULL) {
     val = getenv(key.c_str());
@@ -306,22 +361,20 @@ bool getFromEnvOrConfig(string key, string &val) {
     }
     return true;
   }
+  const string json_config_file_path = joinPath(getUserHomeDirectory(), ".dnanexus_config", "environment.json");
+  if (getVariableFromJsonConfigFile(json_config_file_path, key, val)) {
+    if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
+      cerr << "Reading '" << key << "' value from file: '" << json_config_file_path << "'. Value = '" << val + "'" << endl;
+    }
+    return true;
+  }
   const string user_config_file_path = joinPath(getUserHomeDirectory(), ".dnanexus_config", "environment");
-  if (getVariableFromConfigFile(user_config_file_path, key, val)) {
+  if (getVariableFromConfigFile_old(user_config_file_path, key, val)) {
     if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
       cerr << "Reading '" << key << "' value from file: '" << user_config_file_path << "'. Value = '" << val + "'" << endl;
     } 
     return true;
   }
-
-  const string default_config_file_path = "/opt/dnanexus/environment";
-  if (getVariableFromConfigFile(default_config_file_path, key, val)) {
-    if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
-      cerr << "Reading '" << key << "' value from file: '" << default_config_file_path << "'. Value = '" << val + "'" << endl;
-    }
-    return true;
-  }
-
   return false;
 }
 
@@ -395,9 +448,11 @@ bool loadFromEnvironment() {
     cerr << "10. g_DX_CA_CERT: " << getVariableForPrinting(get_g_DX_CA_CERT()) << endl;
     cerr << "***** Will exit dxcpp.cc::loadFromEnvironment() - Global Variable set as noted above *****" << endl;
   }
-  g_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
+  g_config_file_contents_old.clear(); // Remove the contents of config file - we no longer need them
+  if (g_json_config_file_contents.type() == JSON_HASH)
+    g_json_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
+  
   g_loadFromEnvironment_finished = true;
-
 
   return true;
 }
