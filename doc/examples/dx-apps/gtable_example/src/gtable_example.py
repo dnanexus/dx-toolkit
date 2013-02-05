@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# subprocess_example 0.0.1
+# gtable_example 0.0.1
 
 import subprocess
 
@@ -15,8 +15,10 @@ def main(**kwargs):
 
     # Parse the file we just generated into a GTable.
     with dxpy.new_dxgtable(columns=columns, mode='w') as output_gtable:
-        for word in open("words.txt"):
+        for index, word in enumerate(open("words.txt")):
             output_gtable.add_row([word.strip()])
+            if index % 10000 == 0:
+                print "Read word: " + word.strip()
     # Closing the GTable automatically commences at the conclusion of the "with" block.
 
     return {'words': dxpy.dxlink(output_gtable.get_id())}

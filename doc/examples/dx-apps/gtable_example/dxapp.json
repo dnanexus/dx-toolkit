@@ -1,9 +1,9 @@
 {
-  "name": "subprocess_example",
-  "title": "Subprocess Example",
+  "name": "gtable_example",
+  "title": "GTable Example",
   "runSpec": {
     "interpreter": "python2.7",
-    "file": "src/subprocess_example.py",
+    "file": "src/gtable_example.py",
     "execDepends": [
       {
         "name": "wamerican"

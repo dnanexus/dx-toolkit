@@ -1,0 +1,25 @@
+{
+  "name": "python_trimmer_example",
+  "title": "Python Read Trimmer",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "inputSpec": [
+    {
+      "name": "input_file",
+      "label": "Input file",
+      "class": "file",
+      "optional": false
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "output_file",
+      "label": "Output file",
+      "class": "file"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "python2.7",
+    "file": "src/python_trimmer_example.py"
+  }
+}
