@@ -31,8 +31,7 @@ languages.
 Supported languages
 -------------------
 
-The Platform Toolkit contains API language bindings for the following
-platforms:
+The Platform SDK contains API language bindings for the following platforms:
 
 * Python (requires Python 2.7)
 * C++
