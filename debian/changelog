@@ -1,3 +1,13 @@
+dx-toolkit (0.36.0) precise; urgency=low
+
+  * Python scripts use a more portable Python interpreter path.
+
+  * distribute is now bundled with dx-toolkit.
+
+  * dx-build-applet now supports --remote
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 05 Feb 2013 17:26:45 -0800
+
 dx-toolkit (0.35.0) precise; urgency=low
 
   * dx-app-wizard enforces new input/output name restrictions.
