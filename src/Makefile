@@ -26,6 +26,7 @@ ifndef PREFIX
 endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
+export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
 
 # For parallel builds, add the following to your .bashrc or other build
 # environment initialization file:
@@ -65,8 +66,9 @@ src_libs: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/perl5"
 	cp -R -v perl/lib/* "$(DNANEXUS_HOME)/lib/perl5/"
 
-python_deps: python/requirements.txt
-	$(eval DNANEXUS_PY27_ENV := "$(DNANEXUS_HOME)/build/py27_env")
+python_deps: $(DNANEXUS_PY27_ENV)/lib
+
+$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt
 	rm -rf "$(DNANEXUS_PY27_ENV)"
 	virtualenv --python=python2.7 --distribute "$(DNANEXUS_PY27_ENV)"
 	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
@@ -76,7 +78,6 @@ python_deps: python/requirements.txt
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
 # setup.py doesn't complain.
 python: api_wrappers toolkit_version python_deps
-	$(eval DNANEXUS_PY27_ENV := "$(DNANEXUS_HOME)/build/py27_env")
 	rm -rf "$(DNANEXUS_HOME)/share/dnanexus/lib/python2.7"
 	mkdir -p "$(DNANEXUS_HOME)/lib/python2.7/site-packages"
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
@@ -196,5 +197,6 @@ clean:
 	-rm -f ../build/wrapper_table.json
 	-rm -rf ../lib
 	-rm -rf ../share
+	-rm -rf "$(DNANEXUS_PY27_ENV)"
 
 .PHONY: all toolkit_version api_wrappers src_libs python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
