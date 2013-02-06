@@ -47,10 +47,17 @@ done
 
 if [[ "$ostype" == 'Linux' ]]; then
   osversion=$(lsb_release -c | sed s/Codename:.//)
+  rhmajorversion=$(cat /etc/system-release | sed "s/^\(CentOS\) release \([0-9]\)\.[0-9]\+.*$/\2/")
   # TODO: detect versions that do and don't support mktemp --suffix more
-  # reliably. What I know is that Ubuntu 12.04 supports --suffix and
-  # Ubuntu 10.04 doesn't.
-  if [[ "$osversion" == 'precise' ]]; then
+  # reliably. What is known:
+  #
+  # Supports --suffix:
+  #   Ubuntu 12.04
+  #   CentOS 6
+  #
+  # Doesn't support --suffix:
+  #   Ubuntu 10.04
+  if [[ "$osversion" == 'precise' || "$rhmajorversion" == '6' ]]; then
     temp_archive=$(mktemp --suffix .tar.gz)
   else
     temp_archive=$(mktemp -t dx-toolkit.tar.gz.XXXXXXXXXX)
