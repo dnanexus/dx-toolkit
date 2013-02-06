@@ -141,7 +141,7 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _build_app_remote(mode, src_dir, publish=False, dx_toolkit_autodep="auto"):
+def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit_autodep="auto"):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -173,7 +173,36 @@ def _build_app_remote(mode, src_dir, publish=False, dx_toolkit_autodep="auto"):
     elif dx_toolkit_autodep == False:
         dx_toolkit_autodep_flag = "--no-dx-toolkit-autodep"
 
-    extra_flags = " ".join([dx_toolkit_autodep_flag])
+    extra_flags = [dx_toolkit_autodep_flag]
+
+    using_temp_project_for_remote_build = False
+
+    # If building an applet, run the builder app in the destination
+    # project. If building an app, run the builder app in a temporary
+    # project.
+    dest_folder = None
+    dest_applet_name = None
+    if mode == "applet":
+        # Translate the --destination flag as follows. If --destination
+        # is PROJ:FOLDER/NAME,
+        #
+        # 1. Run the builder app in PROJ
+        # 2. Make the output folder FOLDER
+        # 3. Supply --destination=NAME to the interior call of dx-build-applet.
+        build_project_id = dxpy.WORKSPACE_ID
+        if destination:
+            build_project_id, dest_folder, dest_applet_name = parse_destination(destination)
+        if build_project_id is None:
+            parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
+        if dest_applet_name:
+            # TODO: escape this correctly, or find a way of passing the
+            # extra_flags that doesn't get screwed up by names that have
+            # spaces in them.
+            extra_flags.extend(['--destination', '/' + dest_applet_name])
+
+    elif mode == "app":
+        using_temp_project_for_remote_build = True
+        build_project_id = dxpy.api.projectNew({"name": "dx-build-app --remote temporary project"})["id"]
 
     try:
         # Resolve relative paths and symlinks here so we have something
@@ -187,34 +216,37 @@ def _build_app_remote(mode, src_dir, publish=False, dx_toolkit_autodep="auto"):
         # general that can depend on the git metadata.
         subprocess.check_call(["tar", "-czf", app_tarball_file, "."], cwd=src_dir)
 
-        build_project_id = dxpy.api.projectNew({"name": "dx-build-app --remote temporary project"})["id"]
+        dxpy.set_workspace_id(build_project_id)
 
         try:
-            dxpy.set_workspace_id(build_project_id)
-            remote_file_id = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
-                                                    wait_on_close=True, show_progress=True)
+            remote_file = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
+                                                 wait_on_close=True, show_progress=True)
+            print
             input_hash = {
-                "input_file": dxpy.dxlink(remote_file_id),
-                "extra_flags": extra_flags
+                "input_file": dxpy.dxlink(remote_file),
+                "extra_flags": " ".join(extra_flags)
                 }
             if mode == 'app':
                 input_hash["publish"] = publish
-            app_run_result = dxpy.api.appRun(
-                builder_app,
-                input_params={
-                    "name": "Remote build of %s" % (os.path.basename(src_dir),),
-                    "input": input_hash,
-                    "project": build_project_id
-                    }
-                )
+            api_options = {
+                "name": "Remote build of %s" % (os.path.basename(src_dir),),
+                "input": input_hash,
+                "project": build_project_id,
+                }
+            if dest_folder:
+                api_options["folder"] = dest_folder
+            app_run_result = dxpy.api.appRun(builder_app, input_params=api_options)
             job_id = app_run_result["id"]
             print "Started builder job %s" % (job_id,)
             subprocess.check_call(["dx", "watch", job_id])
-
         finally:
-            dxpy.api.projectDestroy(build_project_id)
+            if not using_temp_project_for_remote_build:
+                dxpy.DXProject(build_project_id).remove_objects([remote_file.get_id()])
     finally:
+        if using_temp_project_for_remote_build:
+            dxpy.api.projectDestroy(build_project_id)
         shutil.rmtree(temp_dir)
+
     return
 
 
@@ -236,6 +268,9 @@ def main(**kwargs):
 
     if not os.path.exists(os.path.join(args.src_dir, "dxapp.json")):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % args.src_dir)
+
+    if args.mode == "app" and args.destination:
+        parser.error("--destination cannot be used when creating an app (only an applet)")
 
     if args.remote:
         # To enable these, the tarball builder app needs to learn how to
