@@ -39,6 +39,6 @@ namespace HttpHelperUtils {
   // If no colon is present, then first string in output pair
   // contains the complete input string, and second string is empty
   pair<string, string> splitOnFirstColon(const string &s);
-};
+}
 
 #endif

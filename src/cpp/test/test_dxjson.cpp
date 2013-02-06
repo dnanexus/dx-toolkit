@@ -29,13 +29,19 @@ bool exceptionflag;
   try { a; ASSERT_TRUE(false); } catch(JSONException &e) { exceptionflag =  true; } \
   ASSERT_TRUE(exceptionflag);
 
-// This function is useful for debuggin purposes (utf-8 cases)
+// This function is useful for debugging purposes (utf-8 cases)
 void printStringAsIntegers(string str) {
   std::cout<<"\nString = "<<str<<"\nInteger version = ";
   for (int i = 0; i < str.length(); i++) {
     cout<<int(str[i])<<" ";
   }
   cout<<"\n";
+}
+
+string getResourceDir() {
+  if (getenv("DNANEXUS_HOME") == NULL)
+    assert(false);
+  return string(getenv("DNANEXUS_HOME")) + string("/src/cpp/test/resources");
 }
 
 TEST(JSONTest, ParseJSONTestSuiteExampleFile) {
@@ -56,7 +62,7 @@ TEST(JSONTest, ParseJSONTestSuiteExampleFile) {
      '퓲꽪m{㶩/뇿#⼢&᭙硞㪔E嚉c樱㬇1a綑᝖DḾ䝩': null } }
   */
   std::fstream ifs;
-  ifs.open("json-test-suite.json", std::fstream::in);
+  ifs.open(getResourceDir() + "/json-test-suite.json", std::fstream::in);
   ASSERT_FALSE(ifs.fail()); // should be able to open this file
   // Read the whole file in a string
   std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -221,12 +227,13 @@ TEST(JSONTest, JSONEquality) {
 
 TEST(JSONTest, CreationFromFile) {
   std::fstream ifs;
-  ifs.open("test_data/pass1.json", fstream::in);
+  string rd = getResourceDir();
+  ifs.open(rd + "/pass1.json", fstream::in);
   JSON j1;
   j1.read(ifs);
   ifs.close();
 
-  ifs.open("test_data/pass1.json", fstream::in);
+  ifs.open(rd + "/pass1.json", fstream::in);
   JSON j2;
   j2.read(ifs);
   ifs.close();
@@ -246,6 +253,7 @@ TEST(JSONTest, Miscellaneous) {
   ASSERT_TRUE(j2[3]["0"]["1"]["2"] == JSON(.2123));
   ASSERT_TRUE(j2[0] == JSON(JSON_NULL));
   ASSERT_TRUE(j2[1] == JSON(false));
+
 }
 
 TEST(JSONTest, AssignmentAndCopyConstructor) {
@@ -264,6 +272,40 @@ TEST(JSONTest, AssignmentAndCopyConstructor) {
   ASSERT_EQ(j2["k1"], 1.0);
   ASSERT_EQ(double(j2["k1"]), 1);
   ASSERT_NE(j2["k1"], 1); // In this case, 1 will be converted to JSON, and 1.0 != 1 (in our json case)
+
+  // Test that JSON j = JSON_HASH works
+  const JSON j3 = JSON_HASH;
+  ASSERT_EQ(j3.type(), JSON_HASH);
+  ASSERT_EQ(j3.length(), 0);
+
+  JSON j4 = JSON_ARRAY;
+  ASSERT_EQ(j4.type(), JSON_ARRAY);
+  ASSERT_EQ(j4.length(), 0);
+  
+  JSON j5 = JSON_NULL;
+  ASSERT_EQ(j5.type(), JSON_NULL);
+
+  // Try using just the operator=()
+  JSON j6;
+  j6 = JSON_NULL;
+  ASSERT_EQ(j6.type(), JSON_NULL);
+  
+  JSON j7;
+  j7 = JSON_ARRAY;
+  ASSERT_EQ(j7.type(), JSON_ARRAY);
+  ASSERT_EQ(j7.length(), 0);
+
+  // Chaining in = operator
+  JSON j8, j9, j10;
+  j8 = j9 = j10 = JSON_NULL;
+  ASSERT_EQ(j8.type(), JSON_NULL);
+  ASSERT_EQ(j8, j9);
+  ASSERT_EQ(j9, j10);
+  j8 = j9 = j10 = JSON::parse("[2]");
+  ASSERT_EQ(j8.type(), JSON_ARRAY);
+  ASSERT_EQ(j8[0], 2);
+  ASSERT_EQ(j8, j9);
+  ASSERT_EQ(j9, j10);
 }
 
 TEST(JSONTest, ResizeArray) {
@@ -791,3 +833,4 @@ int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
+

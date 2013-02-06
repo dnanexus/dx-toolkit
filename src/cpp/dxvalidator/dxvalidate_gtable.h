@@ -116,6 +116,6 @@ namespace dx {
         warningMsg["TYPE_DUPLICATE"] = "Object has duplicated types";
       }
   };
-};
+}
 
 #endif

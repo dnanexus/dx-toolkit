@@ -358,13 +358,21 @@ namespace dx {
       * @return Reference to current object (to allow chaining of = operations).
       */
     template<typename T> JSON& operator =(const T &rhs);
-
+    
     /** Copies the provided JSON object's value to current JSON object.
       * @note Current value of object will be erased.
       * @param rhs The value which will be copied to current object.
       * @return Reference to current object (to allow chaining of = operations).
       */
     JSON& operator =(const JSON &);
+    
+    /** Creates a blank JSON object of a particular JSONValue type, i.e.,
+      * this->type() == rhs; to the function, after the call.
+      * @note Current value of object will be erased.
+      * @param rhs The new type for the JSON
+      * @return Reference to current object (to allow chaining of = operations).
+      */
+    JSON& operator =(const JSONValue&);
 
     /** Copies the provided character value to current JSON object (as a JSON_STRING)
       * @note Current value of object will be erased.

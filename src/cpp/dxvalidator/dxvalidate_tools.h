@@ -249,6 +249,6 @@ namespace dx {
       // Return validation outcome
       JSON getInfo() { return info; }
   };
-};
+}
 
 #endif

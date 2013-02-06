@@ -219,6 +219,6 @@ namespace Compress
     istream * stream_ptr;
   };
 
-};
+}
 
 #endif

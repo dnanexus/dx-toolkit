@@ -187,9 +187,9 @@ distclean: clean
 # TODO: clean up files in /bin, too
 clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
+	$(MAKE) -C dx-wig-to-wiggle clean
 	-rm -f ../bin/dx-contigset-to-fasta
 	-rm -f ../bin/contigset2fasta
-	$(MAKE) -C ua clean
 	-rm -rf python/build
 	-rm -rf java/target
 	-rm -f ../bin/pyrsa-*

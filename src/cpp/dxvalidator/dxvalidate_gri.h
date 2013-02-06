@@ -85,6 +85,6 @@ namespace dx {
       virtual bool validateColumns();
       virtual bool validateDetails();
   };
-};
+}
 
 #endif
