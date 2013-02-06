@@ -1,10 +1,12 @@
-<!-- dx-header -->
-# Python Read Trimmer (DNAnexus Platform App)
+# Python Read Trimmer
 
-This is the source code for an app that runs on the DNAnexus Platform.
-For more information about how to run or modify it, see
-http://wiki.dnanexus.com/.
-<!-- /dx-header -->
+This simple example app wraps the `fastq_quality_trimmer` tool from the
+<a href="http://hannonlab.cshl.edu/fastx_toolkit/">FASTX-Toolkit</a>.
+
+This example is part of the DNAnexus <a
+href="http://wiki.dnanexus.com/Developer-Tutorials/Python/Python">Python
+tutorial for app developers</a>, which will walk you through the process of
+creating and running this app on the DNAnexus Platform.
 
 ## Inputs
 
