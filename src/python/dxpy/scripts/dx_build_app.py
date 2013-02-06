@@ -36,8 +36,6 @@ parser.add_argument("src_dir", help="App or applet source directory (default: cu
 parser.set_defaults(mode="app")
 parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
-# TODO: remove -p/--destination-project and deprecation message below.
-parser.add_argument("-p", "--destination-project", help="(Deprecated) Insert the applet into the project with the specified project ID.", default=None)
 parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default=None)
 
 parser.set_defaults(use_temp_build_project=True)
@@ -304,16 +302,6 @@ def main(**kwargs):
     using_temp_project = False
     override_folder = None
     override_applet_name = None
-
-    if args.destination_project:
-        if args.destination:
-            # We'll clobber destination below.
-            parser.error("Can't supply both --destination and --destination-project. Just use --destination.")
-        args.destination = args.destination_project
-        print >> sys.stderr, "*"
-        print >> sys.stderr, "* The -p/--destination-project flag has been deprecated. Instead please use"
-        print >> sys.stderr, "* -d=project-XXXX or --destination=project-XXXX, which does the same and more."
-        print >> sys.stderr, "*"
 
     if args.mode == "applet" and args.destination:
         working_project, override_folder, override_applet_name = parse_destination(args.destination)
