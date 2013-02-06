@@ -216,9 +216,10 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
 
         dxpy.set_workspace_id(build_project_id)
 
+        remote_file = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
+                                             wait_on_close=True, show_progress=True)
+
         try:
-            remote_file = dxpy.upload_local_file(app_tarball_file, media_type="application/gzip",
-                                                 wait_on_close=True, show_progress=True)
             print
             input_hash = {
                 "input_file": dxpy.dxlink(remote_file),
