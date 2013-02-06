@@ -273,9 +273,9 @@ def main(**kwargs):
         parser.error("--destination cannot be used when creating an app (only an applet)")
 
     if args.remote:
-        # To enable these, the tarball builder app needs to learn how to
-        # pass these options through to the interior call of
-        # dx_build_app.
+        # The following flags might be useful in conjunction with
+        # --remote. To enable these, we need to learn how to pass these
+        # options through to the interior call of dx_build_app(let).
         if args.version_override:
             parser.error('--remote cannot be combined with --version')
         if args.bill_to:
@@ -286,7 +286,19 @@ def main(**kwargs):
             parser.error('--remote cannot be combined with --no-update')
         if args.dry_run:
             parser.error('--remote cannot be combined with --dry-run')
-        return _build_app_remote(args.mode, args.src_dir, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
+
+        # The following flags are probably not useful in conjunction
+        # with --remote.
+        if not args.build_step:
+            parser.error('--remote cannot be combined with --no-build-step')
+        if not args.upload_step:
+            parser.error('--remote cannot be combined with --no-upload-step')
+        if args.json:
+            parser.error('--remote cannot be combined with --json')
+        if not args.use_temp_build_project:
+            parser.error('--remote cannot be combined with --no-temp-build-project')
+
+        return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
 
     working_project = None
     using_temp_project = False
