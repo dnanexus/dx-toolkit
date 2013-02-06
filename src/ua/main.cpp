@@ -571,7 +571,7 @@ void printEnvironmentInfo() {
        << "  API server host: " << opt.apiserverHost << endl
        << "  API server port: " << opt.apiserverPort << endl
        << "  Auth token: " << opt.authToken << endl; 
-  cout << "  Project:  " << ((opt.projects.size() > 0) ? opt.projects[0] : "") << endl; 
+  cout << "  Project: " << ((opt.projects.size() > 0) ? opt.projects[0] : "") << endl; 
 }
 
 int main(int argc, char * argv[]) {

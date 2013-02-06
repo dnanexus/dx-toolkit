@@ -1,41 +1,28 @@
 cmake_minimum_required(VERSION 2.6)
 cmake_policy(VERSION 2.6)
 
-project(dxtestcpp)
-set(CMAKE_BUILD_TYPE, Release)
+project(dx-cpp-tests)
 
-set(GTEST_DIR /opt/chef-gtest-1.6.0)
-include_directories(../ ./ ${GTEST_DIR} ${GTEST_DIR}/include ../SimpleHttpLib ../dxjson ../dxcpp ../dxlog)
+if (NOT DEFINED ENV{DNANEXUS_HOME})
+  message(FATAL_ERROR "Environment variable DNANEXUS_HOME (location of dx-toolkit) not defined")
+endif (NOT DEFINED ENV{DNANEXUS_HOME})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-overloaded-virtual -Wno-sign-compare -Werror=return-type -Wno-unused-result -Wno-deprecated")
+# Set default build type, common compiler flags, etc
+include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_POLICY_SCOPE)
 
-add_subdirectory(../dxcpp dxcpp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/..  ../SimpleHttpLib ../dxjson ../dxcpp)
 
-add_executable(test_dxcpp test_dxcpp.cc ${GTEST_DIR}/src/gtest-all.cc)
-target_link_libraries(test_dxcpp dxcpp)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../dxcpp dxcpp)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/gtest gtest)
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-  add_definitions("-std=c++0x")
-  
-  # compile dxlog, dxjson, simple http tests iff compiler is g++  
-  add_executable(test_simple_http gtest_http.cpp ${GTEST_DIR}/src/gtest-all.cc)
-  target_link_libraries(test_simple_http curl dxhttp) 
-  
-  add_executable(test_json gtest_json.cpp ${GTEST_DIR}/src/gtest-all.cc)
-  target_link_libraries(test_json dxjson)
+# dxcpp_tests
+add_executable(test_dxcpp test_dxcpp.cc)
+target_link_libraries(test_dxcpp dxcpp gtest)
 
-  # dxlog require openmp to compile
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
+# simple http tests
+add_executable(test_simplehttp test_simplehttp.cpp)
+target_link_libraries(test_simplehttp dxhttp gtest) 
 
-  add_subdirectory(../dxlog dxlog)
-
-  # dxlog tests requires openmp
-  add_executable(test_dxlog test_dxlog.cc ${GTEST_DIR}/src/gtest-all.cc)
-  target_link_libraries(test_dxlog pthread dxlog dxjson)
-
-endif()
-
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  add_definitions("-std=c++11")
-endif()
+# dxjson tests
+add_executable(test_dxjson test_dxjson.cpp)
+target_link_libraries(test_dxjson dxjson gtest) 

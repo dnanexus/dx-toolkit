@@ -1,4 +1,9 @@
-default:
-	$(MAKE) -C src
+all: default
 
-.PHONY: default
+default:
+	$(MAKE) -C src all
+
+clean:
+	$(MAKE) -C src clean
+
+.PHONY: all default clean

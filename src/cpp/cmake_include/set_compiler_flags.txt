@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 2.6)
+cmake_policy(VERSION 2.6)
+
+# Set the default build type to "RELEASE" (if none specified)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'RELEASE' as none was specified.")
+  set(CMAKE_BUILD_TYPE RELEASE)
+endif()
+
+# General compiler flags & macros (applicable for all build types)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -pedantic -Wall -Wextra -Wno-sign-compare -Werror=return-type -Wno-deprecated -fPIC")
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  # Clang case is not yet well tested (do not uncomment line below without testing them first)
+  #if (APPLE)
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  #endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+# Set compiler flags & macros for different build types (which can be configured using CMAKE_BUILD_TYPE)
+
+# Additional flags to be set for RELEASE mode (cmake -DCMAKE_BUILD_TYPE=RELEASE)
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+# Additional flags to be set for DEBUG mode (cmake -DCMAKE_BUILD_TYPE=DEBUG)
+set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DDEBUG=1")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")

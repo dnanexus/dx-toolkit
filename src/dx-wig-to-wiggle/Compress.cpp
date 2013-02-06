@@ -550,4 +550,4 @@ namespace Compress
 
     return stream_ptr;
   }
-};
+}

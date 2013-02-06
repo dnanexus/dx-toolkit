@@ -2,43 +2,59 @@ cmake_minimum_required(VERSION 2.6)
 cmake_policy(VERSION 2.6)
 
 project(dxcpp)
-set(CMAKE_BUILD_TYPE, Release)
 
-FIND_PACKAGE(Boost 1.48 REQUIRED)
-IF (Boost_FOUND)
-  INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-  LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
-ENDIF()
+if (NOT DEFINED ENV{DNANEXUS_HOME})
+  message(FATAL_ERROR "Environment variable DNANEXUS_HOME (location of dx-toolkit) not defined")
+endif (NOT DEFINED ENV{DNANEXUS_HOME})
 
+# Set default build type, common compiler flags, etc
+include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_POLICY_SCOPE)
+# Set an additional flag (to disable some dxcpp specific warnings)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -Wall -Wextra -Wno-sign-compare -Wno-overloaded-virtual -Werror=return-type -Wno-deprecated")
+####################################
+# Find libcrypto (and openssl/md5.h)
+####################################
+find_path(OPENSSL_INCLUDE_DIR openssl/md5.h)
+find_library(CRYPTO_LIBRARY_PATH NAMES crypto)
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-  add_definitions("-std=c++0x")
+if (OPENSSL_INCLUDE_DIR AND CRYPTO_LIBRARY_PATH)
+  message(STATUS "dxcpp CMakeLists.txt says: libcrypto, and openssl/md5.h found!")
+  message(STATUS "\t** OPENSSL_INCLUDE_PATH = \"${OPENSSL_INCLUDE_DIR}\"")
+  message(STATUS "\t** CRYPTO_LIBRARY_PATH = \"${CRYPTO_LIBRARY_PATH}\"")
+else()
+  message(FATAL_ERROR "\ndxcpp says: Unable to find 'libcrypto', and/or 'openssl/md5.h'. OPENSSL_INCLUDE_PATH = \"${OPENSSL_INCLUDE_DIR}\", CRYPTO_LIBRARY_PATH = \"${CRYPTO_LIBRARY_PATH}\"")
 endif()
+include_directories(BEFORE ${OPENSSL_INCLUDE_DIR})
+###################################
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-  if (APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-  endif()
-  add_definitions("-std=c++11")
+#########################################################################
+# Find Boost library >= 1.48 (using the cmake find_package functionality)
+if (STATIC_BOOST) # can be set by using -DSTATIC_BOOST=1 while running cmake
+  message (STATUS "dxcpp says: Variable STATIC_BOOST is set, will turn on static linking for boost")
+  set(Boost_USE_STATIC_LIBS ON) # Use static libs for boost
+endif ()
+set(Boost_USE_MULTITHREADED ON)
+
+# Mac instalaltion (for some unknown reason) requires boost system as well ?
+if (NOT APPLE)
+  find_package(Boost 1.48 COMPONENTS thread regex REQUIRED)
+else()
+  find_package(Boost 1.48 COMPONENTS thread regex system REQUIRED)
 endif()
-
-set (CMAKE_C_FLAGS_RELEASE "-O3")
-set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-
-set (CMAKE_C_FLAGS_DEBUG "-g -DDEBUG=1")
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+if (Boost_FOUND)
+  message(STATUS "dxcpp CMakeLists.txt says: Boost libraries found")
+  message(STATUS "\t** BOOST_INCLUDE_DIR=\"${Boost_INCLUDE_DIR}\"")
+  message(STATUS "\t** BOOST_LIBRARY_DIRS=\"${Boost_LIBRARY_DIRS}\"")
+  message(STATUS "\t** BOOST_LIBRARIES = \"${Boost_LIBRARIES}\"")
+  include_directories(BEFORE ${Boost_INCLUDE_DIR})
+endif()
+#########################################################################
 
 add_subdirectory(../dxjson dxjson)
 add_subdirectory(../SimpleHttpLib SimpleHttpLib)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../SimpleHttpLib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../SimpleHttpLib ${CMAKE_CURRENT_SOURCE_DIR}/../dxjson)
 
 add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc bindings/execution_common_helper.cc exec_utils.cc utils.cc)
-set_target_properties(dxcpp PROPERTIES COMPILE_FLAGS -fPIC)
-IF (APPLE)
-  target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex-mt boost_system-mt crypto)
-ELSE ()
-  target_link_libraries(dxcpp dxjson curl dxhttp boost_thread-mt boost_regex-mt)
-ENDIF()
+target_link_libraries(dxcpp dxhttp dxjson ${CRYPTO_LIBRARY_PATH} ${Boost_LIBRARIES})

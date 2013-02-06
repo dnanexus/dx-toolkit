@@ -540,6 +540,19 @@ JSON& JSON::operator [](const size_t &indx) { return const_cast<JSON&>( (*(const
 //JSON& JSON::operator [](const char *str) { return const_cast<JSON&>( (*(const_cast<const JSON*>(this)))[str]); }
 
 JSON::JSON(const JSONValue &rhs) {
+  val = NULL; // So that clear() works fine on this, else we will be deallocating some arbitrary memory - dangerous!
+  *this = operator=(rhs);
+}
+
+JSON::JSON(const JSON &rhs) {
+  if (rhs.type() != JSON_UNDEFINED)
+    val = rhs.val->returnMyNewCopy();
+  else
+    val = NULL;
+}
+
+JSON& JSON::operator =(const JSONValue &rhs) {
+  clear();
   switch(rhs) {
     case JSON_ARRAY: val = new Array(); break;
     case JSON_OBJECT: val = new Object(); break;
@@ -550,13 +563,7 @@ JSON::JSON(const JSONValue &rhs) {
     case JSON_NULL: val = new Null(); break;
     default: throw JSONException("Illegal JSONValue value for JSON initialization");
   }
-}
-
-JSON::JSON(const JSON &rhs) {
-  if (rhs.type() != JSON_UNDEFINED)
-    val = rhs.val->returnMyNewCopy();
-  else
-    val = NULL;
+  return *this;
 }
 
 JSON& JSON::operator =(const JSON &rhs) {
