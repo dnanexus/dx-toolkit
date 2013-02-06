@@ -194,9 +194,9 @@ class DXPathCompleter():
         self.matches = path_completer(prefix, self.expected, self.classes,
                                       typespec=self.typespec,
                                       include_current_proj=self.include_current_proj)
-        if get_last_pos_of_char(':', prefix) != -1:
+        if prefix.rfind(':') != -1:
             for i in range(len(self.matches)):
-                self.matches[i] = self.matches[i][get_last_pos_of_char(':', self.matches[i]) + 1:]
+                self.matches[i] = self.matches[i][self.matches[i].rfind(':') + 1:]
                 
         return self.matches
 
@@ -224,6 +224,14 @@ class DXAppCompleter():
             self.matches += [name for name in appnames_with_prefix if name.startswith(prefix)]
 
     def get_matches(self, line, point, prefix, suffix):
+        # This implementation is reliant on bash behavior that ':' is
+        # treated as a word separator for determining prefix
+        if get_last_pos_of_char(' ', line) != point - 1:
+            prefix = split_unescaped(' ', line[:point])[-1]
+        # Can immediately return if there are disallowed characters of
+        # app names in the prefix
+        if ':' in prefix:
+            return []
         self._populate_matches(prefix)
         return self.matches
 
@@ -272,7 +280,15 @@ class ListCompleter():
         self.matches = [ans for ans in self.completions if ans.startswith(prefix)]
 
     def get_matches(self, line, point, prefix, suffix):
+        # This implementation is reliant on bash behavior that ':' is
+        # treated as a word separator for determining prefix
+        if get_last_pos_of_char(' ', line) != point - 1:
+            prefix = split_unescaped(' ', line[:point])[-1]
         self._populate_matches(prefix)
+        if prefix.rfind(':') != -1:
+            for i in range(len(self.matches)):
+                self.matches[i] = self.matches[i][self.matches[i].rfind(':') + 1:]
+
         return self.matches
 
     def __call__(self, text, state):
@@ -289,14 +305,12 @@ class MultiCompleter():
         self.completers = completers
         self.matches = []
 
-    def _populate_matches(self, prefix):
+    def get_matches(self, line, point, prefix, suffix):
+        # This implementation assumes the get_matches will handle any
+        # special word separation
         self.matches = []
         for completer in self.completers:
-            completer._populate_matches(prefix)
-            self.matches += completer.matches
-
-    def get_matches(self, line, point, prefix, suffix):
-        self._populate_matches(prefix)
+            self.matches += completer.get_matches(line, point, prefix, suffix)
         return self.matches
 
     def __call__(self, text, state):
