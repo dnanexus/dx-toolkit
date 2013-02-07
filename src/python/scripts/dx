@@ -17,10 +17,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import sys, os, datetime, urlparse, base64, getpass, collections, re, json, time, urllib, argparse, textwrap, copy
+import os, sys, datetime, urlparse, getpass, collections, re, json, time, urllib, argparse, textwrap, copy, hashlib
 import shlex # respects quoted substrings when splitting
-import codecs
-import hashlib
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -3631,6 +3629,15 @@ if len(args_list) > 0:
     set_delim(args)
     set_env_from_args(args)
     args.func(args)
+    # Flush buffered data in stdout before interpreter shutdown to ignore broken pipes
+    try:
+        sys.stdout.flush()
+    except IOError as e:
+        if e.errno == errno.EPIPE:
+            if dxpy._DEBUG:
+                print >>sys.stderr, "Broken pipe"
+        else:
+            raise
 else:
     parser.print_help()
     sys.exit(1)
