@@ -84,12 +84,12 @@
 /gtable-xxxx/setProperties RETRYABLE
 /gtable-xxxx/setVisibility RETRYABLE
 /gtable/new
-/invite-xxxx/accept RETRYABLE
-/invite-xxxx/approve RETRYABLE
-/invite-xxxx/decline RETRYABLE
-/invite-xxxx/describe RETRYABLE
-/invite-xxxx/destroy
-/invite-xxxx/reject RETRYABLE
+#/invite-xxxx/accept RETRYABLE
+#/invite-xxxx/approve RETRYABLE
+#/invite-xxxx/decline RETRYABLE
+#/invite-xxxx/describe RETRYABLE
+#/invite-xxxx/destroy
+#/invite-xxxx/reject RETRYABLE
 /job-xxxx/describe RETRYABLE
 /job-xxxx/streamLog
 /job-xxxx/terminate RETRYABLE
@@ -102,7 +102,7 @@
 /project-xxxx/describe RETRYABLE
 /project-xxxx/destroy RETRYABLE
 /project-xxxx/invite
-/project-xxxx/join
+#/project-xxxx/join
 /project-xxxx/leave RETRYABLE
 /project-xxxx/listFolder RETRYABLE
 /project-xxxx/move
@@ -129,24 +129,24 @@
 /record-xxxx/setProperties RETRYABLE
 /record-xxxx/setVisibility RETRYABLE
 /record/new
-/request-xxxx/approve RETRYABLE
-/request-xxxx/describe RETRYABLE
-/request-xxxx/destroy
-/request-xxxx/reject RETRYABLE
+#/request-xxxx/approve RETRYABLE
+#/request-xxxx/describe RETRYABLE
+#/request-xxxx/destroy
+#/request-xxxx/reject RETRYABLE
 /system/findAffiliates RETRYABLE
 /system/findApps RETRYABLE
 /system/findDataObjects RETRYABLE
-/system/findDiscitems RETRYABLE
-/system/findFeeditems RETRYABLE
-/system/findInvites RETRYABLE
+#/system/findDiscitems RETRYABLE
+#/system/findFeeditems RETRYABLE
+#/system/findInvites RETRYABLE
 /system/findJobs RETRYABLE
 /system/findProjects RETRYABLE
-/system/findRequests RETRYABLE
+#/system/findRequests RETRYABLE
 /system/findUsers RETRYABLE
 /system/findProjectMembers RETRYABLE
-/system/getLog RETRYABLE
-/system/getProjectTags RETRYABLE
-/system/globalSearch RETRYABLE
+#/system/getLog RETRYABLE
+#/system/getProjectTags RETRYABLE
+#/system/globalSearch RETRYABLE
 /system/shortenURL RETRYABLE
 #/table-xxxx/addColumns RETRYABLE
 #/table-xxxx/addIndices RETRYABLE
