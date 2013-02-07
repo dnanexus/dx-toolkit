@@ -207,8 +207,8 @@ def print_list_field(label, values):
 def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
-def print_project_desc(desc):
-    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo']
+def print_project_desc(desc, verbose=False):
+    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo', 'version']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -216,8 +216,10 @@ def print_project_desc(desc):
         print_field("Name", desc["name"])
     if 'summary' in desc:
         print_field("Summary", desc["summary"])
-    elif 'description' in desc:
+    if 'description' in desc and (verbose or 'summary' not in desc):
         print_field("Description", desc['description'])
+    if 'version' in desc and verbose:
+        print_field("Version", str(desc['version']))
     if 'billTo' in desc:
         print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'protected' in desc:
@@ -499,7 +501,7 @@ def print_desc(desc, verbose=False):
     formatted and human-readable string containing the data in *desc*.
     '''
     if desc['class'] in ['project', 'workspace', 'container']:
-        print_project_desc(desc)
+        print_project_desc(desc, verbose=verbose)
     elif desc['class'] == 'app':
         print_app_desc(desc, verbose=verbose)
     elif desc['class'] == 'job':

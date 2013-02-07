@@ -293,17 +293,21 @@ class DXProject(DXContainer):
 
     _class = "project"
 
-    def update(self, name=None, description=None, protected=None,
-               restricted=None, **kwargs):
+    def update(self, name=None, summary=None, description=None, protected=None,
+               restricted=None, version=None, **kwargs):
         """
-        :param name: New project name
+        :param name: If provided, the new project name
         :type name: string
-        :param description: New project description
+        :param summary: If provided, the new project summary
+        :type summary: string
+        :param description: If provided, the new project description
         :type name: string
-        :param protected: Whether the project should become protected
+        :param protected: If provided, whether the project should be protected
         :type protected: boolean
-        :param restricted: Whether the project should become restricted
+        :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
+        :param version: If provided, the update will only occur if the value matches the current project's version number
+        :type version: int
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
@@ -315,12 +319,16 @@ class DXProject(DXContainer):
         update_hash = {}
         if name is not None:
             update_hash["name"] = name
+        if summary is not None:
+            update_hash["summary"] = summary
         if description is not None:
             update_hash["description"] = description
         if protected is not None:
             update_hash["protected"] = protected
         if restricted is not None:
             update_hash["restricted"] = restricted
+        if version is not None:
+            update_hash["version"] = version
         dxpy.api.projectUpdate(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, **kwargs):
