@@ -12,10 +12,7 @@
   ],
   "runSpec": {
     "code": "/hello_world_app",
-    "interpreter": "bash",
-    "execDepends": [
-      {"name": "libcurl4-openssl-dev"}
-    ]
+    "interpreter": "bash"
   },
   "version": "0.0.1"
 }
