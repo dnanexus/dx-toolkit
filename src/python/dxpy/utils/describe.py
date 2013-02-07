@@ -208,14 +208,16 @@ def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
 def print_project_desc(desc):
-    recognized_fields = ['id', 'class', 'name', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo']
+    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if "name" in desc:
         print_field("Name", desc["name"])
-    if 'description' in desc:
-        print_field("Description", desc["description"])
+    if 'summary' in desc:
+        print_field("Summary", desc["summary"])
+    elif 'description' in desc:
+        print_field("Description", desc['description'])
     if 'billTo' in desc:
         print_field("Billed to",  desc['billTo'][5 if desc['billTo'].startswith('user-') else 0:])
     if 'protected' in desc:
