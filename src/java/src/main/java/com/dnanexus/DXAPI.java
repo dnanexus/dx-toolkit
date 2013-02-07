@@ -299,30 +299,6 @@ public class DXAPI {
         return new DXHTTPRequest().request("/gtable/new", inputParams);
     }
 
-    public static JsonNode inviteAccept(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "accept", inputParams);
-    }
-
-    public static JsonNode inviteApprove(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "approve", inputParams);
-    }
-
-    public static JsonNode inviteDecline(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "decline", inputParams);
-    }
-
-    public static JsonNode inviteDescribe(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
-    }
-
-    public static JsonNode inviteDestroy(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
-    }
-
-    public static JsonNode inviteReject(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "reject", inputParams);
-    }
-
     public static JsonNode jobDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
@@ -369,10 +345,6 @@ public class DXAPI {
 
     public static JsonNode projectInvite(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "invite", inputParams);
-    }
-
-    public static JsonNode projectJoin(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "join", inputParams);
     }
 
     public static JsonNode projectLeave(String objectId, JsonNode inputParams) throws Exception {
@@ -479,22 +451,6 @@ public class DXAPI {
         return new DXHTTPRequest().request("/record/new", inputParams);
     }
 
-    public static JsonNode requestApprove(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "approve", inputParams);
-    }
-
-    public static JsonNode requestDescribe(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
-    }
-
-    public static JsonNode requestDestroy(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
-    }
-
-    public static JsonNode requestReject(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "reject", inputParams);
-    }
-
     public static JsonNode systemFindAffiliates(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findAffiliates", inputParams);
     }
@@ -507,18 +463,6 @@ public class DXAPI {
         return new DXHTTPRequest().request("/system/findDataObjects", inputParams);
     }
 
-    public static JsonNode systemFindDiscitems(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/findDiscitems", inputParams);
-    }
-
-    public static JsonNode systemFindFeeditems(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/findFeeditems", inputParams);
-    }
-
-    public static JsonNode systemFindInvites(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/findInvites", inputParams);
-    }
-
     public static JsonNode systemFindJobs(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findJobs", inputParams);
     }
@@ -527,28 +471,12 @@ public class DXAPI {
         return new DXHTTPRequest().request("/system/findProjects", inputParams);
     }
 
-    public static JsonNode systemFindRequests(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/findRequests", inputParams);
-    }
-
     public static JsonNode systemFindUsers(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findUsers", inputParams);
     }
 
     public static JsonNode systemFindProjectMembers(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findProjectMembers", inputParams);
-    }
-
-    public static JsonNode systemGetLog(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/getLog", inputParams);
-    }
-
-    public static JsonNode systemGetProjectTags(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/getProjectTags", inputParams);
-    }
-
-    public static JsonNode systemGlobalSearch(JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/system/globalSearch", inputParams);
     }
 
     public static JsonNode systemShortenURL(JsonNode inputParams) throws Exception {

@@ -782,60 +782,6 @@ dx::JSON gtableNew(const dx::JSON &input_params, const bool retry) {
 }
 
 
-dx::JSON inviteAccept(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/accept"), input_params, retry);
-}
-
-dx::JSON inviteAccept(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return inviteAccept(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON inviteApprove(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/approve"), input_params, retry);
-}
-
-dx::JSON inviteApprove(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return inviteApprove(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON inviteDecline(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/decline"), input_params, retry);
-}
-
-dx::JSON inviteDecline(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return inviteDecline(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON inviteDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
-}
-
-dx::JSON inviteDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return inviteDescribe(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON inviteDestroy(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params, retry);
-}
-
-dx::JSON inviteDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return inviteDestroy(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON inviteReject(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/reject"), input_params, retry);
-}
-
-dx::JSON inviteReject(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return inviteReject(object_id, input_params.toString(), retry);
-}
-
-
 dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
   return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
 }
@@ -941,15 +887,6 @@ dx::JSON projectInvite(const std::string &object_id, const std::string &input_pa
 
 dx::JSON projectInvite(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
   return projectInvite(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON projectJoin(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/join"), input_params, retry);
-}
-
-dx::JSON projectJoin(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return projectJoin(object_id, input_params.toString(), retry);
 }
 
 
@@ -1187,42 +1124,6 @@ dx::JSON recordNew(const dx::JSON &input_params, const bool retry) {
 }
 
 
-dx::JSON requestApprove(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/approve"), input_params, retry);
-}
-
-dx::JSON requestApprove(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return requestApprove(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON requestDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
-}
-
-dx::JSON requestDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return requestDescribe(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON requestDestroy(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/destroy"), input_params, retry);
-}
-
-dx::JSON requestDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return requestDestroy(object_id, input_params.toString(), retry);
-}
-
-
-dx::JSON requestReject(const std::string &object_id, const std::string &input_params, const bool retry) {
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/reject"), input_params, retry);
-}
-
-dx::JSON requestReject(const std::string &object_id, const dx::JSON &input_params, const bool retry) {
-  return requestReject(object_id, input_params.toString(), retry);
-}
-
-
 dx::JSON systemFindAffiliates(const std::string &input_params, const bool retry) {
   return DXHTTPRequest("/system/findAffiliates", input_params, retry);
 }
@@ -1250,33 +1151,6 @@ dx::JSON systemFindDataObjects(const dx::JSON &input_params, const bool retry) {
 }
 
 
-dx::JSON systemFindDiscitems(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/findDiscitems", input_params, retry);
-}
-
-dx::JSON systemFindDiscitems(const dx::JSON &input_params, const bool retry) {
-  return systemFindDiscitems(input_params.toString(), retry);
-}
-
-
-dx::JSON systemFindFeeditems(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/findFeeditems", input_params, retry);
-}
-
-dx::JSON systemFindFeeditems(const dx::JSON &input_params, const bool retry) {
-  return systemFindFeeditems(input_params.toString(), retry);
-}
-
-
-dx::JSON systemFindInvites(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/findInvites", input_params, retry);
-}
-
-dx::JSON systemFindInvites(const dx::JSON &input_params, const bool retry) {
-  return systemFindInvites(input_params.toString(), retry);
-}
-
-
 dx::JSON systemFindJobs(const std::string &input_params, const bool retry) {
   return DXHTTPRequest("/system/findJobs", input_params, retry);
 }
@@ -1295,15 +1169,6 @@ dx::JSON systemFindProjects(const dx::JSON &input_params, const bool retry) {
 }
 
 
-dx::JSON systemFindRequests(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/findRequests", input_params, retry);
-}
-
-dx::JSON systemFindRequests(const dx::JSON &input_params, const bool retry) {
-  return systemFindRequests(input_params.toString(), retry);
-}
-
-
 dx::JSON systemFindUsers(const std::string &input_params, const bool retry) {
   return DXHTTPRequest("/system/findUsers", input_params, retry);
 }
@@ -1319,33 +1184,6 @@ dx::JSON systemFindProjectMembers(const std::string &input_params, const bool re
 
 dx::JSON systemFindProjectMembers(const dx::JSON &input_params, const bool retry) {
   return systemFindProjectMembers(input_params.toString(), retry);
-}
-
-
-dx::JSON systemGetLog(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/getLog", input_params, retry);
-}
-
-dx::JSON systemGetLog(const dx::JSON &input_params, const bool retry) {
-  return systemGetLog(input_params.toString(), retry);
-}
-
-
-dx::JSON systemGetProjectTags(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/getProjectTags", input_params, retry);
-}
-
-dx::JSON systemGetProjectTags(const dx::JSON &input_params, const bool retry) {
-  return systemGetProjectTags(input_params.toString(), retry);
-}
-
-
-dx::JSON systemGlobalSearch(const std::string &input_params, const bool retry) {
-  return DXHTTPRequest("/system/globalSearch", input_params, retry);
-}
-
-dx::JSON systemGlobalSearch(const dx::JSON &input_params, const bool retry) {
-  return systemGlobalSearch(input_params.toString(), retry);
 }
 
 

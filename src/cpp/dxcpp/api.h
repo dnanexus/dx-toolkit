@@ -342,30 +342,6 @@ dx::JSON gtableNew(const std::string &input_params="{}", const bool retry=false)
 dx::JSON gtableNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON inviteAccept(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON inviteAccept(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON inviteApprove(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON inviteApprove(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON inviteDecline(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON inviteDecline(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON inviteDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON inviteDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON inviteDestroy(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON inviteDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON inviteReject(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON inviteReject(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
 dx::JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
 dx::JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
@@ -412,10 +388,6 @@ dx::JSON projectDestroy(const std::string &object_id, const dx::JSON &input_para
 
 dx::JSON projectInvite(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
 dx::JSON projectInvite(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON projectJoin(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON projectJoin(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
 
 dx::JSON projectLeave(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
@@ -522,22 +494,6 @@ dx::JSON recordNew(const std::string &input_params="{}", const bool retry=false)
 dx::JSON recordNew(const dx::JSON &input_params, const bool retry=false);
 
 
-dx::JSON requestApprove(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON requestApprove(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON requestDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON requestDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON requestDestroy(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-dx::JSON requestDestroy(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-
-dx::JSON requestReject(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-dx::JSON requestReject(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-
 dx::JSON systemFindAffiliates(const std::string &input_params="{}", const bool retry=true);
 dx::JSON systemFindAffiliates(const dx::JSON &input_params, const bool retry=true);
 
@@ -550,18 +506,6 @@ dx::JSON systemFindDataObjects(const std::string &input_params="{}", const bool 
 dx::JSON systemFindDataObjects(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindDiscitems(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemFindDiscitems(const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON systemFindFeeditems(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemFindFeeditems(const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON systemFindInvites(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemFindInvites(const dx::JSON &input_params, const bool retry=true);
-
-
 dx::JSON systemFindJobs(const std::string &input_params="{}", const bool retry=true);
 dx::JSON systemFindJobs(const dx::JSON &input_params, const bool retry=true);
 
@@ -570,28 +514,12 @@ dx::JSON systemFindProjects(const std::string &input_params="{}", const bool ret
 dx::JSON systemFindProjects(const dx::JSON &input_params, const bool retry=true);
 
 
-dx::JSON systemFindRequests(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemFindRequests(const dx::JSON &input_params, const bool retry=true);
-
-
 dx::JSON systemFindUsers(const std::string &input_params="{}", const bool retry=true);
 dx::JSON systemFindUsers(const dx::JSON &input_params, const bool retry=true);
 
 
 dx::JSON systemFindProjectMembers(const std::string &input_params="{}", const bool retry=true);
 dx::JSON systemFindProjectMembers(const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON systemGetLog(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemGetLog(const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON systemGetProjectTags(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemGetProjectTags(const dx::JSON &input_params, const bool retry=true);
-
-
-dx::JSON systemGlobalSearch(const std::string &input_params="{}", const bool retry=true);
-dx::JSON systemGlobalSearch(const dx::JSON &input_params, const bool retry=true);
 
 
 dx::JSON systemShortenURL(const std::string &input_params="{}", const bool retry=true);

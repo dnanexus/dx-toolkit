@@ -310,30 +310,6 @@ def gtableNew(input_params={}, always_retry=False, **kwargs):
     return DXHTTPRequest('/gtable/new', input_params, always_retry=always_retry, **kwargs)
 
 
-def inviteAccept(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/accept' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def inviteApprove(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/approve' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def inviteDecline(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/decline' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def inviteDescribe(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def inviteDestroy(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/destroy' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def inviteReject(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/reject' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
 def jobDescribe(object_id, input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
@@ -380,10 +356,6 @@ def projectDestroy(object_id, input_params={}, always_retry=True, **kwargs):
 
 def projectInvite(object_id, input_params={}, always_retry=False, **kwargs):
     return DXHTTPRequest('/%s/invite' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def projectJoin(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/join' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 
 def projectLeave(object_id, input_params={}, always_retry=True, **kwargs):
@@ -490,22 +462,6 @@ def recordNew(input_params={}, always_retry=False, **kwargs):
     return DXHTTPRequest('/record/new', input_params, always_retry=always_retry, **kwargs)
 
 
-def requestApprove(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/approve' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def requestDescribe(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def requestDestroy(object_id, input_params={}, always_retry=False, **kwargs):
-    return DXHTTPRequest('/%s/destroy' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
-def requestReject(object_id, input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/%s/reject' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
 def systemFindAffiliates(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findAffiliates', input_params, always_retry=always_retry, **kwargs)
 
@@ -518,18 +474,6 @@ def systemFindDataObjects(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findDataObjects', input_params, always_retry=always_retry, **kwargs)
 
 
-def systemFindDiscitems(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/findDiscitems', input_params, always_retry=always_retry, **kwargs)
-
-
-def systemFindFeeditems(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/findFeeditems', input_params, always_retry=always_retry, **kwargs)
-
-
-def systemFindInvites(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/findInvites', input_params, always_retry=always_retry, **kwargs)
-
-
 def systemFindJobs(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findJobs', input_params, always_retry=always_retry, **kwargs)
 
@@ -538,28 +482,12 @@ def systemFindProjects(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findProjects', input_params, always_retry=always_retry, **kwargs)
 
 
-def systemFindRequests(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/findRequests', input_params, always_retry=always_retry, **kwargs)
-
-
 def systemFindUsers(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findUsers', input_params, always_retry=always_retry, **kwargs)
 
 
 def systemFindProjectMembers(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findProjectMembers', input_params, always_retry=always_retry, **kwargs)
-
-
-def systemGetLog(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/getLog', input_params, always_retry=always_retry, **kwargs)
-
-
-def systemGetProjectTags(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/getProjectTags', input_params, always_retry=always_retry, **kwargs)
-
-
-def systemGlobalSearch(input_params={}, always_retry=True, **kwargs):
-    return DXHTTPRequest('/system/globalSearch', input_params, always_retry=always_retry, **kwargs)
 
 
 def systemShortenURL(input_params={}, always_retry=True, **kwargs):

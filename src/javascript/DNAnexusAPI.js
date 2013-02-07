@@ -430,36 +430,6 @@ exports.gtableNew = function(input_params) {
 };
 
 
-exports.inviteAccept = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/accept', input_params);
-};
-
-
-exports.inviteApprove = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/approve', input_params);
-};
-
-
-exports.inviteDecline = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/decline', input_params);
-};
-
-
-exports.inviteDescribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
-};
-
-
-exports.inviteDestroy = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/destroy', input_params);
-};
-
-
-exports.inviteReject = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/reject', input_params);
-};
-
-
 exports.jobDescribe = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
 };
@@ -517,11 +487,6 @@ exports.projectDestroy = function(object_id, input_params) {
 
 exports.projectInvite = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/invite', input_params);
-};
-
-
-exports.projectJoin = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/join', input_params);
 };
 
 
@@ -655,26 +620,6 @@ exports.recordNew = function(input_params) {
 };
 
 
-exports.requestApprove = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/approve', input_params);
-};
-
-
-exports.requestDescribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
-};
-
-
-exports.requestDestroy = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/destroy', input_params);
-};
-
-
-exports.requestReject = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/reject', input_params);
-};
-
-
 exports.systemFindAffiliates = function(input_params) {
   return dx.DXHTTPRequest('/system/findAffiliates', input_params);
 };
@@ -690,21 +635,6 @@ exports.systemFindDataObjects = function(input_params) {
 };
 
 
-exports.systemFindDiscitems = function(input_params) {
-  return dx.DXHTTPRequest('/system/findDiscitems', input_params);
-};
-
-
-exports.systemFindFeeditems = function(input_params) {
-  return dx.DXHTTPRequest('/system/findFeeditems', input_params);
-};
-
-
-exports.systemFindInvites = function(input_params) {
-  return dx.DXHTTPRequest('/system/findInvites', input_params);
-};
-
-
 exports.systemFindJobs = function(input_params) {
   return dx.DXHTTPRequest('/system/findJobs', input_params);
 };
@@ -715,11 +645,6 @@ exports.systemFindProjects = function(input_params) {
 };
 
 
-exports.systemFindRequests = function(input_params) {
-  return dx.DXHTTPRequest('/system/findRequests', input_params);
-};
-
-
 exports.systemFindUsers = function(input_params) {
   return dx.DXHTTPRequest('/system/findUsers', input_params);
 };
@@ -727,21 +652,6 @@ exports.systemFindUsers = function(input_params) {
 
 exports.systemFindProjectMembers = function(input_params) {
   return dx.DXHTTPRequest('/system/findProjectMembers', input_params);
-};
-
-
-exports.systemGetLog = function(input_params) {
-  return dx.DXHTTPRequest('/system/getLog', input_params);
-};
-
-
-exports.systemGetProjectTags = function(input_params) {
-  return dx.DXHTTPRequest('/system/getProjectTags', input_params);
-};
-
-
-exports.systemGlobalSearch = function(input_params) {
-  return dx.DXHTTPRequest('/system/globalSearch', input_params);
 };
 
 
