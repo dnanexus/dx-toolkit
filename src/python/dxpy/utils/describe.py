@@ -562,16 +562,21 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False):
     :param single_result: whether the job is displayed as a single result or as part of a job tree
     '''
     is_origin_job = jobdesc['parentJob'] is None or single_result
-    string = ("* " if is_origin_job and get_delimiter() is None else "")
-    string += (BOLD() + BLUE() + (jobdesc['name'] if 'name' in jobdesc else "<no name>") + ENDC()) + DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id'] 
-    string += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
-    string += jobdesc['launchedBy'][5:] + DELIMITER(' ')
-    string += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
+    result = ("* " if is_origin_job and get_delimiter() is None else "")
+    canonical_job_name = jobdesc['executableName'] + ":" + jobdesc['function']
+    job_name = jobdesc.get('name', '<no name>')
+    result += BOLD() + BLUE() + job_name + ENDC()
+    if job_name != canonical_job_name and job_name+":main" != canonical_job_name:
+        result += ' (' + canonical_job_name + ')'    
+    result += DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id']
+    result += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
+    result += jobdesc['launchedBy'][5:] + DELIMITER(' ')
+    result += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
     if jobdesc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
         # TODO: Remove this check once all jobs are migrated to have these values
         if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
-            string += " (runtime {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
+            result += " (runtime {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
     elif jobdesc['state'] == 'running':
-        string += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
+        result += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
 
-    return string
+    return result
