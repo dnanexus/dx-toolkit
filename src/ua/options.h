@@ -26,6 +26,11 @@
 
 namespace po = boost::program_options;
 
+#ifdef MAC_BUILD
+  // Returns path of executable on Mac (not portable)
+  std::string getExecutablePathOnMac();
+#endif
+ 
 class Options {
 public:
 

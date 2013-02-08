@@ -170,6 +170,7 @@ void Options::printHelp(char * programName) {
     return fs::path(toStr).remove_filename().string(); // return just the directory path
   }
 #endif
+
 // Looks at either the 'certificate-file' flag's value,
 // or tries to find the certificate file in a few known
 // standard locations. Throws an error if not found anywhere.
@@ -187,7 +188,7 @@ void setCertificateFile(const string &certificateFile) {
   #ifdef MAC_BUILD
     // If we are building on mac, then add one more path to look for certificate file, i.e.,
     // the current executable path (since we bundle certificate file together with distribution)
-    string certpath = getExecutablePathOnMac() + "/ca-certificates.crt";
+    string certpath = getExecutablePathOnMac() + "/resources/ca-certificates.crt";
     standardPathLocations[ARR_SIZE - 1] = certpath.c_str();
   #endif
   if (!certificateFile.empty()) {
