@@ -98,7 +98,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
         names = map(lambda result: result['describe']['name'], results)
         return filter(startswith(text),
                       map(lambda name:
-                              ('' if text == '' else text[:delim_pos + 1]) + escape_completion_name_str(name),
+                              ('' if text == '' else text[:delim_pos + 1]) + escape_completion_name_str(name) + " ",
                           names))
     except:
         return []
@@ -127,15 +127,20 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
 
     # First get projects if necessary
     matches = []
+    if expected == 'project' and colon_pos > 0 and colon_pos == len(text) - 1:
+        if dxpy.find_one_project(zero_ok=True, name=unescape_name_str(text[:colon_pos])) is not None:
+            return [text + " "]
+
     if colon_pos < 0 and slash_pos < 0:
         # Might be tab-completing a project, but don't ever include
         # whatever's set as dxpy.WORKSPACE_ID unless expected == "project"
         # Also, don't bother if text=="" and expected is NOT "project"
+        # Also, add space if expected == "project"
         if text != "" or expected == 'project':
             results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
                              list(dxpy.find_projects(describe=True, level=perm_level)))
             matches += filter(startswith(text),
-                              [(escape_completion_name_str(result['describe']['name']) + ':') for result in results])
+                              [(escape_completion_name_str(result['describe']['name']) + ':' + (" " if expected == 'project' else "")) for result in results])
 
     if expected == 'project':
         return matches
@@ -172,6 +177,10 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                 else:
                     matches += get_data_matches(text, delim_pos, dxproj,
                                                 folderpath, typespec=typespec)
+        if len(proj_ids) > 0 and len(matches) == 0:
+            # There's only one project completion, so just add a space
+            matches = [text + " "]
+
     return matches
 
 class DXPathCompleter():
@@ -201,6 +210,7 @@ class DXPathCompleter():
         self.matches = path_completer(prefix, self.expected, self.classes,
                                       typespec=self.typespec,
                                       include_current_proj=self.include_current_proj)
+
         if prefix.rfind(':') != -1:
             for i in range(len(self.matches)):
                 self.matches[i] = self.matches[i][self.matches[i].rfind(':') + 1:]
@@ -266,7 +276,19 @@ class LocalCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        self.matches = [match for match in [path.replace(' ', '\ ') for path in os.listdir(os.getcwdu())] if match.startswith(prefix)]
+        import subprocess, shlex, pipes
+
+        lexer = shlex.shlex(prefix, posix=True)
+        tomatch = lexer.get_token()
+        tomatch = '' if tomatch is None else tomatch
+        file_completions = subprocess.Popen('bash -c "compgen -f -o filenames -- \'' + tomatch + '\'"',
+                                            shell=True,
+                                            stdout=subprocess.PIPE).stdout.read().splitlines()
+        self.matches = subprocess.Popen('bash -c "compgen -d -o filenames -S / -- \'' + tomatch + '\'"',
+                                        shell=True,
+                                        stdout=subprocess.PIPE).stdout.read().splitlines()
+        self.matches = [match.replace(" ", "\ ") for match in self.matches if match != '']
+        self.matches += [(completion.replace(" ", "\ ") + " ") for completion in file_completions if (completion != '' and completion + "/" not in self.matches)]
 
     def get_matches(self, line, point, prefix, suffix):
         self._populate_matches(prefix)

@@ -63,4 +63,4 @@ _dx_argcomplete() {
         unset COMPREPLY
     fi
 }
-complete -o nospace -o default -F _dx_argcomplete dx
+complete -o nospace -F _dx_argcomplete dx

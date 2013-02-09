@@ -72,7 +72,7 @@ def autocomplete(parser, arg_completer=None, subcommands=None):
         if len(cwords) > 2 and cwords[1]+" "+cwords[2] in subcommands:
             parser = subcommands[cwords[1]+" "+cwords[2]][0]
             return autocomplete(parser, arg_completer=subcommands[cwords[1]+" "+cwords[2]][1])
-        elif len(cwords) > 1 and cwords[1] in subcommands:
+        elif len(cwords) > 1 and cwords[1] in subcommands and cword != 1:
             parser = subcommands[cwords[1]][0]
             return autocomplete(parser, arg_completer=subcommands[cwords[1]][1])
         else:
@@ -92,21 +92,18 @@ def autocomplete(parser, arg_completer=None, subcommands=None):
     # Subcommand and options completion
     for action in parser._actions:
         if isinstance(action, argparse._SubParsersAction):
-            completions += [subcmd for subcmd in action.choices.keys() if subcmd.startswith(prefix)]
+            completions += [subcmd + " " for subcmd in action.choices.keys() if subcmd.startswith(prefix)]
         elif prefix and prefix.startswith('-'):
-            completions += [option for option in action.option_strings if option.startswith(prefix)]
+            completions += [option + " " for option in action.option_strings if option.startswith(prefix)]
 
     # Argument completion
     if arg_completer and (not prefix or not prefix.startswith('-')):
-        if isinstance(arg_completer, dxpy.utils.completer.LocalCompleter):
-            # Avoid using the built-in local completer, fall back to default bash completer
-            print "__DX_STOP_COMPLETION__"
-            sys.exit(1)
+        # Can't use bash fallback because we'll get incorrect results
+        # if isinstance(arg_completer, dxpy.utils.completer.LocalCompleter):
+        #     # Avoid using the built-in local completer, fall back to default bash completer
+        #     print "__DX_STOP_COMPLETION__"
+        #     sys.exit(1)
         completions += arg_completer.get_matches(cline, cpoint, prefix, suffix)
-
-    # If there's only one completion, and it doesn't end with / or :, add a space
-    if len(completions) == 1 and completions[0][-1] not in '/:':
-        completions[0] += ' '
 
     # Print result
     print ifs.join(completions)
