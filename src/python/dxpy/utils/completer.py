@@ -177,7 +177,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                 else:
                     matches += get_data_matches(text, delim_pos, dxproj,
                                                 folderpath, typespec=typespec)
-        if len(proj_ids) > 0 and len(matches) == 0:
+        if delim_pos > 0 and len(proj_ids) > 0 and len(matches) == 0:
             # There's only one project completion, so just add a space
             matches = [text + " "]
 

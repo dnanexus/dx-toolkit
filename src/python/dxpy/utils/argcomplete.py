@@ -99,13 +99,15 @@ def autocomplete(parser, arg_completer=None, subcommands=None):
     # Argument completion
     if arg_completer and (not prefix or not prefix.startswith('-')):
         # Can't use bash fallback because we'll get incorrect results
-        # if isinstance(arg_completer, dxpy.utils.completer.LocalCompleter):
-        #     # Avoid using the built-in local completer, fall back to default bash completer
-        #     print "__DX_STOP_COMPLETION__"
-        #     sys.exit(1)
+        if isinstance(arg_completer, dxpy.utils.completer.LocalCompleter):
+            # Avoid using the built-in local completer, fall back to default bash completer
+            print "__DX_STOP_COMPLETION__"
+            sys.exit(1)
         completions += arg_completer.get_matches(cline, cpoint, prefix, suffix)
 
     # Print result
+    if len(completions) == 0:
+        completions = ["", ""]
     print ifs.join(completions)
 
     # Exit with error code (we do not let the caller continue on purpose, this
