@@ -1188,7 +1188,6 @@ def describe(args):
                     json_output.append(desc)
                 elif args.name:
                     print desc['name']
-                    return
                 else:
                     print get_result_str()
                     print_desc(desc, args.verbose)
@@ -1203,7 +1202,6 @@ def describe(args):
                     json_output.append(desc)
                 elif args.name:
                     print desc['name']
-                    return
                 else:
                     print get_result_str()
                     print_desc(desc, args.verbose)
@@ -1219,7 +1217,6 @@ def describe(args):
                 json_output.append(result['describe'])
             elif args.name:
                 print result['describe']['name']
-                return
             else:
                 print get_result_str()
                 print_desc(result['describe'], args.verbose or args.details)
@@ -1234,7 +1231,6 @@ def describe(args):
                     json_output.append(desc)
                 elif args.name:
                     print desc['name']
-                    return
                 else:
                     print get_result_str()
                     print_desc(desc, args.verbose)
@@ -1248,7 +1244,6 @@ def describe(args):
                     json_output.append(result['describe'])
                 elif args.name:
                     print result['describe']['name']
-                    return
                 else:
                     print get_result_str()
                     print_desc(result['describe'], args.verbose)
@@ -1263,7 +1258,6 @@ def describe(args):
                     json_output.append(desc)
                 elif args.name:
                     print unicode(desc['first']) + ' ' + unicode(desc['last'])
-                    return
                 else:
                     print get_result_str()
                     print_desc(desc, args.verbose)
@@ -1280,7 +1274,6 @@ def describe(args):
                     json_output.append(desc)
                 elif args.name:
                     print unicode(desc['first']) + ' ' + unicode(desc['last'])
-                    return
                 else:
                     print get_result_str()
                     print_desc(desc, args.verbose)
@@ -1297,7 +1290,6 @@ def describe(args):
                     json_output.append(desc)
                 elif args.name:
                     print desc['id']
-                    return
                 else:
                     print get_result_str()
                     print_desc(desc, args.verbose)
@@ -1314,7 +1306,7 @@ def describe(args):
             parser.exit(1, fill('No match found for ' + args.path) + '\n')
         else:
             print json.dumps(json_output[0], indent=4)
-    elif not found_match and not args.name:
+    elif not found_match:
         parser.exit(1, fill("No matches found for " + args.path) + '\n')
 
 def new_project(args):
@@ -3114,7 +3106,7 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
 parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
-parser_describe.add_argument('--name', help='Only print the name of the data object on one line', action='store_true')
+parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24), action='store_true')
 parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 parser_describe.set_defaults(func=describe)
