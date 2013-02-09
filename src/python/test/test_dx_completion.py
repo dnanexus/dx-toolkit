@@ -127,5 +127,14 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assert_completion("dx select to", "to\ select: ")
         self.assert_completion("dx select to\ select:", " ")
 
+    def test_local_file_completion(self):
+        # test dx upload
+        self.assertTrue(False, "Write me")
+
+    def test_noninterference_of_local_files(self):
+        # test dx ls with local files matching the prefix (no nonempty completions should be provided)
+        # and dx ls foo:, where "foo" is not the name of an existing project
+        self.assertTrue(False, "Write me")
+
 if __name__ == '__main__':
     unittest.main()

@@ -164,7 +164,10 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                                                 folderpath, typespec=typespec)
     else:
         # project is ambiguous, but attempt to resolve to an object or folder
-        proj_ids, folderpath, entity_name = resolve_path(text, multi_projects=True)
+        try:
+            proj_ids, folderpath, entity_name = resolve_path(text, multi_projects=True)
+        except:
+            return matches
         for proj in proj_ids:
             dxproj = dxpy.get_handler(proj)
             matches += get_folder_matches(text, delim_pos, dxproj, folderpath)
