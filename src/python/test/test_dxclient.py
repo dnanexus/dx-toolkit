@@ -19,11 +19,11 @@
 
 import os, unittest, json, tempfile, subprocess, csv, shutil, re
 
-def run(command):
+def run(command, **kwargs):
     print "$ %s" % (command,)
-    return subprocess.check_output(command, shell=True)
+    return subprocess.check_output(command, shell=True, **kwargs)
 
-def runAndExpectFailure(command, msg_regexp=None):
+def runAndExpectFailure(command, msg_regexp=None, **kwargs):
     """
     Run the specified command and assert that it fails with exit code 3,
     per DNAnexus convention indicating an error condition that was
@@ -31,7 +31,7 @@ def runAndExpectFailure(command, msg_regexp=None):
     """
     print "$ %s" % (command,)
     with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        exitcode = subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+        exitcode = subprocess.call(command, shell=True, stdout=stdout, stderr=stderr, **kwargs)
         # Rewind to read the streams
         stdout.seek(0)
         stderr.seek(0)
@@ -48,6 +48,12 @@ def runAndExpectFailure(command, msg_regexp=None):
                 print "stderr:"
                 print stderr_value
                 raise Exception("Expected stderr to match '%s' but it didn't" % (msg_regexp,))
+
+def overrideEnvironment(**kwargs):
+    env = os.environ.copy()
+    for key in kwargs:
+        env[key] = kwargs[key]
+    return env
 
 class TestDXClient(unittest.TestCase):
     project = None
@@ -219,6 +225,25 @@ class TestDXBuildApp(unittest.TestCase):
         self.assertEqual(app_describe["version"], "1.0.0")
         self.assertEqual(app_describe["name"], "minimal_app")
         self.assertFalse("published" in app_describe)
+
+    def test_invalid_project_context(self):
+        app_spec = {
+            "name": "invalid_project_context",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7"
+                },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("invalid_project_context", json.dumps(app_spec), "code.py")
+        # Set the project context to a nonexistent project. This
+        # shouldn't have any effect since building an app is supposed to
+        # be hygienic.
+        env = overrideEnvironment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
+        run("dx-build-app --json " + app_dir, env=env)
 
     def test_invalid_execdepends(self):
         app_spec = {

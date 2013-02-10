@@ -275,14 +275,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         print "Would create the following applet:"
         print json.dumps(applet_spec, indent=2)
         print "*** DRY-RUN-- no applet was created ***"
-        return
+        return None, None
 
     applet_id = dxpy.api.appletNew(applet_spec)["id"]
 
     if "categories" in applet_spec:
         dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
 
-    return applet_id
+    return applet_id, applet_spec
 
 def _create_or_update_version(app_name, version, app_spec, try_update=True):
     """
@@ -323,16 +323,15 @@ def _update_version(app_name, version, app_spec, try_update=True):
             return None
         raise e
 
-def create_app(applet_id, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True):
+def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None, try_update=True):
     """
     Creates a new app object from the specified applet.
     """
     app_spec = _get_app_spec(src_dir)
     print >> sys.stderr, "Will create app with spec: ", app_spec
 
-    applet_desc = dxpy.DXApplet(applet_id).describe()
     app_spec["applet"] = applet_id
-    app_spec["name"] = applet_desc["name"]
+    app_spec["name"] = applet_name
 
     if billTo:
         app_spec["billTo"] = billTo

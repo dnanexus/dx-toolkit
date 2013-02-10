@@ -343,14 +343,16 @@ def main(**kwargs):
                     args.dx_toolkit_autodep = "stable"
                 else:
                     args.dx_toolkit_autodep = "beta"
-            applet_id = dxpy.app_builder.upload_applet(args.src_dir, bundled_resources,
-                                                       check_name_collisions=(args.mode == "applet"),
-                                                       overwrite=args.overwrite and args.mode == "applet",
-                                                       project=working_project,
-                                                       override_folder = override_folder,
-                                                       override_name = override_applet_name,
-                                                       dx_toolkit_autodep=args.dx_toolkit_autodep,
-                                                       dry_run=args.dry_run)
+            applet_id, applet_spec = dxpy.app_builder.upload_applet(
+                args.src_dir,
+                bundled_resources,
+                check_name_collisions=(args.mode == "applet"),
+                overwrite=args.overwrite and args.mode == "applet",
+                project=working_project,
+                override_folder=override_folder,
+                override_name=override_applet_name,
+                dx_toolkit_autodep=args.dx_toolkit_autodep,
+                dry_run=args.dry_run)
         except:
             # Avoid leaking any bundled_resources files we may have
             # created, if applet creation fails. Note that if
@@ -366,6 +368,8 @@ def main(**kwargs):
         if args.dry_run:
             return
 
+        applet_name = applet_spec['name']
+
         print >> sys.stderr, "Created applet " + applet_id + " successfully"
 
         if args.mode == "app":
@@ -376,7 +380,9 @@ def main(**kwargs):
             if not args.version_override and args.version_autonumbering:
                 try_versions.append(version + get_version_suffix(args.src_dir))
 
-            app_id = dxpy.app_builder.create_app(applet_id, args.src_dir,
+            app_id = dxpy.app_builder.create_app(applet_id,
+                                                 applet_name,
+                                                 args.src_dir,
                                                  publish=args.publish,
                                                  set_default=args.publish,
                                                  billTo=args.bill_to,
