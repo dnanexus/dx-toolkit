@@ -42,7 +42,7 @@ NUM_CORES = multiprocessing.cpu_count()
 DX_TOOLKIT_PKGS = ['dx-toolkit', 'dx-toolkit-beta', 'dx-toolkit-unstable']
 DX_TOOLKIT_GIT_URLS = ["git@github.com:dnanexus/dx-toolkit.git"]
 
-class AppletBuilderException(Exception):
+class AppBuilderException(Exception):
     """
     This exception is raised by the methods in this module when app or applet
     building fails.
@@ -51,7 +51,7 @@ class AppletBuilderException(Exception):
 
 def _validate_applet_spec(applet_spec):
     if 'runSpec' not in applet_spec:
-        raise AppletBuilderException("Required field 'runSpec' not found in dxapp.json")
+        raise AppBuilderException("Required field 'runSpec' not found in dxapp.json")
 
 def _validate_app_spec(app_spec):
     pass
@@ -172,7 +172,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         try:
             applet_spec['name'] = os.path.basename(os.path.abspath(src_dir))
         except:
-            raise AppletBuilderException("Could not determine applet name from the specification (dxapp.json) or from the name of the working directory (%r)" % (src_dir,))
+            raise AppBuilderException("Could not determine applet name from the specification (dxapp.json) or from the name of the working directory (%r)" % (src_dir,))
 
     if override_folder:
         applet_spec['folder'] = override_folder
@@ -194,7 +194,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             else:
-                raise AppletBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) option was not given" % (destination_path, result['id']))
+                raise AppBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) option was not given" % (destination_path, result['id']))
 
     # -----
     # Override various fields from the pristine dxapp.json
@@ -251,13 +251,13 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     elif dx_toolkit_autodep == "unstable":
         dx_toolkit_dep = {"name": "dx-toolkit-unstable", "package_manager": "apt"}
     elif dx_toolkit_autodep:
-        raise AppletBuilderException("dx_toolkit_autodep must be one of 'stable', 'beta', 'unstable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
+        raise AppBuilderException("dx_toolkit_autodep must be one of 'stable', 'beta', 'unstable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
 
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
         exec_depends = applet_spec["runSpec"]["execDepends"]
         if type(exec_depends) is not list or any(type(dep) is not dict for dep in exec_depends):
-            raise AppletBuilderException("Expected runSpec.execDepends to be an array of objects")
+            raise AppBuilderException("Expected runSpec.execDepends to be an array of objects")
         dx_toolkit_dep_found = any(dep.get('name') in DX_TOOLKIT_PKGS or dep.get('url') in DX_TOOLKIT_GIT_URLS for dep in exec_depends)
         if not dx_toolkit_dep_found:
             exec_depends.append(dx_toolkit_dep)
