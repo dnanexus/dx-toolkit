@@ -398,13 +398,14 @@ def main(**kwargs):
             if args.json:
                 print json.dumps(dxpy.api.appletDescribe(applet_id))
         else:
-            raise ValueError("Unrecognized mode %r" % (args.mode,))
+            raise dxpy.app_builder.AppletBuilderException("Unrecognized mode %r" % (args.mode,))
 
     except dxpy.app_builder.AppletBuilderException as e:
         # AppletBuilderException represents errors during applet
-        # building that could reasonably have been anticipated.
-        print "Error: %s" % (e.message,)
-        sys.exit(1)
+        # building that could reasonably have been anticipated by the
+        # user.
+        print >> sys.stderr, "Error: %s" % (e.message,)
+        sys.exit(3)
 
     finally:
         # Clean up after ourselves.
