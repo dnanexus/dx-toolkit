@@ -20,10 +20,8 @@
 import os, unittest, json, tempfile, subprocess, csv, shutil
 
 def run(command):
-    # print "Running", command
-    result = subprocess.check_output(command, shell=True)
-    print "Result for", command, ":\n", result
-    return result
+    print "$ %s" % (command,)
+    return subprocess.check_output(command, shell=True)
 
 class TestDXClient(unittest.TestCase):
     project = None
