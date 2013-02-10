@@ -17,11 +17,37 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, json, tempfile, subprocess, csv, shutil
+import os, unittest, json, tempfile, subprocess, csv, shutil, re
 
 def run(command):
     print "$ %s" % (command,)
     return subprocess.check_output(command, shell=True)
+
+def runAndExpectFailure(command, msg_regexp=None):
+    """
+    Run the specified command and assert that it fails with exit code 3,
+    per DNAnexus convention indicating an error condition that was
+    successfully detected.
+    """
+    print "$ %s" % (command,)
+    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
+        exitcode = subprocess.call(command, shell=True, stdout=stdout, stderr=stderr)
+        # Rewind to read the streams
+        stdout.seek(0)
+        stderr.seek(0)
+        stdout_value = stdout.read().strip()
+        stderr_value = stderr.read().strip()
+        if exitcode != 3:
+            print "stdout:"
+            print stdout_value
+            print "stderr:"
+            print stderr_value
+            raise Exception("Expected command to exit with code 3, but it exited with code %d" % (exitcode,))
+        if msg_regexp:
+            if not re.search(msg_regexp, stderr_value):
+                print "stderr:"
+                print stderr_value
+                raise Exception("Expected stderr to match '%s' but it didn't" % (msg_regexp,))
 
 class TestDXClient(unittest.TestCase):
     project = None
@@ -194,6 +220,21 @@ class TestDXBuildApp(unittest.TestCase):
         self.assertEqual(app_describe["name"], "minimal_app")
         self.assertFalse("published" in app_describe)
 
+    def test_invalid_execdepends(self):
+        app_spec = {
+            "name": "invalid_execdepends",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "execDepends": {"name": "oops"}
+                },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
+        runAndExpectFailure("dx-build-applet --json " + app_dir, msg_regexp="Expected runSpec\.execDepends to")
 
 if __name__ == '__main__':
     unittest.main()

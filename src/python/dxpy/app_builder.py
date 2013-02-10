@@ -255,10 +255,12 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
-        dx_toolkit_dep_found = any(dep.get('name') in DX_TOOLKIT_PKGS or dep.get('url') in DX_TOOLKIT_GIT_URLS
-                                   for dep in applet_spec["runSpec"]["execDepends"])
+        exec_depends = applet_spec["runSpec"]["execDepends"]
+        if type(exec_depends) is not list or any(type(dep) is not dict for dep in exec_depends):
+            raise AppletBuilderException("Expected runSpec.execDepends to be an array of objects")
+        dx_toolkit_dep_found = any(dep.get('name') in DX_TOOLKIT_PKGS or dep.get('url') in DX_TOOLKIT_GIT_URLS for dep in exec_depends)
         if not dx_toolkit_dep_found:
-            applet_spec["runSpec"]["execDepends"].append(dx_toolkit_dep)
+            exec_depends.append(dx_toolkit_dep)
             if dx_toolkit_autodep == "git":
                 applet_spec.setdefault("access", {})
                 applet_spec["access"].setdefault("network", [])
