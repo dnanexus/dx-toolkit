@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, json, tempfile, subprocess, csv
+import os, unittest, json, tempfile, subprocess, csv, shutil
 
 def run(command):
     # print "Running", command
@@ -146,6 +146,56 @@ class TestDXClient(unittest.TestCase):
         # compare output of old and new
 
         run(u"yes|dx rmproject {p}".format(p=project))
+
+class TestDXBuildApp(unittest.TestCase):
+    def setUp(self):
+        self.temp_file_path = tempfile.mkdtemp()
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+
+    def write_app_directory(self, app_name, dxapp_str, code_filename=None):
+        os.mkdir(os.path.join(self.temp_file_path, app_name))
+        with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
+            manifest.write(dxapp_str)
+        if code_filename:
+            with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
+                code_file.write('\n')
+        return os.path.join(self.temp_file_path, app_name)
+
+    def test_build_applet(self):
+        app_spec = {
+            "name": "minimal_applet",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_applet", json.dumps(app_spec), "code.py")
+        new_applet = json.loads(run("dx-build-applet --json " + app_dir))
+        applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
+        self.assertEqual(applet_describe["class"], "applet")
+        self.assertEqual(applet_describe["id"], applet_describe["id"])
+        self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    def test_build_app(self):
+        app_spec = {
+            "name": "minimal_app",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("minimal_app", json.dumps(app_spec), "code.py")
+        new_app = json.loads(run("dx-build-app --json " + app_dir))
+        app_describe = json.loads(run("dx describe --json " + new_app["id"]))
+        self.assertEqual(app_describe["class"], "app")
+        self.assertEqual(app_describe["id"], app_describe["id"])
+        self.assertEqual(app_describe["version"], "1.0.0")
+        self.assertEqual(app_describe["name"], "minimal_app")
+        self.assertFalse("published" in app_describe)
+
 
 if __name__ == '__main__':
     unittest.main()
