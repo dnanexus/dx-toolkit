@@ -193,7 +193,6 @@ clean:
 	-rm -f ../bin/contigset2fasta
 	-rm -rf python/build
 	-rm -rf java/target
-	-rm -f ../bin/pyrsa-*
 	-rm -f ../build/wrapper_table.json
 	-rm -rf ../lib
 	-rm -rf ../share
