@@ -21,10 +21,15 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
+import locale
 import shutil
 import tempfile
+import time
 from datetime import datetime
 import dxpy, dxpy.app_builder
+
+# Use default locale (used for formatting numbers nicely)
+locale.setlocale(locale.LC_ALL, '')
 
 from dxpy.utils.resolver import resolve_path, is_container_id
 
@@ -207,12 +212,49 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
         # reasonable to write in the job name below.
         src_dir = os.path.realpath(src_dir)
 
+        # Show the user some progress as the tarball is being generated.
+        # Hopefully this will help them to understand when their tarball
+        # is huge (e.g. the target directory already has a whole bunch
+        # of binaries in it) and interrupt before uploading begins.
         app_tarball_file = os.path.join(temp_dir, "app_tarball.tar.gz")
         # TODO: figure out if we can use --exclude-vcs here (conditional
         # on presence of GNU tar). This might require propagating the
         # --version directly to the interior dx-build-app since in
         # general that can depend on the git metadata.
-        subprocess.check_call(["tar", "-czf", app_tarball_file, "."], cwd=src_dir)
+        tar_subprocess = subprocess.Popen(["tar", "-czf", "-", "."], cwd=src_dir, stdout=subprocess.PIPE)
+        with open(app_tarball_file, 'w') as tar_output_file:
+            total_num_bytes = 0
+            last_console_update = 0
+            start_time = time.time()
+            printed_static_message = False
+            # Pipe the output of tar into the output file, and
+            while True:
+                tar_exitcode = tar_subprocess.poll()
+                data = tar_subprocess.stdout.read(4 * 1024 * 1024)
+                if tar_exitcode is not None and len(data) == 0:
+                    break
+                tar_output_file.write(data)
+                total_num_bytes += len(data)
+                current_time = time.time()
+                # Don't show status messages at all for very short tar
+                # operations (< 1.0 sec)
+                if current_time - last_console_update > 0.25 and current_time - start_time > 1.0:
+                    if sys.stderr.isatty():
+                        if last_console_update > 0:
+                            sys.stderr.write("\r")
+                        sys.stderr.write("Compressing target directory %s... (%s kb)" % (src_dir, locale.format("%d", (total_num_bytes / 1024,), grouping=True),))
+                        sys.stderr.flush()
+                        last_console_update = current_time
+                    elif not printed_static_message:
+                        # Print a message (once only) when stderr is not
+                        # going to a live console
+                        sys.stderr.write("Compressing target directory %s..." % (src_dir,))
+                        printed_static_message = True
+
+        if last_console_update > 0:
+            sys.stderr.write("\n")
+        if tar_exitcode != 0:
+            raise Exception("tar exited with non-zero exit code " + str(tar_exitcode))
 
         dxpy.set_workspace_id(build_project_id)
 
