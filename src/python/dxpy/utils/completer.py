@@ -217,7 +217,11 @@ class DXAppCompleter():
         self.installed = installed
 
     def _populate_matches(self, prefix):
-        appnames = [result['describe']['name'] for result in dxpy.find_apps(describe=True) if self.installed is None or (self.installed == result['describe']['installed'])]
+        try:
+            appnames = [result['describe']['name'] for result in dxpy.find_apps(describe={"fields": {"name": True, "installed": (self.installed is not None)}}) if self.installed is None or (self.installed == result['describe']['installed'])]
+        except:
+            # This is for (temporary) backwards-compatibility
+            appnames = [result['describe']['name'] for result in dxpy.find_apps(describe=True) if self.installed is None or (self.installed == result['describe']['installed'])]
         self.matches = [name for name in appnames if name.startswith(prefix)]
         if prefix != '':
             appnames_with_prefix = [('app-' + name) for name in appnames]
