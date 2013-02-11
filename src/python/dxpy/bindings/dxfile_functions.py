@@ -255,6 +255,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if not keep_open:
         dxfile.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
+    if show_progress:
+        sys.stderr.write("\n")
+        sys.stderr.flush()
+
     if 'name' in kwargs or use_existing_dxfile:
         pass # File has already been named
     elif filename is not None:

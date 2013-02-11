@@ -220,7 +220,6 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
                                              wait_on_close=True, show_progress=True)
 
         try:
-            print
             input_hash = {
                 "input_file": dxpy.dxlink(remote_file),
                 "extra_flags": " ".join(extra_flags)

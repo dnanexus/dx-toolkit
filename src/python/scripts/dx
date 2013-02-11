@@ -1852,8 +1852,6 @@ def upload(args):
                                             folder=folder,
                                             parents=args.parents,
                                             show_progress=args.show_progress)
-            if args.show_progress:
-                print ''
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
