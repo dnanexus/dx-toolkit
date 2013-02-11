@@ -26,8 +26,23 @@ from dxpy.utils.resolver import *
 def startswith(text):
     return (lambda string: string.startswith(text))
 
+def completion_escaper(match):
+    if match.group(0) == ":":
+        return "\\\\:"
+    elif match.group(0) == "/":
+        return "\\\\/"
+    elif match.group(0) == "*":
+        return "\\\\\\\\*"
+    elif match.group(0) == "?":
+        return "\\\\\\\\\?"
+    else:
+        return "\\" + match.group(0)
+
 def escape_completion_name_str(string):
-    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?').replace('(', '\\(').replace(')', '\\)')
+    return re.sub("([#\?\*: ;&`\"'/!$\(\)\{\[<>|~])", completion_escaper, string.replace('\\', '\\\\\\\\'))
+
+#def escape_completion_name_str(string):
+#    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?').replace('(', '\\(').replace(')', '\\)')
 
 def unescape_completion_name_str(string):
     return string.replace('\\)', ')').replace('\\(', '(').replace('\\\\\\\\?', '?').replace('\\\\\\\\*', '*').replace('\\\\/', '/').replace('\\\\:', ':').replace('\ ', ' ').replace('\\\\\\\\', '\\')
@@ -163,10 +178,12 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                     matches += get_data_matches(text, slash_pos, dxproj,
                                                 folderpath, typespec=typespec)
     else:
-        # project is ambiguous, but attempt to resolve to an object or folder
+        # project is given by a path, but attempt to resolve to an
+        # object or folder anyway
         try:
             proj_ids, folderpath, entity_name = resolve_path(text, multi_projects=True)
-        except:
+        except BaseException as details:
+            sys.stderr.write("\n" + fill(unicode(details)))
             return matches
         for proj in proj_ids:
             dxproj = dxpy.get_handler(proj)
@@ -180,9 +197,6 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
                 else:
                     matches += get_data_matches(text, delim_pos, dxproj,
                                                 folderpath, typespec=typespec)
-        if delim_pos > 0 and len(proj_ids) > 0 and len(matches) == 0:
-            # There's only one project completion, so just add a space
-            matches = [text + " "]
 
     return matches
 

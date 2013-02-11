@@ -161,17 +161,24 @@ def is_nohash_id(string):
 def is_glob_pattern(string):
     return (get_last_pos_of_char('*', string) >= 0) or (get_last_pos_of_char('?', string) >= 0)
 
+# Special characters in bash to be escaped: #?*: ;&`"'/!$({[<>|~
+def escaper(match):
+    return "\\" + match.group(0)
+
 def escape_folder_str(string):
-    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('*', '\*').replace('?', '\?')
+    return re.sub("([#\?\*: ;&`\"'!$\(\)\{\[<>|~])", escaper, string.replace('\\', '\\\\'))
 
 def escape_name_str(string):
-    return string.replace('\\', '\\\\').replace(' ', '\ ').replace(':', '\:').replace('/', '\/').replace('*', '\*').replace('?', '\?')
+    return re.sub("([#\?\*: ;&`\"'/!$\(\)\{\[<>|~])", escaper, string.replace('\\', '\\\\'))
+
+def unescaper(match):
+    return match.group(0)[1]
 
 def unescape_folder_str(string):
-    return string.replace('\?', '?').replace('\*', '*').replace('\:', ':').replace('\ ', ' ').replace('\\\\', '\\')
+    return re.sub("(\\\[#\?*: ;&`\"'!$\(\){[<>|~])", unescaper, string).replace('\\\\', '\\')
 
 def unescape_name_str(string):
-    return string.replace('\?', '?').replace('\*', '*').replace('\:', ':').replace('\ ', ' ').replace('\/', '/').replace('\\\\', '\\')
+    return re.sub("(\\\[#\?*: ;&`\"'/!$\(\){[<>|~])", unescaper, string).replace('\\\\', '\\')
 
 def get_last_pos_of_char(char, string):
     '''

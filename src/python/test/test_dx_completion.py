@@ -4,7 +4,6 @@ import os, sys, unittest, json, subprocess, re
 
 import dxpy
 from dxpy.utils.completer import *
-from tempfile import TemporaryFile
 
 IFS = "\v"
 
@@ -76,14 +75,21 @@ class TestDXTabCompletion(unittest.TestCase):
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
 
-    def get_bash_completions(self, line, point=None):
+    def tearDown(self):
+        dxpy.api.projectRemoveFolder(dxpy.WORKSPACE_ID,
+                                     {"folder": "/", "recurse": True})
+
+    def get_bash_completions(self, line, point=None, stderr_contains=""):
         os.environ['ARGPARSE_AUTO_COMPLETE'] = '1'
         os.environ['COMP_LINE'] = line
         os.environ['COMP_POINT'] = point if point else str(len(line))
         os.environ['COMP_WORDS'], os.environ['COMP_CWORD'] = split_line_like_bash(line,
                                                                                   os.environ['COMP_POINT'])
-        pipe = subprocess.Popen(line, stdout=subprocess.PIPE, shell=True).stdout
-        return [result[:-1] if result[-1] == "\n" else result for result in pipe.read().split(IFS)]
+        p = subprocess.Popen(line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        stderr_pipe = p.stderr
+        self.assertIn(stderr_contains, stderr_pipe.read())
+        stdout_pipe = p.stdout
+        return [result[:-1] if len(result) > 0 and result[-1] == "\n" else result for result in stdout_pipe.read().split(IFS)]
 
     def assert_completion(self, line, completion):
         self.assertIn(completion, self.get_bash_completions(line))
@@ -93,6 +99,12 @@ class TestDXTabCompletion(unittest.TestCase):
 
         for completion in completions:
             self.assertIn(completion, actual_completions)
+
+    def assert_non_completion(self, line, non_completion):
+        self.assertNotIn(non_completion, self.get_bash_completions(line))
+
+    def assert_no_completions(self, line, stderr_contains=""):
+        self.assertEqual(self.get_bash_completions(line, stderr_contains=stderr_contains), ["", ""])
 
     def test_command_completion(self):
         self.assert_completion("dx ru", "run ")
@@ -128,13 +140,25 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assert_completion("dx select to\ select:", " ")
 
     def test_local_file_completion(self):
-        # test dx upload
-        self.assertTrue(False, "Write me")
+        # For now, just test that the signal of the single completion
+        # "__DX_STOP_COMPLETION__" has been given; this will cause the
+        # bash completion to take over
+        self.assert_completion("dx upload ", "__DX_STOP_COMPLETION__")
 
     def test_noninterference_of_local_files(self):
-        # test dx ls with local files matching the prefix (no nonempty completions should be provided)
-        # and dx ls foo:, where "foo" is not the name of an existing project
-        self.assertTrue(False, "Write me")
+        # The assert_no_completions method will assert ["", ""], which
+        # will not drop into the bash tab-completion
+        self.assert_no_completions("dx ls ")
+        self.assert_no_completions("dx ls noninter")
+        self.assert_no_completions("dx ls nonexistent-project:", stderr_contains="Could not find a project named")
+        self.assert_no_completions("dx ls :")
+
+    def test_escaping(self):
+        # TODO: test backslash-escaping behavior for use with dx ls
+        # (aside from special characters, escape the string so that
+        # "*" and "?" aren't used as part of the glob pattern, escape
+        # "/")
+        self.assertTrue(False)
 
 if __name__ == '__main__':
     unittest.main()
