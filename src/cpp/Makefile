@@ -16,7 +16,6 @@ clean:
 	(cd dxcpp; rm -rf build)
 	(cd dxjson; rm -rf build)
 	(cd SimpleHttpLib; rm -rf build)
-	(cd dxlog; rm -rf build)
 	$(MAKE) -C test clean
 
-.PHONY: dxcpp dxjson dxhttp dxlog tests
+.PHONY: dxcpp dxjson dxhttp tests
