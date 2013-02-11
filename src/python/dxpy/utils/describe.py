@@ -378,7 +378,7 @@ def print_data_obj_desc(desc, verbose=False):
                 if desc["class"] == "file" or desc["class"] == "gtable":
                     sponsored_str = ""
                     if 'sponsored' in desc and desc['sponsored']:
-                        sponsored_str = ", sponsored by DNAnexus"
+                        sponsored_str = DELIMITER(", ") + "sponsored by DNAnexus"
                     print_field("Size", get_size_str(desc['size']) + sponsored_str)
                 else:
                     print_field("Size", str(desc['size']))
