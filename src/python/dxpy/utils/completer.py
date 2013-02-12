@@ -29,6 +29,9 @@ def startswith(text):
 def escape_completion_name_str(string):
     return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?').replace('(', '\\(').replace(')', '\\)')
 
+def unescape_completion_name_str(string):
+    return string.replace('\\)', ')').replace('\\(', '(').replace('\\\\\\\\?', '?').replace('\\\\\\\\*', '*').replace('\\\\/', '/').replace('\\\\:', ':').replace('\ ', ' ').replace('\\\\\\\\', '\\')
+
 def get_folder_matches(text, delim_pos, dxproj, folderpath):
     '''
     :param text: String to be tab-completed; still in escaped form
@@ -79,9 +82,13 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
     and be in escaped form for consumption by the command-line.
     '''
 
+    unescaped_text = unescape_completion_name_str(text)
+
     try:
         results = list(dxpy.find_data_objects(project=dxproj.get_id(),
                                               folder=folderpath,
+                                              name=unescaped_text + "*",
+                                              name_mode="glob",
                                               recurse=False,
                                               visibility='either' if text != '' and delim_pos != len(text) - 1 else 'visible',
                                               classname=classname,
@@ -218,12 +225,18 @@ class DXAppCompleter():
 
     def _populate_matches(self, prefix):
         try:
-            appnames = [result['describe']['name'] for result in dxpy.find_apps(describe={"fields": {"name": True, "installed": (self.installed is not None)}}) if self.installed is None or (self.installed == result['describe']['installed'])]
+            name_query = None
+            if len(prefix) > 0:
+                if prefix.startswith("app-") and len(prefix) > 4:
+                    name_query = prefix[4:] + "*"
+                elif len(prefix) > 4 or not "app-".startswith(prefix):
+                    name_query = prefix + "*"
+            appnames = [result['describe']['name'] for result in dxpy.find_apps(name=name_query, name_mode="glob", describe={"fields": {"name": True, "installed": (self.installed is not None)}}) if self.installed is None or (self.installed == result['describe']['installed'])]
         except:
             # This is for (temporary) backwards-compatibility
             appnames = [result['describe']['name'] for result in dxpy.find_apps(describe=True) if self.installed is None or (self.installed == result['describe']['installed'])]
         self.matches = [name for name in appnames if name.startswith(prefix)]
-        if prefix != '':
+        if prefix != '' and prefix.startswith('app-'[:len(prefix)]):
             appnames_with_prefix = [('app-' + name) for name in appnames]
             self.matches += [name for name in appnames_with_prefix if name.startswith(prefix)]
 

@@ -261,7 +261,7 @@ class DXCLICompleter():
                                         result['describe']['name'],
                                     filter(lambda result:
                                                result['describe']['installed'] if words[0] in ['run', 'uninstall'] else not result['describe']['installed'],
-                                           list(dxpy.find_apps(describe=True))))
+                                           list(dxpy.find_apps(describe={"fields": {"name": True, "installed": True}}))))
                     app_matches = filter(lambda app_name:
                                              app_name.startswith(words[-1]),
                                          app_names)
@@ -2211,7 +2211,10 @@ def find_apps(args):
                                       created_before=args.created_before,
                                       modified_after=args.mod_after,
                                       modified_before=args.mod_before,
-                                      describe=True))
+                                      describe={"fields": {"name": True, "installed": args.installed,
+                                                           "title": args.summary or args.verbose,
+                                                           "version": args.summary or args.verbose,
+                                                           "published": args.verbose}}))
 
         if args.installed:
             results = filter(lambda result: result['describe']['installed'],
