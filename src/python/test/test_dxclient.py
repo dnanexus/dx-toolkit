@@ -52,7 +52,10 @@ def runAndExpectFailure(command, msg_regexp=None, **kwargs):
 def overrideEnvironment(**kwargs):
     env = os.environ.copy()
     for key in kwargs:
-        env[key] = kwargs[key]
+        if kwargs[key] is None:
+            del env[key]
+        else:
+            env[key] = kwargs[key]
     return env
 
 class TestDXClient(unittest.TestCase):
