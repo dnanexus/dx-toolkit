@@ -339,5 +339,20 @@ class TestDXBuildApp(unittest.TestCase):
         run("dx-build-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
+    def test_build_app_autonumbering(self):
+        app_spec = {
+            "name": "build_app_autonumbering",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("build_app_autonumbering", json.dumps(app_spec), "code.py")
+        run("dx-build-app --json --publish " + app_dir)
+        with self.assertSubprocessFailure(stderr_regexp="Could not create"):
+            print run("dx-build-app --json --no-version-autonumbering " + app_dir)
+        run("dx-build-app --json " + app_dir) # Creates autonumbered version
+
 if __name__ == '__main__':
     unittest.main()

@@ -389,7 +389,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
             tried_versions = 'any of the requested versions: ' + ', '.join(try_versions)
         else:
             tried_versions = 'the requested version: ' + try_versions[0]
-        raise EnvironmentError('Could not create %s' % (tried_versions,))
+        raise AppBuilderException('Could not create %s' % (tried_versions,))
 
     # Set categories appropriately.
     categories_to_set = app_spec.get("categories", [])
