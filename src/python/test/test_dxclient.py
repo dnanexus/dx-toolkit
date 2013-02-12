@@ -19,35 +19,34 @@
 
 import os, unittest, json, tempfile, subprocess, csv, shutil, re
 
+from contextlib import contextmanager
+
+def check_output(*popenargs, **kwargs):
+    """
+    Adapted version of the builtin subprocess.check_output which sets a
+    "stderr" field on the resulting exception (in addition to "output")
+    if the subprocess fails. (If the command succeeds, the contents of
+    stderr are discarded.)
+    """
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    if 'stderr' in kwargs:
+        raise ValueError('stderr argument not allowed, it will be overridden.')
+    process = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
+    output, err = process.communicate()
+    retcode = process.poll()
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        exc = subprocess.CalledProcessError(retcode, cmd, output=output)
+        exc.stderr = err
+        raise exc
+    return output
+
 def run(command, **kwargs):
     print "$ %s" % (command,)
-    return subprocess.check_output(command, shell=True, **kwargs)
-
-def runAndExpectFailure(command, msg_regexp=None, **kwargs):
-    """
-    Run the specified command and assert that it fails with exit code 3,
-    per DNAnexus convention indicating an error condition that was
-    successfully detected.
-    """
-    print "$ %s" % (command,)
-    with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
-        exitcode = subprocess.call(command, shell=True, stdout=stdout, stderr=stderr, **kwargs)
-        # Rewind to read the streams
-        stdout.seek(0)
-        stderr.seek(0)
-        stdout_value = stdout.read().strip()
-        stderr_value = stderr.read().strip()
-        if exitcode != 3:
-            print "stdout:"
-            print stdout_value
-            print "stderr:"
-            print stderr_value
-            raise Exception("Expected command to exit with code 3, but it exited with code %d" % (exitcode,))
-        if msg_regexp:
-            if not re.search(msg_regexp, stderr_value):
-                print "stderr:"
-                print stderr_value
-                raise Exception("Expected stderr to match '%s' but it didn't" % (msg_regexp,))
+    return check_output(command, shell=True, **kwargs)
 
 def overrideEnvironment(**kwargs):
     env = os.environ.copy()
@@ -186,6 +185,28 @@ class TestDXBuildApp(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
 
+    # Be sure to use the check_output defined in this module if you wish
+    # to use stderr_regexp. Python's usual subprocess.check_output
+    # doesn't propagate stderr back to us.
+    @contextmanager
+    def assertSubprocessFailure(self, output_regexp=None, stderr_regexp=None, exit_code=3):
+        try:
+            yield
+        except subprocess.CalledProcessError as e:
+            self.assertEqual(exit_code, e.returncode, "Expected command to return code %d but it returned code %d" % (exit_code, e.returncode))
+            if output_regexp:
+                print "stdout:"
+                print e.output
+                self.assertTrue(re.search(output_regexp, e.output), "Expected stdout to match '%s' but it didn't" % (output_regexp,))
+            if stderr_regexp:
+                if not hasattr(e, 'stderr'):
+                    raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
+                print "stderr:"
+                print e.stderr
+                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stdout to match '%s' but it didn't" % (stderr_regexp,))
+            return
+        self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
+
     def write_app_directory(self, app_name, dxapp_str, code_filename=None):
         os.mkdir(os.path.join(self.temp_file_path, app_name))
         with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
@@ -262,7 +283,8 @@ class TestDXBuildApp(unittest.TestCase):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
-        runAndExpectFailure("dx-build-applet --json " + app_dir, msg_regexp="Expected runSpec\.execDepends to")
+        with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
+            run("dx-build-applet --json " + app_dir)
 
 if __name__ == '__main__':
     unittest.main()
