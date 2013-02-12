@@ -1,3 +1,9 @@
+dx-toolkit (0.36.1) precise; urgency=low
+
+  * Don't install easy_install executables into bin/.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 12 Feb 2013 13:55:15 -0800
+
 dx-toolkit (0.36.0) precise; urgency=low
 
   * Python scripts use a more portable Python interpreter path.
