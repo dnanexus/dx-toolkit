@@ -87,12 +87,18 @@ def build(src_dir):
     config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
         logging.debug("Running ./configure")
-        subprocess.check_call([config_script])
+        try:
+            subprocess.check_call([config_script])
+        except subprocess.CalledProcessError as e:
+            raise AppBuilderException("./configure in target directory failed with exit code %d" % (e.returncode,))
     if os.path.isfile(os.path.join(src_dir, "Makefile")) \
         or os.path.isfile(os.path.join(src_dir, "makefile")) \
         or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
         logging.debug("Building with make -j%d" % (NUM_CORES,))
-        subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
+        try:
+            subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
+        except subprocess.CalledProcessError as e:
+            raise AppBuilderException("make -j%d in target directory failed with exit code %d" % (NUM_CORES, e.returncode))
 
 def get_destination_project(src_dir, project=None):
     """
