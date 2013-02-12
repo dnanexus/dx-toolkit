@@ -40,7 +40,7 @@ all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wi
 
 toolkit_version:
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
-	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then echo "version = \"`git describe`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; R/dxR-build-templates/generate_files.py `git describe`; fi)
+	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; R/dxR-build-templates/generate_files.py `git describe --always`; fi)
 
 api_wrappers:
 	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
