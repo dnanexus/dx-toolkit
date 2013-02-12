@@ -216,6 +216,10 @@ class TestDXBuildApp(unittest.TestCase):
                 code_file.write('\n')
         return os.path.join(self.temp_file_path, app_name)
 
+    def test_help_without_security_context(self):
+        env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None, DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
+        run("dx-build-app -h", env=env)
+
     def test_build_applet(self):
         app_spec = {
             "name": "minimal_applet",
@@ -285,6 +289,55 @@ class TestDXBuildApp(unittest.TestCase):
         app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
             run("dx-build-applet --json " + app_dir)
+
+    def test_overwrite_applet(self):
+        app_spec = {
+            "name": "applet_overwriting",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("applet_overwriting", json.dumps(app_spec), "code.py")
+        applet_id = json.loads(run("dx-build-applet --json " + app_dir))["id"]
+        # Verify that we can succeed by writing to a different folder.
+        run("dx mkdir subfolder")
+        run("dx-build-applet --destination=subfolder/applet_overwriting " + app_dir)
+        with self.assertSubprocessFailure():
+            run("dx-build-applet " + app_dir)
+        run("dx-build-applet -f " + app_dir)
+        # Verify that the original app was deleted by the previous
+        # dx-build-applet -f
+        with self.assertSubprocessFailure(exit_code=1):
+            run("dx describe " + applet_id)
+
+    def test_update_app_categories(self):
+        app1_spec = {
+            "name": "update_app_categories",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0",
+            "categories": ["A"]
+            }
+        app2_spec = {
+            "name": "update_app_categories",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.1",
+            "categories": ["B"]
+            }
+        app_dir = self.write_app_directory("update_app_categories", json.dumps(app1_spec), "code.py")
+        app_id = json.loads(run("dx-build-app --json " + app_dir))['id']
+        self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['A'])
+        shutil.rmtree(app_dir)
+        self.write_app_directory("update_app_categories", json.dumps(app2_spec), "code.py")
+        run("dx-build-app --json " + app_dir)
+        self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
 if __name__ == '__main__':
     unittest.main()
