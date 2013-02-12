@@ -144,7 +144,7 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit_autodep="auto"):
+def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit_autodep="auto", version_override=None, bill_to=None, version_autonumbering=True, update=True):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -177,6 +177,16 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
         dx_toolkit_autodep_flag = "--no-dx-toolkit-autodep"
 
     extra_flags = [dx_toolkit_autodep_flag]
+
+    # These flags are basically passed through verbatim.
+    if version_override:
+        extra_flags.extend(['--version', version_override])
+    if bill_to:
+        extra_flags.extend(['--bill-to', bill_to])
+    if not version_autonumbering:
+        extra_flags.append('--no-version-autonumbering')
+    if not update:
+        extra_flags.append('--no-update')
 
     using_temp_project_for_remote_build = False
 
@@ -316,14 +326,6 @@ def main(**kwargs):
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
-        if args.version_override:
-            parser.error('--remote cannot be combined with --version')
-        if args.bill_to:
-            parser.error('--remote cannot be combined with --bill-to')
-        if not args.version_autonumbering:
-            parser.error('--remote cannot be combined with --no-version-autonumbering')
-        if not args.update:
-            parser.error('--remote cannot be combined with --no-update')
         if args.dry_run:
             parser.error('--remote cannot be combined with --dry-run')
 
@@ -338,7 +340,17 @@ def main(**kwargs):
         if not args.use_temp_build_project:
             parser.error('--remote cannot be combined with --no-temp-build-project')
 
-        return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
+        more_kwargs = {}
+        if args.version_override:
+            more_kwargs['version_override'] = args.version_override
+        if args.bill_to:
+            more_kwargs['bill_to'] = args.bill_to
+        if not args.version_autonumbering:
+            more_kwargs['version_autonumbering'] = False
+        if not args.update:
+            more_kwargs['update'] = False
+
+        return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
     working_project = None
     using_temp_project = False
