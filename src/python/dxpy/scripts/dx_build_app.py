@@ -46,6 +46,10 @@ parser.add_argument("-d", "--destination", help="Specifies the destination proje
 parser.set_defaults(use_temp_build_project=True)
 parser.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
 
+parser.set_defaults(parallel_build=True)
+parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
+parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false", dest="parallel_build")
+
 # --[no-]publish
 parser.set_defaults(publish=False)
 parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
@@ -144,7 +148,10 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit_autodep="auto", version_override=None, bill_to=None, version_autonumbering=True, update=True):
+def _build_app_remote(mode, src_dir, destination=None, publish=False,
+                      dx_toolkit_autodep="auto", version_override=None,
+                      bill_to=None, version_autonumbering=True, update=True,
+                      parallel_build=True):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -187,6 +194,8 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
         extra_flags.append('--no-version-autonumbering')
     if not update:
         extra_flags.append('--no-update')
+    if not parallel_build:
+        extra_flags.append('--no-parallel-build')
 
     using_temp_project_for_remote_build = False
 
@@ -349,6 +358,8 @@ def main(**kwargs):
             more_kwargs['version_autonumbering'] = False
         if not args.update:
             more_kwargs['update'] = False
+        if not args.parallel_build:
+            more_kwargs['parallel_build'] = False
 
         return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
@@ -381,7 +392,7 @@ def main(**kwargs):
             del app_json["buildOptions"]
 
         if args.build_step:
-            dxpy.app_builder.build(args.src_dir)
+            dxpy.app_builder.build(args.src_dir, parallel_build=args.parallel_build)
 
         if not args.upload_step:
             return

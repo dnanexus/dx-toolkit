@@ -368,6 +368,9 @@ class TestDXBuildApp(unittest.TestCase):
             makefile.write("all:\n\texit 7")
         with self.assertSubprocessFailure(stderr_regexp="make -j[0-9]+ in target directory failed with exit code"):
             run("dx-build-applet " + app_dir)
+        # Somewhat indirect test of --no-parallel-build
+        with self.assertSubprocessFailure(stderr_regexp="make in target directory failed with exit code"):
+            run("dx-build-applet --no-parallel-build " + app_dir)
 
 if __name__ == '__main__':
     unittest.main()

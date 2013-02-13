@@ -74,7 +74,7 @@ def _get_app_spec(src_dir):
     _validate_app_spec(app_spec)
     return app_spec
 
-def build(src_dir):
+def build(src_dir, parallel_build=True):
     """
     Runs any build scripts that are found in the specified directory.
 
@@ -94,11 +94,18 @@ def build(src_dir):
     if os.path.isfile(os.path.join(src_dir, "Makefile")) \
         or os.path.isfile(os.path.join(src_dir, "makefile")) \
         or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
-        logging.debug("Building with make -j%d" % (NUM_CORES,))
+        if parallel_build:
+            make_shortcmd = "make -j%d" % (NUM_CORES,)
+        else:
+            make_shortcmd = "make"
+        logging.debug("Building with " + make_shortcmd)
         try:
-            subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
+            make_cmd = ["make", "-C", src_dir]
+            if parallel_build:
+                make_cmd.append("-j" + str(NUM_CORES))
+            subprocess.check_call(make_cmd)
         except subprocess.CalledProcessError as e:
-            raise AppBuilderException("make -j%d in target directory failed with exit code %d" % (NUM_CORES, e.returncode))
+            raise AppBuilderException("%s in target directory failed with exit code %d" % (make_shortcmd, e.returncode))
 
 def get_destination_project(src_dir, project=None):
     """
