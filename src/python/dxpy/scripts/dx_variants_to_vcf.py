@@ -61,18 +61,18 @@ def main(**kwargs):
     
     variantsTable = dxpy.open_dxgtable(entity_result['id'])
     
+    try:
+        originalContigSet = variantsTable.get_details()['original_contigset']
+    except:
+        raise dxpy.AppError("The original reference genome must be attached as a detail")        
+    contigDetails = dxpy.DXRecord(originalContigSet).get_details()
+    
     if kwargs['reference'] is not None:
         refFileName = kwargs['reference']
         if not os.path.isfile(refFileName):
             raise dxpy.AppError("The reference expected by the variants to vcf script was not a valid file")
     else:    
         refFileName = tempfile.NamedTemporaryFile(prefix='reference_', suffix='.txt', delete=False).name
-        try:
-            originalContigSet = variantsTable.get_details()['original_contigset']
-        except:
-            raise dxpy.AppError("The original reference genome must be attached as a detail")
-        
-        contigDetails = dxpy.DXRecord(originalContigSet).get_details()
         dxpy.download_dxfile(contigDetails['flat_sequence_file']['$dnanexus_link'], refFileName)
  
     if kwargs['write_header']:
