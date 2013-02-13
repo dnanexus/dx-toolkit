@@ -173,7 +173,8 @@ dxHTTPRequest <- function(resource, data,
                          httpheader=headers,
                          postfields=body,
                          writefunction=h$update,
-                         headerfunction=d$update)
+                         headerfunction=d$update,
+                         cainfo=system.file("data", "ca-certificates.crt", package="dxR"))
     }, error=function(e) {
       return (e)
     })
@@ -205,10 +206,9 @@ dxHTTPRequest <- function(resource, data,
       } else {
         if (RJSONIO::isValidJSON(h$value(), TRUE)) {
           errorHash <- RJSONIO::fromJSON(h$value())
-          print(names(errorHash))
           if ('error' %in% names(errorHash) &&
               'type' %in% names(errorHash$error) &&
-              'messsage' %in% names(errorHash$error)) {
+              'message' %in% names(errorHash$error)) {
             stop(paste(errorHash$error['type'], ': ',
                        errorHash$error['message'], ', code ',
                        statusCode, sep=''),
