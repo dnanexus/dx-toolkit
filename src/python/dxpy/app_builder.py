@@ -74,7 +74,7 @@ def _get_app_spec(src_dir):
     _validate_app_spec(app_spec)
     return app_spec
 
-def build(src_dir):
+def build(src_dir, parallel_build=True):
     """
     Runs any build scripts that are found in the specified directory.
 
@@ -87,12 +87,25 @@ def build(src_dir):
     config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
         logging.debug("Running ./configure")
-        subprocess.check_call([config_script])
+        try:
+            subprocess.check_call([config_script])
+        except subprocess.CalledProcessError as e:
+            raise AppBuilderException("./configure in target directory failed with exit code %d" % (e.returncode,))
     if os.path.isfile(os.path.join(src_dir, "Makefile")) \
         or os.path.isfile(os.path.join(src_dir, "makefile")) \
         or os.path.isfile(os.path.join(src_dir, "GNUmakefile")):
-        logging.debug("Building with make -j%d" % (NUM_CORES,))
-        subprocess.check_call(["make", "-C", src_dir, "-j" + str(NUM_CORES)])
+        if parallel_build:
+            make_shortcmd = "make -j%d" % (NUM_CORES,)
+        else:
+            make_shortcmd = "make"
+        logging.debug("Building with " + make_shortcmd)
+        try:
+            make_cmd = ["make", "-C", src_dir]
+            if parallel_build:
+                make_cmd.append("-j" + str(NUM_CORES))
+            subprocess.check_call(make_cmd)
+        except subprocess.CalledProcessError as e:
+            raise AppBuilderException("%s in target directory failed with exit code %d" % (make_shortcmd, e.returncode))
 
 def get_destination_project(src_dir, project=None):
     """
@@ -389,7 +402,7 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
             tried_versions = 'any of the requested versions: ' + ', '.join(try_versions)
         else:
             tried_versions = 'the requested version: ' + try_versions[0]
-        raise EnvironmentError('Could not create %s' % (tried_versions,))
+        raise AppBuilderException('Could not create %s' % (tried_versions,))
 
     # Set categories appropriately.
     categories_to_set = app_spec.get("categories", [])

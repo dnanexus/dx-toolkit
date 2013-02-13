@@ -339,5 +339,38 @@ class TestDXBuildApp(unittest.TestCase):
         run("dx-build-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
+    def test_build_app_autonumbering(self):
+        app_spec = {
+            "name": "build_app_autonumbering",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("build_app_autonumbering", json.dumps(app_spec), "code.py")
+        run("dx-build-app --json --publish " + app_dir)
+        with self.assertSubprocessFailure(stderr_regexp="Could not create"):
+            print run("dx-build-app --json --no-version-autonumbering " + app_dir)
+        run("dx-build-app --json " + app_dir) # Creates autonumbered version
+
+    def test_build_failure(self):
+        app_spec = {
+            "name": "build_failure",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("build_failure", json.dumps(app_spec), "code.py")
+        with open(os.path.join(app_dir, 'Makefile'), 'w') as makefile:
+            makefile.write("all:\n\texit 7")
+        with self.assertSubprocessFailure(stderr_regexp="make -j[0-9]+ in target directory failed with exit code"):
+            run("dx-build-applet " + app_dir)
+        # Somewhat indirect test of --no-parallel-build
+        with self.assertSubprocessFailure(stderr_regexp="make in target directory failed with exit code"):
+            run("dx-build-applet --no-parallel-build " + app_dir)
+
 if __name__ == '__main__':
     unittest.main()

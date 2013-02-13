@@ -1,3 +1,13 @@
+dx-toolkit (0.37.0) precise; urgency=low
+
+  * R API wrappers.
+
+  * Major reworking of CMakeLists files.
+
+  * Various improvements to dx-build-app(let), including remote building.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 12 Feb 2013 14:44:06 -0800
+
 dx-toolkit (0.36.0) precise; urgency=low
 
   * Python scripts use a more portable Python interpreter path.

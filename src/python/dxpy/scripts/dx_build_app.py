@@ -22,6 +22,7 @@ logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.E
 
 import os, sys, json, subprocess, argparse
 import locale
+import pipes
 import shutil
 import tempfile
 import time
@@ -46,6 +47,10 @@ parser.add_argument("-d", "--destination", help="Specifies the destination proje
 parser.set_defaults(use_temp_build_project=True)
 parser.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
 
+parser.set_defaults(parallel_build=True)
+parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
+parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false", dest="parallel_build")
+
 # --[no-]publish
 parser.set_defaults(publish=False)
 parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
@@ -56,7 +61,7 @@ parser.set_defaults(remote=False)
 parser.add_argument("--remote", help="Build the app remotely.", action="store_true", dest="remote")
 parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
-parser.add_argument("-f", "--overwrite", help="If creating an applet, remove existing applets of the same name from the destination project.", action="store_true", default=False)
+parser.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.", action="store_true", default=False)
 parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None, dest="version_override", metavar='VERSION')
 parser.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.", default=None, dest="bill_to", metavar='USER_OR_ORG')
 
@@ -144,7 +149,10 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
-def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit_autodep="auto"):
+def _build_app_remote(mode, src_dir, destination=None, publish=False,
+                      dx_toolkit_autodep="auto", version_override=None,
+                      bill_to=None, version_autonumbering=True, update=True,
+                      parallel_build=True):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -177,6 +185,18 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
         dx_toolkit_autodep_flag = "--no-dx-toolkit-autodep"
 
     extra_flags = [dx_toolkit_autodep_flag]
+
+    # These flags are basically passed through verbatim.
+    if version_override:
+        extra_flags.extend(['--version', version_override])
+    if bill_to:
+        extra_flags.extend(['--bill-to', bill_to])
+    if not version_autonumbering:
+        extra_flags.append('--no-version-autonumbering')
+    if not update:
+        extra_flags.append('--no-update')
+    if not parallel_build:
+        extra_flags.append('--no-parallel-build')
 
     using_temp_project_for_remote_build = False
 
@@ -262,9 +282,10 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False, dx_toolkit
                                              wait_on_close=True, show_progress=True)
 
         try:
+            extra_flags_str = " ".join(pipes.quote(s) for s in extra_flags)
             input_hash = {
                 "input_file": dxpy.dxlink(remote_file),
-                "extra_flags": " ".join(extra_flags)
+                "extra_flags": extra_flags_str
                 }
             if mode == 'app':
                 input_hash["publish"] = publish
@@ -316,14 +337,6 @@ def main(**kwargs):
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
-        if args.version_override:
-            parser.error('--remote cannot be combined with --version')
-        if args.bill_to:
-            parser.error('--remote cannot be combined with --bill-to')
-        if not args.version_autonumbering:
-            parser.error('--remote cannot be combined with --no-version-autonumbering')
-        if not args.update:
-            parser.error('--remote cannot be combined with --no-update')
         if args.dry_run:
             parser.error('--remote cannot be combined with --dry-run')
 
@@ -338,7 +351,19 @@ def main(**kwargs):
         if not args.use_temp_build_project:
             parser.error('--remote cannot be combined with --no-temp-build-project')
 
-        return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep)
+        more_kwargs = {}
+        if args.version_override:
+            more_kwargs['version_override'] = args.version_override
+        if args.bill_to:
+            more_kwargs['bill_to'] = args.bill_to
+        if not args.version_autonumbering:
+            more_kwargs['version_autonumbering'] = False
+        if not args.update:
+            more_kwargs['update'] = False
+        if not args.parallel_build:
+            more_kwargs['parallel_build'] = False
+
+        return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
     working_project = None
     using_temp_project = False
@@ -369,7 +394,7 @@ def main(**kwargs):
             del app_json["buildOptions"]
 
         if args.build_step:
-            dxpy.app_builder.build(args.src_dir)
+            dxpy.app_builder.build(args.src_dir, parallel_build=args.parallel_build)
 
         if not args.upload_step:
             return

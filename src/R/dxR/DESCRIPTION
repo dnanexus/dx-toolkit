@@ -1,0 +1,18 @@
+Package: dxR
+Type: Package
+Title: DNAnexus R Client Library
+Version: 0.37.0
+Date: 2013-02-13
+Author: Katherine Lai
+Maintainer: Katherine Lai <klai@dnanexus.com>
+Description: dxR is an R extension containing API wrapper functions for
+    interacting with the new DNAnexus platform.
+License: Apache License (== 2.0)
+Imports:
+    RCurl
+Depends:
+    RJSONIO
+Collate:
+    'api.R'
+    'dxinit.R'
+    'dxR-package.R'
