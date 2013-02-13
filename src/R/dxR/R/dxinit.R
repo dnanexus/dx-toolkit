@@ -14,6 +14,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+##' @import RCurl RJSONIO
+
 # dxEnv is an R environment storing config variables
 dxEnv <- new.env()
 
@@ -42,10 +44,14 @@ getFromJSONEnv <- function() {
   }
 }
 
-# Load (or reload) state from
-# 1) Shell environment variables
-# 2) Config options saved by dx
-# 3) hardcoded defaults
+##' (Re)Load DNAnexus Configuration Values
+##'
+##' Load (or reload) state from:
+##' 1) shell environment variables,
+##' 2) configuration options saved by dx (the DNAnexus command-line client),
+##' 3) hardcoded defaults
+##'
+##' @export
 loadFromEnvironment <- function() {
   for (varname in envVariables) {
     assign(varname, Sys.getenv(varname), envir=dxEnv)
@@ -64,6 +70,24 @@ loadFromEnvironment <- function() {
   }
 }
 
+
+
+##' Print DNAnexus Configuration Values
+##' 
+##' Prints the current set of configuration values that are being used to
+##' contact the DNAnexus platform.
+##' 
+##' @examples
+##' 
+##' # Running the following
+##' printenv()
+##' 
+##' # Results in:
+##' # Currently loaded environment:
+##' #   DX_APISERVER_HOST: api.dnanexus.com
+##' #   DX_APISERVER_PORT: 443
+##' #   DX_APISERVER_PROTOCOL: https
+##' @export
 printenv <- function() {
   cat("Currently loaded environment:\n")
   for (varname in envVariables) {
@@ -77,6 +101,39 @@ printenv <- function() {
   loadFromEnvironment()
 }
 
+
+
+##' Makes HTTP Request to DNAnexus API Server
+##' 
+##' Makes a POST HTTP Request to the DNAnexus API Server using stored
+##' configuration values.
+##' 
+##' @param resource String URI of API method, e.g. "/file/new", or
+##' "/class-xxxx/describe", where "class-xxxx" is some entity ID on
+##' the DNAnexus platform.
+##' @param data R object to be converted into JSON, using
+##' \code{RJSONIO::toJSON}.  If jsonifyData is set to FALSE, it is
+##' treated as a string value instead and passed through directly.
+##' @param headers List of HTTP headers to use, keyed by the header
+##' names.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on \code{data} to
+##' create the JSON string or pass through the value of \code{data} directly.
+##' (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry the API call (assuming
+##' a non-error status code was received).
+##' @return If the API call is successful, the parsed JSON of the API
+##' server response is returned (using \code{RJSONIO::fromJSON}).
+##' @seealso \code{\link{printenv}}
+##' @examples
+##' 
+##' \dontrun{
+##' # Basic API call; use RJSONIO::namedEmptyList for an empty hash
+##' dxHTTPRequest("/gtable-xxxx/get", namedEmptyList)
+##' 
+##' # API call with nonempty input hash
+##' dxHTTPRequest("/record/new", list("project"="project-xxxx"))
+##' }
+##' @export
 dxHTTPRequest <- function(resource, data,
                           headers=list(),
                           jsonifyData=TRUE,

@@ -1,5 +1,0 @@
-import(RCurl, RJSONIO)
-
-export(loadFromEnvironment)
-export(printenv)
-export(dxHTTPRequest)

@@ -52,7 +52,6 @@ api_wrappers:
 	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
 	cat ../build/wrapper_table.json | api_wrappers/generateJavaAPIWrappers.py > java/src/main/java/com/dnanexus/DXAPI.java
 	cat ../build/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
-	cat ../build/wrapper_table.json | api_wrappers/generateRWrapperList.py > R/dxR-build-templates/list-of-api-wrappers.txt
 	touch -r "../build/list_of_all_routes.txt" python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc \
 		javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java
 	rm ../bin/generateWrapperTable
@@ -99,7 +98,7 @@ java: api_wrappers
 
 R: api_wrappers toolkit_version
 	mkdir -p "$(DNANEXUS_HOME)/lib/R"
-	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R CMD BATCH install_dxR_deps.R; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
+	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R --no-save < install_dxR_deps.R; R -e "library(roxygen2); roxygenize(\"dxR\")"; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
 
 # Tools
 # =====
