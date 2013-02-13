@@ -433,14 +433,14 @@ def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
         if not more_ok:
             try:
                 response.next()
-                raise DXSearchError("Expected one result, but found more")
+                raise DXSearchError("Expected one result, but found more: "+str(kwargs))
             except StopIteration:
                 pass
     except StopIteration:
         if zero_ok:
             return None
         else:
-            raise DXSearchError("Expected one result, but found none")
+            raise DXSearchError("Expected one result, but found none: "+str(kwargs))
     return result
 
 def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
