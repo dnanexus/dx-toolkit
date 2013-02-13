@@ -2,7 +2,7 @@ Package: dxR
 Type: Package
 Title: DNAnexus R Client Library
 Version: VERSION
-Date: 2013-02-01
+Date: DATE
 Author: Katherine Lai
 Maintainer: Katherine Lai <klai@dnanexus.com>
 Description: dxR is an R extension containing API wrapper functions for
