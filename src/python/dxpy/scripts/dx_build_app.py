@@ -22,6 +22,7 @@ logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.E
 
 import os, sys, json, subprocess, argparse
 import locale
+import pipes
 import shutil
 import tempfile
 import time
@@ -281,9 +282,10 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False,
                                              wait_on_close=True, show_progress=True)
 
         try:
+            extra_flags_str = " ".join(pipes.quote(s) for s in extra_flags)
             input_hash = {
                 "input_file": dxpy.dxlink(remote_file),
-                "extra_flags": " ".join(extra_flags)
+                "extra_flags": extra_flags_str
                 }
             if mode == 'app':
                 input_hash["publish"] = publish
