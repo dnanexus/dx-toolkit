@@ -24,6 +24,7 @@ import org.apache.http.util.*;
 import org.apache.http.entity.*;
 import org.apache.http.client.methods.*;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.client.ClientProtocolException;
 import java.io.*;
 import org.apache.commons.io.IOUtils;
 
@@ -42,6 +43,8 @@ public class DXHTTPRequest {
     private ObjectMapper mapper;
     private JsonFactory dxJsonFactory;
 
+    private static int NUM_RETRIES = 5;
+
     public DXHTTPRequest() throws Exception {
         if (APISERVER_HOST == null) { APISERVER_HOST = "api.dnanexus.com"; }
         if (APISERVER_PORT == null) { APISERVER_PORT = "443"; }
@@ -54,25 +57,89 @@ public class DXHTTPRequest {
         SecurityContext = dxJsonFactory.createJsonParser(SECURITY_CONTEXT).readValueAsTree();
     }
 
+    private String errorMessage(String method, String resource, String errorString,
+                                int retryWait, int nextRetryNum, int maxRetries) {
+        String baseError = method + " " + resource + ": " + errorString + ".";
+        if (nextRetryNum <= maxRetries) {
+            return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
+                + " of " + maxRetries;
+        } else {
+            return baseError;
+        }
+    }
+
     public String request(String resource, String data) throws Exception {
         HttpPost request = new HttpPost(apiserver + resource);
-        
+
         request.setHeader("Content-Type", "application/json");
         request.setHeader("Authorization", SecurityContext.get("auth_token_type").textValue()
         		+ " "
         		+ SecurityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data));
 
-        HttpResponse response = httpclient.execute(request);
-        
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        	System.err.println(response.getStatusLine());
-        	System.err.println(EntityUtils.toString(response.getEntity()));
-        	throw new Exception();
+        // Retry with exponential backoff
+        int timeout = 1;
+
+        for (int i = 0; i <= NUM_RETRIES; i++) {
+            HttpResponse response = null;
+            boolean okToRetry = false;
+
+            try {
+                response = httpclient.execute(request);
+            } catch (ClientProtocolException e) {
+                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1,
+                                                NUM_RETRIES));
+            } catch (IOException e) {
+                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1,
+                                                NUM_RETRIES));
+            }
+
+            if (response != null) {
+                int statusCode = response.getStatusLine().getStatusCode();
+
+                HttpEntity entity = response.getEntity();
+
+                if (statusCode == HttpStatus.SC_OK) {
+                    // 200 OK
+
+                    String value = EntityUtils.toString(entity);
+                    // Having to re-encode the string into UTF-8 is kind of
+                    // crummy, but that's what we'll do to verify the
+                    // Content-Length.
+                    //
+                    // TODO: compute the UTF-8 encoded length more efficiently,
+                    // or find a way to make the HTTP stack verify the length
+                    // itself.
+                    int realLength = value.getBytes("UTF-8").length;
+                    if (entity.getContentLength() >= 0 && realLength != entity.getContentLength()) {
+                        String errorStr = "Received response of " + realLength
+                            + " bytes but Content-Length was " + entity.getContentLength();
+                        System.err.println(errorMessage("POST", resource, errorStr, timeout, i + 1,
+                                                        NUM_RETRIES));
+                    } else {
+                        return value;
+                    }
+                } else {
+                    // Non-200 status codes.
+
+                    // 500 InternalError should get retried. 4xx errors should
+                    // be considered not recoverable.
+                    if (statusCode < 500) {
+                        throw new Exception(EntityUtils.toString(entity));
+                    } else {
+                        System.err.println(errorMessage("POST", resource, EntityUtils.toString(entity),
+                                                        timeout, i + 1, NUM_RETRIES));
+                    }
+                }
+            }
+
+            if (i < NUM_RETRIES) {
+                Thread.sleep(timeout * 1000);
+                timeout *= 2;
+            }
         }
 
-        HttpEntity entity = response.getEntity();
-        return EntityUtils.toString(entity);
+        throw new Exception("POST " + resource + " failed");
     }
 
     public JsonNode request(String resource, JsonNode data) throws Exception {
