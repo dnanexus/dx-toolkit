@@ -161,7 +161,9 @@ def main(**kwargs):
                         source = "protein_coding"
                     else:
                         source = "non_protein_coding"
-                        
+            else:
+                source = "."
+
             result = "\t".join([chromosome, source, typ, lo, hi, score, strand, frame, attributes.rstrip(";")])+"\n"
             if outputFile != None:
                 outputFile.write(result)
