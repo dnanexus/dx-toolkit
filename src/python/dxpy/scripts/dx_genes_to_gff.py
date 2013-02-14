@@ -124,4 +124,6 @@ def main(**kwargs):
             else:
                 sys.stdout.write(result)
 
-main()
+if __name__ == '__main__':
+    main()
+
