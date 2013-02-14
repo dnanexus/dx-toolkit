@@ -2,7 +2,7 @@
 # directory; edit the copy in the dxR-build-templates directory which
 # will then be propagated in the R make target.
 #
-##' ##' DNAnexus R Client Library
+##' DNAnexus R Client Library
 ##' 
 ##' dxR is an R extension containing API wrapper functions for interacting with
 ##' the new DNAnexus platform.
