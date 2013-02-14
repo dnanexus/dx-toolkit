@@ -174,7 +174,7 @@ dxHTTPRequest <- function(resource, data,
                          postfields=body,
                          writefunction=h$update,
                          headerfunction=d$update,
-                         cainfo=system.file("data", "ca-certificates.crt", package="dxR"))
+                         cainfo=system.file("extdata", "ca-certificates.crt", package="dxR"))
     }, error=function(e) {
       return (e)
     })
