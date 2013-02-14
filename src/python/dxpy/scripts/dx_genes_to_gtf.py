@@ -23,6 +23,8 @@ import sys
 parser = argparse.ArgumentParser(description="Export Genes object to GTF File")
 parser.add_argument("genes_id", help="Genes table id to read from")
 parser.add_argument("--output", dest="file_name", default=None, help="Name of file to write GTF to.  If not given GTF file will be printed to stdout.")
+parser.add_argument("--add_gene_biotype", action="store_true", default=False, dest="add_gene_biotype", help="Write either \"protein_coding\" or \"non_coding\" in the field \"gene_biotype\" if it doesn't exist. Useful for programs like snpEff which require this data.")
+
 
 def main(**kwargs):
 
@@ -52,6 +54,10 @@ def main(**kwargs):
     genes = {}
     
     acceptedTypes = {"CDS":"CDS", "start_codon": "start_codon", "stop_codon": "stop_codon", "5' UTR": "5UTR", "3' UTR": "3UTR", "intergenic":"inter", "intergenic_conserved":"inter_CNS", "exon":"exon"}
+    
+    biotypePresent = False
+    if "gene_biotype" in table.get_col_names():
+        biotypePresent = True
     
     for row in table.iterate_rows(want_dict=True):
         if row["type"] == "gene":
@@ -118,10 +124,19 @@ def main(**kwargs):
             for k, v in row.iteritems():
                 if k not in reservedColumns and v != '':
                     attributes += " " + k + " " + '"'+str(v)+'";'
+                    
+            if opts.add_gene_biotype and not biotypePresent:
+                if row["is_coding"]:
+                    entry = "protein_coding"
+                else:
+                    entry = "non_protein_coding"
+                attributes += " gene_biotype " + '"' + entry + '"' + '";' 
+                    
+                    
             chromosome = row["chr"]
             lo = str(row["lo"] + 1)
             hi = str(row["hi"])
-            typ = row["type"]
+            typ = acceptedTypes[row["type"]]
             strand = row["strand"]
             if strand == '':
                 strand = '.'
@@ -129,10 +144,11 @@ def main(**kwargs):
                 frame = '.'
             else:
                 frame = str(row["frame"])
-            source = '.'
             
             #Null values 2**31 and 2**31-1 are legacy values and will be removed when possible
-            if row["score"] == dxpy.NULL or row["score"] == 2**31-1 or row["score"] == float(2**31):
+            if row.get("score") == None:
+                score = "."
+            elif row["score"] == dxpy.NULL or row["score"] == 2**31-1 or row["score"] == float(2**31):
                 score = "."
             else:
                 score = str(row["score"])
@@ -140,6 +156,12 @@ def main(**kwargs):
             if row.get("source") != None:
                 if row["source"] !=  '':
                     source = row["source"]
+                if opts.add_gene_biotype and not biotypePresent:
+                    if row["is_coding"]:
+                        source = "protein_coding"
+                    else:
+                        source = "non_protein_coding"
+                        
             result = "\t".join([chromosome, source, typ, lo, hi, score, strand, frame, attributes.rstrip(";")])+"\n"
             if outputFile != None:
                 outputFile.write(result)

@@ -25,6 +25,7 @@ parser.add_argument("genes_id", help="Genes table id to read from")
 parser.add_argument("--output", dest="file_name", default=None, help="Name of file to write GFF to.  If not given GFF file will be printed to stdout.")
 parser.add_argument("--only_genes_types", action="store_true", default=False, dest="only_genes_types", help="Name of file to write GFF to.  If not given GFF file will be printed to stdout.")
 
+
 def main(**kwargs):
 
     if len(kwargs) == 0:
@@ -107,6 +108,8 @@ def main(**kwargs):
             source = '.'
             
             # 2**31 and 2**31-1 are legacy null values that will be removed when possible
+            if row.get("score") == None:
+                score = "."
             if row["score"] == dxpy.NULL or row["score"] == 2**31-1 or row["score"] == float(2**31):
                 score = "."
             else:
