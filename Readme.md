@@ -107,6 +107,11 @@ Notes:
 
 Install the [Command Line Tools for XCode](https://developer.apple.com/downloads/). (Free registration required with Apple)
 
+Install `pip` and `virtualenv` for Python:
+
+    easy_install-2.7 pip
+    pip-2.7 install virtualenv
+
 Install the following packages from source or via [Homebrew](http://mxcl.github.com/homebrew/), [Fink](http://www.finkproject.org/), or [MacPorts](http://www.macports.org/):
 
 * [CMake](http://www.cmake.org/cmake/resources/software.html) (```sudo port install cmake``` or ```brew install cmake```)
