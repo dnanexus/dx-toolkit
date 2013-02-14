@@ -1,3 +1,7 @@
+# WARNING: Do not edit the copy of this file directly in the package
+# directory; edit the copy in the dxR-build-templates directory which
+# will then be propagated in the R make target.
+#
 ##' DNAnexus R Client Library
 ##' 
 ##' dxR is an R extension containing API wrapper functions for interacting with
@@ -15,7 +19,6 @@
 ##' Maintainer: Katherine Lai <klai@@dnanexus.com>
 # @examples
 # TODO: fill in examples here 
-# 
 NULL
 
 

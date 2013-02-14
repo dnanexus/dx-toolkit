@@ -21,9 +21,6 @@
 import os, sys
 
 template_files = [
-    {"template": os.path.join('R', 'dxR-build-templates', 'DESCRIPTION'),
-     "newpath": os.path.join('R', 'dxR', 'DESCRIPTION')
-     },
     {"template": os.path.join('R', 'dxR-build-templates', 'dxR-package.R'),
      "newpath": os.path.join('R', 'dxR', 'R', 'dxR-package.R')
      }
@@ -34,6 +31,16 @@ if version.startswith('v'):
     version = version[1:]
 if '-' in version:
     version = version[:version.find('-')]
+
+with open(os.path.join('R', 'dxR', 'DESCRIPTION'), 'r+') as desc_fd:
+    lines = desc_fd.readlines()
+    desc_fd.seek(0)
+    for line in lines:
+        if line.startswith("Version: "):
+            desc_fd.write("Version: " + version + "\n")
+        else:
+            desc_fd.write(line)
+    desc_fd.truncate()
 
 for item in template_files:
     with open(item['template'], 'r') as template_fd, open(item['newpath'], 'w') as new_fd:
