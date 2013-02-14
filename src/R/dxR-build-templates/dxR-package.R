@@ -4,7 +4,7 @@
 ##' the new DNAnexus platform.
 ##' 
 ##' \tabular{ll}{ Package: \tab dxR\cr Type: \tab Package\cr Version: \tab
-##' VERSION\cr Date: \tab DATE\cr License: \tab Apache License (== 2.0)\cr
+##' VERSION\cr License: \tab Apache License (== 2.0)\cr
 ##' }
 ##' 
 ##' @name dxR-package
