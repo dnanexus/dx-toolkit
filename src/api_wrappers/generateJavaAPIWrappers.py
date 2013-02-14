@@ -25,21 +25,31 @@ preamble = '''/* Do not modify this file by hand.
  */
 
 package com.dnanexus;
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
-import com.dnanexus.DXHTTPRequest;
 
-public class DXAPI {'''
+import com.dnanexus.DXHTTPRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class DXAPI {
+
+    private static ObjectMapper mapper = new ObjectMapper();
+'''
 
 postscript = '''}
 '''
 
 class_method_template = '''
+    public static JsonNode {method_name}() throws Exception {{
+        return {method_name}(mapper.readTree("{{}}"));
+    }}
     public static JsonNode {method_name}(JsonNode inputParams) throws Exception {{
         return new DXHTTPRequest().request("{route}", inputParams);
     }}'''
 
 object_method_template = '''
+    public static JsonNode {method_name}(String objectId) throws Exception {{
+        return {method_name}(objectId, mapper.readTree("{{}}"));
+    }}
     public static JsonNode {method_name}(String objectId, JsonNode inputParams) throws Exception {{
         return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams);
     }}'''
