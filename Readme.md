@@ -49,7 +49,7 @@ toolkit that doesn't require them.
 
 ### Ubuntu 12.04
 
-    sudo apt-get install make python-setuptools python-pip g++ cmake \
+    sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
       libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
 
 ### Ubuntu 10.04
@@ -62,6 +62,7 @@ for Ubuntu 10.04. You can install Python from there as follows (as root):
     echo "deb http://ppa.launchpad.net/fkrull/deadsnakes/ubuntu lucid main" > /etc/apt/sources.list.d/deadsnakes.list
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5BB92C09DB82666C
     apt-get install --yes python2.7 python-pip python-setuptools-deadsnakes
+    pip-2.7 install virtualenv
 
 Install boost 1.48 or higher (at least the ```filesystem```,
 ```program_options```, ```regex```, ```system``` and ```thread``` libraries).
