@@ -648,7 +648,7 @@ def select(args):
         else:
             args.path = args.project + ':'
         cd(args)
-        print "Selected project", args.project.split(":")[0]
+        print "Selected project", split_unescaped(":", args.project)[0].replace("\\:", ":")
     else:
         pick_and_set_project(args)
 
