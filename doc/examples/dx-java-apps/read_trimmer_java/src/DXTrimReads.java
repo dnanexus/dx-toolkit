@@ -20,7 +20,7 @@ public class DXTrimReads {
 
         System.out.println("Trimming reads in "+gtableId);
 
-        JsonNode tableDesc = DXAPI.gtableDescribe(gtableId, mapper.readTree("{}"));
+        JsonNode tableDesc = DXAPI.gtableDescribe(gtableId);
 
         ObjectNode gtableNewInput = mapper.createObjectNode();
         gtableNewInput.put("initializeFrom", mapper.createObjectNode());
@@ -63,7 +63,7 @@ public class DXTrimReads {
             gtableAddRowsInput.put("data", outputRows);
             DXAPI.gtableAddRows(outputGTableId, gtableAddRowsInput);
         }
-        DXAPI.gtableClose(outputGTableId, mapper.readTree("{}"));
+        DXAPI.gtableClose(outputGTableId);
 
         ObjectNode JobOutput = mapper.createObjectNode();
         JobOutput.put("trimmedReads", mapper.createObjectNode());
