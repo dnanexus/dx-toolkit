@@ -18,7 +18,7 @@
 
 # This script is meant to be run from $DNANEXUS_HOME/src
 
-import os, sys, datetime
+import os, sys
 
 template_files = [
     {"template": os.path.join('R', 'dxR-build-templates', 'DESCRIPTION'),
@@ -35,8 +35,6 @@ if version.startswith('v'):
 if '-' in version:
     version = version[:version.find('-')]
 
-current_date = datetime.date.today().isoformat()
-
 for item in template_files:
     with open(item['template'], 'r') as template_fd, open(item['newpath'], 'w') as new_fd:
-        new_fd.write(template_fd.read().replace('VERSION', version).replace('DATE', current_date))
+        new_fd.write(template_fd.read().replace('VERSION', version))
