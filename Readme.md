@@ -89,6 +89,8 @@ into ```/usr/local/lib```.
 Then:
 
     yum install cmake libcurl-devel
+    easy_install-2.7 pip
+    pip-2.7 install virtualenv
 
 Notes:
 
