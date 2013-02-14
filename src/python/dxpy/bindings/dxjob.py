@@ -200,7 +200,8 @@ class DXJob(DXObject):
             if state == "done":
                 break
             if state == "failed":
-                raise DXJobFailureError("Job has failed.")
+                desc = self.describe(**kwargs)
+                raise DXJobFailureError("Job has failed because of " + desc['failureReason'] + ": " + desc['failureMessage'] + ((" (failure from " + desc['failureFrom']['id'] + ")") if "failureFrom" in desc and desc["failureFrom"] is not None and desc["failureFrom"]['id'] != desc["id"] else ""))
             if state == "terminated":
                 raise DXJobFailureError("Job was terminated.")
 
