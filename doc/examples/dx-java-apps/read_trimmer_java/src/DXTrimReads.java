@@ -38,7 +38,7 @@ public class DXTrimReads {
             }
         }
 
-        int step = 10000;
+        int step = 10000, nextPartIndex = 1;
         for (int i=0; i<tableDesc.get("length").intValue(); i += step) {
             ObjectNode gtableGetInput = mapper.createObjectNode();
             gtableGetInput.put("starting", i);
@@ -59,7 +59,7 @@ public class DXTrimReads {
                 outputRows.add(row);
             }
             ObjectNode gtableAddRowsInput = mapper.createObjectNode();
-            gtableAddRowsInput.put("part", i+1);
+            gtableAddRowsInput.put("part", nextPartIndex++);
             gtableAddRowsInput.put("data", outputRows);
             DXAPI.gtableAddRows(outputGTableId, gtableAddRowsInput);
         }
