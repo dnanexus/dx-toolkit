@@ -2,7 +2,7 @@
 \name{dxR-package}
 \alias{dxR}
 \alias{dxR-package}
-\title{DNAnexus R Client Library}
+\title{##' DNAnexus R Client Library}
 \description{
   dxR is an R extension containing API wrapper functions
   for interacting with the new DNAnexus platform.
