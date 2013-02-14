@@ -20,8 +20,6 @@
 #include <string>
 #include "dxjson/dxjson.h"
 
-void apiInit(const std::string &apiserverHost, const int apiserverPort, const std::string &apiserverProtocol, const std::string &authToken);
-
 void testServerConnection(void);
 
 std::string resolveProject(const std::string &projectSpec);

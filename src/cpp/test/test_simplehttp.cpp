@@ -18,6 +18,7 @@
 #include "SimpleHttp.h"
 
 using namespace std;
+using namespace dx;
 
 bool exceptionflag;
 // A macro which asserts that a JSONException is thrown by provided statement

@@ -1452,13 +1452,13 @@ int main(int argc, char **argv) {
   resp = projectNew(project_hash);
   third_proj_id = resp["id"].get<string>();
 
-  setWorkspaceID(proj_id);
+  config::CURRENT_PROJECT() = proj_id;
 
   int result = RUN_ALL_TESTS();
   remove(foofilename.c_str());
-  projectDestroy(proj_id);
-  projectDestroy(second_proj_id);
-  projectDestroy(third_proj_id);
+  projectDestroy(proj_id, string("{\"terminateJobs\": true}"));
+  projectDestroy(second_proj_id, string("{\"terminateJobs\": true}"));
+  projectDestroy(third_proj_id, string("{\"terminateJobs\": true}"));
 
   return result;
 }

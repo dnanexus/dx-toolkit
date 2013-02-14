@@ -51,7 +51,7 @@ void Chunk::read() {
 }
 
 string Chunk::computeMD5() {
-  return getHexifiedMD5(data); 
+  return dx::getHexifiedMD5(data); 
 }
 
 void Chunk::clear() {

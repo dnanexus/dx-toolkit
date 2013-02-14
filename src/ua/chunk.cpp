@@ -212,11 +212,11 @@ void Chunk::upload() {
     throw runtime_error("An error occurred when initializing the HTTP connection");
   }
   // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
-  if (get_g_DX_CA_CERT() == "NOVERIFY") {
+  if (dx::config::CA_CERT() == "NOVERIFY") {
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0));
   } else {
-    if (!get_g_DX_CA_CERT().empty()) {
-      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, get_g_DX_CA_CERT().c_str()));
+    if (!dx::config::CA_CERT().empty()) {
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, dx::config::CA_CERT().c_str()));
     } else {
       // Set verify on, and use default path for certificate
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));
@@ -260,7 +260,7 @@ void Chunk::upload() {
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist));
 
   // Compute the MD5 sum of data, and add the Content-MD5 header
-  expectedMD5 = getHexifiedMD5(data);
+  expectedMD5 = dx::getHexifiedMD5(data);
   {
     ostringstream cmd5;
     cmd5 << "Content-MD5: " << expectedMD5;
