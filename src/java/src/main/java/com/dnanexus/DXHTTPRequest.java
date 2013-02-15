@@ -89,22 +89,15 @@ public class DXHTTPRequest {
                 if (statusCode == HttpStatus.SC_OK) {
                     // 200 OK
 
-                    String value = EntityUtils.toString(entity);
-                    // Having to re-encode the string into UTF-8 is kind of
-                    // crummy, but that's what we'll do to verify the
-                    // Content-Length.
-                    //
-                    // TODO: compute the UTF-8 encoded length more efficiently,
-                    // or find a way to make the HTTP stack verify the length
-                    // itself.
-                    int realLength = value.getBytes("UTF-8").length;
+                    byte[] value = EntityUtils.toByteArray(entity);
+                    int realLength = value.length;
                     if (entity.getContentLength() >= 0 && realLength != entity.getContentLength()) {
                         String errorStr = "Received response of " + realLength
                             + " bytes but Content-Length was " + entity.getContentLength();
                         System.err.println(errorMessage("POST", resource, errorStr, timeout, i + 1,
                                                         NUM_RETRIES));
                     } else {
-                        return value;
+                        return new String(value, "UTF-8");
                     }
                 } else {
                     // Non-200 status codes.
