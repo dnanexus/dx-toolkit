@@ -22,7 +22,6 @@
 #include <boost/thread.hpp>
 #include "dxcpp/bqueue.h"
 
-#include "api_helper.h"
 #include "options.h"
 #include "chunk.h"
 #include "File.h"
@@ -39,6 +38,7 @@
 #endif
 
 using namespace std;
+using namespace dx;
 
 #ifdef WINDOWS_BUILD
   // This additional code is required for Windows build, since Magic database is not present
@@ -177,12 +177,19 @@ void joinWorkerThreads() {
   }
 }
 
+// This function should be called before opt.setApiserverDxConfig() is called,
+// since opt::setApiserverDxConfig() changes the value of dx::config::*, based on command line args
 void printEnvironmentInfo() {
+  using namespace dx::config;
+
   cout << "Environment info:" << endl
-       << "  API server protocol: " << opt.apiserverProtocol << endl
-       << "  API server host: " << opt.apiserverHost << endl
-       << "  API server port: " << opt.apiserverPort << endl
-       << "  Auth token: " << opt.authToken << endl; 
+       << "  API server protocol: " << APISERVER_PROTOCOL() << endl
+       << "  API server host: " << APISERVER_HOST() << endl
+       << "  API server port: " << APISERVER_PORT() << endl;
+  if (SECURITY_CONTEXT().size() != 0)
+    cout << "  Auth token: " << SECURITY_CONTEXT()["auth_token"].get<string>() << endl;
+  else
+    cout << "  Auth token: " << endl;
 }
 
 int main(int argc, char * argv[]) {
@@ -200,16 +207,17 @@ int main(int argc, char * argv[]) {
   }
   if (opt.version()) {
     cout << "dx-verify-file Version: " << DX_VERIFY_FILE_VERSION << endl
-         << "git version: " << GITVERSION << endl;
+         << "git version: " << DXTOOLKIT_GITVERSION << endl;
     return 0;
   } else if (opt.help()) {
     opt.printHelp(argv[0]);
     return 1;
   }
 
-  LOG << "dx-verify-file" << DX_VERIFY_FILE_VERSION << " (git version: " << GITVERSION << ")" << endl;
+  LOG << "dx-verify-file" << DX_VERIFY_FILE_VERSION << " (git version: " << DXTOOLKIT_GITVERSION << ")" << endl;
   LOG << opt;
   try {
+    opt.setApiserverDxConfig();
     opt.validate();
   } catch (exception &e) {
     cerr << "ERROR: " << e.what() << endl;
@@ -217,8 +225,6 @@ int main(int argc, char * argv[]) {
     return 1;
   }
  
-  apiInit(opt.apiserverHost, opt.apiserverPort, opt.apiserverProtocol, opt.authToken); // sets g_APISERVER_*, g_SECURITY_CONTEXT variable (for dxcpp)
-
   chunksToComputeMD5.setCapacity(opt.md5Threads);
   int exitCode = 0; 
   try {

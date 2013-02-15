@@ -146,14 +146,14 @@ void File::init(const bool tryResuming) {
   }
 }
 
-unsigned int File::createChunks(BlockingQueue<Chunk *> &queue, const int tries) {
+unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tries) {
   if (failed || (!isRemoteFileOpen)) {
     // This is the case when:
     // 1. Multiple resumable targets exist for a file (an do-not-resume is not set).
     // 2. OR, Remote resumable target is already in "closing" or "closed" state.
     return 0;
   }
-  const dx::JSON desc = fileDescribe(fileID);
+  const dx::JSON desc = dx::fileDescribe(fileID);
   // sanity check
   assert(desc["state"].get<string>() == "open");
  

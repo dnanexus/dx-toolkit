@@ -24,24 +24,19 @@
 #include "log.h"
 
 using namespace std;
+using namespace dx;
 
-dx::JSON securityContext(const string &authToken) {
-  dx::JSON ctx(dx::JSON_OBJECT);
+JSON securityContext(const string &authToken) {
+  JSON ctx(JSON_OBJECT);
   ctx["auth_token_type"] = "Bearer";
   ctx["auth_token"] = authToken;
   return ctx;
 }
 
-void apiInit(const string &apiserverHost, const int apiserverPort, const string &apiserverProtocol, const string &authToken) {
-  setAPIServerInfo(apiserverHost, apiserverPort, apiserverProtocol);
-  setSecurityContext(securityContext(authToken));
-}
-
 void testServerConnection() {
   LOG << "Testing connection to API server...";
-
   try {
-    dx::JSON result = systemFindProjects(dx::JSON::parse("{\"limit\": 1}"), false); // don't retry this request
+    JSON result = systemFindUsers(JSON::parse("{\"limit\": 1}"), false); // don't retry this request
     LOG << " success." << endl;
   } catch (DXAPIError &aerr) {
     LOG << " failure." << endl;
@@ -94,7 +89,7 @@ string resolveProject(const string &projectSpec) {
   map<string, string> matchingProjectIdToName;
 
   try {
-    dx::JSON desc = projectDescribe(urlEscape(projectSpec));
+    JSON desc = projectDescribe(urlEscape(projectSpec));
     string level = desc["level"].get<string>();
     if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
       matchingProjectIdToName[projectSpec] = desc["name"].get<string>();
@@ -104,12 +99,12 @@ string resolveProject(const string &projectSpec) {
   }
   
   try {
-    dx::JSON params(dx::JSON_OBJECT);
+    JSON params(JSON_OBJECT);
     params["name"] = projectSpec;
     params["level"] = "CONTRIBUTE";
     
-    dx::JSON findResult = systemFindProjects(params);
-    dx::JSON projects = findResult["results"];
+    JSON findResult = systemFindProjects(params);
+    JSON projects = findResult["results"];
     for (unsigned i = 0; i < projects.size(); ++i) {
       matchingProjectIdToName[projects[i]["id"].get<string>()] = projectSpec;
     }
@@ -142,7 +137,7 @@ string resolveProject(const string &projectSpec) {
 void testProjectPermissions(const string &projectID) {
   LOG << "Testing permissions on project " << projectID << "...";
   try {
-    dx::JSON desc = projectDescribe(projectID);
+    JSON desc = projectDescribe(projectID);
     string level = desc["level"].get<string>();
 
     if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
@@ -165,7 +160,7 @@ void testProjectPermissions(const string &projectID) {
 void createFolder(const string &projectID, const string &folder) {
   LOG << "Creating folder " << folder << " and parents in project " << projectID << "...";
   try {
-    dx::JSON params(dx::JSON_OBJECT);
+    JSON params(JSON_OBJECT);
     params["folder"] = folder;
     params["parents"] = true;
     projectNewFolder(projectID, params);
@@ -181,8 +176,8 @@ void createFolder(const string &projectID, const string &folder) {
  * folder, and with the specified name. The folder and any parent folders
  * are created if they do not exist.
  */
-string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType, const dx::JSON &properties) {
-  dx::JSON params(dx::JSON_OBJECT);
+string createFileObject(const string &project, const string &folder, const string &name, const string &mimeType, const JSON &properties) {
+  JSON params(JSON_OBJECT);
   params["project"] = project;
   params["folder"] = folder;
   params["name"] = name;
@@ -192,7 +187,7 @@ string createFileObject(const string &project, const string &folder, const strin
 
   LOG << "Creating new file with parameters " << params.toString() << endl;
 
-  dx::JSON result = fileNew(params);
+  JSON result = fileNew(params);
   LOG << "Got result " << result.toString() << endl;
 
   return result["id"].get<string>();
@@ -204,19 +199,19 @@ string createFileObject(const string &project, const string &folder, const strin
  * is also returned.
  * Note: Hidden files are searched as well.
  */
-dx::JSON findResumableFileObject(string project, string signature) {
-  dx::JSON query(dx::JSON_OBJECT);
+JSON findResumableFileObject(string project, string signature) {
+  JSON query(JSON_OBJECT);
   query["class"] = "file";
-  query["properties"] = dx::JSON(dx::JSON_OBJECT);
+  query["properties"] = JSON(JSON_OBJECT);
   query["properties"][FILE_SIGNATURE_PROPERTY] = signature;
-  query["scope"] = dx::JSON(dx::JSON_OBJECT);
+  query["scope"] = JSON(JSON_OBJECT);
   query["scope"]["project"] = project;
   query["scope"]["folder"] = "/";
   query["scope"]["recurse"] = true;
   query["visibility"] = "either";
-  query["describe"] = dx::JSON::parse("{\"project\": \"" + project + "\"}");
+  query["describe"] = JSON::parse("{\"project\": \"" + project + "\"}");
 
-  dx::JSON output;
+  JSON output;
   try {
     output = systemFindDataObjects(query);
   } catch (exception &e) {
@@ -231,10 +226,10 @@ void closeFileObject(const string &fileID) {
 }
 
 void removeFromProject(const string &projID, const string &objID) {
-  projectRemoveObjects(projID, dx::JSON::parse("{\"objects\": [\"" + objID + "\"]}"));
+  projectRemoveObjects(projID, JSON::parse("{\"objects\": [\"" + objID + "\"]}"));
 }
 
 string getFileState(const string &fileID) {
-  dx::JSON result = fileDescribe(fileID);
+  JSON result = fileDescribe(fileID);
   return result["state"].get<string>();
 }

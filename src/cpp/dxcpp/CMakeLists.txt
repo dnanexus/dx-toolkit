@@ -12,6 +12,19 @@ include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_PO
 # Set an additional flag (to disable some dxcpp specific warnings)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
 
+# Get the output of command `git describe`, and save it in DXTOOLKIT_GITVERSION variable
+execute_process(COMMAND git describe WORKING_DIRECTORY $ENV{DNANEXUS_HOME} RESULT_VARIABLE GIT_DESCRIBE_STATUS_CODE OUTPUT_VARIABLE DXTOOLKIT_GITVERSION ERROR_VARIABLE GIT_DESCRIBE_ERROR)
+if (GIT_DESCRIBE_STATUS_CODE EQUAL 0)
+  # Trim the newline at the end of "git describe" output
+  string(REGEX REPLACE "\n" "" DXTOOLKIT_GITVERSION ${DXTOOLKIT_GITVERSION})
+  message(STATUS "dxcpp CMakeLists.txt says: DXTOOLKIT_GITVERSION= ${DXTOOLKIT_GITVERSION}")
+else()
+  set(DXTOOLKIT_GITVERSION unknown)
+  message(STATUS "dxcpp CMakeLists.txt says: The command 'git describe' failed.")
+  message(STATUS "\terror message: '${GIT_DESCRIBE_ERROR}'. Will set DXTOOLKIT_GITVERSION='${DXTOOLKIT_GITVERSION}'")
+endif()
+add_definitions(-DDXTOOLKIT_GITVERSION=\"${DXTOOLKIT_GITVERSION}\")
+
 ####################################
 # Find libcrypto (and openssl/md5.h)
 ####################################

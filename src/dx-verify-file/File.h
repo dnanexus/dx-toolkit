@@ -34,7 +34,7 @@ public:
 
   void init();
 
-  unsigned int createChunks(BlockingQueue<Chunk *> &queue);
+  unsigned int createChunks(dx::BlockingQueue<Chunk *> &queue);
 
   void updateState(void);
 

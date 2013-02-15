@@ -40,32 +40,30 @@ preamble = r'''/** \file
 #define DXCPP_API_H
 
 #include "dxjson/dxjson.h"
-'''
+
+namespace dx {'''
 
 postscript = '''
+}
 #include "dxcpp.h"
 
-#endif
-'''
+#endif'''
 
 class_method_template = '''
-dx::JSON {method_name}(const std::string &input_params="{{}}", const bool retry={to_retry});
-dx::JSON {method_name}(const dx::JSON &input_params, const bool retry={to_retry});
-'''
+  JSON {method_name}(const std::string &input_params="{{}}", const bool retry={to_retry});
+  JSON {method_name}(const dx::JSON &input_params, const bool retry={to_retry});'''
 
 object_method_template = '''
-dx::JSON {method_name}(const std::string &object_id, const std::string &input_params="{{}}", const bool retry={to_retry});
-dx::JSON {method_name}(const std::string &object_id, const dx::JSON &input_params, const bool retry={to_retry});
-'''
+  JSON {method_name}(const std::string &object_id, const std::string &input_params="{{}}", const bool retry={to_retry});
+  JSON {method_name}(const std::string &object_id, const dx::JSON &input_params, const bool retry={to_retry});'''
 
 # Overloads with alias are named differently to eliminate ambiguity between
 # method(app_id_or_name, input_params) and method(app_name, app_alias)
 app_object_method_template = '''
-dx::JSON {method_name}(const std::string &app_id_or_name, const std::string &input_params="{{}}", const bool retry={to_retry});
-dx::JSON {method_name}(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry={to_retry});
-dx::JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{{}}", const bool retry={to_retry});
-dx::JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry={to_retry});
-'''
+  JSON {method_name}(const std::string &app_id_or_name, const std::string &input_params="{{}}", const bool retry={to_retry});
+  JSON {method_name}(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry={to_retry});
+  JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{{}}", const bool retry={to_retry});
+  JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry={to_retry});'''
 
 print preamble
 

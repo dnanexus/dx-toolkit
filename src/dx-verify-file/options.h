@@ -32,7 +32,7 @@ public:
   Options();
 
   void parse(int argc, char * argv[]);
-
+  void setApiserverDxConfig();
   bool help();
   bool version();
   bool env();
@@ -41,10 +41,6 @@ public:
 
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);
 
-  std::string apiserverProtocol;
-  std::string apiserverHost;
-  int apiserverPort;
-  std::string authToken;
   std::string certificateFile;
 
   std::vector<std::string> localFiles;
@@ -55,12 +51,16 @@ public:
   bool verbose;
   
 private:
-
+  std::string apiserverProtocol;
+  std::string apiserverHost;
+  int apiserverPort;
+  std::string authToken;
+ 
   po::options_description * visible_opts;
   po::options_description * hidden_opts;
   po::options_description * command_line_opts;
   po::options_description * env_opts;
-
+  
   po::variables_map vm;
 };
 
