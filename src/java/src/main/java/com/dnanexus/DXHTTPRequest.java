@@ -29,32 +29,20 @@ import java.io.*;
 import org.apache.commons.io.IOUtils;
 
 public class DXHTTPRequest {
-    public String APISERVER_HOST = System.getenv("DX_APISERVER_HOST");
-    public String APISERVER_PORT = System.getenv("DX_APISERVER_PORT");
-    public String SECURITY_CONTEXT = System.getenv("DX_SECURITY_CONTEXT");
-    public String APISERVER_PROTOCOL = System.getenv("DX_APISERVER_PROTOCOL");
-    public String JOB_ID = System.getenv("DX_JOB_ID");
-    public String WORKSPACE_ID = System.getenv("DX_WORKSPACE_ID");
-    public String PROJECT_CONTEXT_ID = System.getenv("DX_PROJECT_CONTEXT_ID");
-
-    private JsonNode SecurityContext;
-    private String apiserver;
-    private DefaultHttpClient httpclient;
-    private ObjectMapper mapper;
-    private JsonFactory dxJsonFactory;
+    private final JsonNode securityContext;
+    private final String apiserver;
+    private final DefaultHttpClient httpclient;
+    private final JsonFactory dxJsonFactory;
 
     private static int NUM_RETRIES = 5;
 
+    private static DXEnvironment env = DXEnvironment.create();
+
     public DXHTTPRequest() throws Exception {
-        if (APISERVER_HOST == null) { APISERVER_HOST = "api.dnanexus.com"; }
-        if (APISERVER_PORT == null) { APISERVER_PORT = "443"; }
-        if (APISERVER_PROTOCOL == null) { APISERVER_PROTOCOL = "https"; }
-        if (SECURITY_CONTEXT == null) { System.err.println("Warning: No security context found"); }
-        
-        httpclient = new DefaultHttpClient();
-        apiserver = APISERVER_PROTOCOL + "://" + APISERVER_HOST + ":" + APISERVER_PORT;
-        dxJsonFactory = new MappingJsonFactory();
-        SecurityContext = dxJsonFactory.createJsonParser(SECURITY_CONTEXT).readValueAsTree();
+        this.securityContext = env.getSecurityContext();
+        this.apiserver = env.getApiserverPath();
+        this.httpclient = new DefaultHttpClient();
+        this.dxJsonFactory = new MappingJsonFactory();
     }
 
     private String errorMessage(String method, String resource, String errorString,
@@ -72,9 +60,8 @@ public class DXHTTPRequest {
         HttpPost request = new HttpPost(apiserver + resource);
 
         request.setHeader("Content-Type", "application/json");
-        request.setHeader("Authorization", SecurityContext.get("auth_token_type").textValue()
-        		+ " "
-        		+ SecurityContext.get("auth_token").textValue());
+        request.setHeader("Authorization", securityContext.get("auth_token_type").textValue()
+                          + " " + securityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data));
 
         // Retry with exponential backoff
