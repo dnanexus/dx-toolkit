@@ -37,7 +37,7 @@ public:
   Options();
 
   void parse(int argc, char * argv[]);
-
+  void setApiserverDxConfig();
   bool help();
   bool version();
   bool env();
@@ -45,12 +45,6 @@ public:
   void validate();
 
   friend std::ostream &operator<<(std::ostream &out, const Options &opt);
-
-  std::string apiserverProtocol;
-  std::string apiserverHost;
-  int apiserverPort;
-  std::string authToken;
-  std::string certificateFile;
 
   std::vector<std::string> projects;
   std::vector<std::string> folders;
@@ -76,6 +70,12 @@ public:
   std::string refGenome;
 
 private:
+  // These params (if provided) are used for overriding the relevant dx::config::* values
+  std::string apiserverProtocol;
+  std::string apiserverHost;
+  int apiserverPort;
+  std::string authToken;
+  std::string certificateFile;
 
   po::options_description * visible_opts;
   po::options_description * hidden_opts;

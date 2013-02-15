@@ -11,12 +11,20 @@ endif (NOT DEFINED ENV{DNANEXUS_HOME})
 include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_POLICY_SCOPE)
 
 #dx-verify-file version
-set (VERSION 0.0.1)
+set (DX_VERIFY_FILE_VERSION 0.0.1)
 
-# Get the output of command `git describe`, and save it in GITVERSION variable
-execute_process(COMMAND git describe OUTPUT_VARIABLE GITVERSION)
-# Trim the newline at the end of "git describe" output
-string(REGEX REPLACE "\n" "" GITVERSION ${GITVERSION})
+# Get the output of command `git describe`, and save it in DXTOOLKIT_GITVERSION variable
+execute_process(COMMAND git describe WORKING_DIRECTORY $ENV{DNANEXUS_HOME} RESULT_VARIABLE GIT_DESCRIBE_STATUS_CODE OUTPUT_VARIABLE DXTOOLKIT_GITVERSION ERROR_VARIABLE GIT_DESCRIBE_ERROR)
+if (GIT_DESCRIBE_STATUS_CODE EQUAL 0)
+  # Trim the newline at the end of "git describe" output
+  string(REGEX REPLACE "\n" "" DXTOOLKIT_GITVERSION ${DXTOOLKIT_GITVERSION})
+  message(STATUS "dx-verify-file CMakeLists.txt says: DXTOOLKIT_GITVERSION= ${DXTOOLKIT_GITVERSION}")
+else()
+  set(DXTOOLKIT_GITVERSION unknown)
+  message(STATUS "dx-verify-file CMakeLists.txt says: The command 'git describe' failed.")
+  message(STATUS "\terror message: '${GIT_DESCRIBE_ERROR}'. Will set DXTOOLKIT_GITVERSION='${DXTOOLKIT_GITVERSION}'")
+endif()
+add_definitions(-DDXTOOLKIT_GITVERSION=\"${DXTOOLKIT_GITVERSION}\")
 
 #########################################################################
 # Find Boost library >= 1.48 (using the cmake find_package functionality)
@@ -55,10 +63,9 @@ else()
 endif()
 
 add_definitions(-D_FILE_OFFSET_BITS=64)
-add_definitions(-DDX_VERIFY_FILE_VERSION=\"${VERSION}\")
-add_definitions(-DGITVERSION=\"${GITVERSION}\")
+add_definitions(-DDX_VERIFY_FILE_VERSION=\"${DX_VERIFY_FILE_VERSION}\")
 
-add_executable(dx-verify-file main.cpp options.cpp log.cpp chunk.cpp main.cpp File.cpp api_helper.cpp)
+add_executable(dx-verify-file main.cpp options.cpp log.cpp chunk.cpp main.cpp File.cpp)
 
 # Add dxcpp
 target_link_libraries(dx-verify-file dxcpp)

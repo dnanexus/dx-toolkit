@@ -31,7 +31,7 @@ public:
 
   void init(const bool tryResuming);
 
-  unsigned int createChunks(BlockingQueue<Chunk *> &queue, const int tries);
+  unsigned int createChunks(dx::BlockingQueue<Chunk *> &queue, const int tries);
 
   void close(void);
 

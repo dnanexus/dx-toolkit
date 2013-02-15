@@ -41,112 +41,113 @@
 
 #include "../bindings.h"
 
-class DXApplet: public DXDataObject {
-private:
-  dx::JSON describe_(const std::string &s)const{return appletDescribe(dxid_,s);}
-  void addTypes_(const std::string &s)const{appletAddTypes(dxid_,s);}
-  void removeTypes_(const std::string &s)const{appletRemoveTypes(dxid_,s);}
-  dx::JSON getDetails_(const std::string &s)const{return appletGetDetails(dxid_,s);}
-  void setDetails_(const std::string &s)const{appletSetDetails(dxid_,s);}
-  void setVisibility_(const std::string &s)const{appletSetVisibility(dxid_,s);}
-  void rename_(const std::string &s)const{appletRename(dxid_,s);}
-  void setProperties_(const std::string &s)const{appletSetProperties(dxid_,s);}
-  void addTags_(const std::string &s)const{appletAddTags(dxid_,s);}
-  void removeTags_(const std::string &s)const{appletRemoveTags(dxid_,s);}
-  void close_(const std::string &s)const{appletClose(dxid_,s);}
-  dx::JSON listProjects_(const std::string &s)const{return appletListProjects(dxid_,s);}
+namespace dx {
+  class DXApplet: public DXDataObject {
+  private:
+    dx::JSON describe_(const std::string &s)const{return appletDescribe(dxid_,s);}
+    void addTypes_(const std::string &s)const{appletAddTypes(dxid_,s);}
+    void removeTypes_(const std::string &s)const{appletRemoveTypes(dxid_,s);}
+    dx::JSON getDetails_(const std::string &s)const{return appletGetDetails(dxid_,s);}
+    void setDetails_(const std::string &s)const{appletSetDetails(dxid_,s);}
+    void setVisibility_(const std::string &s)const{appletSetVisibility(dxid_,s);}
+    void rename_(const std::string &s)const{appletRename(dxid_,s);}
+    void setProperties_(const std::string &s)const{appletSetProperties(dxid_,s);}
+    void addTags_(const std::string &s)const{appletAddTags(dxid_,s);}
+    void removeTags_(const std::string &s)const{appletRemoveTags(dxid_,s);}
+    void close_(const std::string &s)const{appletClose(dxid_,s);}
+    dx::JSON listProjects_(const std::string &s)const{return appletListProjects(dxid_,s);}
 
-public:
-  // Note: We do not provide applet creation function .. since we want users
-  // to use applet_builder for that task.
+  public:
+    // Note: We do not provide applet creation function .. since we want users
+    // to use applet_builder for that task.
 
-  // Applet-specific functions
-  DXApplet() { }
+    // Applet-specific functions
+    DXApplet() { }
 
-  /**
-   * Creates a %DXApplet handler for the specified remote applet.
-   *
-   * @param dxid Applet ID.
-   * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
-   */
-  DXApplet(const char *dxid, const char *proj=NULL) {
-    setIDs(std::string(dxid), (proj == NULL) ? g_WORKSPACE_ID : std::string(proj));
-  }
- 
-  /**
-   * Creates a %DXApplet handler for the specified remote applet.
-   *
-   * @param dxid applet ID
-   * @param proj ID of the project in which the applet should be accessed
-   */
-  DXApplet(const std::string &dxid,
-           const std::string &proj=g_WORKSPACE_ID) { setIDs(dxid, proj); }
-  
-  /**
-   * Creates a %DXApplet handler for the specified remote applet.
-   *
-   * @param dxlink A JSON representing a <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
-   *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
-   */
-  DXApplet(const dx::JSON &dxlink) { setIDs(dxlink); }
+    /**
+     * Creates a %DXApplet handler for the specified remote applet.
+     *
+     * @param dxid Applet ID.
+     * @param proj ID of the project in which to access the object (if NULL, then default workspace will be used).
+     */
+    DXApplet(const char *dxid, const char *proj=NULL) {
+      setIDs(std::string(dxid), (proj == NULL) ? config::CURRENT_PROJECT() : std::string(proj));
+    }
+   
+    /**
+     * Creates a %DXApplet handler for the specified remote applet.
+     *
+     * @param dxid applet ID
+     * @param proj ID of the project in which the applet should be accessed
+     */
+    DXApplet(const std::string &dxid,
+             const std::string &proj=config::CURRENT_PROJECT()) { setIDs(dxid, proj); }
+    
+    /**
+     * Creates a %DXApplet handler for the specified remote applet.
+     *
+     * @param dxlink A JSON representing a <a
+     * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
+     */
+    DXApplet(const dx::JSON &dxlink) { setIDs(dxlink); }
 
-  /**
-   * Creates a new remote applet with the input hash, as specified in the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a>
-   * API method.
-   *
-   * If <code>inp["project"]</code> is missing, then <code>g_WORKSPACE_ID</code> will be used as
-   * the destination project.
-   *
-   * @param inp JSON hash representing the applet to be created
-   */
-  void create(dx::JSON inp);
+    /**
+     * Creates a new remote applet with the input hash, as specified in the <a
+     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a>
+     * API method.
+     *
+     * If <code>inp["project"]</code> is missing, then <code>config::CURRENT_PROJECT()</code> will be used as
+     * the destination project.
+     *
+     * @param inp JSON hash representing the applet to be created
+     */
+    void create(dx::JSON inp);
 
-  /**
-   * Runs this applet with the specified input and returns a handler for the resulting job.
-   *
-   * See the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
-   * API method for more info.
-   *
-   * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
-   * @param output_folder The folder (within the project_context) in which the applet's output objects will be placed.
-   * @param depends_on A list of job IDs and/or data object IDs (string), representing jobs that must finish and/or data objects that must close before this job should start running.
-   * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job with 
-   * the entry point "main" will be run, or a mapping of function names to instance types. (Note: you can pass a 
-   * std::map<string, string> as well)
-   * @param project_context A string representing the project context in which the applet is to be run.
-   *
-   * @return Handler for the job that was launched.
-   */
-  DXJob run(const dx::JSON &applet_input,
-            const std::string &output_folder="/", 
-            const std::vector<std::string> &depends_on=std::vector<std::string>(),
-            const dx::JSON &instance_type=dx::JSON(dx::JSON_NULL),
-            const std::string &project_context=g_WORKSPACE_ID
-            ) const;
+    /**
+     * Runs this applet with the specified input and returns a handler for the resulting job.
+     *
+     * See the <a
+     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
+     * API method for more info.
+     *
+     * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
+     * @param output_folder The folder (within the project_context) in which the applet's output objects will be placed.
+     * @param depends_on A list of job IDs and/or data object IDs (string), representing jobs that must finish and/or data objects that must close before this job should start running.
+     * @param instance_type A string, or a JSON_HASH (values must be string), representing instance type on which the job with 
+     * the entry point "main" will be run, or a mapping of function names to instance types. (Note: you can pass a 
+     * std::map<string, string> as well)
+     * @param project_context A string representing the project context in which the applet is to be run (used *only* if called outside of a running job, i.e., DX_JOB_ID is not set)
+     *
+     * @return Handler for the job that was launched.
+     */
+    DXJob run(const dx::JSON &applet_input,
+              const std::string &output_folder="/", 
+              const std::vector<std::string> &depends_on=std::vector<std::string>(),
+              const dx::JSON &instance_type=dx::JSON(dx::JSON_NULL),
+              const std::string &project_context=config::CURRENT_PROJECT()
+              ) const;
 
-  /**
-   * Clones the applet into the specified project and folder.
-   *
-   * @param dest_proj_id ID of the project to which the object should be cloned
-   * @param dest_folder Folder route in destination project into which the clone should be placed.
-   *
-   * @return New object handler with the associated project set to dest_proj_id.
-   */
-  DXApplet clone(const std::string &dest_proj_id,
-                 const std::string &dest_folder="/") const;
+    /**
+     * Clones the applet into the specified project and folder.
+     *
+     * @param dest_proj_id ID of the project to which the object should be cloned
+     * @param dest_folder Folder route in destination project into which the clone should be placed.
+     *
+     * @return New object handler with the associated project set to dest_proj_id.
+     */
+    DXApplet clone(const std::string &dest_proj_id,
+                   const std::string &dest_folder="/") const;
 
-  /**
-   * Returns the full specification of the applet, as specified in the <a
-   * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a>
-   * API method.
-   *
-   * @return JSON hash containing the full specification of the applet
-   */
-  dx::JSON get() const { return appletGet(dxid_); }
+    /**
+     * Returns the full specification of the applet, as specified in the <a
+     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a>
+     * API method.
+     *
+     * @return JSON hash containing the full specification of the applet
+     */
+    dx::JSON get() const { return appletGet(dxid_); }
 
-};
-
+  };
+}
 #endif
