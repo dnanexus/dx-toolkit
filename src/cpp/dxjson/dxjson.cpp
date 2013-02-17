@@ -381,7 +381,7 @@ namespace JSON_Utility
             }
             break;
           default:
-            throw JSONException("Illegal escape sequence:" + inp[i]);
+            throw JSONException("Illegal escape sequence:" + std::string(1, inp[i]));
         }
       }
     }
@@ -742,7 +742,7 @@ void Object::read(std::istream &in) {
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
     if (in.eof() || in.fail())
-      throw JSONException("Unexpected EOF while parsing object. ch = " + std::string(1,ch));
+      throw JSONException("Unexpected EOF while parsing object. ch = " + std::string(1, ch));
 
     // End of parsing for this JSON object
     if (ch == '}')
@@ -750,7 +750,7 @@ void Object::read(std::istream &in) {
 
     // Keys:value pairs must be separated by , inside JSON object
     if (!firstKey && ch != ',')
-      throw JSONException("Expected , while parsing object. Got : " + std::string(1,char(ch)));
+      throw JSONException("Expected , while parsing object. Got : " + std::string(1, ch));
 
     if (!firstKey) {
       JSON_Utility::SkipWhiteSpace(in);
@@ -767,7 +767,7 @@ void Object::read(std::istream &in) {
     JSON_Utility::SkipWhiteSpace(in);
     ch = in.get();
     if (ch != ':')
-      throw JSONException("Expected :, got : " + std::string(1,ch));
+      throw JSONException("Expected :, got : " + std::string(1, ch));
     JSON_Utility::SkipWhiteSpace(in);
     JSON_Utility::ReadJSONValue(in, val[key], false);
     firstKey = false;
@@ -816,7 +816,7 @@ void Object::erase(const std::string &key) {
 
 void Array::erase(const size_t &indx) {
   if (indx >= val.size())
-    throw JSONException("Cannot erase out of bound element in a JSON_ARRAY. indx supplied = " + indx);
+    throw JSONException("Cannot erase out of bound element in a JSON_ARRAY. indx supplied = " + boost::lexical_cast<std::string>(indx));
   val.erase(val.begin() + indx);
 }
 

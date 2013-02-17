@@ -159,8 +159,12 @@ namespace dx {
     // The HTTP Request is always executed at least once,
     // a maximum of NUM_MAX_RETRIES number of subsequent tries are made, if required and feasible.
     for (countTries = 0u; countTries <= NUM_MAX_RETRIES; ++countTries, sec_to_wait *= 2u) {
-      bool toRetry; // whether or not the request should be retried on failure
       
+      // Variable "toRetry" indicates whether or not the request should be retried on failure
+      // Note: Initial value of "false" is just a dummy value, toRetry will always be re-init before being used.
+      //       This dummy initial value is provided, to prevent some spurious warnings from clang
+      bool toRetry = false;
+
       // TODO: Add check for Content-Length header (we should retry if content-length header mismatches with actual data received)
 
       reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
@@ -192,7 +196,7 @@ namespace dx {
           } catch (JSONException &je) {
             ostringstream errStr;
             errStr << "\nERROR: Unable to parse output returned by Apiserver as JSON" << endl;
-            errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode + "; response body: '" + req.respData + "'" << endl;
+            errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode << "; response body: '" << req.respData << "'" << endl;
             errStr << "JSONException: " << je.what() << endl;
             throw DXError(errStr.str());
           }
@@ -430,7 +434,7 @@ namespace dx {
         }
       }
       // Append dxcpp info to the default user agent string (set by dxhttp)
-      USER_AGENT_STRING() = "dxcpp/"DXTOOLKIT_GITVERSION" " + USER_AGENT_STRING(); 
+      USER_AGENT_STRING() = "dxcpp/" DXTOOLKIT_GITVERSION" " + USER_AGENT_STRING(); 
       if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
         cerr << "\n***** In dxcpp.cc::loadFromEnvironment() - Following global config parameters have been set for dxcpp *****" << endl;
         cerr << "These values will be used by dxcpp library now:" << endl;

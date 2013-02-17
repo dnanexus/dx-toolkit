@@ -39,7 +39,7 @@ namespace dx {
     // Returns a mutable reference to USER_AGENT_STRING()
     // This value will be used for setting user agent header, for all calls made by dxhttp 
     std::string& USER_AGENT_STRING() {
-      static std::string local = "dxhttp/"DXTOOLKIT_GITVERSION; // default
+      static std::string local = "dxhttp/" DXTOOLKIT_GITVERSION; // default
       return local;
     }
   }
