@@ -1,3 +1,11 @@
+dx-toolkit (0.38.0) precise; urgency=low
+
+  * Improvements to R and Java bindings.
+
+  * dx-build-app/let supports new flag --no-parallel-build.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 19 Feb 2013 13:20:53 -0800
+
 dx-toolkit (0.37.0) precise; urgency=low
 
   * R API wrappers.
