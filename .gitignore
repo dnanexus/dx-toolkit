@@ -11,6 +11,7 @@
 /src/dx-wig-to-wiggle/build
 /src/R/install_dxR_deps.Rout
 /src/R/dxR*.tar.gz
+/src/R/dxR.Rcheck/
 *~
 *.log
 *.swp
