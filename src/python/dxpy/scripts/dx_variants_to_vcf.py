@@ -97,7 +97,7 @@ def main(**kwargs):
                outputFile.write("##FORMAT=<ID="+k+",Number="+v['number']+",Type="+v['type']+",Description=\""+v['description']+"\">\n")
        if alts is not None:
            for k, v in collections.OrderedDict(sorted(alts.iteritems())).iteritems():
-               outputFile.write("##ALT=<ID="+k+",Type="+v['type']+",Description=\""+v['description']+"\">\n")
+               outputFile.write("##ALT=<ID="+k+",Description=\""+v['description']+"\">\n")
        if filters is not None:
            for k, v in collections.OrderedDict(sorted(filters.iteritems())).iteritems():
                outputFile.write("##FILTER=<ID="+k+",Description=\""+v+"\">\n")
