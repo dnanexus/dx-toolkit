@@ -79,6 +79,7 @@ def main(**kwargs):
     
        infos = variantsTable.get_details().get('infos')
        formats = variantsTable.get_details().get('formats')
+       alts = variantsTable.get_details().get('alts')
        filters = variantsTable.get_details().get('filters')
        samples = variantsTable.get_details().get('samples')
     
@@ -94,6 +95,9 @@ def main(**kwargs):
        if formats is not None:
            for k, v in collections.OrderedDict(sorted(formats.iteritems())).iteritems():
                outputFile.write("##FORMAT=<ID="+k+",Number="+v['number']+",Type="+v['type']+",Description=\""+v['description']+"\">\n")
+       if alts is not None:
+           for k, v in collections.OrderedDict(sorted(alts.iteritems())).iteritems():
+               outputFile.write("##ALT=<ID="+k+",Type="+v['type']+",Description=\""+v['description']+"\">\n")
        if filters is not None:
            for k, v in collections.OrderedDict(sorted(filters.iteritems())).iteritems():
                outputFile.write("##FILTER=<ID="+k+",Description=\""+v+"\">\n")
@@ -210,7 +214,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     printPreceedingCharacter = False
     altOptions = row[col["alt"]].split(",")
     for x in altOptions:
-        if len(ref) != len(x) or len(ref) == 0 or len(alt) == 0:
+        if (len(ref) != len(x) or len(ref) == 0 or len(alt) == 0) and not re.search("[^ATGCNatgcn\.-]", x):
             printPreceedingCharacter = True
     
     if printPreceedingCharacter:
@@ -218,7 +222,11 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
         altOptions = row[col["alt"]].split(",")
         alt = ''
         for x in altOptions:
-            alt += contigSequence[chromosomeOffsets[chr]+int(pos)-2]+x+","
+            if re.search("[^ATGCNatgcn\.-]", x):
+                alt += x+","
+            else:
+                alt += contigSequence[chromosomeOffsets[chr]+int(pos)-2]+x+","
+                validAlt = False
         alt = alt.rstrip(",")
         pos -= 1
 
