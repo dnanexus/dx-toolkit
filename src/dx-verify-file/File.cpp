@@ -25,6 +25,7 @@ namespace fs = boost::filesystem;
 #include "log.h"
 
 using namespace std;
+using namespace dx;
 
 void testLocalFileExists(const string &filename) {
   LOG << "Testing existence of local file " << filename << "...";

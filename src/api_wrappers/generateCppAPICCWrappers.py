@@ -24,45 +24,45 @@ preamble = '''// Do not modify this file by hand.
 // (Run make api_wrappers to update it.)
 
 #include "api.h"
-'''
+namespace dx {'''
 
 class_method_template = '''
-dx::JSON {method_name}(const std::string &input_params, const bool retry) {{
-  return DXHTTPRequest("{route}", input_params, retry);
-}}
+  JSON {method_name}(const std::string &input_params, const bool retry) {{
+    return DXHTTPRequest("{route}", input_params, retry);
+  }}
 
-dx::JSON {method_name}(const dx::JSON &input_params, const bool retry) {{
-  return {method_name}(input_params.toString(), retry);
-}}
-'''
+  JSON {method_name}(const JSON &input_params, const bool retry) {{
+    return {method_name}(input_params.toString(), retry);
+  }}'''
 
 object_method_template = '''
-dx::JSON {method_name}(const std::string &object_id, const std::string &input_params, const bool retry) {{
-  return DXHTTPRequest(std::string("/") + object_id + std::string("/{method_route}"), input_params, retry);
-}}
+  JSON {method_name}(const std::string &object_id, const std::string &input_params, const bool retry) {{
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/{method_route}"), input_params, retry);
+  }}
 
-dx::JSON {method_name}(const std::string &object_id, const dx::JSON &input_params, const bool retry) {{
-  return {method_name}(object_id, input_params.toString(), retry);
-}}
-'''
+  JSON {method_name}(const std::string &object_id, const JSON &input_params, const bool retry) {{
+    return {method_name}(object_id, input_params.toString(), retry);
+  }}'''
 
 app_object_method_template = '''
-dx::JSON {method_name}(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {{
-  return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/{method_route}"), input_params, retry);
-}}
+  JSON {method_name}(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {{
+    return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/{method_route}"), input_params, retry);
+  }}
 
-dx::JSON {method_name}(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry) {{
-  return {method_name}(app_id_or_name, input_params.toString(), retry);
-}}
+  JSON {method_name}(const std::string &app_id_or_name, const JSON &input_params, const bool retry) {{
+    return {method_name}(app_id_or_name, input_params.toString(), retry);
+  }}
 
-dx::JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool retry) {{
-  return {method_name}(app_name + std::string("/") + app_alias, input_params, retry);
-}}
+  JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool retry) {{
+    return {method_name}(app_name + std::string("/") + app_alias, input_params, retry);
+  }}
 
-dx::JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry) {{
-  return {method_name}WithAlias(app_name, app_alias, input_params.toString(), retry);
-}}
-'''
+  JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool retry) {{
+    return {method_name}WithAlias(app_name, app_alias, input_params.toString(), retry);
+  }}'''
+
+postscript = '''
+}'''
 
 print preamble
 
@@ -77,3 +77,5 @@ for method in json.loads(sys.stdin.read()):
             print object_method_template.format(method_name=method_name, method_route=method_route)
     else:
         print class_method_template.format(method_name=method_name, route=route)
+
+print postscript

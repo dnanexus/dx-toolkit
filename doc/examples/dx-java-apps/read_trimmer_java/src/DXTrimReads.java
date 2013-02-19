@@ -20,7 +20,7 @@ public class DXTrimReads {
 
         System.out.println("Trimming reads in "+gtableId);
 
-        JsonNode tableDesc = DXAPI.gtableDescribe(gtableId, mapper.readTree("{}"));
+        JsonNode tableDesc = DXAPI.gtableDescribe(gtableId);
 
         ObjectNode gtableNewInput = mapper.createObjectNode();
         gtableNewInput.put("initializeFrom", mapper.createObjectNode());
@@ -38,7 +38,7 @@ public class DXTrimReads {
             }
         }
 
-        int step = 10000;
+        int step = 10000, nextPartIndex = 1;
         for (int i=0; i<tableDesc.get("length").intValue(); i += step) {
             ObjectNode gtableGetInput = mapper.createObjectNode();
             gtableGetInput.put("starting", i);
@@ -59,11 +59,11 @@ public class DXTrimReads {
                 outputRows.add(row);
             }
             ObjectNode gtableAddRowsInput = mapper.createObjectNode();
-            gtableAddRowsInput.put("part", i+1);
+            gtableAddRowsInput.put("part", nextPartIndex++);
             gtableAddRowsInput.put("data", outputRows);
             DXAPI.gtableAddRows(outputGTableId, gtableAddRowsInput);
         }
-        DXAPI.gtableClose(outputGTableId, mapper.readTree("{}"));
+        DXAPI.gtableClose(outputGTableId);
 
         ObjectNode JobOutput = mapper.createObjectNode();
         JobOutput.put("trimmedReads", mapper.createObjectNode());

@@ -5,488 +5,852 @@
  */
 
 package com.dnanexus;
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
+
 import com.dnanexus.DXHTTPRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DXAPI {
 
+    private static ObjectMapper mapper = new ObjectMapper();
+
+
+    public static JsonNode appAddCategories(String objectId) throws Exception {
+        return appAddCategories(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appAddCategories(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addCategories", inputParams);
     }
 
+    public static JsonNode appAddDevelopers(String objectId) throws Exception {
+        return appAddDevelopers(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addDevelopers", inputParams);
     }
 
+    public static JsonNode appAddTags(String objectId) throws Exception {
+        return appAddTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appAddTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
+    public static JsonNode appDelete(String objectId) throws Exception {
+        return appDelete(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appDelete(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "delete", inputParams);
     }
 
+    public static JsonNode appDescribe(String objectId) throws Exception {
+        return appDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode appGet(String objectId) throws Exception {
+        return appGet(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appGet(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
 
+    public static JsonNode appInstall(String objectId) throws Exception {
+        return appInstall(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appInstall(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "install", inputParams);
     }
 
+    public static JsonNode appListCategories(String objectId) throws Exception {
+        return appListCategories(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appListCategories(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listCategories", inputParams);
     }
 
+    public static JsonNode appListDevelopers(String objectId) throws Exception {
+        return appListDevelopers(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appListDevelopers(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listDevelopers", inputParams);
     }
 
+    public static JsonNode appPublish(String objectId) throws Exception {
+        return appPublish(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appPublish(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "publish", inputParams);
     }
 
+    public static JsonNode appRemoveCategories(String objectId) throws Exception {
+        return appRemoveCategories(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeCategories", inputParams);
     }
 
+    public static JsonNode appRemoveDevelopers(String objectId) throws Exception {
+        return appRemoveDevelopers(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeDevelopers", inputParams);
     }
 
+    public static JsonNode appRemoveTags(String objectId) throws Exception {
+        return appRemoveTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appRemoveTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
+    public static JsonNode appRun(String objectId) throws Exception {
+        return appRun(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appRun(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
     }
 
+    public static JsonNode appUninstall(String objectId) throws Exception {
+        return appUninstall(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appUninstall(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "uninstall", inputParams);
     }
 
+    public static JsonNode appUpdate(String objectId) throws Exception {
+        return appUpdate(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appUpdate(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
     }
 
+    public static JsonNode appNew() throws Exception {
+        return appNew(mapper.readTree("{}"));
+    }
     public static JsonNode appNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/app/new", inputParams);
     }
 
+    public static JsonNode appletAddTags(String objectId) throws Exception {
+        return appletAddTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletAddTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
+    public static JsonNode appletAddTypes(String objectId) throws Exception {
+        return appletAddTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletAddTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
+    public static JsonNode appletClose(String objectId) throws Exception {
+        return appletClose(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletClose(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
 
+    public static JsonNode appletDescribe(String objectId) throws Exception {
+        return appletDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode appletGet(String objectId) throws Exception {
+        return appletGet(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletGet(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
 
+    public static JsonNode appletGetDetails(String objectId) throws Exception {
+        return appletGetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletGetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
+    public static JsonNode appletListProjects(String objectId) throws Exception {
+        return appletListProjects(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletListProjects(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
+    public static JsonNode appletRemoveTags(String objectId) throws Exception {
+        return appletRemoveTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
+    public static JsonNode appletRemoveTypes(String objectId) throws Exception {
+        return appletRemoveTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
+    public static JsonNode appletRename(String objectId) throws Exception {
+        return appletRename(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletRename(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
 
+    public static JsonNode appletRun(String objectId) throws Exception {
+        return appletRun(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletRun(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
     }
 
+    public static JsonNode appletSetDetails(String objectId) throws Exception {
+        return appletSetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletSetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
+    public static JsonNode appletSetProperties(String objectId) throws Exception {
+        return appletSetProperties(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
+    public static JsonNode appletSetVisibility(String objectId) throws Exception {
+        return appletSetVisibility(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode appletSetVisibility(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
+    public static JsonNode appletNew() throws Exception {
+        return appletNew(mapper.readTree("{}"));
+    }
     public static JsonNode appletNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/applet/new", inputParams);
     }
 
+    public static JsonNode containerClone(String objectId) throws Exception {
+        return containerClone(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerClone(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams);
     }
 
+    public static JsonNode containerDescribe(String objectId) throws Exception {
+        return containerDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode containerDestroy(String objectId) throws Exception {
+        return containerDestroy(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerDestroy(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
     }
 
+    public static JsonNode containerListFolder(String objectId) throws Exception {
+        return containerListFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerListFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams);
     }
 
+    public static JsonNode containerMove(String objectId) throws Exception {
+        return containerMove(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerMove(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams);
     }
 
+    public static JsonNode containerNewFolder(String objectId) throws Exception {
+        return containerNewFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerNewFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams);
     }
 
+    public static JsonNode containerRemoveFolder(String objectId) throws Exception {
+        return containerRemoveFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams);
     }
 
+    public static JsonNode containerRemoveObjects(String objectId) throws Exception {
+        return containerRemoveObjects(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams);
     }
 
+    public static JsonNode containerRenameFolder(String objectId) throws Exception {
+        return containerRenameFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams);
     }
 
+    public static JsonNode fileAddTags(String objectId) throws Exception {
+        return fileAddTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileAddTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
+    public static JsonNode fileAddTypes(String objectId) throws Exception {
+        return fileAddTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileAddTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
+    public static JsonNode fileClose(String objectId) throws Exception {
+        return fileClose(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileClose(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
 
+    public static JsonNode fileDescribe(String objectId) throws Exception {
+        return fileDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode fileDownload(String objectId) throws Exception {
+        return fileDownload(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileDownload(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "download", inputParams);
     }
 
+    public static JsonNode fileGetDetails(String objectId) throws Exception {
+        return fileGetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileGetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
+    public static JsonNode fileListProjects(String objectId) throws Exception {
+        return fileListProjects(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileListProjects(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
+    public static JsonNode fileRemoveTags(String objectId) throws Exception {
+        return fileRemoveTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
+    public static JsonNode fileRemoveTypes(String objectId) throws Exception {
+        return fileRemoveTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
+    public static JsonNode fileRename(String objectId) throws Exception {
+        return fileRename(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileRename(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
 
+    public static JsonNode fileSetDetails(String objectId) throws Exception {
+        return fileSetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileSetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
+    public static JsonNode fileSetProperties(String objectId) throws Exception {
+        return fileSetProperties(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
+    public static JsonNode fileSetVisibility(String objectId) throws Exception {
+        return fileSetVisibility(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
+    public static JsonNode fileUpload(String objectId) throws Exception {
+        return fileUpload(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode fileUpload(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "upload", inputParams);
     }
 
+    public static JsonNode fileNew() throws Exception {
+        return fileNew(mapper.readTree("{}"));
+    }
     public static JsonNode fileNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/file/new", inputParams);
     }
 
+    public static JsonNode gtableAddRows(String objectId) throws Exception {
+        return gtableAddRows(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableAddRows(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addRows", inputParams);
     }
 
+    public static JsonNode gtableAddTags(String objectId) throws Exception {
+        return gtableAddTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableAddTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
+    public static JsonNode gtableAddTypes(String objectId) throws Exception {
+        return gtableAddTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
+    public static JsonNode gtableClose(String objectId) throws Exception {
+        return gtableClose(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableClose(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
 
+    public static JsonNode gtableDescribe(String objectId) throws Exception {
+        return gtableDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode gtableGet(String objectId) throws Exception {
+        return gtableGet(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableGet(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
 
+    public static JsonNode gtableGetDetails(String objectId) throws Exception {
+        return gtableGetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
+    public static JsonNode gtableListProjects(String objectId) throws Exception {
+        return gtableListProjects(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableListProjects(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
+    public static JsonNode gtableNextPart(String objectId) throws Exception {
+        return gtableNextPart(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableNextPart(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "nextPart", inputParams);
     }
 
+    public static JsonNode gtableRemoveTags(String objectId) throws Exception {
+        return gtableRemoveTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
+    public static JsonNode gtableRemoveTypes(String objectId) throws Exception {
+        return gtableRemoveTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
+    public static JsonNode gtableRename(String objectId) throws Exception {
+        return gtableRename(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableRename(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
 
+    public static JsonNode gtableSetDetails(String objectId) throws Exception {
+        return gtableSetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
+    public static JsonNode gtableSetProperties(String objectId) throws Exception {
+        return gtableSetProperties(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
+    public static JsonNode gtableSetVisibility(String objectId) throws Exception {
+        return gtableSetVisibility(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
+    public static JsonNode gtableNew() throws Exception {
+        return gtableNew(mapper.readTree("{}"));
+    }
     public static JsonNode gtableNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/gtable/new", inputParams);
     }
 
+    public static JsonNode jobDescribe(String objectId) throws Exception {
+        return jobDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode jobDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode jobStreamLog(String objectId) throws Exception {
+        return jobStreamLog(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode jobStreamLog(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "streamLog", inputParams);
     }
 
+    public static JsonNode jobTerminate(String objectId) throws Exception {
+        return jobTerminate(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode jobTerminate(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams);
     }
 
+    public static JsonNode jobNew() throws Exception {
+        return jobNew(mapper.readTree("{}"));
+    }
     public static JsonNode jobNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/job/new", inputParams);
     }
 
+    public static JsonNode notificationsGet() throws Exception {
+        return notificationsGet(mapper.readTree("{}"));
+    }
     public static JsonNode notificationsGet(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/notifications/get", inputParams);
     }
 
+    public static JsonNode notificationsMarkRead() throws Exception {
+        return notificationsMarkRead(mapper.readTree("{}"));
+    }
     public static JsonNode notificationsMarkRead(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/notifications/markRead", inputParams);
     }
 
+    public static JsonNode projectAddTags(String objectId) throws Exception {
+        return projectAddTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectAddTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
+    public static JsonNode projectClone(String objectId) throws Exception {
+        return projectClone(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectClone(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams);
     }
 
+    public static JsonNode projectDecreasePermissions(String objectId) throws Exception {
+        return projectDecreasePermissions(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "decreasePermissions", inputParams);
     }
 
+    public static JsonNode projectDescribe(String objectId) throws Exception {
+        return projectDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode projectDestroy(String objectId) throws Exception {
+        return projectDestroy(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectDestroy(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
     }
 
+    public static JsonNode projectInvite(String objectId) throws Exception {
+        return projectInvite(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectInvite(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "invite", inputParams);
     }
 
+    public static JsonNode projectLeave(String objectId) throws Exception {
+        return projectLeave(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectLeave(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "leave", inputParams);
     }
 
+    public static JsonNode projectListFolder(String objectId) throws Exception {
+        return projectListFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectListFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams);
     }
 
+    public static JsonNode projectMove(String objectId) throws Exception {
+        return projectMove(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectMove(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams);
     }
 
+    public static JsonNode projectNewFolder(String objectId) throws Exception {
+        return projectNewFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectNewFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams);
     }
 
+    public static JsonNode projectRemoveFolder(String objectId) throws Exception {
+        return projectRemoveFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams);
     }
 
+    public static JsonNode projectRemoveObjects(String objectId) throws Exception {
+        return projectRemoveObjects(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams);
     }
 
+    public static JsonNode projectRemoveTags(String objectId) throws Exception {
+        return projectRemoveTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
+    public static JsonNode projectRenameFolder(String objectId) throws Exception {
+        return projectRenameFolder(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams);
     }
 
+    public static JsonNode projectSetProperties(String objectId) throws Exception {
+        return projectSetProperties(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
+    public static JsonNode projectSubscribe(String objectId) throws Exception {
+        return projectSubscribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectSubscribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "subscribe", inputParams);
     }
 
+    public static JsonNode projectUnsubscribe(String objectId) throws Exception {
+        return projectUnsubscribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectUnsubscribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "unsubscribe", inputParams);
     }
 
+    public static JsonNode projectUpdate(String objectId) throws Exception {
+        return projectUpdate(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode projectUpdate(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
     }
 
+    public static JsonNode projectNew() throws Exception {
+        return projectNew(mapper.readTree("{}"));
+    }
     public static JsonNode projectNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/project/new", inputParams);
     }
 
+    public static JsonNode recordAddTags(String objectId) throws Exception {
+        return recordAddTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordAddTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
+    public static JsonNode recordAddTypes(String objectId) throws Exception {
+        return recordAddTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordAddTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
+    public static JsonNode recordClose(String objectId) throws Exception {
+        return recordClose(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordClose(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
 
+    public static JsonNode recordDescribe(String objectId) throws Exception {
+        return recordDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode recordGetDetails(String objectId) throws Exception {
+        return recordGetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordGetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
+    public static JsonNode recordListProjects(String objectId) throws Exception {
+        return recordListProjects(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordListProjects(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
+    public static JsonNode recordRemoveTags(String objectId) throws Exception {
+        return recordRemoveTags(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
+    public static JsonNode recordRemoveTypes(String objectId) throws Exception {
+        return recordRemoveTypes(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
+    public static JsonNode recordRename(String objectId) throws Exception {
+        return recordRename(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordRename(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
 
+    public static JsonNode recordSetDetails(String objectId) throws Exception {
+        return recordSetDetails(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordSetDetails(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
+    public static JsonNode recordSetProperties(String objectId) throws Exception {
+        return recordSetProperties(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
+    public static JsonNode recordSetVisibility(String objectId) throws Exception {
+        return recordSetVisibility(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
+    public static JsonNode recordNew() throws Exception {
+        return recordNew(mapper.readTree("{}"));
+    }
     public static JsonNode recordNew(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/record/new", inputParams);
     }
 
+    public static JsonNode systemFindAffiliates() throws Exception {
+        return systemFindAffiliates(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindAffiliates(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findAffiliates", inputParams);
     }
 
+    public static JsonNode systemFindApps() throws Exception {
+        return systemFindApps(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindApps(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findApps", inputParams);
     }
 
+    public static JsonNode systemFindDataObjects() throws Exception {
+        return systemFindDataObjects(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindDataObjects(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findDataObjects", inputParams);
     }
 
+    public static JsonNode systemFindJobs() throws Exception {
+        return systemFindJobs(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindJobs(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findJobs", inputParams);
     }
 
+    public static JsonNode systemFindProjects() throws Exception {
+        return systemFindProjects(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindProjects(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findProjects", inputParams);
     }
 
+    public static JsonNode systemFindUsers() throws Exception {
+        return systemFindUsers(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindUsers(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findUsers", inputParams);
     }
 
+    public static JsonNode systemFindProjectMembers() throws Exception {
+        return systemFindProjectMembers(mapper.readTree("{}"));
+    }
     public static JsonNode systemFindProjectMembers(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/findProjectMembers", inputParams);
     }
 
+    public static JsonNode systemShortenURL() throws Exception {
+        return systemShortenURL(mapper.readTree("{}"));
+    }
     public static JsonNode systemShortenURL(JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/system/shortenURL", inputParams);
     }
 
+    public static JsonNode userDescribe(String objectId) throws Exception {
+        return userDescribe(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode userDescribe(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
 
+    public static JsonNode userUpdate(String objectId) throws Exception {
+        return userUpdate(objectId, mapper.readTree("{}"));
+    }
     public static JsonNode userUpdate(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
     }

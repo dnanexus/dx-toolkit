@@ -82,7 +82,7 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
     and be in escaped form for consumption by the command-line.
     '''
 
-    unescaped_text = unescape_completion_name_str(text)
+    unescaped_text = unescape_completion_name_str(text[delim_pos + 1:])
 
     try:
         results = list(dxpy.find_data_objects(project=dxproj.get_id(),

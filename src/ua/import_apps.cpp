@@ -21,16 +21,17 @@
 #include "import_apps.h"
 
 using namespace std;
+using namespace dx;
 
 string findRefGenomeProjID() {
   try {
-    dx::JSON params(dx::JSON_OBJECT);
+    JSON params(JSON_OBJECT);
     params["name"] = "Reference Genomes";
     params["level"] = "VIEW";
     params["public"] = true;
     params["describe"] = false;
     params["billTo"] = "org-dnanexus";
-    dx::JSON findResult = systemFindProjects(params);
+    JSON findResult = systemFindProjects(params);
     if (findResult["results"].size() != 1)
       throw runtime_error("Expected name = 'Reference Genomes', and, billTo = 'org-dnanexus', to return exactly one public project, but instead recieved " + boost::lexical_cast<string>(findResult["results"].size()) + " projects instead. Unable to resolve --ref-genome parameter.");
     return findResult["results"][0]["id"].get<string>();
@@ -46,14 +47,14 @@ string getRefGenomeID(const string &refGenome) {
 
   //If not an ID, then find in 'Reference Genomes' project
   string refGenomeProj = findRefGenomeProjID();
-  dx::JSON params(dx::JSON_OBJECT);
+  JSON params(JSON_OBJECT);
   params["name"] = refGenome;
   params["state"] = "closed";
   params["class"] = "record";
   params["type"] = "ContigSet";
-  params["scope"] = dx::JSON(dx::JSON_OBJECT);
+  params["scope"] = JSON(JSON_OBJECT);
   params["scope"]["project"] = refGenomeProj;
-  dx::JSON findResult = systemFindDataObjects(params);
+  JSON findResult = systemFindDataObjects(params);
   if (findResult["results"].size() == 0)
     throw runtime_error("Unable to find any reference genome with name: '" + refGenome + "'");
   if (findResult["results"].size() > 1) {
@@ -66,13 +67,13 @@ string getRefGenomeID(const string &refGenome) {
 }
 
 // A helper for runImportApps(): Logs all the activity while running an app (and any error)
-string runApp_helper(const string &appName, const string &jobName, const dx::JSON &input, const string &project, const string &folder) {
-  dx::JSON params(dx::JSON_OBJECT);
+string runApp_helper(const string &appName, const string &jobName, const JSON &input, const string &project, const string &folder) {
+  JSON params(JSON_OBJECT);
   params["name"] = jobName;
   params["input"] = input;
   params["project"] = project;
   params["folder"] = folder;
-  dx::JSON output;
+  JSON output;
 
   try {
     LOG << "Running app: '" << appName << "'" << endl;
@@ -89,8 +90,8 @@ string runApp_helper(const string &appName, const string &jobName, const dx::JSO
   return output["id"].get<string>();
 }
 
-inline dx::JSON getDnanexusLinkFormat(const string &objID) {
-  return dx::JSON::parse("{\"$dnanexus_link\": \"" + objID + "\"}");
+inline JSON getDnanexusLinkFormat(const string &objID) {
+  return JSON::parse("{\"$dnanexus_link\": \"" + objID + "\"}");
 }
 
 void runImportApps(const Options &opt, vector<File> &files) {
@@ -115,7 +116,7 @@ void runImportApps(const Options &opt, vector<File> &files) {
       }
       continue;
     }
-    dx::JSON input(dx::JSON_OBJECT);
+    JSON input(JSON_OBJECT);
     
     if (opt.reads) {
       input["file"] = getDnanexusLinkFormat(files[i].fileID); 

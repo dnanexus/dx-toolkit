@@ -87,51 +87,42 @@ void Options::parse(int argc, char * argv[]) {
   po::store(po::command_line_parser(argc, argv).options(*command_line_opts).positional(*pos_opts).run(), vm);
   po::notify(vm);
   Log::enabled = verbose;
+}
+
+// This function is responsible for:
+//  - If --auth-token, --apiserver-* params are not provided, then set it from
+//    values in dxcpp (dx::config::*)
+//  - If --auth-token, --apiserver-* params are provided, then set the values
+//    in dxcpp (dx::config::*), so that dxcpp uses correct host, token, etc
+//  - Throw error if a required parameter is not set anywhere (provided on command line, or in dx::config)
+void Options::setApiserverDxConfig() {
+  using namespace dx::config; // for SECURITY_CONTEXT(), APISERVER_*(), etc
+
   if (authToken.empty()) {
-    char * dxSecurityContext = getenv("DX_SECURITY_CONTEXT");
-    if (dxSecurityContext != NULL) {
-      dx::JSON secContext = dx::JSON::parse(dxSecurityContext);
-      if (secContext.has("auth_token")) {
-        authToken = secContext["auth_token"].get<string>();
-      }
-    }
+    // If --auth-token flag is not used, check that dx::config::SECURITY_CONTEXT() has a auth token, else throw
+    if (SECURITY_CONTEXT().size() == 0) 
+      throw runtime_error("No Authentication token found, please provide a correct auth token (you may use --auth-token option)");
+  } else {
+    LOG << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'" << endl;
+    SECURITY_CONTEXT() = dx::JSON::parse("{\"auth_token_type\": \"Bearer\", \"auth_token\": \"" + authToken + "\"}");
   }
 
-  /*
-   * Incorporate values read by loadFromEnvironment in dxcpp. This handles
-   * the contents of enviornment variables, and ~/.dnanexus_config/environment.
-   */
-  if (apiserverProtocol.empty()) {
-    LOG << "Setting apiServerProtocol from g_APISERVER_PROTOCOL: " << g_APISERVER_PROTOCOL << endl;
-    apiserverProtocol = g_APISERVER_PROTOCOL;
+  if (!apiserverProtocol.empty()) {
+    LOG << "Setting dx::config::APISERVER_PROTOCOL from value provided at run time: '" << apiserverProtocol << "'" << endl;
+    APISERVER_PROTOCOL() = apiserverProtocol;
   }
-  if (apiserverHost.empty()) {
-    LOG << "Setting apiServerHost from g_APISERVER_HOST: " << g_APISERVER_HOST << endl;
-    apiserverHost = g_APISERVER_HOST;
+  if (apiserverPort != -1) {
+    LOG << "Setting dx::config::APISERVER_PORT from value provided at run time: '" << apiserverPort << "'" << endl;
+    APISERVER_PORT() = boost::lexical_cast<string>(apiserverPort);
   }
-  if (apiserverPort == -1) {
-    LOG << "Setting apiServerPort from g_APISERVER_PORT: " << g_APISERVER_PORT << endl;
-    apiserverPort = boost::lexical_cast<int>(g_APISERVER_PORT);
+  if (!apiserverHost.empty()) {
+    LOG << "Setting dx::config::APISERVER_HOST from value provided at run time: '" << apiserverHost << "'" << endl;
+    APISERVER_HOST() = apiserverHost;
   }
-  if (authToken.empty()) {
-    if (g_SECURITY_CONTEXT_SET) {
-      if (g_SECURITY_CONTEXT.has("auth_token")) {
-        LOG << "Setting authToken from g_SECURITY_CONTEXT: " << g_SECURITY_CONTEXT["auth_token"].get<string>() << endl;
-        authToken = g_SECURITY_CONTEXT["auth_token"].get<string>();
-      }
-    }
-  }
-  if (projects.empty()) {
-    if (!g_WORKSPACE_ID.empty()) {
-      LOG << "Adding to projects from g_WORKSPACE_ID: " << g_WORKSPACE_ID << endl;
-      projects.push_back(g_WORKSPACE_ID);
-    }
-  }
-  if (projects.empty()) {
-    if (!g_PROJECT_CONTEXT_ID.empty()) {
-      LOG << "Adding to projects from g_PROJECT_CONTEXT_ID: " << g_PROJECT_CONTEXT_ID << endl;
-      projects.push_back(g_PROJECT_CONTEXT_ID);
-    }
+  // Now check that dxcpp has all of the required apiserver params set
+  if (APISERVER().empty()) {
+    throw runtime_error("At least one of apiserver host/port/protocol is not specified, unable to continue without this information."
+                        "Please use --apiserver-host, --apiserver-port, --apiserver-protocol to provide this info on command line");
   }
 }
 
@@ -176,6 +167,7 @@ void Options::printHelp(char * programName) {
 // standard locations. Throws an error if not found anywhere.
 // Note: Do not call when protocol being used != https
 void setCertificateFile(const string &certificateFile) {
+  using namespace dx::config;
   #ifdef MAC_BUILD
     const unsigned ARR_SIZE = 3;
   #else
@@ -193,10 +185,10 @@ void setCertificateFile(const string &certificateFile) {
   #endif
   if (!certificateFile.empty()) {
     LOG << "Option '--certificate-file' present, and value is: '" << certificateFile << "'" << endl;
-    get_g_DX_CA_CERT() = certificateFile;
+    CA_CERT() = certificateFile;
     return;
   } else {
-    if (get_g_DX_CA_CERT().empty()) {
+    if (CA_CERT().empty()) {
       LOG << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
       #ifdef WINDOWS_BUILD
         LOG << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default." << endl;
@@ -209,7 +201,7 @@ void setCertificateFile(const string &certificateFile) {
           fs::path p (standardPathLocations[i]);
           if (fs::exists(p)) {
             LOG << " ... Found! Will use it." << endl;
-            get_g_DX_CA_CERT() = standardPathLocations[i];
+            CA_CERT() = standardPathLocations[i];
             return;
           }
           LOG << " ... not found." << endl;
@@ -221,7 +213,7 @@ void setCertificateFile(const string &certificateFile) {
       #endif
     } else {
       // use the DX_CA_CERT value (already set by dxcpp's static initializer).
-      LOG << "'--certificate-file' option is absent, but 'DX_CA_CERT' is present, value is: '" << get_g_DX_CA_CERT() << "'. Will use it." << endl;
+      LOG << "'--certificate-file' option is absent, but 'DX_CA_CERT' is present, value is: '" << CA_CERT() << "'. Will use it." << endl;
       return;
     }
   }
@@ -243,7 +235,7 @@ void Options::validate() {
   } else {
     throw runtime_error("Must specify at least one file to upload");
   }
-
+  
   if (names.size() == 0) {
     // Get each file object name from the local name of the corresponding
     // file.
@@ -260,7 +252,10 @@ void Options::validate() {
   }
 
   if (projects.empty()) {
-    throw runtime_error("A project must be specified");
+    if (!dx::config::CURRENT_PROJECT().empty())
+      projects.push_back(dx::config::CURRENT_PROJECT());
+    else
+      throw runtime_error("A project must be specified (or present in environment variables/config file). You may use --project to specify project id/name on command line");
   } else if (projects.size() == 1) {
     // If one project was specified, use that for all files.
     while (projects.size() < files.size()) {
@@ -298,7 +293,9 @@ void Options::validate() {
   assert(names.size() == files.size());
   assert(folders.size() == files.size());
   assert(projects.size() == files.size());
-
+  
+  // Commented code below: setApiserverDxConfig() take care of these cases now
+/*
   if (authToken.empty()) {
     throw runtime_error("An authentication token must be provided");
   }
@@ -313,6 +310,7 @@ void Options::validate() {
     msg << "Invalid API server port: " << apiserverPort;
     throw runtime_error(msg.str());
   }
+  */
   // ugly way to do case insensitive comparison, but works
   // without adding additional dependencies, like boost string, etc
   string lowerCaseApiserverProtocol = "";
