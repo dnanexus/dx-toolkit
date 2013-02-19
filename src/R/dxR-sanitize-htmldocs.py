@@ -29,6 +29,8 @@ with open(os.path.join('..', 'doc', 'R', 'html', '00Index.html'), 'r+') as index
     for line in lines:
         if ".jpg" in line:
             continue
+        elif "../DESCRIPTION" in line:
+            index_fd.write(line.replace("../DESCRIPTION", "DESCRIPTION"))
         else:
             index_fd.write(line)
     index_fd.truncate()

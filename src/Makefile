@@ -188,7 +188,7 @@ doc_java:
 
 doc_R: R
 	mkdir -p ../doc/R
-	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R CMD BATCH install_dxR_deps.R; R CMD INSTALL --build dxR --html --library="$(DNANEXUS_HOME)/lib/R"; cp -r "$(DNANEXUS_HOME)/lib/R/dxR/DESCRIPTION" "$(DNANEXUS_HOME)/lib/R/dxR/html/" "$(DNANEXUS_HOME)/doc/R/.")
+	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R CMD BATCH install_dxR_deps.R; R CMD INSTALL --build dxR --html --library="$(DNANEXUS_HOME)/lib/R"; cp -r "$(DNANEXUS_HOME)/lib/R/dxR/html/" "$(DNANEXUS_HOME)/doc/R/."; cp "$(DNANEXUS_HOME)/lib/R/dxR/DESCRIPTION" "$(DNANEXUS_HOME)/doc/R/html/.")
 	R/dxR-sanitize-htmldocs.py
 
 # Clean
