@@ -13,8 +13,9 @@ public class DXHelloWorld {
         JsonNode Name = JobInputJson.get("name");
 
         ObjectMapper mapper = new ObjectMapper();
-        ObjectNode JobOutput = mapper.createObjectNode();
-        JobOutput.put("greeting", "Hello, " + (Name == null ? "World" : Name) + "!");
-        mapper.writeValue(new File("job_output.json"), JobOutput);
+
+        String greeting = "Hello, " + (Name == null ? "World" : Name) + "!";
+        ObjectNode jobOutput = DXJSON.getObjectBuilder().put("greeting", greeting).build();
+        mapper.writeValue(new File("job_output.json"), jobOutput);
     }
 }
