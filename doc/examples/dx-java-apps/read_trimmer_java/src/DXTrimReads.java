@@ -22,11 +22,14 @@ public class DXTrimReads {
 
         JsonNode tableDesc = DXAPI.gtableDescribe(gtableId);
 
-        ObjectNode gtableNewInput = mapper.createObjectNode();
-        gtableNewInput.put("initializeFrom", mapper.createObjectNode());
-        // ((ObjectNode)(gtableNewInput.get("initializeFrom"))).put("project", tableDesc.get("project"));
-        ((ObjectNode)(gtableNewInput.get("initializeFrom"))).put("project", System.getenv("DX_WORKSPACE_ID"));
-        ((ObjectNode)(gtableNewInput.get("initializeFrom"))).put("id", tableDesc.get("id"));
+        ObjectNode gtableNewInput = DXJSON.getObjectBuilder()
+            .put("initializeFrom",
+                 DXJSON.getObjectBuilder()
+                 .put("project", System.getenv("DX_WORKSPACE_ID"))
+                 .put("id", tableDesc.get("id"))
+                 .build())
+            .build();
+
         String outputGTableId = DXAPI.gtableNew(gtableNewInput).get("id").textValue();
 
         int sequenceColumnIndex = -1, qualColumnIndex = -1;
@@ -40,9 +43,10 @@ public class DXTrimReads {
 
         int step = 10000, nextPartIndex = 1;
         for (int i=0; i<tableDesc.get("length").intValue(); i += step) {
-            ObjectNode gtableGetInput = mapper.createObjectNode();
-            gtableGetInput.put("starting", i);
-            gtableGetInput.put("limit", step);
+            ObjectNode gtableGetInput = DXJSON.getObjectBuilder()
+                .put("starting", i)
+                .put("limit", step)
+                .build();
             ArrayNode outputRows = mapper.createArrayNode();
             for (JsonNode row : DXAPI.gtableGet(gtableId, gtableGetInput).get("data")) {
                 ArrayNode arrayRow = (ArrayNode)row;
@@ -65,10 +69,16 @@ public class DXTrimReads {
         }
         DXAPI.gtableClose(outputGTableId);
 
-        ObjectNode JobOutput = mapper.createObjectNode();
-        JobOutput.put("trimmedReads", mapper.createObjectNode());
-        ((ObjectNode)(JobOutput.get("trimmedReads"))).put("$dnanexus_link", outputGTableId);
-        mapper.writeValue(new File("job_output.json"), JobOutput);
+        ObjectNode jobOutput = DXJSON.getObjectBuilder()
+            .put("trimmedReads", makeDXLink(outputGTableId))
+            .build();
+        mapper.writeValue(new File("job_output.json"), jobOutput);
+
         System.out.println("Trimming complete!");
     }
+
+    private static ObjectNode makeDXLink(String objectId) {
+        return DXJSON.getObjectBuilder().put("$dnanexus_link", objectId).build();
+    }
+
 }
