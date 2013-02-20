@@ -135,6 +135,7 @@ from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
 import httplib
 from dxpy.exceptions import *
+from dxpy.toolkit_version import version as TOOLKIT_VERSION
 
 snappy_available = True
 try:
@@ -237,7 +238,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
         rewind_input_buffer_offset = data.tell()
 
     headers['DNAnexus-API'] = API_VERSION
-
+    headers['User-Agent'] = "dxpy/" + TOOLKIT_VERSION
     if use_compression == 'snappy':
         if not snappy_available:
             raise DXError("Snappy compression requested, but the snappy module is unavailable")
@@ -452,7 +453,7 @@ from dxpy.bindings import *
 from dxpy.dxlog import *
 from dxpy.utils.exec_utils import run, entry_point
 
-from dxpy.toolkit_version import version as TOOLKIT_VERSION
+#from dxpy.toolkit_version import version as TOOLKIT_VERSION
 
 
 # This should be in exec_utils but fails because of circular imports
