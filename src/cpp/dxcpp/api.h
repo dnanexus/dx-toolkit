@@ -406,6 +406,9 @@ namespace dx {
   JSON systemFindProjectMembers(const std::string &input_params="{}", const bool retry=true);
   JSON systemFindProjectMembers(const dx::JSON &input_params, const bool retry=true);
 
+  JSON systemGreet(const std::string &input_params="{}", const bool retry=true);
+  JSON systemGreet(const dx::JSON &input_params, const bool retry=true);
+
   JSON systemShortenURL(const std::string &input_params="{}", const bool retry=true);
   JSON systemShortenURL(const dx::JSON &input_params, const bool retry=true);
 

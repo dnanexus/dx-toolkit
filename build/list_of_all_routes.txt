@@ -144,6 +144,7 @@
 #/system/findRequests RETRYABLE
 /system/findUsers RETRYABLE
 /system/findProjectMembers RETRYABLE
+/system/greet RETRYABLE
 #/system/getLog RETRYABLE
 #/system/getProjectTags RETRYABLE
 #/system/globalSearch RETRYABLE

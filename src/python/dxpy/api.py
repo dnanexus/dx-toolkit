@@ -490,6 +490,10 @@ def systemFindProjectMembers(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/findProjectMembers', input_params, always_retry=always_retry, **kwargs)
 
 
+def systemGreet(input_params={}, always_retry=True, **kwargs):
+    return DXHTTPRequest('/system/greet', input_params, always_retry=always_retry, **kwargs)
+
+
 def systemShortenURL(input_params={}, always_retry=True, **kwargs):
     return DXHTTPRequest('/system/shortenURL', input_params, always_retry=always_retry, **kwargs)
 

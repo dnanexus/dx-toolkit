@@ -33,6 +33,58 @@ JSON securityContext(const string &authToken) {
   return ctx;
 }
 
+// Runs /system/greet route to get update info
+//  - If the API call fails, do nothing (except log the failure (if verbose mode is on))
+//  - If UA is up to date, we just log this fact (if verbose mode is on)
+//  - If a "required" update is available, we throw runtime_error()
+//  - If a "recommended" update is available, we print the info on stderr (irresepctive of verbose mode status)
+void checkForUpdates() {
+  JSON inp(JSON_HASH);
+  inp["client"] = "dnanexus-upload-agent";
+  inp["version"] = UAVERSION;
+  string platform;
+#if WINDOWS_BUILD
+  platform = "windows";
+#endif
+#if LINUX_BUILD
+  platform = "linux";
+#endif
+#if MAC_BUILD
+  platform = "mac";
+#endif
+  if (!platform.empty()) {
+    inp["platform"] = platform;
+  }
+  JSON res;
+  LOG << "Checking for updates (calling /system/greet) ...";
+  try {
+    res = systemGreet(inp, false); // don't retry this requests, not that essential
+  } catch (DXAPIError &aerr) {
+    // If an error is thrown while calling /system/greet, we don't treat it as fatal
+    // but instead just log it to stderr (if verbose mode was on).
+    LOG << " failure (call failed), reason: '" << aerr.what() << "'" << endl;
+    return;
+  }
+  
+  if (res["update"]["available"] == false) {
+    LOG << " Hurray! Your copy of Upload Agent is up to date." << endl;
+    return;
+  }
+  string ver = res["update"]["version"].get<string>();
+  string url = res["update"]["url"].get<string>();
+  if (res["update"]["level"] == "required") {
+    throw runtime_error(string("**********\nUnfortunately your copy of Upload Agent is too old to continue.") +
+                        "\nPlease download latest version (v" + ver + ") from " + url + "\n**********");
+  }
+  // If we are here => A recommended update is available. Show user a message to that effect
+  LOG << endl;
+  cerr <<"*********** Update Available ***********" << endl
+       << "A new version of Upload Agent (v" << ver << ") is available for your platform!" << endl
+       << "It's highly recommended that you download the latest version from here " << url << endl
+       << "****************************************" << endl;
+  return;
+}
+
 void testServerConnection() {
   LOG << "Testing connection to API server...";
   try {

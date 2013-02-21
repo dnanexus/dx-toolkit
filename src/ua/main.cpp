@@ -631,6 +631,23 @@ int main(int argc, char * argv[]) {
     opt.setApiserverDxConfig();
     opt.validate();
     dx::g_dxcpp_mute_retry_cerrs = !opt.verbose; // a dirty hack, to silent dxcpp's error messages (printed when retrying)
+    
+    // Check for updates, and terminate execution if necessary
+    // Note: - It's important to call this function before testServerConnection()
+    //         because, if the client is too old, testServerConnection() would fail with "ClientTooOld" error (since it calls /system/findUsers).
+    //       - If server is unreachable, checkForUpdates() will just print a warning on LOG
+    //         the actual unreachability of server (and subsequent action) will still be determined by testServerConnection()
+    // TODO: Once production has /system/greet route, we can subsume testServerConnection() into checkForUpdates()
+    //       , i.e., we can use /system/greet route to test apiserver connection as well (instead of findUsers).
+    //       But one important point to be noted: /findUsers route check the fact that auth token is not from public,
+    //       whereas /system/greet does not (so we must find another way to test that fact for auth token).
+    //       (for example: later calls, like creating file, polling project, etc will fail)
+    try {
+      checkForUpdates();
+    } catch (runtime_error &e) {
+      cerr << e.what() << endl;
+      return 3;
+    }
     testServerConnection();
     if (!opt.doNotResume) {
       disallowDuplicateFiles(opt.files, opt.projects);
@@ -639,6 +656,7 @@ int main(int argc, char * argv[]) {
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
+  
   const bool anyImportAppToBeCalled = (opt.reads || opt.pairedReads || opt.mappings || opt.variants);
   if (anyImportAppToBeCalled) {
     LOG << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)" << endl;

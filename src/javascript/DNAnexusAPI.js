@@ -655,6 +655,11 @@ exports.systemFindProjectMembers = function(input_params) {
 };
 
 
+exports.systemGreet = function(input_params) {
+  return dx.DXHTTPRequest('/system/greet', input_params);
+};
+
+
 exports.systemShortenURL = function(input_params) {
   return dx.DXHTTPRequest('/system/shortenURL', input_params);
 };

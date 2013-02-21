@@ -834,6 +834,13 @@ public class DXAPI {
         return new DXHTTPRequest().request("/system/findProjectMembers", inputParams);
     }
 
+    public static JsonNode systemGreet() throws Exception {
+        return systemGreet(mapper.readTree("{}"));
+    }
+    public static JsonNode systemGreet(JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/system/greet", inputParams);
+    }
+
     public static JsonNode systemShortenURL() throws Exception {
         return systemShortenURL(mapper.readTree("{}"));
     }

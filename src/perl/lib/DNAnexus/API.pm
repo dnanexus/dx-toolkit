@@ -925,6 +925,13 @@ sub systemFindProjectMembers(;$%) {
 }
 
 
+sub systemGreet(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/system/greet', $input_params, %kwargs);
+}
+
+
 sub systemShortenURL(;$%) {
     my ($input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -947,5 +954,5 @@ sub userUpdate($;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListCategories appListDevelopers appPublish appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletAddTypes appletClose appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRemoveTypes appletRename appletRun appletSetDetails appletSetProperties appletSetVisibility appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectSubscribe projectUnsubscribe projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemShortenURL userDescribe userUpdate);
+our @EXPORT_OK = qw(appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListCategories appListDevelopers appPublish appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletAddTypes appletClose appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRemoveTypes appletRename appletRun appletSetDetails appletSetProperties appletSetVisibility appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectSubscribe projectUnsubscribe projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate);
 
