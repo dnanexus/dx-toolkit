@@ -19,23 +19,21 @@
 #include <queue>
 
 #include <curl/curl.h>
-#include <magic.h>
 
 #include <boost/thread.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/version.hpp>
 
+#include "dxcpp/dxcpp.h"
 #include "dxcpp/bqueue.h"
-
 #include "api_helper.h"
 #include "options.h"
 #include "chunk.h"
-#include "File.h"
+#include "file.h"
 #include "log.h"
-#include "dxcpp/dxcpp.h"
 #include "import_apps.h"
+#include "mime.h"
 
-#include <boost/filesystem.hpp>
-
-#include <boost/version.hpp>
 // http://www.boost.org/doc/libs/1_48_0/libs/config/doc/html/boost_config/boost_macro_reference.html
 #if ((BOOST_VERSION / 100000) < 1 || ((BOOST_VERSION/100000) == 1 && ((BOOST_VERSION / 100) % 1000) < 48))
   #error "Cannot compile Upload Agent using Boost version < 1.48"
@@ -44,14 +42,6 @@
 using namespace std;
 using namespace dx;
 
-#if (WINDOWS_BUILD || MAC_BUILD)
-#if (WINDOWS_BUILD)
-  #include <windows.h>
-#endif
-  // This additional code is required for Windows & Mac build, since Magic database is not present
-  // in different locations (we simply bundle the .mgc file)
-  string MAGIC_DATABASE_PATH;	
-#endif
 
 int curlInit_call_count = 0;
 
@@ -394,145 +384,6 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
-#if (WINDOWS_BUILD || MAC_BUILD)
-void setMagicDBPath() {
-  if (MAGIC_DATABASE_PATH.size() > 0)
-    return;
-
-#if WINDOWS_BUILD 
-  // Find out the current process's directory
-  char buffer[32768] = {0}; // Maximum path length in windows (approx): http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath
-  if (!GetModuleFileName(NULL, buffer, 32767)) {
-    throw runtime_error("Unable to get current process's directory using GetModuleFileName() .. GetLastError() = " + boost::lexical_cast<string>(GetLastError()) + "\n");
-  }
-  string processPath = buffer;
-  size_t found = processPath.find_last_of("\\");
-  found = (found != string::npos) ? found : 0;
-  MAGIC_DATABASE_PATH = processPath.substr(0, found) + "\\resources\\magic";
-#endif
-
-#if MAC_BUILD
- MAGIC_DATABASE_PATH = getExecutablePathOnMac() + "/resources/magic.mgc";
-#endif
-}
-
-#endif
-
-/* 
- * - Returns the MIME type for a file (of this format: "type/subType")
- * - Symlinks are followed (and MIME type of actual file being pointed is returned)
- * - We do not try to uncompress an archive, rather return the mime type for compressed file.
- * - Throw runtime_error if the file path (fpath) is invalid, or if some other
- *   internal error occurs.
- */
-// Note: This function is NOT thread-safe (since it redirects "stderr" to /dev/null temporarily)
-//       At most one instance of this function should run at any time (else "stderr" might point to /dev/null forever)
-string getMimeType(string filePath) {
-  // It's necessary to check file's existence
-  // because if an invalid path is given,
-  // then, libmagic silently Seg faults.
-  if (!boost::filesystem::exists(boost::filesystem::path(filePath)))
-    throw runtime_error("Local file '" + filePath + "' does not exist");
-  
-  string magic_output;
-  magic_t magic_cookie;
-  magic_cookie = magic_open(MAGIC_MIME | MAGIC_NO_CHECK_COMPRESS | MAGIC_SYMLINK);
-  if (magic_cookie == NULL) {
-    throw runtime_error("error allocating magic cookie (libmagic)");
-  }
-
-#if LINUX_BUILD
-	const char *ptr_to_db = NULL; // NULL means look in default location
-#else
-	setMagicDBPath();
-	const char *ptr_to_db = MAGIC_DATABASE_PATH.c_str();
-#endif
-#if LINUX_BUILD
-  // We redirect stderr momentarily, because "libmagic" prints bunch of warning (which we don't care about much)
-  // on stderr, and the easiest way to get rid of them is to redirect stderr to /dev/null (see PTFM-4636)
-  FILE *stderr_backup = stderr; // store original stderr FILE pointer
-  FILE *devnull = fopen("/dev/null", "w");
-  if (devnull == NULL) {
-    // If unable to open /dev/null, try opening "nul" (for Windows case): http://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html
-    devnull = fopen("nul", "w");
-    if (devnull == NULL) {
-      // TODO: Probably we should not throw runtime_error() for it, as we can carry on by creating a temp file somewhere too.
-      //       or at max, user will see some extra warnings on stderr .. not a big deal eitherway
-      throw runtime_error("Unable to open either: '/dev/null' or 'nul': Unexpected");
-    }
-  }
-  stderr = devnull; // redirect stderr to /dev/null, so that warning by magic_load() are not printed.
-#endif
-  int errorCode = magic_load(magic_cookie, ptr_to_db);
-#if LINUX_BUILD
-  stderr = stderr_backup; // restore original value of stderr
-  fclose(devnull);
-#endif
-
-  if (errorCode) {
-    string errMsg = magic_error(magic_cookie);
-    magic_close(magic_cookie);
-#if LINUX_BUILD
-    throw runtime_error("cannot load magic database - '" + errMsg + "'");
-#else
-    throw runtime_error("cannot load magic database - '" + errMsg + "'" + " Magic DB path = '" + MAGIC_DATABASE_PATH + "'");
-#endif
-  } 
-  magic_output = magic_file(magic_cookie, filePath.c_str());
-  magic_close(magic_cookie);
-
-  // magic_output will be of this format: "type/subType; charset=.."
-  // we just want to return "type/subType"
-  return magic_output.substr(0, magic_output.find(';'));
-}
-
-/* 
- * - Returns true iff the file is detected as 
- *   one of the compressed types.
- */
-bool isCompressed(string mimeType) {
-  // This list is mostly compiled from: http://en.wikipedia.org/wiki/List_of_archive_formats
-  // Some of the items are added by trying libmagic with few common file formats
-  // Note: application/x-empty and inode/x-empty are added to treat
-  //       the special case of empty file (i.e., not compress them).
-  const char* compressed_mime_types[] = {
-    "application/x-bzip2",
-    "application/zip",
-    "application/x-gzip",
-    "application/x-lzip",
-    "application/x-lzma",
-    "application/x-lzop",
-    "application/x-xz",
-    "application/x-compress",
-    "application/x-7z-compressed",
-    "application/x-ace-compressed",
-    "application/x-alz-compressed",
-    "application/x-astrotite-afa",
-    "application/x-arj",
-    "application/x-cfs-compressed",
-    "application/x-lzx",
-    "application/x-lzh",
-    "application/x-gca-compressed",
-    "application/x-apple-diskimage",
-    "application/x-dgc-compressed",
-    "application/x-dar",
-    "application/vnd.ms-cab-compressed",
-    "application/x-rar-compressed",
-    "application/x-stuffit",
-    "application/x-stuffitx",
-    "application/x-gtar",
-    "application/x-zoo",
-    "application/x-empty",
-    "inode/x-empty"
-  };
-  unsigned numElems = sizeof compressed_mime_types/sizeof(compressed_mime_types[0]);
-  for (unsigned i = 0; i < numElems; ++i) {
-    if (mimeType == string(compressed_mime_types[i]))
-      return true;
-  }
-  return false;
-}
-
 /* This function throws a runtime_error if two or more file 
  * have same "signature", and are being uploaded to same project.
  * Note: - Signature is: <project, size, last_write_time, filename> tuple
@@ -656,13 +507,15 @@ int main(int argc, char * argv[]) {
     cerr << "ERROR: " << e.what() << endl;
     return 1;
   }
-  
+
   const bool anyImportAppToBeCalled = (opt.reads || opt.pairedReads || opt.mappings || opt.variants);
+ 
+/*// JM can now accept files which are not in "closed" state as inputs. So we no longer need to wait for them to close first.
   if (anyImportAppToBeCalled) {
     LOG << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)" << endl;
     opt.waitOnClose = true;
   }
-
+*/
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
   int exitCode = 0; 

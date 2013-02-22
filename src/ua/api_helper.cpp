@@ -45,11 +45,9 @@ void checkForUpdates() {
   string platform;
 #if WINDOWS_BUILD
   platform = "windows";
-#endif
-#if LINUX_BUILD
+#elif LINUX_BUILD
   platform = "linux";
-#endif
-#if MAC_BUILD
+#elif MAC_BUILD
   platform = "mac";
 #endif
   if (!platform.empty()) {
@@ -73,7 +71,7 @@ void checkForUpdates() {
   string ver = res["update"]["version"].get<string>();
   string url = res["update"]["url"].get<string>();
   if (res["update"]["level"] == "required") {
-    throw runtime_error(string("**********\nUnfortunately your copy of Upload Agent is too old to continue.") +
+    throw runtime_error(string("**********\nUpload Agent being used is too old to continue.") +
                         "\nPlease download latest version (v" + ver + ") from " + url + "\n**********");
   }
   // If we are here => A recommended update is available. Show user a message to that effect

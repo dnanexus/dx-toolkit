@@ -14,7 +14,7 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
-#include "File.h"
+#include "file.h"
 #include "dxcpp/dxcpp.h"
 
 #include <boost/filesystem.hpp>
@@ -138,6 +138,7 @@ void File::init(const bool tryResuming) {
     }
   }
   if (!tryResuming || (findResult.size() == 0)) {
+    // Note: It's fine if mimeType is empty string "" (since default for /file/new is anyway empty media type)
     fileID = createFileObject(projectID, folder, remoteFileName, mimeType, properties);
     isRemoteFileOpen = true;
     LOG << "fileID is " << fileID << endl;
