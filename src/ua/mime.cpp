@@ -129,7 +129,7 @@ void setMagicDBPath() {
 string getMimeTypeUsingLibmagic(const string& filePath) {
   string magic_output;
   magic_t magic_cookie;
-  magic_cookie = magic_open(MAGIC_MIME | MAGIC_NO_CHECK_COMPRESS | MAGIC_ERROR);
+  magic_cookie = magic_open(MAGIC_MIME | MAGIC_NO_CHECK_COMPRESS | MAGIC_SYMLINK | MAGIC_ERROR);
   if (magic_cookie == NULL) {
     throw runtime_error("error allocating magic cookie (libmagic)");
   }
