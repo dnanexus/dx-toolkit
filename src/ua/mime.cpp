@@ -22,6 +22,7 @@
 #include <functional> 
 #include <cctype>
 #include <locale>
+#include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
 #include <magic.h>
 #include "mime.h"
