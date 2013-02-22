@@ -12,8 +12,8 @@ jobs in parallel).
 
 To create an executable from scratch, we encourage you to use the
 command-line tools `dx-app-wizard
-<http://wiki.dnanexus.com/Building-Your-First-DNAnexus-App>`_ and
-`dx-build-applet <http://wiki.dnanexus.com/DxBuildApplet>`_ (or
+<http://wiki.dnanexus.com/Developer-Tutorials/Build-Your-First-DNAnexus-App>`_
+and `dx-build-applet <http://wiki.dnanexus.com/DxBuildApplet>`_ (or
 `dx-build-app <http://wiki.dnanexus.com/DxBuildApp>`_) rather than using
 the API or bindings directly. The following handlers for applets, apps,
 and jobs are most useful for running preexisting executables and
