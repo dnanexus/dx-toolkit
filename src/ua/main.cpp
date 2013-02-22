@@ -415,7 +415,7 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
 void setUserAgentString() {
   // Set user agent string for libcurl calls, directly by Upload Agent
   bool windows_env = false;
-#ifdef WINDOWS_BUILD
+#if WINDOWS_BUILD
   windows_env = true;
 #endif
   // Include these things in user agent string: UA version, GIT version, a random hash (which will be unique per instance of UA)

@@ -57,7 +57,7 @@ void checkForUpdates() {
   LOG << "Checking for updates (calling /system/greet) ...";
   try {
     res = systemGreet(inp, false); // don't retry this requests, not that essential
-  } catch (DXAPIError &aerr) {
+  } catch (exception &aerr) {
     // If an error is thrown while calling /system/greet, we don't treat it as fatal
     // but instead just log it to stderr (if verbose mode was on).
     LOG << " failure (call failed), reason: '" << aerr.what() << "'" << endl;

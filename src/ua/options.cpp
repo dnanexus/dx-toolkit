@@ -25,7 +25,7 @@ using namespace std;
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
-#ifdef MAC_BUILD
+#if MAC_BUILD
   #include <mach-o/dyld.h>
 #endif
 namespace fs = boost::filesystem;
@@ -110,14 +110,23 @@ void Options::setApiserverDxConfig() {
   if (!apiserverProtocol.empty()) {
     LOG << "Setting dx::config::APISERVER_PROTOCOL from value provided at run time: '" << apiserverProtocol << "'" << endl;
     APISERVER_PROTOCOL() = apiserverProtocol;
+  } else {
+    apiserverProtocol = APISERVER_PROTOCOL();
+    LOG << "Using apiserver protocol from dx::config::APISERVER_PROTOCOL: '" << apiserverProtocol << "'" << endl;
   }
   if (apiserverPort != -1) {
     LOG << "Setting dx::config::APISERVER_PORT from value provided at run time: '" << apiserverPort << "'" << endl;
     APISERVER_PORT() = boost::lexical_cast<string>(apiserverPort);
+  } else {
+    apiserverPort = boost::lexical_cast<int>(APISERVER_PORT());
+    LOG << "Using apiserver port from dx::config::APISERVER_PORT: '" << apiserverPort << "'" << endl;
   }
   if (!apiserverHost.empty()) {
     LOG << "Setting dx::config::APISERVER_HOST from value provided at run time: '" << apiserverHost << "'" << endl;
     APISERVER_HOST() = apiserverHost;
+  } else {
+    apiserverHost = APISERVER_HOST();
+    LOG << "Using apiserver host from dx::config::APISERVER_HOST: '" << apiserverHost << "'" << endl;
   }
   // Now check that dxcpp has all of the required apiserver params set
   if (APISERVER().empty()) {
@@ -144,7 +153,7 @@ void Options::printHelp(char * programName) {
        << (*visible_opts) << endl;
 }
 
-#ifdef MAC_BUILD
+#if MAC_BUILD
   // Returns path of executable on Mac (not portable)
   string getExecutablePathOnMac() {
     char path[1024 * 100];
@@ -168,7 +177,7 @@ void Options::printHelp(char * programName) {
 // Note: Do not call when protocol being used != https
 void setCertificateFile(const string &certificateFile) {
   using namespace dx::config;
-  #ifdef MAC_BUILD
+  #if MAC_BUILD
     const unsigned ARR_SIZE = 3;
   #else
     const unsigned ARR_SIZE = 2;
@@ -177,7 +186,7 @@ void setCertificateFile(const string &certificateFile) {
     "/etc/ssl/certs/ca-certificates.crt", // default on ubuntu
     "/etc/pki/tls/certs/ca-bundle.crt" // default on centos
   };
-  #ifdef MAC_BUILD
+  #if MAC_BUILD
     // If we are building on mac, then add one more path to look for certificate file, i.e.,
     // the current executable path (since we bundle certificate file together with distribution)
     string certpath = getExecutablePathOnMac() + "/resources/ca-certificates.crt";
@@ -190,7 +199,7 @@ void setCertificateFile(const string &certificateFile) {
   } else {
     if (CA_CERT().empty()) {
       LOG << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
-      #ifdef WINDOWS_BUILD
+      #if WINDOWS_BUILD
         LOG << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default." << endl;
         return;
       #else
@@ -311,13 +320,10 @@ void Options::validate() {
     throw runtime_error(msg.str());
   }
   */
-  // ugly way to do case insensitive comparison, but works
-  // without adding additional dependencies, like boost string, etc
-  string lowerCaseApiserverProtocol = "";
-  for (unsigned i = 0; i < apiserverProtocol.length(); ++i)
-    lowerCaseApiserverProtocol += tolower(apiserverProtocol[i]);
+  string lowerCaseProt = dx::config::APISERVER_PROTOCOL();
+  std::transform(lowerCaseProt.begin(), lowerCaseProt.end(), lowerCaseProt.begin(), ::tolower); // conver to lower case
   
-  if (lowerCaseApiserverProtocol == "https") {
+  if (lowerCaseProt == "https") {
     setCertificateFile(certificateFile);
   }
   if (readThreads < 1) {
