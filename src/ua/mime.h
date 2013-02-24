@@ -14,15 +14,11 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
-#ifndef UA_IMPORT_APP_H
-#define UA_IMPORT_APP_H
+#include <string>
 
-#include "api_helper.h"
-#include "file.h"
-#include "options.h"
-#include "log.h"
-#include <vector>
+// See the comments in mime.cpp for details about what
+// the following functions do
 
-void runImportApps(const Options &opt, std::vector<File> &files);
+std::string getMimeType(const std::string &filePath);
 
-#endif
+bool isCompressed(const std::string &mimeType);

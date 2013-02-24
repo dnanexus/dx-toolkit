@@ -45,11 +45,9 @@ void checkForUpdates() {
   string platform;
 #if WINDOWS_BUILD
   platform = "windows";
-#endif
-#if LINUX_BUILD
+#elif LINUX_BUILD
   platform = "linux";
-#endif
-#if MAC_BUILD
+#elif MAC_BUILD
   platform = "mac";
 #endif
   if (!platform.empty()) {
@@ -59,7 +57,7 @@ void checkForUpdates() {
   LOG << "Checking for updates (calling /system/greet) ...";
   try {
     res = systemGreet(inp, false); // don't retry this requests, not that essential
-  } catch (DXAPIError &aerr) {
+  } catch (exception &aerr) {
     // If an error is thrown while calling /system/greet, we don't treat it as fatal
     // but instead just log it to stderr (if verbose mode was on).
     LOG << " failure (call failed), reason: '" << aerr.what() << "'" << endl;
@@ -73,7 +71,7 @@ void checkForUpdates() {
   string ver = res["update"]["version"].get<string>();
   string url = res["update"]["url"].get<string>();
   if (res["update"]["level"] == "required") {
-    throw runtime_error(string("**********\nUnfortunately your copy of Upload Agent is too old to continue.") +
+    throw runtime_error(string("**********\nUpload Agent being used is too old to continue.") +
                         "\nPlease download latest version (v" + ver + ") from " + url + "\n**********");
   }
   // If we are here => A recommended update is available. Show user a message to that effect
