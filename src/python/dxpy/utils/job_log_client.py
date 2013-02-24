@@ -76,7 +76,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
 
         if self.print_job_info and 'job' in message and message['job'] not in self.seen_jobs:
             self.seen_jobs[message['job']] = dxpy.describe(message['job'])
-            print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False)
+            print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False, show_outputs=True)
 
         if message.get('source') == 'SYSTEM' and message.get('msg') == 'END_LOG':
             self.close()

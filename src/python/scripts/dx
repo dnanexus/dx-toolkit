@@ -1929,7 +1929,7 @@ def find_jobs(args):
     project = dxpy.WORKSPACE_ID
     origin = None
     more_results = False
-    include_io = args.verbose and args.json
+    include_io = (args.verbose and args.json) or args.show_outputs
     id_desc = None
     need_to_requery = args.trees and (
         args.state is not None or
@@ -1981,7 +1981,7 @@ def find_jobs(args):
                 elif args.brief:
                     output_ids.append(args.id)
                 else:
-                    print format_tree({}, get_find_jobs_string(id_desc, False, True))
+                    print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True, show_outputs=opts.show_outputs))
             else:   
                 i = 0
                 for job_result in dxpy.find_jobs(**query):
@@ -1994,7 +1994,7 @@ def find_jobs(args):
                     elif args.brief:
                         output_ids.append(job_result['id'])
                     else:
-                        print format_tree({}, get_find_jobs_string(job_result['describe'], False, True))
+                        print format_tree({}, get_find_jobs_string(job_result['describe'], has_children=False, single_result=True, show_outputs=opts.show_outputs))
         else:
             origin_jobs = []  # List of origin job IDs (ordered by search results)
             job_descs = {}    # job ID -> job desc
@@ -2051,7 +2051,7 @@ def find_jobs(args):
                     if args.json:
                         json_output.append(job_descs[origin_job])
                     elif not args.brief:
-                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], False))
+                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], has_children=False, show_outputs=opts.show_outputs))
             else: # args.trees
 
                 def process_children(parent_job, parent_hash=None):
@@ -2062,7 +2062,7 @@ def find_jobs(args):
                         output_ids.append(parent_job)
                     else:
                         parent_string = get_find_jobs_string(job_descs[parent_job],
-                                                             has_children)
+                                                             has_children=has_children)
                         parent_hash[parent_string] = collections.OrderedDict()
                     if has_children:
                         for child_job in job_children[parent_job]:
@@ -3513,6 +3513,7 @@ parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job; i
 parser_find_jobs.add_argument('--created-after', help=fill('Integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_find_jobs.add_argument('--created-before', help=fill('Integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
+parser_find_jobs.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
 parser_find_jobs_search_gp = parser_find_jobs.add_argument_group('Search mode')
 parser_find_jobs_search = parser_find_jobs_search_gp.add_mutually_exclusive_group()
 parser_find_jobs_search.add_argument('--trees', help=fill('Show entire job trees for all matching results (default)', width_adjustment=-24), action='store_true')

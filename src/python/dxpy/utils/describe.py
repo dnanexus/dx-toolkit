@@ -454,11 +454,11 @@ def print_job_desc(desc):
             print_field("Started running", datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime())
         else:
             print_field("Started running", "{t} (running for {rt})".format(t=datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime(),
-                rt=datetime.timedelta(milliseconds=int(time.time()*1000)-desc['startedRunning'])))
+                rt=datetime.timedelta(seconds=int(time.time())-desc['startedRunning']/1000)))
     if 'stoppedRunning' in desc:
         print_field("Stopped running", "{t} (Runtime: {rt})".format(
             t=datetime.datetime.fromtimestamp(desc['stoppedRunning']/1000).ctime(),
-            rt=datetime.timedelta(milliseconds=desc['stoppedRunning']-desc['startedRunning'])))
+            rt=datetime.timedelta(seconds=(desc['stoppedRunning']-desc['startedRunning'])/1000)))
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
@@ -555,7 +555,7 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
 
-def get_find_jobs_string(jobdesc, has_children, single_result=False):
+def get_find_jobs_string(jobdesc, has_children, single_result=False, show_outputs=True):
     '''
     :param jobdesc: hash of job describe output
     :param has_children: whether the job has subjobs to be printed
@@ -578,5 +578,14 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False):
             result += " (runtime {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
     elif jobdesc['state'] == 'running':
         result += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
+
+    if show_outputs and jobdesc.get("output") != None:
+        prefix = DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
+        if len(jobdesc["output"]) == 0:
+            result += prefix + "Output: -"
+        else:
+            result += prefix + "Output: " + (prefix+' '*8).join([fill(key + ' = ' + io_val_to_str(value),
+                                                                      subsequent_indent=' '*9,
+                                                                      break_long_words=False) for key, value in jobdesc["output"].items()])
 
     return result
