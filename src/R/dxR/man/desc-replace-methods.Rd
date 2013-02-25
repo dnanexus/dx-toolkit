@@ -16,12 +16,8 @@
   given value.  Usually called with \code{\link{describe}}.
 }
 \examples{
-\dontrun{
-dxgtable <- DXGTable("gtable-123456789012345678901234")
-
-# The following command refreshes the cached description of the
-# object
-desc(dxgtable) <- describe(dxgtable)
-}
+# The following command refreshes the cached description a
+# DXGTable object
+\dontrun{desc(dxgtable) <- describe(dxgtable)}
 }
 
