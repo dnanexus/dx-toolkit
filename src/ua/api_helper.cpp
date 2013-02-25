@@ -169,7 +169,7 @@ string resolveProject(const string &projectSpec) {
   }
 
   if (matchingProjectIdToName.size() > 1) {
-    LOG << "failure. " << matchingProjectIdToName.size() << " projects (with >=CONTRIBUTE access) match the identifer: \"" + projectSpec + "\":" << endl;
+    LOG << "failure. " << matchingProjectIdToName.size() << " projects (with >=CONTRIBUTE access) match the identifier: \"" + projectSpec + "\":" << endl;
     int i =  1;
     for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
       LOG << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")" << endl;
@@ -177,7 +177,7 @@ string resolveProject(const string &projectSpec) {
     throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project (multiple matches found)");
   }
   
-  LOG << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corrosponding to project identifer \"" << projectSpec << "\"" << endl;
+  LOG << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corresponding to project identifier \"" << projectSpec << "\"" << endl;
   return matchingProjectIdToName.begin()->first;
 }
 

@@ -259,25 +259,32 @@ void Options::validate() {
                         boost::lexical_cast<string>(files.size()) + " files, but only " +
                         boost::lexical_cast<string>(names.size()) + " names were provided.");
   }
-
+  
   if (projects.empty()) {
-    if (!dx::config::CURRENT_PROJECT().empty())
+    if (!dx::config::CURRENT_PROJECT().empty()) {
+      LOG << "No project was explicitly specified, will use from dx::config::CURRENT_PROJECT = '" << dx::config::CURRENT_PROJECT() << "'" << endl;
       projects.push_back(dx::config::CURRENT_PROJECT());
+    }
     else
       throw runtime_error("A project must be specified (or present in environment variables/config file). You may use --project to specify project id/name on command line");
-  } else if (projects.size() == 1) {
+  }
+  // Now if only 1 project is specified, make them equal to number of files.
+  if (projects.size() == 1) {
+    LOG << "Only one project was found (specified explicitly, or retrieved from environment variables). Will use it for all input file(s)." << endl;
     // If one project was specified, use that for all files.
     while (projects.size() < files.size()) {
       projects.push_back(projects[0]);
     }
-  } else if (projects.size() != files.size()) {
-    // If (multiple) projects were specified, there must be exactly as many
-    // projects as files.
-    throw runtime_error("Must specify a project for each file; there are " +
-                        boost::lexical_cast<string>(files.size()) + " files, but only " +
-                        boost::lexical_cast<string>(projects.size()) + " projects were provided.");
+  } else {
+    // If n projects (n > 1) were specified, then "n" should be exactly same as total number of files
+    if (projects.size() != files.size()) {
+      // If (multiple) projects were specified, there must be exactly as many
+      // projects as files.
+      throw runtime_error("Must specify a project for each file; there are " +
+                          boost::lexical_cast<string>(files.size()) + " files, but only " +
+                          boost::lexical_cast<string>(projects.size()) + " projects were provided.");
+    }
   }
-
   if (folders.empty()) {
     throw runtime_error("A folder must be specified");
   } else if (folders.size() == 1) {
