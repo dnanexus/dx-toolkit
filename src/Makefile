@@ -171,6 +171,7 @@ setup_doc_virtualenv: .setup_doc_virtualenv
 	touch .setup_doc_virtualenv
 
 doc_python: python setup_doc_virtualenv
+	rm -rf ../doc/python/html/_modules
 	source ../build/doc_env/bin/activate; source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
 
 doc_dxcpp:
