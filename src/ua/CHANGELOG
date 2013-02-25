@@ -1,0 +1,45 @@
+DNAnexus Upload Agent 1.2.5 <support@dnanexus.com>, 2013-Feb-25
+---------------------------------------------------------------
+  * Bug fix: UA crashed when uploading >1 files
+    without explicitly specifying a project.
+  
+  * https://github.com/dnanexus/dx-toolkit/commit/bc10fc7f576226de79333ac3de92a8b4046e507d
+
+  * Uploaded to wiki
+
+DNAnexus Upload Agent 1.2.4 <support@dnanexus.com>, 2013-Feb-22
+---------------------------------------------------------------
+  * [PTFM-5674] [PTFM-5184] fixed in this version
+    - We use "file" to find out mime type on POSIX compilant systems
+    - /system/greet is now called when UA starts to check for updates
+  
+  * https://github.com/dnanexus/dx-toolkit/commit/98fc8e2d5dc9e1261319da26cc4fe046996255f4
+  
+  * Uploaded to wiki
+
+=============================================================================================
+=============================================================================================
+
+DNAnexus Upload Agent all versions <1.2.4 <support@dnanexus.com>
+----------------------------------------------------------------
+ * We did not keep an explicit changelog for Upload Agent
+   before v1.2.4. Please see the dx-toolkit git repo for details.
+
+ * A super brief overview of UA's capabilities at v1.2.3
+   - Available for Linux, Mac & Windows.
+   - Supports uploading multiple files to multiple projects
+     (with possibly different names/folders)
+   - Can show progress bar
+     -- Individual file percentage complete
+     -- Average & Instantaneous transfer speed
+   - File upload integrity check is performed, i.e., a Content-MD5
+     header is added to all /UPLOAD requests
+   - Able to compress file (if not already compressed)
+   - Can resume uploads
+   - Can run import apps once the upload has finished (user can specify ref genome)
+     -- Import reads
+     -- Import paired reads
+     -- Import mappings
+     -- Import variants
+   - Number of compress/upload/reads threads can be tweaked
+   - "--env" flag available
