@@ -166,8 +166,7 @@ setup_doc_virtualenv: .setup_doc_virtualenv
 .setup_doc_virtualenv: ../build/doc_build_requirements.txt
 	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
 	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
-	virtualenv ../build/doc_env
-	(unset PYTHONPATH; source ../build/doc_env/bin/activate; pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
+	(unset PYTHONPATH; virtualenv ../build/doc_env; source ../build/doc_env/bin/activate; pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
 	virtualenv --relocatable ../build/doc_env
 	touch .setup_doc_virtualenv
 
