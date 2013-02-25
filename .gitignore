@@ -6,6 +6,7 @@
 /doc/python/
 /lib/
 /share/
+/src/.setup_doc_virtualenv
 /src/java/target/
 /src/python/dxpy/toolkit_version.py
 /src/dx-wig-to-wiggle/build
