@@ -1,3 +1,15 @@
+dx-toolkit (0.39.0) precise; urgency=low
+
+  * DXGTable bindings for R.
+
+  * "dx watch" and "dx find jobs -o" describe job outputs.
+
+  * Java bindings support builder pattern for creating JSON objects.
+
+  * Python bindings supply a User-Agent header containing the version.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 26 Feb 2013 15:28:11 -0800
+
 dx-toolkit (0.38.0) precise; urgency=low
 
   * Improvements to R and Java bindings.
