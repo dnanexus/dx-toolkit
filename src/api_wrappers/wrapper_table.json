@@ -1,365 +1,1091 @@
 [
- [
-  "/app-xxxx/addCategories", "appAddCategories(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories"}
- ],
- [
-  "/app-xxxx/addDevelopers", "appAddDevelopers(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/addTags", "appAddTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/delete", "appDelete(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/describe", "appDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/get", "appGet(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/install", "appInstall(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/listCategories", "appListCategories(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/listDevelopers", "appListDevelopers(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/publish", "appPublish(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/removeCategories", "appRemoveCategories(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/removeDevelopers", "appRemoveDevelopers(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/removeTags", "appRemoveTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/run", "appRun(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/app-xxxx/uninstall", "appUninstall(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app-xxxx/update", "appUpdate(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/app/new", "appNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/addTags", "appletAddTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/addTypes", "appletAddTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/close", "appletClose(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/describe", "appletDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/get", "appletGet(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/getDetails", "appletGetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/listProjects", "appletListProjects(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/removeTags", "appletRemoveTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/removeTypes", "appletRemoveTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/rename", "appletRename(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/run", "appletRun(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/setDetails", "appletSetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/setProperties", "appletSetProperties(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet-xxxx/setVisibility", "appletSetVisibility(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/applet/new", "appletNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/container-xxxx/clone", "containerClone(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/container-xxxx/describe", "containerDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/container-xxxx/destroy", "containerDestroy(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/container-xxxx/listFolder", "containerListFolder(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/container-xxxx/move", "containerMove(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/container-xxxx/newFolder", "containerNewFolder(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/container-xxxx/removeFolder", "containerRemoveFolder(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/container-xxxx/removeObjects", "containerRemoveObjects(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/container-xxxx/renameFolder", "containerRenameFolder(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/file-xxxx/addTags", "fileAddTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/addTypes", "fileAddTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/close", "fileClose(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/describe", "fileDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/download", "fileDownload(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/getDetails", "fileGetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/listProjects", "fileListProjects(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/removeTags", "fileRemoveTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/removeTypes", "fileRemoveTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/rename", "fileRename(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/setDetails", "fileSetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/setProperties", "fileSetProperties(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/setVisibility", "fileSetVisibility(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file-xxxx/upload", "fileUpload(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/file/new", "fileNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/addRows", "gtableAddRows(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/addTags", "gtableAddTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/addTypes", "gtableAddTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/close", "gtableClose(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/describe", "gtableDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/get", "gtableGet(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/getDetails", "gtableGetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/listProjects", "gtableListProjects(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/nextPart", "gtableNextPart(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/removeTags", "gtableRemoveTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/removeTypes", "gtableRemoveTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/rename", "gtableRename(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/setDetails", "gtableSetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/setProperties", "gtableSetProperties(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable-xxxx/setVisibility", "gtableSetVisibility(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/gtable/new", "gtableNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/job-xxxx/describe", "jobDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/job-xxxx/streamLog", "jobStreamLog(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/job-xxxx/terminate", "jobTerminate(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/job/new", "jobNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/notifications/get", "notificationsGet(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/notifications/markRead", "notificationsMarkRead(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/addTags", "projectAddTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/clone", "projectClone(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/project-xxxx/decreasePermissions", "projectDecreasePermissions(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/describe", "projectDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/destroy", "projectDestroy(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/invite", "projectInvite(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/project-xxxx/leave", "projectLeave(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/listFolder", "projectListFolder(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/move", "projectMove(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/project-xxxx/newFolder", "projectNewFolder(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/removeFolder", "projectRemoveFolder(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/removeObjects", "projectRemoveObjects(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/removeTags", "projectRemoveTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/renameFolder", "projectRenameFolder(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/project-xxxx/setProperties", "projectSetProperties(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project-xxxx/subscribe", "projectSubscribe(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/project-xxxx/unsubscribe", "projectUnsubscribe(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ],
- [
-  "/project-xxxx/update", "projectUpdate(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/project/new", "projectNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/record-xxxx/addTags", "recordAddTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/addTypes", "recordAddTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/close", "recordClose(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/describe", "recordDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/getDetails", "recordGetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/listProjects", "recordListProjects(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/removeTags", "recordRemoveTags(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/removeTypes", "recordRemoveTypes(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/rename", "recordRename(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/setDetails", "recordSetDetails(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/setProperties", "recordSetProperties(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record-xxxx/setVisibility", "recordSetVisibility(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/record/new", "recordNew(req)",  {"objectMethod":false, "retryable":false, "wikiLink": null}
- ],
- [
-  "/system/findAffiliates", "systemFindAffiliates(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/findApps", "systemFindApps(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/findDataObjects", "systemFindDataObjects(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/findJobs", "systemFindJobs(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/findProjects", "systemFindProjects(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/findUsers", "systemFindUsers(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/findProjectMembers", "systemFindProjectMembers(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/greet", "systemGreet(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/system/shortenURL", "systemShortenURL(req)",  {"objectMethod":false, "retryable":true, "wikiLink": null}
- ],
- [
-  "/user-xxxx/describe", "userDescribe(req, objectId)",  {"objectMethod":true, "retryable":true, "wikiLink": null}
- ],
- [
-  "/user-xxxx/update", "userUpdate(req, objectId)",  {"objectMethod":true, "retryable":false, "wikiLink": null}
- ]
+    [
+        "/app-xxxx/addCategories",
+        "appAddCategories(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories"
+        }
+    ],
+    [
+        "/app-xxxx/addDevelopers",
+        "appAddDevelopers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/addTags",
+        "appAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/delete",
+        "appDelete(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/describe",
+        "appDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/get",
+        "appGet(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/install",
+        "appInstall(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/listCategories",
+        "appListCategories(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/listDevelopers",
+        "appListDevelopers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/publish",
+        "appPublish(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/removeCategories",
+        "appRemoveCategories(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/removeDevelopers",
+        "appRemoveDevelopers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/removeTags",
+        "appRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/run",
+        "appRun(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/uninstall",
+        "appUninstall(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app-xxxx/update",
+        "appUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/app/new",
+        "appNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/addTags",
+        "appletAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/addTypes",
+        "appletAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/close",
+        "appletClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/describe",
+        "appletDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/get",
+        "appletGet(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/getDetails",
+        "appletGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/listProjects",
+        "appletListProjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/removeTags",
+        "appletRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/removeTypes",
+        "appletRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/rename",
+        "appletRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/run",
+        "appletRun(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/setDetails",
+        "appletSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/setProperties",
+        "appletSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet-xxxx/setVisibility",
+        "appletSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/applet/new",
+        "appletNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/clone",
+        "containerClone(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/describe",
+        "containerDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/destroy",
+        "containerDestroy(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/listFolder",
+        "containerListFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/move",
+        "containerMove(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/newFolder",
+        "containerNewFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/removeFolder",
+        "containerRemoveFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/removeObjects",
+        "containerRemoveObjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/container-xxxx/renameFolder",
+        "containerRenameFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/addTags",
+        "fileAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/addTypes",
+        "fileAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/close",
+        "fileClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/describe",
+        "fileDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/download",
+        "fileDownload(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/getDetails",
+        "fileGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/listProjects",
+        "fileListProjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/removeTags",
+        "fileRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/removeTypes",
+        "fileRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/rename",
+        "fileRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/setDetails",
+        "fileSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/setProperties",
+        "fileSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/setVisibility",
+        "fileSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file-xxxx/upload",
+        "fileUpload(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/file/new",
+        "fileNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/addRows",
+        "gtableAddRows(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/addTags",
+        "gtableAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/addTypes",
+        "gtableAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/close",
+        "gtableClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/describe",
+        "gtableDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/get",
+        "gtableGet(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/getDetails",
+        "gtableGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/listProjects",
+        "gtableListProjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/nextPart",
+        "gtableNextPart(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/removeTags",
+        "gtableRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/removeTypes",
+        "gtableRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/rename",
+        "gtableRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/setDetails",
+        "gtableSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/setProperties",
+        "gtableSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable-xxxx/setVisibility",
+        "gtableSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/gtable/new",
+        "gtableNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/job-xxxx/describe",
+        "jobDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/job-xxxx/streamLog",
+        "jobStreamLog(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/job-xxxx/terminate",
+        "jobTerminate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/job/new",
+        "jobNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/notifications/get",
+        "notificationsGet(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/notifications/markRead",
+        "notificationsMarkRead(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/addTags",
+        "projectAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/clone",
+        "projectClone(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/decreasePermissions",
+        "projectDecreasePermissions(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/describe",
+        "projectDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/destroy",
+        "projectDestroy(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/invite",
+        "projectInvite(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/leave",
+        "projectLeave(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/listFolder",
+        "projectListFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/move",
+        "projectMove(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/newFolder",
+        "projectNewFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/removeFolder",
+        "projectRemoveFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/removeObjects",
+        "projectRemoveObjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/removeTags",
+        "projectRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/renameFolder",
+        "projectRenameFolder(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/setProperties",
+        "projectSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/subscribe",
+        "projectSubscribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/unsubscribe",
+        "projectUnsubscribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project-xxxx/update",
+        "projectUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/project/new",
+        "projectNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/addTags",
+        "recordAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/addTypes",
+        "recordAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/close",
+        "recordClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/describe",
+        "recordDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/getDetails",
+        "recordGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/listProjects",
+        "recordListProjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/removeTags",
+        "recordRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/removeTypes",
+        "recordRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/rename",
+        "recordRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/setDetails",
+        "recordSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/setProperties",
+        "recordSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record-xxxx/setVisibility",
+        "recordSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/record/new",
+        "recordNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findAffiliates",
+        "systemFindAffiliates(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findApps",
+        "systemFindApps(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findDataObjects",
+        "systemFindDataObjects(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findJobs",
+        "systemFindJobs(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findProjects",
+        "systemFindProjects(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findUsers",
+        "systemFindUsers(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/findProjectMembers",
+        "systemFindProjectMembers(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/greet",
+        "systemGreet(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/system/shortenURL",
+        "systemShortenURL(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/user-xxxx/describe",
+        "userDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": null
+        }
+    ],
+    [
+        "/user-xxxx/update",
+        "userUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": null
+        }
+    ]
 ]
