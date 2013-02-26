@@ -23,6 +23,7 @@
 #include <boost/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/version.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/bqueue.h"
@@ -104,6 +105,11 @@ void readChunks() {
 
       c->log("Finished reading");
       chunksToCompress.produce(c);
+
+      // Sleep for tiny amount of time, to make sure we yield to other threads.
+      // Note: boost::this_thread::yield() is not a valid interruption point,
+      //       so we have to use sleep()
+      boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
   } catch (boost::thread_interrupted &ti) {
     return;
@@ -124,6 +130,11 @@ void compressChunks() {
       }
 
       chunksToUpload.produce(c);
+
+      // Sleep for tiny amount of time, to make sure we yield to other threads.
+      // Note: boost::this_thread::yield() is not a valid interruption point,
+      //       so we have to use sleep()
+      boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
   } catch (boost::thread_interrupted &ti) {
     return;
@@ -176,6 +187,10 @@ void uploadChunks(vector<File> &files) {
         c->clear();
         chunksFailed.produce(c);
       }
+      // Sleep for tiny amount of time, to make sure we yield to other threads.
+      // Note: boost::this_thread::yield() is not a valid interruption point,
+      //       so we have to use sleep()
+      boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
   } catch (boost::thread_interrupted &ti) {
     return;
@@ -425,11 +440,22 @@ void setUserAgentString() {
   stringstream iHash;
   iHash << std::hex << r1 << "-" << std::hex << r2;
   userAgentString = string("DNAnexus-Upload-Agent/") + UAVERSION + "/" + string(DXTOOLKIT_GITVERSION);
-  userAgentString += (windows_env) ? " (WINDOWS_BUILD=true)" : "";
+  
+  string platform = "unknown";
+#if WINDOWS_BUILD
+  platform = "windows";
+#elif LINUX_BUILD
+  platform = "linux";
+#elif MAC_BUILD
+  platform = "mac";
+#endif
+  userAgentString += " platform/" + platform;
   userAgentString += " uid/" + iHash.str();
+  // Now append the agent string from dxcpp
+  userAgentString += string(" ") + dx::config::USER_AGENT_STRING();
 
-  // Update user agent string of dxcpp
-  dx::config::USER_AGENT_STRING() = userAgentString + " " + dx::config::USER_AGENT_STRING(); 
+  // Now set user agent string of both UA & dxcpp to same thing
+  dx::config::USER_AGENT_STRING() = userAgentString;
 }
 
 // This function should be called before opt.setApiserverDxConfig() is called,
