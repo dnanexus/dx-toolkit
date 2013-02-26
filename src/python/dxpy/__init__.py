@@ -255,6 +255,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
                                         auth=auth, config=config, **kwargs)
 
+            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info').startswith('A recommended update is available'):
+                logging.info(response.headers['x-upgrade-info'])
+                global _UPGRADE_NOTIFY
+                _UPGRADE_NOTIFY = False
+
             if _DEBUG:
                 print >>sys.stderr, method, url, "<=", response.status_code, Repr().repr(response.content)
 
@@ -420,10 +425,9 @@ def _initialize(suppress_warning=False):
     :param suppress_warning: Whether to suppress the warning message for any mismatch found in the environment variables and the dx configuration file
     :type suppress_warning: boolean
     '''
-    global _DEBUG
-    _DEBUG = False
-    if '_DX_DEBUG' in os.environ:
-        _DEBUG = True
+    global _DEBUG, _UPGRADE_NOTIFY
+    _DEBUG = True if '_DX_DEBUG' in os.environ else False
+    _UPGRADE_NOTIFY = True
 
     env_vars = get_env(suppress_warning)
     for var in env_vars:
