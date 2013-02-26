@@ -1,3 +1,9 @@
+dx-toolkit (0.38.1) precise; urgency=low
+
+  * Correctly bump R bindings version number.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 26 Feb 2013 15:37:06 -0800
+
 dx-toolkit (0.38.0) precise; urgency=low
 
   * Improvements to R and Java bindings.
