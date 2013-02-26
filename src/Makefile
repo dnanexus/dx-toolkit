@@ -98,7 +98,7 @@ java: api_wrappers
 
 R: api_wrappers toolkit_version
 	mkdir -p "$(DNANEXUS_HOME)/lib/R"
-	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R --no-save < install_dxR_deps.R; R -e "library(roxygen2); roxygenize(\"dxR\")"; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
+	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q --no-restore --no-save < install_dxR_build_deps.R; R -q --no-restore --no-save -e "library(roxygen2); roxygenize(\"dxR\")"; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
 
 # Tools
 # =====
@@ -188,7 +188,7 @@ doc_java:
 
 doc_R: R
 	mkdir -p ../doc/R
-	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R CMD BATCH install_dxR_deps.R; R CMD INSTALL --build dxR --html --library="$(DNANEXUS_HOME)/lib/R"; cp -r "$(DNANEXUS_HOME)/lib/R/dxR/html/" "$(DNANEXUS_HOME)/doc/R/."; cp "$(DNANEXUS_HOME)/lib/R/dxR/DESCRIPTION" "$(DNANEXUS_HOME)/doc/R/html/.")
+	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R CMD INSTALL --build dxR --html --library="$(DNANEXUS_HOME)/lib/R"; cp -r "$(DNANEXUS_HOME)/lib/R/dxR/html/" "$(DNANEXUS_HOME)/doc/R/."; cp "$(DNANEXUS_HOME)/lib/R/dxR/DESCRIPTION" "$(DNANEXUS_HOME)/doc/R/html/.")
 	R/dxR-sanitize-htmldocs.py
 
 # Clean

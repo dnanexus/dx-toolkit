@@ -8,10 +8,18 @@ Description: dxR is an R extension containing API wrapper functions for
     interacting with the new DNAnexus platform.
 License: Apache License (== 2.0)
 Imports:
+    methods,
     RCurl
 Depends:
     RJSONIO
+Suggests:
+    testthat
 Collate:
     'api.R'
     'dxinit.R'
     'dxR-package.R'
+    'AllClasses.R'
+    'AllGenerics.R'
+    'DXGTable-methods.R'
+    'show-methods.R'
+    'DXGTable-generic-methods.R'

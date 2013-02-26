@@ -27,6 +27,7 @@ envVariables <- c('DX_APISERVER_HOST',
                   'DX_APISERVER_PROTOCOL',
                   'DX_PROJECT_CONTEXT_ID',
                   'DX_WORKSPACE_ID',
+                  'DX_JOB_ID',
                   'DX_CLI_WD',
                   'DX_USERNAME',
                   'DX_PROJECT_CONTEXT_NAME',
@@ -40,7 +41,11 @@ getFromJSONEnv <- function() {
     return (emptyNamedList)
   })
   for (varname in names(configjson)) {
-    assign(varname, configjson[[varname]], envir=dxEnv)
+    if (dxEnv[[varname]] == '') {
+      # Only use the value found if it was *not* found in the
+      # environment variables
+      assign(varname, configjson[[varname]], envir=dxEnv)
+    }
   }
 }
 
@@ -67,6 +72,12 @@ loadFromEnvironment <- function() {
   }
   if (dxEnv$DX_APISERVER_PROTOCOL == '') {
     assign('DX_APISERVER_PROTOCOL', "https", envir=dxEnv)
+  }
+
+  if (dxEnv$DX_JOB_ID == '') {
+    assign('DEFAULT_PROJECT', dxEnv$DX_PROJECT_CONTEXT_ID, envir=dxEnv)
+  } else {
+    assign('DEFAULT_PROJECT', dxEnv$DX_WORKSPACE_ID, envir=dxEnv)
   }
 }
 
@@ -161,6 +172,9 @@ dxHTTPRequest <- function(resource, data,
     body <- data
   }
 
+  # DEBUG:
+  # print(body)
+
   h <- RCurl::basicTextGatherer()
   d <- RCurl::basicHeaderGatherer()
   secondsToWait <- 2
@@ -199,6 +213,8 @@ dxHTTPRequest <- function(resource, data,
             as.numeric(d$value()['Content-Length']) != nchar(h$value(), type="bytes")) {
           toRetry <- TRUE
         } else {
+          # DEBUG:
+          # print(h$value())
           return (RJSONIO::fromJSON(h$value()))
         }
       } else if (statusCode >= 500 && statusCode <= 599) {
