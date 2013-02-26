@@ -43,18 +43,15 @@ toolkit_version:
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
 
 api_wrappers:
-	($(CXX) -O -Wall -o ../bin/generateWrapperTable api_wrappers/generateWrapperTable.cpp)
-	../bin/generateWrapperTable ../build/list_of_all_routes.txt > ../build/wrapper_table.json
-	cat ../build/wrapper_table.json | api_wrappers/generatePythonAPIWrappers.py > python/dxpy/api.py
-	cat ../build/wrapper_table.json | api_wrappers/generateCppAPIHWrappers.py > cpp/dxcpp/api.h
-	cat ../build/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
-	cat ../build/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
-	cat ../build/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
-	cat ../build/wrapper_table.json | api_wrappers/generateJavaAPIWrappers.py > java/src/main/java/com/dnanexus/DXAPI.java
-	cat ../build/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
-	touch -r "../build/list_of_all_routes.txt" python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc \
+	cat api_wrappers/wrapper_table.json | api_wrappers/generatePythonAPIWrappers.py > python/dxpy/api.py
+	cat api_wrappers/wrapper_table.json | api_wrappers/generateCppAPIHWrappers.py > cpp/dxcpp/api.h
+	cat api_wrappers/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
+	cat api_wrappers/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
+	cat api_wrappers/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
+	cat api_wrappers/wrapper_table.json | api_wrappers/generateJavaAPIWrappers.py > java/src/main/java/com/dnanexus/DXAPI.java
+	cat api_wrappers/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
+	touch -r python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc \
 		javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java
-	rm ../bin/generateWrapperTable
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
@@ -204,7 +201,6 @@ clean:
 	-rm -f ../bin/contigset2fasta
 	-rm -rf python/build
 	-rm -rf java/target
-	-rm -f ../build/wrapper_table.json
 	-rm -rf ../lib
 	-rm -rf ../share
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
