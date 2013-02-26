@@ -255,7 +255,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
                                         auth=auth, config=config, **kwargs)
 
-            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info').startswith('A recommended update is available'):
+            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available'):
                 logging.info(response.headers['x-upgrade-info'])
                 global _UPGRADE_NOTIFY
                 _UPGRADE_NOTIFY = False
