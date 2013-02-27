@@ -26,33 +26,51 @@ preamble = '''# Do not modify this file by hand.
 from dxpy import DXHTTPRequest
 '''
 
-class_method_template = '''
-def {method_name}(input_params={{}}, always_retry={retry}, **kwargs):
+class_method_template = '''def {wrapper_method_name}(input_params={{}}, always_retry={retry}, **kwargs):
+    """
+    Invokes the {route} API method.{wiki_ref}
+    """
     return DXHTTPRequest('{route}', input_params, always_retry=always_retry, **kwargs)
 '''
 
-object_method_template = '''
-def {method_name}(object_id, input_params={{}}, always_retry={retry}, **kwargs):
-    return DXHTTPRequest('/%s/{method_route}' % object_id, input_params, always_retry=always_retry, **kwargs)
+object_method_template = '''def {wrapper_method_name}(object_id, input_params={{}}, always_retry={retry}, **kwargs):
+    """
+    Invokes the {route} API method.{wiki_ref}
+    """
+    return DXHTTPRequest('/%s/{api_method_name}' % object_id, input_params, always_retry=always_retry, **kwargs)
 '''
 
-app_object_method_template = '''
-def {method_name}(app_name_or_id, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
+app_object_method_template = '''def {wrapper_method_name}(app_name_or_id, alias=None, input_params={{}}, always_retry={retry}, **kwargs):
+    """
+    Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
+    """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
-    return DXHTTPRequest('/%s/{method_route}' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+    return DXHTTPRequest('/%s/{api_method_name}' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 '''
+
+def make_wiki_ref(url):
+    return ("\n\n    For more info, see: " + url) if url else ""
+
+def make_class_method(wrapper_method_name, route, retry=False, url=None):
+    return class_method_template.format(wrapper_method_name=wrapper_method_name, route=route, retry=retry, wiki_ref=make_wiki_ref(url))
+
+def make_object_method(wrapper_method_name, api_method_name, route, retry=False, url=None):
+    return object_method_template.format(wrapper_method_name=wrapper_method_name, api_method_name=api_method_name, route=route, retry=retry, wiki_ref=make_wiki_ref(url))
+
+def make_app_object_method(wrapper_method_name, api_method_name, retry=False, url=None):
+    return app_object_method_template.format(wrapper_method_name=wrapper_method_name, api_method_name=api_method_name, retry=retry, wiki_ref=make_wiki_ref(url))
 
 print preamble
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
-    method_name = signature.split("(")[0]
+    wrapper_method_name = signature.split("(")[0]
     retry = "True" if (opts['retryable']) else "False"
     if (opts['objectMethod']):
-        root, oid_route, method_route = route.split("/")
+        root, oid_route, api_method_name = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, method_route=method_route, retry=retry)
+            print make_app_object_method(wrapper_method_name, api_method_name, retry=retry, url=opts.get('wikiLink', None))
         else:
-            print object_method_template.format(method_name=method_name, method_route=method_route, retry=retry)
+            print make_object_method(wrapper_method_name, api_method_name, route, retry=retry, url=opts.get('wikiLink', None))
     else:
-        print class_method_template.format(method_name=method_name, route=route, retry=retry)
+        print make_class_method(wrapper_method_name, route, retry=retry, url=opts.get('wikiLink', None))
