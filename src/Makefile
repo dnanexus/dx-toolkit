@@ -42,16 +42,28 @@ toolkit_version:
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
 
-api_wrappers:
+python/dxpy/api.py: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generatePythonAPIWrappers.py > python/dxpy/api.py
+
+cpp/dxcpp/api.h: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateCppAPIHWrappers.py > cpp/dxcpp/api.h
+
+cpp/dxcpp/api.cc: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateCppAPICCWrappers.py > cpp/dxcpp/api.cc
+
+javascript/DNAnexusAPI.js: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateJSAPIWrappers.py > javascript/DNAnexusAPI.js
+
+perl/lib/DNAnexus/API.pm: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generatePerlAPIWrappers.py > perl/lib/DNAnexus/API.pm
+
+java/src/main/java/com/dnanexus/DXAPI.java: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateJavaAPIWrappers.py > java/src/main/java/com/dnanexus/DXAPI.java
+
+R/dxR/R/api.R: api_wrappers/wrapper_table.json
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
-	touch -r python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc \
-		javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java
+
+api_wrappers: python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
