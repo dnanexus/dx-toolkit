@@ -109,12 +109,6 @@ namespace dx {
   JSON appletAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON appletAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
-  JSON appletAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-  JSON appletAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-  JSON appletClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-  JSON appletClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
   JSON appletDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON appletDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
@@ -130,23 +124,14 @@ namespace dx {
   JSON appletRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON appletRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
-  JSON appletRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-  JSON appletRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
   JSON appletRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON appletRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON appletRun(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
   JSON appletRun(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
-  JSON appletSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-  JSON appletSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
   JSON appletSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON appletSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-  JSON appletSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
-  JSON appletSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON appletNew(const std::string &input_params="{}", const bool retry=false);
   JSON appletNew(const dx::JSON &input_params, const bool retry=false);
@@ -333,12 +318,6 @@ namespace dx {
 
   JSON projectSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON projectSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
-
-  JSON projectSubscribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-  JSON projectSubscribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
-
-  JSON projectUnsubscribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-  JSON projectUnsubscribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
   JSON projectUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON projectUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);

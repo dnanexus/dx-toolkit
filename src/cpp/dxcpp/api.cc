@@ -278,22 +278,6 @@ namespace dx {
     return appletAddTags(object_id, input_params.toString(), retry);
   }
 
-  JSON appletAddTypes(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params, retry);
-  }
-
-  JSON appletAddTypes(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return appletAddTypes(object_id, input_params.toString(), retry);
-  }
-
-  JSON appletClose(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params, retry);
-  }
-
-  JSON appletClose(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return appletClose(object_id, input_params.toString(), retry);
-  }
-
   JSON appletDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
   }
@@ -334,14 +318,6 @@ namespace dx {
     return appletRemoveTags(object_id, input_params.toString(), retry);
   }
 
-  JSON appletRemoveTypes(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params, retry);
-  }
-
-  JSON appletRemoveTypes(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return appletRemoveTypes(object_id, input_params.toString(), retry);
-  }
-
   JSON appletRename(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params, retry);
   }
@@ -358,28 +334,12 @@ namespace dx {
     return appletRun(object_id, input_params.toString(), retry);
   }
 
-  JSON appletSetDetails(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params, retry);
-  }
-
-  JSON appletSetDetails(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return appletSetDetails(object_id, input_params.toString(), retry);
-  }
-
   JSON appletSetProperties(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params, retry);
   }
 
   JSON appletSetProperties(const std::string &object_id, const JSON &input_params, const bool retry) {
     return appletSetProperties(object_id, input_params.toString(), retry);
-  }
-
-  JSON appletSetVisibility(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params, retry);
-  }
-
-  JSON appletSetVisibility(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return appletSetVisibility(object_id, input_params.toString(), retry);
   }
 
   JSON appletNew(const std::string &input_params, const bool retry) {
@@ -876,22 +836,6 @@ namespace dx {
 
   JSON projectSetProperties(const std::string &object_id, const JSON &input_params, const bool retry) {
     return projectSetProperties(object_id, input_params.toString(), retry);
-  }
-
-  JSON projectSubscribe(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/subscribe"), input_params, retry);
-  }
-
-  JSON projectSubscribe(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return projectSubscribe(object_id, input_params.toString(), retry);
-  }
-
-  JSON projectUnsubscribe(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/unsubscribe"), input_params, retry);
-  }
-
-  JSON projectUnsubscribe(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return projectUnsubscribe(object_id, input_params.toString(), retry);
   }
 
   JSON projectUpdate(const std::string &object_id, const std::string &input_params, const bool retry) {

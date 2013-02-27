@@ -14,7 +14,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers"
         }
     ],
     [
@@ -23,7 +23,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags"
         }
     ],
     [
@@ -32,7 +32,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete"
         }
     ],
     [
@@ -41,7 +41,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe"
         }
     ],
     [
@@ -50,7 +50,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get"
         }
     ],
     [
@@ -59,7 +59,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install"
         }
     ],
     [
@@ -68,7 +68,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories"
         }
     ],
     [
@@ -77,7 +77,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers"
         }
     ],
     [
@@ -86,7 +86,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish"
         }
     ],
     [
@@ -95,7 +95,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories"
         }
     ],
     [
@@ -104,7 +104,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers"
         }
     ],
     [
@@ -113,7 +113,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags"
         }
     ],
     [
@@ -122,7 +122,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run"
         }
     ],
     [
@@ -131,7 +131,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall"
         }
     ],
     [
@@ -140,7 +140,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update"
         }
     ],
     [
@@ -149,7 +149,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new"
         }
     ],
     [
@@ -158,25 +158,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/applet-xxxx/addTypes",
-        "appletAddTypes(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/applet-xxxx/close",
-        "appletClose(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags"
         }
     ],
     [
@@ -185,7 +167,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe"
         }
     ],
     [
@@ -194,7 +176,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget"
         }
     ],
     [
@@ -203,7 +185,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails"
         }
     ],
     [
@@ -212,7 +194,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects"
         }
     ],
     [
@@ -221,16 +203,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/applet-xxxx/removeTypes",
-        "appletRemoveTypes(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags"
         }
     ],
     [
@@ -239,7 +212,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename"
         }
     ],
     [
@@ -248,16 +221,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/applet-xxxx/setDetails",
-        "appletSetDetails(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun"
         }
     ],
     [
@@ -266,16 +230,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/applet-xxxx/setVisibility",
-        "appletSetVisibility(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties"
         }
     ],
     [
@@ -284,7 +239,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew"
         }
     ],
     [
@@ -293,7 +248,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone"
         }
     ],
     [
@@ -302,7 +257,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe"
         }
     ],
     [
@@ -320,7 +275,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder"
         }
     ],
     [
@@ -329,7 +284,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove"
         }
     ],
     [
@@ -338,7 +293,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder"
         }
     ],
     [
@@ -347,7 +302,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder"
         }
     ],
     [
@@ -356,7 +311,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects"
         }
     ],
     [
@@ -365,7 +320,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder"
         }
     ],
     [
@@ -374,7 +329,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags"
         }
     ],
     [
@@ -383,7 +338,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes"
         }
     ],
     [
@@ -392,7 +347,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose"
         }
     ],
     [
@@ -401,7 +356,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe"
         }
     ],
     [
@@ -410,7 +365,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload"
         }
     ],
     [
@@ -419,7 +374,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails"
         }
     ],
     [
@@ -428,7 +383,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects"
         }
     ],
     [
@@ -437,7 +392,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags"
         }
     ],
     [
@@ -446,7 +401,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes"
         }
     ],
     [
@@ -455,7 +410,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename"
         }
     ],
     [
@@ -464,7 +419,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails"
         }
     ],
     [
@@ -473,7 +428,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties"
         }
     ],
     [
@@ -482,7 +437,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility"
         }
     ],
     [
@@ -491,7 +446,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload"
         }
     ],
     [
@@ -500,7 +455,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
         }
     ],
     [
@@ -509,7 +464,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows"
         }
     ],
     [
@@ -518,7 +473,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags"
         }
     ],
     [
@@ -527,7 +482,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes"
         }
     ],
     [
@@ -536,7 +491,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose"
         }
     ],
     [
@@ -545,7 +500,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe"
         }
     ],
     [
@@ -554,7 +509,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget"
         }
     ],
     [
@@ -563,7 +518,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails"
         }
     ],
     [
@@ -572,7 +527,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects"
         }
     ],
     [
@@ -581,7 +536,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart"
         }
     ],
     [
@@ -590,7 +545,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags"
         }
     ],
     [
@@ -599,7 +554,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes"
         }
     ],
     [
@@ -608,7 +563,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename"
         }
     ],
     [
@@ -617,7 +572,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails"
         }
     ],
     [
@@ -626,7 +581,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties"
         }
     ],
     [
@@ -635,7 +590,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility"
         }
     ],
     [
@@ -644,7 +599,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew"
         }
     ],
     [
@@ -653,7 +608,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe"
         }
     ],
     [
@@ -662,7 +617,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog"
         }
     ],
     [
@@ -671,7 +626,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate"
         }
     ],
     [
@@ -680,7 +635,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew"
         }
     ],
     [
@@ -707,7 +662,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags"
         }
     ],
     [
@@ -716,7 +671,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone"
         }
     ],
     [
@@ -725,7 +680,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions"
         }
     ],
     [
@@ -734,7 +689,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe"
         }
     ],
     [
@@ -743,7 +698,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy"
         }
     ],
     [
@@ -752,7 +707,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite"
         }
     ],
     [
@@ -761,7 +716,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave"
         }
     ],
     [
@@ -770,7 +725,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder"
         }
     ],
     [
@@ -779,7 +734,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove"
         }
     ],
     [
@@ -788,7 +743,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder"
         }
     ],
     [
@@ -797,7 +752,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder"
         }
     ],
     [
@@ -806,7 +761,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects"
         }
     ],
     [
@@ -815,7 +770,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags"
         }
     ],
     [
@@ -824,7 +779,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder"
         }
     ],
     [
@@ -833,25 +788,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/project-xxxx/subscribe",
-        "projectSubscribe(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": false,
-            "wikiLink": null
-        }
-    ],
-    [
-        "/project-xxxx/unsubscribe",
-        "projectUnsubscribe(req, objectId)",
-        {
-            "objectMethod": true,
-            "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties"
         }
     ],
     [
@@ -860,7 +797,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate"
         }
     ],
     [
@@ -869,7 +806,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew"
         }
     ],
     [
@@ -878,7 +815,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags"
         }
     ],
     [
@@ -887,7 +824,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes"
         }
     ],
     [
@@ -896,7 +833,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose"
         }
     ],
     [
@@ -905,7 +842,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe"
         }
     ],
     [
@@ -914,7 +851,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails"
         }
     ],
     [
@@ -923,7 +860,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects"
         }
     ],
     [
@@ -932,7 +869,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags"
         }
     ],
     [
@@ -941,7 +878,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes"
         }
     ],
     [
@@ -950,7 +887,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename"
         }
     ],
     [
@@ -959,7 +896,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails"
         }
     ],
     [
@@ -968,7 +905,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties"
         }
     ],
     [
@@ -977,7 +914,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility"
         }
     ],
     [
@@ -986,7 +923,7 @@
         {
             "objectMethod": false,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew"
         }
     ],
     [
@@ -1004,7 +941,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps"
         }
     ],
     [
@@ -1013,7 +950,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects"
         }
     ],
     [
@@ -1022,7 +959,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs"
         }
     ],
     [
@@ -1031,7 +968,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects"
         }
     ],
     [
@@ -1040,7 +977,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers"
         }
     ],
     [
@@ -1049,7 +986,7 @@
         {
             "objectMethod": false,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers"
         }
     ],
     [
@@ -1076,7 +1013,7 @@
         {
             "objectMethod": true,
             "retryable": true,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe"
         }
     ],
     [
@@ -1085,7 +1022,7 @@
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": null
+            "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate"
         }
     ]
 ]

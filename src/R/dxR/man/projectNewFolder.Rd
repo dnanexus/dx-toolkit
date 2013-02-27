@@ -33,6 +33,10 @@
   wrapper around the \code{\link{dxHTTPRequest}} function
   which makes POST HTTP requests to the API server.
 }
+\references{
+  API spec documentation:
+  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FnewFolder}
+}
 \seealso{
   \code{\link{dxHTTPRequest}}
 }

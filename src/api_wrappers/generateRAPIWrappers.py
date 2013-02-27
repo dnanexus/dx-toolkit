@@ -43,7 +43,7 @@ class_method_template = '''
 ##' @return If the API call is successful, the parsed JSON of the API server
 ##' response is returned (using \code{{RJSONIO::fromJSON}}).
 ##' @export
-##' @seealso \code{{\link{{dxHTTPRequest}}}}
+##' @seealso \code{{\link{{dxHTTPRequest}}}}{wiki_ref}
 {method_name} <- function(inputParams=emptyNamedList,
 {indent}jsonifyData=TRUE,
 {indent}alwaysRetry={retry}) {{
@@ -71,7 +71,7 @@ object_method_template = '''
 ##' @return If the API call is successful, the parsed JSON of the API server
 ##' response is returned (using \code{{RJSONIO::fromJSON}}).
 ##' @export
-##' @seealso \code{{\link{{dxHTTPRequest}}}}
+##' @seealso \code{{\link{{dxHTTPRequest}}}}{wiki_ref}
 {method_name} <- function(objectID,
 {indent}inputParams=emptyNamedList,
 {indent}jsonifyData=TRUE,
@@ -108,7 +108,7 @@ app_object_method_template = '''
 ##' @return If the API call is successful, the parsed JSON of the API server
 ##' response is returned (using \code{{RJSONIO::fromJSON}}).
 ##' @export
-##' @seealso \code{{\link{{dxHTTPRequest}}}}
+##' @seealso \code{{\link{{dxHTTPRequest}}}}{wiki_ref}
 {method_name} <- function(appNameOrID, alias=NULL,
 {indent}inputParams=emptyNamedList, jsonifyData=TRUE,
 {indent}alwaysRetry={retry}) {{
@@ -130,6 +130,7 @@ for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
     method_name = signature.split("(")[0]
     retry = "TRUE" if (opts['retryable']) else "FALSE"
+    wiki_ref = "" if (opts["wikiLink"] is None) else "\n##' @references API spec documentation: \url{" + opts["wikiLink"].replace("%", "\\%") + "}"
     indent = " " * len(method_name + " <- function(")
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
@@ -138,15 +139,18 @@ for method in json.loads(sys.stdin.read()):
                                                     route=route,
                                                     method_route=method_route,
                                                     retry=retry,
+                                                    wiki_ref=wiki_ref,
                                                     indent=indent)
         else:
             print object_method_template.format(method_name=method_name,
                                                 route=route,
                                                 method_route=method_route,
                                                 retry=retry,
+                                                wiki_ref=wiki_ref,
                                                 indent=indent)
     else:
         print class_method_template.format(method_name=method_name,
                                            route=route,
                                            retry=retry,
+                                           wiki_ref=wiki_ref,
                                            indent=indent)

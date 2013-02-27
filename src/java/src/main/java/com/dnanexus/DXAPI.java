@@ -141,20 +141,6 @@ public class DXAPI {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
 
-    public static JsonNode appletAddTypes(String objectId) throws Exception {
-        return appletAddTypes(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode appletAddTypes(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
-    }
-
-    public static JsonNode appletClose(String objectId) throws Exception {
-        return appletClose(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode appletClose(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
-    }
-
     public static JsonNode appletDescribe(String objectId) throws Exception {
         return appletDescribe(objectId, mapper.readTree("{}"));
     }
@@ -190,13 +176,6 @@ public class DXAPI {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
-    public static JsonNode appletRemoveTypes(String objectId) throws Exception {
-        return appletRemoveTypes(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode appletRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
-    }
-
     public static JsonNode appletRename(String objectId) throws Exception {
         return appletRename(objectId, mapper.readTree("{}"));
     }
@@ -211,25 +190,11 @@ public class DXAPI {
         return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
     }
 
-    public static JsonNode appletSetDetails(String objectId) throws Exception {
-        return appletSetDetails(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode appletSetDetails(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
-    }
-
     public static JsonNode appletSetProperties(String objectId) throws Exception {
         return appletSetProperties(objectId, mapper.readTree("{}"));
     }
     public static JsonNode appletSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
-    }
-
-    public static JsonNode appletSetVisibility(String objectId) throws Exception {
-        return appletSetVisibility(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode appletSetVisibility(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
     public static JsonNode appletNew() throws Exception {
@@ -664,20 +629,6 @@ public class DXAPI {
     }
     public static JsonNode projectSetProperties(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
-    }
-
-    public static JsonNode projectSubscribe(String objectId) throws Exception {
-        return projectSubscribe(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode projectSubscribe(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "subscribe", inputParams);
-    }
-
-    public static JsonNode projectUnsubscribe(String objectId) throws Exception {
-        return projectUnsubscribe(objectId, mapper.readTree("{}"));
-    }
-    public static JsonNode projectUnsubscribe(String objectId, JsonNode inputParams) throws Exception {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "unsubscribe", inputParams);
     }
 
     public static JsonNode projectUpdate(String objectId) throws Exception {

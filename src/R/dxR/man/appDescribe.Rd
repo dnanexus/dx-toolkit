@@ -40,6 +40,10 @@
   wrapper around the \code{\link{dxHTTPRequest}} function
   which makes POST HTTP requests to the API server.
 }
+\references{
+  API spec documentation:
+  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/describe}
+}
 \seealso{
   \code{\link{dxHTTPRequest}}
 }

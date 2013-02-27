@@ -33,6 +33,12 @@
   wrapper around the \code{\link{dxHTTPRequest}} function
   which makes POST HTTP requests to the API server.
 }
+\references{
+  API spec documentation:
+  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets
+  and Entry
+  Points#API-method\%3A-\%2Fjob-xxxx\%2Fterminate}
+}
 \seealso{
   \code{\link{dxHTTPRequest}}
 }

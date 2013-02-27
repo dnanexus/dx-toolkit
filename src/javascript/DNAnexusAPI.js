@@ -160,16 +160,6 @@ exports.appletAddTags = function(object_id, input_params) {
 };
 
 
-exports.appletAddTypes = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/addTypes', input_params);
-};
-
-
-exports.appletClose = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/close', input_params);
-};
-
-
 exports.appletDescribe = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
 };
@@ -195,11 +185,6 @@ exports.appletRemoveTags = function(object_id, input_params) {
 };
 
 
-exports.appletRemoveTypes = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/removeTypes', input_params);
-};
-
-
 exports.appletRename = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/rename', input_params);
 };
@@ -210,18 +195,8 @@ exports.appletRun = function(object_id, input_params) {
 };
 
 
-exports.appletSetDetails = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setDetails', input_params);
-};
-
-
 exports.appletSetProperties = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
-};
-
-
-exports.appletSetVisibility = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/setVisibility', input_params);
 };
 
 
@@ -532,16 +507,6 @@ exports.projectRenameFolder = function(object_id, input_params) {
 
 exports.projectSetProperties = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
-};
-
-
-exports.projectSubscribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/subscribe', input_params);
-};
-
-
-exports.projectUnsubscribe = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/unsubscribe', input_params);
 };
 
 
