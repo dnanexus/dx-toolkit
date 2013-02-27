@@ -22,10 +22,7 @@ import textwrap, subprocess, sys
 
 if sys.stdout.isatty():
     try:
-        p = subprocess.Popen(['stty', 'size'],
-                             stdin=sys.stdout,
-                             stdout=subprocess.PIPE)
-        tty_rows, tty_cols = map(int, p.stdout.read().split())
+        tty_rows, tty_cols = map(int, subprocess.check_output(['stty', 'size']).split())
         std_width = min(tty_cols - 2, 100)
     except:
         tty_rows, tty_cols = 24, 80
