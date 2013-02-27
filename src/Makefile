@@ -217,4 +217,4 @@ clean:
 	-rm -rf ../share
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
 
-.PHONY: all toolkit_version api_wrappers src_libs python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
+.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
