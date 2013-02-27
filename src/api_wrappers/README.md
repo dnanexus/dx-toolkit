@@ -4,29 +4,28 @@ Wrapper generation for API routes
 wrapper_table.json
 ------------------
 
-This file is the canonical list of all API routes (for which wrappers need to
-be generated). The file contains a JSON array, all of whose elements are arrays
-themselves. This is what it looks like:
+The `wrapper_table.json` file is the canonical list of all API routes (for
+which wrappers need to be generated). The file contains a JSON array, all of
+whose elements are arrays themselves. This is what it looks like:
 
 ```json
 [
-  ...,
   [
     "/file-xxxx/upload",
     "fileUpload(req, objectId)",
     {
-        "objectMethod": true,
-        "retryable": true,
-        "wikiLink": null
+      "objectMethod": true,
+      "retryable": true,
+      "wikiLink": null
     }
   ],
   [
     "/file/new",
     "fileNew(req)",
     {
-        "objectMethod": false,
-        "retryable": false,
-        "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
+      "objectMethod": false,
+      "retryable": false,
+      "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
     }
   ],
   ...,
@@ -40,18 +39,19 @@ Each route is described by an array with exactly 3 elements:
 3. The third element is a hash with the following fields:
     * `objectMethod`: boolean; true for routes that are called on a specific object ID (e.g. `/record-xxxx/describe`), and false for routes that are not bound to a specific object ID (e.g. `/system/findJobs`, `/record/new`).
     * `retryable`: boolean; true if the route is "safe" to retry for failed requests. This information is used by the API wrappers to decide when to retry a failed request.
-    * `wikiLink`: either null or a string; if a string, then it's the URL for documentation of the route. This information can be used to add wiki links in api wrapper documentation.
+    * `wikiLink`: either null or a string; if provided, contains a URL for documentation for the route. This information can be used to add wiki links in api wrapper documentation.
 
 Adding wrappers for a new language
 ----------------------------------
 
 By convention we create a file `generateXXXXAPIWrappers.py` in this directory
-for each supported language. These are python scripts which read
-`wrapper_table.json` from stdin, and produce a language-specific wrapper file
+for each supported language. This is a Python script which reads
+`wrapper_table.json` from stdin, and produces a language-specific wrapper file
 on stdout.
 
 To add wrappers for your favorite language (say, Ruby):
 
+* Implement a function for making a single HTTP request to a DNAnexus API server. (You will call this function below in the implementation of each route's wrapper.) Add this and whatever other common bindings code are needed into a new directory, say, `src/ruby`.
+    * TODO: document under what conditions requests should be retried, and where configuration such as the user's security context is conventionally stored.
 * Create a file `generateRubyAPIWrappers.py` in this directory, `dx-toolkit/src/api_wrappers/`. This file should read a description of the routes on stdin (see `wrapper_table.json`), and produce a .rb file (with relevant function definitions, etc) on stdout. Look at `dx-toolkit/src/api_wrappers/generatePythonAPIWrappers.py` for an example.
-
 * Add a new make target in `dx-toolkit/src/Makefile` to build the wrappers, and make the `api_wrappers` target depend on it. Refer to the existing examples in the Makefile.
