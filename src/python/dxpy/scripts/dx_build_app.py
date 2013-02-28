@@ -339,6 +339,8 @@ def main(**kwargs):
         # options through to the interior call of dx_build_app(let).
         if args.dry_run:
             parser.error('--remote cannot be combined with --dry-run')
+        if args.overwrite:
+            parser.error('--remote cannot be combined with --overwrite/-f')
 
         # The following flags are probably not useful in conjunction
         # with --remote.
