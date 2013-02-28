@@ -31,6 +31,11 @@ from dxpy.bindings import *
 # DXApplet #
 ############
 
+def makeNonexistentAPIWrapper(method):
+    def nonexistentAPIWrapper(object_id, input_params=None, always_retry=None, **kwargs):
+        raise DXError("Wrapper for " + method + " does not exist")
+    return nonexistentAPIWrapper
+
 class DXApplet(DXDataObject):
     '''
     Remote applet object handler.
@@ -41,16 +46,16 @@ class DXApplet(DXDataObject):
     _class = "applet"
 
     _describe = staticmethod(dxpy.api.appletDescribe)
-    _add_types = staticmethod(dxpy.api.appletAddTypes)
-    _remove_types = staticmethod(dxpy.api.appletRemoveTypes)
+    _add_types = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/addTypes"))
+    _remove_types = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/removeTypes"))
     _get_details = staticmethod(dxpy.api.appletGetDetails)
-    _set_details = staticmethod(dxpy.api.appletSetDetails)
-    _set_visibility = staticmethod(dxpy.api.appletSetVisibility)
+    _set_details = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/setDetails"))
+    _set_visibility = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/setVisibility"))
     _rename = staticmethod(dxpy.api.appletRename)
     _set_properties = staticmethod(dxpy.api.appletSetProperties)
     _add_tags = staticmethod(dxpy.api.appletAddTags)
     _remove_tags = staticmethod(dxpy.api.appletRemoveTags)
-    _close = staticmethod(dxpy.api.appletClose)
+    _close = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/close"))
     _list_projects = staticmethod(dxpy.api.appletListProjects)
 
     def _new(self, dx_hash, **kwargs):
