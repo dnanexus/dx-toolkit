@@ -35,7 +35,8 @@ _test_harness_jobs = {}
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None, **kwargs):
+def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None, details=None,
+              **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -47,6 +48,8 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None,
     :type instance_type: string or dict
     :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
     :type depends_on: list
+    :param details: Details to set for the job
+    :type details: dict or list
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -70,7 +73,7 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None,
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name, name, instance_type, depends_on, **kwargs)
+    dxjob.new(fn_input, fn_name, name, instance_type, depends_on, details, **kwargs)
     return dxjob
 
 class DXJob(DXObject):
@@ -84,7 +87,8 @@ class DXJob(DXObject):
         self._test_harness_result = None
         DXObject.__init__(self, dxid=dxid)
 
-    def new(self, fn_input, fn_name, name=None, instance_type=None, depends_on=None, **kwargs):
+    def new(self, fn_input, fn_name, name=None, instance_type=None, depends_on=None, details=None,
+            **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -96,6 +100,8 @@ class DXJob(DXObject):
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
+        :param details: Details to set for the job
+        :type details: dict or list
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job
@@ -136,6 +142,8 @@ class DXJob(DXObject):
                             raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
                 else:
                     raise DXError('Expected depends_on field to be a list')                    
+            if details is not None:
+                req_input["details"] = details
             resp = dxpy.api.jobNew(req_input, **kwargs)
             self.set_id(resp["id"])
         else:

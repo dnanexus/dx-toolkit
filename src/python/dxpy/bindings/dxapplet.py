@@ -117,7 +117,8 @@ class DXApplet(DXDataObject):
         """
         return dxpy.api.appletGet(self._dxid, **kwargs)
 
-    def run(self, applet_input, project=None, folder="/", name=None, instance_type=None, depends_on=None, **kwargs):
+    def run(self, applet_input, project=None, folder="/", name=None, instance_type=None,
+            depends_on=None, details=None, **kwargs):
         '''
         :param applet_input: Hash of the applet's input arguments
         :type applet_input: dict
@@ -131,6 +132,8 @@ class DXApplet(DXDataObject):
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
+        :param details: Details to set for the job
+        :type details: dict or list
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -167,6 +170,9 @@ class DXApplet(DXDataObject):
                         raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
             else:
                 raise DXError('Expected depends_on field to be a list')                    
+
+        if details is not None:
+            run_input["details"] = details
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project
