@@ -130,10 +130,13 @@ environment variables:
 # except:
 #     pass
 
-import os, json, requests, time
+import os, json, time, logging, httplib
+import requests
 from requests.exceptions import ConnectionError, HTTPError
 from requests.auth import AuthBase
-import httplib
+
+logger = logging.getLogger(__name__)
+
 from dxpy.exceptions import *
 from dxpy.toolkit_version import version as TOOLKIT_VERSION
 
@@ -256,7 +259,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                                         auth=auth, config=config, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available'):
-                logging.info(response.headers['x-upgrade-info'])
+                logger.info(response.headers['x-upgrade-info'])
                 global _UPGRADE_NOTIFY
                 _UPGRADE_NOTIFY = False
 
@@ -311,7 +314,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
                     delay = 2 ** (retry+1)
-                    logging.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
+                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
                     time.sleep(delay)
                     continue
             break

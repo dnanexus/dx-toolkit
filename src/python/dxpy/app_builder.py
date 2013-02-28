@@ -34,8 +34,9 @@ the effective destination project.
 
 '''
 
-import os, sys, json, subprocess, tempfile, logging, multiprocessing
+import os, sys, json, subprocess, tempfile, multiprocessing
 import dxpy
+from dxpy import logger
 
 NUM_CORES = multiprocessing.cpu_count()
 
@@ -82,11 +83,11 @@ def build(src_dir, parallel_build=True):
     if it exists (building with as many parallel tasks as there are CPUs on the
     system).
     """
-    logging.debug("Building in " + src_dir)
+    logger.debug("Building in " + src_dir)
     # TODO: use Gentoo or deb buildsystem
     config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
-        logging.debug("Running ./configure")
+        logger.debug("Running ./configure")
         try:
             subprocess.check_call([config_script])
         except subprocess.CalledProcessError as e:
@@ -98,7 +99,7 @@ def build(src_dir, parallel_build=True):
             make_shortcmd = "make -j%d" % (NUM_CORES,)
         else:
             make_shortcmd = "make"
-        logging.debug("Building with " + make_shortcmd)
+        logger.debug("Building with " + make_shortcmd)
         try:
             make_cmd = ["make", "-C", src_dir]
             if parallel_build:
@@ -143,7 +144,7 @@ def upload_resources(src_dir, project=None):
 
     resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
-        logging.debug("Uploading in " + src_dir)
+        logger.debug("Uploading in " + src_dir)
 
         with tempfile.NamedTemporaryFile(suffix=".tar.gz") as tar_fh:
             subprocess.check_call(['tar', '-C', resources_dir, '-czf', tar_fh.name, '.'])
@@ -200,10 +201,10 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     if check_name_collisions and not dry_run:
         destination_path = applet_spec['folder'] + ('/' if not applet_spec['folder'].endswith('/') else '') + applet_spec['name']
-        logging.debug("Checking for existing applet at " + destination_path)
+        logger.debug("Checking for existing applet at " + destination_path)
         for result in dxpy.find_data_objects(classname="applet", name=applet_spec["name"], folder=applet_spec['folder'], project=dest_project, recurse=False):
             if overwrite:
-                logging.info("Deleting applet %s" % (result['id']))
+                logger.info("Deleting applet %s" % (result['id']))
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             else:
@@ -220,7 +221,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 readme_filename = filename
                 break
         if readme_filename is None:
-            logging.warn("No description found; please supply one in README.md")
+            logger.warn("No description found; please supply one in README.md")
         else:
             with open(os.path.join(src_dir, readme_filename)) as fh:
                 applet_spec['description'] = fh.read()
