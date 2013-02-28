@@ -877,7 +877,7 @@ class TestDXAppletJob(unittest.TestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxjob = dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input, details={"$dnanexus_link": "hello world"})
         jobdesc = dxjob.describe()
         self.assertEqual(jobdesc["class"], "job")
         self.assertEqual(jobdesc["function"], "main")
@@ -891,6 +891,8 @@ class TestDXAppletJob(unittest.TestCase):
         self.assertTrue("modified" in jobdesc)
         self.assertTrue("launchedBy" in jobdesc)
         self.assertTrue("output" in jobdesc)
+        self.assertTrue("$dnanexus_link" in jobdesc["details"])
+        self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
         dxjob.terminate()
 
 class TestDXApp(unittest.TestCase):
