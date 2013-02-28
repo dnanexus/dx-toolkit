@@ -2376,6 +2376,8 @@ def get_exec_or_workflow_handler(path, alias):
 def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     exec_inputs = ExecutableInputs(executable, input_name_prefix=input_name_prefix)
 
+    exec_inputs.update(args.input_from_clone, strip_prefix=False)
+
     if preset_inputs is not None:
         exec_inputs.update(preset_inputs, strip_prefix=False)
 
@@ -2402,7 +2404,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     if not args.brief:
         print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
-        dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name)
+        dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
+                               details=args.details)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -2620,6 +2623,78 @@ def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
 
+    if args.clone is None and args.executable == "":
+        parser.exit(2, fill("Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
+
+    args.input_from_clone = {}
+
+    clone_desc = None
+    if args.clone is not None:
+        # Resolve job ID or name
+        if is_job_id(args.clone):
+            clone_desc = dxpy.api.jobDescribe(args.clone)
+        else:
+            iterators = []
+            if ":" in args.clone:
+                colon_pos = args.clone.find(":")
+                try:
+                    # Resolve args.clone[:args.clone.find(":")] to a project name or ID
+                    # And find jobs in that with that name
+                    proj_id = resolve_container_id_or_name(args.clone[:colon_pos])
+                    if proj_id is not None:
+                        job_name_or_id = args.clone[colon_pos + 1:]
+                        if is_job_id(job_name_or_id):
+                            clone_desc = dxpy.api.jobDescribe(job_name_or_id)
+                        else:
+                            iterators.append(dxpy.find_jobs(name=job_name_or_id,
+                                                            describe={"io": False},
+                                                            project=proj_id))
+                except:
+                    pass
+
+            if clone_desc is None:
+                if dxpy.WORKSPACE_ID is not None:
+                    try:
+                        iterators.append(dxpy.find_jobs(name=args.clone,
+                                                        describe={"io": False},
+                                                        project=dxpy.WORKSPACE_ID))
+                    except:
+                        pass
+                import itertools
+
+                result_choice = paginate_and_pick(itertools.chain(*iterators),
+                                                  (lambda result:
+                                                       get_find_jobs_string(result["describe"],
+                                                                            has_children=False,
+                                                                            single_result=True)))
+                if result_choice == "none found":
+                    parser.exit(1, "No matching job found\n")
+                elif result_choice == "none picked":
+                    parser.exit(1)
+                else:
+                    clone_desc = dxpy.api.jobDescribe(result_choice["id"])
+
+        if args.executable == "":
+            args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
+        if args.folder is None:
+            args.folder = clone_desc["project"] + ":" + clone_desc["folder"]
+        if args.name is None:
+            import re
+            match_obj = re.search("\(re-run\)$", clone_desc["name"])
+            if match_obj is None:
+                args.name = clone_desc["name"] + " (re-run)"
+            else:
+                args.name = clone_desc["name"]
+        args.input_from_clone = clone_desc["runInput"]
+        args.details = {"clonedFrom": {"id": clone_desc["id"],
+                                       "executable": clone_desc.get("applet", clone_desc.get("app", "")),
+                                       "project": clone_desc["project"],
+                                       "folder": clone_desc["folder"],
+                                       "name": clone_desc["name"],
+                                       "runInput": clone_desc["runInput"]
+                                       }
+                        }
+
     get_output_flag(args)
     handler = get_exec_or_workflow_handler(args.executable, args.alias)
 
@@ -2634,6 +2709,8 @@ def run(args):
                                               expected='folder')
 
     if isinstance(handler, dxpy.bindings.DXRecord): # Identified as a workflow in get_exec_or_workflow_handler()
+        if clone_desc is not None:
+            parser.exit(1, fill("Cannot run a workflow and clone a job; only apps or applets can be run with cloned options") + "\n")
         print "Executing workflow", handler
         workflow = handler.get_details()
         if workflow['version'] != 2:
@@ -3231,8 +3308,9 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[stdout_args, env_args])
-parser_run.add_argument('executable', help='Name or ID of an applet, app, or workflow to run')
+parser_run.add_argument('executable', help='Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', nargs="?", default="")
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
+parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--dest', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
@@ -3244,7 +3322,7 @@ parser_run.add_argument('--input-help', help=fill('Print help and examples for h
 parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
-parser_run.set_defaults(func=run, verbose=False, help=False)
+parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
 parser_map['run'] = (parser_run, MultiCompleter([DXAppCompleter(), DXPathCompleter(classes=['applet']), DXPathCompleter(classes=['record'], typespec='pipeline')]))
 parser_categories['all']['cmds'].append(('run', 'Run an applet, app, or workflow'))
 parser_categories['exec']['cmds'].append(('run', 'Run an applet, app, or workflow'))
