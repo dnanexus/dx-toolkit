@@ -23,6 +23,17 @@
 #include <string>
 #include "dxjson/dxjson.h"
 
+// A macro to allow unused variable (without throwing warning)
+// Does work for GCC, will need to be expanded for other compilers.
+#ifdef UNUSED
+#elif defined(__GNUC__) 
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused)) 
+#elif defined(__LCLINT__) 
+# define UNUSED(x) /*@unused@*/ x 
+#else 
+# define UNUSED(x) x 
+#endif
+
 namespace dx {
   namespace config {
     std::string& APISERVER_HOST();
