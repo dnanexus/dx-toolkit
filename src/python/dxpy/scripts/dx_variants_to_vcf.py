@@ -218,7 +218,7 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
             printPreceedingCharacter = True
     
     if printPreceedingCharacter:
-        ref = contigSequence[chromosomeOffsets[chr]+int(pos)-2]+ref
+        ref = contigSequence[chromosomeOffsets[chr]+int(pos)-2].upper()+ref
         altOptions = row[col["alt"]].split(",")
         alt = ''
         for x in altOptions:
