@@ -17,7 +17,7 @@
 }
 \examples{
 # The following command refreshes the cached description a
-# DXGTable object
+# DXGTable object called dxgtable
 \dontrun{desc(dxgtable) <- describe(dxgtable)}
 }
 
