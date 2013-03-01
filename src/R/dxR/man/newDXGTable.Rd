@@ -28,7 +28,7 @@
   \code{\link{DXGTable}} for making a handler for an
   existing GTable.  \code{\link{colDesc}} for creating
   column descriptors.  \code{\link{genomicRangeIndex}} and
-  \code{link{lexicographicIndex}} for creating index
+  \code{\link{lexicographicIndex}} for creating index
   descriptors.
 }
 

@@ -120,7 +120,7 @@ lexicographicIndex <- function(columns, name) {
 ##' @seealso \code{\link{DXGTable}} for making a handler for an
 ##' existing GTable.  \code{\link{colDesc}} for creating column
 ##' descriptors.  \code{\link{genomicRangeIndex}} and
-##' \code{link{lexicographicIndex}} for creating index descriptors.
+##' \code{\link{lexicographicIndex}} for creating index descriptors.
 newDXGTable <- function(columns, indices=NA, project=dxEnv$DEFAULT_PROJECT) {
   resp <- gtableNew(list(columns=columns, project=project))
   handler <- new("DXGTable", id=resp[["id"]], project=project)
