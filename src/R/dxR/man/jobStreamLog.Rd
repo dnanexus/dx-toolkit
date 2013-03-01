@@ -35,9 +35,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets
-  and Entry
-  Points#API-method\%3A-\%2Fjob-xxxx\%2FstreamLog}
+  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2FstreamLog}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

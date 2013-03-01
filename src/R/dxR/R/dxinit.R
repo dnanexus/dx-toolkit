@@ -89,15 +89,7 @@ loadFromEnvironment <- function() {
 ##' contact the DNAnexus platform.
 ##' 
 ##' @examples
-##' 
-##' # Running the following
 ##' printenv()
-##' 
-##' # Results in:
-##' # Currently loaded environment:
-##' #   DX_APISERVER_HOST: api.dnanexus.com
-##' #   DX_APISERVER_PORT: 443
-##' #   DX_APISERVER_PROTOCOL: https
 ##' @export
 printenv <- function() {
   cat("Currently loaded environment:\n")
@@ -114,7 +106,7 @@ printenv <- function() {
 
 
 
-##' Makes HTTP Request to DNAnexus API Server
+##' Make HTTP Request to DNAnexus API Server
 ##' 
 ##' Makes a POST HTTP Request to the DNAnexus API Server using stored
 ##' configuration values.
@@ -137,13 +129,11 @@ printenv <- function() {
 ##' @seealso \code{\link{printenv}}
 ##' @examples
 ##' 
-##' \dontrun{
 ##' # Basic API call; use RJSONIO::namedEmptyList for an empty hash
-##' dxHTTPRequest("/gtable-xxxx/get", namedEmptyList)
+##' \dontrun{dxHTTPRequest("/gtable-xxxx/get", namedEmptyList)}
 ##' 
 ##' # API call with nonempty input hash
-##' dxHTTPRequest("/record/new", list("project"="project-xxxx"))
-##' }
+##' \dontrun{dxHTTPRequest("/record/new", list("project"="project-xxxx"))}
 ##' @export
 dxHTTPRequest <- function(resource, data,
                           headers=list(),

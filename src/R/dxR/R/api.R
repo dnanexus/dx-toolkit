@@ -740,7 +740,7 @@ appletAddTags <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fapplet-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fapplet-xxxx\%2Fdescribe}
 appletDescribe <- function(objectID,
                            inputParams=emptyNamedList,
                            jsonifyData=TRUE,
@@ -773,7 +773,7 @@ appletDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fapplet-xxxx\%2Fget}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fapplet-xxxx\%2Fget}
 appletGet <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -938,7 +938,7 @@ appletRename <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fapplet-xxxx\%2Frun}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fapplet-xxxx\%2Frun}
 appletRun <- function(objectID,
                       inputParams=emptyNamedList,
                       jsonifyData=TRUE,
@@ -1003,7 +1003,7 @@ appletSetProperties <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fapplet\%2Fnew}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fapplet\%2Fnew}
 appletNew <- function(inputParams=emptyNamedList,
                       jsonifyData=TRUE,
                       alwaysRetry=FALSE) {
@@ -2338,7 +2338,7 @@ gtableNew <- function(inputParams=emptyNamedList,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fjob-xxxx\%2Fdescribe}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2Fdescribe}
 jobDescribe <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
@@ -2371,7 +2371,7 @@ jobDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fjob-xxxx\%2FstreamLog}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2FstreamLog}
 jobStreamLog <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -2404,7 +2404,7 @@ jobStreamLog <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fjob-xxxx\%2Fterminate}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2Fterminate}
 jobTerminate <- function(objectID,
                          inputParams=emptyNamedList,
                          jsonifyData=TRUE,
@@ -2436,7 +2436,7 @@ jobTerminate <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method\%3A-\%2Fjob\%2Fnew}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob\%2Fnew}
 jobNew <- function(inputParams=emptyNamedList,
                    jsonifyData=TRUE,
                    alwaysRetry=FALSE) {
@@ -2681,7 +2681,7 @@ projectDestroy <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations\%20and\%20Join\%20Requests#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
 projectInvite <- function(objectID,
                           inputParams=emptyNamedList,
                           jsonifyData=TRUE,
@@ -3137,7 +3137,7 @@ recordAddTypes <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
+##' @references API spec documentation: \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Data\%20Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
 recordClose <- function(objectID,
                         inputParams=emptyNamedList,
                         jsonifyData=TRUE,
