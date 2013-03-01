@@ -194,14 +194,9 @@ setMethod("describe", "DXGTable", function(handler) {
 ##' @return the modified data object handler
 ##' @docType methods
 ##' @examples
-##' 
-##' \dontrun{
-##' dxgtable <- DXGTable("gtable-123456789012345678901234")
-##' 
-##' # The following command refreshes the cached description of the
-##' # object
-##' desc(dxgtable) <- describe(dxgtable)
-##' }
+##' # The following command refreshes the cached description a
+##' # DXGTable object called dxgtable
+##' \dontrun{desc(dxgtable) <- describe(dxgtable)}
 ##' @aliases desc<-,DXGTable-method
 ##' @name desc<-
 ##' @rdname desc-replace-methods

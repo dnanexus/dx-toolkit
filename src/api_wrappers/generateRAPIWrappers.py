@@ -130,7 +130,7 @@ for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
     method_name = signature.split("(")[0]
     retry = "TRUE" if (opts['retryable']) else "FALSE"
-    wiki_ref = "" if (opts["wikiLink"] is None) else "\n##' @references API spec documentation: \url{" + opts["wikiLink"].replace("%", "\\%") + "}"
+    wiki_ref = "" if (opts["wikiLink"] is None) else "\n##' @references API spec documentation: \url{" + opts["wikiLink"].replace(" ", "%20").replace("%", "\\%") + "}"
     indent = " " * len(method_name + " <- function(")
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")

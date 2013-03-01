@@ -35,9 +35,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations
-  and Join
-  Requests#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
+  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations\%20and\%20Join\%20Requests#API-method\%3A-\%2Fproject-xxxx\%2Finvite}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}
