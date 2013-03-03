@@ -24,14 +24,14 @@ namespace dx {
     if (t.type() == JSON_STRING) {
       std::string str = t.get<string>();
       if (str.length() == 0)
-        throw DXError("Invalid timestamp string: Cannot be zero length");
+        throw DXError("Invalid timestamp string: Cannot be zero length", "InvalidTimestamp");
       char suffix = str[str.length() - 1];
       str.erase(str.end() - 1);
       double val;
       try {
         val = boost::lexical_cast<double>(str);
-      } catch(...) {
-        throw DXError("Invalid timestamp string");
+      } catch(exception &e) {
+        throw DXError("Invalid timestamp string. err = '" + string(e.what()) + "'", "InvalidTimestamp");
       }
       int64_t initial = (val >= 0.0) ? 0 : (std::time(NULL) * 1000);
       switch(tolower(suffix)) {
@@ -41,7 +41,7 @@ namespace dx {
         case 'd': return static_cast<int64_t>(initial + val*1000*60*60*24);
         case 'w': return static_cast<int64_t>(initial + val*1000*60*60*24*7);
         case 'y': return static_cast<int64_t>(initial + val*1000*60*60*24*7*365);
-        default: throw DXError("Invalid timestamp string: Invalid suffix");
+        default: throw DXError("Invalid timestamp string: Invalid suffix", "InvalidTimestamp");
       }
     } else {
       int64_t val = t.get<int64_t>();
@@ -71,7 +71,7 @@ namespace dx {
     if (query.has("scope")) {
       if (!query["scope"].has("project")) {
         if (config::CURRENT_PROJECT() == "")
-          throw DXError("config::CURRENT_PROJECT() is not set, but call to DXSystem::findDataObjects() is missing input['scope']['project']");
+          throw DXError("config::CURRENT_PROJECT() is not set, but call to DXSystem::findDataObjects() is missing input['scope']['project']", "NoProjectKeyFound");
         query["scope"]["project"] = config::CURRENT_PROJECT();
       }
     }

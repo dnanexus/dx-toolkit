@@ -37,13 +37,13 @@ namespace dx {
           for (JSON::const_object_iterator it = instance_type.object_begin(); it != instance_type.object_end(); ++it) {
             if (it->second.type() != JSON_STRING)
               throw DXError("Invalid JSON as argument to parameter 'instance_type'. Expected Key '" + it->first + 
-                            "' to contain a string value, but rather found JSON_TYPE = " + boost::lexical_cast<string>(it->second.type()));
+                            "' to contain a string value, but rather found JSON_TYPE = " + boost::lexical_cast<string>(it->second.type()), "InvalidInstanceType");
             input["systemRequirements"][it->first] = JSON(JSON_HASH);
             input["systemRequirements"][it->first]["instanceType"] = it->second;
           }
         } else {
           throw DXError("Invalid JSON as argument to parameter 'instance_type'."
-                        "Must be either: a non-empty Hash (string -> string), or a single string.");
+                        "Must be either: a non-empty Hash (string -> string), or a single string.", "InvalidInstanceType");
         }
       }
     }

@@ -10,7 +10,7 @@ endif (NOT DEFINED ENV{DNANEXUS_HOME})
 # Set default build type, common compiler flags, etc
 include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_POLICY_SCOPE)
 # Set an additional flag (to disable some dxcpp specific warnings)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual -Wno-switch")
 
 # Get the output of command `git describe`, and save it in DXTOOLKIT_GITVERSION variable
 execute_process(COMMAND git describe WORKING_DIRECTORY $ENV{DNANEXUS_HOME} RESULT_VARIABLE GIT_DESCRIBE_STATUS_CODE OUTPUT_VARIABLE DXTOOLKIT_GITVERSION ERROR_VARIABLE GIT_DESCRIBE_ERROR)
@@ -69,5 +69,5 @@ add_subdirectory(../SimpleHttpLib SimpleHttpLib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_SOURCE_DIR}/../SimpleHttpLib ${CMAKE_CURRENT_SOURCE_DIR}/../dxjson)
 
-add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc bindings/execution_common_helper.cc exec_utils.cc utils.cc)
+add_library(dxcpp dxcpp.cc api.cc bindings.cc bindings/dxapplet.cc bindings/dxrecord.cc bindings/dxfile.cc bindings/dxjob.cc bindings/dxgtable.cc bindings/dxapp.cc bindings/dxproject.cc bindings/search.cc bindings/execution_common_helper.cc exec_utils.cc utils.cc dxlog.cc)
 target_link_libraries(dxcpp dxhttp dxjson ${CRYPTO_LIBRARY_PATH} ${Boost_LIBRARIES})

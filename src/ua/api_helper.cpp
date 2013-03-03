@@ -21,7 +21,7 @@
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
-#include "log.h"
+#include "dxcpp/dxlog.h"
 
 using namespace std;
 using namespace dx;
@@ -54,18 +54,18 @@ void checkForUpdates() {
     inp["platform"] = platform;
   }
   JSON res;
-  LOG << "Checking for updates (calling /system/greet) ...";
+  DXLOG(logINFO) << "Checking for updates (calling /system/greet) ...";
   try {
     res = systemGreet(inp, false); // don't retry this requests, not that essential
   } catch (exception &aerr) {
     // If an error is thrown while calling /system/greet, we don't treat it as fatal
     // but instead just log it to stderr (if verbose mode was on).
-    LOG << " failure (call failed), reason: '" << aerr.what() << "'" << endl;
+    DXLOG(logINFO) << " failure (call failed), reason: '" << aerr.what() << "'";
     return;
   }
   
   if (res["update"]["available"] == false) {
-    LOG << " Hurray! Your copy of Upload Agent is up to date." << endl;
+    DXLOG(logINFO) << " Hurray! Your copy of Upload Agent is up to date.";
     return;
   }
   string ver = res["update"]["version"].get<string>();
@@ -75,7 +75,7 @@ void checkForUpdates() {
                         "\nPlease download latest version (v" + ver + ") from " + url + "\n**********");
   }
   // If we are here => A recommended update is available. Show user a message to that effect
-  LOG << endl;
+  DXLOG(logINFO);
   cerr <<"*********** Update Available ***********" << endl
        << "A new version of Upload Agent (v" << ver << ") is available for your platform!" << endl
        << "It's highly recommended that you download the latest version from here " << url << endl
@@ -84,21 +84,30 @@ void checkForUpdates() {
 }
 
 void testServerConnection() {
-  LOG << "Testing connection to API server...";
+  DXLOG(logINFO) << "Testing connection to API server...";
   try {
     JSON result = systemFindUsers(JSON::parse("{\"limit\": 1}"), false); // don't retry this request
-    LOG << " success." << endl;
+    DXLOG(logINFO) << " success.";
   } catch (DXAPIError &aerr) {
-    LOG << " failure." << endl;
+    DXLOG(logINFO) << " failure.";
     if (aerr.resp_code == 401) {
       throw runtime_error("Invalid Authentication token, please provide a correct auth token (you may use --auth-token option). (" + string(aerr.what()) + ")");
     }
     throw runtime_error("Unable to connect to apiserver -- an unexpected error occurred. (" + string(aerr.what()) + ")");
-  }
-  catch (exception &e) {
-    LOG << " failure." << endl;
+  } catch (DXConnectionError &cerr) {
+    DXLOG(logINFO) << " failure.";
+    #if WINDOWS_BUILD
+    if (cerr.curl_code = 35 && string(e.what()).find("schannel") != string::npos) {
+      throw runtime_error("This is a known issue on Microsoft Windows. Please download this hotfix from Microsoft to fix this problem: http://support.microsoft.com/kb/975858/en-us"
+                          "\nTechnical details (for advanced users): \n'" + string(cerr.what()) + "'\nIf you still face the problem (after installing hotfix), please contact DNAnexus support.");
+    }
+    #endif
     throw runtime_error("Unable to connect to DNAnexus apiserver. Please list your environment variables (--env flag) to see the current apiserver configuration.\n\n"
-                        "Detailed message (for advanced users only):\n" + string(e.what()));
+                         "Detailed message (for advanced users only):\n" + string(cerr.what()));
+  } catch (DXError &e) {
+    DXLOG(logINFO) << " failure.";
+    throw runtime_error("Unable to connect to DNAnexus apiserver. Please list your environment variables (--env flag) to see the current apiserver configuration.\n\n"
+                         "Detailed message (for advanced users only):\n" + string(e.what()));
   }
 }
 
@@ -134,7 +143,7 @@ string urlEscape(const string &str) {
  * - If project list's size == 1, then we return the project ID.
  */
 string resolveProject(const string &projectSpec) {
-  LOG << "Resolving project specifier " << projectSpec << "...";
+  DXLOG(logINFO) << "Resolving project specifier " << projectSpec << "...";
   string projectID;
   map<string, string> matchingProjectIdToName;
 
@@ -159,64 +168,66 @@ string resolveProject(const string &projectSpec) {
       matchingProjectIdToName[projects[i]["id"].get<string>()] = projectSpec;
     }
   } catch (DXAPIError &e) {
-    LOG << "Call to findProjects failed." << endl;
+    DXLOG(logINFO) << "Call to findProjects failed.";
     throw;  
   }
 
   if (matchingProjectIdToName.size() == 0) {
-    LOG << " failure." << endl;
+    DXLOG(logINFO) << " failure.";
     throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=CONTRIBUTE access)");
   }
 
   if (matchingProjectIdToName.size() > 1) {
-    LOG << "failure. " << matchingProjectIdToName.size() << " projects (with >=CONTRIBUTE access) match the identifier: \"" + projectSpec + "\":" << endl;
+    DXLOG(logINFO) << "failure. " << matchingProjectIdToName.size() << " projects (with >=CONTRIBUTE access) match the identifier: \"" + projectSpec + "\":";
     int i =  1;
     for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
-      LOG << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")" << endl;
+      DXLOG(logINFO) << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")";
     }
     throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project (multiple matches found)");
   }
   
-  LOG << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corresponding to project identifier \"" << projectSpec << "\"" << endl;
+  DXLOG(logINFO) << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corresponding to project identifier \"" << projectSpec << "\"";
   return matchingProjectIdToName.begin()->first;
 }
 
 /*
  * Ensure that we have at least CONTRIBUTE access to the project.
  */
+/*
 void testProjectPermissions(const string &projectID) {
-  LOG << "Testing permissions on project " << projectID << "...";
+  DXLOG(logINFO) << "Testing permissions on project " << projectID << "...";
   try {
     JSON desc = projectDescribe(projectID);
     string level = desc["level"].get<string>();
 
     if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
-      LOG << " success." << endl;
+      DXLOG(logINFO) << " success.";
       return;
     } else {
-      LOG << " failure." << endl;
+      DXLOG(logINFO) << " failure.";
       throw runtime_error("Permission level " + level + " is not sufficient to create files in project " + projectID);
     }
   } catch (DXAPIError &e) {
-    LOG << " call to projectDescribe failed." << endl;
+    DXLOG(logINFO) << " call to projectDescribe failed.";
     throw;
   }
 }
+*/
 
 /*
  * Create the folder in which the file object(s) will be created, including
  * any parent folders.
  */
 void createFolder(const string &projectID, const string &folder) {
-  LOG << "Creating folder " << folder << " and parents in project " << projectID << "...";
+  DXLOG(logINFO) << "Creating folder " << folder << " and parents in project " << projectID << "...";
   try {
     JSON params(JSON_OBJECT);
     params["folder"] = folder;
     params["parents"] = true;
     projectNewFolder(projectID, params);
-    LOG << " success." << endl;
+    DXLOG(logINFO) << " success.";
   } catch (DXAPIError &e) {
-    LOG << " failure." << endl;
+    DXLOG(logINFO) << " failure.";
     throw runtime_error("Could not create folder with path '" + folder + "' in project '" + projectID + "' (" + e.what() + ")");
   }
 }
@@ -235,10 +246,10 @@ string createFileObject(const string &project, const string &folder, const strin
   params["media"] = mimeType;
   params["properties"] = properties;
 
-  LOG << "Creating new file with parameters " << params.toString() << endl;
+  DXLOG(logINFO) << "Creating new file with parameters " << params.toString();
 
   JSON result = fileNew(params);
-  LOG << "Got result " << result.toString() << endl;
+  DXLOG(logINFO) << "Got result " << result.toString();
 
   return result["id"].get<string>();
 }
@@ -265,7 +276,7 @@ JSON findResumableFileObject(string project, string signature) {
   try {
     output = systemFindDataObjects(query);
   } catch (exception &e) {
-    LOG << " failure while running findDataObjects with this input query: " << query.toString() << endl;
+    DXLOG(logINFO) << " failure while running findDataObjects with this input query: " << query.toString();
     throw;
   }
   return output["results"];

@@ -31,7 +31,7 @@
 #include "options.h"
 #include "chunk.h"
 #include "file.h"
-#include "log.h"
+#include "dxcpp/dxlog.h"
 #include "import_apps.h"
 #include "mime.h"
 
@@ -152,7 +152,7 @@ void uploadChunks(vector<File> &files) {
       try {
         c->upload();
         uploaded = true;
-      } catch (exception &e) {
+      } catch (runtime_error &e) {
         ostringstream msg;
         msg << "Upload failed: " << e.what();
         c->log(msg.str());
@@ -181,8 +181,8 @@ void uploadChunks(vector<File> &files) {
         chunksToRead.produce(c);
       } else {
         c->log("Not retrying");
-        // TODO: Should we print it on stderr or LOG (verbose only) ??
-        cerr << "Failed to upload Chunk [" << c->start << " - " << c->end << "] for local file ("
+        // TODO: Should we print it on stderr or DXLOG (verbose only) ??
+        cerr << "\nFailed to upload Chunk [" << c->start << " - " << c->end << "] for local file ("
              << files[c->parentFileIndex].localFile << "). APIServer response for last try: '" << c->respData << "'" << endl;
         c->clear();
         chunksFailed.produce(c);
@@ -201,12 +201,12 @@ void monitor() {
   while (true) {
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     {
-      LOG << "[monitor]"
+      DXLOG(logINFO) << "[monitor]"
           << "  to read: " << chunksToRead.size()
           << "  to compress: " << chunksToCompress.size()
           << "  to upload: " << chunksToUpload.size()
           << "  finished: " << chunksFinished.size()
-          << "  failed: " << chunksFailed.size() << endl;
+          << "  failed: " << chunksFailed.size();
 
       if (finished()) {
         return;
@@ -298,10 +298,11 @@ void uploadProgressHelper(vector<File> &files) {
 }
 
 void uploadProgress(vector<File> &files) {
+  cerr << endl;
   try {
     do {
       uploadProgressHelper(files);
-      boost::this_thread::sleep(boost::posix_time::milliseconds(250));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     } while (keepShowingUploadProgress);
     uploadProgressHelper(files);
     return;
@@ -315,71 +316,71 @@ void uploadProgress(vector<File> &files) {
 }
 
 void createWorkerThreads(vector<File> &files) {
-  LOG << "Creating worker threads:" << endl;
+  DXLOG(logINFO) << "Creating worker threads:";
 
-  LOG << " read..." << endl;
+  DXLOG(logINFO) << " read...";
   for (int i = 0; i < opt.readThreads; ++i) {
     readThreads.push_back(boost::thread(readChunks));
   }
 
-  LOG << " compress..." << endl;
+  DXLOG(logINFO) << " compress...";
   for (int i = 0; i < opt.compressThreads; ++i) {
     compressThreads.push_back(boost::thread(compressChunks));
   }
 
-  LOG << " upload..." << endl;
+  DXLOG(logINFO) << " upload...";
   for (int i = 0; i < opt.uploadThreads; ++i) {
     uploadThreads.push_back(boost::thread(uploadChunks, boost::ref(files)));
   }
 }
 
 void interruptWorkerThreads() {
-  LOG << "Interrupting worker threads:" << endl;
+  DXLOG(logINFO) << "Interrupting worker threads:";
 
-  LOG << " read..." << endl;
+  DXLOG(logINFO) << " read...";
   for (int i = 0; i < (int) readThreads.size(); ++i) {
     readThreads[i].interrupt();
   }
 
-  LOG << " compress..." << endl;
+  DXLOG(logINFO) << " compress...";
   for (int i = 0; i < (int) compressThreads.size(); ++i) {
     compressThreads[i].interrupt();
   }
 
-  LOG << " upload..." << endl;
+  DXLOG(logINFO) << " upload...";
   for (int i = 0; i < (int) uploadThreads.size(); ++i) {
     uploadThreads[i].interrupt();
   }
 }
 
 void joinWorkerThreads() {
-  LOG << "Joining worker threads:" << endl;
+  DXLOG(logINFO) << "Joining worker threads:";
 
-  LOG << " read..." << endl;
+  DXLOG(logINFO) << " read...";
   for (int i = 0; i < (int) readThreads.size(); ++i) {
     readThreads[i].join();
   }
 
-  LOG << " compress..." << endl;
+  DXLOG(logINFO) << " compress...";
   for (int i = 0; i < (int) compressThreads.size(); ++i) {
     compressThreads[i].join();
   }
 
-  LOG << " upload..." << endl;
+  DXLOG(logINFO) << " upload...";
   for (int i = 0; i < (int) uploadThreads.size(); ++i) {
     uploadThreads[i].join();
   }
 }
 
 void curlInit() {
-  LOG << "Initializing HTTP library...";
+  DXLOG(logINFO) << "Initializing HTTP library...";
   CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
   if (code != 0) {
     ostringstream msg;
     msg << "An error occurred when initializing the HTTP library (" << curl_easy_strerror(code) << ")" << endl;
     throw runtime_error(msg.str());
   }
-  LOG << " done." << endl;
+  DXLOG(logINFO) << " done.";
   curlInit_call_count++;
 }
 
@@ -428,11 +429,6 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
 //  1) For Upload Agent libcurl calls (/UPLOAD/xxxx calls)
 //  2) For dxcpp libcurl calls (using dx::config::USER_AGENT_STRING())
 void setUserAgentString() {
-  // Set user agent string for libcurl calls, directly by Upload Agent
-  bool windows_env = false;
-#if WINDOWS_BUILD
-  windows_env = true;
-#endif
   // Include these things in user agent string: UA version, GIT version, a random hash (which will be unique per instance of UA)
   // For windows build, also include that info
   srand(clock() + time(NULL));
@@ -500,19 +496,18 @@ int main(int argc, char * argv[]) {
   
   setUserAgentString(); // also sets dx::config::USER_AGENT_STRING()
   
-  LOG << "DNAnexus Upload Agent " << UAVERSION << " (git version: " << DXTOOLKIT_GITVERSION << ")" << endl;
-  LOG << "Upload agent's User Agent string: '" << userAgentString << "'" << endl;
-  LOG << "dxcpp's User Agent string: '" << dx::config::USER_AGENT_STRING() << "'" << endl;
-  LOG << opt;
+  DXLOG(logINFO) << "DNAnexus Upload Agent " << UAVERSION << " (git version: " << DXTOOLKIT_GITVERSION << ")";
+  DXLOG(logINFO) << "Upload agent's User Agent string: '" << userAgentString << "'";
+  DXLOG(logINFO) << "dxcpp's User Agent string: '" << dx::config::USER_AGENT_STRING() << "'";
+  DXLOG(logINFO) << opt;
   try {
     opt.setApiserverDxConfig();
     opt.validate();
-    dx::g_dxcpp_mute_retry_cerrs = !opt.verbose; // a dirty hack, to silent dxcpp's error messages (printed when retrying)
     
     // Check for updates, and terminate execution if necessary
     // Note: - It's important to call this function before testServerConnection()
     //         because, if the client is too old, testServerConnection() would fail with "ClientTooOld" error (since it calls /system/findUsers).
-    //       - If server is unreachable, checkForUpdates() will just print a warning on LOG
+    //       - If server is unreachable, checkForUpdates() will just print a warning on DXLOG
     //         the actual unreachability of server (and subsequent action) will still be determined by testServerConnection()
     // TODO: Once production has /system/greet route, we can subsume testServerConnection() into checkForUpdates()
     //       , i.e., we can use /system/greet route to test apiserver connection as well (instead of findUsers).
@@ -522,7 +517,7 @@ int main(int argc, char * argv[]) {
     try {
       checkForUpdates();
     } catch (runtime_error &e) {
-      cerr << e.what() << endl;
+      cerr << endl << e.what() << endl;
       return 3;
     }
     testServerConnection();
@@ -530,7 +525,7 @@ int main(int argc, char * argv[]) {
       disallowDuplicateFiles(opt.files, opt.projects);
     }
   } catch (exception &e) {
-    cerr << "ERROR: " << e.what() << endl;
+    cerr << endl << "ERROR: " << e.what() << endl;
     return 1;
   }
 
@@ -538,7 +533,7 @@ int main(int argc, char * argv[]) {
  
 /*// JM can now accept files which are not in "closed" state as inputs. So we no longer need to wait for them to close first.
   if (anyImportAppToBeCalled) {
-    LOG << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)" << endl;
+    DXLOG(logINFO) << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)";
     opt.waitOnClose = true;
   }
 */
@@ -553,17 +548,17 @@ int main(int argc, char * argv[]) {
     vector<File> files;
 
     for (unsigned int i = 0; i < opt.files.size(); ++i) {
-      LOG << "Getting MIME type for local file " << opt.files[i] << "..." << endl;
+      DXLOG(logINFO) << "Getting MIME type for local file " << opt.files[i] << "...";
       string mimeType = getMimeType(opt.files[i]);
-      LOG << "MIME type for local file " << opt.files[i] << " is '" << mimeType << "'." << endl;
+      DXLOG(logINFO) << "MIME type for local file " << opt.files[i] << " is '" << mimeType << "'.";
       bool toCompress;
       if (!opt.doNotCompress) {
         bool is_compressed = isCompressed(mimeType);
         toCompress = !is_compressed;
         if (is_compressed)
-          LOG << "File " << opt.files[i] << " is already compressed, so won't try to compress it any further." << endl;
+          DXLOG(logINFO) << "File " << opt.files[i] << " is already compressed, so won't try to compress it any further.";
         else
-          LOG << "File " << opt.files[i] << " is not compressed, will compress it before uploading." << endl;
+          DXLOG(logINFO) << "File " << opt.files[i] << " is not compressed, will compress it before uploading.";
       } else {
         toCompress = false;
       }
@@ -584,29 +579,29 @@ int main(int argc, char * argv[]) {
     // (to calculate average transfer speed)
     startTime = std::time(0);
 
-    LOG << "Created " << totalChunks << " chunks." << endl;
+    DXLOG(logINFO) << "Created " << totalChunks << " chunks.";
     
     createWorkerThreads(files);
 
-    LOG << "Creating monitor thread.." << endl;
+    DXLOG(logINFO) << "Creating monitor thread..";
     boost::thread monitorThread(monitor);
     
     boost::thread uploadProgressThread;
     if (opt.progress) {
-      LOG << "Creating Upload Progress thread.." << endl;
+      DXLOG(logINFO) << "Creating Upload Progress thread..";
       uploadProgressThread = boost::thread(uploadProgress, boost::ref(files));
     }
 
-    LOG << "Joining monitor thread..." << endl;
+    DXLOG(logINFO) << "Joining monitor thread...";
     monitorThread.join();
-    LOG << "Monitor thread finished." << endl;
+    DXLOG(logINFO) << "Monitor thread finished.";
 
     if (opt.progress) {
-      LOG << "Joining Upload Progress thread.." << endl;
+      DXLOG(logINFO) << "Joining Upload Progress thread..";
       keepShowingUploadProgress = false;
       uploadProgressThread.interrupt();
       uploadProgressThread.join();
-      LOG << "Upload Progress thread finished." << endl;
+      DXLOG(logINFO) << "Upload Progress thread finished.";
     }
 
 
@@ -621,23 +616,22 @@ int main(int argc, char * argv[]) {
 
     for (unsigned int i = 0; i < files.size(); ++i) {
       if (files[i].failed) {
-        cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
+        cerr << endl << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
-        cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing...";
+        cerr << endl << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
         if (files[i].isRemoteFileOpen) {
           files[i].close();
         }
-        cerr << endl;
       }
       if (files[i].failed)
         files[i].fileID = "failed";
     } 
 
-    LOG << "Waiting for files to be closed..." << endl;
+    DXLOG(logINFO) << "Waiting for files to be closed...";
     boost::thread waitOnCloseThread(waitOnClose, boost::ref(files));
-    LOG << "Joining wait-on-close thread..." << endl;
+    DXLOG(logINFO) << "Joining wait-on-close thread...";
     waitOnCloseThread.join();
-    LOG << "Wait-on-close thread finished." << endl;
+    DXLOG(logINFO) << "Wait-on-close thread finished.";
     if (anyImportAppToBeCalled) {
       runImportApps(opt, files);  
     }
@@ -654,10 +648,18 @@ int main(int argc, char * argv[]) {
     }
     curlCleanup();
 
-    LOG << "Exiting." << endl;
+    DXLOG(logINFO) << "Exiting.";
+  } catch (bad_alloc &e) {
+    curlCleanup();
+    cerr << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl;
+    cerr << "1. Try decreasing number of upload/compress/read threads (Try ./ua --help to see how to set them) - Recommended solution" << endl;
+    cerr << "2. Reduce the chunk-size (--chunk-size options). Note: Trying with a different chunk size will not resume your previous upload" << endl;
+    cerr << endl << "If you still face problem, please contact DNAnexus support." << endl;
+    cerr << "\nError details (for advanced users only): '" << e.what() << "'" << endl << "*********" << endl;
+    return 1;
   } catch (exception &e) {
     curlCleanup();
-    cerr << "ERROR: " << e.what() << endl;
+    cerr << endl << "ERROR: " << e.what() << endl;
     return 1;
   }
 
