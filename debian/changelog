@@ -1,3 +1,11 @@
+dx-toolkit (0.39.1) precise; urgency=low
+
+  * Remove dx-get-job-streams.
+
+  * Bug fix for GTables in R bindings.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 05 Mar 2013 12:54:45 -0800
+
 dx-toolkit (0.39.0) precise; urgency=low
 
   * DXGTable bindings for R.
