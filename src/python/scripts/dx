@@ -1669,8 +1669,11 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
     if use_stdout:
         try:
             dxfile = dxpy.DXFile(entity_result['id'])
-            for line in dxfile:
-                print line
+            while True:
+                chunk = dxfile.read(1024*1024)
+                if len(chunk) == 0:
+                    break
+                sys.stdout.write(chunk)
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
     else:
