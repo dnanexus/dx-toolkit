@@ -1982,7 +1982,7 @@ def find_jobs(args):
                 elif args.brief:
                     output_ids.append(args.id)
                 else:
-                    print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True, show_outputs=opts.show_outputs))
+                    print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True, show_outputs=args.show_outputs))
             else:   
                 i = 0
                 for job_result in dxpy.find_jobs(**query):
@@ -1995,7 +1995,7 @@ def find_jobs(args):
                     elif args.brief:
                         output_ids.append(job_result['id'])
                     else:
-                        print format_tree({}, get_find_jobs_string(job_result['describe'], has_children=False, single_result=True, show_outputs=opts.show_outputs))
+                        print format_tree({}, get_find_jobs_string(job_result['describe'], has_children=False, single_result=True, show_outputs=args.show_outputs))
         else:
             origin_jobs = []  # List of origin job IDs (ordered by search results)
             job_descs = {}    # job ID -> job desc
@@ -2052,7 +2052,7 @@ def find_jobs(args):
                     if args.json:
                         json_output.append(job_descs[origin_job])
                     elif not args.brief:
-                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], has_children=False, show_outputs=opts.show_outputs))
+                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], has_children=False, show_outputs=args.show_outputs))
             else: # args.trees
 
                 def process_children(parent_job, parent_hash=None):
