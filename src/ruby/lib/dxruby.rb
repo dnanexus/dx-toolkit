@@ -86,8 +86,15 @@ module DXRuby
 
     if uri.scheme == "https"
       http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+ 
       # http://notetoself.vrensk.com/2008/09/verified-https-in-ruby/
+      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+
+      # Set certificate file from OpenSSL: http://stackoverflow.com/questions/9199660/why-is-ruby-unable-to-verify-an-ssl-certificate
+      store = OpenSSL::X509::Store.new
+      store.set_default_paths
+      http.cert_store = store
+
       #request.ca_file = 
     end
     
