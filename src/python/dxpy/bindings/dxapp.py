@@ -314,7 +314,8 @@ class DXApp(DXObject):
         else:
             return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
 
-    def run(self, app_input, project=None, folder="/", name=None, instance_type=None, depends_on=None, **kwargs):
+    def run(self, app_input, project=None, folder="/", name=None, instance_type=None, depends_on=None,
+            details=None, **kwargs):
         '''
         :param app_input: Hash of the app's input arguments
         :type app_input: dict
@@ -328,6 +329,8 @@ class DXApp(DXObject):
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
+        :param details: Details to set for the job
+        :type details: dict or list
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -368,6 +371,9 @@ class DXApp(DXObject):
                         raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
             else:
                 raise DXError('Expected depends_on field to be a list')                    
+
+        if details is not None:
+            run_input["details"] = details
 
         if self._dxid is not None:
             return DXJob(dxpy.api.appRun(

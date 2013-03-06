@@ -1,6 +1,6 @@
 \name{dxHTTPRequest}
 \alias{dxHTTPRequest}
-\title{Makes HTTP Request to DNAnexus API Server}
+\title{Make HTTP Request to DNAnexus API Server}
 \usage{
   dxHTTPRequest(resource, data, headers = list(),
     jsonifyData = TRUE, alwaysRetry = FALSE)
@@ -36,13 +36,11 @@
   using stored configuration values.
 }
 \examples{
-\dontrun{
 # Basic API call; use RJSONIO::namedEmptyList for an empty hash
-dxHTTPRequest("/gtable-xxxx/get", namedEmptyList)
+\dontrun{dxHTTPRequest("/gtable-xxxx/get", namedEmptyList)}
 
 # API call with nonempty input hash
-dxHTTPRequest("/record/new", list("project"="project-xxxx"))
-}
+\dontrun{dxHTTPRequest("/record/new", list("project"="project-xxxx"))}
 }
 \seealso{
   \code{\link{printenv}}

@@ -149,16 +149,21 @@ def io_val_to_str(val):
     else:
         return json.dumps(val)
 
-def get_io_field(io_hash, defaults={}, delim='='):
+def get_io_field(io_hash, defaults={}, delim='=', highlight_fields=[]):
     if io_hash is None:
         return '-'
     if len(io_hash) == 0 and len(defaults) == 0:
         return '-'
+    def highlight_value(key, value):
+        if key in highlight_fields:
+            return YELLOW() + value + ENDC()
+        else:
+            return value
     if get_delimiter() is not None:
-        return ('\n' + get_delimiter()).join([(key + delim + io_val_to_str(value)) for key, value in io_hash.items()] +
+        return ('\n' + get_delimiter()).join([(key + delim + highlight_value(key, io_val_to_str(value))) for key, value in io_hash.items()] +
                                              [('[' + key + delim + io_val_to_str(value) + ']') for key, value in defaults.items()])
     else:
-        return ('\n').join([fill(key + ' ' + delim + ' ' + io_val_to_str(value),
+        return ('\n').join([fill(key + ' ' + delim + ' ' + highlight_value(key, io_val_to_str(value)),
                                  initial_indent=' '*16,
                                  subsequent_indent=' '*17,
                                  break_long_words=False) for key, value in io_hash.items()] +
@@ -402,7 +407,7 @@ def print_job_desc(desc):
     recognized_fields = ['id', 'class', 'project', 'workspace', 'app', 'state', 'parentJob', 'originJob',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
-                         'dependsOn', 'resources', 'projectCache', 'applet',
+                         'dependsOn', 'resources', 'projectCache', 'applet', 'details',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions']
 
@@ -472,6 +477,29 @@ def print_job_desc(desc):
         print_field("Failure is from", desc['failureFrom']['id'])
     if 'systemRequirements' in desc:
         print_json_field("Sys Requirements", desc['systemRequirements'])
+    if "details" in desc and "clonedFrom" in desc["details"]:
+        cloned_hash = desc["details"]["clonedFrom"]
+        if "id" in cloned_hash:
+            print_field("Re-run of", cloned_hash["id"])
+            print_field(" named", cloned_hash["name"])
+
+            same_executable = cloned_hash["executable"] == desc.get("applet", desc.get("app", ""))
+            print_field(" using", ("" if same_executable else YELLOW()) + \
+                            cloned_hash["executable"] + \
+                            (" (same)" if same_executable else ENDC()))
+            same_project = cloned_hash["project"] == desc["project"]
+            same_folder = cloned_hash["folder"] == desc["folder"] or not same_project
+            print_field(" output folder", ("" if same_project else YELLOW()) + \
+                            cloned_hash["project"] + \
+                            ("" if same_project else END()) + ":" + \
+                            ("" if same_folder else YELLOW()) + \
+                            cloned_hash["folder"] + \
+                            (" (same)" if (same_project and same_folder) else "" if same_folder else ENDC()))
+            different_inputs = []
+            for item in cloned_hash["runInput"]:
+                if cloned_hash["runInput"][item] != desc["runInput"][item]:
+                    different_inputs.append(item)
+            print_nofill_field(" input", get_io_field(cloned_hash["runInput"], highlight_fields=different_inputs))
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])

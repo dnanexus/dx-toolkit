@@ -183,7 +183,18 @@ test_that("getRows works for columns, starting, and limit", {
 })
 
 test_that("GRI table can be created and queried", {
-  warning("TODO: WRITE ME (GRI test)", call.=FALSE)
+  handler <- newDXGTable(columns=list(colDesc("chr", "string"),
+                           colDesc("lo", "int"),
+                           colDesc("hi", "int")),
+                         indices=list(genomicRangeIndex("chr", "lo", "hi")))
+  idsToDestroy <<- c(idsToDestroy, id(handler))
+  df <- data.frame(chr=c("chrII", "chrI", "chrI"), lo=c(1000, 500, 300), hi=c(1010, 800, 600),
+                   stringsAsFactors=FALSE)
+  addRows(handler, df)
+  closeObj(handler, block=TRUE)
+  storedRows <- getRows(handler)
+  expect_that(storedRows["0", "chr"], equals("chrI"))
+  expect_that(storedRows[3, "chr"], equals("chrII"))
 })
 
 test_that("lexicographic indexed table can be created and queried", {

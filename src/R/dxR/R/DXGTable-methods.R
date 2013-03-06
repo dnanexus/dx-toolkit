@@ -120,9 +120,13 @@ lexicographicIndex <- function(columns, name) {
 ##' @seealso \code{\link{DXGTable}} for making a handler for an
 ##' existing GTable.  \code{\link{colDesc}} for creating column
 ##' descriptors.  \code{\link{genomicRangeIndex}} and
-##' \code{link{lexicographicIndex}} for creating index descriptors.
+##' \code{\link{lexicographicIndex}} for creating index descriptors.
 newDXGTable <- function(columns, indices=NA, project=dxEnv$DEFAULT_PROJECT) {
-  resp <- gtableNew(list(columns=columns, project=project))
+  inputHash <- list(columns=columns, project=project)
+  if (!is.na(indices)) {
+    inputHash$indices <- indices
+  }
+  resp <- gtableNew(inputHash)
   handler <- new("DXGTable", id=resp[["id"]], project=project)
   desc(handler) <- describe(handler)
   return (handler)
@@ -194,14 +198,9 @@ setMethod("describe", "DXGTable", function(handler) {
 ##' @return the modified data object handler
 ##' @docType methods
 ##' @examples
-##' 
-##' \dontrun{
-##' dxgtable <- DXGTable("gtable-123456789012345678901234")
-##' 
-##' # The following command refreshes the cached description of the
-##' # object
-##' desc(dxgtable) <- describe(dxgtable)
-##' }
+##' # The following command refreshes the cached description a
+##' # DXGTable object called dxgtable
+##' \dontrun{desc(dxgtable) <- describe(dxgtable)}
 ##' @aliases desc<-,DXGTable-method
 ##' @name desc<-
 ##' @rdname desc-replace-methods

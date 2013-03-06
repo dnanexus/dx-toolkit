@@ -255,10 +255,12 @@ class DXFile(DXDataObject):
 
         if len(self._http_threadpool_futures) > 0:
             dxpy.utils.wait_for_all_futures(self._http_threadpool_futures)
-            for future in self._http_threadpool_futures:
-                if future.exception() != None:
-                    raise future.exception()
-            self._http_threadpool_futures = set()
+            try:
+                for future in self._http_threadpool_futures:
+                    if future.exception() != None:
+                        raise future.exception()
+            finally:
+                self._http_threadpool_futures = set()
 
     def _async_upload_part_request(self, *args, **kwargs):
         if self._http_threadpool == None:

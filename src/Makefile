@@ -196,9 +196,8 @@ doc_java:
 	(cd java; mvn compile javadoc:javadoc)
 
 doc_R: R
-	mkdir -p ../doc/R
-	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R CMD INSTALL --build dxR --html --library="$(DNANEXUS_HOME)/lib/R"; cp -r "$(DNANEXUS_HOME)/lib/R/dxR/html/" "$(DNANEXUS_HOME)/doc/R/."; cp "$(DNANEXUS_HOME)/lib/R/dxR/DESCRIPTION" "$(DNANEXUS_HOME)/doc/R/html/.")
-	R/dxR-sanitize-htmldocs.py
+	(export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R --no-save < "$(DNANEXUS_HOME)/src/R/install_dxR_doc_deps.R")
+	(export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q -e "library('parser'); library('highlight'); library('staticdocs'); build_package('R/dxR', '$(DNANEXUS_HOME)/doc/R/')")
 
 # Clean
 # =====
@@ -217,4 +216,4 @@ clean:
 	-rm -rf ../share
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
 
-.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java
+.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R
