@@ -14,12 +14,10 @@ Gem::Specification.new do |gem|
   gem.email    = 'expert-dev@dnanexus.com'
   gem.homepage = 'https://github.com/dnanexus/dx-toolkit'
 
-#  gem.files = Dir[libdir+'/**/*']
   gem.files = Dir.glob('lib/**/*')
-  gem.require_paths = %w['lib']
-#  puts "foo"
-#  puts Dir.pwd
+  gem.require_paths = ["lib"]
 
   gem.add_development_dependency('rake')
   gem.add_development_dependency('rspec', ["~> 2.0"])
+  gem.add_development_dependency('yard')
 end
