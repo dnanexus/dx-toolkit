@@ -120,7 +120,7 @@ R: api_wrappers toolkit_version
 
 ruby: api_wrappers toolkit_version
 	(cd ruby; gem build dxruby.gemspec)
-	(cd ruby; export GEM_HOME="$(DNANEXUS_HOME)/lib/rubygems"; gem install --local dxruby*.gem)
+	(cd ruby; export GEM_HOME="$(DNANEXUS_HOME)/lib/rubygems"; gem install dxruby*.gem)
 
 # Tools
 # =====
