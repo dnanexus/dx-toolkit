@@ -187,20 +187,20 @@ def parseRegions(input):
 
 def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
 
-    chr = str(row[col["chr"]])
+    chr = str(row[col["chr"]]).strip()
     pos = row[col["lo"]]+1
-    ref = row[col["ref"]]
-    alt = row[col["alt"]]
+    ref = row[col["ref"]].strip()
+    alt = row[col["alt"]].strip()
 
     ids = '.'
     if col.get("ids") is not None:
         if row[col["ids"]] != '':
-            ids = row[col["ids"]]
+            ids = row[col["ids"]].strip()
 
     filt = '.'
     if col.get("filter") is not None:
         if row[col["filter"]] != '':
-            filt = row[col["filter"]]
+            filt = row[col["filter"]].strip()
         else:
             filt = "PASS"
             
@@ -213,12 +213,14 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
     sample = 0
     printPreceedingCharacter = False
     altOptions = row[col["alt"]].split(",")
+    if altOptions == ['']:
+        printPreceedingCharacter = True
     for x in altOptions:
         if (len(ref) != len(x) or len(ref) == 0 or len(alt) == 0) and not re.search("[^ATGCNatgcn\.-]", x):
             printPreceedingCharacter = True
-    
+            
     if printPreceedingCharacter:
-        ref = contigSequence[chromosomeOffsets[chr]+int(pos)-2].upper()+ref
+        ref = contigSequence[chromosomeOffsets[chr]+int(pos)-2]+ref
         altOptions = row[col["alt"]].split(",")
         alt = ''
         for x in altOptions:
@@ -229,8 +231,8 @@ def writeRow(row, col, outputFile, contigSequence, chromosomeOffsets):
                 validAlt = False
         alt = alt.rstrip(",")
         pos -= 1
-
-    outputFile.write(chr+"\t"+str(pos)+"\t"+str(ids)+"\t"+ref+"\t"+alt+"\t"+str(qual)+"\t"+str(filt))
+                
+    outputFile.write(chr+"\t"+str(pos).strip()+"\t"+str(ids).strip()+"\t"+ref.upper().strip()+"\t"+alt.upper().strip()+"\t"+str(qual).strip()+"\t"+str(filt).strip())
 
     infos = ''
     for x in col:
