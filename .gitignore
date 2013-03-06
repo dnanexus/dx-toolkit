@@ -9,6 +9,7 @@
 /src/.setup_doc_virtualenv
 /src/java/target/
 /src/python/dxpy/toolkit_version.py
+/src/ruby/lib/dxruby/version.rb
 /src/dx-wig-to-wiggle/build
 /src/R/install_dxR_deps.Rout
 /src/R/dxR*.tar.gz
