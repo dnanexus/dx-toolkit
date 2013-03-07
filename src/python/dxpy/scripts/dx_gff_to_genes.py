@@ -22,6 +22,7 @@ import random
 import sys
 import re
 import argparse
+import subprocess
 
 import magic
 
