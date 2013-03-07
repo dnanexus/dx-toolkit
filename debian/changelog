@@ -1,3 +1,9 @@
+dx-toolkit (0.39.2) precise; urgency=low
+
+  * Bug fix for dx_gff_to_genes.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 06 Mar 2013 16:42:07 -0800
+
 dx-toolkit (0.39.1) precise; urgency=low
 
   * Remove dx-get-job-streams.
