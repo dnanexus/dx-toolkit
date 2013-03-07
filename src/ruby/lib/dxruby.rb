@@ -158,17 +158,17 @@ module DXRuby
         end
       else
         # A response was received from server
-        status_code = Integer(response.code, 10);
+        status_code = response.code.to_i
         
         # Check the status code of response
         if status_code >= 200 && status_code <= 299
           # Ok response case: Match content-length (if provided by server)
-          if response['content-length'] && (Integer(response['content-length'], 10) != response.body.length)
+          if response['content-length'] && (response['content-length'].to_i != response.body.length)
             to_retry = always_retry || (method == "GET")
             err_msg = "Expected Content-Length from server: " + response['content-length'] + ", but recieved only " + response.body.length.to_s
           else
             # Everything is ok, just return the response (after parsing as JSON, if content-type is provided by server)
-            if response['content-type'] && (/application\/json/i.match(response['content-type']) != nil)
+            if response['content-type'] && (/^\s*application\/json/i.match(response['content-type']) != nil)
               return JSON.parse(response.body)
             else
               return response.body

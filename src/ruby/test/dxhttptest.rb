@@ -1,4 +1,5 @@
-require "../lib/dxhttp"
+require 'rubygems'
+require "dxruby"
 require "test/unit"
  
 class TestDXHTTP < Test::Unit::TestCase
