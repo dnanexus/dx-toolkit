@@ -1,3 +1,9 @@
+dx-toolkit (0.40.1) precise; urgency=low
+
+  * Bug fix for dx_gff_to_genes.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 06 Mar 2013 16:40:05 -0800
+
 dx-toolkit (0.40.0) precise; urgency=low
 
   * Cleanup of API wrappers and wrapper build process.
