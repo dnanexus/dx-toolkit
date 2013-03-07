@@ -5,7 +5,7 @@ libdir = File.expand_path('../lib', __FILE__)
 Gem::Specification.new do |gem|
   gem.name    = 'dxruby'
   gem.version = DXRuby::VERSION
-  gem.date    = Date.today.to_s
+  gem.date    = Time.now.strftime("%Y-%m-%d")
 
   gem.summary = "DNAnexus Platform API bindings for Ruby"
   gem.description = "This gem provides native Ruby support for accessing the DNAnexus Platform API"
