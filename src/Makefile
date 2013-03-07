@@ -130,7 +130,7 @@ ua:
 test: test_python test_perl
 
 test_python:
-	for i in python/test/*; do $$i; done
+	for i in python/test/test_*.py; do python $$i; done
 
 test_perl:
 	(cd perl; prove)
