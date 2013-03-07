@@ -111,7 +111,7 @@ def unpack_and_open(input):
 
         try:
             subprocess.check_call(" ".join([test_util, "-t", input]), shell=True)
-        except:
+        except subprocess.CalledProcessError:
             raise dxpy.AppError("File failed integrity check by "+uncomp_util+".  Compressed file is corrupted.")
 
     # with that in hand, open file for reading.  If we find a tar archive then exit with error.

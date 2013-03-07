@@ -442,7 +442,7 @@ def unpack(input):
 
         try:
             subprocess.check_call(" ".join([test_util, "-t", input]), shell=True)
-        except:
+        except subprocess.CalledProcessError:
             raise dxpy.AppError("File failed integrity check by "+uncomp_util+".  Compressed file is corrupted.")
 
     # with that in hand, unzip file.  If we find a tar archive then exit with error.
@@ -461,7 +461,7 @@ def unpack(input):
     try:
         subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", "uncompressed.gtf"]), shell=True)
         return "uncompressed.gtf"
-    except:
+    except subprocess.CalledProcessError:
         raise dxpy.AppError("Unable to open compressed input for reading")
 
 def main(**args):

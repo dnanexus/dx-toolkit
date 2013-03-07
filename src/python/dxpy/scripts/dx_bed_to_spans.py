@@ -69,7 +69,7 @@ def unpack(input):
 
         try:
             subprocess.check_call(" ".join([test_util, "-t", input]), shell=True)
-        except:
+        except subprocess.CalledProcessError:
             raise dxpy.AppError("File failed integrity check by "+uncomp_util+".  Compressed file is corrupted.")
 
     # with that in hand, unzip file.  If we find a tar archive then exit with error.
@@ -89,7 +89,7 @@ def unpack(input):
         out_name = id_generator()
         subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", out_name]), shell=True)
         return out_name
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         raise dxpy.AppError("Unable to open compressed input for reading: " + str(e))
 
 
