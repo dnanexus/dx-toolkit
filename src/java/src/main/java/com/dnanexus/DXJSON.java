@@ -96,7 +96,7 @@ public class DXJSON {
         public ObjectNode build() {
             ObjectNode output = mapper.createObjectNode();
             ObjectBuilder nextBuilder = this;
-            while (!this.isEmpty) {
+            while (!nextBuilder.isEmpty) {
                 output.put(nextBuilder.key, nextBuilder.value);
                 nextBuilder = nextBuilder.next;
             }
