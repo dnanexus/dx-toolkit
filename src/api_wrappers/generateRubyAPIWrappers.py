@@ -26,7 +26,7 @@ preamble = '''# Do not modify this file by hand.
 require 'dxruby'
 
 module DXRuby
-  class API'''
+  module API'''
 
 postscript = '''  end
 end'''

@@ -6,7 +6,7 @@
 require 'dxruby'
 
 module DXRuby
-  class API
+  module API
     def self.appAddCategories(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/addCategories API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories
