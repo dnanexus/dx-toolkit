@@ -603,13 +603,17 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False, show_output
     elif jobdesc['state'] == 'running':
         result += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
 
-    if show_outputs and jobdesc.get("output") != None:
+    if show_outputs:
         prefix = DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
-        if len(jobdesc["output"]) == 0:
-            result += prefix + "Output: -"
-        else:
-            result += prefix + "Output: " + (prefix+' '*8).join([fill(key + ' = ' + io_val_to_str(value),
-                                                                      subsequent_indent=' '*9,
-                                                                      break_long_words=False) for key, value in jobdesc["output"].items()])
+        if jobdesc.get("output") != None:
+            if len(jobdesc["output"]) == 0:
+                result += prefix + "Output: -"
+            else:
+                result += prefix + "Output: " + (prefix+' '*8).join([fill(key + ' = ' + io_val_to_str(value),
+                                                                          subsequent_indent=' '*9,
+                                                                          break_long_words=False) for key, value in jobdesc["output"].items()])
+        elif jobdesc['state'] == 'failed' and 'failureReason' in jobdesc:
+            result += prefix + BOLD() + jobdesc['failureReason'] + ENDC() + ": " + fill(jobdesc.get('failureMessage', ''),
+                                                                                        subsequent_indent=prefix.lstrip('\n'))
 
     return result

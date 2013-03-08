@@ -2002,7 +2002,6 @@ def find_jobs(args):
             job_children = collections.OrderedDict() # job ID -> list of child job IDs
 
             for job_result in dxpy.find_jobs(**query):
-
                 if args.origin_jobs:
                     # Guaranteed that all results are origin jobs already
                     if len(origin_jobs) == args.num_results:
@@ -2063,7 +2062,8 @@ def find_jobs(args):
                         output_ids.append(parent_job)
                     else:
                         parent_string = get_find_jobs_string(job_descs[parent_job],
-                                                             has_children=has_children)
+                                                             has_children=has_children,
+                                                             show_outputs=args.show_outputs)
                         parent_hash[parent_string] = collections.OrderedDict()
                     if has_children:
                         for child_job in job_children[parent_job]:
