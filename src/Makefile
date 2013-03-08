@@ -135,6 +135,9 @@ test_python:
 test_perl:
 	(cd perl; prove)
 
+test_java:
+	(cd java; mvn test)
+
 # Installation
 # ============
 
