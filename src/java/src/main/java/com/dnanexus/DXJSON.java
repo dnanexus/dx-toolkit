@@ -35,7 +35,7 @@ public class DXJSON {
     // TODO: helpers for making arrays
 
     /**
-     * Builder class which returns a JSON object (hash).
+     * Builder class that generates a JSON object (hash).
      *
      * Example:
      *
@@ -44,11 +44,9 @@ public class DXJSON {
      * ObjectNode o = DXJSON.getObjectBuilder()
      *                      .put("key1", "a-string")
      *                      .put("key2", 12321)
-     *                      .build()
-     * }
-     * </pre>
+     *                      .build()}</pre>
      *
-     * when serialized, produces the JSON object {"key1": "a-string", "key2": 12321}.
+     * when serialized, produces the JSON object <tt>{"key1": "a-string", "key2": 12321}</tt>.
      */
     public static class ObjectBuilder {
         private final boolean isEmpty;
@@ -63,36 +61,65 @@ public class DXJSON {
             this.value = value;
         }
 
+        /**
+         * Initializes an ObjectBuilder which will generate an empty object.
+         */
         public ObjectBuilder() {
             this(true, null, null, null);
         }
 
+        /**
+         * Adds a key-value pair with an arbitrary JsonNode value.
+         */
         public ObjectBuilder put(String key, JsonNode value) {
             return new ObjectBuilder(false, this, key, value);
         }
 
         // TODO: allow easy creation of nulls
 
+        /**
+         * Adds a key-value pair with a string value and returns the resulting
+         * ObjectBuilder.
+         */
         public ObjectBuilder put(String key, String value) {
             return put(key, new TextNode(value));
         }
 
+        /**
+         * Adds a key-value pair with a numeric value and returns the resulting
+         * ObjectBuilder.
+         */
         public ObjectBuilder put(String key, int value) {
             return put(key, new IntNode(value));
         }
 
+        /**
+         * Adds a key-value pair with a numeric value and returns the resulting
+         * ObjectBuilder.
+         */
         public ObjectBuilder put(String key, long value) {
             return put(key, new LongNode(value));
         }
 
+        /**
+         * Adds a key-value pair with a numeric value and returns the resulting
+         * ObjectBuilder.
+         */
         public ObjectBuilder put(String key, double value) {
             return put(key, new DoubleNode(value));
         }
 
+        /**
+         * Adds a key-value pair with a boolean value and returns the resulting
+         * ObjectBuilder.
+         */
         public ObjectBuilder put(String key, boolean value) {
             return put(key, value ? BooleanNode.TRUE : BooleanNode.FALSE);
         }
 
+        /**
+         * Generates a JSON object.
+         */
         public ObjectNode build() {
             ObjectNode output = mapper.createObjectNode();
             ObjectBuilder nextBuilder = this;

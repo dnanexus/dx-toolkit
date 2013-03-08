@@ -28,6 +28,9 @@ import org.apache.http.client.ClientProtocolException;
 import java.io.*;
 import org.apache.commons.io.IOUtils;
 
+/**
+ * Class for making a raw DNAnexus API call via HTTP.
+ */
 public class DXHTTPRequest {
     private final JsonNode securityContext;
     private final String apiserver;
@@ -56,6 +59,10 @@ public class DXHTTPRequest {
         }
     }
 
+    /**
+     * Issues a request against the specified resource and returns the result
+     * as a String.
+     */
     public String request(String resource, String data) throws Exception {
         HttpPost request = new HttpPost(apiserver + resource);
 
@@ -122,6 +129,10 @@ public class DXHTTPRequest {
         throw new Exception("POST " + resource + " failed");
     }
 
+    /**
+     * Issues a request against the specified resource and returns the result
+     * as a JSON object.
+     */
     public JsonNode request(String resource, JsonNode data) throws Exception {
         String dataAsString = data.toString();
         String response = this.request(resource, dataAsString);
