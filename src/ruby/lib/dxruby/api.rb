@@ -10,7 +10,7 @@ module DXRuby
     def self.appAddCategories(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/addCategories API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/addCategories", input_params, opts)
     end
@@ -18,7 +18,7 @@ module DXRuby
     def self.appAddDevelopers(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/addDevelopers API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/addDevelopers", input_params, opts)
     end
@@ -26,7 +26,7 @@ module DXRuby
     def self.appAddTags(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/addTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/addTags", input_params, opts)
     end
@@ -34,7 +34,7 @@ module DXRuby
     def self.appDelete(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/delete API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/delete", input_params, opts)
     end
@@ -42,7 +42,7 @@ module DXRuby
     def self.appDescribe(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/describe", input_params, opts)
     end
@@ -50,7 +50,7 @@ module DXRuby
     def self.appGet(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/get API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/get", input_params, opts)
     end
@@ -58,7 +58,7 @@ module DXRuby
     def self.appInstall(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/install API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/install", input_params, opts)
     end
@@ -66,7 +66,7 @@ module DXRuby
     def self.appListCategories(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/listCategories API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/listCategories", input_params, opts)
     end
@@ -74,7 +74,7 @@ module DXRuby
     def self.appListDevelopers(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/listDevelopers API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/listDevelopers", input_params, opts)
     end
@@ -82,7 +82,7 @@ module DXRuby
     def self.appPublish(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/publish API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/publish", input_params, opts)
     end
@@ -90,7 +90,7 @@ module DXRuby
     def self.appRemoveCategories(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/removeCategories API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/removeCategories", input_params, opts)
     end
@@ -98,7 +98,7 @@ module DXRuby
     def self.appRemoveDevelopers(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/removeDevelopers API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/removeDevelopers", input_params, opts)
     end
@@ -106,7 +106,7 @@ module DXRuby
     def self.appRemoveTags(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/removeTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/removeTags", input_params, opts)
     end
@@ -114,7 +114,7 @@ module DXRuby
     def self.appRun(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/run API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/run", input_params, opts)
     end
@@ -122,7 +122,7 @@ module DXRuby
     def self.appUninstall(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/uninstall API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/uninstall", input_params, opts)
     end
@@ -130,7 +130,7 @@ module DXRuby
     def self.appUpdate(app_name_or_id, app_alias=nil, input_params={}, opts={})
       # Invokes the /app-xxxx/update API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{fully_qualified_version}/update", input_params, opts)
     end
@@ -138,680 +138,680 @@ module DXRuby
     def self.appNew(input_params={}, opts={})
       # Invokes the /app/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/app/new", input_params, opts)
     end
 
     def self.appletAddTags(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/addTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTags", input_params, opts)
     end
 
     def self.appletDescribe(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.appletGet(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/get API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/get", input_params, opts)
     end
 
     def self.appletGetDetails(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/getDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/getDetails", input_params, opts)
     end
 
     def self.appletListProjects(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/listProjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/listProjects", input_params, opts)
     end
 
     def self.appletRemoveTags(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/removeTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTags", input_params, opts)
     end
 
     def self.appletRename(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/rename API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/rename", input_params, opts)
     end
 
     def self.appletRun(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/run API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/run", input_params, opts)
     end
 
     def self.appletSetProperties(object_id, input_params={}, opts={})
       # Invokes the /applet-xxxx/setProperties API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setProperties", input_params, opts)
     end
 
     def self.appletNew(input_params={}, opts={})
       # Invokes the /applet/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/applet/new", input_params, opts)
     end
 
     def self.containerClone(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/clone API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/clone", input_params, opts)
     end
 
     def self.containerDescribe(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.containerDestroy(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/destroy API method.
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/destroy", input_params, opts)
     end
 
     def self.containerListFolder(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/listFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/listFolder", input_params, opts)
     end
 
     def self.containerMove(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/move API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/move", input_params, opts)
     end
 
     def self.containerNewFolder(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/newFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/newFolder", input_params, opts)
     end
 
     def self.containerRemoveFolder(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/removeFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeFolder", input_params, opts)
     end
 
     def self.containerRemoveObjects(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/removeObjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeObjects", input_params, opts)
     end
 
     def self.containerRenameFolder(object_id, input_params={}, opts={})
       # Invokes the /container-xxxx/renameFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/renameFolder", input_params, opts)
     end
 
     def self.fileAddTags(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/addTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTags", input_params, opts)
     end
 
     def self.fileAddTypes(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/addTypes API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTypes", input_params, opts)
     end
 
     def self.fileClose(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/close API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/close", input_params, opts)
     end
 
     def self.fileDescribe(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.fileDownload(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/download API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/download", input_params, opts)
     end
 
     def self.fileGetDetails(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/getDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/getDetails", input_params, opts)
     end
 
     def self.fileListProjects(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/listProjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/listProjects", input_params, opts)
     end
 
     def self.fileRemoveTags(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/removeTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTags", input_params, opts)
     end
 
     def self.fileRemoveTypes(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/removeTypes API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTypes", input_params, opts)
     end
 
     def self.fileRename(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/rename API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/rename", input_params, opts)
     end
 
     def self.fileSetDetails(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/setDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setDetails", input_params, opts)
     end
 
     def self.fileSetProperties(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/setProperties API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setProperties", input_params, opts)
     end
 
     def self.fileSetVisibility(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/setVisibility API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setVisibility", input_params, opts)
     end
 
     def self.fileUpload(object_id, input_params={}, opts={})
       # Invokes the /file-xxxx/upload API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/upload", input_params, opts)
     end
 
     def self.fileNew(input_params={}, opts={})
       # Invokes the /file/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/file/new", input_params, opts)
     end
 
     def self.gtableAddRows(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/addRows API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addRows", input_params, opts)
     end
 
     def self.gtableAddTags(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/addTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTags", input_params, opts)
     end
 
     def self.gtableAddTypes(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/addTypes API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTypes", input_params, opts)
     end
 
     def self.gtableClose(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/close API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/close", input_params, opts)
     end
 
     def self.gtableDescribe(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.gtableGet(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/get API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/get", input_params, opts)
     end
 
     def self.gtableGetDetails(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/getDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/getDetails", input_params, opts)
     end
 
     def self.gtableListProjects(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/listProjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/listProjects", input_params, opts)
     end
 
     def self.gtableNextPart(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/nextPart API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/nextPart", input_params, opts)
     end
 
     def self.gtableRemoveTags(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/removeTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTags", input_params, opts)
     end
 
     def self.gtableRemoveTypes(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/removeTypes API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTypes", input_params, opts)
     end
 
     def self.gtableRename(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/rename API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/rename", input_params, opts)
     end
 
     def self.gtableSetDetails(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/setDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setDetails", input_params, opts)
     end
 
     def self.gtableSetProperties(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/setProperties API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setProperties", input_params, opts)
     end
 
     def self.gtableSetVisibility(object_id, input_params={}, opts={})
       # Invokes the /gtable-xxxx/setVisibility API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setVisibility", input_params, opts)
     end
 
     def self.gtableNew(input_params={}, opts={})
       # Invokes the /gtable/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/gtable/new", input_params, opts)
     end
 
     def self.jobDescribe(object_id, input_params={}, opts={})
       # Invokes the /job-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.jobStreamLog(object_id, input_params={}, opts={})
       # Invokes the /job-xxxx/streamLog API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/streamLog", input_params, opts)
     end
 
     def self.jobTerminate(object_id, input_params={}, opts={})
       # Invokes the /job-xxxx/terminate API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/terminate", input_params, opts)
     end
 
     def self.jobNew(input_params={}, opts={})
       # Invokes the /job/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/job/new", input_params, opts)
     end
 
     def self.notificationsGet(input_params={}, opts={})
       # Invokes the /notifications/get API method.
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/notifications/get", input_params, opts)
     end
 
     def self.notificationsMarkRead(input_params={}, opts={})
       # Invokes the /notifications/markRead API method.
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/notifications/markRead", input_params, opts)
     end
 
     def self.projectAddTags(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/addTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTags", input_params, opts)
     end
 
     def self.projectClone(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/clone API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/clone", input_params, opts)
     end
 
     def self.projectDecreasePermissions(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/decreasePermissions API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/decreasePermissions", input_params, opts)
     end
 
     def self.projectDescribe(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.projectDestroy(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/destroy API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/destroy", input_params, opts)
     end
 
     def self.projectInvite(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/invite API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/invite", input_params, opts)
     end
 
     def self.projectLeave(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/leave API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/leave", input_params, opts)
     end
 
     def self.projectListFolder(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/listFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/listFolder", input_params, opts)
     end
 
     def self.projectMove(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/move API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/move", input_params, opts)
     end
 
     def self.projectNewFolder(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/newFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/newFolder", input_params, opts)
     end
 
     def self.projectRemoveFolder(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/removeFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeFolder", input_params, opts)
     end
 
     def self.projectRemoveObjects(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/removeObjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeObjects", input_params, opts)
     end
 
     def self.projectRemoveTags(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/removeTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTags", input_params, opts)
     end
 
     def self.projectRenameFolder(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/renameFolder API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/renameFolder", input_params, opts)
     end
 
     def self.projectSetProperties(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/setProperties API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setProperties", input_params, opts)
     end
 
     def self.projectUpdate(object_id, input_params={}, opts={})
       # Invokes the /project-xxxx/update API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/update", input_params, opts)
     end
 
     def self.projectNew(input_params={}, opts={})
       # Invokes the /project/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/project/new", input_params, opts)
     end
 
     def self.recordAddTags(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/addTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTags", input_params, opts)
     end
 
     def self.recordAddTypes(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/addTypes API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/addTypes", input_params, opts)
     end
 
     def self.recordClose(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/close API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/close", input_params, opts)
     end
 
     def self.recordDescribe(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.recordGetDetails(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/getDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/getDetails", input_params, opts)
     end
 
     def self.recordListProjects(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/listProjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/listProjects", input_params, opts)
     end
 
     def self.recordRemoveTags(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/removeTags API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTags", input_params, opts)
     end
 
     def self.recordRemoveTypes(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/removeTypes API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/removeTypes", input_params, opts)
     end
 
     def self.recordRename(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/rename API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/rename", input_params, opts)
     end
 
     def self.recordSetDetails(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/setDetails API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setDetails", input_params, opts)
     end
 
     def self.recordSetProperties(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/setProperties API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setProperties", input_params, opts)
     end
 
     def self.recordSetVisibility(object_id, input_params={}, opts={})
       # Invokes the /record-xxxx/setVisibility API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/setVisibility", input_params, opts)
     end
 
     def self.recordNew(input_params={}, opts={})
       # Invokes the /record/new API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/record/new", input_params, opts)
     end
 
     def self.systemFindAffiliates(input_params={}, opts={})
       # Invokes the /system/findAffiliates API method.
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findAffiliates", input_params, opts)
     end
 
     def self.systemFindApps(input_params={}, opts={})
       # Invokes the /system/findApps API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findApps", input_params, opts)
     end
 
     def self.systemFindDataObjects(input_params={}, opts={})
       # Invokes the /system/findDataObjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findDataObjects", input_params, opts)
     end
 
     def self.systemFindJobs(input_params={}, opts={})
       # Invokes the /system/findJobs API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findJobs", input_params, opts)
     end
 
     def self.systemFindProjects(input_params={}, opts={})
       # Invokes the /system/findProjects API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findProjects", input_params, opts)
     end
 
     def self.systemFindUsers(input_params={}, opts={})
       # Invokes the /system/findUsers API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findUsers", input_params, opts)
     end
 
     def self.systemFindProjectMembers(input_params={}, opts={})
       # Invokes the /system/findProjectMembers API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/findProjectMembers", input_params, opts)
     end
 
     def self.systemGreet(input_params={}, opts={})
       # Invokes the /system/greet API method.
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/greet", input_params, opts)
     end
 
     def self.systemShortenURL(input_params={}, opts={})
       # Invokes the /system/shortenURL API method.
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/system/shortenURL", input_params, opts)
     end
 
     def self.userDescribe(object_id, input_params={}, opts={})
       # Invokes the /user-xxxx/describe API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe
-      opts = { :always_retry => true }.merge(opts)
+      opts = { "always_retry" => true }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/describe", input_params, opts)
     end
 
     def self.userUpdate(object_id, input_params={}, opts={})
       # Invokes the /user-xxxx/update API method.
       # For more info, see: http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate
-      opts = { :always_retry => false }.merge(opts)
+      opts = { "always_retry" => false }.merge(opts)
       return DXRuby::DXHTTPRequest("/#{object_id}/update", input_params, opts)
     end
 

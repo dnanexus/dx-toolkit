@@ -33,21 +33,21 @@ end'''
 
 class_method_template = '''    def self.{wrapper_method_name}(input_params={{}}, opts={{}})
       # Invokes the {route} API method.{wiki_ref}
-      opts = {{ :always_retry => {retry} }}.merge(opts)
+      opts = {{ "always_retry" => {retry} }}.merge(opts)
       return DXRuby::DXHTTPRequest("{route}", input_params, opts)
     end
 '''
 
 object_method_template = '''    def self.{wrapper_method_name}(object_id, input_params={{}}, opts={{}})
       # Invokes the {route} API method.{wiki_ref}
-      opts = {{ :always_retry => {retry} }}.merge(opts)
+      opts = {{ "always_retry" => {retry} }}.merge(opts)
       return DXRuby::DXHTTPRequest("/#{{object_id}}/{api_method_name}", input_params, opts)
     end
 '''
 
 app_object_method_template = '''    def self.{wrapper_method_name}(app_name_or_id, app_alias=nil, input_params={{}}, opts={{}})
       # Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
-      opts = {{ :always_retry => {retry} }}.merge(opts)
+      opts = {{ "always_retry" => {retry} }}.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DXRuby::DXHTTPRequest("/#{{fully_qualified_version}}/{api_method_name}", input_params, opts)
     end
