@@ -1,7 +1,9 @@
 DNAnexus Platform SDK
 =====================
 
-**To download pre-built packages for your platform, see http://wiki.dnanexus.com/Downloads.**
+* **To download pre-built packages for your platform, see http://wiki.dnanexus.com/Downloads.**
+
+* **Found a bug? See [Reporting Bugs](#reporting-bugs) below.**
 
 Welcome to the `dx-toolkit` repository! This repository contains the DNAnexus
 API language bindings and utilities for interacting with the DNAnexus platform.
@@ -188,3 +190,7 @@ Once you have installed the library, you are ready to use it.  Inside
 R, just run:
 
     library(dxR)
+
+Reporting Bugs
+--------------
+Please use [GitHub](https://github.com/dnanexus/dx-toolkit/issues) to report bugs, post suggestions, or send us pull requests.
