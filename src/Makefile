@@ -194,7 +194,7 @@ doc_dxjson:
 	mkdir -p ../doc/cpp/dxjson
 	doxygen cpp/dxjson/Doxyfile
 
-doc_java:
+doc_java: api_wrappers
 	mkdir -p ../doc/java
 	(cd java; mvn compile javadoc:javadoc)
 
