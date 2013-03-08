@@ -93,6 +93,9 @@ def run(function_name=None, function_input=None):
 
         job = {'function': function_name, 'input': function_input}
     job['input'] = resolve_job_refs_in_test(job['input'])
+    with open("job_error_reserved_space", "w") as fh:
+        fh.write("This file contains reserved space for writing job errors in case the filesystem becomes full.\n" + " "*1024*64)
+
     print "Invoking", job.get('function'), "with", job.get('input')
 
     try:
@@ -106,6 +109,10 @@ def run(function_name=None, function_input=None):
     except Exception as e:
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)
+            try:
+                os.unlink("job_error_reserved_space")
+            except:
+                pass
             with open("job_error.json", "w") as fh:
                 fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e)}}) + "\n")
         raise
