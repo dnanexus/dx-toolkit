@@ -69,14 +69,14 @@ class DXJobLogStreamClient(WebSocketBaseClient):
                 raise DXJobLogStreamingException(error)
         elif self.print_job_info:
             for job_id in self.seen_jobs:
-                print get_find_jobs_string(dxpy.describe(job_id), has_children=False)
+                print get_find_jobs_string(dxpy.describe(job_id), has_children=False, show_outputs=True)
 
     def received_message(self, message):
         message = json.loads(str(message))
 
         if self.print_job_info and 'job' in message and message['job'] not in self.seen_jobs:
             self.seen_jobs[message['job']] = dxpy.describe(message['job'])
-            print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False, show_outputs=True)
+            print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False, show_outputs=False)
 
         if message.get('source') == 'SYSTEM' and message.get('msg') == 'END_LOG':
             self.close()
