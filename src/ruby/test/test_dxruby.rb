@@ -6,7 +6,7 @@ class TestDXHTTP < Test::Unit::TestCase
   def test_negative
     #printresp(DXRuby.DXHTTPRequest("/system/findProjects", {}, true, JSON.parse('{"max_retries": 2}')))
     assert_raise(DXRuby::DXHTTPRequestError) { DXRuby.DXHTTPRequest("/system/IDoNotExist", {}, {"always_retry"=> true, "max_retries"=> 2}) }
-    assert_raise(DXRuby::DXHTTPRequestError) { DXRuby.DXHTTPRequest("/system/greet", {}, JSON.parse('{"method": "PUT"}')) } # We don't support PUT method
+    assert_raise(DXRuby::DXHTTPRequestError) { DXRuby.DXHTTPRequest("/system/greet", {}, JSON.parse('{"method": "PUT"}')) } # We don't support methods other than POST/GET at this time
     assert_raise(DXRuby::DXHTTPRequestError) { DXRuby.DXHTTPRequest("/system/findProjects", "{MalformedJson}", {"always_retry"=> true}) } # should fail because of malformed json
   end
 

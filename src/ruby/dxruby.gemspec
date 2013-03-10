@@ -1,7 +1,5 @@
 require File.expand_path('../lib/dxruby/version', __FILE__)
 
-libdir = File.expand_path('../lib', __FILE__)
-
 Gem::Specification.new do |gem|
   gem.name    = 'dxruby'
   gem.version = DXRuby::VERSION
@@ -13,6 +11,8 @@ Gem::Specification.new do |gem|
   gem.authors  = ['Anurag Biyani', 'Andrey Kislyuk', 'George Asimenos']
   gem.email    = 'expert-dev@dnanexus.com'
   gem.homepage = 'https://github.com/dnanexus/dx-toolkit'
+
+  gem.rubyforge_project = 'dxruby'
 
   gem.files = Dir.glob('lib/**/*')
   gem.require_paths = ["lib"]
