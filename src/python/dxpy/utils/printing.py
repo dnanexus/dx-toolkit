@@ -18,11 +18,11 @@
 This submodule gives basic utilities for printing to the terminal.
 '''
 
-import textwrap, subprocess, sys
+import textwrap, subprocess, os, sys
 
 if sys.stdout.isatty():
     try:
-        tty_rows, tty_cols = map(int, subprocess.check_output(['stty', 'size']).split())
+        tty_rows, tty_cols = map(int, subprocess.check_output(['stty', 'size'], stderr=os.devnull).split())
         std_width = min(tty_cols - 2, 100)
     except:
         tty_rows, tty_cols = 24, 80
