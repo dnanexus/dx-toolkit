@@ -41,14 +41,8 @@ module DXRuby
     # @param default_val String This value will be returned if value is not found in env variables/config file
     # @return String Value for given variable (see priority order above)
     def self.get_config_var(name, config_json, default_val="")
-      if ENV[name] != nil
-        return ENV[name]
-      end
-
-      if config_json != nil && config_json[name].is_a?(String)
-        return config_json[name]
-      end
-
+      return ENV[name] if ENV[name]
+      return config_json[name] if config_json && config_json[name].is_a?(String)
       return default_val
     end
 
@@ -104,7 +98,9 @@ module DXRuby
     end
 
     send_data = (data != nil)
-    if !data.is_a?(String)
+
+    # If data is not a string (and not nil), convert it to a string
+    if send_data && !data.is_a?(String)
       data = data.to_json
     end
 
