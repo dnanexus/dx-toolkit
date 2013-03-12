@@ -39,8 +39,14 @@ all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wi
 # ============================
 
 toolkit_version:
-	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
-	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; fi)
+	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then \
+	    echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    echo -e "module DXRuby\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	fi)
+	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
+	    echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    git describe --always | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DXRuby\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generatePythonAPIWrappers.py > python/dxpy/api.py
@@ -63,7 +69,10 @@ java/src/main/java/com/dnanexus/DXAPI.java: api_wrappers/wrapper_table.json api_
 R/dxR/R/api.R: api_wrappers/wrapper_table.json api_wrappers/generateRAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
 
-api_wrappers: python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R
+ruby/lib/dxruby/api.rb: api_wrappers/wrapper_table.json api_wrappers/generateRubyAPIWrappers.py
+	cat api_wrappers/wrapper_table.json | api_wrappers/generateRubyAPIWrappers.py > ruby/lib/dxruby/api.rb
+
+api_wrappers: python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R ruby/lib/dxruby/api.rb
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
@@ -109,6 +118,10 @@ R: api_wrappers toolkit_version
 	mkdir -p "$(DNANEXUS_HOME)/lib/R"
 	(cd R; export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q --no-restore --no-save < install_dxR_build_deps.R; R -q --no-restore --no-save -e "library(roxygen2); roxygenize(\"dxR\")"; R CMD INSTALL --build dxR --library="$(DNANEXUS_HOME)/lib/R"; )
 
+ruby: api_wrappers toolkit_version
+	(cd ruby; gem build dxruby.gemspec)
+	(cd ruby; export GEM_HOME="$(DNANEXUS_HOME)/lib/rubygems"; gem install dxruby*.gem)
+
 # Tools
 # =====
 
@@ -128,6 +141,9 @@ ua:
 # =====
 
 test: test_python test_perl
+
+test_ruby: ruby
+	(source ../environment && ruby ruby/test/test_dxruby.rb)
 
 test_python:
 	for i in python/test/test_*.py; do python $$i; done
@@ -202,6 +218,10 @@ doc_R: R
 	(export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R --no-save < "$(DNANEXUS_HOME)/src/R/install_dxR_doc_deps.R")
 	(export R_LIBS_SITE="$(DNANEXUS_HOME)/lib/R"; R -q -e "library('parser'); library('highlight'); library('staticdocs'); build_package('R/dxR', '$(DNANEXUS_HOME)/doc/R/')")
 
+doc_ruby: ruby
+	-rm -rf ../doc/ruby
+	(cd ruby; yard --output-dir "$(DNANEXUS_HOME)/doc/ruby")
+
 # Clean
 # =====
 
@@ -219,4 +239,4 @@ clean:
 	-rm -rf ../share
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
 
-.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java dx-contigset-to-fasta ua test test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R
+.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby
