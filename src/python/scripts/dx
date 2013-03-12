@@ -2669,7 +2669,7 @@ def run(args):
                                                                             has_children=False,
                                                                             single_result=True)))
                 if result_choice == "none found":
-                    parser.exit(1, "No matching job found\n")
+                    parser.exit(1, "dx run --clone: No matching job found. Please use a valid job name or ID.\n")
                 elif result_choice == "none picked":
                     parser.exit(1)
                 else:
