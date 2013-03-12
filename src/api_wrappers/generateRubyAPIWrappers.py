@@ -65,18 +65,19 @@ def make_object_method(wrapper_method_name, api_method_name, route, retry=False,
 def make_app_object_method(wrapper_method_name, api_method_name, retry=False, url=None):
     return app_object_method_template.format(wrapper_method_name=wrapper_method_name, api_method_name=api_method_name, retry=retry, wiki_ref=make_wiki_ref(url))
 
-def rubify_name(name):
-    def lispify_char(c):
+# This function converts a "camelCase" string to underscore version, e.g: "camel_case"
+def camel_case_to_underscore(name):
+    def char_helper(c):
         if c == c.upper():
             return "_" + c.lower()
         return c
-    return "".join(map(lispify_char, name))
+    return "".join(map(char_helper, name))
 
 print preamble
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
-    wrapper_method_name = rubify_name(signature.split("(")[0])
+    wrapper_method_name = camel_case_to_underscore(signature.split("(")[0])
     retry = "true" if (opts['retryable']) else "false"
     if (opts['objectMethod']):
         root, oid_route, api_method_name = route.split("/")
