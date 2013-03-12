@@ -19,16 +19,14 @@ module DXRuby
   ##
   # Loads environment variables (@apiserver_host, etc)
   def self.read_env_var()
-    if @env_var_loaded
-      return
-    end
+    return if @env_var_loaded
     user_env_file = File.expand_path("~/.dnanexus_config/environment.json")
     env_json = nil
     if File.exist?(user_env_file)
       begin
         env_json = JSON.parse(IO.read(user_env_file))
       rescue
-        $stderr.puts("WARNING: The contents of file '" + user_env_file + "' cannot be parsed as a valid JSON, ignoring")
+        $stderr.puts("WARNING: The contents of file '#{user_env_file}' cannot be parsed as a valid JSON, ignoring")
         env_json = nil
       end
     end
@@ -81,23 +79,14 @@ module DXRuby
   def self.DXHTTPRequest(resource, data, opts = {})
     read_env_var()
     if opts["prepend_srv"] != false
-      uri = URI.parse(@apiserver_protocol + "://" + @apiserver_host + ":" + @apiserver_port + resource)
+      uri = URI.parse("#{@apiserver_protocol}://#{@apiserver_host}:#{@apiserver_port}#{resource}")
     else
       uri = URI.parse(resource)
     end
     http = Net::HTTP.new(uri.host, uri.port)
 
-    if opts.has_key?("max_retries")
-      max_retries = opts['max_retries']
-    else
-      max_retries = @DEFAULT_RETRIES
-    end
-
-    if opts.has_key?("always_retry")
-      always_retry = opts['always_retry']
-    else
-      always_retry = false
-    end
+    max_retries = opts["max_retries"] || @DEFAULT_RETRIES
+    always_retry = opts["always_retry"] || false
 
     if uri.scheme == "https"
       http.use_ssl = true
@@ -119,12 +108,9 @@ module DXRuby
       data = data.to_json
     end
 
-    if opts.has_key?("method")
-      if opts["method"] != 'GET' and opts["method"] != 'POST':
-          raise DXHTTPRequestError, 'opts["method"] should be either GET or POST'
-      end
-    else
-      method = "POST"
+    method = opts["method"] || "POST"
+    if method != 'GET' and method != 'POST':
+       raise DXHTTPRequestError, 'opts["method"] should be either GET or POST'
     end
 
     for num_try in 0..max_retries
