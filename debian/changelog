@@ -1,3 +1,11 @@
+dx-toolkit (v0.41.0) precise; urgency=low
+
+  * Ruby bindings.
+
+  * Python bindings for case-insensitive indices.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 12 Mar 2013 16:44:16 -0700
+
 dx-toolkit (0.40.0) precise; urgency=low
 
   * Cleanup of API wrappers and wrapper build process.
