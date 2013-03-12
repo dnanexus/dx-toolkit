@@ -25,7 +25,7 @@ preamble = '''# Do not modify this file by hand.
 
 require 'dxruby'
 
-module DXRuby
+module DX
   module API'''
 
 postscript = '''  end
@@ -34,14 +34,14 @@ end'''
 class_method_template = '''    def self.{wrapper_method_name}(input_params={{}}, opts={{}})
       # Invokes the {route} API method.{wiki_ref}
       opts = {{ "always_retry" => {retry} }}.merge(opts)
-      return DXRuby::DXHTTPRequest("{route}", input_params, opts)
+      return DX::http_request("{route}", input_params, opts)
     end
 '''
 
 object_method_template = '''    def self.{wrapper_method_name}(object_id, input_params={{}}, opts={{}})
       # Invokes the {route} API method.{wiki_ref}
       opts = {{ "always_retry" => {retry} }}.merge(opts)
-      return DXRuby::DXHTTPRequest("/#{{object_id}}/{api_method_name}", input_params, opts)
+      return DX::http_request("/#{{object_id}}/{api_method_name}", input_params, opts)
     end
 '''
 
@@ -49,7 +49,7 @@ app_object_method_template = '''    def self.{wrapper_method_name}(app_name_or_i
       # Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
       opts = {{ "always_retry" => {retry} }}.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
-      return DXRuby::DXHTTPRequest("/#{{fully_qualified_version}}/{api_method_name}", input_params, opts)
+      return DX::http_request("/#{{fully_qualified_version}}/{api_method_name}", input_params, opts)
     end
 '''
 
@@ -65,11 +65,18 @@ def make_object_method(wrapper_method_name, api_method_name, route, retry=False,
 def make_app_object_method(wrapper_method_name, api_method_name, retry=False, url=None):
     return app_object_method_template.format(wrapper_method_name=wrapper_method_name, api_method_name=api_method_name, retry=retry, wiki_ref=make_wiki_ref(url))
 
+def rubify_name(name):
+    def lispify_char(c):
+        if c == c.upper():
+            return "_" + c.lower()
+        return c
+    return "".join(map(lispify_char, name))
+
 print preamble
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
-    wrapper_method_name = signature.split("(")[0]
+    wrapper_method_name = rubify_name(signature.split("(")[0])
     retry = "true" if (opts['retryable']) else "false"
     if (opts['objectMethod']):
         root, oid_route, api_method_name = route.split("/")

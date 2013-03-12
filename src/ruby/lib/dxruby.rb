@@ -4,10 +4,9 @@ require "json"
 require "dxruby/version"
 require "dxruby/api"
 
-module DXRuby
-  #TODO: Add a custom error class for APIErrors
-  class DXHTTPRequestError < StandardError
-    def initialize(msg = "An error occured in call to DXHTTPRequest")
+module DX
+  class HTTPRequestError < StandardError
+    def initialize(msg = "An error occured in call to DX::http_request")
       super(msg)
     end
   end
@@ -70,7 +69,7 @@ module DXRuby
   #                  Default is "POST"
   # @return String/JSON Data returned by the API request
   # Raises error if request was not completed (after retrying, if possible)
-  def self.DXHTTPRequest(resource, data, opts = {})
+  def self.http_request(resource, data, opts = {})
     read_env_var()
     if opts["prepend_srv"] != false
       uri = URI.parse("#{@apiserver_protocol}://#{@apiserver_host}:#{@apiserver_port}#{resource}")
@@ -106,7 +105,7 @@ module DXRuby
 
     method = opts["method"] || "POST"
     if method != 'GET' and method != 'POST':
-       raise DXHTTPRequestError, 'opts["method"] should be either GET or POST'
+       raise HTTPRequestError, 'opts["method"] should be either GET or POST'
     end
 
     for num_try in 0..max_retries
@@ -124,7 +123,7 @@ module DXRuby
 
       if opts["auth"] != false
         if @security_context.empty? || (!@security_context["auth_token_type"].is_a?(String)) || (!@security_context["auth_token"].is_a?(String))
-          raise DXHTTPRequestError, "DX_SECURITY_CONTEXT not found (or incorrect). Unable to set Authorization header"
+          raise HTTPRequestError, "DX_SECURITY_CONTEXT not found (or incorrect). Unable to set Authorization header"
         end
         request.add_field("Authorization", @security_context["auth_token_type"] + " " + @security_context["auth_token"])
       end
@@ -177,7 +176,7 @@ module DXRuby
         $stderr.puts "#{method} #{uri.to_s}: #{err_msg or 'none'}. Waiting #{delay.to_s} seconds before retry #{(num_try + 1).to_s} of #{max_retries.to_s}..."
         sleep(delay)
       else
-        raise DXHTTPRequestError, "#{method} #{uri.to_s}: #{err_msg or 'none'}"
+        raise HTTPRequestError, "#{method} #{uri.to_s}: #{err_msg or 'none'}"
       end
     end
   end
