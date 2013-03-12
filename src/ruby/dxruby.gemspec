@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.description = "This gem provides native Ruby support for accessing the DNAnexus Platform API"
 
   gem.authors  = ['Anurag Biyani', 'Andrey Kislyuk', 'George Asimenos']
-  gem.email    = 'expert-dev@dnanexus.com'
+  gem.email    = 'support@dnanexus.com'
   gem.homepage = 'https://github.com/dnanexus/dx-toolkit'
 
   gem.rubyforge_project = 'dxruby'
