@@ -556,8 +556,8 @@ class DXGTable(DXDataObject):
     @staticmethod
     def lexicographic_index(columns, name):
         """
-        :param columns: Required parameter for a lexicographic index: Ordered list of lists of the form [<column name>, "ASC"|"DESC"]
-        :type columns: list of lists containing two strings each
+        :param columns: list of columns to be indexed, in order
+        :type columns: list of hashes, each one of the form returned by :meth:`lexicographic_index_column()`
         :param name: Name of the index
         :type name: string
         :returns: A specially formatted dict that represents an index schema in the API
@@ -567,9 +567,29 @@ class DXGTable(DXDataObject):
         :meth:`_new` method.
 
         """
+        for column in columns:
+            if type(column) is list:
+                print >> sys.stderr, "Warning: passing a list of lists to lexicographic_index() is deprecated, please use lexicographic_index_column instead."
 
-        return {"name": name, "type": "lexicographic",
-                "columns": columns}
+        return {"name": name, "type": "lexicographic", "columns": columns}
+
+    @staticmethod
+    def lexicographic_index_column(name, ascending=True, case_sensitive=None):
+        """
+        :param name: Name of the column to be indexed
+        :type name: str
+        :param ascending: Whether to order entries of this column in ascending order
+        :type ascending: bool
+        :param case_sensitive: if False, compare strings case-insensitively (default is True; only valid on string columns)
+        :type case_sensitive: bool
+
+        Returns a column descriptor for a lexicographic index, for use with the
+        :meth:`lexicographic_index()` method.
+        """
+        result = {"name": name, "order": "asc" if ascending else "desc"}
+        if case_sensitive is not None:
+            result['caseSensitive'] = case_sensitive
+        return result
 
     @staticmethod
     def genomic_range_query(chr, lo, hi, mode="overlap", index="gri"):

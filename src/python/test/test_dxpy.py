@@ -577,6 +577,22 @@ class TestDXGTable(unittest.TestCase):
             result_num += 1
         self.assertEqual(3, result_num)
 
+    def test_lexicographic(self):
+        lex_index = dxpy.DXGTable.lexicographic_index([
+                dxpy.DXGTable.lexicographic_index_column("a", case_sensitive=False),
+                dxpy.DXGTable.lexicographic_index_column("b", ascending=False)
+                ], "search")
+        self.dxgtable = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                           dxpy.DXGTable.make_column_desc("b", "int32")],
+                                          indices=[lex_index])
+        self.dxgtable.close(block=True)
+        desc = self.dxgtable.describe()
+        self.assertEqual({u"name": u"search",
+                          u"type": u"lexicographic",
+                          u"columns": [{u"name": u"a", u"order": u"asc", u"caseSensitive": False},
+                                       {u"name": u"b", u"order": u"desc"}]},
+                         desc['indices'][0])
+
     # TODO: Test with > 1 index
 
 class TestDXRecord(unittest.TestCase):
