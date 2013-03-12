@@ -97,7 +97,7 @@ module DXRuby
       #request.ca_file =
     end
 
-    send_data = (data.nil?)
+    send_data = !(data.nil?)
 
     # If data is not a string (and not nil), convert it to a string
     if send_data && !data.is_a?(String)
