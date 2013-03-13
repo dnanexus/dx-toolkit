@@ -95,6 +95,23 @@ bool finished() {
   return (chunksFinished.size() + chunksFailed.size() == totalChunks);
 }
 
+void curlCleanup() {
+  // http://curl.haxx.se/libcurl/c/curl_global_cleanup.html
+  for (;curlInit_call_count > 0; --curlInit_call_count) {
+    curl_global_cleanup();
+  }
+}
+
+void handle_bad_alloc(const std::bad_alloc &e) {
+  curlCleanup();
+  cerr << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl;
+  cerr << "1. Try decreasing number of upload/compress/read threads (Try ./ua --help to see how to set them) - Recommended solution" << endl;
+  cerr << "2. Reduce the chunk-size (--chunk-size options). Note: Trying with a different chunk size will not resume your previous upload" << endl;
+  cerr << endl << "If you still face problem, please contact DNAnexus support." << endl;
+  cerr << "\nError details (for advanced users only): '" << e.what() << "'" << endl << "*********" << endl;
+  exit(1);
+}
+
 void readChunks() {
   try {
     while (true) {
@@ -111,6 +128,8 @@ void readChunks() {
       //       so we have to use sleep()
       boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
+  } catch(std::bad_alloc &e) {
+    handle_bad_alloc(e);
   } catch (boost::thread_interrupted &ti) {
     return;
   }
@@ -136,6 +155,8 @@ void compressChunks() {
       //       so we have to use sleep()
       boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
+  } catch(std::bad_alloc &e) {
+    handle_bad_alloc(e);
   } catch (boost::thread_interrupted &ti) {
     return;
   }
@@ -192,6 +213,8 @@ void uploadChunks(vector<File> &files) {
       //       so we have to use sleep()
       boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
+  } catch(std::bad_alloc &e) {
+    handle_bad_alloc(e);
   } catch (boost::thread_interrupted &ti) {
     return;
   }
@@ -384,12 +407,6 @@ void curlInit() {
   curlInit_call_count++;
 }
 
-void curlCleanup() {
-  // http://curl.haxx.se/libcurl/c/curl_global_cleanup.html
-  for (;curlInit_call_count > 0; --curlInit_call_count) {
-    curl_global_cleanup();
-  }
-}
 
 void markFileAsFailed(vector<File> &files, const string &fileID) {
   for (unsigned int i = 0; i < files.size(); ++i) {
@@ -650,13 +667,7 @@ int main(int argc, char * argv[]) {
 
     DXLOG(logINFO) << "Exiting.";
   } catch (bad_alloc &e) {
-    curlCleanup();
-    cerr << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl;
-    cerr << "1. Try decreasing number of upload/compress/read threads (Try ./ua --help to see how to set them) - Recommended solution" << endl;
-    cerr << "2. Reduce the chunk-size (--chunk-size options). Note: Trying with a different chunk size will not resume your previous upload" << endl;
-    cerr << endl << "If you still face problem, please contact DNAnexus support." << endl;
-    cerr << "\nError details (for advanced users only): '" << e.what() << "'" << endl << "*********" << endl;
-    return 1;
+    handle_bad_alloc(e);
   } catch (exception &e) {
     curlCleanup();
     cerr << endl << "ERROR: " << e.what() << endl;
