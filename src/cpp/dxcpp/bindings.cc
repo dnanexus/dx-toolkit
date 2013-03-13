@@ -14,14 +14,14 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
-#include <unistd.h>
+//#include <unistd.h>
 #include "bindings.h"
+#include "dxlog.h"
 
 using namespace std;
 
 namespace dx {
-  void DXDataObject::setIDs(const std::string &dxid,
-          const std::string &proj) {
+  void DXDataObject::setIDs(const std::string &dxid, const std::string &proj) {
     dxid_ = dxid;
     if (proj == "default")
       proj_ = config::CURRENT_PROJECT(); 
@@ -42,9 +42,8 @@ namespace dx {
                             "1. {\"$dnanexus_link\": \"obj_id\"} \n"
                             "2. {\"$dnanexus_link\": {\"project\": \"proj-id\", \"id\": \"obj-id\"}";
     if (dxlink.type() != JSON_HASH || dxlink.size() != 1) {
-      std::cerr << "Not a hash or not of only one key" << endl;
-      std::cerr << dxlink.toString() << endl;
-      throw DXError(err_str);
+      DXLOG(logERROR) << "Not a hash, or has more than one key: '" << dxlink.toString() << "'";
+      throw DXError(err_str, "InvalidDXLink");
     }
     if (dxlink["$dnanexus_link"].type() == JSON_STRING) {
       dxid_ = dxlink["$dnanexus_link"].get<string>();
@@ -52,20 +51,19 @@ namespace dx {
     } else {
       if (dxlink["$dnanexus_link"].type() == JSON_HASH && dxlink["$dnanexus_link"].size() == 2) {
         if (dxlink["$dnanexus_link"]["project"].type() != JSON_STRING || dxlink["$dnanexus_link"]["id"].type() != JSON_STRING) {
-          std::cerr << "project key is not string or id key is not string" << endl;
-          throw DXError(err_str);
+          DXLOG(logERROR) << "At least one of the keys: 'project', or 'id' are not string" << endl;
+          throw DXError(err_str, "InvalidDXLink");
         }
         dxid_ = dxlink["$dnanexus_link"]["id"].get<string>();
         proj_ = dxlink["$dnanexus_link"]["project"].get<string>();
       } else {
-        std::cerr << "value is not a string, nor is it a hash with two keys" << endl;
-        throw DXError(err_str);
+        DXLOG(logERROR) << "The given dnanexus_link is neither a string, nor a valid dxlink hash." << endl;
+        throw DXError(err_str, "InvalidDXLink");
       }
     }
   }
 
-  void DXDataObject::waitOnState(const string &state,
-                                 const int timeout) const {
+  void DXDataObject::waitOnState(const string &state, const int timeout) const {
     int elapsed = 0;
     string cur_state;
     do {

@@ -23,9 +23,10 @@
 namespace fs = boost::filesystem;
 
 #include "api_helper.h"
-#include "log.h"
+#include "dxcpp/dxlog.h"
 
 using namespace std;
+using namespace dx;
 
 string File::createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const string &name) {
   using namespace boost;
@@ -39,12 +40,12 @@ string File::createResumeInfoString(const int64_t fileSize, const int64_t modifi
 }
 
 void testLocalFileExists(const string &filename) {
-  LOG << "Testing existence of local file " << filename << "...";
+  DXLOG(logINFO) << "Testing existence of local file " << filename << "...";
   fs::path p(filename);
   if (fs::exists(p)) {
-    LOG << " success." << endl;
+    DXLOG(logINFO) << " success.";
   } else {
-    LOG << " failure." << endl;
+    DXLOG(logINFO) << " failure.";
     throw runtime_error("Local file " + filename + " does not exist.");
   }
 }
@@ -122,13 +123,13 @@ void File::init(const bool tryResuming) {
         completePercentage = percentageComplete(findResult[0]["describe"]["parts"], size, chunkSize);
         isRemoteFileOpen = true;
       }
-
+      DXLOG(logINFO) << "A resume target is found .. " << endl;
       cerr << "Signature of file " << localFile << " matches remote file: " << findResult[0]["describe"]["name"].get<string>() 
-           << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it" << endl;
-      LOG << "Remote resume target is in state: \"" << state << "\"" << endl;
+           << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it";
+      DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
     }
     if (findResult.size() > 1) {
-      cerr << "More than one resumable targets for local file \"" << localFile << "\" found in the project '" + projectID + "', candidates: " << endl;
+      cerr << endl << "More than one resumable targets for local file \"" << localFile << "\" found in the project '" + projectID + "', candidates: " << endl;
       for (unsigned i = 0; i < findResult.size(); ++i) {
         cerr << "\t" << (i + 1) << ". " << findResult[i]["describe"]["name"].get<string>() << " (" << findResult[i]["id"].get<string>() << ")" << endl;
       }
@@ -141,9 +142,9 @@ void File::init(const bool tryResuming) {
     // Note: It's fine if mimeType is empty string "" (since default for /file/new is anyway empty media type)
     fileID = createFileObject(projectID, folder, remoteFileName, mimeType, properties);
     isRemoteFileOpen = true;
-    LOG << "fileID is " << fileID << endl;
-
-    cerr << "Uploading file " << localFile << " to file object " << fileID << endl;
+    DXLOG(logINFO) << "fileID is " << fileID << endl;
+    
+    cerr << "Uploading file " << localFile << " to file object " << fileID;
   }
 }
 
@@ -161,7 +162,7 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
   // Treat special case of empty file here
   if (size == 0) {
     if (desc["parts"].has("1") && desc["parts"]["1"]["state"].get<string>() == "complete") {
-      LOG << "Part index 1 for fileID " << fileID << " is in complete state. Will not create an upload chunk for it." << endl;
+      DXLOG(logINFO) << "Part index 1 for fileID " << fileID << " is in complete state. Will not create an upload chunk for it.";
       atleastOnePartDone = true;
       return 0;
     }
@@ -171,7 +172,7 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
     return 1;
   }
   
-  LOG << "Creating chunks:" << endl;
+  DXLOG(logINFO) << "Creating chunks:";
   fs::path p(localFile);
   unsigned int countChunks = 0; // to iterate over chunks
   unsigned int actualChunksCreated = 0; // is not incremented for chunks which are already in "complete" state (when resuming)
@@ -180,7 +181,7 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
     string partIndex = boost::lexical_cast<string>(countChunks + 1); // minimum part index is 1
     const int64_t end = min(start + chunkSize, size);
     if (desc["parts"].has(partIndex) && desc["parts"][partIndex]["state"] == "complete") {
-      LOG << "Part index " << partIndex << " for fileID " << fileID << " is in complete state. Will not create an upload chunk for it." << endl;
+      DXLOG(logINFO) << "Part index " << partIndex << " for fileID " << fileID << " is in complete state. Will not create an upload chunk for it.";
       bytesUploaded += (end - start);
       atleastOnePartDone = true;
     } else { 
@@ -202,7 +203,7 @@ void File::close(void) {
 void File::updateState(void) {
   string state = getFileState(fileID);
   if (state == "closed") {
-    LOG << "File " << fileID << " is closed." << endl;
+    DXLOG(logINFO) << "File " << fileID << " is closed.";
   }
   closed = (state == "closed");
 }

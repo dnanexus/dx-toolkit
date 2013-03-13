@@ -20,7 +20,7 @@
 #include "api_helper.h"
 #include "file.h"
 #include "options.h"
-#include "log.h"
+#include "dxcpp/dxlog.h"
 #include <vector>
 
 void runImportApps(const Options &opt, std::vector<File> &files);

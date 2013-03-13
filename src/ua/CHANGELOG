@@ -1,3 +1,16 @@
+DNAnexus Upload Agent 1.2.6 <support@dnanexus.com>, 2013-Mar-12
+---------------------------------------------------------------
+  * https://github.com/dnanexus/dx-toolkit/commit/bd7d2fa306aa90fd06580cfc86fabc94b64d9772
+    - User Agent string of Upload Agent is updated to include platform
+      (and also dxcpp/dxhttp version for /UPLOAD requests)
+    - Added some sleep() to compress/read/upload threads, to ensure
+      that we yield to other threads
+    - Using DXLOG for logging in Upload Agent now
+  * New default values for chunk-size, number of threads (upload/read/compress)
+  * Catch std::bad_alloc (and print a meaningful error message)
+  * Catch the "schannel" (curl code: 35) error, and show the URL to download relevant hotfix from Microsoft.
+  * Progress bar is now refreshed every 1sec (compared to previous 0.25sec)
+
 DNAnexus Upload Agent 1.2.5 <support@dnanexus.com>, 2013-Feb-25
 ---------------------------------------------------------------
   * Bug fix: UA crashed when uploading >1 files

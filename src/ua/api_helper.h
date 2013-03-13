@@ -24,7 +24,7 @@ void testServerConnection(void);
 
 std::string resolveProject(const std::string &projectSpec);
 
-void testProjectPermissions(const std::string &projectID);
+//void testProjectPermissions(const std::string &projectID);
 
 void createFolder(const std::string &projectID, const std::string &folder);
 

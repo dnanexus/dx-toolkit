@@ -124,9 +124,10 @@ namespace dx {
      *
      * @param dxid ID of the associated object.
      * @param proj ID of the project whose copy of the data object should be accessed.
+     * If a value "default" is provided, then default workspace will be used.
      */
-    virtual void setIDs(const std::string &dxid,
-            const std::string &proj=dx::config::CURRENT_PROJECT());
+    virtual void setIDs(const std::string &dxid, const std::string &proj="default");
+
     /**
      * Sets the object and project IDs as specified. If not specified, the project ID will be set
      * to the default workspace.
