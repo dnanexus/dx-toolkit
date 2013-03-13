@@ -16,7 +16,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import sys, json
+import sys, json, re
 
 preamble = '''# Do not modify this file by hand.
 #
@@ -67,11 +67,7 @@ def make_app_object_method(wrapper_method_name, api_method_name, retry=False, ur
 
 # This function converts a "camelCase" string to underscore version, e.g: "camel_case"
 def camel_case_to_underscore(name):
-    def char_helper(c):
-        if c == c.upper():
-            return "_" + c.lower()
-        return c
-    return "".join(map(char_helper, name))
+    return re.sub("[A-Z]+", lambda m: "_" + m.group(0).lower(), name, 0)
 
 print preamble
 

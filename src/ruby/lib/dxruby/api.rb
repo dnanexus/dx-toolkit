@@ -795,7 +795,7 @@ module DX
       return DX::http_request("/system/greet", input_params, opts)
     end
 
-    def self.system_shorten_u_r_l(input_params={}, opts={})
+    def self.system_shorten_url(input_params={}, opts={})
       # Invokes the /system/shortenURL API method.
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/system/shortenURL", input_params, opts)
