@@ -97,7 +97,7 @@ void testServerConnection() {
   } catch (DXConnectionError &cerr) {
     DXLOG(logINFO) << " failure.";
     #if WINDOWS_BUILD
-    if (cerr.curl_code = 35 && string(e.what()).find("schannel") != string::npos) {
+    if (cerr.curl_code = 35 && string(cerr.what()).find("schannel") != string::npos) {
       throw runtime_error("This is a known issue on Microsoft Windows. Please download this hotfix from Microsoft to fix this problem: http://support.microsoft.com/kb/975858/en-us"
                           "\nTechnical details (for advanced users): \n'" + string(cerr.what()) + "'\nIf you still face the problem (after installing hotfix), please contact DNAnexus support.");
     }
