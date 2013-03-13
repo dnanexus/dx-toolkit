@@ -1,4 +1,4 @@
-dx-toolkit (v0.41.0) precise; urgency=low
+dx-toolkit (0.41.1) precise; urgency=low
 
   * Ruby bindings.
 
