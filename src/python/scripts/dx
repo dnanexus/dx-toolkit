@@ -2406,7 +2406,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
         dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
-                               details=args.details)
+                               details=args.details, debug=args.debug)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -3307,6 +3307,7 @@ parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--dest', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
+parser_run.add_argument('--debug', help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24), action='store_true')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
