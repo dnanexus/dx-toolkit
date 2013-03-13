@@ -59,8 +59,6 @@ namespace dx {
     const std::string& API_VERSION();
   }
 
-  extern bool g_dxcpp_mute_retry_cerrs; // dirty hack
-
   /**
    * This is a low-level function for making an HTTP request to the API
    * server using the information that has been set by

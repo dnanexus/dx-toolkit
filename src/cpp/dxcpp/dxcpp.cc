@@ -18,6 +18,7 @@
 #include <boost/thread.hpp>
 #include <boost/regex.hpp>
 
+#include "dxlog.h"
 #include "dxcpp.h"
 #include "SimpleHttp.h"
 #include "utils.h"
@@ -89,9 +90,6 @@ namespace dx {
   // DX_APISERVER_HOST=localhost
   // DX_SECURITY_CONTEXT='{"auth_token":"outside","auth_token_type":"Bearer"}'
 
-  const bool PRINT_ENV_VAR_VALUES_WHEN_LOADED = (getenv("DXCPP_DEBUG") != NULL); // hack
-
-  bool g_dxcpp_mute_retry_cerrs = false; // dirty hack -> only used by UA (for muting the "cerr" by DXHTTPRequest()). Figure a better mechanism soon.
 
   static bool isAlwaysRetryableHttpCode(int c) {
     return (c >= 500 && c<=599); // assumption: always retry if a 5xx HTTP status code is received (irrespective of the route)
@@ -110,7 +108,7 @@ namespace dx {
     const unsigned int NUM_MAX_RETRIES = 5u; // maximum number of retries for an individual request
     
     if (config::APISERVER().empty()) {
-      throw DXError("dxcpp::DXHTTPRequest()-> API server information not found (g_APISERVER is empty). Please set DX_APISERVER_HOST, DX_APISERVER_PORT, and DX_APISERVER_PROTOCOL.");
+      throw DXError("dxcpp::DXHTTPRequest()-> API server information not found. Please set DX_APISERVER_HOST, DX_APISERVER_PORT, and DX_APISERVER_PROTOCOL.", "ApiserverInfoMissing");
     }
 
     const JSON &ctx = config::SECURITY_CONTEXT();
@@ -118,9 +116,9 @@ namespace dx {
         || !ctx.has("auth_token_type") || ctx["auth_token_type"].type() != JSON_STRING
         || !ctx.has("auth_token") || ctx["auth_token"].type() != JSON_STRING) {
       if (ctx.type() != JSON_HASH || ctx.size() == 0) {
-        throw DXError("dxcpp::DXHTTPRequest()-> DX_SECURITY_CONTEXT is either not set, or not a valid JSON");
+        throw DXError("dxcpp::DXHTTPRequest()-> DX_SECURITY_CONTEXT is either not set, or not a valid JSON", "SecurityContextNotFound");
       } else {
-        throw DXError("dxcpp::DXHTTPRequest()-> Invalid DX_SECURITY_CONTEXT string: '" + ctx.toString() + "'");
+        throw DXError("dxcpp::DXHTTPRequest()-> Invalid DX_SECURITY_CONTEXT string: '" + ctx.toString() + "'", "BadSecurityContextString");
       }
     }
 
@@ -187,9 +185,10 @@ namespace dx {
         } else {
           // Everything is fine, the request went through and 200 received
           // So return back the response now
-          if (countTries != 0u) // if at least one retry was made, print eventual success on stderr
-            if (!g_dxcpp_mute_retry_cerrs)
-              cerr << "\nRequest completed successfully in Retry #" << countTries << endl;
+          if (countTries != 0u) { 
+            // if at least one retry was made, print eventual success on stderr
+            DXLOG(logINFO) << "Request completed successfully in Retry #" << countTries;
+          }
 
           try {
             return JSON::parse(req.respData); // we always return json output
@@ -198,21 +197,18 @@ namespace dx {
             errStr << "\nERROR: Unable to parse output returned by Apiserver as JSON" << endl;
             errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode << "; response body: '" << req.respData << "'" << endl;
             errStr << "JSONException: " << je.what() << endl;
-            throw DXError(errStr.str());
+            throw DXError(errStr.str(), "UnableToParseAsJSON");
           }
         }
       }
 
       if (toRetry && (countTries < NUM_MAX_RETRIES)) {
         if (reqCompleted) {
-          if (!g_dxcpp_mute_retry_cerrs)
-            cerr << "\nWARNING: POST " << url << " returned with HTTP code " << req.responseCode << " and body: '" << req.respData << "'" << endl;
+          DXLOG(logWARNING) << "POST '" << url << "' returned with HTTP code ;" << req.responseCode << "' and body: '" << req.respData << "'";
         } else {
-          if (!g_dxcpp_mute_retry_cerrs)
-            cerr << "\nWARNING: Unable to complete request: POST " << url << ". Details: '" << hre.what() << "'" << endl;
+          DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
         }
-        if (!g_dxcpp_mute_retry_cerrs)
-          cerr << "\n... Waiting " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
+        DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
 
         boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
       } else {
@@ -223,24 +219,21 @@ namespace dx {
 
     // We are here, implies, All retries were exhausted (or not attempted) with failure.
     if (reqCompleted) {
-      if (!g_dxcpp_mute_retry_cerrs)
-        cerr << "\nERROR: POST " + url + " returned non-200 http code in (at least) last of " << countTries << " attempts. Will throw." << endl;
-
+      DXLOG(logERROR) << "POST '" + url + "' returned non-200 HTTP code in (at least) last of '" << countTries << "' attempts.";
       JSON respJSON;
       try {
         respJSON = JSON::parse(req.respData);
-      } catch (...) {
+      } catch (JSONException &e) {
         // If invalid json, throw general DXError
-        throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + "'");
+        throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + 
+                      "'. Could not parse response as valid JSON, error = '" + e.what() + "'", "UnableToParseAsJSON");
       }
-      throw DXAPIError(respJSON["error"]["type"].get<string>(),
-                       respJSON["error"]["message"].get<string>(),
+      throw DXAPIError(respJSON["error"]["message"].get<string>(),
+                       respJSON["error"]["type"].get<string>(),
                        req.responseCode);
     } else {
-      if (!g_dxcpp_mute_retry_cerrs)
-        cerr << "\nERROR: Unable to complete request: POST " << url << " in " << countTries << " attempts. Will throw DXError." << endl;
-
-      throw DXError("An exception was thrown while trying to make the request: POST " + url + " . Details: '" + hre.err + "'. ");
+      DXLOG(logERROR) << "Unable to complete request: POST '" << url << "' in '" << countTries << "' attempts." << endl;
+      throw DXConnectionError("Was unable to make the request: POST '" + url + "' . Details: '" + hre.err + "'.", hre.errorCode);
     }
     // Unreachable line
   }
@@ -316,13 +309,13 @@ namespace dx {
         try {
           g_json_config_file_contents.read(fp);
         } catch (JSONException &j) {
-          cerr << "An error occured while trying to parse the JSON file '" << fname << "'. Will ignore contents of this file."
+          DXLOG(logWARNING) << "An error occured while trying to parse the JSON file '" << fname << "'. Will ignore contents of this file."
                << "Error = '" << j.what() << "'";
           g_json_config_file_contents = JSON(JSON_NULL); // don't attempt to parse file again
           return false;
         }
         if (g_json_config_file_contents.type() != JSON_HASH) {
-          cerr << "The file '" << fname << "' does not contain a valid JSON hash. Will ignore contents of this file.";
+          DXLOG(logWARNING) << "The file '" << fname << "' does not contain a valid JSON hash. Will ignore contents of this file.";
           g_json_config_file_contents = JSON(JSON_NULL); // don't attempt to parse file again
           return false;
         }
@@ -330,7 +323,7 @@ namespace dx {
         // If anything else if found print error, and ignore file conents
         for (JSON::object_iterator it = g_json_config_file_contents.object_begin(); it != g_json_config_file_contents.object_end(); ++it) {
           if (it->second.type() != JSON_STRING && it->second.type() != JSON_INTEGER) {
-            cerr << "The file '" << fname << "' contains a an invalid key (neither string, nor integer). Will ignore contents of this file.";
+            DXLOG(logWARNING) << "The file '" << fname << "' contains a an invalid key (neither string, nor integer). Will ignore contents of this file.";
             g_json_config_file_contents = JSON(JSON_NULL); // don't attempt to parse file again
             return false;
           }
@@ -358,23 +351,17 @@ namespace dx {
     bool getFromEnvOrConfig(string key, string &val) {
       if (getenv(key.c_str()) != NULL) {
         val = getenv(key.c_str());
-        if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
-          cerr << "Reading '" << key << "' value from environment variables. Value = '" << val << "'" << endl;
-        }
+        DXLOG(logINFO) << "Reading '" << key << "' value from environment variables. Value = '" << val << "'";
         return true;
       }
       const string json_config_file_path = joinPath(getUserHomeDirectory(), ".dnanexus_config", "environment.json");
       if (getVariableFromJsonConfigFile(json_config_file_path, key, val)) {
-        if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
-          cerr << "Reading '" << key << "' value from file: '" << json_config_file_path << "'. Value = '" << val + "'" << endl;
-        }
+        DXLOG(logINFO) << "Reading '" << key << "' value from file: '" << json_config_file_path << "'. Value = '" << val + "'";
         return true;
       }
       const string user_config_file_path = joinPath(getUserHomeDirectory(), ".dnanexus_config", "environment");
       if (getVariableFromConfigFile_old(user_config_file_path, key, val)) {
-        if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
-          cerr << "Reading '" << key << "' value from file: '" << user_config_file_path << "'. Value = '" << val + "'" << endl;
-        } 
+        DXLOG(logINFO) << "Reading '" << key << "' value from file: '" << user_config_file_path << "'. Value = '" << val + "'";
         return true;
       }
       return false;
@@ -435,23 +422,22 @@ namespace dx {
       }
       // Append dxcpp info to the default user agent string (set by dxhttp)
       USER_AGENT_STRING() = "dxcpp/" DXTOOLKIT_GITVERSION" " + USER_AGENT_STRING(); 
-      if (PRINT_ENV_VAR_VALUES_WHEN_LOADED) {
-        cerr << "\n***** In dxcpp.cc::loadFromEnvironment() - Following global config parameters have been set for dxcpp *****" << endl;
-        cerr << "These values will be used by dxcpp library now:" << endl;
-        cerr << "1. APISERVER_HOST: " << getVariableForPrinting(APISERVER_HOST()) << endl;
-        cerr << "2. APISERVER_PORT: " << getVariableForPrinting(APISERVER_PORT()) << endl;
-        cerr << "3. APISERVER_PROTOCOL: " << getVariableForPrinting(APISERVER_PROTOCOL()) << endl;
-        cerr << "4. APISERVER: " << getVariableForPrinting(APISERVER()) << endl;
-        cerr << "5. SECURITY_CONTEXT: " << getVariableForPrinting(SECURITY_CONTEXT()) << endl;
-        cerr << "6. JOB_ID: " << getVariableForPrinting(JOB_ID()) << endl;
-        cerr << "7. WORKSPACE_ID: " << getVariableForPrinting(WORKSPACE_ID()) << endl;
-        cerr << "8. PROJECT_CONTEXT_ID: " << getVariableForPrinting(PROJECT_CONTEXT_ID()) << endl;
-        cerr << "9. API_VERSION: " << getVariableForPrinting(API_VERSION()) << endl;
-        cerr << "10. CA_CERT: " << getVariableForPrinting(CA_CERT()) << endl;
-        cerr << "11. Current Project: " << getVariableForPrinting(CURRENT_PROJECT()) << endl;
-        cerr << "12. User Agent String: " << getVariableForPrinting(USER_AGENT_STRING()) << endl;
-        cerr << "***** Will exit loadFromEnvironment() function in dxcpp.cc *****" << endl;
-      }
+      DXLOG(logINFO) << "***** In dxcpp.cc::loadFromEnvironment() - Following global config parameters have been set for dxcpp *****";
+      DXLOG(logINFO) << "These values will be used by dxcpp library now:";
+      DXLOG(logINFO) << "1. APISERVER_HOST: " << getVariableForPrinting(APISERVER_HOST());
+      DXLOG(logINFO) << "2. APISERVER_PORT: " << getVariableForPrinting(APISERVER_PORT());
+      DXLOG(logINFO) << "3. APISERVER_PROTOCOL: " << getVariableForPrinting(APISERVER_PROTOCOL());
+      DXLOG(logINFO) << "4. APISERVER: " << getVariableForPrinting(APISERVER());
+      DXLOG(logINFO) << "5. SECURITY_CONTEXT: " << getVariableForPrinting(SECURITY_CONTEXT());
+      DXLOG(logINFO) << "6. JOB_ID: " << getVariableForPrinting(JOB_ID());
+      DXLOG(logINFO) << "7. WORKSPACE_ID: " << getVariableForPrinting(WORKSPACE_ID());
+      DXLOG(logINFO) << "8. PROJECT_CONTEXT_ID: " << getVariableForPrinting(PROJECT_CONTEXT_ID());
+      DXLOG(logINFO) << "9. API_VERSION: " << getVariableForPrinting(API_VERSION());
+      DXLOG(logINFO) << "10. CA_CERT: " << getVariableForPrinting(CA_CERT());
+      DXLOG(logINFO) << "11. Current Project: " << getVariableForPrinting(CURRENT_PROJECT());
+      DXLOG(logINFO) << "12. User Agent String: " << getVariableForPrinting(USER_AGENT_STRING());
+      DXLOG(logINFO) << "***** Will exit loadFromEnvironment() function in dxcpp.cc *****";
+      
       g_config_file_contents_old.clear(); // Remove the contents of config file - we no longer need them
       if (g_json_config_file_contents.type() == JSON_HASH)
         g_json_config_file_contents.clear(); // Remove the contents of config file - we no longer need them
@@ -463,6 +449,7 @@ namespace dx {
     // -> Do *not* create any other variables of this structure anywhere else
     struct dxcpp_init {
       dxcpp_init() {
+        Log::Init();
         loadFromEnvironment();
       }
     }the_only_instance;

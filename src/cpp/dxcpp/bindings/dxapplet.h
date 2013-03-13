@@ -45,16 +45,16 @@ namespace dx {
   class DXApplet: public DXDataObject {
   private:
     dx::JSON describe_(const std::string &s)const{return appletDescribe(dxid_,s);}
-    void addTypes_(const std::string &UNUSED(s))const{throw DXError("Wrapper for /applet-xxxx/addTypes does not exist");}
-    void removeTypes_(const std::string &UNUSED(s))const{throw DXError("Wrapper for /applet-xxxx/removeTypes does not exist");}
+    void addTypes_(const std::string &UNUSED(s))const{throw DXNotImplementedError("Wrapper for /applet-xxxx/addTypes does not exist");}
+    void removeTypes_(const std::string &UNUSED(s))const{throw DXNotImplementedError("Wrapper for /applet-xxxx/removeTypes does not exist");}
     dx::JSON getDetails_(const std::string &s)const{return appletGetDetails(dxid_,s);}
-    void setDetails_(const std::string &UNUSED(s))const{throw DXError("Wrapper for /applet-xxxx/setDetails does not exist");}
-    void setVisibility_(const std::string &UNUSED(s))const{throw DXError("Wrapper for /applet-xxxx/setVisibility does not exist");}
+    void setDetails_(const std::string &UNUSED(s))const{throw DXNotImplementedError("Wrapper for /applet-xxxx/setDetails does not exist");}
+    void setVisibility_(const std::string &UNUSED(s))const{throw DXNotImplementedError("Wrapper for /applet-xxxx/setVisibility does not exist");}
     void rename_(const std::string &s)const{appletRename(dxid_,s);}
     void setProperties_(const std::string &s)const{appletSetProperties(dxid_,s);}
     void addTags_(const std::string &s)const{appletAddTags(dxid_,s);}
     void removeTags_(const std::string &s)const{appletRemoveTags(dxid_,s);}
-    void close_(const std::string &UNUSED(s))const{throw DXError("Wrapper for /applet-xxxx/close does not exist");}
+    void close_(const std::string &UNUSED(s))const{throw DXNotImplementedError("Wrapper for /applet-xxxx/close does not exist");}
     dx::JSON listProjects_(const std::string &s)const{return appletListProjects(dxid_,s);}
 
   public:

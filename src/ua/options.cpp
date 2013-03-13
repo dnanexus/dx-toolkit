@@ -21,7 +21,7 @@ using namespace std;
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem/operations.hpp>
-#include "log.h"
+#include "dxcpp/dxlog.h"
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 
@@ -30,11 +30,20 @@ using namespace std;
 #endif
 namespace fs = boost::filesystem;
 
+using namespace dx;
+
+#if WINDOWS_BUILD
+  const int64_t DEFAULT_CHUNK_SIZE = 30 * 1024 * 1024;
+  const int DEFAULT_UPLOAD_THREADS = 6;
+#else
+  const int64_t DEFAULT_CHUNK_SIZE = 75 * 1024 * 1024;
+  const int DEFAULT_UPLOAD_THREADS = 8;
+#endif
+
+const int DEFAULT_READ_THREADS = 2;
+
 Options::Options() {
-  int defaultCompressThreads = int(boost::thread::hardware_concurrency()) - 1;
-  if (defaultCompressThreads < 1) {
-    defaultCompressThreads = 1;
-  }
+  int defaultCompressThreads = std::max(int(boost::thread::hardware_concurrency()) - 1, 1);
 
   vector<string> defaultFolders;
   defaultFolders.push_back("/");
@@ -48,10 +57,10 @@ Options::Options() {
     ("project,p", po::value<vector<string> >(&projects), "Name or ID of the destination project")
     ("folder,f", po::value<vector<string> >(&folders)->default_value(defaultFolders, "/"), "Name of the destination folder")
     ("name,n", po::value<vector<string> >(&names), "Name of the file to be created")
-    ("read-threads", po::value<int>(&readThreads)->default_value(1), "Number of parallel disk read threads")
+    ("read-threads", po::value<int>(&readThreads)->default_value(DEFAULT_READ_THREADS), "Number of parallel disk read threads")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
-    ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(4), "Number of parallel upload threads")
-    ("chunk-size,s", po::value<int>(&chunkSize)->default_value(100 * 1000 * 1000), "Size (in bytes) of chunks in which the file should be uploaded")
+    ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(DEFAULT_UPLOAD_THREADS), "Number of parallel upload threads")
+    ("chunk-size,s", po::value<int>(&chunkSize)->default_value(DEFAULT_CHUNK_SIZE), "Size (in bytes) of chunks in which the file should be uploaded")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
     ("do-not-compress", po::bool_switch(&doNotCompress), "Do not compress file(s) before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")
@@ -86,7 +95,7 @@ Options::Options() {
 void Options::parse(int argc, char * argv[]) {
   po::store(po::command_line_parser(argc, argv).options(*command_line_opts).positional(*pos_opts).run(), vm);
   po::notify(vm);
-  Log::enabled = verbose;
+  dx::Log::ReportingLevel() = (verbose) ? dx::logDEBUG4 : dx::DISABLE_LOGGING;
 }
 
 // This function is responsible for:
@@ -103,30 +112,30 @@ void Options::setApiserverDxConfig() {
     if (SECURITY_CONTEXT().size() == 0) 
       throw runtime_error("No Authentication token found, please provide a correct auth token (you may use --auth-token option)");
   } else {
-    LOG << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'" << endl;
+    DXLOG(logINFO) << "Setting dx::config::SECURITY_CONTEXT() from value provided at run time: '" << authToken << "'";
     SECURITY_CONTEXT() = dx::JSON::parse("{\"auth_token_type\": \"Bearer\", \"auth_token\": \"" + authToken + "\"}");
   }
 
   if (!apiserverProtocol.empty()) {
-    LOG << "Setting dx::config::APISERVER_PROTOCOL from value provided at run time: '" << apiserverProtocol << "'" << endl;
+    DXLOG(logINFO) << "Setting dx::config::APISERVER_PROTOCOL from value provided at run time: '" << apiserverProtocol << "'";
     APISERVER_PROTOCOL() = apiserverProtocol;
   } else {
     apiserverProtocol = APISERVER_PROTOCOL();
-    LOG << "Using apiserver protocol from dx::config::APISERVER_PROTOCOL: '" << apiserverProtocol << "'" << endl;
+    DXLOG(logINFO) << "Using apiserver protocol from dx::config::APISERVER_PROTOCOL: '" << apiserverProtocol << "'";
   }
   if (apiserverPort != -1) {
-    LOG << "Setting dx::config::APISERVER_PORT from value provided at run time: '" << apiserverPort << "'" << endl;
+    DXLOG(logINFO) << "Setting dx::config::APISERVER_PORT from value provided at run time: '" << apiserverPort << "'";
     APISERVER_PORT() = boost::lexical_cast<string>(apiserverPort);
   } else {
     apiserverPort = boost::lexical_cast<int>(APISERVER_PORT());
-    LOG << "Using apiserver port from dx::config::APISERVER_PORT: '" << apiserverPort << "'" << endl;
+    DXLOG(logINFO) << "Using apiserver port from dx::config::APISERVER_PORT: '" << apiserverPort << "'";
   }
   if (!apiserverHost.empty()) {
-    LOG << "Setting dx::config::APISERVER_HOST from value provided at run time: '" << apiserverHost << "'" << endl;
+    DXLOG(logINFO) << "Setting dx::config::APISERVER_HOST from value provided at run time: '" << apiserverHost << "'";
     APISERVER_HOST() = apiserverHost;
   } else {
     apiserverHost = APISERVER_HOST();
-    LOG << "Using apiserver host from dx::config::APISERVER_HOST: '" << apiserverHost << "'" << endl;
+    DXLOG(logINFO) << "Using apiserver host from dx::config::APISERVER_HOST: '" << apiserverHost << "'";
   }
   // Now check that dxcpp has all of the required apiserver params set
   if (APISERVER().empty()) {
@@ -193,27 +202,27 @@ void setCertificateFile(const string &certificateFile) {
     standardPathLocations[ARR_SIZE - 1] = certpath.c_str();
   #endif
   if (!certificateFile.empty()) {
-    LOG << "Option '--certificate-file' present, and value is: '" << certificateFile << "'" << endl;
+    DXLOG(logINFO) << "Option '--certificate-file' present, and value is: '" << certificateFile << "'";
     CA_CERT() = certificateFile;
     return;
   } else {
     if (CA_CERT().empty()) {
-      LOG << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
+      DXLOG(logINFO) << "--certificate-file is not specified, and env var 'DX_CA_CERT' is not present either.\n";
       #if WINDOWS_BUILD
-        LOG << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default." << endl;
+        DXLOG(logINFO) << " For Windows version, we don't look for CA certificate in standard location, but rather use the curl default.";
         return;
       #else
-        LOG << " Will look in standard locations for certificate file (to verify peers)" << endl;
+        DXLOG(logINFO) << " Will look in standard locations for certificate file (to verify peers)";
         // Look into standard locations
         for (unsigned i = 0; i < ARR_SIZE; ++i) {
-          LOG << "\tChecking in location: '" << standardPathLocations[i] << "'";
+          DXLOG(logINFO) << "\tChecking in location: '" << standardPathLocations[i] << "'";
           fs::path p (standardPathLocations[i]);
           if (fs::exists(p)) {
-            LOG << " ... Found! Will use it." << endl;
+            DXLOG(logINFO) << " ... Found! Will use it.";
             CA_CERT() = standardPathLocations[i];
             return;
           }
-          LOG << " ... not found." << endl;
+          DXLOG(logINFO) << " ... not found.";
         }
         // If we are here, we haven't found certificate file in any of the standard locations. Throw error
         throw runtime_error("Unable to find certificate file (for verifying authenticity of the peer over SSL connection) in any of the standard locations.\n"
@@ -222,7 +231,7 @@ void setCertificateFile(const string &certificateFile) {
       #endif
     } else {
       // use the DX_CA_CERT value (already set by dxcpp's static initializer).
-      LOG << "'--certificate-file' option is absent, but 'DX_CA_CERT' is present, value is: '" << CA_CERT() << "'. Will use it." << endl;
+      DXLOG(logINFO) << "'--certificate-file' option is absent, but 'DX_CA_CERT' is present, value is: '" << CA_CERT() << "'. Will use it.";
       return;
     }
   }
@@ -262,7 +271,7 @@ void Options::validate() {
   
   if (projects.empty()) {
     if (!dx::config::CURRENT_PROJECT().empty()) {
-      LOG << "No project was explicitly specified, will use from dx::config::CURRENT_PROJECT = '" << dx::config::CURRENT_PROJECT() << "'" << endl;
+      DXLOG(logINFO) << "No project was explicitly specified, will use from dx::config::CURRENT_PROJECT = '" << dx::config::CURRENT_PROJECT() << "'";
       projects.push_back(dx::config::CURRENT_PROJECT());
     }
     else
@@ -270,7 +279,7 @@ void Options::validate() {
   }
   // Now if only 1 project is specified, make them equal to number of files.
   if (projects.size() == 1) {
-    LOG << "Only one project was found (specified explicitly, or retrieved from environment variables). Will use it for all input file(s)." << endl;
+    DXLOG(logINFO) << "Only one project was found (specified explicitly, or retrieved from environment variables). Will use it for all input file(s).";
     // If one project was specified, use that for all files.
     while (projects.size() < files.size()) {
       projects.push_back(projects[0]);

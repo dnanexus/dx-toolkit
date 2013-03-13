@@ -36,7 +36,7 @@ string findRefGenomeProjID() {
       throw runtime_error("Expected name = 'Reference Genomes', and, billTo = 'org-dnanexus', to return exactly one public project, but instead recieved " + boost::lexical_cast<string>(findResult["results"].size()) + " projects instead. Unable to resolve --ref-genome parameter.");
     return findResult["results"][0]["id"].get<string>();
   } catch (DXAPIError &e) {
-    LOG << "Call to findProjects failed." << endl;
+    DXLOG(logINFO) << "Call to findProjects failed." << endl;
     throw;  
   }
 }
@@ -76,17 +76,17 @@ string runApp_helper(const string &appName, const string &jobName, const JSON &i
   JSON output;
 
   try {
-    LOG << "Running app: '" << appName << "'" << endl;
-    LOG << "\tJob Name: " << jobName << endl;
-    LOG << "\tProject context: " << project << endl;
-    LOG << "\tOutput Folder: " << folder << endl;
-    LOG << "\tInput JSON Hash: '" << input.toString() << "'" << endl;
+    DXLOG(logINFO) << "Running app: '" << appName << "'" << endl;
+    DXLOG(logINFO) << "\tJob Name: " << jobName << endl;
+    DXLOG(logINFO) << "\tProject context: " << project << endl;
+    DXLOG(logINFO) << "\tOutput Folder: " << folder << endl;
+    DXLOG(logINFO) << "\tInput JSON Hash: '" << input.toString() << "'" << endl;
     output = appRun(appName, params);
   } catch (exception &e) {
-    LOG << "Error running the app. Message: " << e.what() << endl;
+    DXLOG(logINFO) << "Error running the app. Message: " << e.what() << endl;
     return "failed";
   }
-  LOG << "App started succesfuly, Job ID: " << output["id"].get<string>() << endl;
+  DXLOG(logINFO) << "App started succesfuly, Job ID: " << output["id"].get<string>() << endl;
   return output["id"].get<string>();
 }
 
@@ -100,9 +100,9 @@ void runImportApps(const Options &opt, vector<File> &files) {
   const char *const variantsImporter = "app-vcf_importer";
   string refGenomeID;
   if (opt.mappings || opt.variants) {
-    LOG << "Obtaining record ID of reference genome from flag --ref-genome";
+    DXLOG(logINFO) << "Obtaining record ID of reference genome from flag --ref-genome";
     refGenomeID = getRefGenomeID(opt.refGenome);
-    LOG << "... Done (ref genome id = " << refGenomeID << ")" << endl;
+    DXLOG(logINFO) << "... Done (ref genome id = " << refGenomeID << ")" << endl;
   }
   const unsigned int incrementFactor = (opt.pairedReads) ? 2 : 1;
   for (unsigned i = 0; i < files.size(); i += incrementFactor) {
@@ -110,9 +110,9 @@ void runImportApps(const Options &opt, vector<File> &files) {
       files[i].jobID = "failed";
       if (opt.pairedReads) {
         files[i + 1].jobID = "failed";
-        LOG << "Atleast one of the file in " << i + 1 << "th pair, failed to upload properly. Won't run reads_importer app for it" << endl;
+        DXLOG(logINFO) << "Atleast one of the file in " << i + 1 << "th pair, failed to upload properly. Won't run reads_importer app for it" << endl;
       } else {
-        LOG << "File '" << files[i].localFile << "' failed to upload. Won't run importer app for it." << endl;
+        DXLOG(logINFO) << "File '" << files[i].localFile << "' failed to upload. Won't run importer app for it." << endl;
       }
       continue;
     }

@@ -26,9 +26,10 @@
 #include <boost/filesystem.hpp>
 #include <magic.h>
 #include "mime.h"
-#include "log.h"
+#include "dxcpp/dxlog.h"
 
 using namespace std;
+using namespace dx;
 
 // Note currently POSIX_BUILD is same as !WINDOWS_BUILD
 #define POSIX_BUILD (MAC_BUILD || LINUX_BUILD)
@@ -64,7 +65,7 @@ string trim(const string &str) {
 string detectCompressTypesUsingExtension(const string &filePath) {
   // http://www.boost.org/doc/libs/1_53_0/libs/filesystem/doc/reference.html#path-extension
   string ext = boost::filesystem::path(filePath).extension().string(); // returns something like ".txt"
-  LOG << INDENT << "File extension is '" << ext << "', will try and match up against some common extensions ..." << endl; 
+  DXLOG(logINFO) << "File extension is '" << ext << "', will try and match up against some common extensions ..."; 
   if (ext == "") // no extension present in the file, can't do anything
     return "";
   
@@ -196,21 +197,21 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
           output += buffer;
       }
     } catch(const std::length_error &e1) {
-      LOG << INDENT << "Exception thrown while appending to string in exec(), error = " << e1.what() << endl;
+      DXLOG(logINFO) << "Exception thrown while appending to string in exec(), error = " << e1.what();
       success = false;
     } catch(const std::bad_alloc &e2) {
-      LOG << INDENT << "Exception thrown while appending to string in exec(), error = " << e2.what() << endl;
+      DXLOG(logINFO) << "Exception thrown while appending to string in exec(), error = " << e2.what();
       success = false;
     }
     int ret = pclose(pipe);
     if (ret == -1) {
       // Call to plcose() failed -> This should almost never happen.
       // log this event
-      LOG << INDENT << "Call to pclose() failed errno =  " << errno << endl;
+      DXLOG(logINFO) << "Call to pclose() failed errno =  " << errno;
       // TODO: What else to do in this case ?
     }
     if (ret > 0) {
-      LOG << INDENT << "The command: '" << cmd << "'<< returned with non-zero exit code (" << ret << "), stdout = '" << output << "' ... " << endl;
+      DXLOG(logINFO) << "The command: '" << cmd << "'<< returned with non-zero exit code (" << ret << "), stdout = '" << output << "' ... ";
     }
     success = success && (ret == 0);
     return success;
@@ -232,23 +233,23 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     fs::path sp; // path of temp symlink file we will create
     try {
       sp = fs::unique_path(fs::temp_directory_path().string() + "/ua-symlink-%%%%%%%%%%%%%.tmp"); // Create it in a temp directory
-      LOG << INDENT << "Generated path for unique temp file: '" << sp.string() << "'" << endl;
+      DXLOG(logINFO) << "Generated path for unique temp file: '" << sp.string() << "'";
       
       // We need to find full system path of the file, 
       // because otherwise symlink we create will be absurd
       // (because we create symlink in a differnt directory than the one user used to specify the file path)
       fs::path complete_path = fs::system_complete(filePath);
       fs::create_symlink(complete_path, sp);
-      LOG << INDENT << "Created symlink ('" << sp.string() << "') to file '" << complete_path.string() << "'" << endl;
+      DXLOG(logINFO) << "Created symlink ('" << sp.string() << "') to file '" << complete_path.string() << "'";
     } catch (exception &boost_err) {
-      LOG << INDENT << "An exception occured while trying to create a temp symlink to existing file. Error message = '" << boost_err.what() << "'" << endl;
+      DXLOG(logINFO) << "An exception occured while trying to create a temp symlink to existing file. Error message = '" << boost_err.what() << "'";
       fs_success = false;
     }
     if (fs_success) {
       string cmd = "file -L --brief --mime-type " + sp.string() + " 2>&1";
       string sout;
       bool exec_success = exec(cmd, sout); // actually execute the file command
-      LOG << INDENT << "Removing the temp symlink file ('" << sp.string() << "')" << endl;
+      DXLOG(logINFO) << "Removing the temp symlink file ('" << sp.string() << "')";
       fs::remove(sp); // remove the temp symlink we created
       if (exec_success) {
         return trim(sout); // we succesfuly determined mime type using "file" command, return it.
@@ -260,18 +261,18 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     // In most likely scenario: it will throw error because it 
     // cannot find magic db: do catch them!
     try {
-      LOG << INDENT << "Unable to get mime type by running 'file' command ... will try to fetch mime type from libmagic ...." << endl;
+      DXLOG(logINFO) << "Unable to get mime type by running 'file' command ... will try to fetch mime type from libmagic ....";
       string temp = getMimeTypeUsingLibmagic(filePath);
       return temp;
     } catch (runtime_error &e) {
-      LOG << INDENT << "Fetching of mime type form libmagic also failed, error = " << e.what() << endl;
+      DXLOG(logINFO) << "Fetching of mime type form libmagic also failed, error = " << e.what();
       // Ignore the error (it was expected anyway!)
     }
     
     // We shall try one last resort --> try to get mime type from file extension!!
     // (we only check for common compressed types), and return empty string if
     // file extension doesn't match few known types.
-    LOG << INDENT << "Both, execution of 'file' command, and fetching mime type from libmagic failed ... will try to match extension to common compressed types as a last resort ..." << endl;
+    DXLOG(logINFO) << "Both, execution of 'file' command, and fetching mime type from libmagic failed ... will try to match extension to common compressed types as a last resort ...";
     return detectCompressTypesUsingExtension(filePath);
   }
 #endif

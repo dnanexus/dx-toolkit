@@ -32,7 +32,7 @@ extern "C" {
 #include "compress.h"
 }
 
-#include "log.h"
+#include "dxcpp/dxlog.h"
 
 using namespace std;
 
@@ -284,10 +284,11 @@ void Chunk::upload() {
   try {
     apiserverResp = dx::JSON::parse(respData);
   } catch(dx::JSONException &jexcp) {
-    cerr << "UNEXPECTED FATAL ERROR: Response from /UPLOAD/xxxx route could not be parsed as valid JSON" << endl
+    cerr << "\nUNEXPECTED FATAL ERROR: Response from /UPLOAD/xxxx route could not be parsed as valid JSON" << endl
          << "JSONException = '" << jexcp.what() << "'" << endl
          << "APIServer response = '" << respData << "'" << endl;
     assert(false); // This should not happen (apiserver response could not be parsed as JSON)
+    throw jexcp;
   }
   assert(apiserverResp.type() == dx::JSON_HASH);
   assert(apiserverResp.has("md5") && apiserverResp["md5"].type() == dx::JSON_STRING);
@@ -315,7 +316,7 @@ string Chunk::uploadURL() const {
  * Logs a message about this chunk.
  */
 void Chunk::log(const string &message) const {
-  LOG << "Thread " << boost::this_thread::get_id() << ": " << "Chunk " << (*this) << ": " << message << endl;
+  DXLOG(dx::logINFO) << "Chunk " << (*this) << ": " << message;
 }
 
 ostream &operator<<(ostream &out, const Chunk &chunk) {
