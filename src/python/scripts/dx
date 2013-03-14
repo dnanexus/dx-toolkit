@@ -317,21 +317,22 @@ def login(args):
         auth = HTTPBasicAuth(username, password)
 
         session = requests.session()
-        error_msg = "Error: The authserver could not be contacted; if you are manually specifying the authserver, please check if your settings are correct"
         try:
             res = requests.post(authserver+"/oauth2/authorize",
                                 data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
                                 auth=auth,
                                 allow_redirects=False)
-        except:
+        except Exception as e:
             # An error may be thrown here if the host is not reachable
             # or if the port is not receiving connections
-            parser.exit(3, fill(error_msg) + "\n")
+            parser.exit(3, fill("Error: The authserver could not be contacted: {e}".format(e=e)) + "\n")
         try:
+            if 'Location' not in res.headers:
+                raise Exception('"Location" header not found in response from server')
             parsed_url = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])
-        except:
+        except Exception as e:
             # An error may be thrown here if the wrong port is specified
-            parser.exit(3, fill(error_msg) + "\n")
+            parser.exit(3, fill("Error: the response from the authserver could not be parsed: {e}".format(e=e)) + "\n")
         if 'code' not in parsed_url:
             parser.exit(1, 'Error: Incorrect username and/or password\n')
         else:
