@@ -185,13 +185,14 @@ void uploadChunks(vector<File> &files) {
 
       if (uploaded) {
         c->log("Upload succeeded!");
+        int64_t size_of_chunk = c->data.size(); // this can be different than (c->end - c->start) because of compression
         c->clear();
         chunksFinished.produce(c);
         // Update number of bytes uploaded in parent file object
         boost::mutex::scoped_lock boLock(bytesUploadedMutex);
         files[c->parentFileIndex].bytesUploaded += (c->end - c->start);
         files[c->parentFileIndex].atleastOnePartDone = true;
-        bytesUploadedSinceStart += (c->end - c->start);
+        bytesUploadedSinceStart += size_of_chunk;
         boLock.unlock();
       } else if (c->triesLeft > 0) {
         int numTry = NUMTRIES_g - c->triesLeft + 1; // find out which try is it
