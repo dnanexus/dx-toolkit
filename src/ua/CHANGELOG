@@ -6,6 +6,8 @@ DNAnexus Upload Agent 1.2.7 <support@dnanexus.com>, 2013-Mar-14
     for bad_alloc case
   * Append null gzipped bytes for chunks compressing less than 5MB
     (instead of previous behavior of compressing at level 0)
+  * Bug fix: Average transfer rate was incorrectly reported when
+    file compression was on
 
 DNAnexus Upload Agent 1.2.6 <support@dnanexus.com>, 2013-Mar-12
 ---------------------------------------------------------------
