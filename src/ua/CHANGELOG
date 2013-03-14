@@ -1,3 +1,12 @@
+DNAnexus Upload Agent 1.2.7 <support@dnanexus.com>, 2013-Mar-14
+---------------------------------------------------------------
+  * Relevant JIRA tickets: PTFM-4459, PTFM-6628, PTFM-6629
+  * Compiling UA with "-O3" flag now
+  * Fix a thread race condition while printing error message
+    for bad_alloc case
+  * Append null gzipped bytes for chunks compressing less than 5MB
+    (instead of previous behavior of compressing at level 0)
+
 DNAnexus Upload Agent 1.2.6 <support@dnanexus.com>, 2013-Mar-12
 ---------------------------------------------------------------
   * https://github.com/dnanexus/dx-toolkit/commit/bd7d2fa306aa90fd06580cfc86fabc94b64d9772

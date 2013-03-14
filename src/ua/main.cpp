@@ -102,6 +102,10 @@ void curlCleanup() {
   }
 }
 
+// The flag below is used to ensure that handle_bad_alloc() is called only once
+// (since if program runs out of memory, all read/upload/compress threads call the
+//  function simultaneously, and thus leading to interleaved "cerr" outputs)
+boost::once_flag bad_alloc_once = BOOST_ONCE_INIT;
 void handle_bad_alloc(const std::bad_alloc &e) {
   curlCleanup();
   cerr << endl << "*********" << endl << "FATAL ERROR: The program ran out of memory. You may try following steps to avoid this problem: " << endl;
@@ -129,7 +133,7 @@ void readChunks() {
       boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
   } catch(std::bad_alloc &e) {
-    handle_bad_alloc(e);
+    boost::call_once(bad_alloc_once, boost::bind(&handle_bad_alloc, e));
   } catch (boost::thread_interrupted &ti) {
     return;
   }
@@ -156,7 +160,7 @@ void compressChunks() {
       boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
   } catch(std::bad_alloc &e) {
-    handle_bad_alloc(e);
+    boost::call_once(bad_alloc_once, boost::bind(&handle_bad_alloc, e));
   } catch (boost::thread_interrupted &ti) {
     return;
   }
@@ -214,7 +218,7 @@ void uploadChunks(vector<File> &files) {
       boost::this_thread::sleep(boost::posix_time::microseconds(100));
     }
   } catch(std::bad_alloc &e) {
-    handle_bad_alloc(e);
+    boost::call_once(bad_alloc_once, boost::bind(&handle_bad_alloc, e));
   } catch (boost::thread_interrupted &ti) {
     return;
   }
@@ -667,7 +671,7 @@ int main(int argc, char * argv[]) {
 
     DXLOG(logINFO) << "Exiting.";
   } catch (bad_alloc &e) {
-    handle_bad_alloc(e);
+    boost::call_once(bad_alloc_once, boost::bind(&handle_bad_alloc, e));
   } catch (exception &e) {
     curlCleanup();
     cerr << endl << "ERROR: " << e.what() << endl;

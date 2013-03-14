@@ -22,7 +22,7 @@
 # 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 DXTOOLKIT_GITVERSION := $(shell git describe)
-VERSION = 1.2.6
+VERSION = 1.2.7
 
 curl_dir = $(HOME)/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
@@ -33,15 +33,15 @@ ua_dir = $(DNANEXUS_HOME)/src/ua
 
 VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 
-CFLAGS = -g -Wall -Wextra -pedantic
+CFLAGS = -O3 -Wall -Wextra -pedantic
 
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
-  CXXFLAGS = -DLINUX_BUILD=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\" -g -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
+  CXXFLAGS = -DLINUX_BUILD=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\" -O3 -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
   LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -lcurl -lcares -lssl -lcrypto -lrt -lz -ldl -lboost_program_options -lboost_filesystem -lboost_system -lboost_thread-mt -lboost_regex -lmagic
 else ifeq ($(UNAME), Darwin)
-  CXXFLAGS = -DMAC_BUILD=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\" -g -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
+  CXXFLAGS = -DMAC_BUILD=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\" -O3 -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
   boost_ldir_mac = /opt/local/lib
   LDFLAGS := $(boost_ldir_mac)/libboost_program_options-mt.a $(boost_ldir_mac)/libboost_thread-mt.a $(boost_ldir_mac)/libboost_filesystem-mt.a $(boost_ldir_mac)/libboost_regex-mt.a $(curl_dir)/lib/libcurl.a /opt/local/lib/libssl.a /opt/local/lib/libcrypto.a /opt/local/lib/libcares.a /opt/local/lib/libz.a $(boost_ldir_mac)/libboost_system-mt.a /opt/local/lib/libmagic.a
 else

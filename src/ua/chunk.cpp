@@ -46,6 +46,29 @@ boost::mutex instantaneousBytesMutex;
 // (like ~30sec) to mitigate rounding effect.
 const size_t MAX_QUEUE_SIZE = 5000;
 
+// Replace contents of "dest" with gzip of empty string 
+void get_empty_string_gzip(vector<char> &dest) {
+  DXLOG(dx::logINFO) << "Computing gzip of zero length string...";
+  int64_t destLen = gzCompressBound(0);
+  dest.clear();
+  dest.resize(destLen);
+  const char *data = "";
+  int compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
+                                  (const Bytef *) (data), 0ul, Z_DEFAULT_COMPRESSION);
+
+  if (compressStatus == Z_MEM_ERROR) {
+    throw runtime_error("compression failed: not enough memory");
+  } else if (compressStatus == Z_BUF_ERROR) {
+    throw runtime_error("compression failed: output buffer too small");
+  } else if (compressStatus != Z_OK) {
+    throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
+  }
+  if (destLen < (int64_t) dest.size()) {
+    dest.resize(destLen);
+  }
+  DXLOG(dx::logINFO) << "Gzip of zero length string computed to be " << dest.size() << "bytes long";
+}
+
 void Chunk::read() {
   const int64_t len = end - start;
   data.clear();
@@ -85,36 +108,31 @@ void Chunk::compress() {
   } else if (compressStatus != Z_OK) {
     throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
   }
-
-  /* Special case: If the chunk is compressed below 5MB, compress it with
-   *               level 0
-   */
-  if (!lastChunk && destLen < 5 * 1024 * 1024) {
-    log("Compression at level Z_DEFAULT_COMPRESSION (usually 6), resulted in data size =" + boost::lexical_cast<string>(destLen) + " bytes. " +
-        "We cannot upload data less than 5MB in any chunk (except last). So will compress at level 0 now (i.e., no compression).");
-    destLen = gzCompressBound(sourceLen);
-    dest.clear();
-    dest.resize(destLen);
-    destLen = gzCompressBound(sourceLen);
-    compressStatus = gzCompress((Bytef *) (&(dest[0])), (uLongf *) &destLen,
-                                    (const Bytef *) (&(data[0])), (uLong) sourceLen,
-                                    Z_NO_COMPRESSION);  // no compression = level 0
-
-    if (compressStatus == Z_MEM_ERROR) {
-      throw runtime_error("compression failed: not enough memory");
-    } else if (compressStatus == Z_BUF_ERROR) {
-      throw runtime_error("compression failed: output buffer too small");
-    } else if (compressStatus != Z_OK) {
-      throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
-    }
-    
-    assert (destLen >= 5 * 1024 * 1024); // Chunk size should never decrease when 'compressing' at level 0, and chunk size is always >= 5mb
-  }
-
+  
   if (destLen < (int64_t) dest.size()) {
     dest.resize(destLen);
   }
-
+   
+  const size_t MIN_CHUNK_SIZE = 5 * 1024 * 1024;
+  /* Special case: If the chunk is compressed below 5MB, append appropriate
+   *               number of chunks representing gzip of empty string.
+   */
+  if (!lastChunk && dest.size() < MIN_CHUNK_SIZE) {
+    log("Compression at level Z_DEFAULT_COMPRESSION (usually 6), resulted in data size = " + boost::lexical_cast<string>(dest.size()) + " bytes. " +
+        "We cannot upload data less than 5MB in any chunk (except last). So will append approppriate number of gzipped chunks of empty string.");
+    vector<char> zeroLengthGzip;
+    get_empty_string_gzip(zeroLengthGzip);
+    if (zeroLengthGzip.empty()) {
+      throw runtime_error("Size of empty string's gzip is 0 bytes .. unexpected");
+    }
+    dest.reserve(MIN_CHUNK_SIZE + zeroLengthGzip.size()); // Reserve memory in advance
+    int count = 0;
+    while (dest.size() < MIN_CHUNK_SIZE) {
+      count++;
+      std::copy(zeroLengthGzip.begin(), zeroLengthGzip.end(), std::back_inserter(dest));
+    }
+    log ("Pushed empty string's gzip to 'dest' " + boost::lexical_cast<string>(count) + " number of times, Final length = " + boost::lexical_cast<string>(dest.size()) + " bytes");
+  }
   data.swap(dest);
 }
 
