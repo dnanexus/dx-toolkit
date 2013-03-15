@@ -149,6 +149,12 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
+def _verify_app_source_dir(src_dir):
+    if not os.path.isdir(src_dir):
+        parser.error("%s is not a directory" % src_dir)
+    if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
+        parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
+
 def _build_app_remote(mode, src_dir, destination=None, publish=False,
                       dx_toolkit_autodep="auto", version_override=None,
                       bill_to=None, version_autonumbering=True, update=True,
@@ -311,12 +317,125 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False,
     return
 
 
+def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="auto", do_build_step=True, do_upload_step=True, dry_run=False, return_object_dump=False):
+    working_project = None
+    using_temp_project = False
+    override_folder = None
+    override_applet_name = None
+
+    if mode == "applet" and destination_override:
+        working_project, override_folder, override_applet_name = parse_destination(destination_override)
+    elif mode == "app" and use_temp_build_project and not dry_run:
+        # Create a temp project
+        working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
+        print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
+        using_temp_project = True
+
+    try:
+        if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
+            parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
+
+        with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
+            try:
+                app_json = json.load(app_desc)
+            except:
+                parser.error("Could not parse dxapp.json file as valid JSON")
+
+        if "buildOptions" in app_json:
+            if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
+                dx_toolkit_autodep = False
+            del app_json["buildOptions"]
+
+        if do_build_step:
+            dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
+
+        if not do_upload_step:
+            return
+
+        bundled_resources = dxpy.app_builder.upload_resources(src_dir, project=working_project) if not dry_run else []
+
+        try:
+            if dx_toolkit_autodep == "auto":
+                # "auto" (the default) means dx-toolkit (stable) on preprod and prod,
+                # and dx-toolkit-beta on all other systems.
+                if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
+                    dx_toolkit_autodep = "stable"
+                else:
+                    dx_toolkit_autodep = "beta"
+            applet_id, applet_spec = dxpy.app_builder.upload_applet(
+                src_dir,
+                bundled_resources,
+                check_name_collisions=(mode == "applet"),
+                overwrite=overwrite and mode == "applet",
+                project=working_project,
+                override_folder=override_folder,
+                override_name=override_applet_name,
+                dx_toolkit_autodep=dx_toolkit_autodep,
+                dry_run=dry_run)
+        except:
+            # Avoid leaking any bundled_resources files we may have
+            # created, if applet creation fails. Note that if
+            # using_temp_project, the entire project gets destroyed at
+            # the end, so we don't bother.
+            if not using_temp_project:
+                objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
+                if objects_to_delete:
+                    dxpy.api.projectRemoveObjects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
+                                                  input_params={"objects": objects_to_delete})
+            raise
+
+        if dry_run:
+            return
+
+        applet_name = applet_spec['name']
+
+        print >> sys.stderr, "Created applet " + applet_id + " successfully"
+
+        if mode == "app":
+            if 'version' not in app_json:
+                parser.error("dxapp.json contains no \"version\" field, but it is required to build an app")
+            version = app_json['version']
+            try_versions = [version_override or version]
+            if not version_override and do_version_autonumbering:
+                try_versions.append(version + get_version_suffix(src_dir))
+
+            app_id = dxpy.app_builder.create_app(applet_id,
+                                                 applet_name,
+                                                 src_dir,
+                                                 publish=publish,
+                                                 set_default=publish,
+                                                 billTo=bill_to_override,
+                                                 try_versions=try_versions,
+                                                 try_update=do_try_update)
+
+            app_describe = dxpy.api.appDescribe(app_id)
+
+            if publish:
+                print >> sys.stderr, "Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
+            else:
+                print >> sys.stderr, "Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
+                print >> sys.stderr, "You can publish this app with:"
+                print >> sys.stderr, "  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"])
+
+            return app_describe if return_object_dump else None
+
+        elif mode == "applet":
+            return dxpy.api.appletDescribe(applet_id) if return_object_dump else None
+        else:
+            raise dxpy.app_builder.AppBuilderException("Unrecognized mode %r" % (mode,))
+
+    finally:
+        # Clean up after ourselves.
+        if using_temp_project:
+            dxpy.api.projectDestroy(working_project)
+
+
 def main(**kwargs):
 
     if len(kwargs) == 0:
         args = parser.parse_args()
     else:
-        args = parser.parse_args(kwargs)
+        args = parser.parse_args(**kwargs)
 
     if dxpy.AUTH_HELPER is None:
         parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
@@ -324,16 +443,47 @@ def main(**kwargs):
     if args.src_dir is None:
         args.src_dir = os.getcwd()
 
-    if not os.path.isdir(args.src_dir):
-        parser.error("%s is not a directory" % args.src_dir)
-
-    if not os.path.exists(os.path.join(args.src_dir, "dxapp.json")):
-        parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % args.src_dir)
+    _verify_app_source_dir(args.src_dir)
 
     if args.mode == "app" and args.destination:
         parser.error("--destination cannot be used when creating an app (only an applet)")
 
-    if args.remote:
+    if not args.remote:
+        # LOCAL BUILD
+
+        try:
+            output = build_and_upload_locally(
+                args.src_dir,
+                args.mode,
+                overwrite=args.overwrite,
+                publish=args.publish,
+                destination_override=args.destination,
+                version_override=args.version_override,
+                bill_to_override=args.bill_to,
+                use_temp_build_project=args.use_temp_build_project,
+                do_parallel_build=args.parallel_build,
+                do_version_autonumbering=args.version_autonumbering,
+                do_try_update=args.update,
+                dx_toolkit_autodep=args.dx_toolkit_autodep,
+                do_build_step=args.build_step,
+                do_upload_step=args.upload_step,
+                dry_run=args.dry_run,
+                return_object_dump=args.json
+                )
+
+            if output is not None:
+                print json.dumps(output)
+        except dxpy.app_builder.AppBuilderException as e:
+            # AppBuilderException represents errors during app or applet building
+            # that could reasonably have been anticipated by the user.
+            print >> sys.stderr, "Error: %s" % (e.message,)
+            sys.exit(3)
+
+        return
+
+    else:
+        # REMOTE BUILD
+
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
@@ -367,123 +517,6 @@ def main(**kwargs):
 
         return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
-    working_project = None
-    using_temp_project = False
-    override_folder = None
-    override_applet_name = None
-
-    if args.mode == "applet" and args.destination:
-        working_project, override_folder, override_applet_name = parse_destination(args.destination)
-    elif args.mode == "app" and args.use_temp_build_project and not args.dry_run:
-        # Create a temp project
-        working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
-        print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
-        using_temp_project = True
-
-    if args.mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
-        parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-
-    try:
-        with open(os.path.join(args.src_dir, "dxapp.json")) as app_desc:
-            try:
-                app_json = json.load(app_desc)
-            except:
-                parser.error("Could not parse dxapp.json file as valid JSON")
-
-        if "buildOptions" in app_json:
-            if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
-                args.dx_toolkit_autodep = False
-            del app_json["buildOptions"]
-
-        if args.build_step:
-            dxpy.app_builder.build(args.src_dir, parallel_build=args.parallel_build)
-
-        if not args.upload_step:
-            return
-
-        bundled_resources = dxpy.app_builder.upload_resources(args.src_dir, project=working_project) if not args.dry_run else []
-
-        try:
-            if args.dx_toolkit_autodep == "auto":
-                # "auto" (the default) means dx-toolkit (stable) on preprod and prod,
-                # and dx-toolkit-beta on all other systems.
-                if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
-                    args.dx_toolkit_autodep = "stable"
-                else:
-                    args.dx_toolkit_autodep = "beta"
-            applet_id, applet_spec = dxpy.app_builder.upload_applet(
-                args.src_dir,
-                bundled_resources,
-                check_name_collisions=(args.mode == "applet"),
-                overwrite=args.overwrite and args.mode == "applet",
-                project=working_project,
-                override_folder=override_folder,
-                override_name=override_applet_name,
-                dx_toolkit_autodep=args.dx_toolkit_autodep,
-                dry_run=args.dry_run)
-        except:
-            # Avoid leaking any bundled_resources files we may have
-            # created, if applet creation fails. Note that if
-            # using_temp_project, the entire project gets destroyed at
-            # the end, so we don't bother.
-            if not using_temp_project:
-                objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
-                if objects_to_delete:
-                    dxpy.api.projectRemoveObjects(dxpy.app_builder.get_destination_project(args.src_dir, project=working_project),
-                                                  input_params={"objects": objects_to_delete})
-            raise
-
-        if args.dry_run:
-            return
-
-        applet_name = applet_spec['name']
-
-        print >> sys.stderr, "Created applet " + applet_id + " successfully"
-
-        if args.mode == "app":
-            if 'version' not in app_json:
-                parser.error("dxapp.json contains no \"version\" field, but it is required to build an app")
-            version = app_json['version']
-            try_versions = [args.version_override or version]
-            if not args.version_override and args.version_autonumbering:
-                try_versions.append(version + get_version_suffix(args.src_dir))
-
-            app_id = dxpy.app_builder.create_app(applet_id,
-                                                 applet_name,
-                                                 args.src_dir,
-                                                 publish=args.publish,
-                                                 set_default=args.publish,
-                                                 billTo=args.bill_to,
-                                                 try_versions=try_versions,
-                                                 try_update=args.update)
-
-            app_describe = dxpy.api.appDescribe(app_id)
-            if args.json:
-                print json.dumps(app_describe)
-
-            if args.publish:
-                print >> sys.stderr, "Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
-            else:
-                print >> sys.stderr, "Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
-                print >> sys.stderr, "You can publish this app with:"
-                print >> sys.stderr, "  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"])
-
-        elif args.mode == "applet":
-            if args.json:
-                print json.dumps(dxpy.api.appletDescribe(applet_id))
-        else:
-            raise dxpy.app_builder.AppBuilderException("Unrecognized mode %r" % (args.mode,))
-
-    except dxpy.app_builder.AppBuilderException as e:
-        # AppBuilderException represents errors during app or applet building
-        # that could reasonably have been anticipated by the user.
-        print >> sys.stderr, "Error: %s" % (e.message,)
-        sys.exit(3)
-
-    finally:
-        # Clean up after ourselves.
-        if using_temp_project:
-            dxpy.api.projectDestroy(working_project)
 
 if __name__ == '__main__':
     main()
