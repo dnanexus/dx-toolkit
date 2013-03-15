@@ -318,6 +318,9 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False,
 
 
 def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="auto", do_build_step=True, do_upload_step=True, dry_run=False, return_object_dump=False):
+
+    _verify_app_source_dir(src_dir)
+
     working_project = None
     using_temp_project = False
     override_folder = None
@@ -443,8 +446,6 @@ def main(**kwargs):
     if args.src_dir is None:
         args.src_dir = os.getcwd()
 
-    _verify_app_source_dir(args.src_dir)
-
     if args.mode == "app" and args.destination:
         parser.error("--destination cannot be used when creating an app (only an applet)")
 
@@ -483,6 +484,8 @@ def main(**kwargs):
 
     else:
         # REMOTE BUILD
+
+        _verify_app_source_dir(args.src_dir)
 
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
