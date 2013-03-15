@@ -1200,6 +1200,56 @@ TEST_F(DXGTableTest, GRITest) {
   // TODO: Test with > 1 index
 }
 
+TEST_F(DXGTableTest, LexicographicIndexTest) {
+  JSON rows = JSON::parse("[[\"chr1\", \"ABC\"], [\"chr2\", \"DEF\"], [\"chr3\", \"ABH\"]]");
+  vector<JSON> columns;
+  columns.push_back(JSON::parse("{ \"name\": \"chr\", \"type\": \"string\" }"));
+  columns.push_back(JSON::parse("{ \"name\": \"second\", \"type\": \"string\" }"));
+  
+  vector<JSON> indices;
+  
+  // build lexicographic index
+  JSON index_cols(JSON_ARRAY);
+  JSON elem(JSON_HASH);
+  elem["name"] = "chr"; 
+  elem["order"] = "asc";
+  elem["caseSensitive"] = false;
+  index_cols.push_back(elem);
+  indices.push_back(DXGTable::lexicographicIndex(index_cols, "l_index1"));
+  index_cols = JSON_ARRAY;    
+  elem["name"] = "second";
+  elem["caseSensitive"] = true;
+  index_cols.push_back(elem);
+  indices.push_back(DXGTable::lexicographicIndex(index_cols, "l_index2"));
+
+  dxgtable = DXGTable::newDXGTable(columns, indices);
+  JSON desc = dxgtable.describe();
+  
+  dxgtable.addRows(rows);
+  dxgtable.close(true);
+
+  desc = dxgtable.describe();
+  ASSERT_EQ(desc["length"].get<int>(), 3);
+  
+  JSON query(JSON_HASH);
+  query["chr"] = JSON(JSON_HASH);
+  query["chr"]["$startsWith"] = "CHR";
+  JSON result = dxgtable.getRows(DXGTable::lexicographicQuery(query, "l_index1"));
+  ASSERT_EQ(result["data"].size(), 3);
+  
+  query = JSON(JSON_HASH);
+  query["chr"] = JSON(JSON_HASH);
+  query["chr"]["$gt"] = "chr1";
+  result = dxgtable.getRows(DXGTable::lexicographicQuery(query, "l_index1"));
+  ASSERT_EQ(result["data"].size(), 2);
+
+  query = JSON(JSON_HASH);
+  query["second"] = JSON(JSON_HASH);
+  query["second"]["$startsWith"] = "AB";
+  result = dxgtable.getRows(DXGTable::lexicographicQuery(query, "l_index2"));
+  ASSERT_EQ(result["data"].size(), 2);
+}
+
 TEST(DXSystemTest, findDataObjects) {
   vector<DXGTable> dxg;
   dxg.push_back(DXGTable("", ""));

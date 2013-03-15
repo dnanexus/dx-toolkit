@@ -703,12 +703,13 @@ namespace dx {
     /**
      * Creates a lexicographic index descriptor for use with the create() calls.
      *
-     * @param columns Vector of lists of the form [COLUMN_NAME, "ASC"|"DESC"].
+     * @param columns JSON An array of hashes of the form: {"name": "Col1", "order": "ASC", "caseSensitive": true}. 
+     * (Note: fields "order" & "caseSensitive" are optional in the hashes)
      * @param name Name of the index.
      *
      * @return A JSON object containing the index descriptor.
      */
-    static dx::JSON lexicographicIndex(const std::vector<std::vector<std::string> > &columns,
+    static dx::JSON lexicographicIndex(const dx::JSON &columns,
                                        const std::string &name);
 
     // TODO: lo and hi are currently constrained by the API spec to be

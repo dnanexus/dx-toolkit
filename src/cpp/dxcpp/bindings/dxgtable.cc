@@ -467,7 +467,7 @@ namespace dx {
     return index_desc;
   }
 
-  JSON DXGTable::lexicographicIndex(const vector<vector<string> > &columns,
+  JSON DXGTable::lexicographicIndex(const JSON &columns,
                                     const string &name) {
     JSON index_desc(JSON_OBJECT);
     index_desc["name"] = name;
