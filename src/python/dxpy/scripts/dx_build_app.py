@@ -82,18 +82,27 @@ parser.add_argument("--dx-toolkit-unstable-autodep", help="Auto-insert a dx-tool
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
+# TODO: remove this flag (once all calls to build_and_upload_locally are
+# in process
+#
 # --[no-]build (undocumented): perform the ./configure && make step
 parser.set_defaults(build_step=True)
 parser.add_argument("--build-step", help=argparse.SUPPRESS, action="store_true", dest="build_step")
 parser.add_argument("--no-build-step", help=argparse.SUPPRESS, action="store_false", dest="build_step")
 
+# TODO: remove this flag (once all calls to build_and_upload_locally are
+# in process
+#
 # --[no-]upload (undocumented): perform the actual upload
 parser.set_defaults(upload_step=True)
 parser.add_argument("--upload-step", help=argparse.SUPPRESS, action="store_true", dest="upload_step")
 parser.add_argument("--no-upload-step", help=argparse.SUPPRESS, action="store_false", dest="upload_step")
 
+# TODO: remove this flag (once all calls to build_and_upload_locally are
+# in process
+#
 # --[no-]json (undocumented): dumps the JSON describe of the app or
-# --applet that was created
+# applet that was created
 parser.set_defaults(json=False)
 parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
@@ -155,10 +164,9 @@ def _verify_app_source_dir(src_dir):
     if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
 
-def _build_app_remote(mode, src_dir, destination=None, publish=False,
-                      dx_toolkit_autodep="auto", version_override=None,
-                      bill_to=None, version_autonumbering=True, update=True,
-                      parallel_build=True):
+def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
+                      version_override=None, bill_to_override=None, dx_toolkit_autodep="auto",
+                      do_version_autonumbering=True, do_try_update=True, do_parallel_build=True):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -166,43 +174,33 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False,
 
     temp_dir = tempfile.mkdtemp()
 
-    # We have to resolve the correct dx-toolkit dependency type here and
-    # explicitly pass it into the interior call of dx-build-app, because
-    # within the execution environment of tarball_app(let)_builder,
-    # APISERVER_HOST is set to the address of the proxy (a 10.x.x.x
-    # address) and doesn't give us any information about whether we are
-    # talking to preprod.
+    # If dx_toolkit_autodep is "auto", We have to resolve the correct
+    # dx-toolkit dependency type here and explicitly pass it into the
+    # interior call of dx-build-app, because within the execution
+    # environment of tarball_app(let)_builder, APISERVER_HOST is set to
+    # the address of the proxy (a 10.x.x.x address) and doesn't give us
+    # any information about whether we are talking to preprod.
     if dx_toolkit_autodep == "auto":
         # "auto" (the default) means dx-toolkit (stable) on preprod and prod, and
         # dx-toolkit-beta on all other systems.
         if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
-            dx_toolkit_autodep_flag = "--dx-toolkit-stable-autodep"
+            dx_toolkit_autodep = "stable"
         else:
-            dx_toolkit_autodep_flag = "--dx-toolkit-beta-autodep"
-    elif dx_toolkit_autodep == "git":
-        dx_toolkit_autodep_flag = "--dx-toolkit-legacy-git-autodep"
-    elif dx_toolkit_autodep == "stable":
-        dx_toolkit_autodep_flag = "--dx-toolkit-stable-autodep"
-    elif dx_toolkit_autodep == "beta":
-        dx_toolkit_autodep_flag = "--dx-toolkit-beta-autodep"
-    elif dx_toolkit_autodep == "unstable":
-        dx_toolkit_autodep_flag = "--dx-toolkit-unstable-autodep"
-    elif dx_toolkit_autodep == False:
-        dx_toolkit_autodep_flag = "--no-dx-toolkit-autodep"
+            dx_toolkit_autodep = "beta"
 
-    extra_flags = [dx_toolkit_autodep_flag]
+    build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
 
     # These flags are basically passed through verbatim.
     if version_override:
-        extra_flags.extend(['--version', version_override])
-    if bill_to:
-        extra_flags.extend(['--bill-to', bill_to])
-    if not version_autonumbering:
-        extra_flags.append('--no-version-autonumbering')
-    if not update:
-        extra_flags.append('--no-update')
-    if not parallel_build:
-        extra_flags.append('--no-parallel-build')
+        build_options['version_override'] = version_override
+    if bill_to_override:
+        build_options['bill_to_override'] = bill_to_override
+    if not do_version_autonumbering:
+        build_options['do_version_autonumbering'] = False
+    if not do_try_update:
+        build_options['do_try_update'] = False
+    if not do_parallel_build:
+        build_options['do_parallel_build'] = False
 
     using_temp_project_for_remote_build = False
 
@@ -219,15 +217,12 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False,
         # 2. Make the output folder FOLDER
         # 3. Supply --destination=NAME to the interior call of dx-build-applet.
         build_project_id = dxpy.WORKSPACE_ID
-        if destination:
-            build_project_id, dest_folder, dest_applet_name = parse_destination(destination)
+        if destination_override:
+            build_project_id, dest_folder, dest_applet_name = parse_destination(destination_override)
         if build_project_id is None:
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
         if dest_applet_name:
-            # TODO: escape this correctly, or find a way of passing the
-            # extra_flags that doesn't get screwed up by names that have
-            # spaces in them.
-            extra_flags.extend(['--destination', '/' + dest_applet_name])
+            build_options['destination_override'] = '/' + dest_applet_name
 
     elif mode == "app":
         using_temp_project_for_remote_build = True
@@ -288,10 +283,9 @@ def _build_app_remote(mode, src_dir, destination=None, publish=False,
                                              wait_on_close=True, show_progress=True)
 
         try:
-            extra_flags_str = " ".join(pipes.quote(s) for s in extra_flags)
             input_hash = {
                 "input_file": dxpy.dxlink(remote_file),
-                "extra_flags": extra_flags_str
+                "build_options": build_options
                 }
             if mode == 'app':
                 input_hash["publish"] = publish
@@ -510,15 +504,15 @@ def main(**kwargs):
         if args.version_override:
             more_kwargs['version_override'] = args.version_override
         if args.bill_to:
-            more_kwargs['bill_to'] = args.bill_to
+            more_kwargs['bill_to_override'] = args.bill_to
         if not args.version_autonumbering:
-            more_kwargs['version_autonumbering'] = False
+            more_kwargs['do_version_autonumbering'] = False
         if not args.update:
-            more_kwargs['update'] = False
+            more_kwargs['do_try_update'] = False
         if not args.parallel_build:
-            more_kwargs['parallel_build'] = False
+            more_kwargs['do_parallel_build'] = False
 
-        return _build_app_remote(args.mode, args.src_dir, destination=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
+        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
 
 if __name__ == '__main__':
