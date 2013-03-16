@@ -213,7 +213,9 @@ def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
 def print_project_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo', 'version']
+    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo', 'version',
+                         # Following are app container-specific
+                         'destroyAt', 'project', 'type', 'app', 'appName']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -250,6 +252,16 @@ def print_project_desc(desc, verbose=False):
         print_list_field("Properties", [key + '=' + value for key, value in desc["properties"].items()])
     if "appCaches" in desc:
         print_json_field("App caches", desc["appCaches"])
+    if 'type' in desc:
+        print_field("Container type", desc["type"])
+    if 'project' in desc:
+        print_field("Assoc. project", desc["project"])
+    if 'destroyAt' in desc:
+        print_field("To be destroyed", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+    if 'app' in desc:
+        print_field("Assoc. App ID", desc["app"])
+    if 'appName' in desc:
+        print_field("Assoc. App", desc["appName"])
 
     for field in desc:
         if field not in recognized_fields:
@@ -409,7 +421,8 @@ def print_job_desc(desc):
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
                          'dependsOn', 'resources', 'projectCache', 'applet', 'details',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
-                         'startedRunning', 'stoppedRunning', 'stateTransitions']
+                         'startedRunning', 'stoppedRunning', 'stateTransitions',
+                         'delayWorkspaceDestruction']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -431,6 +444,8 @@ def print_job_desc(desc):
         print_field("Applet", desc["applet"])
     if "instanceType" in desc and desc['instanceType'] is not None:
         print_field("Instance Type", desc["instanceType"])
+    if "delayWorkspaceDestruction" in desc:
+        print_json_field("Debug mode", desc["delayWorkspaceDestruction"])
     print_field("State", JOB_STATES(desc["state"]))
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
