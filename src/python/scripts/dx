@@ -2375,7 +2375,8 @@ def get_exec_or_workflow_handler(path, alias):
         handler = dxpy.DXApp(name=path, alias=alias)
     return handler
 
-def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
+def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
+            is_the_only_job=True):
     exec_inputs = ExecutableInputs(executable, input_name_prefix=input_name_prefix)
 
     exec_inputs.update(args.input_from_clone, strip_prefix=False)
@@ -2413,9 +2414,9 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         else:
             print dxjob.get_id()
         sys.stdout.flush()
-        if args.wait:
+        if args.wait and is_the_only_job:
             dxjob.wait_on_done()
-        if args.watch:
+        if args.watch and is_the_only_job:
             watch_args = parser.parse_args(['watch', dxjob.get_id()])
             print ''
             print 'Job Log'
@@ -2713,14 +2714,16 @@ def run(args):
     if isinstance(handler, dxpy.bindings.DXRecord): # Identified as a workflow in get_exec_or_workflow_handler()
         if clone_desc is not None:
             parser.exit(1, fill("Cannot run a workflow and clone a job; only apps or applets can be run with cloned options") + "\n")
-        print "Executing workflow", handler
+        if not args.brief:
+            print "Executing workflow", handler
         workflow = handler.get_details()
         if workflow['version'] != 2:
             parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
         requested_job_name = args.name
         for stage in workflow['stages']:
-            print "Processing stage", stage['key'], "(id", stage['id'] + ")"
+            if not args.brief:
+                print "Processing stage", stage['key'], "(id", stage['id'] + ")"
             inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
             executable = dxpy.get_handler(stage['app']['id'])
             if requested_job_name is None:
@@ -2730,7 +2733,18 @@ def run(args):
                 pass
             launched_jobs[stage['id']] = run_one(args, executable, dest_proj, dest_path,
                                                  preset_inputs=inputs_from_stage,
-                                                 input_name_prefix=str(stage['key'])+".")
+                                                 input_name_prefix=str(stage['key'])+".",
+                                                 is_the_only_job=False)
+        if args.wait:
+            for stage in workflow['stages']:
+                launched_jobs[stage['id']].wait_on_done()
+        if args.watch:
+            for stage in workflow['stages']:
+                watch_args = parser.parse_args(['watch', launched_jobs[stage['id']].get_id()])
+                print ''
+                print 'Job Log'
+                print '-------'
+                watch(watch_args)
     else:
         run_one(args, handler, dest_proj, dest_path)
 
