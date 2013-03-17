@@ -118,7 +118,7 @@ class DXApplet(DXDataObject):
         return dxpy.api.appletGet(self._dxid, **kwargs)
 
     def run(self, applet_input, project=None, folder="/", name=None, instance_type=None,
-            depends_on=None, details=None, **kwargs):
+            depends_on=None, details=None, debug=None, **kwargs):
         '''
         :param applet_input: Hash of the applet's input arguments
         :type applet_input: dict
@@ -134,6 +134,8 @@ class DXApplet(DXDataObject):
         :type depends_on: list
         :param details: Details to set for the job
         :type details: dict or list
+        :param debug: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
+        :type debug: boolean
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -173,6 +175,9 @@ class DXApplet(DXDataObject):
 
         if details is not None:
             run_input["details"] = details
+
+        if debug is not None:
+            run_input["delayWorkspaceDestruction"] = debug
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project
