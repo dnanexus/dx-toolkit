@@ -31,22 +31,22 @@ module DX
 postscript = '''  end
 end'''
 
-class_method_template = '''    def self.{wrapper_method_name}(input_params={{}}, opts={{}})
-      # Invokes the {route} API method.{wiki_ref}
+class_method_template = '''    # Invokes the {route} API method.{wiki_ref}
+    def self.{wrapper_method_name}(input_params={{}}, opts={{}})
       opts = {{ "always_retry" => {retry} }}.merge(opts)
       return DX::http_request("{route}", input_params, opts)
     end
 '''
 
-object_method_template = '''    def self.{wrapper_method_name}(object_id, input_params={{}}, opts={{}})
-      # Invokes the {route} API method.{wiki_ref}
+object_method_template = '''    # Invokes the {route} API method.{wiki_ref}
+    def self.{wrapper_method_name}(object_id, input_params={{}}, opts={{}})
       opts = {{ "always_retry" => {retry} }}.merge(opts)
       return DX::http_request("/#{{object_id}}/{api_method_name}", input_params, opts)
     end
 '''
 
-app_object_method_template = '''    def self.{wrapper_method_name}(app_name_or_id, app_alias=nil, input_params={{}}, opts={{}})
-      # Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
+app_object_method_template = '''    # Invokes the /app-xxxx/{api_method_name} API method.{wiki_ref}
+    def self.{wrapper_method_name}(app_name_or_id, app_alias=nil, input_params={{}}, opts={{}})
       opts = {{ "always_retry" => {retry} }}.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DX::http_request("/#{{fully_qualified_version}}/{api_method_name}", input_params, opts)
@@ -54,7 +54,7 @@ app_object_method_template = '''    def self.{wrapper_method_name}(app_name_or_i
 '''
 
 def make_wiki_ref(url):
-    return ("\n      # For more info, see: " + url) if url else ""
+    return ("\n    #\n    # For more info, see: " + url) if url else ""
 
 def make_class_method(wrapper_method_name, route, retry=False, url=None):
     return class_method_template.format(wrapper_method_name=wrapper_method_name, route=route, retry=retry, wiki_ref=make_wiki_ref(url))
