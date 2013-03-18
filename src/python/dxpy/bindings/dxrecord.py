@@ -59,18 +59,18 @@ class DXRecord(DXDataObject):
 
     _class = "record"
 
-    _describe = staticmethod(dxpy.api.recordDescribe)
-    _add_types = staticmethod(dxpy.api.recordAddTypes)
-    _remove_types = staticmethod(dxpy.api.recordRemoveTypes)
-    _get_details = staticmethod(dxpy.api.recordGetDetails)
-    _set_details = staticmethod(dxpy.api.recordSetDetails)
-    _set_visibility = staticmethod(dxpy.api.recordSetVisibility)
-    _rename = staticmethod(dxpy.api.recordRename)
-    _set_properties = staticmethod(dxpy.api.recordSetProperties)
-    _add_tags = staticmethod(dxpy.api.recordAddTags)
-    _remove_tags = staticmethod(dxpy.api.recordRemoveTags)
-    _close = staticmethod(dxpy.api.recordClose)
-    _list_projects = staticmethod(dxpy.api.recordListProjects)
+    _describe = staticmethod(dxpy.api.record_describe)
+    _add_types = staticmethod(dxpy.api.record_add_types)
+    _remove_types = staticmethod(dxpy.api.record_remove_types)
+    _get_details = staticmethod(dxpy.api.record_get_details)
+    _set_details = staticmethod(dxpy.api.record_set_details)
+    _set_visibility = staticmethod(dxpy.api.record_set_visibility)
+    _rename = staticmethod(dxpy.api.record_rename)
+    _set_properties = staticmethod(dxpy.api.record_set_properties)
+    _add_tags = staticmethod(dxpy.api.record_add_tags)
+    _remove_tags = staticmethod(dxpy.api.record_remove_tags)
+    _close = staticmethod(dxpy.api.record_close)
+    _list_projects = staticmethod(dxpy.api.record_list_projects)
 
     def _new(self, dx_hash, **kwargs):
         """
@@ -91,5 +91,5 @@ class DXRecord(DXDataObject):
                     {"id": kwargs["init_from"].get_id(),
                      "project": kwargs["init_from"].get_proj_id()}
             del kwargs["init_from"]
-        resp = dxpy.api.recordNew(dx_hash, **kwargs)
+        resp = dxpy.api.record_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])

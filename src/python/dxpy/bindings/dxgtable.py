@@ -54,18 +54,18 @@ class DXGTable(DXDataObject):
 
     _class = "gtable"
 
-    _describe = staticmethod(dxpy.api.gtableDescribe)
-    _add_types = staticmethod(dxpy.api.gtableAddTypes)
-    _remove_types = staticmethod(dxpy.api.gtableRemoveTypes)
-    _get_details = staticmethod(dxpy.api.gtableGetDetails)
-    _set_details = staticmethod(dxpy.api.gtableSetDetails)
-    _set_visibility = staticmethod(dxpy.api.gtableSetVisibility)
-    _rename = staticmethod(dxpy.api.gtableRename)
-    _set_properties = staticmethod(dxpy.api.gtableSetProperties)
-    _add_tags = staticmethod(dxpy.api.gtableAddTags)
-    _remove_tags = staticmethod(dxpy.api.gtableRemoveTags)
-    _close = staticmethod(dxpy.api.gtableClose)
-    _list_projects = staticmethod(dxpy.api.gtableListProjects)
+    _describe = staticmethod(dxpy.api.gtable_describe)
+    _add_types = staticmethod(dxpy.api.gtable_add_types)
+    _remove_types = staticmethod(dxpy.api.gtable_remove_types)
+    _get_details = staticmethod(dxpy.api.gtable_get_details)
+    _set_details = staticmethod(dxpy.api.gtable_set_details)
+    _set_visibility = staticmethod(dxpy.api.gtable_set_visibility)
+    _rename = staticmethod(dxpy.api.gtable_rename)
+    _set_properties = staticmethod(dxpy.api.gtable_set_properties)
+    _add_tags = staticmethod(dxpy.api.gtable_add_tags)
+    _remove_tags = staticmethod(dxpy.api.gtable_remove_tags)
+    _close = staticmethod(dxpy.api.gtable_close)
+    _list_projects = staticmethod(dxpy.api.gtable_list_projects)
 
     _http_threadpool = None
     _http_threadpool_size = NUM_HTTP_THREADS
@@ -188,7 +188,7 @@ class DXGTable(DXDataObject):
                      "project": kwargs["init_from"].get_proj_id()}
             del kwargs["init_from"]
 
-        resp = dxpy.api.gtableNew(dx_hash, **kwargs)
+        resp = dxpy.api.gtable_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
         if "columns" in dx_hash:
             self._columns = dx_hash["columns"]
@@ -256,7 +256,7 @@ class DXGTable(DXDataObject):
         if limit is not None:
             get_rows_params["limit"] = limit
 
-        return dxpy.api.gtableGet(self._dxid, get_rows_params, always_retry=True, **kwargs)
+        return dxpy.api.gtable_get(self._dxid, get_rows_params, always_retry=True, **kwargs)
 
     def get_columns(self, **kwargs):
         '''
@@ -404,7 +404,7 @@ class DXGTable(DXDataObject):
                         self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
                         del request_data
         else:
-            dxpy.api.gtableAddRows(self._dxid, {"data": data, "part": part}, **kwargs)
+            dxpy.api.gtable_add_rows(self._dxid, {"data": data, "part": part}, **kwargs)
 
     def add_row(self, row, **kwargs):
         '''
@@ -435,7 +435,7 @@ class DXGTable(DXDataObject):
         returns a different part ID.
 
         '''
-        return dxpy.api.gtableNextPart(self._dxid, **kwargs)['part']
+        return dxpy.api.gtable_next_part(self._dxid, **kwargs)['part']
 
     def _flush_row_buf_to_string_buf(self):
         if self._string_row_buf == None:
@@ -476,7 +476,7 @@ class DXGTable(DXDataObject):
             if multithread:
                 self._async_add_rows_request(self._dxid, request_data, jsonify_data=False, **kwargs)
             else:
-                dxpy.api.gtableAddRows(self._dxid, request_data, jsonify_data=False, **kwargs)
+                dxpy.api.gtable_add_rows(self._dxid, request_data, jsonify_data=False, **kwargs)
 
         if len(self._http_threadpool_futures) > 0:
             dxpy.utils.wait_for_all_futures(self._http_threadpool_futures)
@@ -497,7 +497,7 @@ class DXGTable(DXDataObject):
         '''
         self.flush(**kwargs)
 
-        dxpy.api.gtableClose(self._dxid, **kwargs)
+        dxpy.api.gtable_close(self._dxid, **kwargs)
 
         if block:
             self._wait_on_close(**kwargs)
@@ -646,7 +646,7 @@ class DXGTable(DXDataObject):
             self._http_threadpool_futures.remove(future)
             del future
 
-        future = self._http_threadpool.submit(dxpy.api.gtableAddRows, *args, **kwargs)
+        future = self._http_threadpool.submit(dxpy.api.gtable_add_rows, *args, **kwargs)
         self._http_threadpool_futures.add(future)
 
     def _generate_read_requests(self, start_row=0, end_row=None, query=None, columns=None, **kwargs):
