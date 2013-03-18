@@ -1325,6 +1325,8 @@ def new_project(args):
             print resp['id']
         else:
             print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
+        if args.select:
+            set_project(resp['id'], write=True, name=args.name)
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -3385,6 +3387,7 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
                                                parents=[stdout_args, env_args],
                                                prog='dx new project')
 parser_new_project.add_argument('name', help='Name of the new project', nargs='?')
+parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating', action='store_true')
 parser_new_project.set_defaults(func=new_project)
 parser_map['new project'] = (parser_new_project, NoneCompleter())
 parser_categories['fs']['cmds'].append(('new project', subparsers_new._choices_actions[-1].help))
