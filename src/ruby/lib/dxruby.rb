@@ -104,7 +104,7 @@ module DX
     end
 
     method = opts["method"] || "POST"
-    if method != 'GET' and method != 'POST':
+    if method != 'GET' and method != 'POST'
        raise HTTPRequestError, 'opts["method"] should be either GET or POST'
     end
 
