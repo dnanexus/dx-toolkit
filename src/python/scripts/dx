@@ -1310,6 +1310,13 @@ def describe(args):
         parser.exit(1, fill("No matches found for " + args.path) + '\n')
 
 def new_project(args):
+    if args.name == None:
+        if sys.stdin.isatty():
+            args.name = raw_input("Enter name for new project: ")
+        else:
+            parser_new_project.print_help()
+            parser.exit(1, fill("No project name supplied, and input is not interactive") + '\n')
+
     get_output_flag(args)
     try:
         resp = dxpy.DXHTTPRequest('/project/new',
@@ -3377,7 +3384,7 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
                                                description='Create a new project',
                                                parents=[stdout_args, env_args],
                                                prog='dx new project')
-parser_new_project.add_argument('name', help='Name of the new project')
+parser_new_project.add_argument('name', help='Name of the new project', nargs='?')
 parser_new_project.set_defaults(func=new_project)
 parser_map['new project'] = (parser_new_project, NoneCompleter())
 parser_categories['fs']['cmds'].append(('new project', subparsers_new._choices_actions[-1].help))
