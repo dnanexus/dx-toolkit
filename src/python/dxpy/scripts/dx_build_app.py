@@ -335,8 +335,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
         with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
             try:
                 app_json = json.load(app_desc)
-            except:
-                parser.error("Could not parse dxapp.json file as valid JSON")
+            except Exception as e:
+                raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.message)
 
         if "buildOptions" in app_json:
             if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
