@@ -189,7 +189,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.systemFindDataObjects, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, **kwargs)
 
 def find_jobs(launched_by=None, executable=None, project=None,
               state=None, origin_job=None, parent_job=None,
@@ -278,7 +278,7 @@ def find_jobs(launched_by=None, executable=None, project=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.systemFindJobs, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_jobs, query, limit, return_handler, **kwargs)
 
 def find_projects(name=None, name_mode='exact', properties=None,
                   level=None, describe=None, explicit_perms=None,
@@ -336,7 +336,7 @@ def find_projects(name=None, name_mode='exact', properties=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.systemFindProjects, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_projects, query, limit, return_handler, **kwargs)
 
 def find_apps(name=None, name_mode='exact', category=None,
               all_versions=None, published=None,
@@ -423,7 +423,7 @@ def find_apps(name=None, name_mode='exact', category=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.systemFindApps, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_apps, query, limit, return_handler, **kwargs)
 
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
     kwargs["limit"] = 1 if more_ok else 2

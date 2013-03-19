@@ -12,7 +12,7 @@ Pythonized JSON (a list or dict) that is returned from the API server.
 
 .. describe:: An example API call
 
-      .. function:: apiCall(object_id, input_params={}, **kwargs)
+      .. function:: api_call(object_id, input_params={}, **kwargs)
 
          :param object_id: Object ID of remote object to be manipulated
 	 :type object_id: string
@@ -28,7 +28,7 @@ by their name and version (or tag), in addition to their app ID.
 
 .. describe:: An example API call on an app instance
 
-     .. function:: apiCallForApps(app_name_or_id, alias=None, input_params={}, **kwargs)
+     .. function:: api_call_for_apps(app_name_or_id, alias=None, input_params={}, **kwargs)
 
          :param app_name_or_id: Either "app-NAME" or the hash ID "app-xxxx"
          :type app_name_or_id: string

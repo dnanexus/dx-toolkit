@@ -45,18 +45,18 @@ class DXApplet(DXDataObject):
 
     _class = "applet"
 
-    _describe = staticmethod(dxpy.api.appletDescribe)
+    _describe = staticmethod(dxpy.api.applet_describe)
     _add_types = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/addTypes"))
     _remove_types = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/removeTypes"))
-    _get_details = staticmethod(dxpy.api.appletGetDetails)
+    _get_details = staticmethod(dxpy.api.applet_get_details)
     _set_details = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/setDetails"))
     _set_visibility = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/setVisibility"))
-    _rename = staticmethod(dxpy.api.appletRename)
-    _set_properties = staticmethod(dxpy.api.appletSetProperties)
-    _add_tags = staticmethod(dxpy.api.appletAddTags)
-    _remove_tags = staticmethod(dxpy.api.appletRemoveTags)
+    _rename = staticmethod(dxpy.api.applet_rename)
+    _set_properties = staticmethod(dxpy.api.applet_set_properties)
+    _add_tags = staticmethod(dxpy.api.applet_add_tags)
+    _remove_tags = staticmethod(dxpy.api.applet_remove_tags)
     _close = staticmethod(makeNonexistentAPIWrapper("/applet-xxxx/close"))
-    _list_projects = staticmethod(dxpy.api.appletListProjects)
+    _list_projects = staticmethod(dxpy.api.applet_list_projects)
 
     def _new(self, dx_hash, **kwargs):
         '''
@@ -101,7 +101,7 @@ class DXApplet(DXDataObject):
                 dx_hash[field] = kwargs[field]
                 del kwargs[field]
 
-        resp = dxpy.api.appletNew(dx_hash, **kwargs)
+        resp = dxpy.api.applet_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
 
     def get(self, **kwargs):
@@ -115,7 +115,7 @@ class DXApplet(DXDataObject):
         <http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget>`_
         method.
         """
-        return dxpy.api.appletGet(self._dxid, **kwargs)
+        return dxpy.api.applet_get(self._dxid, **kwargs)
 
     def run(self, applet_input, project=None, folder="/", name=None, instance_type=None,
             depends_on=None, details=None, delay_workspace_destruction=None, **kwargs):
@@ -182,5 +182,5 @@ class DXApplet(DXDataObject):
         if dxpy.JOB_ID is None:
             run_input["project"] = project
 
-        return DXJob(dxpy.api.appletRun(self._dxid, run_input,
-                                        **kwargs)["id"])
+        return DXJob(dxpy.api.applet_run(self._dxid, run_input,
+                                         **kwargs)["id"])

@@ -51,7 +51,7 @@ def run(function_name=None, function_input=None):
     JSON from the environment variable *DX_JOB_INPUT*; if that is not set, no input is given to the function.
 
     The absence of *DX_JOB_ID* signals to run() that execution is happening in the debug harness. In this mode of
-    operation, all calls to *dxpy.api.jobNew* (and higher level handler methods which use it) are intercepted, and run()
+    operation, all calls to *dxpy.api.job_new* (and higher level handler methods which use it) are intercepted, and run()
     is invoked instead with appropriate inputs. The initial invocation of *dxpy.run()* (with no arguments) need not be
     changed; instead, use the environment variable *DX_JOB_INPUT* and/or command line arguments:
 

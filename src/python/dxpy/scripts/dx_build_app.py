@@ -226,7 +226,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     elif mode == "app":
         using_temp_project_for_remote_build = True
-        build_project_id = dxpy.api.projectNew({"name": "dx-build-app --remote temporary project"})["id"]
+        build_project_id = dxpy.api.project_new({"name": "dx-build-app --remote temporary project"})["id"]
 
     try:
         # Resolve relative paths and symlinks here so we have something
@@ -296,7 +296,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                 }
             if dest_folder:
                 api_options["folder"] = dest_folder
-            app_run_result = dxpy.api.appRun(builder_app, input_params=api_options)
+            app_run_result = dxpy.api.app_run(builder_app, input_params=api_options)
             job_id = app_run_result["id"]
             print "Started builder job %s" % (job_id,)
             subprocess.check_call(["dx", "watch", job_id])
@@ -305,7 +305,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                 dxpy.DXProject(build_project_id).remove_objects([remote_file.get_id()])
     finally:
         if using_temp_project_for_remote_build:
-            dxpy.api.projectDestroy(build_project_id)
+            dxpy.api.project_destroy(build_project_id)
         shutil.rmtree(temp_dir)
 
     return
@@ -324,7 +324,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
     elif mode == "app" and use_temp_build_project and not dry_run:
         # Create a temp project
-        working_project = dxpy.api.projectNew({"name": "Temporary build project for dx-build-app"})["id"]
+        working_project = dxpy.api.project_new({"name": "Temporary build project for dx-build-app"})["id"]
         print >> sys.stderr, "Created temporary project %s to build in" % (working_project,)
         using_temp_project = True
 
@@ -377,7 +377,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
             if not using_temp_project:
                 objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
                 if objects_to_delete:
-                    dxpy.api.projectRemoveObjects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
+                    dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
                                                   input_params={"objects": objects_to_delete})
             raise
 
@@ -405,7 +405,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
                                                  try_versions=try_versions,
                                                  try_update=do_try_update)
 
-            app_describe = dxpy.api.appDescribe(app_id)
+            app_describe = dxpy.api.app_describe(app_id)
 
             if publish:
                 print >> sys.stderr, "Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id)
@@ -417,14 +417,14 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
             return app_describe if return_object_dump else None
 
         elif mode == "applet":
-            return dxpy.api.appletDescribe(applet_id) if return_object_dump else None
+            return dxpy.api.applet_describe(applet_id) if return_object_dump else None
         else:
             raise dxpy.app_builder.AppBuilderException("Unrecognized mode %r" % (mode,))
 
     finally:
         # Clean up after ourselves.
         if using_temp_project:
-            dxpy.api.projectDestroy(working_project)
+            dxpy.api.project_destroy(working_project)
 
 
 def main(**kwargs):
