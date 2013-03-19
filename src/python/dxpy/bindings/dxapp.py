@@ -315,7 +315,7 @@ class DXApp(DXObject):
             return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
 
     def run(self, app_input, project=None, folder="/", name=None, instance_type=None, depends_on=None,
-            details=None, debug=None, **kwargs):
+            details=None, delay_workspace_destruction=None, **kwargs):
         '''
         :param app_input: Hash of the app's input arguments
         :type app_input: dict
@@ -331,8 +331,8 @@ class DXApp(DXObject):
         :type depends_on: list
         :param details: Details to set for the job
         :type details: dict or list
-        :param debug: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
-        :type debug: boolean
+        :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
+        :type delay_workspace_destruction: boolean
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -377,8 +377,8 @@ class DXApp(DXObject):
         if details is not None:
             run_input["details"] = details
 
-        if debug is not None:
-            run_input["delayWorkspaceDestruction"] = debug
+        if delay_workspace_destruction is not None:
+            run_input["delayWorkspaceDestruction"] = delay_workspace_destruction
 
         if self._dxid is not None:
             return DXJob(dxpy.api.appRun(

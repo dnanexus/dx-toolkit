@@ -444,8 +444,6 @@ def print_job_desc(desc):
         print_field("Applet", desc["applet"])
     if "instanceType" in desc and desc['instanceType'] is not None:
         print_field("Instance Type", desc["instanceType"])
-    if "delayWorkspaceDestruction" in desc:
-        print_json_field("Debug mode", desc["delayWorkspaceDestruction"])
     print_field("State", JOB_STATES(desc["state"]))
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
