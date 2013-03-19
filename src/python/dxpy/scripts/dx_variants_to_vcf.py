@@ -132,8 +132,8 @@ def main(**kwargs):
         chromosomeList = intersection[:]
  
     for chromosome in chromosomeList:
-        lastPosition = -1
         buff = []
+        lastPosition = -1
         query = variantsTable.genomic_range_query(chr=chromosome, lo=0, hi=sys.maxint)
         for row in variantsTable.get_rows(query=query, limit=1)['data']:
             startRow =  row[0]
@@ -153,7 +153,7 @@ def writeBuffer(buff, col, outputFile, contigSequence, chromosomeOffsets, export
         printPreceedingCharacter = False
         altOptions = x[col["alt"]].split(",")
         for y in altOptions:
-            if len(x[col["ref"]]) != len(y) or len(x[col["ref"]]) == 0 or len(y) == 0:
+            if (len(x[col["ref"]]) != len(y) or len(x[col["ref"]]) == 0 or len(y) == 0) and not re.search("[^ATGCNatgcn\.-]", y):
                 printPreceedingCharacter = True
                 break
         if printPreceedingCharacter:
@@ -162,7 +162,7 @@ def writeBuffer(buff, col, outputFile, contigSequence, chromosomeOffsets, export
         printPreceedingCharacter = False
         altOptions = x[col["alt"]].split(",")
         for y in altOptions:
-            if len(x[col["ref"]]) != len(y) or len(x[col["ref"]]) == 0 or len(y) == 0:
+            if (len(x[col["ref"]]) != len(y) or len(x[col["ref"]]) == 0 or len(y) == 0) and not re.search("[^ATGCNatgcn\.-]", y):
                 printPreceedingCharacter = True
                 break
         if printPreceedingCharacter == False:
