@@ -38,7 +38,6 @@ parser.add_argument('--tag', default=[], action='append', help='"A set of tags (
 @dxpy.entry_point('main')
 def importGTF(**args):
 
-    print args
     if len(args) == 0:
         command_line_args = parser.parse_args(sys.argv[1:])
         fileName = command_line_args.fileName
@@ -69,10 +68,9 @@ def importGTF(**args):
 
     inputFileName = unpack(fileName)
 
-    capturedTypes = {"5UTR": "5' UTR", "3UTR": "3' UTR", "CDS": "CDS", "inter": "intergenic", "inter_CNS": "intergenic_conserved", "intron_CNS": "intron_conserved", "exon": "exon", "transcript": "transcript", "gene":"gene"}
-
+    capturedTypes = {"5UTR": "5' UTR", "3UTR": "3' UTR", "CDS": "CDS", "inter": "intergenic", "inter_CNS": "intergenic_conserved", "intron_CNS": "intron_conserved", "exon": "exon", "transcript": "transcript", "gene":"gene", "stop_codon": "stop_codon", "start_codon":"start_codon"}
+    
     #Rows of this type will not be written to the gtable as their information is fully encompassed by the rest of the data
-    discardedTypes = {"start_codon": True, "stop_codon": True}
 
     ##Isolate the attribute tags from the file and check integrity
     spansTable, additionalColumns = constructTable(inputFileName)
@@ -104,18 +102,19 @@ def importGTF(**args):
     transcripts = {}
     spanId = 0
     frames = {}
+    stopCodons = {}
     
 
     inputFile = open(inputFileName, 'r')
     for line in inputFile:
         if line[0] != "#":
-            values = parseLine(line, capturedTypes, discardedTypes)
+            values = parseLine(line, capturedTypes)
 
             if values["type"] == "CDS":
                 if frames.get(values["transcriptId"]) == None:
                     frames[values["transcriptId"]] = {}
                 frames[values["transcriptId"]][values["lo"]] = values["frame"]
-
+                
             for [element, hashId, elementType] in [[genes, values["geneId"], "geneName"], [transcripts, values["transcriptId"], "transcriptName"]]:   
 
                 if element.get(hashId) == None:
@@ -129,6 +128,12 @@ def importGTF(**args):
                         element[hashId][values["chromosome"]]["lo"] = values["lo"]
                     if values["hi"] > element[hashId][values["chromosome"]]["hi"]:
                         element[hashId][values["chromosome"]]["hi"] = values["hi"]
+
+            if values["type"] == "stop_codon":
+                if stopCodons.get(values["transcriptId"]) == None:
+                    stopCodons[values["transcriptId"]] = [[values["lo"], values["hi"]]]
+                else:
+                    stopCodons[values["transcriptId"]].append([values["lo"], values["hi"]])
 
             if values["type"] == "CDS" or values["type"] == "start_codon" or values["type"] == "stop_codon":
                 if values["hi"] > transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"]:
@@ -157,7 +162,7 @@ def importGTF(**args):
     inputFile = open(inputFileName, 'r')
     for line in inputFile:
         if line[0] != "#":
-            values = parseLine(line, capturedTypes, discardedTypes)
+            values = parseLine(line, capturedTypes)
 
             if exons.get(values["transcriptId"]) != None:
                 if exons[values["transcriptId"]].get(values["chromosome"]) == None:
@@ -175,10 +180,18 @@ def importGTF(**args):
 
                 #If type is CDS, always of type coding
                 if values["type"] == "CDS":
+                    if stopCodons.get(values["transcriptId"]) != None:
+                        for x in stopCodons[values["transcriptId"]]:
+                            if values["hi"] == x[0]:
+                                values["hi"] = x[1]
+                                break                            
                     if [values["lo"], values["hi"]] not in exons[values["transcriptId"]][values["chromosome"]]:
                         spanId = writeEntry(spansTable, spanId, exons[values["transcriptId"]], additionalColumns, values["chromosome"], values["lo"], values["hi"], values["attributes"], [values["chromosome"], values["lo"], values["hi"], values["transcriptName"], spanId, capturedTypes[values["type"]], values["strand"], values["score"], True, transcripts[values["transcriptId"]][values["chromosome"]]["spanId"], values["frame"], '', values["source"]])
 
                 #If type is exon do calculation as to whether coding or non-coding
+                if values["type"] == "stop_codon":
+                    values["type"] = "exon"
+                    values["frame"] = 3 - (values["hi"] - values["lo"])
                 if values["type"] == "exon":
                     if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1):
                         if frames.get(values["transcriptId"]) != None:
@@ -231,9 +244,6 @@ def trimOverlap(exons, lo, hi):
             hi = x[0]
     return {"lo": lo, "hi": hi, "loChange": loChange, "hiChange": hiChange}
 
-
-
-
 def splitExons(transcriptInfo, chromosome, lo, hi, strand):
     upstream = "5' UTR"
     downstream = "3' UTR"
@@ -256,7 +266,7 @@ def splitExons(transcriptInfo, chromosome, lo, hi, strand):
 
 
 
-def parseLine(line, capturedTypes, discardedTypes):
+def parseLine(line, capturedTypes):
     tabSplit = line.split("\t")
     if len(tabSplit) == 1:
             tabSplit = line.split(" ")
@@ -267,11 +277,10 @@ def parseLine(line, capturedTypes, discardedTypes):
     chromosome = tabSplit[0]
     source = tabSplit[1]
     typ = tabSplit[2]
-    if capturedTypes.get(typ) == None and discardedTypes.get(typ) == None:
+    if capturedTypes.get(typ) == None == None:
         message = 'Permitted types:'
-        for x in [capturedTypes, discardedTypes]:
-            for k, v in x.iteritems():
-                message += " " + k + ","
+        for k, v in capturedTypes.iteritems():
+            message += " " + k + ","
         raise dxpy.AppError("One row had a type which is not in the list of permitted types. " + message + "\nOffending line: " + line + "\nOffending type: " + typ)
 
     try:
@@ -289,15 +298,11 @@ def parseLine(line, capturedTypes, discardedTypes):
 
     try:
         lo = int(tabSplit[3])-1
-        if typ == "stop_codon" and strand == "-":
-            lo += 3
     except ValueError:
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[3])
 
     try:
         hi = int(tabSplit[4])
-        if typ == "stop_codon" and strand == "+":
-            hi -= 3
     except ValueError:
         raise dxpy.AppError("One of the start values was could not be translated to an integer. " + "\nOffending line: " + line + "\nOffending value: " + tabSplit[4])
 
@@ -396,7 +401,7 @@ def constructTable(inputFileName):
             schema.append({"name": k, "type": "string"})
             additionalColumns.append(k)
 
-    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")]
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "search")]
     #indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri')]
     spansTable = dxpy.new_dxgtable(columns=schema, indices=indices)
     return spansTable, additionalColumns
