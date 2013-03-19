@@ -144,7 +144,7 @@ class DXJob(DXObject):
                     raise DXError('Expected depends_on field to be a list')                    
             if details is not None:
                 req_input["details"] = details
-            resp = dxpy.api.jobNew(req_input, **kwargs)
+            resp = dxpy.api.job_new(req_input, **kwargs)
             self.set_id(resp["id"])
         else:
             result = dxpy.run(function_name=fn_name, function_input=fn_input)
@@ -189,7 +189,7 @@ class DXJob(DXObject):
         method.
 
         """
-        return dxpy.api.jobDescribe(self._dxid, {"io": io}, **kwargs)
+        return dxpy.api.job_describe(self._dxid, {"io": io}, **kwargs)
 
     def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
         '''
@@ -226,7 +226,7 @@ class DXJob(DXObject):
         '''
         Terminates the associated job.
         '''
-        dxpy.api.jobTerminate(self._dxid, **kwargs)
+        dxpy.api.job_terminate(self._dxid, **kwargs)
 
     def get_output_ref(self, field):
         '''

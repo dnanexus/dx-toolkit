@@ -291,7 +291,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         print "*** DRY-RUN-- no applet was created ***"
         return None, None
 
-    applet_id = dxpy.api.appletNew(applet_spec)["id"]
+    applet_id = dxpy.api.applet_new(applet_spec)["id"]
 
     if "categories" in applet_spec:
         dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
@@ -306,7 +306,7 @@ def _create_or_update_version(app_name, version, app_spec, try_update=True):
     # This has a race condition since the app could have been created or
     # published since we last looked.
     try:
-        app_id = dxpy.api.appNew(app_spec)["id"]
+        app_id = dxpy.api.app_new(app_spec)["id"]
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         # TODO: detect this error more reliably
@@ -315,7 +315,7 @@ def _create_or_update_version(app_name, version, app_spec, try_update=True):
             # The version number was already taken, so app/new doesn't work.
             # However, maybe it hasn't been published yet, so we might be able
             # to app-xxxx/update it.
-            app_describe = dxpy.api.appDescribe("app-" + app_name, alias=version)
+            app_describe = dxpy.api.app_describe("app-" + app_name, alias=version)
             if app_describe.get("published", 0) > 0:
                 return None
             return _update_version(app_name, version, app_spec, try_update=try_update)
@@ -329,7 +329,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
     if not try_update:
         return None
     try:
-        app_id = dxpy.api.appUpdate("app-" + app_name, version, app_spec)["id"]
+        app_id = dxpy.api.app_update("app-" + app_name, version, app_spec)["id"]
         return app_id
     except dxpy.exceptions.DXAPIError as e:
         if e.name == 'InvalidState':
@@ -357,13 +357,13 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         app_spec['version'] = version
         app_describe = None
         try:
-            # 404, which is rather likely in this appDescribe request
+            # 404, which is rather likely in this app_describe request
             # (the purpose of the request is to find out whether the
             # version of interest exists), would ordinarily cause this
             # request to be retried multiple times, introducing a
             # substantial delay. So we disable retrying here for this
             # request.
-            app_describe = dxpy.api.appDescribe("app-" + app_spec["name"], alias=version, always_retry=False)
+            app_describe = dxpy.api.app_describe("app-" + app_spec["name"], alias=version, always_retry=False)
         except dxpy.exceptions.DXAPIError as e:
             if e.name == 'ResourceNotFound':
                 pass
@@ -407,15 +407,15 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
     # Set categories appropriately.
     categories_to_set = app_spec.get("categories", [])
-    existing_categories = dxpy.api.appListCategories(app_id)['categories']
+    existing_categories = dxpy.api.app_list_categories(app_id)['categories']
     categories_to_add = set(categories_to_set).difference(set(existing_categories))
     categories_to_remove = set(existing_categories).difference(set(categories_to_set))
     if categories_to_add:
-        dxpy.api.appAddCategories(app_id, input_params={'categories': list(categories_to_add)})
+        dxpy.api.app_add_categories(app_id, input_params={'categories': list(categories_to_add)})
     if categories_to_remove:
-        dxpy.api.appRemoveCategories(app_id, input_params={'categories': list(categories_to_remove)})
+        dxpy.api.app_remove_categories(app_id, input_params={'categories': list(categories_to_remove)})
 
     if publish:
-        dxpy.api.appPublish(app_id, input_params={'makeDefault': set_default})
+        dxpy.api.app_publish(app_id, input_params={'makeDefault': set_default})
 
     return app_id

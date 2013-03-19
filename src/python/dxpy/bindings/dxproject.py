@@ -98,9 +98,9 @@ class DXContainer(DXObject):
 
         """
         # TODO: link to /container-xxxx/describe
-        api_method = dxpy.api.containerDescribe
+        api_method = dxpy.api.container_describe
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectDescribe
+            api_method = dxpy.api.project_describe
         return api_method(self._dxid, **kwargs)
 
     def new_folder(self, folder, parents=False, **kwargs):
@@ -113,9 +113,9 @@ class DXContainer(DXObject):
         Creates a new folder in the project or container.
 
         """
-        api_method = dxpy.api.containerNewFolder
+        api_method = dxpy.api.container_new_folder
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectNewFolder
+            api_method = dxpy.api.project_new_folder
 
         api_method(self._dxid, {"folder": folder,
                                 "parents": parents},
@@ -148,9 +148,9 @@ class DXContainer(DXObject):
         input hash to be supplied to each ``/describe`` call.
 
         """
-        api_method = dxpy.api.containerListFolder
+        api_method = dxpy.api.container_list_folder
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectListFolder
+            api_method = dxpy.api.project_list_folder
 
         return api_method(self._dxid, {"folder": folder,
                                        "describe": describe,
@@ -175,9 +175,9 @@ class DXContainer(DXObject):
         directly in *destination*.
 
         """
-        api_method = dxpy.api.containerMove
+        api_method = dxpy.api.container_move
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectMove
+            api_method = dxpy.api.project_move
 
         api_method(self._dxid, {"objects": objects,
                                 "folders": folders,
@@ -196,9 +196,9 @@ class DXContainer(DXObject):
         moved.
 
         """
-        api_method = dxpy.api.containerMove
+        api_method = dxpy.api.container_move
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectMove
+            api_method = dxpy.api.project_move
 
         api_method(self._dxid, {"folders": [folder],
                                 "destination": destination},
@@ -220,9 +220,9 @@ class DXContainer(DXObject):
         True.)
 
         """
-        api_method = dxpy.api.containerRemoveFolder
+        api_method = dxpy.api.container_remove_folder
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectRemoveFolder
+            api_method = dxpy.api.project_remove_folder
 
         api_method(self._dxid, {"folder": folder, "recurse": recurse},
                    **kwargs)
@@ -239,9 +239,9 @@ class DXContainer(DXObject):
         result of this operation.
 
         """
-        api_method = dxpy.api.containerRemoveObjects
+        api_method = dxpy.api.container_remove_objects
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectRemoveObjects
+            api_method = dxpy.api.project_remove_objects
 
         api_method(self._dxid, {"objects": objects},
                    **kwargs)
@@ -272,9 +272,9 @@ class DXContainer(DXObject):
         Objects must be in the "closed" state to be cloned.
 
         """
-        api_method = dxpy.api.containerClone
+        api_method = dxpy.api.container_clone
         if isinstance(self, DXProject):
-            api_method = dxpy.api.projectClone
+            api_method = dxpy.api.project_clone
 
         return api_method(self._dxid,
                           {"objects": objects,
@@ -329,7 +329,7 @@ class DXProject(DXContainer):
             update_hash["restricted"] = restricted
         if version is not None:
             update_hash["version"] = version
-        dxpy.api.projectUpdate(self._dxid, update_hash, **kwargs)
+        dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, **kwargs):
         """
@@ -342,9 +342,9 @@ class DXProject(DXContainer):
 
         """
 
-        return dxpy.api.projectInvite(self._dxid,
-                                      {"invitee": invitee,
-                                       "level": level}, **kwargs)
+        return dxpy.api.project_invite(self._dxid,
+                                       {"invitee": invitee, "level": level},
+                                       **kwargs)
 
     def decrease_perms(self, member, level, **kwargs):
         """
@@ -360,13 +360,13 @@ class DXProject(DXContainer):
         input_hash = {}
         input_hash[member] = level
 
-        return dxpy.api.projectDecreasePermissions(self._dxid,
-                                                   input_hash,
-                                                   **kwargs)
+        return dxpy.api.project_decrease_permissions(self._dxid,
+                                                     input_hash,
+                                                     **kwargs)
 
     def destroy(self, **kwargs):
         """
         Destroys the project.
         """
 
-        dxpy.api.projectDestroy(self._dxid, **kwargs)
+        dxpy.api.project_destroy(self._dxid, **kwargs)

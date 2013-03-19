@@ -54,18 +54,18 @@ class DXFile(DXDataObject):
 
     _class = "file"
 
-    _describe = staticmethod(dxpy.api.fileDescribe)
-    _add_types = staticmethod(dxpy.api.fileAddTypes)
-    _remove_types = staticmethod(dxpy.api.fileRemoveTypes)
-    _get_details = staticmethod(dxpy.api.fileGetDetails)
-    _set_details = staticmethod(dxpy.api.fileSetDetails)
-    _set_visibility = staticmethod(dxpy.api.fileSetVisibility)
-    _rename = staticmethod(dxpy.api.fileRename)
-    _set_properties = staticmethod(dxpy.api.fileSetProperties)
-    _add_tags = staticmethod(dxpy.api.fileAddTags)
-    _remove_tags = staticmethod(dxpy.api.fileRemoveTags)
-    _close = staticmethod(dxpy.api.fileClose)
-    _list_projects = staticmethod(dxpy.api.fileListProjects)
+    _describe = staticmethod(dxpy.api.file_describe)
+    _add_types = staticmethod(dxpy.api.file_add_types)
+    _remove_types = staticmethod(dxpy.api.file_remove_types)
+    _get_details = staticmethod(dxpy.api.file_get_details)
+    _set_details = staticmethod(dxpy.api.file_set_details)
+    _set_visibility = staticmethod(dxpy.api.file_set_visibility)
+    _rename = staticmethod(dxpy.api.file_rename)
+    _set_properties = staticmethod(dxpy.api.file_set_properties)
+    _add_tags = staticmethod(dxpy.api.file_add_tags)
+    _remove_tags = staticmethod(dxpy.api.file_remove_tags)
+    _close = staticmethod(dxpy.api.file_close)
+    _list_projects = staticmethod(dxpy.api.file_list_projects)
 
     _http_threadpool = None
     _http_threadpool_size = NUM_HTTP_THREADS
@@ -118,7 +118,7 @@ class DXFile(DXDataObject):
         if media_type is not None:
             dx_hash["media"] = media_type
 
-        resp = dxpy.api.fileNew(dx_hash, **kwargs)
+        resp = dxpy.api.file_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
 
     def __enter__(self):
@@ -358,7 +358,7 @@ class DXFile(DXDataObject):
         if 'report_progress_fn' in kwargs:
             del kwargs['report_progress_fn']
 
-        dxpy.api.fileClose(self._dxid, **kwargs)
+        dxpy.api.file_close(self._dxid, **kwargs)
 
         if block:
             self._wait_on_close(**kwargs)
@@ -395,7 +395,7 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        resp = dxpy.api.fileUpload(self._dxid, req_input, **kwargs)
+        resp = dxpy.api.file_upload(self._dxid, req_input, **kwargs)
         url = resp["url"]
         headers = {}
         headers['Content-Length'] = str(len(data))
@@ -431,7 +431,7 @@ class DXFile(DXDataObject):
     def get_download_url(self, duration=24*3600, **kwargs):
         if self._download_url is None or self._download_url_expires > time.time():
             # logging.debug("Download URL unset or expired, requesting a new one")
-            resp = dxpy.api.fileDownload(self._dxid, {"duration": duration}, **kwargs)
+            resp = dxpy.api.file_download(self._dxid, {"duration": duration}, **kwargs)
             self._download_url = resp["url"]
             self._download_url_expires = time.time() + duration - 60 # Try to account for drift
         return self._download_url

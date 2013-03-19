@@ -175,7 +175,7 @@ class DXApp(DXObject):
             dx_hash['billTo'] = kwargs['bill_to']
             del kwargs["bill_to"]
 
-        resp = dxpy.api.appNew(dx_hash, **kwargs)
+        resp = dxpy.api.app_new(dx_hash, **kwargs)
         self.set_id(dxid=resp["id"])
 
     def describe(self, **kwargs):
@@ -191,9 +191,9 @@ class DXApp(DXObject):
 
         '''
         if self._dxid is not None:
-            return dxpy.api.appDescribe(self._dxid, **kwargs)
+            return dxpy.api.app_describe(self._dxid, **kwargs)
         else:
-            return dxpy.api.appDescribe('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_describe('app-' + self._name, alias=self._alias, **kwargs)
 
     def update(self, **kwargs):
         '''
@@ -221,10 +221,10 @@ class DXApp(DXObject):
                 del kwargs[field]
 
         if self._dxid is not None:
-            resp = dxpy.api.appUpdate(self._dxid, input_params=updates, **kwargs)
+            resp = dxpy.api.app_update(self._dxid, input_params=updates, **kwargs)
         else:
-            resp = dxpy.api.appUpdate('app-' + self._name, alias=self._alias,
-                                      input_params=updates, **kwargs)
+            resp = dxpy.api.app_update('app-' + self._name, alias=self._alias,
+                                       input_params=updates, **kwargs)
 
     def addTags(self, tags, **kwargs):
         """
@@ -237,10 +237,10 @@ class DXApp(DXObject):
 
         """
         if self._dxid is not None:
-            return dxpy.api.appAddTags(self._dxid, input_params=tags, **kwargs)
+            return dxpy.api.app_add_tags(self._dxid, input_params=tags, **kwargs)
         else:
-            return dxpy.api.appAddTags('app-' + self._name, alias=self._alias,
-                                       input_params=tags, **kwargs)
+            return dxpy.api.app_add_tags('app-' + self._name, alias=self._alias,
+                                         input_params=tags, **kwargs)
 
     def removeTags(self, **kwargs):
         """
@@ -254,27 +254,27 @@ class DXApp(DXObject):
 
         """
         if self._dxid is not None:
-            return dxpy.api.appRemoveTags(self._dxid, **kwargs)
+            return dxpy.api.app_remove_tags(self._dxid, **kwargs)
         else:
-            return dxpy.api.appRemoveTags('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_remove_tags('app-' + self._name, alias=self._alias, **kwargs)
 
     def install(self, **kwargs):
         """
         Installs the app in the current user's account.
         """
         if self._dxid is not None:
-            return dxpy.api.appInstall(self._dxid, **kwargs)
+            return dxpy.api.app_install(self._dxid, **kwargs)
         else:
-            return dxpy.api.appInstall('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_install('app-' + self._name, alias=self._alias, **kwargs)
 
     def uninstall(self, **kwargs):
         """
         Uninstalls the app from the current user's account.
         """
         if self._dxid is not None:
-            return dxpy.api.appUninstall(self._dxid, **kwargs)
+            return dxpy.api.app_uninstall(self._dxid, **kwargs)
         else:
-            return dxpy.api.appUninstall('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_uninstall('app-' + self._name, alias=self._alias, **kwargs)
 
     def get(self, **kwargs):
         """
@@ -288,9 +288,9 @@ class DXApp(DXObject):
         method.
         """
         if self._dxid is not None:
-            return dxpy.api.appGet(self._dxid, **kwargs)
+            return dxpy.api.app_get(self._dxid, **kwargs)
         else:
-            return dxpy.api.appGet('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_get('app-' + self._name, alias=self._alias, **kwargs)
 
     def publish(self, **kwargs):
         """
@@ -299,9 +299,9 @@ class DXApp(DXObject):
         The current user must be a developer of the app.
         """
         if self._dxid is not None:
-            return dxpy.api.appPublish(self._dxid, **kwargs)
+            return dxpy.api.app_publish(self._dxid, **kwargs)
         else:
-            return dxpy.api.appPublish('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_publish('app-' + self._name, alias=self._alias, **kwargs)
 
     def delete(self, **kwargs):
         """
@@ -310,9 +310,9 @@ class DXApp(DXObject):
         The current user must be a developer of the app.
         """
         if self._dxid is not None:
-            return dxpy.api.appDelete(self._dxid, **kwargs)
+            return dxpy.api.app_delete(self._dxid, **kwargs)
         else:
-            return dxpy.api.appDelete('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_delete('app-' + self._name, alias=self._alias, **kwargs)
 
     def run(self, app_input, project=None, folder="/", name=None, instance_type=None, depends_on=None,
             details=None, delay_workspace_destruction=None, **kwargs):
@@ -381,12 +381,12 @@ class DXApp(DXObject):
             run_input["delayWorkspaceDestruction"] = delay_workspace_destruction
 
         if self._dxid is not None:
-            return DXJob(dxpy.api.appRun(
+            return DXJob(dxpy.api.app_run(
                     self._dxid,
                     input_params=run_input,
                     **kwargs)["id"])
         else:
-            return DXJob(dxpy.api.appRun(
+            return DXJob(dxpy.api.app_run(
                     'app-' + self._name, alias=self._alias,
                     input_params=run_input,
                     **kwargs)["id"])

@@ -403,8 +403,8 @@ class DXDataObject(DXObject):
         if self._proj is None:
             raise DXError("Remove called when a project ID was not associated with this object handler")
 
-        dxpy.api.projectRemoveObjects(self._proj, {"objects": [self._dxid]},
-                                      **kwargs)
+        dxpy.api.project_remove_objects(self._proj, {"objects": [self._dxid]},
+                                        **kwargs)
 
         # Reset internal state
         del self._dxid
@@ -423,9 +423,9 @@ class DXDataObject(DXObject):
         if self._proj is None:
             raise DXError("Move called when a project ID was not associated with this object handler")
 
-        dxpy.api.projectMove(self._proj, {"objects": [self._dxid],
-                                          "destination": folder},
-                             **kwargs)
+        dxpy.api.project_move(self._proj, {"objects": [self._dxid],
+                                           "destination": folder},
+                              **kwargs)
 
 
     def clone(self, project, folder="/", include_hidden_links=True,
@@ -450,12 +450,12 @@ class DXDataObject(DXObject):
         if self._proj is None:
             raise DXError("Clone called when a project ID was not associated with this object handler")
 
-        dxpy.api.projectClone(self._proj,
-                              {"objects": [self._dxid],
-                               "project": project,
-                               "destination": folder,
-                               "includeHiddenLinks": include_hidden_links},
-                              **kwargs)
+        dxpy.api.project_clone(self._proj,
+                               {"objects": [self._dxid],
+                                "project": project,
+                                "destination": folder,
+                                "includeHiddenLinks": include_hidden_links},
+                               **kwargs)
         cloned_copy = copy.copy(self)
         cloned_copy.set_ids(cloned_copy.get_id(), project)
         return cloned_copy
