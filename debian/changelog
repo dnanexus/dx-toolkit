@@ -1,3 +1,23 @@
+dx-toolkit (0.42.0) precise; urgency=low
+
+  * Python API wrappers renamed to names_with_underscores.
+
+  * Improvements to Ruby documentation.
+
+  * dx run supports a new option --delay-workspace-destruction.
+
+  * Improved error reporting for dx-build-app/let --remote.
+
+  * dx new project prompts for input if no name is given.
+
+  * dx new project supports a new option --select.
+
+  * Various dxcpp changes.
+
+  * Bug fixes for upload agent.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 19 Mar 2013 13:59:51 -0700
+
 dx-toolkit (0.41.1) precise; urgency=low
 
   * Ruby bindings.
