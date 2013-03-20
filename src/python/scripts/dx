@@ -1151,7 +1151,7 @@ def describe(args):
             try:
                 # But only put it in the JSON if you still have
                 # access.
-                dxpy.api.projectListFolder(dxpy.WORKSPACE_ID)
+                dxpy.api.project_list_folder(dxpy.WORKSPACE_ID)
                 json_input['project'] = dxpy.WORKSPACE_ID
             except:
                 pass
@@ -1950,7 +1950,7 @@ def find_jobs(args):
 
     # Now start parsing flags
     if args.id is not None:
-        id_desc = try_call(dxpy.api.jobDescribe, args.id, {"io": False})
+        id_desc = try_call(dxpy.api.job_describe, args.id, {"io": False})
         origin = id_desc.get('originJob', None)
         if args.origin_jobs and args.id != origin:
             return
@@ -2644,7 +2644,7 @@ def run(args):
     if args.clone is not None:
         # Resolve job ID or name
         if is_job_id(args.clone):
-            clone_desc = dxpy.api.jobDescribe(args.clone)
+            clone_desc = dxpy.api.job_describe(args.clone)
         else:
             iterators = []
             if ":" in args.clone:
@@ -2656,7 +2656,7 @@ def run(args):
                     if proj_id is not None:
                         job_name_or_id = args.clone[colon_pos + 1:]
                         if is_job_id(job_name_or_id):
-                            clone_desc = dxpy.api.jobDescribe(job_name_or_id)
+                            clone_desc = dxpy.api.job_describe(job_name_or_id)
                         else:
                             iterators.append(dxpy.find_jobs(name=job_name_or_id,
                                                             describe={"io": False},
@@ -2684,7 +2684,7 @@ def run(args):
                 elif result_choice == "none picked":
                     parser.exit(1)
                 else:
-                    clone_desc = dxpy.api.jobDescribe(result_choice["id"])
+                    clone_desc = dxpy.api.job_describe(result_choice["id"])
 
         if args.executable == "":
             args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
@@ -2760,7 +2760,7 @@ def run(args):
 def terminate(args):
     for jobid in args.jobid:
         try:
-            dxpy.api.jobTerminate(jobid)
+            dxpy.api.job_terminate(jobid)
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 

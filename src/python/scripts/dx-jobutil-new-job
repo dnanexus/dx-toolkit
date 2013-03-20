@@ -46,6 +46,6 @@ entry_point_inputs.update_from_args(args)
 
 job_new_input["input"] = entry_point_inputs.inputs
 
-resp = dxpy.api.jobNew(job_new_input)
+resp = dxpy.api.job_new(job_new_input)
 
 print resp["id"]
