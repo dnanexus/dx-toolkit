@@ -277,10 +277,8 @@ def parseLine(line, capturedTypes):
     chromosome = tabSplit[0]
     source = tabSplit[1]
     typ = tabSplit[2]
-    if capturedTypes.get(typ) == None == None:
-        message = 'Permitted types:'
-        for k, v in capturedTypes.iteritems():
-            message += " " + k + ","
+    if capturedTypes.get(typ) == None:
+        message = 'Permitted types: ' + " ,".join(capturedTypes.keys())
         raise dxpy.AppError("One row had a type which is not in the list of permitted types. " + message + "\nOffending line: " + line + "\nOffending type: " + typ)
 
     try:
