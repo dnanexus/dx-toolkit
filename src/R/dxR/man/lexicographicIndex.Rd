@@ -6,7 +6,7 @@
 }
 \arguments{
   \item{columns}{List of lexicographic column descriptors
-  as created via \code{\link{lexicographiIndexColumn}}}
+  as created via \code{\link{lexicographicIndexColumn}}}
 
   \item{name}{Name to give the created lexicographic index;
   used when querying the GTable after it has been closed.}

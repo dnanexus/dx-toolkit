@@ -121,7 +121,7 @@ lexicographicIndexColumn <- function(name, ascending=TRUE, caseSensitive=NA) {
 ##' column(s) are to be used to create the index.
 ##'
 ##' @param columns List of lexicographic column descriptors as created
-##' via \code{\link{lexicographiIndexColumn}}
+##' via \code{\link{lexicographicIndexColumn}}
 ##' @param name Name to give the created lexicographic index; used
 ##' when querying the GTable after it has been closed.
 ##' @return a list that can be used as an index descriptor when
