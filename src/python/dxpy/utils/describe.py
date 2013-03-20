@@ -359,6 +359,10 @@ def print_data_obj_desc(desc, verbose=False):
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
     if 'createdBy' in desc:
         print_field("Created by", desc['createdBy']['user'][5:])
+        if 'job' in desc["createdBy"]:
+            print_field(" via the job", desc['createdBy']['job'])
+            if verbose and 'executable' in desc['createdBy']:
+                print_field(" running", desc['createdBy']['executable'])
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     if "title" in desc:
         print_field("Title", desc["title"])
