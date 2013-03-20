@@ -43,6 +43,23 @@ test_that("desc<- and desc methods work", {
 
 test_that("colDesc makes a valid column descriptor", {
   someCol <- colDesc("colname", "int")
+  expect_that(class(someCol), equals("list"))
   expect_that(someCol$name, equals("colname"))
   expect_that(someCol$type, equals("int"))
+})
+
+test_that("lexicographicIndexColumn makes a valid lexicographic column descriptor", {
+  someCol <- lexicographicIndexColumn("colname")
+  expect_that(class(someCol), equals("list"))
+  expect_that(length(someCol), equals(2))
+  expect_that(someCol$name, equals("colname"))
+  expect_that(someCol$order, equals("asc"))
+
+  someCol <- lexicographicIndexColumn("colname", ascending=FALSE)
+  expect_that(length(someCol), equals(2))
+  expect_that(someCol$order, equals("desc"))
+  
+  someCol <- lexicographicIndexColumn("colname", caseSensitive=FALSE)
+  expect_that(length(someCol), equals(3))
+  expect_that(someCol$caseSensitive, is_false())
 })

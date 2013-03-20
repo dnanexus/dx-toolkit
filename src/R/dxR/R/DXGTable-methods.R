@@ -84,17 +84,51 @@ genomicRangeIndex <- function(chr, lo, hi, name="gri") {
   return (list(name=name, type="genomic", chr=chr, lo=lo, hi=hi))
 }
 
+##' Create a lexicographic index column descriptor
+##'
+##' Creates a lexicographic index column descriptor to be used for
+##' creating a lexicographic index descriptor using
+##' \code{\link{lexicographicIndex}}.
+##'
+##' @param name Name of the column to be indexed
+##' @param ascending Whether to order entries of this column in ascending order
+##' @param caseSensitive If \code{FALSE}, compare strings
+##' case-insensitively (default is TRUE for string columns; note that
+##' this option should only be used for string columns and will be an
+##' error if used otherwise)
+##' @return a list that can be used to create a lexicographic index
+##' descriptor via \code{\link{lexicographicIndex}}
+##' @seealso \code{\link{lexicographicIndex}}
+##' @export
+##' @examples
+##' lexicographicIndexColumn("gene", caseSensitive=FALSE)
+lexicographicIndexColumn <- function(name, ascending=TRUE, caseSensitive=NA) {
+  column <- list(name=name)
+  if (ascending) {
+    column$order <- "asc"
+  } else {
+    column$order <- "desc"
+  }
+  if (!is.na(caseSensitive)) {
+    column$caseSensitive <- caseSensitive
+  }
+  return (column)
+}
+
 ##' Create a lexicographic index descriptor
 ##'
 ##' Creates a lexicographic index descriptor describing which
 ##' column(s) are to be used to create the index.
 ##'
-##' @param columns List of column names
+##' @param columns List of lexicographic column descriptors as created
+##' via \code{\link{lexicographiIndexColumn}}
 ##' @param name Name to give the created lexicographic index; used
 ##' when querying the GTable after it has been closed.
 ##' @return a list that can be used as an index descriptor when
 ##' calling \code{\link{newDXGTable}}
-##' @seealso \code{\link{newDXGTable}}, \code{\link{lexicographicQuery}}
+##' @seealso \code{\link{newDXGTable}},
+##' \code{\link{lexicographicQuery}},
+##' \code{\link{lexicographicIndexColumn}}
 ##' @export
 ##' @examples
 ##' lexicographicIndex(list("quality"), "qualityIndex")

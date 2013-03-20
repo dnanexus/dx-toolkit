@@ -5,7 +5,8 @@
   lexicographicIndex(columns, name)
 }
 \arguments{
-  \item{columns}{List of column names}
+  \item{columns}{List of lexicographic column descriptors
+  as created via \code{\link{lexicographiIndexColumn}}}
 
   \item{name}{Name to give the created lexicographic index;
   used when querying the GTable after it has been closed.}
@@ -24,6 +25,7 @@ lexicographicIndex(list("quality", "othercol"), "multiColIndex")
 }
 \seealso{
   \code{\link{newDXGTable}},
-  \code{\link{lexicographicQuery}}
+  \code{\link{lexicographicQuery}},
+  \code{\link{lexicographicIndexColumn}}
 }
 

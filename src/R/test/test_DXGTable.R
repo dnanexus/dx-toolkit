@@ -198,7 +198,17 @@ test_that("GRI table can be created and queried", {
 })
 
 test_that("lexicographic indexed table can be created and queried", {
-  warning("TODO: WRITE ME (lexicographic test)", call.=FALSE)
+  handler <- newDXGTable(columns=list(colDesc("gene", "string"),
+                           colDesc("anint", "int")),
+                         indices=list(lexicographicIndex(
+                           columns=list(lexicographicIndexColumn("gene", caseSensitive=FALSE)),
+                           name="myindex")))
+  idsToDestroy <<- c(idsToDestroy, id(handler))
+  df <- data.frame(gene=c("Baa", "BCC", "aAA", "Abb"), anint=1:4)
+  addRows(handler, df)
+  closeObj(handler, block=TRUE)
+  storedRows <- getRows(handler)
+  expect_that(storedRows$anint, equals(c(3, 4, 1, 2)))
 })
 
 test_that("head returns first n rows (nrow < n)", {
