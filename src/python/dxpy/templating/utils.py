@@ -179,16 +179,7 @@ def get_version(default=None):
     return version
 
 def get_ordinal_str(num):
-    string = str(num)
-    if string[-1] == '1':
-        string += 'st'
-    elif string[-1] == '2':
-        string += 'nd'
-    elif string[-1] == '3':
-        string += 'rd'
-    else:
-        string += 'th'
-    return string
+    return str(num) + ('th' if 11 <= num % 100 <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(num % 10, 'th'))
 
 def get_language():
     #language_choices = language_options.keys()
