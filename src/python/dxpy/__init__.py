@@ -215,6 +215,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
        through to :func:`DXHTTPRequest`.
 
     '''
+    global _UPGRADE_NOTIFY
+
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper() # Convert method string to upper case, makes our life easier for comparing string later (POST, GET, etc)
     if _DEBUG:
@@ -260,7 +262,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
-                global _UPGRADE_NOTIFY
                 _UPGRADE_NOTIFY = False
 
             if _DEBUG:
