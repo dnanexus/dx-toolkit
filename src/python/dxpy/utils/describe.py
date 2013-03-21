@@ -120,16 +120,42 @@ def is_job_ref(thing, reftype=dict):
     :param reftype: type that a job-based object reference would be (default is dict)
     '''
     return isinstance(thing, reftype) and \
-        len(thing) == 2 and \
-        'field' in thing and \
-        'job' in thing and \
-        isinstance(thing['field'], basestring) and \
-        isinstance(thing['job'], basestring)
+        ((len(thing) == 2 and \
+              isinstance(thing.get('field'), basestring) and \
+              isinstance(thing.get('job'), basestring)) or \
+             (len(thing) == 1 and \
+                  isinstance(thing.get('$dnanexus_link'), reftype) and \
+                  isinstance(thing['$dnanexus_link'].get('field'), basestring) and \
+                  isinstance(thing['$dnanexus_link'].get('job'), basestring)))
+
+def get_job_from_jbor(thing):
+    '''
+    Assumes is_job_ref evaluates to True
+    '''
+    if '$dnanexus_link' in thing:
+        return thing['$dnanexus_link']['job']
+    else:
+        return thing['job']
+
+def get_field_from_jbor(thing):
+    '''
+    Assumes is_job_ref evaluates to True
+    '''
+    if '$dnanexus_link' in thing:
+        return thing['$dnanexus_link']['field']
+    else:
+        return thing['field']
+
+def is_metadata_ref(thing, reftype=dict):
+    return isinstance(thing, reftype) and \
+        len(thing) == 1 and \
+        isinstance(thing.get('$dnanexus_link'), reftype) and \
+        isinstance(thing['$dnanexus_link'].get('metadata'), basestring)
 
 def io_val_to_str(val):
     if is_job_ref(val):
         # Job-based object references
-        return val['job'] + ':' + val['field']
+        return get_job_from_jbor(val) + ':' + get_field_from_jbor(val)
     elif isinstance(val, dict) and '$dnanexus_link' in val:
         # DNAnexus link
         if isinstance(val['$dnanexus_link'], basestring):
@@ -174,7 +200,7 @@ def get_io_field(io_hash, defaults={}, delim='=', highlight_fields=[]):
 
 def get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors):
     if is_job_ref(orig_thing):
-        resolved_jbors[orig_thing['job'] + ':' + orig_thing['field']] = resolved_thing
+        resolved_jbors[get_job_from_jbor(orig_thing) + ':' + get_field_from_jbor(orig_thing)] = resolved_thing
     elif isinstance(orig_thing, list):
         for i in range(len(orig_thing)):
             get_resolved_jbors(resolved_thing[i], orig_thing[i], resolved_jbors)
@@ -462,8 +488,8 @@ def print_job_desc(desc):
         print_nofill_field("Input", get_io_field(desc["originalInput"]))
     resolved_jbors = {}
     for k in desc["input"]:
-        if desc["input"][k] != desc["originalInput"][k]:
-            get_resolved_jbors(desc["input"][k], desc["originalInput"][k], resolved_jbors)
+        if k in desc["runInput"] and desc["input"][k] != desc["runInput"][k]:
+            get_resolved_jbors(desc["input"][k], desc["runInput"][k], resolved_jbors)
     if len(resolved_jbors) != 0:
         print_nofill_field("Resolved JBORs", get_io_field(resolved_jbors, delim=(GREEN() + '=>' + ENDC())))
     print_nofill_field("Output", get_io_field(desc["output"]))
