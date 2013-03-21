@@ -77,7 +77,7 @@ def new_dxfile(mode=None, write_buffer_size=DEFAULT_BUFFER_SIZE, **kwargs):
     return dx_file
 
 def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    **kwargs):
+                    project=None, **kwargs):
     '''
     :param dxid: Remote file ID
     :type dxid: string
@@ -115,7 +115,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
     bytes = 0
 
     mode = 'ab' if append else 'wb'
-    with DXFile(dxid, read_buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
+    with DXFile(dxid, project=project, read_buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
         if show_progress:
             print_progress(0, None)
         while True:

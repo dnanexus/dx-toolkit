@@ -1678,7 +1678,7 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
 
     if use_stdout:
         try:
-            dxfile = dxpy.DXFile(entity_result['id'])
+            dxfile = dxpy.DXFile(entity_result['id'], project=project)
             while True:
                 chunk = dxfile.read(1024*1024)
                 if len(chunk) == 0:
@@ -1694,7 +1694,8 @@ def download(args, already_parsed=False, project=None, folderpath=None, entity_r
         except AttributeError:
             show_progress = False
         try:
-            dxpy.download_dxfile(entity_result['id'], filename, show_progress=show_progress)
+            dxpy.download_dxfile(entity_result['id'], filename, show_progress=show_progress,
+                                 project=project)
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -1744,7 +1745,7 @@ def get(args):
             parser.exit(1, fill(unicode(details)) + '\n')
         fd.write(json.dumps(details, indent=4))
     elif entity_result['describe']['class'] == 'applet':
-        dxapplet = dxpy.DXApplet(entity_result['id'])
+        dxapplet = dxpy.DXApplet(entity_result['id'], project=project)
         try:
             resp = dxapplet.get()
             run_spec = resp['runSpec']
@@ -1767,7 +1768,7 @@ def head(args):
     if not entity_result['describe']['class'] in ['gtable', 'file']:
         parser.exit(1, 'Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class gtable or file was expected\n')
 
-    handler = dxpy.get_handler(entity_result['id'])
+    handler = dxpy.get_handler(entity_result['id'], project=project)
 
     counter = 0
     if args.lines > 0:
@@ -2300,7 +2301,7 @@ def wait(args):
                 print fill('Could not resolve ' + path + ' to a data object')
                 had_error = True
             else:
-                handler = dxpy.get_handler(entity_result['id'])
+                handler = dxpy.get_handler(entity_result['id'], project=project)
                 print "Waiting for " + path + " to close..."
                 try_call(handler._wait_on_close)
                 print "Done"
@@ -2360,7 +2361,7 @@ def get_exec_or_workflow_handler(path, alias):
                 project, folderpath, entity_results = None, None, None
 
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
-            handler = dxpy.get_handler(entity_results[0]['id'])
+            handler = dxpy.get_handler(entity_results[0]['id'], project=entity_results[0]['project'])
         elif entity_results is None and app_desc is not None:
             handler = dxpy.DXApp(dxid=app_desc['id'])
         elif entity_results is not None:
@@ -2372,7 +2373,7 @@ def get_exec_or_workflow_handler(path, alias):
                 choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
             choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
-                handler = dxpy.get_handler(entity_results[choice]['id'], project)
+                handler = dxpy.get_handler(entity_results[choice]['id'], project=entity_results[choice]['project'])
             else:
                 handler = dxpy.DXApp(dxid=app_desc['id'])
                 desc = app_desc
