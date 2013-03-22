@@ -319,7 +319,7 @@ def login(args):
         session = requests.session()
         try:
             res = requests.post(authserver+"/oauth2/authorize",
-                                data={"response_type": "code", "client_id": "test", "redirect_uri": "/"},
+                                data={"response_type": "code", "client_id": "dnanexus.com", "redirect_uri": "https://platform.dnanexus.com"},
                                 auth=auth,
                                 allow_redirects=False)
         except Exception as e:
