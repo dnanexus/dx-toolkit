@@ -2361,7 +2361,7 @@ def get_exec_or_workflow_handler(path, alias):
                 project, folderpath, entity_results = None, None, None
 
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
-            handler = dxpy.get_handler(entity_results[0]['id'], project=entity_results[0]['project'])
+            handler = dxpy.get_handler(entity_results[0]['id'], project=entity_results[0]['describe']['project'])
         elif entity_results is None and app_desc is not None:
             handler = dxpy.DXApp(dxid=app_desc['id'])
         elif entity_results is not None:
@@ -2373,7 +2373,7 @@ def get_exec_or_workflow_handler(path, alias):
                 choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
             choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
-                handler = dxpy.get_handler(entity_results[choice]['id'], project=entity_results[choice]['project'])
+                handler = dxpy.get_handler(entity_results[choice]['id'], project=entity_results[choice]['describe']['project'])
             else:
                 handler = dxpy.DXApp(dxid=app_desc['id'])
                 desc = app_desc
