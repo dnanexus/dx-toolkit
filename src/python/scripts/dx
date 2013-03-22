@@ -340,7 +340,7 @@ def login(args):
         
         try:
             res = requests.post(authserver+"/oauth2/token",
-                                data={"grant_type": "authorization_code", "code": code, "redirect_uri": "/"})
+                                data={"grant_type": "authorization_code", "code": code, "redirect_uri": "https://platform.dnanexus.com"})
             assert(res.status_code == requests.codes.ok)
         except:
             parser.exit(3, 'Error: Please try again' + "\n")
