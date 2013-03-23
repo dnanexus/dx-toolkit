@@ -22,17 +22,11 @@ The UA depends on the following libraries:
 
 * [libcurl](http://curl.haxx.se/libcurl/) for HTTP requests. In particular,
   a custom statically-linked libcurl must be built, and this relies on:
-
-* c-ares, an asynchronous DNS library (Ubuntu package libc-ares-dev; Mac
-  port c-ares);
-
-* OpenSSL for HTTPS;
-
+  * c-ares, an asynchronous DNS library (Ubuntu package libc-ares-dev; Mac
+    port c-ares);
+  * OpenSSL for HTTPS;
 * various [Boost](http://www.boost.org/) libraries, including Thread,
   Lexical Cast, Program Options, Filesystem, System, and Regex;
-
 * [zlib](http://zlib.net/) for compression;
-
 * libmagic, a library to recognize the MIME type of the input file(s) (Mac port "file")
-
 * the dxjson and dxcpp libraries for communicating with the platform API.
