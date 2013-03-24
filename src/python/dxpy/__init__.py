@@ -154,6 +154,8 @@ APISERVER_PROTOCOL = 'https'
 APISERVER_HOST = 'api.dnanexus.com'
 APISERVER_PORT = '443'
 
+SESSION_HANDLER=requests.session()
+
 DEFAULT_RETRIES = 5
 
 http_server_errors = set([requests.codes.server_error,
@@ -257,8 +259,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     response, last_error = None, None
     for retry in range(max_retries + 1):
         try:
-            response = requests.request(method, url, data=data, headers=headers, timeout=timeout,
-                                        auth=auth, config=config, **kwargs)
+            response = SESSION_HANDLER.request(method, url, data=data, headers=headers, timeout=timeout,
+                                               auth=auth, config=config, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
