@@ -34,6 +34,7 @@ class DXJobLogStreamingException(Exception):
 class DXJobLogStreamClient(WebSocketBaseClient):
     def __init__(self, job_id, input_params={}, msg_output_format="{job} {level} {msg}", msg_callback=None,
                  print_job_info=True):
+        self.job_id = job_id
         self.seen_jobs = {}
         self.input_params = input_params
         self.msg_output_format = msg_output_format
@@ -68,8 +69,11 @@ class DXJobLogStreamClient(WebSocketBaseClient):
                                                                                    reason=self.closed_reason)
                 raise DXJobLogStreamingException(error)
         elif self.print_job_info:
-            for job_id in self.seen_jobs:
-                print get_find_jobs_string(dxpy.describe(job_id), has_children=False, show_outputs=True)
+            if len(self.seen_jobs) > 0:
+                for job_id in self.seen_jobs:
+                    print get_find_jobs_string(dxpy.describe(job_id), has_children=False, show_outputs=True)
+            else:
+                print get_find_jobs_string(dxpy.describe(self.job_id), has_children=False, show_outputs=True)
 
     def received_message(self, message):
         message = json.loads(str(message))
