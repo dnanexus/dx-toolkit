@@ -516,7 +516,7 @@ def print_job_desc(desc):
         print_field("Failure reason", desc["failureReason"])
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
-    if "failureFrom" in desc and desc['failureFrom'] is not None:
+    if "failureFrom" in desc and desc['failureFrom'] is not None and desc['failureFrom']['id'] != desc['id']:
         print_field("Failure is from", desc['failureFrom']['id'])
     if 'systemRequirements' in desc:
         print_json_field("Sys Requirements", desc['systemRequirements'])
