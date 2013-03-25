@@ -68,7 +68,7 @@ public:
   bool toCompress;
  
   /* true if remote file is in open state, false otherwise.
-   * This variable is used for noting  wheter a resumed upload
+   * This variable is used for noting whether a resumed upload
    * is already in "closing"/"closed" state or not.
    */
   bool isRemoteFileOpen;

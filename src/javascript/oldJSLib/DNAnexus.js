@@ -99,7 +99,7 @@ var DNAnexus = {};
   /** @brief Builds header to be sent with while making http request.
    *  @internal
    *  This function generates header to be sent with http request.
-   *  User can specify wheter the request data is JSON, and/or, request is authenticated.
+   *  User can specify whether the request data is JSON, and/or, request is authenticated.
    *  @tparam Boolean boolIsJSON If true, content-type will be set to application/json in header.
    *  @tparam Boolean boolIsAuthenticated Is true, security context will be provided in header.
    *  @return Header(s) as a JSON object.
