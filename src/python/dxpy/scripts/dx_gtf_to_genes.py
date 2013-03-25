@@ -160,6 +160,7 @@ def importGTF(**args):
 
     exons = {}
     inputFile = open(inputFileName, 'r')
+    
     for line in inputFile:
         if line[0] != "#":
             values = parseLine(line, capturedTypes)
@@ -192,6 +193,11 @@ def importGTF(**args):
                 if values["type"] == "stop_codon":
                     values["type"] = "exon"
                     values["frame"] = 3 - (values["hi"] - values["lo"])
+                    if values["strand"] == "-":
+                        values["lo"] = transcripts[values["transcriptId"]][values["chromosome"]]["lo"]
+                    else:
+                        values["hi"] = transcripts[values["transcriptId"]][values["chromosome"]]["hi"]
+                    
                 if values["type"] == "exon":
                     if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1):
                         if frames.get(values["transcriptId"]) != None:
@@ -256,10 +262,10 @@ def splitExons(transcriptInfo, chromosome, lo, hi, strand):
         result[0][0] = upstream
     elif lo > transcriptInfo[chromosome]["codingHi"]:
         result[0][0] = downstream
-    elif lo < transcriptInfo[chromosome]["codingLo"]:
+    if lo < transcriptInfo[chromosome]["codingLo"]:
         result[0][1] = transcriptInfo[chromosome]["codingLo"]
         result.append([upstream, lo, transcriptInfo[chromosome]["codingLo"], False])
-    elif hi > transcriptInfo[chromosome]["codingHi"]:
+    if hi > transcriptInfo[chromosome]["codingHi"]:
         result[0][2] = transcriptInfo[chromosome]["codingHi"]
         result.append([downstream, transcriptInfo[chromosome]["codingHi"], hi, False])
     return result
