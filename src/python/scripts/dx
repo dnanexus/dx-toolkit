@@ -91,9 +91,9 @@ def get_bash_export_cmds(env_vars):
 
 def write_env_var(var, value):
     try:
-        os.mkdir(os.path.expanduser('~/.dnanexus_config/'))
+        os.mkdir(os.path.expanduser('~/.dnanexus_config/'), 0o700)
     except:
-        pass
+        os.chmod(os.path.expanduser('~/.dnanexus_config/'), 0o700)
     std_vars = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID', 'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
     if var in std_vars:
         env_vars = parse_env_jsonfile(user_env_jsonfile_path)
@@ -101,11 +101,21 @@ def write_env_var(var, value):
             del env_vars[var]
         else:
             env_vars[var] = value
-        with open(user_env_jsonfile_path, 'w') as fd:
+        # Make sure the file has 600 permissions
+        try:
+            os.remove(user_env_jsonfile_path)
+        except:
+            pass
+        with os.fdopen(os.open(user_env_jsonfile_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
             json.dump(env_vars, fd, indent=4)
             fd.write("\n")
     else: # DX_CLI_WD, DX_USERNAME, DX_PROJECT_CONTEXT_NAME
-        with open(os.path.expanduser('~/.dnanexus_config/' + var), 'w') as fd:
+        # Make sure the file has 600 permissions
+        try:
+            os.remove(os.path.expanduser('~/.dnanexus_config/' + var))
+        except:
+            pass
+        with os.fdopen(os.open(os.path.expanduser('~/.dnanexus_config/' + var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
             fd.write(value)
     if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
         with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
