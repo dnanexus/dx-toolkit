@@ -309,6 +309,8 @@ def login(args):
     # the --special-host flags has been set.
     if args.token is None:
         if args.host is not None or args.port is not None:
+            if args.host is None or args.port is None:
+                parser.exit(2, fill('Error: Only one of --host and --port were provided; provide either both or neither of the values') + '\n')
             protocol = args.protocol or ("https" if (args.port == 443) else "http")
             authserver = protocol + '://' + args.host
             authserver += ':' + str(args.port)
