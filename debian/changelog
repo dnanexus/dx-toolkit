@@ -1,3 +1,11 @@
+dx-toolkit (0.43.0) oneiric; urgency=low
+
+  * Case-insensitive index support for R.
+
+  * Bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 26 Mar 2013 18:46:27 +0000
+
 dx-toolkit (0.42.0) precise; urgency=low
 
   * Python API wrappers renamed to names_with_underscores.
