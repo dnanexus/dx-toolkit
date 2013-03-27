@@ -184,6 +184,11 @@ debian_install: base_install
 	rm -rf $(DESTDIR)/$(PREFIX)/share/dnanexus/bin                           # Remove residual stuff left by pip/virtualenv
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/local/*
 
+debian_r_install: R
+	mkdir -p $(DESTDIR)/$(PREFIX)/lib/R/site-library
+	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
+	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
+
 # Documentation
 # =============
 
