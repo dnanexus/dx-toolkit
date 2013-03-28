@@ -59,6 +59,20 @@ def run(function_name=None, function_input=None):
 
     With this, no program code requires changing between the two modes.
     '''
+
+    def safe_unicode(o):
+        """
+        Returns an equivalent unicode object, trying harder to avoid
+        dependencies on the Python default encoding.
+        """
+        try:
+            return str(o).decode("utf-8")
+        except:
+            try:
+                return unicode(o)
+            except:
+                return u"(Unable to decode Python exception message)"
+
     global RUN_COUNT
     RUN_COUNT += 1
 
@@ -104,7 +118,7 @@ def run(function_name=None, function_input=None):
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": u"{t}: {msg}".format(t=e.__class__.__name__, msg=e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + safe_unicode(e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
@@ -114,7 +128,7 @@ def run(function_name=None, function_input=None):
             except:
                 pass
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": u"{t}: {msg}".format(t=e.__class__.__name__, msg=e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + safe_unicode(e)}}) + "\n")
         raise
 
     result = convert_handlers_to_dxlinks(result)
