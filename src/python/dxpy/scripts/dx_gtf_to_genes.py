@@ -193,10 +193,10 @@ def importGTF(**args):
                 if values["type"] == "stop_codon":
                     values["type"] = "exon"
                     values["frame"] = 3 - (values["hi"] - values["lo"])
-                    if values["strand"] == "-":
-                        values["lo"] = transcripts[values["transcriptId"]][values["chromosome"]]["lo"]
-                    else:
-                        values["hi"] = transcripts[values["transcriptId"]][values["chromosome"]]["hi"]
+                    #if values["strand"] == "-":
+                    #    values["lo"] = transcripts[values["transcriptId"]][values["chromosome"]]["lo"]
+                    #else:
+                    #    values["hi"] = transcripts[values["transcriptId"]][values["chromosome"]]["hi"]
                     
                 if values["type"] == "exon":
                     if (transcripts[values["transcriptId"]][values["chromosome"]]["codingLo"] != -1 and transcripts[values["transcriptId"]][values["chromosome"]]["codingHi"] != -1):
