@@ -339,7 +339,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
-        app_json = parse_app_spec(src_dir)
+        app_json = _parse_app_spec(src_dir)
 
         if "buildOptions" in app_json:
             if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
