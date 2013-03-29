@@ -164,6 +164,13 @@ def _verify_app_source_dir(src_dir):
     if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
 
+def _parse_app_spec(src_dir):
+    with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
+        try:
+            return json.load(app_desc)
+        except Exception as e:
+            raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.message)
+
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="auto",
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True):
@@ -332,11 +339,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
-        with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
-            try:
-                app_json = json.load(app_desc)
-            except Exception as e:
-                raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.message)
+        app_json = parse_app_spec(src_dir)
 
         if "buildOptions" in app_json:
             if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
@@ -480,6 +483,12 @@ def main(**kwargs):
         # REMOTE BUILD
 
         _verify_app_source_dir(args.src_dir)
+
+        try:
+            _parse_app_spec(args.src_dir)
+        except dxpy.app_builder.AppBuilderException as e:
+            print >> sys.stderr, "Error: %s" % (e.message,)
+            sys.exit(3)
 
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
