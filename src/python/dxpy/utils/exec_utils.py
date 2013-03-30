@@ -104,7 +104,7 @@ def run(function_name=None, function_input=None):
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": u"{t}: {msg}".format(t=e.__class__.__name__, msg=e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
@@ -114,7 +114,7 @@ def run(function_name=None, function_input=None):
             except:
                 pass
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": u"{t}: {msg}".format(t=e.__class__.__name__, msg=e)}}) + "\n")
         raise
 
     result = convert_handlers_to_dxlinks(result)
