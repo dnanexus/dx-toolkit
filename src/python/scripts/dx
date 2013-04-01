@@ -2463,7 +2463,7 @@ def print_run_help(executable="", alias=None):
             exec_help += "Workflow: " + exec_desc['name'] + "\n\n"
 
             workflow = handler.get_details()
-            if workflow.get('version') != 2:
+            if workflow.get('version') != 2 and workflow.get('version') != 3:
                 parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
 
             exec_help += fill("To run this workflow, you will need to specify inputs for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
@@ -2473,6 +2473,9 @@ def print_run_help(executable="", alias=None):
             exec_help += fill("Not all inputs and outputs are shown for each stage.  For a list of all inputs and outputs for each stage and additional help, run") + '\n\n'
             exec_help += '  dx run EXECUTABLE -h\n\n'
             exec_help += fill("where EXECUTABLE is the stage's app(let) name or ID, along with any --version flags given.") + '\n'
+
+            for k in range(len(workflow['stages'])):
+                workflow['stages'][k].setdefault('key', str(k))
 
             for stage in workflow['stages']:
                 exec_help += '\nStage ' + unicode(stage['key']) + ': '
@@ -2737,10 +2740,17 @@ def run(args):
         if not args.brief:
             print "Executing workflow", handler
         workflow = handler.get_details()
-        if workflow['version'] != 2:
+        if workflow['version'] != 2 and workflow['version'] != 3:
             parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
         requested_job_name = args.name
+
+        for k in range(len(workflow['stages'])):
+            workflow['stages'][k].setdefault('key', str(k))
+            for i in workflow['stages'][k].get('inputs', {}).keys():
+                if workflow['stages'][k]['inputs'][i] == "":
+                    del workflow['stages'][k]['inputs'][i]
+
         for stage in workflow['stages']:
             if not args.brief:
                 print "Processing stage", stage['key'], "(id", stage['id'] + ")"
