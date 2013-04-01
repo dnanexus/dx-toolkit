@@ -2468,7 +2468,7 @@ def print_run_help(executable="", alias=None):
             if workflow.get('version') != 2 and workflow.get('version') != 3:
                 parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
 
-            exec_help += fill("To run this workflow, you will need to specify inputs for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
+            exec_help += fill("To run this workflow, specify values for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
             exec_help += '  -i0.input_name=3\n\n'
             exec_help += fill('gives the value 3 to stage 0 for an input called "input_name".') + '\n\n'
 
@@ -2645,7 +2645,7 @@ def print_run_input_help():
     Syntax :  -i<input name>=<input value>
     Example:  dx run myApp -inum=34 -istr=ABC -igtables=reads1 -igtables=reads2
 '''
-    print fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  Note that the app MUST have an input spec in order to parse the fields correctly between strings and gtable names.  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ')
+    print fill('The example above runs an app called "myApp" with 3 inputs called num (class int), str (class string), and gtables (class array:gtable).  (For this method to work, the app must have an input spec so inputs can be interpreted correctly.)  The same input field can be used multiple times if the input class is an array.', initial_indent='  ', subsequent_indent='  ')
     print '\n' + fill(BOLD() + 'Job-based object references' + ENDC() + ' can also be provided using the <job id>:<output name> syntax:', initial_indent='  ', subsequent_indent='  ')
     print '''
     Syntax :  -i<input name>=<job id>:<output name>
