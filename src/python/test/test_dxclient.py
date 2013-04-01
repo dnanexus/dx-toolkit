@@ -179,6 +179,18 @@ class TestDXClient(unittest.TestCase):
 
         run(u"yes|dx rmproject {p}".format(p=project))
 
+    def test_dx_mkdir(self):
+        project = run(u"dx new project mkdir_test --brief").strip()
+        os.environ["DX_PROJECT_CONTEXT_ID"] = project
+
+        with self.assertRaises(subprocess.CalledProcessError):
+            run(u'dx mkdir mkdirtest/b/c')
+        run(u'dx mkdir -p mkdirtest/b/c')
+        run(u'dx mkdir -p mkdirtest/b/c')
+        run(u'dx rm -r mkdirtest')
+
+        run(u"dx rmproject --yes {p}".format(p=project))
+
 class TestDXBuildApp(unittest.TestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
