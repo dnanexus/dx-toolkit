@@ -42,10 +42,32 @@ def importGFF(**args):
     
     if len(args) == 0:
         args = parser.parse_args(sys.argv[1:])
+        fileName = args.fileName
+        reference = args.reference
+        outputName = args.outputName
+        file_id = args.file_id
+        property_key = args.property_key
+        property_value = args.property_value
+        tag = args.tag
+        additional_type = args.additional_type
 
-    fileName = args.fileName
-    reference = args.reference
-    outputName = args.outputName
+    else:
+        fileName = args['fileName']
+        reference = args['reference']
+        outputName = ''
+        if args.get('outputName') != None:
+            outputName = args['outputName']
+        tag = []
+        if args.get('tag'):
+            tag = args['tag']
+        if args.get('property_key') != None:
+            property_key = args['property_key']
+        if args.get('property_value') != None:
+            property_value = args['property_value']
+        if args.get('additional_type') != None:
+            additional_type = args['additional_type']
+        if args.get('file_id') != None:
+            file_id = args['file_id']
     
     inputFileName = unpack(fileName)
         
@@ -56,15 +78,15 @@ def importGFF(**args):
     spansTable, additionalColumns = constructTable(inputFileName)
     
     details = {'original_contigset': dxpy.dxlink(reference)}
-    if args.file_id != None:
-            details['original_file'] = dxpy.dxlink(args.file_id)
-    if len(args.property_key) != len(args.property_value):
+    if file_id != None:
+            details['original_file'] = dxpy.dxlink(file_id)
+    if len(property_key) != len(property_value):
         raise dxpy.AppError("Expected each provided property to have a corresponding value.")
-    for i in range(len(args.property_key)):
-        details[args.property_key[i]] = args.property_value[i]
+    for i in range(len(property_key)):
+        details[property_key[i]] = property_value[i]
 
     spansTable.set_details(details)
-    spansTable.add_tags(args.tag)
+    spansTable.add_tags(tag)
 
     if outputName == '':
         spansTable.rename(fileName)
@@ -177,14 +199,14 @@ def importGFF(**args):
         types = ["Genes", "gri"]
     else:
         types = ["Spans", "gri"]
-    for x in args.additional_type:
+    for x in additional_type:
         types.append(x)
     spansTable.add_types(types)
     spansTable.flush()
     spansTable.close()
     print spansTable.get_id()
-    #job_outputs = {"genes" : dxpy.dxlink(spansTable.get_id())}
-    #return job_outputs
+    job_outputs = dxpy.dxlink(spansTable.get_id())
+    return job_outputs
 
 def writeEntry(spansTable, spanId, exonInfo, additionalColumns, chromosome, lo, hi, attributes, entry):
     if [lo, hi] not in exonInfo[chromosome]:
@@ -313,7 +335,13 @@ def constructTable(inputFileName):
             schema.append({"name": k, "type": "string"})
             additionalColumns.append(k)
             
-    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")]
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), 
+               dxpy.DXGTable.lexicographic_index([
+                  dxpy.DXGTable.lexicographic_index_column("name", True, False),
+                  dxpy.DXGTable.lexicographic_index_column("chr"),
+                  dxpy.DXGTable.lexicographic_index_column("lo"),
+                  dxpy.DXGTable.lexicographic_index_column("hi"),
+                  dxpy.DXGTable.lexicographic_index_column("type")], "search")]
     spansTable = dxpy.new_dxgtable(columns=schema, indices=indices)
     return spansTable, additionalColumns
 

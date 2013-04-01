@@ -222,9 +222,15 @@ def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, 
     default_row = possible_default_row[:num_cols]
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
-    gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
-    name_index = dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")
-    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index, name_index], mode='w') as span:
+    
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), 
+               dxpy.DXGTable.lexicographic_index([
+                  dxpy.DXGTable.lexicographic_index_column("name", True, False),
+                  dxpy.DXGTable.lexicographic_index_column("chr"),
+                  dxpy.DXGTable.lexicographic_index_column("lo"),
+                  dxpy.DXGTable.lexicographic_index_column("hi")], "search")]
+    
+    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=indices, mode='w') as span:
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
             details["original_file"] = dxpy.dxlink(file_id)
@@ -365,13 +371,18 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                ("description", "string")]
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
-    gri_index = dxpy.DXGTable.genomic_range_index("chr", "lo", "hi")
-    name_index = dxpy.DXGTable.lexicographic_index([["name", "ASC"]], "name")
-
+    
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), 
+               dxpy.DXGTable.lexicographic_index([
+                  dxpy.DXGTable.lexicographic_index_column("name", True, False),
+                  dxpy.DXGTable.lexicographic_index_column("chr"),
+                  dxpy.DXGTable.lexicographic_index_column("lo"),
+                  dxpy.DXGTable.lexicographic_index_column("hi"),
+                  dxpy.DXGTable.lexicographic_index_column("type")], "search")]
 
     default_row = ["", 0, 0, "", -1, "", ".", False, -1, -1, ""]
 
-    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=[gri_index, name_index], mode='w') as span:
+    with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=indices, mode='w') as span:
         span_table_id = span.get_id()
 
         details = {"original_contigset": dxpy.dxlink(ref_id)}
