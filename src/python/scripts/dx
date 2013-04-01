@@ -2476,11 +2476,25 @@ def print_run_help(executable="", alias=None):
 
             for k in range(len(workflow['stages'])):
                 workflow['stages'][k].setdefault('key', str(k))
+                for i in workflow['stages'][k].get('inputs', {}).keys():
+                    if workflow['stages'][k]['inputs'][i] == "":
+                        del workflow['stages'][k]['inputs'][i]
 
             for stage in workflow['stages']:
+
+                # Describe the app if necessary
+                input_spec = stage['app'].get('inputSpec')
+                output_spec = stage['app'].get('outputSpec')
+
+                if workflow.get('version') == 3:
+                    exec_handler = dxpy.get_handler(stage['app']['id'])
+                    exec_desc = exec_handler.describe()
+                    input_spec = exec_desc.get('inputSpec')
+                    output_spec = exec_desc.get('outputSpec')
+
                 exec_help += '\nStage ' + unicode(stage['key']) + ': '
                 if stage['app']['class'] == 'app':
-                    exec_help += stage['app']['name'] + ' --version ' + stage['app']['version']
+                    exec_help += stage['app']['name'] + ' --version ' + stage['app'].get('version', exec_desc['version'])
                 elif stage['app']['class'] == 'applet':
                     exec_help += stage['app']['name'] + ' (' + stage['app']['id']+ ')'
 
@@ -2495,9 +2509,9 @@ def print_run_help(executable="", alias=None):
                         return json.dumps(val)
 
                 # Go over required inputs
-                if 'inputSpec' in stage['app']:
+                if input_spec is not None:
                     exec_help += '\n  Inputs: '
-                    if len(stage['app']['inputSpec']) == 0:
+                    if len(input_spec) == 0:
                         exec_help += '<none>'
                     else:
                         classes_to_ignore_by_default = [
@@ -2510,13 +2524,13 @@ def print_run_help(executable="", alias=None):
 
                         # ALWAYS show bound and required inputs
                         # IGNORE those that are in the things to ignore and are optional and unbound
-                        for param in stage['app']['inputSpec']:
-                            if (stage['inputs'][param['name']] is None or stage['inputs'][param['name']] == param.get('default', None)) and \
+                        for param in input_spec:
+                            if (stage['inputs'].get(param['name']) is None or stage['inputs'][param['name']] == param.get('default', None)) and \
                                     param['class'] in classes_to_ignore_by_default and \
                                     (param.get('optional', False) or 'default' in param):
                                 continue
                             exec_help += '\n    ' + ('[' if param.get('optional', False) or 'default' in param else '') + param['name'] + (']' if param.get('optional', False) or 'default' in param else '') + '='
-                            if stage['inputs'][param['name']] is None:
+                            if stage['inputs'].get(param['name']) is None:
                                 if 'default' in param:
                                     exec_help += '<' + json.dumps(param['default']) + ' by default>'
                                 exec_help += '<unbound>'
@@ -2530,12 +2544,12 @@ def print_run_help(executable="", alias=None):
                                     exec_help += render_workflow_val(stage['inputs'][param['name']])
 
                 # Also list outputs
-                if 'outputSpec' in stage['app']:
+                if output_spec is not None:
                     exec_help += '\n  Outputs: '
-                    if len(stage['app']['outputSpec']) == 0:
+                    if len(output_spec) == 0:
                         exec_help += "<none>"
                     else:
-                        for param in stage['app']['outputSpec']:
+                        for param in output_spec:
                             exec_help += '\n    ' + param['name']
 
                 exec_help += "\n"
