@@ -2501,7 +2501,7 @@ def print_run_help(executable="", alias=None):
                 if exec_desc['class'] == 'app':
                     exec_help += exec_desc['name'] + ' --version ' + exec_desc['version']
                 elif exec_desc['class'] == 'applet':
-                    exec_help += exec_desc['name'] + ' (' + stage['app'] + ')'
+                    exec_help += exec_desc['name'] + ' (' + exec_id + ')'
 
                 def render_workflow_val(val):
                     if isinstance(val, dict) and 'connectedTo' in val:
