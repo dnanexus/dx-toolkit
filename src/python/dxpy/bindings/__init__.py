@@ -20,13 +20,15 @@ object handlers, and its subclass :class:`DXDataObject` is the abstract
 base class for all remote data object handlers.
 """
 
-import time, re, requests, sys, json
+import os, sys, time, re, json, copy
+import requests
+
 from dxpy import *
 import dxpy.api
 from dxpy.exceptions import *
-import copy
 
-NUM_HTTP_THREADS = 4
+# DX_JOB_ID should only be present in the Execution Environment
+NUM_HTTP_THREADS = 8 if 'DX_JOB_ID' in os.environ else 4
 
 
 class DXObject(object):
