@@ -1036,6 +1036,11 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("\n\\"), u"\\n\\\\")
         self.assertEqual(pretty_print.escape_unicode_string(u"ïñtérnaçiònale"), u"ïñtérnaçiònale")
 
+class TestHTTPResponses(unittest.TestCase):
+    def test_content_type_no_sniff(self):
+        resp = dxpy.api.user_describe("user-000000000000000000000000", want_full_response=True)
+        self.assertEqual(resp.headers['x-content-type-options'], 'nosniff')
+
 if __name__ == '__main__':
     print "NOTE: This test requires environment variables to be set for DX_APISERVER_*, DX_SECURITY_CONTEXT, and a DX_PROJECT_CONTEXT_ID with which the security context has ADMINISTER access.  It should be run against a running API server and with a Mongo DB initialized with test entities such as the public test project project-0000000000000000000000pb."
     unittest.main()
