@@ -2463,7 +2463,7 @@ def print_run_help(executable="", alias=None):
             exec_help += "Workflow: " + exec_desc['name'] + "\n\n"
 
             workflow = handler.get_details()
-            if workflow.get('version') != 2 and workflow.get('version') != 3:
+            if workflow.get('version') not in range(2, 5):
                 parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
 
             exec_help += fill("To run this workflow, you will need to specify inputs for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
@@ -2481,22 +2481,25 @@ def print_run_help(executable="", alias=None):
                         del workflow['stages'][k]['inputs'][i]
 
             for stage in workflow['stages']:
+                exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
+                if workflow.get('version') < 3:
+                    exec_desc = stage['app']
+                else:
+                    if dxpy.is_dxlink(exec_id):
+                        exec_id = exec_id['$dnanexus_link']
+                    if exec_id.startswith('app-'):
+                        exec_desc = get_app_from_path(exec_id)
+                    else:
+                        exec_desc = dxpy.get_handler(exec_id).describe()
 
-                # Describe the app if necessary
-                input_spec = stage['app'].get('inputSpec')
-                output_spec = stage['app'].get('outputSpec')
-
-                if workflow.get('version') == 3:
-                    exec_handler = dxpy.get_handler(stage['app']['id'])
-                    exec_desc = exec_handler.describe()
-                    input_spec = exec_desc.get('inputSpec')
-                    output_spec = exec_desc.get('outputSpec')
+                input_spec = exec_desc.get('inputSpec')
+                output_spec = exec_desc.get('outputSpec')
 
                 exec_help += '\nStage ' + unicode(stage['key']) + ': '
-                if stage['app']['class'] == 'app':
-                    exec_help += stage['app']['name'] + ' --version ' + stage['app'].get('version', exec_desc['version'])
-                elif stage['app']['class'] == 'applet':
-                    exec_help += stage['app']['name'] + ' (' + stage['app']['id']+ ')'
+                if exec_desc['class'] == 'app':
+                    exec_help += exec_desc['name'] + ' --version ' + exec_desc['version']
+                elif exec_desc['class'] == 'applet':
+                    exec_help += exec_desc['name'] + ' (' + stage['app'] + ')'
 
                 def render_workflow_val(val):
                     if isinstance(val, dict) and 'connectedTo' in val:
@@ -2754,7 +2757,7 @@ def run(args):
         if not args.brief:
             print "Executing workflow", handler
         workflow = handler.get_details()
-        if workflow['version'] != 2 and workflow['version'] != 3:
+        if workflow.get('version') not in range(2, 5):
             parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
         requested_job_name = args.name
@@ -2769,7 +2772,14 @@ def run(args):
             if not args.brief:
                 print "Processing stage", stage['key'], "(id", stage['id'] + ")"
             inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
-            executable = dxpy.get_handler(stage['app']['id'])
+
+            exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
+            if dxpy.is_dxlink(exec_id):
+                exec_id = exec_id['$dnanexus_link']
+            if exec_id.startswith('app-'):
+                exec_id = get_app_from_path(exec_id)['id']
+
+            executable = dxpy.get_handler(exec_id)
             if requested_job_name is None:
                 # TODO: name and describe caching in dxobject
                 # TODO: does apiserver append entry point name to parent/subjobs if job name is given? (or should we use :main here?)
