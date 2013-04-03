@@ -19,6 +19,7 @@
 
 import os, unittest, json, tempfile, subprocess, csv, shutil, re
 from dxpy.utils import describe
+from dxpy.utils import exec_utils
 
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):
@@ -50,6 +51,18 @@ class TestDescribe(unittest.TestCase):
         resolved_thing = 32
         describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
         self.assertIn("job-B55ZF5kZKQGz1Xxyb5FQ0003:number", resolved_jbors)
+
+class TestErrorSanitizing(unittest.TestCase):
+    def test_error_sanitizing(self):
+        # ASCII str
+        self.assertEqual(exec_utils._safe_unicode(ValueError("foo")), "foo")
+        # UTF-8 encoded str
+        self.assertEqual(exec_utils._safe_unicode(ValueError(u"crème".encode("utf-8"))), u"cr\xe8me")
+        # Unicode obj
+        self.assertEqual(exec_utils._safe_unicode(ValueError(u"brûlée")), u"br\xfbl\xe9e")
+        # Not UTF-8
+        self.assertEqual(exec_utils._safe_unicode(ValueError(u"Invalid read name: DÑÁnèxûs".encode("ISO-8859-1"))),
+                         "Invalid read name: D??n?x?s [Raw error message: 496e76616c69642072656164206e616d653a2044d1c16ee878fb73]")
 
 if __name__ == '__main__':
     unittest.main()

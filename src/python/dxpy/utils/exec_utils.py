@@ -21,10 +21,32 @@ Utilities used in the DNAnexus execution environment and test harness.
 import os, json, collections, logging, argparse
 from functools import wraps
 import dxpy
+import string
 
 ENTRY_POINT_TABLE = {}
 
 RUN_COUNT = 0
+
+# Locale-independent version of string.printable
+ASCII_PRINTABLE = string.ascii_letters + string.digits + string.punctuation + string.whitespace
+def _safe_unicode(o):
+    """
+    Returns an equivalent unicode object, trying harder to avoid
+    dependencies on the Python default encoding.
+    """
+    def clean(s):
+        return u''.join([c if c in ASCII_PRINTABLE else '?' for c in s])
+    try:
+        return unicode(o)
+    except:
+        try:
+            s = str(o)
+            try:
+                return s.decode("utf-8")
+            except:
+                return clean(s[:2048]) + u" [Raw error message: " + unicode(s.encode("hex"), 'utf-8') + u"]"
+        except:
+            return u"(Unable to decode Python exception message)"
 
 def run(function_name=None, function_input=None):
     '''
@@ -59,19 +81,6 @@ def run(function_name=None, function_input=None):
 
     With this, no program code requires changing between the two modes.
     '''
-
-    def safe_unicode(o):
-        """
-        Returns an equivalent unicode object, trying harder to avoid
-        dependencies on the Python default encoding.
-        """
-        try:
-            return str(o).decode("utf-8")
-        except:
-            try:
-                return unicode(o)
-            except:
-                return u"(Unable to decode Python exception message)"
 
     global RUN_COUNT
     RUN_COUNT += 1
@@ -118,7 +127,7 @@ def run(function_name=None, function_input=None):
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + safe_unicode(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
@@ -128,7 +137,7 @@ def run(function_name=None, function_input=None):
             except:
                 pass
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + safe_unicode(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)}}) + "\n")
         raise
 
     result = convert_handlers_to_dxlinks(result)
