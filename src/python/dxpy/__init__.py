@@ -264,6 +264,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
+                try:
+                    with file(_UPGRADE_NOTIFY, 'a'):
+                        os.utime(_UPGRADE_NOTIFY, None)
+                except:
+                    pass
                 _UPGRADE_NOTIFY = False
 
             if _DEBUG:
@@ -433,7 +438,9 @@ def _initialize(suppress_warning=False):
     '''
     global _DEBUG, _UPGRADE_NOTIFY
     _DEBUG = True if '_DX_DEBUG' in os.environ else False
-    _UPGRADE_NOTIFY = True
+    _UPGRADE_NOTIFY = os.path.expanduser('~/.dnanexus_config/.upgrade_notify')
+    if os.path.exists(_UPGRADE_NOTIFY) and os.path.getmtime(_UPGRADE_NOTIFY) > time.time() - 86400: # 24 hours
+        _UPGRADE_NOTIFY = False
 
     env_vars = get_env(suppress_warning)
     for var in env_vars:
