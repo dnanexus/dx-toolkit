@@ -938,26 +938,6 @@ class TestDXApp(unittest.TestCase):
         anothersameappdesc = dxanothersameapp.describe()
         self.assertEqual(appdesc, anothersameappdesc)
 
-@unittest.skip("Skipping jobs and apps; running Python apps not yet supported")
-class TestDXJob(unittest.TestCase):
-    def test_job_from_app(self):
-        test_json = dxpy.new_dxrecord({"details": {"jobsuccess": False} })
-        job_id_json = dxpy.new_dxrecord({"details": {"jobid": None} })
-        dxapplet = dxpy.new_dxapplet(codefile='test_dxjob.py')
-        dxappletjob = dxapplet.run({"json_dxid": test_json.get_id(),
-                                      "job_id_json": job_id_json.get_id()})
-        dxappletjob.wait_on_done()
-
-        dxjob_id = job_id_json.get_details()["jobid"]
-        self.assertIsNotNone(dxjob_id)
-        dxjob = dxpy.DXJob(dxjob_id)
-        dxjob.wait_on_done()
-
-        self.assertEqual(test_json.get_details(), {"jobsuccess":True})
-
-        test_json.remove()
-        dxapplet.remove()
-
 class TestDXSearch(unittest.TestCase):
     def find_data_objs(self):
         dxrecord = dxpy.new_dxrecord()
