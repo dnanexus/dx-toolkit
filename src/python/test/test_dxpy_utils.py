@@ -18,37 +18,37 @@
 #   under the License.
 
 import os, unittest, json, tempfile, subprocess, csv, shutil, re
-import dxpy.utils.describe
+from dxpy.utils import describe
 
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):
         # Positive results
         jobref = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number"}
-        self.assertTrue(dxpy.utils.describe.is_job_ref(jobref))
+        self.assertTrue(describe.is_job_ref(jobref))
         jobref = {"$dnanexus_link": jobref}
-        self.assertTrue(dxpy.utils.describe.is_job_ref(jobref))
+        self.assertTrue(describe.is_job_ref(jobref))
 
         # Negative results
         jobref = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number", "other": "field"}
-        self.assertFalse(dxpy.utils.describe.is_job_ref(jobref))
+        self.assertFalse(describe.is_job_ref(jobref))
         jobref = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": 32}
-        self.assertFalse(dxpy.utils.describe.is_job_ref(jobref))
+        self.assertFalse(describe.is_job_ref(jobref))
         jobref = {"$dnanexus_link": jobref}
-        self.assertFalse(dxpy.utils.describe.is_job_ref(jobref))
+        self.assertFalse(describe.is_job_ref(jobref))
         jobref = {"$dnanexus_link": "job-B55ZF5kZKQGz1Xxyb5FQ0003"}
-        self.assertFalse(dxpy.utils.describe.is_job_ref(jobref))
+        self.assertFalse(describe.is_job_ref(jobref))
 
     def test_get_resolved_jbors(self):
         resolved_jbors = {}
         orig_thing = {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number"}
         resolved_thing = 32
-        dxpy.utils.describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
+        describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
         self.assertIn("job-B55ZF5kZKQGz1Xxyb5FQ0003:number", resolved_jbors)
 
         resolved_jbors = {}
         orig_thing = {"$dnanexus_link": {"job": "job-B55ZF5kZKQGz1Xxyb5FQ0003", "field": "number"}}
         resolved_thing = 32
-        dxpy.utils.describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
+        describe.get_resolved_jbors(resolved_thing, orig_thing, resolved_jbors)
         self.assertIn("job-B55ZF5kZKQGz1Xxyb5FQ0003:number", resolved_jbors)
 
 if __name__ == '__main__':
