@@ -1,3 +1,9 @@
+dx-toolkit (0.43.3) precise; urgency=low
+
+  * Omit readline dependency to unbreak Mac binary distribution.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 03 Apr 2013 16:47:45 -0700
+
 dx-toolkit (0.43.2) precise; urgency=low
 
   * Bug fixes.
