@@ -224,7 +224,7 @@ def get_input_array(param_desc):
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
     print
-    print fill('Enter ' + in_class + ' values, one at a time (^D or <ENTER> to finish,' + (' <TAB> twice for compatible ' + in_class + 's in current directory,' if in_class in dx_data_classes else '')  + ' \'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
+    print fill('Enter ' + in_class + ' values, one at a time (^D or <ENTER> to finish,' + (' <TAB> twice for compatible ' + in_class + 's in current directory, ' if in_class in dx_data_classes else '')  + ' \'' + WHITE() + BOLD() + '?' + ENDC() + '\' for more options)')
     try:
         import readline
         if in_class in dx_data_classes:
@@ -276,7 +276,7 @@ def get_input_single(param_desc):
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
     print
-    print fill('Enter ' + in_class + (' ID or path' if in_class in dx_data_classes else ' value') + ' (' + ('<TAB> twice for compatible ' + in_class + 's in current directory,' if in_class in dx_data_classes else '')  + '\'' + WHITE() + BOLD() + '?' + ENDC() + '\' for help)')
+    print fill('Enter ' + in_class + (' ID or path' if in_class in dx_data_classes else ' value') + ' (' + ('<TAB> twice for compatible ' + in_class + 's in current directory, ' if in_class in dx_data_classes else '')  + '\'' + WHITE() + BOLD() + '?' + ENDC() + '\' for more options)')
 
     try:
         import readline
