@@ -182,7 +182,7 @@ dx-toolkit (0.0.28-dnanexus.1) precise; urgency=low
 
   * Fix: avoid infinite loop in job log streaming error detection in some cases
 
- -- Andrey Kislyuk <akislyuk@peptide>  Fri, 30 Nov 2012 16:17:01 -0800
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Fri, 30 Nov 2012 16:17:01 -0800
 
 dx-toolkit (0.0.27-dnanexus.1) precise; urgency=low
 
@@ -190,7 +190,7 @@ dx-toolkit (0.0.27-dnanexus.1) precise; urgency=low
 
   * Fix PTFM-4705 (Upload Agent uses DX_WORKSPACE_ID)
 
- -- Andrey Kislyuk <akislyuk@peptide>  Thu, 29 Nov 2012 15:24:45 -0800
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Thu, 29 Nov 2012 15:24:45 -0800
 
 dx-toolkit (0.0.26-dnanexus.1) precise; urgency=low
 
@@ -198,19 +198,19 @@ dx-toolkit (0.0.26-dnanexus.1) precise; urgency=low
 
   * Fix PTFM-4397, PTFM-4717, PTFM-4716, PTFM-4714
 
- -- Andrey Kislyuk <akislyuk@peptide>  Wed, 28 Nov 2012 08:15:22 -0800
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Wed, 28 Nov 2012 08:15:22 -0800
 
 dx-toolkit (0.0.25-dnanexus.1) precise; urgency=low
 
   * Backward compatibility fixes for null sentinels
 
- -- Andrey Kislyuk <akislyuk@peptide>  Tue, 20 Nov 2012 16:23:52 -0800
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Tue, 20 Nov 2012 16:23:52 -0800
 
 dx-toolkit (0.0.24-dnanexus.1) precise; urgency=low
 
   * Fix bug in dx run with shorthand JBORs
 
- -- Andrey Kislyuk <akislyuk@peptide>  Tue, 20 Nov 2012 13:31:46 -0800
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Tue, 20 Nov 2012 13:31:46 -0800
 
 dx-toolkit (0.0.23-dnanexus.1) precise; urgency=low
 
@@ -224,7 +224,7 @@ dx-toolkit (0.0.23-dnanexus.1) precise; urgency=low
 
   * Add various dx-jobutil-* scripts
 
- -- Andrey Kislyuk <akislyuk@peptide>  Mon, 19 Nov 2012 18:46:57 -0800
+ -- Andrey Kislyuk <akislyuk@dnanexus.com>  Mon, 19 Nov 2012 18:46:57 -0800
 
 dx-toolkit (0.0.22-dnanexus.1) precise; urgency=low
 
