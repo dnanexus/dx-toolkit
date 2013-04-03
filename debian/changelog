@@ -1,3 +1,9 @@
+dx-toolkit (0.44.0) precise; urgency=low
+
+  * dx compatibility with new workflows.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 03 Apr 2013 01:34:19 +0000
+
 dx-toolkit (0.43.0) precise; urgency=low
 
   * Case-insensitive index support for R.
