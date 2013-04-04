@@ -162,18 +162,21 @@ base_install: all
 	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
 	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
-	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
-	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
-
-	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 
 # Many apps have an autodep that says DESTDIR=/ PREFIX=/opt/dnanexus. Work
 # around that and install environment in the correct place until all those apps
 # have been replaced.
 install: base_install
+	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
+	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
+	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 	(if [ "$(DESTDIR)" == "/" ]; then install -v $(DNANEXUS_HOME)/environment $(PREFIX); else install -v $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
 
 debian_install: base_install
+	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
+	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
+	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
+
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
 	install -v $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
 	virtualenv $(DESTDIR)/$(PREFIX)/share/dnanexus                           # Install dxpy into lib/python/dist-packages, deps under share/dnanexus
@@ -188,6 +191,10 @@ debian_r_install: R
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/R/site-library
 	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
+
+debian_perl_install: perl
+	mkdir -p $(DESTDIR)/$(PREFIX)/lib
+	cp -a $(DNANEXUS_HOME)/lib/perl5 $(DESTDIR)/$(PREFIX)/lib
 
 # Documentation
 # =============

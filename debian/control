@@ -3,7 +3,7 @@ Maintainer: Phil Sung <psung@dnanexus.com>
 Section: science
 Priority: optional
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 8), python-virtualenv, libboost1.48-all-dev, r-base-core
+Build-Depends: debhelper (>= 8), python-virtualenv, libboost1.48-all-dev, r-base-core, libdist-zilla-perl
 
 Package: dx-toolkit
 Architecture: any
@@ -23,6 +23,12 @@ Architecture: any
 Depends: ${misc:Depends}, dx-toolkit
 Description: Transitional package for DNAnexus client tools
  This is a dummy package that loads vanilla dx-toolkit.
+
+Package: dx-perl-bindings
+Architecture: any
+Depends: ${misc:Depends}, ${perl:Depends}, perl, dx-toolkit
+Description: Perl bindings to DNAnexus Platform
+ Bindings for interacting with the DNAnexus platform from Perl.
 
 Package: dx-r-bindings
 Architecture: any

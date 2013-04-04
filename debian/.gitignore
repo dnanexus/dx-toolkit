@@ -4,6 +4,8 @@
 /dx-toolkit-beta.*
 /dx-toolkit-unstable/
 /dx-toolkit-unstable.*
+/dx-perl-bindings/
+/dx-perl-bindings.*
 /dx-r-bindings/
 /dx-r-bindings.*
 /files
