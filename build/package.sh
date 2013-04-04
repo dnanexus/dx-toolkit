@@ -26,7 +26,7 @@ cd "${DNANEXUS_HOME}"
 make clean
 make
 rm Makefile
-rm -r debian
+rm -r debian src/{java,javascript,perl,R,ruby,ua} share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
 
 # setuptools bakes the path of the Python interpreter into all installed Python scripts. Rewrite it back to the more
