@@ -220,7 +220,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     global _UPGRADE_NOTIFY
 
     url = APISERVER + resource if prepend_srv else resource
-    method = method.upper() # Convert method string to upper case, makes our life easier for comparing string later (POST, GET, etc)
+    method = method.upper() # Convert method name to uppercase, to ease string comparisons later
     if _DEBUG:
         from repr import Repr
         print >>sys.stderr, method, url, "=>", Repr().repr(data)
