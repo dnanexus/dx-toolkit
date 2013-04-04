@@ -1,3 +1,9 @@
+dx-toolkit (0.44.2) precise; urgency=low
+
+  * Unified Debian build procedure.
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 04 Apr 2013 22:52:43 +0000
+
 dx-toolkit (0.44.0) precise; urgency=low
 
   * dx compatibility with new workflows.
