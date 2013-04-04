@@ -487,9 +487,10 @@ def print_job_desc(desc):
     else:
         print_nofill_field("Input", get_io_field(desc["originalInput"]))
     resolved_jbors = {}
+    input_with_jbors = desc.get('runInput', desc['originalInput'])
     for k in desc["input"]:
-        if k in desc["runInput"] and desc["input"][k] != desc["runInput"][k]:
-            get_resolved_jbors(desc["input"][k], desc["runInput"][k], resolved_jbors)
+        if k in input_with_jbors and desc["input"][k] != input_with_jbors[k]:
+            get_resolved_jbors(desc["input"][k], input_with_jbors[k], resolved_jbors)
     if len(resolved_jbors) != 0:
         print_nofill_field("Resolved JBORs", get_io_field(resolved_jbors, delim=(GREEN() + '=>' + ENDC())))
     print_nofill_field("Output", get_io_field(desc["output"]))
