@@ -1,3 +1,9 @@
+dx-toolkit (0.44.3) precise; urgency=low
+
+  * Revert changes to number of upload threads.
+
+ -- Phil Sung <psung@dnanexus.com>  Thu, 04 Apr 2013 18:08:34 -0700
+
 dx-toolkit (0.44.0) precise; urgency=low
 
   * dx compatibility with new workflows.
