@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This file facilitates the build of the Java bindings for Debian
+  packages. Ordinarily the "fakeroot" would mess with the environment
+  just enough so that mvn wouldn't be able to find a sensible
+  localRepository directory to write to.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <localRepository>/tmp/dx-toolkit-m2/repository</localRepository>
+</settings>

@@ -109,9 +109,11 @@ python: api_wrappers toolkit_version python_deps
 perl: api_wrappers
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl5" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl5")
 
+# If running in fakeroot, override some maven settings so that maven can still
+# find a localRepository to write to.
 java: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/java"
-	(cd java; mvn compile assembly:single)
+	(cd java; if [ "$(FAKED_MODE)" == "" ]; then mvn compile assembly:single; else mvn -s m2-settings.xml compile assembly:single; fi)
 	cp -f java/target/*.jar "$(DNANEXUS_HOME)/lib/java"
 
 R: api_wrappers toolkit_version
@@ -187,6 +189,10 @@ debian_install: base_install
 	rm -rf $(DESTDIR)/$(PREFIX)/share/dnanexus/bin                           # Remove residual stuff left by pip/virtualenv
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/local/*
 
+debian_java_install: java
+	mkdir -p $(DESTDIR)/$(PREFIX)/share/java
+	$(eval CLEANED_JAR_NAME := `cd "$(DNANEXUS_HOME)"/lib/java; ls *.jar | sed "s/dnanexus-api-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-.*/dnanexus-api-\1.jar/g"`)
+	(cd "$(DNANEXUS_HOME)"/lib/java; cp -a *.jar $(DESTDIR)/$(PREFIX)/share/java/"$(CLEANED_JAR_NAME)")
 
 debian_perl_install: perl
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib
