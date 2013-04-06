@@ -203,6 +203,10 @@ debian_r_install: R
 	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 
+debian_ruby_install: ruby
+	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/lib
+	cp -a "$(DNANEXUS_HOME)"/lib/rubygems $(DESTDIR)/$(PREFIX)/share/dnanexus/lib
+
 # Documentation
 # =============
 

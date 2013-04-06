@@ -10,4 +10,6 @@
 /dx-perl-bindings.*
 /dx-r-bindings/
 /dx-r-bindings.*
+/dx-ruby-bindings/
+/dx-ruby-bindings.*
 /files
