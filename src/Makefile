@@ -16,13 +16,13 @@
 
 SHELL=/bin/bash -e
 
-# If installing into the system directories you probably want to set
-#   DESTDIR=/ PREFIX=/usr
+# Install into the system directories by default (e.g. binaries go into
+# /usr/bin)
 ifndef DESTDIR
-	export DESTDIR=/opt/dnanexus
+	export DESTDIR=/
 endif
 ifndef PREFIX
-	export PREFIX=/
+	export PREFIX=/usr
 endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
@@ -165,14 +165,11 @@ base_install: all
 
 	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
 
-# Many apps have an autodep that says DESTDIR=/ PREFIX=/opt/dnanexus. Work
-# around that and install environment in the correct place until all those apps
-# have been replaced.
 install: base_install
 	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
-	(if [ "$(DESTDIR)" == "/" ]; then install -v -m0644 $(DNANEXUS_HOME)/environment $(PREFIX); else install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
+	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)
 
 debian_install: base_install
 	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
