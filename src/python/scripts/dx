@@ -2669,7 +2669,8 @@ def run(args):
         print_run_help(args.executable, args.alias)
 
     if args.clone is None and args.executable == "":
-        parser.exit(2, fill("Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
+        parser_map['run'][0].print_help()
+        parser.exit(2, fill("Error: Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
 
     args.input_from_clone = {}
 
