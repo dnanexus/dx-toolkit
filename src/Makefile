@@ -41,11 +41,11 @@ all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wi
 toolkit_version:
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then \
 	    echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    echo -e "module DXRuby\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    echo -e "module DX\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
 	    echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    git describe --always | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DXRuby\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    git describe --always | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
