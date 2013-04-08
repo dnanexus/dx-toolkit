@@ -1,3 +1,9 @@
+dx-toolkit (0.44.4) precise; urgency=low
+
+  * Change dxfile thread pool size again.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 08 Apr 2013 14:44:41 -0700
+
 dx-toolkit (0.44.3) precise; urgency=low
 
   * Revert changes to number of upload threads.
