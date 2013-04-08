@@ -18,10 +18,9 @@
 Utilities used in the DNAnexus execution environment and test harness.
 '''
 
-import os, json, collections, logging, argparse
+import os, sys, json, collections, logging, argparse, re, string
 from functools import wraps
 import dxpy
-import string
 
 ENTRY_POINT_TABLE = {}
 
@@ -103,12 +102,21 @@ def run(function_name=None, function_input=None):
             function_input = json.loads(os.environ.get('DX_JOB_INPUT', '{}'))
 
             # Try to parse args from the command line
+            from dxpy.utils.printing import BOLD, ENDC, DNANEXUS_LOGO, fill
+            dx_app_help = fill('This is a ' + DNANEXUS_LOGO() + ''' application entry point. You can upload this
+            application by running ''' + BOLD() + 'dx-build-applet' + ENDC() + ' or ' + BOLD() + 'dx-build-app' +
+            ENDC() + ' in the directory containing its metadata definition file ' + BOLD() + 'dxapp.json' + ENDC() +
+            ', or run it in a local test harness by supplying the path to ' + BOLD() + 'dxapp.json' + ENDC() + ''' with
+            the --spec option. See http://wiki.dnanexus.com/Developer-Tutorials/App-Build-Process for more info.''')
             args, remaining_args = None, None
             try:
-                parser = argparse.ArgumentParser()
+                parser = argparse.ArgumentParser(description=dx_app_help)
                 parser.add_argument("-s", "--spec", help="Path to app metadata definition file (dxapp.json)")
                 args, remaining_args = parser.parse_known_args()
-            except:
+                if args.spec is None:
+                    parser.print_help()
+                    parser.exit(1)
+            except Exception as e:
                 pass
 
             if args is not None and args.spec is not None:
@@ -201,7 +209,15 @@ def parse_args_as_job_input(args, app_spec):
         if value is None:
             continue
         if i in json_inputs:
-            inputs[i] = json.loads(value)
+            try:
+                inputs[i] = json.loads(value)
+            except ValueError:
+                from dxpy.utils.resolver import resolve_existing_path
+                project, path, results = resolve_existing_path(value, ask_to_resolve=False, describe={'id': True}, allow_mult=False)
+                print project, path, results
+                if results is None or len(results) != 1:
+                    raise ValueError("Value {v} could not be resolved".format(v=value))
+                inputs[i] = dxpy.dxlink(results[0]['id'], project_id=project)
         else:
             inputs[i] = value
 
