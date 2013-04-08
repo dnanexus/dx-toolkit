@@ -83,7 +83,7 @@ def build(src_dir, parallel_build=True):
     if it exists (building with as many parallel tasks as there are CPUs on the
     system).
     """
-    logger.debug("Building in " + src_dir)
+    logger.debug("Building in " + os.path.abspath(src_dir))
     # TODO: use Gentoo or deb buildsystem
     config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
