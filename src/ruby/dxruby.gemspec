@@ -2,7 +2,7 @@ require File.expand_path('../lib/dxruby/version', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.name    = 'dxruby'
-  gem.version = DXRuby::VERSION
+  gem.version = DX::VERSION
   gem.date    = Time.now.strftime("%Y-%m-%d")
 
   gem.summary = "DNAnexus Platform API bindings for Ruby"

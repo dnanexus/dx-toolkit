@@ -5,7 +5,7 @@
   <groupId>com.dnanexus</groupId>
   <artifactId>dnanexus-api</artifactId>
   <packaging>jar</packaging>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1.0-SNAPSHOT</version>
   <name>dnanexus-api</name>
   <url>http://wiki.dnanexus.com/</url>
 
@@ -98,7 +98,7 @@
                 <artifactItem>
                   <groupId>com.dnanexus</groupId>
                   <artifactId>dnanexus-api</artifactId>
-                  <version>0.1-SNAPSHOT</version>
+                  <version>0.1.0-SNAPSHOT</version>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>/tmp/foo</outputDirectory>

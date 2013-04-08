@@ -11,9 +11,10 @@
     {"name": "greeting", "class": "string"}
   ],
   "runSpec": {
-    "code": "export CLASSPATH=/:/lib:/opt/dnanexus/lib/java/*:$CLASSPATH; java DXHelloWorld",
+    "code": "export CLASSPATH=/:$CLASSPATH; java DXHelloWorld",
     "interpreter": "bash",
     "execDepends": [
+      {"name": "dx-java-bindings"},
       {"name": "openjdk-6-jre-headless"}
     ]
   },

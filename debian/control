@@ -3,7 +3,7 @@ Maintainer: Phil Sung <psung@dnanexus.com>
 Section: science
 Priority: optional
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 8), python-virtualenv, libboost1.50-all-dev | libboost1.49-all-dev | libboost1.48-all-dev, r-base-core, libdist-zilla-perl
+Build-Depends: debhelper (>= 8), python-virtualenv, libboost1.50-all-dev | libboost1.49-all-dev | libboost1.48-all-dev, r-base-core, libdist-zilla-perl, openjdk-6-jdk
 
 Package: dx-toolkit
 Architecture: any
@@ -24,6 +24,12 @@ Depends: ${misc:Depends}, dx-toolkit
 Description: Transitional package for DNAnexus client tools
  This is a dummy package that loads vanilla dx-toolkit.
 
+Package: dx-java-bindings
+Architecture: any
+Depends: ${misc:Depends}, openjdk-6-jre-headless, dx-toolkit
+Description: Java bindings to DNAnexus Platform
+ Bindings for interacting with the DNAnexus platform from Java.
+
 Package: dx-perl-bindings
 Architecture: any
 Depends: ${misc:Depends}, ${perl:Depends}, perl, dx-toolkit
@@ -36,3 +42,9 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, r-base-core, r-cran-bitops
 Recommends: dx-toolkit
 Description: R bindings to DNAnexus Platform
  Bindings for interacting with the DNAnexus platform from R.
+
+Package: dx-ruby-bindings
+Architecture: any
+Depends: ${misc:Depends}, ruby1.9.1, dx-toolkit, ruby-json
+Description: Ruby bindings to DNAnexus Platform
+ Bindings for interacting with the DNAnexus platform from Ruby.

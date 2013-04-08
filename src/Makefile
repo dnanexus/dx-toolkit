@@ -16,13 +16,13 @@
 
 SHELL=/bin/bash -e
 
-# If installing into the system directories you probably want to set
-#   DESTDIR=/ PREFIX=/usr
+# Install into the system directories by default (e.g. binaries go into
+# /usr/bin)
 ifndef DESTDIR
-	export DESTDIR=/opt/dnanexus
+	export DESTDIR=/
 endif
 ifndef PREFIX
-	export PREFIX=/
+	export PREFIX=/usr
 endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
@@ -41,11 +41,11 @@ all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wi
 toolkit_version:
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then \
 	    echo "version = \"UNKNOWN_VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    echo -e "module DXRuby\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    echo -e "module DX\n  VERSION = \"0.0.0\"\nend\n" > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
 	    echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    git describe --always | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DXRuby\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    git describe --always | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
 	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
@@ -109,9 +109,11 @@ python: api_wrappers toolkit_version python_deps
 perl: api_wrappers
 	(source ../environment; cd perl; dzil build; cd DNAnexus-0.1; perl Makefile.PL; make install DESTDIR="$(DNANEXUS_HOME)/lib/perl5" DESTINSTALLSITELIB="$(DNANEXUS_HOME)/lib/perl5")
 
+# If running in fakeroot, override some maven settings so that maven can still
+# find a localRepository to write to.
 java: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/lib/java"
-	(cd java; mvn compile assembly:single)
+	(cd java; if [ "$(FAKED_MODE)" == "" ]; then mvn compile assembly:single; else mvn -s m2-settings.xml compile assembly:single; fi)
 	cp -f java/target/*.jar "$(DNANEXUS_HOME)/lib/java"
 
 R: api_wrappers toolkit_version
@@ -163,14 +165,11 @@ base_install: all
 
 	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
 
-# Many apps have an autodep that says DESTDIR=/ PREFIX=/opt/dnanexus. Work
-# around that and install environment in the correct place until all those apps
-# have been replaced.
 install: base_install
 	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
-	(if [ "$(DESTDIR)" == "/" ]; then install -v $(DNANEXUS_HOME)/environment $(PREFIX); else install -v $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
+	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)
 
 debian_install: base_install
 	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
@@ -178,7 +177,7 @@ debian_install: base_install
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
-	install -v $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
+	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
 	virtualenv $(DESTDIR)/$(PREFIX)/share/dnanexus                           # Install dxpy into lib/python/dist-packages, deps under share/dnanexus
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
 	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/dxpy* $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
@@ -187,14 +186,23 @@ debian_install: base_install
 	rm -rf $(DESTDIR)/$(PREFIX)/share/dnanexus/bin                           # Remove residual stuff left by pip/virtualenv
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/local/*
 
+debian_java_install: java
+	mkdir -p $(DESTDIR)/$(PREFIX)/share/java
+	$(eval CLEANED_JAR_NAME := `cd "$(DNANEXUS_HOME)"/lib/java; ls *.jar | sed "s/dnanexus-api-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-.*/dnanexus-api-\1.jar/g"`)
+	(cd "$(DNANEXUS_HOME)"/lib/java; cp -a *.jar $(DESTDIR)/$(PREFIX)/share/java/"$(CLEANED_JAR_NAME)")
+
+debian_perl_install: perl
+	mkdir -p $(DESTDIR)/$(PREFIX)/lib
+	cp -a $(DNANEXUS_HOME)/lib/perl5 $(DESTDIR)/$(PREFIX)/lib
+
 debian_r_install: R
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/R/site-library
 	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
 
-debian_perl_install: perl
-	mkdir -p $(DESTDIR)/$(PREFIX)/lib
-	cp -a $(DNANEXUS_HOME)/lib/perl5 $(DESTDIR)/$(PREFIX)/lib
+debian_ruby_install: ruby
+	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/lib
+	cp -a "$(DNANEXUS_HOME)"/lib/rubygems $(DESTDIR)/$(PREFIX)/share/dnanexus/lib
 
 # Documentation
 # =============

@@ -12,9 +12,10 @@
     {"name": "trimmedReads", "class": "gtable"}
   ],
   "runSpec": {
-    "code": "export CLASSPATH=/:/lib:/opt/dnanexus/lib/java/*:$CLASSPATH; java DXTrimReads",
+    "code": "export CLASSPATH=/:$CLASSPATH; java DXTrimReads",
     "interpreter": "bash",
     "execDepends": [
+      {"name": "dx-java-bindings"},
       {"name": "openjdk-6-jre-headless"}
     ]
   },
