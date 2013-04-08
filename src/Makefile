@@ -170,7 +170,7 @@ install: base_install
 	cp -a $(DNANEXUS_HOME)/{lib,share} $(DESTDIR)/$(PREFIX)                    # libraries
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
-	(if [ "$(DESTDIR)" == "/" ]; then install -v $(DNANEXUS_HOME)/environment $(PREFIX); else install -v $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
+	(if [ "$(DESTDIR)" == "/" ]; then install -v -m0644 $(DNANEXUS_HOME)/environment $(PREFIX); else install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR); fi)
 
 debian_install: base_install
 	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
@@ -178,7 +178,7 @@ debian_install: base_install
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
-	install -v $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
+	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
 	virtualenv $(DESTDIR)/$(PREFIX)/share/dnanexus                           # Install dxpy into lib/python/dist-packages, deps under share/dnanexus
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
 	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/dxpy* $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
