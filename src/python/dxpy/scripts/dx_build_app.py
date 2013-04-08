@@ -23,11 +23,13 @@ logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.E
 import os, sys, json, subprocess, argparse
 import locale
 import pipes
+import re
 import shutil
 import tempfile
 import time
 from datetime import datetime
 import dxpy, dxpy.app_builder
+from dxpy import logger
 
 # Use default locale (used for formatting numbers nicely)
 locale.setlocale(locale.LC_ALL, '')
@@ -158,11 +160,81 @@ def parse_destination(dest_str):
     # [PROJECT]:/FOLDER/ENTITYNAME
     return resolve_path(dest_str)
 
+def _lint(dxapp_json_filename):
+    """
+    Examines the specified dxapp.json file and warns about any
+    violations of app guidelines.
+    """
+
+    def _find_readme(dirname):
+        for basename in ['README.md', 'Readme.md', 'readme.md']:
+            if os.path.exists(os.path.join(dirname, basename)):
+                return os.path.join(dirname, basename)
+        return None
+
+    # Caller is responsible for ensuring that dxapp_json_filename can be
+    # parsed.
+    app_spec = json.load(open(dxapp_json_filename))
+
+    if app_spec['name'] != app_spec['name'].lower():
+        logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
+
+    dirname = os.path.basename(os.path.dirname(os.path.abspath(dxapp_json_filename)))
+    if dirname != app_spec['name']:
+        logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
+
+    if 'summary' in app_spec:
+        if app_spec['summary'].endswith('.'):
+            logger.warn('summary "%s" should be a short phrase not ending in a period' % (app_spec['summary'],))
+    else:
+        logger.warn('app is missing a summary, please add one in the "summary" field of dxapp.json')
+
+    readme_filename = _find_readme(os.path.dirname(dxapp_json_filename))
+    if 'description' in app_spec:
+        if readme_filename:
+            logger.warn('"description" field shadows file ' + readme_filename)
+        if not app_spec['description'].strip().endswith('.'):
+            logger.warn('"description" field should be written in complete sentences and end with a period')
+    else:
+        if readme_filename is None:
+            logger.warn("app is missing a description, please supply one in README.md")
+
+    if 'version' in app_spec:
+        if not re.match("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)$", app_spec['version']):
+            logger.warn('"version" %s should be of the form X.Y.Z' % (app_spec['version'],))
+
+    if 'categories' in app_spec:
+        for category in app_spec['categories']:
+            if category not in ['Import', 'Export', 'Alignment', 'Variation calling', 'Annotation', 'Filtering', 'Reports', 'RNA-Seq', 'Statistics', 'Type validation', 'Debugging']:
+                logger.warn('app has unrecognized category "%s"' % (category,))
+            if category == 'Import':
+                if not app_spec['title'].endswith('Importer'):
+                    logger.warn('title "%s" should end in "Importer"' % (app_spec['title'],))
+            if category == 'Export':
+                if not app_spec['title'].endswith('Exporter'):
+                    logger.warn('title "%s" should end in "Exporter"' % (app_spec['title'],))
+
+    # Note that identical checks are performed on the server side (and
+    # will cause the app build to fail), but the checks here are printed
+    # sooner and multiple naming problems can be detected in a single
+    # pass.
+    if 'inputSpec' in app_spec:
+        for i, input_field in enumerate(app_spec['inputSpec']):
+            if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", input_field['name']):
+                logger.error('input %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, input_field['name']))
+    if 'outputSpec' in app_spec:
+        for i, output_field in enumerate(app_spec['outputSpec']):
+            if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", output_field['name']):
+                logger.error('output %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, output_field['name']))
+
+
 def _verify_app_source_dir(src_dir):
     if not os.path.isdir(src_dir):
         parser.error("%s is not a directory" % src_dir)
     if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
+
+    _lint(os.path.join(src_dir, "dxapp.json"))
 
 def _parse_app_spec(src_dir):
     with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
