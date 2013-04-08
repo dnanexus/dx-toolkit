@@ -32,10 +32,12 @@ if dxpy.snappy_available:
 
 # TODO: adaptive buffer size
 DEFAULT_BUFFER_SIZE = 1024*1024*32
+DXFILE_HTTP_THREADS = NUM_HTTP_THREADS
 if dxpy.JOB_ID:
     # Increase HTTP request buffer sizes when we are running within the
     # platform.
-    DEFAULT_BUFFER_SIZE = 1024*1024*128
+    DEFAULT_BUFFER_SIZE = 1024*1024*64
+    DXFILE_HTTP_THREADS = 8
 
 class DXFile(DXDataObject):
     '''
@@ -68,7 +70,7 @@ class DXFile(DXDataObject):
     _list_projects = staticmethod(dxpy.api.file_list_projects)
 
     _http_threadpool = None
-    _http_threadpool_size = NUM_HTTP_THREADS
+    _http_threadpool_size = DXFILE_HTTP_THREADS
 
     @classmethod
     def set_http_threadpool_size(cls, num_threads):
