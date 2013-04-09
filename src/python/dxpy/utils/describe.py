@@ -70,10 +70,23 @@ def parse_typespec(thing):
         return 'Type spec could not be parsed'
 
 def get_io_desc(parameter, include_class=True, show_opt=True, app_help_version=False):
+    # For interactive help, format array:CLASS inputs as:
+    #   -iNAME=CLASS [-iNAME=... [...]]   # If input is required (needs >=1 inputs)
+    #   [-iNAME=CLASS [...]]              # If input is optional (needs >=0 inputs
+    if app_help_version and parameter["class"].startswith("array"):
+        scalar_parameter = parameter.copy()
+        # Munge the parameter dict (strip off "array:" to turn it into a
+        # scalar) and recurse
+        scalar_parameter["class"] = scalar_parameter["class"][6:]
+        if "default" in parameter or parameter.get("optional"):
+            return "[" + get_io_desc(scalar_parameter, include_class=include_class, show_opt=False, app_help_version=app_help_version) + " [...]]"
+        else:
+            return get_io_desc(scalar_parameter, include_class=include_class, show_opt=False, app_help_version=app_help_version) + " [-i%s=... [...]]" % (parameter["name"],)
+
     desc = ""
     is_optional = False;
     if show_opt:
-        if "default" in parameter or ("optional" in parameter and parameter["optional"]):
+        if "default" in parameter or parameter.get("optional"):
             is_optional = True
             desc += "["
     desc += ('-i' if app_help_version else '') + parameter["name"]
