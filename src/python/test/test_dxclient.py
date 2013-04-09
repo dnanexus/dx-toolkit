@@ -219,13 +219,13 @@ class TestDXBuildApp(unittest.TestCase):
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
-    def write_app_directory(self, app_name, dxapp_str, code_filename=None):
+    def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
         os.mkdir(os.path.join(self.temp_file_path, app_name))
         with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
             manifest.write(dxapp_str)
         if code_filename:
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
-                code_file.write('\n')
+                code_file.write(code_content)
         return os.path.join(self.temp_file_path, app_name)
 
     def test_help_without_security_context(self):
@@ -383,6 +383,22 @@ class TestDXBuildApp(unittest.TestCase):
         # Somewhat indirect test of --no-parallel-build
         with self.assertSubprocessFailure(stderr_regexp="make in target directory failed with exit code"):
             run("dx-build-applet --no-parallel-build " + app_dir)
+
+    def test_syntax_checks(self):
+        app_spec = {
+            "name": "syntax_checks",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("syntax_checks",
+                                           json.dumps(app_spec),
+                                           code_filename="code.py",
+                                           code_content="def improper():\nprint 'oops'")
+        with self.assertSubprocessFailure(stderr_regexp="Entry point file \\S+ has syntax errors"):
+            run("dx-build-applet " + app_dir)
 
 if __name__ == '__main__':
     unittest.main()

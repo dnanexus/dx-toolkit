@@ -227,6 +227,60 @@ def _lint(dxapp_json_filename):
             if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", output_field['name']):
                 logger.error('output %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, output_field['name']))
 
+def _check_syntax(code, lang):
+    """
+    Checks that the code whose text is in CODE parses as LANG.
+
+    Raises subprocess.CalledProcessError if there is a problem.
+    """
+    # This function needs the language to be explicitly set, so we can
+    # generate an appropriate temp filename.
+    if lang == 'python2.7':
+        temp_basename = 'inlined_code_from_dxapp_json.py'
+    elif lang == 'bash':
+        temp_basename = 'inlined_code_from_dxapp_json.sh'
+    else:
+        raise ValueError('lang must be one of "python2.7" or "bash"')
+    # Dump the contents out to a temporary file, then call _check_file_syntax.
+    dirname = tempfile.mkdtemp()
+    try:
+        with open(os.path.join(dirname, temp_basename), 'w') as ofile:
+            ofile.write(code.encode('utf-8'))
+        _check_file_syntax(os.path.join(dirname, temp_basename), override_lang=lang)
+    finally:
+        shutil.rmtree(dirname)
+
+def _check_file_syntax(filename, override_lang=None):
+    """
+    Checks that the code in FILENAME parses, attempting to autodetect
+    the language if necessary.
+
+    Raises subprocess.CalledProcessError if there is a problem.
+    """
+    def check_python(filename):
+        subprocess.check_output("%s -m py_compile %s 2>&1" % (sys.executable, filename), shell=True)
+    def check_bash(filename):
+        subprocess.check_output("/bin/bash -n %s 2>&1" % (filename,), shell=True)
+
+    if override_lang == 'python2.7':
+        checker_fn = check_python
+    elif override_lang == 'bash':
+        checker_fn = check_bash
+    elif filename.endswith('.py'):
+        checker_fn = check_python
+    elif filename.endswith('.sh'):
+        checker_fn = check_bash
+    else:
+        # Ignore other kinds of files.
+        return
+
+    try:
+        checker_fn(filename)
+    except subprocess.CalledProcessError as e:
+        print >> sys.stderr, filename + " has a syntax error! Interpreter output:"
+        for line in e.output.strip("\n").split("\n"):
+            print >> sys.stderr, "  " + line.rstrip("\n")
+        raise
 
 def _verify_app_source_dir(src_dir):
     if not os.path.isdir(src_dir):
@@ -235,6 +289,46 @@ def _verify_app_source_dir(src_dir):
         parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
 
     _lint(os.path.join(src_dir, "dxapp.json"))
+
+    # Check that the entry point file parses as the type it is going to
+    # be interpreted as. The extension is irrelevant.
+    manifest = json.load(open(os.path.join(src_dir, "dxapp.json")))
+    if "runSpec" in manifest:
+        if "interpreter" not in manifest['runSpec']:
+            raise dxpy.app_builder.AppBuilderException('runSpec.interpreter field was not present')
+        if manifest['runSpec']['interpreter'] in ["python2.7", "bash"]:
+            if "file" in manifest['runSpec']:
+                entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
+                try:
+                    _check_file_syntax(entry_point_file, override_lang=manifest['runSpec']['interpreter'])
+                except subprocess.CalledProcessError:
+                    raise dxpy.app_builder.AppBuilderException('Entry point file %s has syntax errors, see above for details' % (entry_point_file,))
+            elif "code" in manifest['runSpec']:
+                try:
+                    _check_syntax(manifest['runSpec']['code'], lang=manifest['runSpec']['interpreter'])
+                except subprocess.CalledProcessError:
+                    raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details')
+
+    # Check all other files that are going to be in the resources tree.
+    # For these we detect the language based on the filename extension.
+    # Obviously this check can have false positives, since the app can
+    # execute (or not execute!) all these files in whatever way it
+    # wishes, e.g. it could use Python != 2.7 or some non-bash shell. So
+    # if it is overzealous we may have to turn it off.
+    files_with_problems = []
+    for dirpath, dirnames, filenames in os.walk(os.path.abspath(os.path.join(src_dir, "resources"))):
+        for filename in filenames:
+            try:
+                _check_file_syntax(os.path.join(dirpath, filename))
+            except subprocess.CalledProcessError:
+                files_with_problems.append(os.path.join(dirpath, filename))
+
+    if files_with_problems:
+        # Make a message of the form:
+        #    "/path/to/my/app.py"
+        # OR "/path/to/my/app.py and 3 other files"
+        files_str = files_with_problems[0] if len(files_with_problems) == 1 else (files_with_problems[0] + " and " + str(len(files_with_problems) - 1) + " other file" + ("s" if len(files_with_problems) > 2 else ""))
+        raise dxpy.app_builder.AppBuilderException('%s contained syntax errors, see above for details' % (files_str,))
 
 def _parse_app_spec(src_dir):
     with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
