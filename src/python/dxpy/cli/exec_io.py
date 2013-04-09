@@ -224,7 +224,18 @@ def get_input_array(param_desc):
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
     print
-    print fill('Enter ' + in_class + ' values, one at a time (^D or <ENTER> to finish,' + (' <TAB> twice for compatible ' + in_class + 's in current directory, ' if in_class in dx_data_classes else '')  + ' \'' + WHITE() + BOLD() + '?' + ENDC() + '\' for more options)')
+
+    prompt = "Enter {_class} values, one at a time (^D or <ENTER> to finish, {hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
+    hint = ''
+    if in_class in dx_data_classes:
+        hint = '<TAB> twice for compatible ' + in_class + 's in current directory, '
+    elif 'suggestions' in param_desc:
+        hint = '<TAB> twice for suggestions, '
+    elif 'choices' in param_desc:
+        hint = '<TAB> twice for choices, '
+    prompt = prompt.format(_class=in_class, hint=hint)
+    print fill(prompt)
+
     try:
         import readline
         if in_class in dx_data_classes:
@@ -234,6 +245,12 @@ def get_input_array(param_desc):
         elif in_class == 'boolean':
             from dxpy.utils.completer import ListCompleter
             readline.set_completer(ListCompleter(completions=['true', 'false']))
+        elif 'suggestions' in param_desc:
+            from dxpy.utils.completer import ListCompleter
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])))
+        elif 'choices' in param_desc:
+            from dxpy.utils.completer import ListCompleter
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])))
         else:
             from dxpy.utils.completer import NoneCompleter
             readline.set_completer(NoneCompleter())
@@ -275,8 +292,34 @@ def get_input_single(param_desc):
     print 'Class:   ' + param_desc['class']
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
+    if 'suggestions' in param_desc:
+        print 'Suggestions:'
+        for suggestion in param_desc['suggestions']:
+            if isinstance(suggestion, dict) and 'name' in suggestion:
+                print "\t{name}: {value}".format(**suggestion)
+            else:
+                print "\t{s}".format(s=suggestion)
+    if 'choices' in param_desc:
+        print 'Choices:'
+        for choice in param_desc['choices']:
+            if isinstance(choice, dict) and 'name' in choice:
+                print "\t{name}: {value}".format(**choice)
+            else:
+                print "\t{s}".format(s=choice)
     print
-    print fill('Enter ' + in_class + (' ID or path' if in_class in dx_data_classes else ' value') + ' (' + ('<TAB> twice for compatible ' + in_class + 's in current directory, ' if in_class in dx_data_classes else '')  + '\'' + WHITE() + BOLD() + '?' + ENDC() + '\' for more options)')
+
+    prompt = "Enter {_class} {value} ({hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
+    hint = ''
+    if in_class in dx_data_classes:
+        hint = '<TAB> twice for compatible ' + in_class + 's in current directory, '
+    elif 'suggestions' in param_desc:
+        hint = '<TAB> twice for suggestions, '
+    elif 'choices' in param_desc:
+        hint = '<TAB> twice for choices, '
+    prompt = prompt.format(_class=in_class,
+                           value='ID or path' if in_class in dx_data_classes else 'value',
+                           hint=hint)
+    print fill(prompt)
 
     try:
         import readline
@@ -287,6 +330,12 @@ def get_input_single(param_desc):
         elif in_class == 'boolean':
             from dxpy.utils.completer import ListCompleter
             readline.set_completer(ListCompleter(completions=['true', 'false']))
+        elif 'suggestions' in param_desc:
+            from dxpy.utils.completer import ListCompleter
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])))
+        elif 'choices' in param_desc:
+            from dxpy.utils.completer import ListCompleter
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])))
         else:
             from dxpy.utils.completer import NoneCompleter
             readline.set_completer(NoneCompleter())

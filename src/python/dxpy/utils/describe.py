@@ -23,6 +23,7 @@ containers, dataobjects, apps, and jobs).
 '''
 
 import datetime, time, json, math, sys
+from collections import defaultdict
 
 from dxpy.utils.printing import *
 
@@ -101,7 +102,21 @@ def get_io_desc(parameter, include_class=True, show_opt=True, app_help_version=F
 def get_io_spec(spec, skip_fields=None):
     if skip_fields is None:
         skip_fields = []
-    list_of_params = [get_io_desc(param) for param in spec if param["name"] not in skip_fields]
+    filtered_spec = [param for param in spec if param["name"] not in skip_fields]
+    groups = defaultdict(list)
+    for param in filtered_spec:
+        groups[param.get('group')].append(param)
+
+    list_of_params = []
+    for param in groups.get(None, []):
+        list_of_params.append(get_io_desc(param))
+    for group in groups:
+        if group is None:
+            continue
+        list_of_params.append("{g}:".format(g=group))
+        for param in groups[group]:
+            list_of_params.append("    "+get_io_desc(param))
+
     if len(skip_fields) > 0:
         list_of_params.append("<advanced inputs hidden; use --verbose to see more>")
 
