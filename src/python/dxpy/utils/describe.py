@@ -24,6 +24,7 @@ containers, dataobjects, apps, and jobs).
 
 import datetime, time, json, math, sys
 from collections import defaultdict
+from copy import copy
 
 from dxpy.utils.printing import *
 
@@ -229,13 +230,10 @@ def render_bundleddepends(thing):
 def render_execdepends(thing):
     rendered = []
     for item in thing:
-        if len(item) == 1:
-            rendered.append(item['name'])
-        elif 'package_manager' in item:
-            if item['package_manager'] == 'apt':
-                rendered.append(item['name'])
-            else:
-                rendered.append(item['package_manager'] + ":" + item['name'])
+        dep = copy(item)
+        dep.setdefault('package_manager', 'apt')
+        dep['version'] = ' = '+dep['version'] if 'version' in dep else ''
+        rendered.append("{package_manager}: {name}{version}".format(**dep))
     return rendered
 
 def print_field(label, value):
