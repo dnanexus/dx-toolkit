@@ -215,7 +215,7 @@ class TestDXBuildApp(unittest.TestCase):
                     raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
                 print "stderr:"
                 print e.stderr
-                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stdout to match '%s' but it didn't" % (stderr_regexp,))
+                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
