@@ -79,7 +79,7 @@ def get_io_desc(parameter, include_class=True, show_opt=True, app_help_version=F
         # scalar) and recurse
         scalar_parameter["class"] = scalar_parameter["class"][6:]
         if "default" in parameter or parameter.get("optional"):
-            return "[" + get_io_desc(scalar_parameter, include_class=include_class, show_opt=False, app_help_version=app_help_version) + " [...]]"
+            return "[" + get_io_desc(scalar_parameter, include_class=include_class, show_opt=False, app_help_version=app_help_version) + " [-i%s=... [...]]]" % (parameter["name"],)
         else:
             return get_io_desc(scalar_parameter, include_class=include_class, show_opt=False, app_help_version=app_help_version) + " [-i%s=... [...]]" % (parameter["name"],)
 
