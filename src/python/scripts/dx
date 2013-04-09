@@ -177,6 +177,7 @@ if len(args_list) == 1 and args_list[0] == 'clearenv':
 
 # importing dxpy will now appropriately load env variables
 import dxpy
+from dxpy.utils import group_array_by_field
 from dxpy.utils.env import parse_env_jsonfile, user_env_jsonfile_path
 from dxpy.utils.printing import *
 from dxpy.utils.pretty_print import format_tree, format_table
@@ -2583,20 +2584,33 @@ def print_run_help(executable="", alias=None):
                 if len(exec_desc['inputSpec']) == 0:
                     exec_help += " <none>\n"
                 else:
-                    for param in exec_desc['inputSpec']:
-                        param_string = "\n  "
-                        param_string += param.get('label', param['name']) + ": "
-                        param_string += get_io_desc(param, app_help_version=True) + "\n"
-                        helpstring = param.get('help', '')
-                        if helpstring != '':
-                            param_string += fill(helpstring,
-                                                 initial_indent='        ',
-                                                 subsequent_indent='        ') + "\n"
-                            
-                        if param['name'] in advanced_inputs:
-                            advanced_inputs_help += param_string
-                        else:
-                            exec_help += param_string
+                    for group, params in group_array_by_field(exec_desc['inputSpec']).iteritems():
+                        if group is not None:
+                            exec_help += "\n " + group
+                        for param in params:
+                            param_string = "\n  "
+                            param_string += param.get('label', param['name']) + ": "
+                            param_string += get_io_desc(param, app_help_version=True) + "\n"
+                            helpstring = param.get('help', '')
+                            if helpstring != '':
+                                param_string += fill(helpstring,
+                                                     initial_indent='        ',
+                                                     subsequent_indent='        ') + "\n"
+
+                            if 'choices' in param:
+                                param_string += fill('Choices: '+', '.join(map(str, param['choices'])),
+                                                     initial_indent='        ',
+                                                     subsequent_indent='        ') + "\n"
+
+                            if 'suggestions' in param:
+                                param_string += fill('Suggestions: '+', '.join(map(str, param['suggestions'])),
+                                                     initial_indent='        ',
+                                                     subsequent_indent='        ') + "\n"
+
+                            if param['name'] in advanced_inputs:
+                                advanced_inputs_help += param_string
+                            else:
+                                exec_help += param_string
                     if len(advanced_inputs) > 0:
                         exec_help += "\n" + advanced_inputs_help
             else:

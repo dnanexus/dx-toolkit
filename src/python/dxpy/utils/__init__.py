@@ -223,3 +223,11 @@ class OrderedDefaultdict(collections.OrderedDict):
     def __reduce__(self):
         args = self.default_factory if self.default_factory else tuple()
         return type(self), args, None, None, self.items()
+
+def group_array_by_field(array, field='group'):
+    groups = OrderedDefaultdict(list)
+    for item in array:
+        if field not in item and None not in groups:
+            groups[None] = []
+        groups[item.get(field)].append(item)
+    return groups
