@@ -2241,12 +2241,13 @@ def find_apps(args):
                                                            "published": args.verbose}}))
 
         if args.installed:
-            results = filter(lambda result: result['describe']['installed'],
-                             results)
+            results = [result for result in results if result['describe']['installed']]
 
         if args.brief:
-            results = map(lambda result: {"id": result['id']},
-                          results)
+            results = [{"id": result['id']} for result in results]
+
+        if args.summary or args.verbose:
+            results.sort(key = lambda result: result['describe']['name'])
 
         if args.json:
             print json.dumps(results, indent=4)
