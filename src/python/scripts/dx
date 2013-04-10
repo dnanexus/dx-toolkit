@@ -2597,20 +2597,19 @@ def print_run_help(executable="", alias=None):
                             param_string += param.get('label', param['name']) + ": "
                             param_string += get_io_desc(param, app_help_version=True) + "\n"
                             helpstring = param.get('help', '')
-                            if helpstring != '':
-                                param_string += fill(helpstring,
-                                                     initial_indent='        ',
-                                                     subsequent_indent='        ') + "\n"
+
+                            stanzas = []
 
                             if 'choices' in param:
-                                param_string += fill('Choices: '+', '.join(map(str, param['choices'])),
-                                                     initial_indent='        ',
-                                                     subsequent_indent='        ') + "\n"
+                                stanzas.append(format_choices_or_suggestions('Choices:', param['choices'], param['class']))
 
-                            if 'suggestions' in param:
-                                param_string += fill('Suggestions: '+', '.join(map(str, param['suggestions'])),
-                                                     initial_indent='        ',
-                                                     subsequent_indent='        ') + "\n"
+                            if helpstring != '':
+                                stanzas.append(fill(helpstring, initial_indent='        ', subsequent_indent='        '))
+
+                            if param.get('suggestions'):
+                                stanzas.append(format_choices_or_suggestions('Suggestions:', param['suggestions'], param['class']))
+
+                            param_string += "\n\n".join(stanzas) + "\n"
 
                             if param['name'] in advanced_inputs:
                                 advanced_inputs_help += param_string
