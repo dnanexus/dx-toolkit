@@ -384,6 +384,11 @@ class TestDXBuildApp(unittest.TestCase):
         with self.assertSubprocessFailure(stderr_regexp="make in target directory failed with exit code"):
             run("dx-build-applet --no-parallel-build " + app_dir)
 
+    def test_dxapp_checks(self):
+        app_dir = self.write_app_directory("dxapp_checks", "{\"invalid_json\":}", code_filename="code.py")
+        with self.assertSubprocessFailure(stderr_regexp="dxapp\\.json"):
+            run("dx-build-applet " + app_dir)
+
     def test_syntax_checks(self):
         app_spec = {
             "name": "syntax_checks",
