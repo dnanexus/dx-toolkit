@@ -597,11 +597,13 @@ class ExecutableInputs(object):
             for i in self.inputs:
                 if type(self.inputs[i]) == list and len(self.inputs[i]) == 1:
                     self.inputs[i] = self.inputs[i][0]
-        
+
         if sys.stdout.isatty():
             self.prompt_for_missing()
-        elif not all(i in self.inputs for i in self.required_inputs):
-            raise Exception('Some inputs are missing, and interactive mode is not available')
+        else:
+            missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
+            if missing_required_inputs:
+                raise Exception('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
 
         # if self.required_input_specs is not None and (len(self.required_input_specs) > 0 or len(self.optional_input_specs) > 0):
         #     if sys.stdout.isatty():
