@@ -47,6 +47,16 @@ def _safe_unicode(o):
         except:
             return u"(Unable to decode Python exception message)"
 
+def _format_exception_message(e):
+    """
+    Formats the specified exception.
+    """
+    # Prevent duplication of "AppError" in places that print "AppError"
+    # and then this formatted string
+    if isinstance(e, dxpy.AppError):
+        return _safe_unicode(e)
+    return unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)
+
 def run(function_name=None, function_input=None):
     '''
     Triggers the execution environment entry point processor.
@@ -135,7 +145,7 @@ def run(function_name=None, function_input=None):
         if dxpy.JOB_ID is not None:
             os.chdir(dx_working_dir)
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppError", "message": _format_exception_message(e)}}) + "\n")
         raise
     except Exception as e:
         if dxpy.JOB_ID is not None:
@@ -145,7 +155,7 @@ def run(function_name=None, function_input=None):
             except:
                 pass
             with open("job_error.json", "w") as fh:
-                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)}}) + "\n")
+                fh.write(json.dumps({"error": {"type": "AppInternalError", "message": _format_exception_message(e)}}) + "\n")
         raise
 
     result = convert_handlers_to_dxlinks(result)

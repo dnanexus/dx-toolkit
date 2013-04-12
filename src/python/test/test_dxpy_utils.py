@@ -18,6 +18,7 @@
 #   under the License.
 
 import os, unittest, json, tempfile, subprocess, csv, shutil, re
+from dxpy import AppError
 from dxpy.utils import describe
 from dxpy.utils import exec_utils
 
@@ -63,6 +64,10 @@ class TestErrorSanitizing(unittest.TestCase):
         # Not UTF-8
         self.assertEqual(exec_utils._safe_unicode(ValueError(u"Invalid read name: DÑÁnèxûs".encode("ISO-8859-1"))),
                          "Invalid read name: D??n?x?s [Raw error message: 496e76616c69642072656164206e616d653a2044d1c16ee878fb73]")
+
+    def test_formatting_exceptions(self):
+        self.assertEqual(exec_utils._format_exception_message(ValueError("foo")), "ValueError: foo")
+        self.assertEqual(exec_utils._format_exception_message(AppError("foo")), "foo")
 
 if __name__ == '__main__':
     unittest.main()
