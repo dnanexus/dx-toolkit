@@ -131,7 +131,7 @@ printenv <- function() {
 ##' 
 ##' # Basic API call; use RJSONIO::namedEmptyList for an empty hash
 ##' \dontrun{dxHTTPRequest("/gtable-xxxx/get", namedEmptyList)}
-##' 
+##'
 ##' # API call with nonempty input hash
 ##' \dontrun{dxHTTPRequest("/record/new", list("project"="project-xxxx"))}
 ##' @export
@@ -175,6 +175,7 @@ dxHTTPRequest <- function(resource, data,
     curlResult <- tryCatch({
       RCurl::curlPerform(url=url,
                          httpheader=headers,
+                         useragent=paste('dxR/', packageVersion("dxR"), sep=''),
                          postfields=body,
                          writefunction=h$update,
                          headerfunction=d$update,
