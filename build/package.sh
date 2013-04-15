@@ -81,6 +81,13 @@ elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
   cd "${DNANEXUS_HOME}/.."
   tempdir=$(mktemp -d -t dx-packaging-workdir)
   cp -a dx-toolkit $tempdir
+
+  # Make the packaged readline module OS-agnostic, so non
+  # Apple-supplied Python installations can still find them.
+  cd $tempdir/dx-toolkit/share/dnanexus/lib/python2.7/site-packages
+  mv readline-6.2.4.1-py2.7-macosx-10.*-intel.egg readline-6.2.4.1-py2.7.egg
+  sed -i -e 's/-py2.7-macosx-10\.[0-9]+-intel.egg/-py2.7.egg/' easy-install.pth
+
   cd $tempdir
   rm -rf dx-toolkit/.git
   tar -czf $temp_archive dx-toolkit
