@@ -1,3 +1,17 @@
+dx-toolkit (0.45.0) precise; urgency=low
+
+  * Pre-upload syntax checks for bash and python.
+
+  * Support for input suggestions, groups, and choices in dx run.
+
+  * Changed thread/buffer config for uploads.
+
+  * Ruby and Java bindings have separate packages now.
+
+  * Various bug fixes and cosmetic improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 09 Apr 2013 18:35:24 +0000
+
 dx-toolkit (0.44.2) precise; urgency=low
 
   * Unified Debian build procedure.

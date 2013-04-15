@@ -2222,6 +2222,9 @@ def find_projects(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def find_apps(args):
+    def maybe_x(result):
+        return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
+
     get_output_flag(args)
     try:
         results = list(dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
@@ -2237,15 +2240,17 @@ def find_apps(args):
                                       describe={"fields": {"name": True, "installed": args.installed,
                                                            "title": args.summary or args.verbose,
                                                            "version": args.summary or args.verbose,
-                                                           "published": args.verbose}}))
+                                                           "published": args.verbose,
+                                                           "billTo": args.summary or args.verbose}}))
 
         if args.installed:
-            results = filter(lambda result: result['describe']['installed'],
-                             results)
+            results = [result for result in results if result['describe']['installed']]
 
         if args.brief:
-            results = map(lambda result: {"id": result['id']},
-                          results)
+            results = [{"id": result['id']} for result in results]
+
+        if args.summary or args.verbose:
+            results.sort(key = lambda result: result['describe']['name'])
 
         if args.json:
             print json.dumps(results, indent=4)
@@ -2255,10 +2260,10 @@ def find_apps(args):
                 print result['id']
         elif args.summary:
             for result in results:
-                print result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"]
+                print maybe_x(result) + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER("), v") + result["describe"]["version"]
         else:
             for result in results:
-                print result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"]["published"] > 0 else "unpublished") + DELIMITER(")")
+                print maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"]["published"] > 0 else "unpublished") + DELIMITER(")")
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
@@ -2591,20 +2596,19 @@ def print_run_help(executable="", alias=None):
                             param_string += param.get('label', param['name']) + ": "
                             param_string += get_io_desc(param, app_help_version=True) + "\n"
                             helpstring = param.get('help', '')
-                            if helpstring != '':
-                                param_string += fill(helpstring,
-                                                     initial_indent='        ',
-                                                     subsequent_indent='        ') + "\n"
+
+                            stanzas = []
 
                             if 'choices' in param:
-                                param_string += fill('Choices: '+', '.join(map(str, param['choices'])),
-                                                     initial_indent='        ',
-                                                     subsequent_indent='        ') + "\n"
+                                stanzas.append(format_choices_or_suggestions('Choices:', param['choices'], param['class']))
 
-                            if 'suggestions' in param:
-                                param_string += fill('Suggestions: '+', '.join(map(str, param['suggestions'])),
-                                                     initial_indent='        ',
-                                                     subsequent_indent='        ') + "\n"
+                            if helpstring != '':
+                                stanzas.append(fill(helpstring, initial_indent='        ', subsequent_indent='        '))
+
+                            if param.get('suggestions'):
+                                stanzas.append(format_choices_or_suggestions('Suggestions:', param['suggestions'], param['class']))
+
+                            param_string += "\n\n".join(stanzas) + "\n"
 
                             if param['name'] in advanced_inputs:
                                 advanced_inputs_help += param_string

@@ -21,6 +21,7 @@ Functions and classes used when launching platform executables from the CLI.
 # TODO: refactor all dx run helper functions here
 
 import os, sys, json, collections
+import pipes
 import shlex
 from dxpy.utils.resolver import *
 from dxpy.utils import OrderedDefaultdict
@@ -285,6 +286,33 @@ def get_input_array(param_desc):
     except EOFError:
         return input_array
 
+def format_choices_or_suggestions(header, items, obj_class, initial_indent=' ' * 8, subsequent_indent=' ' * 10):
+    def format_data_object_reference(item):
+        if dxpy.is_dxlink(item):
+            # Bare dxlink
+            obj_id, proj_id = dxpy.get_dxlink_ids(item)
+            return (proj_id + ":" if proj_id else '') + obj_id
+        if dxpy.is_dxlink(item.get('value')):
+            # value is set
+            obj_id, proj_id = dxpy.get_dxlink_ids(item['value'])
+            return (proj_id + ":" if proj_id else '') + obj_id + (' (%s)' % item['name'] if item.get('name') else '')
+        if item.get('project') and item.get('path'):
+            # project and folder path
+            return item['project'] + ':' + item['path'] + "/" + obj_class + "-*" +  (' (%s)' % item['name'] if item.get('name') else '')
+        return str(item)
+
+    showing_data_objects = obj_class in dx_data_classes
+
+    if showing_data_objects:
+        return initial_indent + header + ''.join('\n' + subsequent_indent + format_data_object_reference(item) for item in items)
+    else:
+        # TODO: in interactive prompts the quotes here may be a bit
+        # misleading. Perhaps it should be a separate mode to print
+        # "interactive-ready" suggestions.
+        return fill(header + ' ' + ', '.join([pipes.quote(item) for item in items]),
+                    initial_indent=initial_indent,
+                    subsequent_indent=subsequent_indent)
+
 def get_input_single(param_desc):
     in_class = param_desc['class']
     typespec = param_desc.get('type', None)
@@ -293,19 +321,9 @@ def get_input_single(param_desc):
     if 'type' in param_desc:
         print 'Type(s): ' + parse_typespec(param_desc['type'])
     if 'suggestions' in param_desc:
-        print 'Suggestions:'
-        for suggestion in param_desc['suggestions']:
-            if isinstance(suggestion, dict) and 'name' in suggestion:
-                print "\t{name}: {value}".format(**suggestion)
-            else:
-                print "\t{s}".format(s=suggestion)
+        print format_choices_or_suggestions('Suggestions:', param_desc['suggestions'], param_desc['class'], initial_indent='', subsequent_indent='  ')
     if 'choices' in param_desc:
-        print 'Choices:'
-        for choice in param_desc['choices']:
-            if isinstance(choice, dict) and 'name' in choice:
-                print "\t{name}: {value}".format(**choice)
-            else:
-                print "\t{s}".format(s=choice)
+        print format_choices_or_suggestions('Choices:', param_desc['choices'], param_desc['class'], initial_indent='', subsequent_indent='  ')
     print
 
     prompt = "Enter {_class} {value} ({hint}'" + WHITE() + BOLD() + '?' + ENDC() + "' for more options)"
@@ -579,11 +597,13 @@ class ExecutableInputs(object):
             for i in self.inputs:
                 if type(self.inputs[i]) == list and len(self.inputs[i]) == 1:
                     self.inputs[i] = self.inputs[i][0]
-        
+
         if sys.stdout.isatty():
             self.prompt_for_missing()
-        elif not all(i in self.inputs for i in self.required_inputs):
-            raise Exception('Some inputs are missing, and interactive mode is not available')
+        else:
+            missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
+            if missing_required_inputs:
+                raise Exception('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
 
         # if self.required_input_specs is not None and (len(self.required_input_specs) > 0 or len(self.optional_input_specs) > 0):
         #     if sys.stdout.isatty():

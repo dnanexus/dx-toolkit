@@ -486,6 +486,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
 def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="auto", do_build_step=True, do_upload_step=True, dry_run=False, return_object_dump=False):
 
+    app_json = _parse_app_spec(src_dir)
     _verify_app_source_dir(src_dir)
 
     working_project = None
@@ -504,8 +505,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
     try:
         if mode == "applet" and working_project is None and dxpy.WORKSPACE_ID is None:
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-
-        app_json = _parse_app_spec(src_dir)
 
         if "buildOptions" in app_json:
             if app_json["buildOptions"].get("dx_toolkit_autodep") == False:
@@ -648,13 +647,13 @@ def main(**kwargs):
     else:
         # REMOTE BUILD
 
-        _verify_app_source_dir(args.src_dir)
-
         try:
             _parse_app_spec(args.src_dir)
         except dxpy.app_builder.AppBuilderException as e:
             print >> sys.stderr, "Error: %s" % (e.message,)
             sys.exit(3)
+
+        _verify_app_source_dir(args.src_dir)
 
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
