@@ -85,7 +85,10 @@ elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
   # Make the packaged readline module OS-agnostic, so non
   # Apple-supplied Python installations can still find them.
   cd $tempdir/dx-toolkit/share/dnanexus/lib/python2.7/site-packages
-  mv readline-6.2.4.1-py2.7-macosx-10.*-intel.egg readline-6.2.4.1-py2.7.egg
+  # e.g. readline-6.2.4.1-py2.7-macosx-10.7-intel.egg => readline-6.2.4.1-py2.7.egg
+  for readline_egg in readline-*; do
+    mv $readline_egg ${readline_egg/-macosx-10.*-intel/}
+  done
   sed -i -e 's/-py2.7-macosx-10\.[0-9]+-intel.egg/-py2.7.egg/' easy-install.pth
 
   cd $tempdir
