@@ -324,6 +324,8 @@ def login(args):
             username = raw_input('Username: ')
             write_env_var('DX_USERNAME', username)
             password = getpass.getpass()
+        except (KeyboardInterrupt, EOFError):
+            parser.exit(1, '\n')
         except Exception as e:
             parser.exit(1, str(e) + "\n")
         auth = HTTPBasicAuth(username, password)
