@@ -352,14 +352,11 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     # interior call of dx-build-app, because within the execution
     # environment of tarball_app(let)_builder, APISERVER_HOST is set to
     # the address of the proxy (a 10.x.x.x address) and doesn't give us
-    # any information about whether we are talking to preprod.
+    # any information about whether we are talking to prod or not.
     if dx_toolkit_autodep == "auto":
-        # "auto" (the default) means dx-toolkit (stable) on preprod and prod, and
+        # "auto" (the default) means dx-toolkit (stable) on prod, and
         # dx-toolkit-beta on all other systems.
-        if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
-            dx_toolkit_autodep = "stable"
-        else:
-            dx_toolkit_autodep = "beta"
+        dx_toolkit_autodep = "stable" if dxpy.APISERVER_HOST == "api.dnanexus.com" else "beta"
 
     build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
 
@@ -521,12 +518,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
 
         try:
             if dx_toolkit_autodep == "auto":
-                # "auto" (the default) means dx-toolkit (stable) on preprod and prod,
-                # and dx-toolkit-beta on all other systems.
-                if dxpy.APISERVER_HOST == "preprodapi.dnanexus.com" or dxpy.APISERVER_HOST == "api.dnanexus.com":
-                    dx_toolkit_autodep = "stable"
-                else:
-                    dx_toolkit_autodep = "beta"
+                # "auto" (the default) means dx-toolkit (stable) on
+                # prod, and dx-toolkit-beta on all other systems.
+                dx_toolkit_autodep = "stable" if dxpy.APISERVER_HOST == "api.dnanexus.com" else "beta"
             applet_id, applet_spec = dxpy.app_builder.upload_applet(
                 src_dir,
                 bundled_resources,
