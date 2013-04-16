@@ -1,3 +1,9 @@
+dx-toolkit (0.45.1) precise; urgency=low
+
+  * Bug fix for dx-build-app(let).
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 16 Apr 2013 20:24:38 +0000
+
 dx-toolkit (0.45.0) precise; urgency=low
 
   * Pre-upload syntax checks for bash and python.
