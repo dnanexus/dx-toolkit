@@ -602,7 +602,7 @@ def main(**kwargs):
     else:
         args = parser.parse_args(**kwargs)
 
-    if dxpy.AUTH_HELPER is None:
+    if dxpy.AUTH_HELPER is None and not args.dry_run:
         parser.error('Authentication required to build an executable on the platform; please run "dx login" first')
 
     if args.src_dir is None:
