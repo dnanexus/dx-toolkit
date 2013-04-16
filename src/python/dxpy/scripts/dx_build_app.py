@@ -120,7 +120,7 @@ parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", d
 # * No temporary project is created (if building an app) and the
 #   "project" field is not set in the app spec.
 parser.set_defaults(dry_run=False)
-parser.add_argument("--dry-run", help="Do not create an app(let), only show the spec of the applet that would have been created.", action="store_true", dest="dry_run")
+parser.add_argument("--dry-run", help="Do not create an app(let): only perform local checks and compilation steps, and show the spec of the app(let) that would have been created.", action="store_true", dest="dry_run")
 parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
 
