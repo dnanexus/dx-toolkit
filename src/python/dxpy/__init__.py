@@ -170,8 +170,7 @@ class ContentLengthError(HTTPError):
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True,
-                  max_retries=DEFAULT_RETRIES, always_retry=False, retry_on_error_reponse_cb=None,
-                  **kwargs):
+                  max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
     :type resource: string
