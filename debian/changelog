@@ -1,3 +1,13 @@
+dx-toolkit (0.46.0) precise; urgency=low
+
+  * Better packaging for readline on Mac OS X.
+
+  * R bindings now send User-Agent header.
+
+  * Various bug fixes and cosmetic improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 16 Apr 2013 20:18:13 +0000
+
 dx-toolkit (0.45.0) precise; urgency=low
 
   * Pre-upload syntax checks for bash and python.
