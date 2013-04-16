@@ -49,12 +49,7 @@ if (STATIC_BOOST) # can be set by using -DSTATIC_BOOST=1 while running cmake
 endif ()
 set(Boost_USE_MULTITHREADED ON)
 
-# Mac instalaltion (for some unknown reason) requires boost system as well ?
-if (NOT APPLE)
-  find_package(Boost 1.48 COMPONENTS thread regex REQUIRED)
-else()
-  find_package(Boost 1.48 COMPONENTS thread regex system REQUIRED)
-endif()
+find_package(Boost 1.48 COMPONENTS thread regex system REQUIRED)
 if (Boost_FOUND)
   message(STATUS "dxcpp CMakeLists.txt says: Boost libraries found")
   message(STATUS "\t** BOOST_INCLUDE_DIR=\"${Boost_INCLUDE_DIR}\"")
