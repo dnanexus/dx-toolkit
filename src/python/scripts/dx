@@ -2472,7 +2472,7 @@ def print_run_help(executable="", alias=None):
             exec_help += "Workflow: " + exec_desc['name'] + "\n\n"
 
             workflow = handler.get_details()
-            if workflow.get('version') not in range(2, 5):
+            if workflow.get('version') not in range(2, 6):
                 parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
 
             exec_help += fill("To run this workflow, specify values for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
@@ -2779,7 +2779,7 @@ def run(args):
         if not args.brief:
             print "Executing workflow", handler
         workflow = handler.get_details()
-        if workflow.get('version') not in range(2, 5):
+        if workflow.get('version') not in range(2, 6):
             parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
         requested_job_name = args.name
