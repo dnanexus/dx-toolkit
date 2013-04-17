@@ -385,6 +385,9 @@ def get_input_single(param_desc):
             except TypeError as details:
                 print fill('Error occurred when parsing for class ' + in_class + ': ' + unicode(details))
                 continue
+            if 'choices' in param_desc and value not in param_desc['choices']:
+                print fill(RED() + BOLD() + 'Warning:' + ENDC() + ' value "' + unicode(value) + '" for input ' + WHITE()
+                           + BOLD() + param_desc['name'] + ENDC() + ' is not in the list of choices for that input')
             return value
     except EOFError:
         raise Exception('')
