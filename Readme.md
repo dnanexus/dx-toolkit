@@ -49,6 +49,8 @@ to install them by either downloading a compiled release from
 http://wiki.dnanexus.com/Downloads, or by building only a portion of the
 toolkit that doesn't require them.
 
+**Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
+
 ### Ubuntu 12.04
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
@@ -133,9 +135,6 @@ Install the following packages from source or via [Homebrew](http://mxcl.github.
         export CC=gcc-4.7
         export CXX=g++-4.7
         ```
-
-* **Note:** There is an incompatibility when using GCC 4.7.1 and Boost 1.49.
-  Please use either the GCC 4.6 series or Boost 1.50+ in this case.
 
 Java bindings
 -------------
