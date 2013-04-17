@@ -2955,6 +2955,24 @@ def watch(args):
 #        sys.exit(1)
 #        print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
 
+def update(args):
+    if len(args.args) == 0:
+        try:
+            upgrade_header = dxpy.api.user_describe('org-dnanexus', want_full_response=True).headers.get('x-upgrade-info')
+            recommended_version = re.match("A recommended update is available for your client/SDK \(v(.+?)\)", upgrade_header).group(1)
+        except Exception as e:
+            print e
+            recommended_version = "latest"
+        print "Upgrading to", recommended_version
+        args.args = [recommended_version]
+
+    try:
+        cmd = os.path.join(os.environ['DNANEXUS_HOME'], 'build', 'update.sh')
+        args.args.insert(0, cmd)
+        os.execv(cmd, args.args)
+    except Exception as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
+
 def print_help(args):
     if args.command_or_category is None:
         parser_help.print_help()
@@ -3767,6 +3785,11 @@ parser_map['help run'] = (parser_help, MultiCompleter([DXAppCompleter(), DXPathC
 for cat in parser_categories:
     parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()
+
+parser_update = subparsers.add_parser('update', help='Upgrade dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform')
+parser_update.add_argument('args', nargs='*')
+parser_update.set_defaults(func=update)
+parser_map['update'] = (parser_update, NoneCompleter())
 
 # Bash argument completer hook
 if os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
