@@ -22,7 +22,9 @@ logging.basicConfig(level=logging.WARN)
 import argparse
 import base64
 import bs4
+import cgi
 import dxpy
+from dx_build_app import parse_destination
 import imghdr
 import os
 import re
@@ -30,9 +32,8 @@ import urllib2
 
 parser = argparse.ArgumentParser(description="Constructs and uploads an HTML report from HTML and attached images")
 parser.add_argument("src", help="Source image or HTML file", nargs="+")
-parser.add_argument("-n", "--name", help="Name to give the report on the remote DNAnexus system")
 parser.add_argument("-o", "--output", help="Local file to save baked HTML to", default=None)
-parser.add_argument("-p", "--project", help="Destination project ID. Can also be a full path in the form PROJECT:/PATH/TO/FOLDER")
+parser.add_argument("-d", "--destination", help="Destination project ID. Can also be a full path in the form PROJECT:/PATH/TO/FOLDER/REPORT_NAME")
 
 
 def _image_to_data(img):
@@ -40,7 +41,7 @@ def _image_to_data(img):
     Does the work of encoding an image into Base64
     """
     # If the image is already encoded in Base64, we have nothing to do here
-    if not "src" in img or re.match("data:", img["src"]):
+    if not "src" in img or img["src"].startswith("data:"):
         return
     elif re.match("http[s]://", img["src"]):
         img_data = _load_url(img["src"]).read()
@@ -61,8 +62,8 @@ def _load_file(path, mode="r"):
     try:
         f = open(path, mode)
         return f
-    except IOError:
-        parser.error("{} could not be read due to an I/O error!".format(path))
+    except IOError as ex:
+        parser.error("{path} could not be read due to an I/O error! ({ex})".format(path=path, ex=ex))
 
 
 def _load_url(url):
@@ -72,8 +73,8 @@ def _load_url(url):
     try:
         response = urllib2.urlopen(url)
         return response
-    except urllib2.URLError:
-        parser.error("{} could not be loaded remotely!".format(url))
+    except urllib2.URLError as ex:
+        parser.error("{url} could not be loaded remotely! ({ex})".format(url=url, ex=ex))
 
 
 def bake(src):
@@ -83,9 +84,9 @@ def bake(src):
     src = os.path.realpath(src)
     path = os.path.dirname(src)
     filename = os.path.basename(src)
-    html = "".join(_load_file(src).readlines())
+    html = _load_file(src).read()
     if imghdr.what("", html):
-        html = "<html><body><img src='{}'/></body></html>".format(filename)
+        html = "<html><body><img src='{}'/></body></html>".format(cgi.escape(filename))
 
     # Change to the file's directory so image files with relative paths can be loaded correctly
     cwd = os.getcwd()
@@ -98,50 +99,31 @@ def bake(src):
     return bs_html
 
 
-def upload_html(project, html, path="/", name=""):
+def upload_html(destination, html, name=None):
     """
     Uploads the HTML to a file on the server
     """
+    [project, path, n] = parse_destination(destination)
     try:
-        dxfile = dxpy.bindings.dxfile_functions
-        args = {
-            "project": project,
-            "folder": path,
-            "hidden": True
-        }
-        if name and len(name) > 0:
-            args["name"] = name
-        file_id = dxpy.api.file_new(args)["id"]
-        html_file = dxfile.DXFile(file_id, project, "w")
-        html_file.write(html)
-        html_file.close()
-        return file_id
-    except:
-        parser.error("Could not upload HTML report to DNAnexus server!")
+        dxfile = dxpy.upload_string(html, media_type="text/html", project=project, folder=path, hidden=True, name=name or None)
+        return dxfile.get_id()
+    except dxpy.DXAPIError as ex:
+        parser.error("Could not upload HTML report to DNAnexus server! ({ex})".format(ex=ex))
 
 
-def create_record(project, file_ids, path="/", name=""):
+def create_record(destination, file_ids):
     """
     Creates a master record for the HTML report; this doesn't contain contain the actual HTML, but reports
     are required to be records rather than files and we can link more than one HTML file to a report
     """
-    files = []
-    for file_id in file_ids:
-        files.append(dxpy.bindings.dxdataobject_functions.dxlink(file_id, project))
-    args = {
-        "project": project,
-        "folder": path,
-        "types": ["Report", "HTMLReport"],
-        "details": {"files": files}
-    }
-    if name and len(name) > 0:
-        args["name"] = name
+    [project, path, name] = parse_destination(destination)
+    files = [dxpy.dxlink(file_id, project) for file_id in file_ids]
     try:
-        record_id = dxpy.api.record_new(args)["id"]
-        dxpy.api.record_close(record_id)
-        return record_id
-    except:
-        parser.error("Could not create an HTML report record on DNAnexus servers!")
+        dxrecord = dxpy.new_dxrecord(project=project, folder=path, types=["Report", "HTMLReport"], details={"files": files}, name=name)
+        dxrecord.close()
+        return dxrecord.get_id()
+    except dxpy.DXAPIError as ex:
+        parser.error("Could not create an HTML report record on DNAnexus servers! ({ex})".format(ex=ex))
 
 
 def save(filename, html):
@@ -152,8 +134,8 @@ def save(filename, html):
         out_file = open(filename, "w")
         out_file.write(html)
         out_file.close()
-    except IOError:
-        parser.error("Could not write baked HTML to local file {}".format(filename))
+    except IOError as ex:
+        parser.error("Could not write baked HTML to local file {name}. ({ex})".format(name=filename, ex=ex))
 
 
 def main(**kwargs):
@@ -161,13 +143,8 @@ def main(**kwargs):
         args = parser.parse_args()
     else:
         args = parser.parse_args(**kwargs)
-    if args.project:
-        if not re.match("project-", args.project):
-            args.project = "project-" + args.project
-        path = "/"
-        if re.match("project-[\d\w]{24}:/", args.project):
-            path = re.sub("^project-[\d\w]{24}:", "", args.project)
-            args.project = re.sub("^(project-[\d\w]{24}):/.*", "\\1", args.project)
+    if not args.destination and not args.output:
+        parser.error("Nothing to do! (At least one of --destination and --output must be specified.)")
     remote_file_ids = []
     for i, source in enumerate(args.src):
         html = bake(source)
@@ -176,8 +153,8 @@ def main(**kwargs):
             link["target"] = "_top"
 
         # If we're supposed to upload the report to the server, upload the individual HTML file
-        if args.project:
-            remote_file_ids.append(upload_html(args.project, str(html), path, os.path.basename(source)))
+        if args.destination:
+            remote_file_ids.append(upload_html(args.destination, str(html), os.path.basename(source)))
 
         # If we're supposed to save locally, do that
         if args.output:
@@ -193,7 +170,7 @@ def main(**kwargs):
                 filename += index_str + ".html"
             save(filename, str(html))
     if len(remote_file_ids) > 0:
-        print(create_record(args.project, remote_file_ids, path, args.name or args.src[0]))
+        print(create_record(args.destination, remote_file_ids))
 
 
 if __name__ == "__main__":
