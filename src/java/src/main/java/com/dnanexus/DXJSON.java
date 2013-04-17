@@ -32,6 +32,10 @@ public class DXJSON {
 
     private static ObjectMapper mapper = new ObjectMapper();
 
+    // Utility class should not be instantiated
+    private DXJSON() {
+    }
+
     // TODO: helpers for making arrays
 
     /**
