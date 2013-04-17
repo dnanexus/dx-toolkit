@@ -52,6 +52,21 @@ on stdout.
 To add wrappers for your favorite language (say, Ruby):
 
 * Implement a function for making a single HTTP request to a DNAnexus API server. (You will call this function below in the implementation of each route's wrapper.) Add this and whatever other common bindings code are needed into a new directory, say, `src/ruby`.
-    * TODO: document under what conditions requests should be retried, and where configuration such as the user's security context is conventionally stored.
+    * See below for conventions regarding when HTTP requests are retried.
+    * TODO: document where configuration such as the user's security context is conventionally stored.
 * Create a file `generateRubyAPIWrappers.py` in the current directory (`src/api_wrappers`). This file should read a description of the routes on stdin (see `wrapper_table.json`), and produce a .rb file (with the relevant function definitions) on stdout. Look at `src/api_wrappers/generatePythonAPIWrappers.py` for an example.
 * Add a new make target in `src/Makefile` to build the wrappers, and make the `api_wrappers` target depend on it. Refer to the existing examples in the Makefile.
+
+HTTP Retry logic
+----------------
+
+An HTTP request to the API server should be retried (up to some fixed number of retries) if any of the following are true:
+
+* A response is received from the server, and the content length received does not match the "Content-Length" header.
+    * This indicates that the response was likely corrupted (truncated).
+* A response is received from the server, and the response has an HTTP status code in 5xx range.
+    * This may indicate that the server encountered a transient error.
+* A response is received from the server, the "Content-Length" header is not set, and the response JSON cannot be parsed.
+    * This is a mechanism that allows for the server to indicate a transient error encountered during a streaming response (after the headers have been sent), simply by halting output.
+* No response is received from the server, and either *always_retry* (caller-supplied parameter) is True or the request *method* is "GET".
+* It is certain that the request was never received by the server (some clients may not be able to determine whether this was the case).
