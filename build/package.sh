@@ -18,6 +18,12 @@
 
 ostype=$(uname)
 
+product_name=$1
+if [[ $product_name == "" ]]; then
+    product_name="unknown"
+fi
+echo "$product_name" > "$(basename $0)"/info/target
+
 # Hide any existing Python packages from the build process.
 export PYTHONPATH=
 
@@ -28,12 +34,6 @@ make
 rm Makefile
 rm -rf debian src/{java,javascript,perl,R,ruby,ua} share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
-
-product_name=$1
-if [[ $product_name == "" ]]; then
-    product_name="unknown"
-fi
-echo "$product_name" > build/built_target
 
 # setuptools bakes the path of the Python interpreter into all installed Python scripts. Rewrite it back to the more
 # portable form "/usr/bin/env python2.7", since we don't always know where the right interpreter is on the target
