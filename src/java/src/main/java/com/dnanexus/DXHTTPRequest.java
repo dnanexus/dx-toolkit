@@ -35,7 +35,6 @@ public class DXHTTPRequest {
     private final JsonNode securityContext;
     private final String apiserver;
     private final DefaultHttpClient httpclient;
-    private final JsonFactory dxJsonFactory;
 
     private static int NUM_RETRIES = 5;
 
@@ -45,7 +44,6 @@ public class DXHTTPRequest {
         this.securityContext = env.getSecurityContext();
         this.apiserver = env.getApiserverPath();
         this.httpclient = new DefaultHttpClient();
-        this.dxJsonFactory = new MappingJsonFactory();
     }
 
     private String errorMessage(String method, String resource, String errorString,
@@ -60,10 +58,24 @@ public class DXHTTPRequest {
     }
 
     /**
-     * Issues a request against the specified resource and returns the result
-     * as a String.
+     * Holds either the raw text of a response or a parsed JSON version of it.
      */
-    public String request(String resource, String data) throws Exception {
+    private static class ParsedResponse {
+        public final String responseText;
+        public final JsonNode responseJson;
+
+        public ParsedResponse(String responseText, JsonNode responseJson) {
+            this.responseText = responseText;
+            this.responseJson = responseJson;
+        }
+    }
+
+    /**
+     * Issues a request against the specified resource and returns either the
+     * text of the response or the parsed JSON of the response (depending on
+     * whether parseResponse is set).
+     */
+    private ParsedResponse requestImpl(String resource, String data, boolean parseResponse) throws Exception {
         HttpPost request = new HttpPost(apiserver + resource);
 
         request.setHeader("Content-Type", "application/json");
@@ -104,7 +116,27 @@ public class DXHTTPRequest {
                         System.err.println(errorMessage("POST", resource, errorStr, timeout, i + 1,
                                                         NUM_RETRIES));
                     } else {
-                        return new String(value, "UTF-8");
+                        if (parseResponse) {
+                            JsonNode responseJson = null;
+                            try {
+                                responseJson = DXJSON.parseJson(new String(value, "UTF-8"));
+                            } catch (JsonProcessingException e) {
+                                if (entity.getContentLength() < 0) {
+                                    // content-length was not provided, and the
+                                    // JSON could not be parsed. Retry since
+                                    // this is a streaming request from the
+                                    // server that probably just encountered a
+                                    // transient error.
+                                } else {
+                                    throw e;
+                                }
+                            }
+                            if (responseJson != null) {
+                                return new ParsedResponse(null, responseJson);
+                            }
+                        } else {
+                            return new ParsedResponse(new String(value, "UTF-8"), null);
+                        }
                     }
                 } else {
                     // Non-200 status codes.
@@ -131,12 +163,18 @@ public class DXHTTPRequest {
 
     /**
      * Issues a request against the specified resource and returns the result
+     * as a String.
+     */
+    public String request(String resource, String data) throws Exception {
+        return requestImpl(resource, data, false).responseText;
+    }
+
+    /**
+     * Issues a request against the specified resource and returns the result
      * as a JSON object.
      */
     public JsonNode request(String resource, JsonNode data) throws Exception {
         String dataAsString = data.toString();
-        String response = this.request(resource, dataAsString);
-        JsonNode root = dxJsonFactory.createJsonParser(response).readValueAsTree();
-        return root;
+        return requestImpl(resource, dataAsString, true).responseJson;
     }
 }

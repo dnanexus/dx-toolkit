@@ -16,7 +16,9 @@
 
 package com.dnanexus;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
@@ -24,16 +26,25 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import java.io.IOException;
 
 /**
  * Utility class for working with JSON objects.
  */
 public class DXJSON {
 
+    private static final JsonFactory dxJsonFactory = new MappingJsonFactory();
     private static ObjectMapper mapper = new ObjectMapper();
 
     // Utility class should not be instantiated
     private DXJSON() {
+    }
+
+    /**
+     * Parses the specified string into a JSON object.
+     */
+    public static JsonNode parseJson(String stringified) throws IOException {
+        return dxJsonFactory.createJsonParser(stringified).readValueAsTree();
     }
 
     // TODO: helpers for making arrays

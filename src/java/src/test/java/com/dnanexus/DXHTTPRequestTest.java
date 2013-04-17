@@ -30,8 +30,13 @@ public class DXHTTPRequestTest {
 
     @Test public void testDXAPI() throws Exception {
         DXHTTPRequest c = new DXHTTPRequest();
-        JsonNode root = c.request("/system/findDataObjects", (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
-        System.out.println(root);
+        JsonNode responseJson = c.request("/system/findDataObjects",
+                                          (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
+        org.junit.Assert.assertEquals(responseJson.isObject(), true);
+        // System.out.println(responseJson);
+
+        String responseText = c.request("/system/findDataObjects", "{}");
+        org.junit.Assert.assertEquals(responseText.substring(0, 1), "{");
     }
 
     @After public void tearDown() throws Exception {

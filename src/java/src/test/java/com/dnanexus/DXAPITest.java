@@ -31,8 +31,9 @@ public class DXAPITest {
     @Test public void testDXAPI() throws Exception {
         DXAPI dx = new DXAPI();
         JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
-        JsonNode root = dx.systemFindDataObjects(input);
-        System.out.println(root);
+        JsonNode responseJson = dx.systemFindDataObjects(input);
+        org.junit.Assert.assertEquals(responseJson.isObject(), true);
+        // System.out.println(responseJson);
     }
 
     @After public void tearDown() throws Exception {
