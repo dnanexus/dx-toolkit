@@ -26,8 +26,14 @@ cd "${DNANEXUS_HOME}"
 make clean
 make
 rm Makefile
-rm -r debian src/{java,javascript,perl,R,ruby,ua} share/dnanexus/lib/javascript
+rm -rf debian src/{java,javascript,perl,R,ruby,ua} share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
+
+product_name=$1
+if [[ $product_name == "" ]]; then
+    product_name="unknown"
+fi
+echo "$product_name" > build/built_target
 
 # setuptools bakes the path of the Python interpreter into all installed Python scripts. Rewrite it back to the more
 # portable form "/usr/bin/env python2.7", since we don't always know where the right interpreter is on the target
@@ -87,7 +93,7 @@ elif [[ "$ostype" == 'Darwin' ]]; then # Mac OS
   cd $tempdir/dx-toolkit/share/dnanexus/lib/python2.7/site-packages
   # e.g. readline-6.2.4.1-py2.7-macosx-10.7-intel.egg => readline-6.2.4.1-py2.7.egg
   for readline_egg in readline-*; do
-    mv $readline_egg ${readline_egg/-macosx-10.*-intel/}
+    mv $readline_egg ${readline_egg/-macosx-10.*-intel/} || true
   done
   sed -i -e 's/-py2.7-macosx-10\.[0-9]+-intel.egg/-py2.7.egg/' easy-install.pth
 
