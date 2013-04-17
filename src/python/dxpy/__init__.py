@@ -193,10 +193,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
     :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if any of the following is true:
-                        
-                        - Content length received does not match "Content-Length" header (only applicable if response is received from server)
-                        - Server responded with HTTP status code in 5xx range (only applicable if response is received from server)
-                        - If no response is received from server, then we retry if *always_retry* is True, or *method* == "GET"
+
+                        - A response is received from the server, and the content length received does not match the "Content-Length" header.
+                        - A response is received from the server, and the response has an HTTP status code in 5xx range.
+                        - A response is received from the server, the "Content-Length" header is not set, and the response JSON cannot be parsed.
+                        - No response is received from the server, and either *always_retry* is True or the request *method* is "GET".
 
     :type max_retries: int
     :param always_retry: If True, indicates that it is safe to retry a request on failure 
@@ -257,6 +258,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     response, last_error = None, None
     for retry in range(max_retries + 1):
+        streaming_response_truncated = False
         try:
             response = SESSION_HANDLER.request(method, url, data=data, headers=headers, timeout=timeout,
                                                auth=auth, config=config, **kwargs)
@@ -302,6 +304,13 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                     try:
                         return json.loads(decoded_content)
                     except ValueError:
+                        # If a streaming API call (no content-length
+                        # set) encounters an error it may just halt the
+                        # response because it has no other way to
+                        # indicate an error. Under these circumstances
+                        # the client sees unparseable JSON, and we
+                        # should be able to recover.
+                        streaming_response_truncated = 'content-length' not in response.headers
                         raise HTTPError("Invalid JSON received from server")
                 return decoded_content
         except (DXAPIError, ConnectionError, HTTPError, httplib.HTTPException) as e:
@@ -315,7 +324,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                 if (response is None) or isinstance(e, ContentLengthError):
                     ok_to_retry = always_retry or (method == 'GET')
                 else:
-                    ok_to_retry = response.status_code >= 500 and response.status_code < 600 
+                    ok_to_retry = (response.status_code >= 500 and response.status_code < 600) or streaming_response_truncated
 
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
