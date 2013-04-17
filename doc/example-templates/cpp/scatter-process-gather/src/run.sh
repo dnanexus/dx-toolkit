@@ -4,21 +4,21 @@
 # points.
 
 main() {
-        /DX_APP_WIZARD_NAME
+        DX_APP_WIZARD_NAME
 }
 
 scatter() {
-        /DX_APP_WIZARD_NAME scatter
+        DX_APP_WIZARD_NAME scatter
 }
 
 map() {
-        /DX_APP_WIZARD_NAME map
+        DX_APP_WIZARD_NAME map
 }
 
 process() {
-        /DX_APP_WIZARD_NAME process
+        DX_APP_WIZARD_NAME process
 }
 
 postprocess() {
-        /DX_APP_WIZARD_NAME postprocess
+        DX_APP_WIZARD_NAME postprocess
 }

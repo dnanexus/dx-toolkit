@@ -141,7 +141,7 @@ class DXJob(DXObject):
                         else:
                             raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
                 else:
-                    raise DXError('Expected depends_on field to be a list')                    
+                    raise DXError('Expected depends_on field to be a list')
             if details is not None:
                 req_input["details"] = details
             resp = dxpy.api.job_new(req_input, **kwargs)

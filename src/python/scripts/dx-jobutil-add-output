@@ -56,7 +56,8 @@ if args.classname == 'auto':
         value = {'$dnanexus_link': args.value}
     else:
         colon_substrings = split_unescaped(':', args.value)
-        if len(colon_substrings) == 2 and is_job_id(colon_substrings[0]):
+        if len(colon_substrings) == 2 and (is_job_id(colon_substrings[0]) or \
+                                               is_localjob_id(colon_substrings[0])):
             value = {"job": colon_substrings[0],
                      "field": unescape_name_str(colon_substrings[1])}
         else:
@@ -102,7 +103,8 @@ elif args.classname == 'dxobject':
             parser.exit(1, 'Value could not be parsed as a data object ID or hash with key "$dnanexus_link"\n')
 elif args.classname == 'jobref':
     colon_substrings = split_unescaped(':', args.value)
-    if len(colon_substrings) == 2 and is_job_id(colon_substrings[0]):
+    if len(colon_substrings) == 2 and (is_job_id(colon_substrings[0]) or \
+                                           is_localjob_id(colon_substrings[0])):
         value = {"job": colon_substrings[0],
                  "field": unescape_name_str(colon_substrings[1])}
     else:

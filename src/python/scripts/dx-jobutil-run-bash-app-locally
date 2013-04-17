@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+import sys, collections
+import os, shutil, subprocess, tempfile
+import json
+import argparse
+import datetime
+from dxpy.utils.printing import *
+from dxpy.utils.describe import io_val_to_str
+from dxpy.cli.exec_io import *
+from dxpy.scripts import dx_build_app
+import dxpy.utils.bash_exec_utils as bash_exec_utils
+
+# TODO: Perhaps allow a flag to allow running of a single entry point
+
+parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx-build-app(let).')
+parser.add_argument('path', help='Local path to an app directory')
+parser.add_argument('--workspace-path', help="Local directory in which jobs will have their home directories (default is a directory called 'test-job-workspaces' within the app directory)")
+parser.add_argument('-i', '--input', help=fill('An input to be used in calling the app "<input name>[:<class>]=<input value>", where class can be any job IO class, e.g. "string", "array:string", or "array".  If class is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string', width_adjustment=-24), action='append')
+parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
+parser.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+parser.add_argument('--split-logs', help='Whether to split stderr and stdout into separate files for each job', action='store_true')
+parser.add_argument('--watch', help='Whether to also print job logs to the console after each local job finishes', action='store_true')
+parser.add_argument('-x', '--verbose', help='Adds the -x flag to bash invocations so that each command is echoed', action='store_true')
+args = parser.parse_args()
+
+# Run it through dx-build-app (dry run) to do some basic checking
+with tempfile.TemporaryFile() as fd:
+    print "About to run 'dx-build-app --dry-run " + args.path + "'"
+    import logging
+    logger = logging.getLogger('dxpy')
+    logger.propagate = False
+    sys.stdout = fd
+    sys.stderr = fd
+    sys.argv = ['dx-build-app', '--dry-run', args.path]
+    build_error = None
+    try:
+        dx_build_app.main()
+    except BaseException as e:
+        build_error = e
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+    logger.propagate = True
+    if build_error:
+        fd.seek(0)
+        print fd.read()
+        sys.exit(build_error)
+    else:
+        print 'Dry run successful'
+
+path_to_dxapp_json = os.path.join(args.path, 'dxapp.json')
+
+with open(path_to_dxapp_json, 'r') as fd:
+    dxapp_json = json.load(fd)
+
+if dxapp_json['runSpec']['interpreter'] != 'bash':
+    parser.exit(3, fill('Error: This testing utility is only for apps which use the bash interpreter') + '\n')
+
+job_inputs = ExecutableInputs(input_spec=dxapp_json.get('inputSpec'))
+job_inputs.update_from_args(args)
+
+if args.workspace_path is None:
+    args.workspace_path = os.path.join(args.path, 'test-job-workspaces')
+
+if not os.path.exists(args.workspace_path):
+    os.mkdir(args.workspace_path)
+if not os.path.isdir(args.workspace_path):
+    parser.exit(1,
+                fill('Error: The path to be used for job home directories is not a directory') + '\n')
+
+job_homedirs = os.path.join(args.workspace_path, datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S'))
+os.mkdir(job_homedirs)
+all_job_outputs_path = os.path.join(job_homedirs, 'job_outputs.json')
+with open(all_job_outputs_path, 'w') as fd:
+    fd.write('{}\n')
+
+job_queue_path = os.path.join(job_homedirs, 'job_queue.json')
+with open(job_queue_path, 'w') as fd:
+    fd.write('[]\n')
+
+code_path = os.path.join(job_homedirs, 'code.sh')
+if 'code' in dxapp_json['runSpec']:
+    with open(code_path, 'w') as fd:
+        fd.write(dxapp_json['runSpec']['code'])
+else:
+    shutil.copy(os.path.join(args.path, dxapp_json['runSpec']['file']), code_path)
+
+resources_path = os.path.join(args.path, 'resources')
+if os.path.isdir(resources_path):
+    os.environ['PATH'] = os.path.join(resources_path, 'bin') + os.pathsep + \
+        os.path.join(resources_path, 'usr', 'local', 'bin') + os.pathsep + \
+        os.path.join(resources_path, 'usr', 'bin') + os.pathsep + os.environ['PATH']
+
+os.environ['DX_BASHTEST_CODE_PATH'] = code_path
+os.environ['DX_BASHTEST_RESOURCES_PATH'] = resources_path
+os.environ['DX_BASHTEST_JOB_HOMEDIRS'] = job_homedirs
+if args.split_logs:
+    os.environ['DX_BASHTEST_SPLIT_LOGS'] = '1'
+if args.watch:
+    os.environ['DX_BASHTEST_WATCH'] = '1'
+if args.verbose:
+    os.environ['DX_BASHTEST_X_FLAG'] = '1'
+
+print 'About to run bash app ' + dxapp_json['name'] + ' locally'
+print 'Local working directory: ' + job_homedirs
+
+main_job_id = bash_exec_utils.queue_entry_point(function='main',
+                                                input_hash=job_inputs.inputs)
+bash_exec_utils.run_entry_points()
+
+print 'App finished successfully'
+with open(all_job_outputs_path, 'r') as fd:
+    job_outputs = json.load(fd)
+    if main_job_id in job_outputs:
+        print job_output_to_str(job_outputs[main_job_id], title="Final output: ")
