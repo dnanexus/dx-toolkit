@@ -21,7 +21,7 @@ import dxpy
 from dxpy.cli.parsers import *
 from dxpy.utils.resolver import *
 
-parser = argparse.ArgumentParser(description='Import a local file as a GenomicTable.  If no flags are given, the file given will be interpreted based on its contents.',
+parser = argparse.ArgumentParser(description='Import a local file as a GenomicTable.  The table will be closed after creation.  If no flags are given, the file given will be interpreted based on its contents.',
                                  parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args])
 parser.add_argument('filename', help='local filename to import ("-" indicates stdin input)')
 parser.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"')
