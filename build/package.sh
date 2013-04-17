@@ -22,7 +22,7 @@ product_name=$1
 if [[ $product_name == "" ]]; then
     product_name="unknown"
 fi
-echo "$product_name" > "$(basename $0)"/info/target
+echo "$product_name" > "$(dirname $0)"/info/target
 
 # Hide any existing Python packages from the build process.
 export PYTHONPATH=
