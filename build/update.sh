@@ -8,7 +8,7 @@ fi
 
 new_version=$1
 build_target_name=$2
-build_dir=$(dirname $0)
+build_dir=$(dirname "$0")
 
 function cleanup() {
     echo "$(basename $0): Unable to update to version ${new_version} $@"
