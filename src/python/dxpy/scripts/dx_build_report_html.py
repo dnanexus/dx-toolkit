@@ -26,14 +26,15 @@ import cgi
 import dxpy
 from dx_build_app import parse_destination
 import imghdr
+import json
 import os
 import re
 import urllib2
 
-parser = argparse.ArgumentParser(description="Constructs and uploads an HTML report from HTML and attached images")
+parser = argparse.ArgumentParser(description="Constructs and saves/uploads an HTML report from HTML and/or linked images")
 parser.add_argument("src", help="Source image or HTML file", nargs="+")
-parser.add_argument("-o", "--output", help="Local file to save baked HTML to", default=None)
-parser.add_argument("-d", "--destination", help="Destination project ID. Can also be a full path in the form PROJECT:/PATH/TO/FOLDER/REPORT_NAME")
+parser.add_argument("-r", "--remote", help="Destination route. Can be: (1) a project ID, (2) a path, with or without object name (e.g. /PATH/REPORT_NAME), (3) project ID + path (e.g. PROJECT:/PATH/REPORT_NAME)")
+parser.add_argument("--local", help="Local file to save baked HTML to", default=None)
 
 
 def _image_to_data(img):
@@ -143,8 +144,8 @@ def main(**kwargs):
         args = parser.parse_args()
     else:
         args = parser.parse_args(**kwargs)
-    if not args.destination and not args.output:
-        parser.error("Nothing to do! (At least one of --destination and --output must be specified.)")
+    if not args.remote and not args.local:
+        parser.error("Nothing to do! (At least one of --remote and --local must be specified.)")
     remote_file_ids = []
     for i, source in enumerate(args.src):
         html = bake(source)
@@ -153,12 +154,12 @@ def main(**kwargs):
             link["target"] = "_top"
 
         # If we're supposed to upload the report to the server, upload the individual HTML file
-        if args.destination:
-            remote_file_ids.append(upload_html(args.destination, str(html), os.path.basename(source)))
+        if args.remote:
+            remote_file_ids.append(upload_html(args.remote, str(html), os.path.basename(source)))
 
         # If we're supposed to save locally, do that
-        if args.output:
-            filename = args.output
+        if args.local:
+            filename = args.local
             # We may have to wrangle the filename a little if there are multiple output files
             if len(args.src) > 1:
                 index_str = "." + str(i)
@@ -170,7 +171,9 @@ def main(**kwargs):
                 filename += index_str + ".html"
             save(filename, str(html))
     if len(remote_file_ids) > 0:
-        print(create_record(args.destination, remote_file_ids))
+        json_out = {"fileIds": remote_file_ids}
+        json_out["recordId"] = create_record(args.remote, remote_file_ids)
+        print json.dumps(json_out)
 
 
 if __name__ == "__main__":
