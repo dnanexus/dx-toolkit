@@ -24,6 +24,7 @@
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include "options.h"
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/utils.h"
@@ -229,6 +230,13 @@ void Chunk::upload() {
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));
     }
   }
+  // Set time out to infinite
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
+  
+  if (opt.verbose) {
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1));
+  }
+
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()));
   // Internal CURL progressmeter must be disabled if we provide our own callback
   checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0));
@@ -274,7 +282,7 @@ void Chunk::upload() {
     slist = curl_slist_append(slist, cmd5.str().c_str());
   }
 
-  log("Starting curl_easy_perform...");
+  log("Starting curl_easy_perform...\n");
   checkPerformCURLcode(curl_easy_perform(curl));
 
   long responseCode;

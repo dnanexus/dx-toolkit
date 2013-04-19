@@ -16,6 +16,7 @@
 
 #include "file.h"
 #include "dxcpp/dxcpp.h"
+#include "options.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -126,6 +127,9 @@ void File::init(const bool tryResuming) {
       DXLOG(logINFO) << "A resume target is found .. " << endl;
       cerr << "Signature of file " << localFile << " matches remote file: " << findResult[0]["describe"]["name"].get<string>() 
            << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it";
+      if (opt.verbose) {
+        cerr << endl;
+      }
       DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
     }
     if (findResult.size() > 1) {
@@ -145,6 +149,9 @@ void File::init(const bool tryResuming) {
     DXLOG(logINFO) << "fileID is " << fileID << endl;
     
     cerr << "Uploading file " << localFile << " to file object " << fileID;
+    if (opt.verbose) {
+      cerr << endl;
+    }
   }
 }
 
