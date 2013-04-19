@@ -32,6 +32,7 @@ dxR.Rcheck
 /bin/dx-bed-to-spans
 /bin/dx-build-app
 /bin/dx-build-applet
+/bin/dx-build-report-html
 /bin/dx-contigset-to-fasta
 /bin/dx-csv-to-gtable
 /bin/dx-fastq-to-reads

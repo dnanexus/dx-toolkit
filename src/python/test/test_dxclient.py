@@ -462,9 +462,13 @@ class TestDXBuildReportHtml(unittest.TestCase):
         report = json.loads(run(u"dx-build-report-html {d}/index.html --remote /html_report".format(d=self.temp_file_path)))
         fileId = report["fileIds"][0]
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=report["recordId"])))
-        self.assertEquals(desc["types"], ["Report", "HTMLReport"])
-        self.assertEquals(desc["name"], "html_report")
+        self.assertEquals(desc["types"], [u"Report", u"HTMLReport"])
+        self.assertEquals(desc["name"], u"html_report")
         self.assertEquals(desc["details"]["files"][0]["$dnanexus_link"]["id"], fileId)
+        desc = json.loads(run(u"dx describe {file} --details --json".format(file=fileId)))
+        self.asserttTrue(desc["hidden"])
+        self.assertEquals(desc["name"], u"index.html")
+        run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
 
 
 if __name__ == '__main__':
