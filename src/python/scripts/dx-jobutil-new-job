@@ -17,6 +17,7 @@
 #   under the License.
 
 import sys, collections
+import os
 import json
 import argparse
 from dxpy.utils.printing import *
@@ -31,21 +32,26 @@ parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=i
 parser.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 args = parser.parse_args()
 
-import dxpy.api
-
-job_new_input = {"function": args.function}
-
-if args.name is not None:
-    job_new_input["name"] = args.name
-
-if args.depends_on is not None:
-    job_new_input["dependsOn"] = args.depends_on
-
 entry_point_inputs = ExecutableInputs()
 entry_point_inputs.update_from_args(args)
 
-job_new_input["input"] = entry_point_inputs.inputs
+if os.environ.get('DX_JOB_ID') is not None:
+    import dxpy.api
 
-resp = dxpy.api.job_new(job_new_input)
+    job_new_input = {"function": args.function}
 
-print resp["id"]
+    if args.name is not None:
+        job_new_input["name"] = args.name
+
+    if args.depends_on is not None:
+        job_new_input["dependsOn"] = args.depends_on
+
+    job_new_input["input"] = entry_point_inputs.inputs
+
+    resp = dxpy.api.job_new(job_new_input)
+
+    print resp["id"]
+else:
+    from dxpy.utils.bash_exec_utils import queue_entry_point
+    print queue_entry_point(function=args.function,
+                            input_hash=entry_point_inputs.inputs)
