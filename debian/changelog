@@ -1,3 +1,9 @@
+dx-toolkit (0.45.2) precise; urgency=low
+
+  * Properly quote names of of files being syntax checked.
+
+ -- Phil Sung <psung@dnanexus.com>  Fri, 19 Apr 2013 14:34:11 -0700
+
 dx-toolkit (0.45.1) precise; urgency=low
 
   * Bug fix for dx-build-app(let).
