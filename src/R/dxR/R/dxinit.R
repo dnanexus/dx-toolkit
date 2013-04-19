@@ -200,13 +200,25 @@ dxHTTPRequest <- function(resource, data,
     } else {
       statusCode <- as.numeric(d$value()['status'])
       if (statusCode == 200) {
-        if ('Content-Length' %in% d$value() &&
-            as.numeric(d$value()['Content-Length']) != nchar(h$value(), type="bytes")) {
-          toRetry <- TRUE
-        } else {
-          # DEBUG:
-          # print(h$value())
+        # DEBUG:
+        # print(h$value())
+        if ('Content-Length' %in% names(d$value())) {
+          if (as.numeric(d$value()['Content-Length']) != nchar(h$value(), type="bytes")) {
+            # Content-Length mismatch -> retry
+            toRetry <- TRUE
+          } else if (RJSONIO::isValidJSON(h$value(), TRUE)) {
+            # Content-Length match && valid JSON
+            return (RJSONIO::fromJSON(h$value()))
+          } else {
+            # Content-Length match && invalid JSON -> error
+            stop('Invalid JSON received from server', call.=FALSE)
+          }
+        } else if (RJSONIO::isValidJSON(h$value(), TRUE)) {
+          # No Content-Length header && valid JSON
           return (RJSONIO::fromJSON(h$value()))
+        } else {
+          # No Content-Length header && invalid JSON -> retry
+          toRetry <- TRUE
         }
       } else if (statusCode >= 500 && statusCode <= 599) {
         toRetry <- TRUE
@@ -248,5 +260,8 @@ dxHTTPRequest <- function(resource, data,
     }
 
     secondsToWait <- 2 * secondsToWait
+    # Reset gatherers for next retry
+    h$reset()
+    d$reset()
   }
 }
