@@ -258,9 +258,9 @@ def _check_file_syntax(filename, override_lang=None):
     Raises subprocess.CalledProcessError if there is a problem.
     """
     def check_python(filename):
-        subprocess.check_output("%s -m py_compile %s 2>&1" % (sys.executable, filename), shell=True)
+        subprocess.check_output([sys.executable, "-m", "py_compile", filename], stderr=subprocess.STDOUT)
     def check_bash(filename):
-        subprocess.check_output("/bin/bash -n %s 2>&1" % (filename,), shell=True)
+        subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
 
     if override_lang == 'python2.7':
         checker_fn = check_python
