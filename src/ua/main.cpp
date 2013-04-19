@@ -284,10 +284,7 @@ void waitOnClose(vector<File> &files) {
 }
 
 void uploadProgressHelper(vector<File> &files) {
-  if (opt.progress)
-    cerr << "\n";
-  else
-    cerr << "\r";
+  cerr << ((opt.verbose) ? "\n" : "\r");
 
   // Print individual file progress
   boost::mutex::scoped_lock boLock(bytesUploadedMutex);
