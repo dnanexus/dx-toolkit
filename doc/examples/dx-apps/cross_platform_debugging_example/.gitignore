@@ -1,0 +1,5 @@
+resources/usr/bin/
+resources/usr/lib/
+mac_resources/usr/bin/
+mac_resources/usr/lib/
+src/greeter/*.o

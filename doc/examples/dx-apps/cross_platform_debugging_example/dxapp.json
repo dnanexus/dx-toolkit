@@ -1,0 +1,26 @@
+{
+  "name": "cross_platform_debugging_example",
+  "title": "Cross-Platform Debugging Example",
+  "summary": "Demonstrates use of separate Linux and Mac binaries for approximate cross-platform parity",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "inputSpec": [
+    {
+      "name": "name",
+      "label": "Your name",
+      "class": "string",
+      "optional": false
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "greeting",
+      "label": "A greeting",
+      "class": "string"
+    }
+  ],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/cross_platform_debugging_example.sh"
+  }
+}
