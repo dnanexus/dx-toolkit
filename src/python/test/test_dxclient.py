@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, json, tempfile, subprocess, csv, shutil, re
+import os, unittest, json, tempfile, subprocess, csv, shutil, re, base64
 
 from contextlib import contextmanager
 
@@ -404,6 +404,77 @@ class TestDXBuildApp(unittest.TestCase):
                                            code_content="def improper():\nprint 'oops'")
         with self.assertSubprocessFailure(stderr_regexp="Entry point file \\S+ has syntax errors"):
             run("dx-build-applet " + app_dir)
+
+
+class TestDXBuildReportHtml(unittest.TestCase):
+    def setUp(self):
+        self.temp_file_path = tempfile.mkdtemp()
+        self.gif_base64 = "R0lGODdhAQABAIAAAAQCBAAAACwAAAAAAQABAAACAkQBADs="
+        gif_file = open("{}/img.gif".format(self.temp_file_path), "w")
+        gif_file.write(base64.b64decode(self.gif_base64))
+        gif_file.close()
+        wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
+        html_file = open("{}/index.html".format(self.temp_file_path), "w")
+        html = "<html><body><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
+        html_file.write(html)
+        html_file.close()
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+
+    # Be sure to use the check_output defined in this module if you wish
+    # to use stderr_regexp. Python's usual subprocess.check_output
+    # doesn't propagate stderr back to us.
+    @contextmanager
+    def assertSubprocessFailure(self, output_regexp=None, stderr_regexp=None, exit_code=3):
+        try:
+            yield
+        except subprocess.CalledProcessError as e:
+            self.assertEqual(exit_code, e.returncode, "Expected command to return code %d but it returned code %d" % (exit_code, e.returncode))
+            if output_regexp:
+                print "stdout:"
+                print e.output
+                self.assertTrue(re.search(output_regexp, e.output), "Expected stdout to match '%s' but it didn't" % (output_regexp,))
+            if stderr_regexp:
+                if not hasattr(e, 'stderr'):
+                    raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
+                print "stderr:"
+                print e.stderr
+                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
+            return
+        self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
+
+    def test_local_file(self):
+        run(u"dx-build-report-html {d}/index.html --local {d}/out.html".format(d=self.temp_file_path))
+        out_path = "{}/out.html".format(self.temp_file_path)
+        self.assertTrue(os.path.exists(out_path))
+        f = open(out_path, "r")
+        html = f.read()
+        f.close()
+        self.assertTrue(re.search(self.gif_base64, html))
+        self.assertEquals(len(re.split("src=\"data:image", html)), 3)
+        self.assertEquals(len(re.split("<img", html)), 3)
+
+    def test_image_only(self):
+        run(u"dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
+        out_path = "{}/gif.html".format(self.temp_file_path)
+        self.assertTrue(os.path.exists(out_path))
+        f = open(out_path, "r")
+        html = f.read()
+        f.close()
+        self.assertTrue(html.startswith("<html><body><img src=\"data:"))
+
+    def test_remote_file(self):
+        report = json.loads(run(u"dx-build-report-html {d}/index.html --remote /html_report".format(d=self.temp_file_path)))
+        fileId = report["fileIds"][0]
+        desc = json.loads(run(u"dx describe {record} --details --json".format(record=report["recordId"])))
+        self.assertEquals(desc["types"], [u"Report", u"HTMLReport"])
+        self.assertEquals(desc["name"], u"html_report")
+        self.assertEquals(desc["details"]["files"][0]["$dnanexus_link"]["id"], fileId)
+        desc = json.loads(run(u"dx describe {file} --details --json".format(file=fileId)))
+        self.asserttTrue(desc["hidden"])
+        self.assertEquals(desc["name"], u"index.html")
+        run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
+
 
 if __name__ == '__main__':
     unittest.main()
