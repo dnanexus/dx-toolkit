@@ -193,10 +193,10 @@ def run_one_entry_point(job_id, function, input_hash):
 
     fn_process = subprocess.Popen(['bash', '-c', '-e'] + \
                                       (['-x'] if os.environ.get('DX_BASHTEST_X_FLAG') else []) + \
-                                      ['cd {homedir}; . {env}; . {code}; if [[ $(type -t {function}) == "function" ]]; then {function}; else echo "$0: Global scope execution complete. Not invoking entry point function {function} because it was not found" 1>&2; fi'.format(homedir=job_homedir,
-                                                                                            env=os.path.join(job_env['HOME'], 'environment'),
-                                                                                            code=os.environ['DX_BASHTEST_CODE_PATH'],
-                                                                                            function=function)],
+                                      ['cd {homedir}; . {env}; . {code}; if [[ $(type -t {function}) == "function" ]]; then {function}; else echo "$0: Global scope execution complete. Not invoking entry point function {function} because it was not found" 1>&2; fi'.format(homedir=pipes.quote(job_homedir),
+                                                                                                                                                                                                                                                                                env=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
+                                                                                                                                                                                                                                                                                code=pipes.quote(os.environ['DX_BASHTEST_CODE_PATH']),
+                                                                                                                                                                                                                                                                                function=function)],
                                   stdout=job_stdout,
                                   stderr=job_stderr,
                                   env=job_env)
