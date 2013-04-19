@@ -253,7 +253,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if dx_toolkit_autodep == "git":
         dx_toolkit_dep = {"name": "dx-toolkit",
                           "package_manager": "git",
-                          "url": "git@github.com:dnanexus/dx-toolkit.git",
+                          "url": "git://github.com/dnanexus/dx-toolkit.git",
                           "tag": "master",
                           "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
     elif dx_toolkit_autodep == "stable":
