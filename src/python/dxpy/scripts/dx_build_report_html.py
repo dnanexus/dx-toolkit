@@ -44,7 +44,7 @@ def _image_to_data(img):
     # If the image is already encoded in Base64, we have nothing to do here
     if not "src" in img.attrs or img["src"].startswith("data:"):
         return
-    elif re.match("http[s]://", img["src"]):
+    elif re.match("https?://", img["src"]):
         img_data = _load_url(img["src"]).read()
     else:
         img_data = _load_file(img["src"]).read()
