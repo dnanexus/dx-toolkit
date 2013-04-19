@@ -40,7 +40,21 @@ except:
 
 if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
     try:
+        # Hack: on some operating systems, like Mac, readline spews
+        # escape codes into the output at import time if TERM is set to
+        # xterm (or xterm-256color). This can be a problem if dx is
+        # being used noninteractively (e.g. --json) and its output will
+        # be redirected or parsed elsewhere.
+        #
+        # http://reinout.vanrees.org/weblog/2009/08/14/readline-invisible-character-hack.html
+        old_term_setting = None
+        if os.environ.has_key('TERM') and os.environ['TERM'].startswith('xterm'):
+            old_term_setting = os.environ['TERM']
+            os.environ['TERM'] = 'vt100'
         import readline
+        if old_term_setting:
+            os.environ['TERM'] = old_term_setting
+
         if 'libedit' in readline.__doc__:
             print >>sys.stderr, 'Warning: incompatible readline module detected (libedit), tab completion disabled'
     except ImportError:
