@@ -152,6 +152,9 @@ def is_container_id(string):
 def is_job_id(string):
     return is_hashid(string) and string.startswith('job-')
 
+def is_localjob_id(thing):
+    return (os.environ.get('DX_JOB_ID') is None and thing.startswith('localjob-'))
+
 def is_nohash_id(string):
     return nohash_pattern.match(string) is not None
 

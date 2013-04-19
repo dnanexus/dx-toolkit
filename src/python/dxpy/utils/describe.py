@@ -159,7 +159,9 @@ def is_job_ref(thing, reftype=dict):
 
 def get_job_from_jbor(thing):
     '''
-    Assumes is_job_ref evaluates to True
+    :returns: Job ID from a JBOR
+
+    Assumes :func:`is_job_ref` evaluates to True
     '''
     if '$dnanexus_link' in thing:
         return thing['$dnanexus_link']['job']
@@ -168,7 +170,9 @@ def get_job_from_jbor(thing):
 
 def get_field_from_jbor(thing):
     '''
-    Assumes is_job_ref evaluates to True
+    :returns: Output field name from a JBOR
+
+    Assumes :func:`is_job_ref` evaluates to True
     '''
     if '$dnanexus_link' in thing:
         return thing['$dnanexus_link']['field']
@@ -203,6 +207,14 @@ def io_val_to_str(val):
         return '{ ' + ', '.join([key + ': ' + io_val_to_str(value) for key, value in val.iteritems()]) + ' }'
     else:
         return json.dumps(val)
+
+def job_output_to_str(job_output, prefix='', title="Output: "):
+    if len(job_output) == 0:
+        return prefix + title + "-"
+    else:
+        return prefix + title + (prefix+' '*8).join([fill(key + ' = ' + io_val_to_str(value),
+                                                               subsequent_indent=' '*9,
+                                                               break_long_words=False) for key, value in job_output.items()])
 
 def get_io_field(io_hash, defaults={}, delim='=', highlight_fields=[]):
     if io_hash is None:
@@ -676,12 +688,7 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False, show_output
     if show_outputs:
         prefix = DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
         if jobdesc.get("output") != None:
-            if len(jobdesc["output"]) == 0:
-                result += prefix + "Output: -"
-            else:
-                result += prefix + "Output: " + (prefix+' '*8).join([fill(key + ' = ' + io_val_to_str(value),
-                                                                          subsequent_indent=' '*9,
-                                                                          break_long_words=False) for key, value in jobdesc["output"].items()])
+            result += job_output_to_str(jobdesc['output'], prefix=prefix)
         elif jobdesc['state'] == 'failed' and 'failureReason' in jobdesc:
             result += prefix + BOLD() + jobdesc['failureReason'] + ENDC() + ": " + fill(jobdesc.get('failureMessage', ''),
                                                                                         subsequent_indent=prefix.lstrip('\n'))

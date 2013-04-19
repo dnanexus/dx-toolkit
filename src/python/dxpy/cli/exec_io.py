@@ -86,7 +86,7 @@ parse_input = {'boolean': parse_bool,
 
 def parse_input_or_jbor(in_class, value):
     val_substrings = split_unescaped(':', value)
-    if len(val_substrings) == 2 and is_job_id(val_substrings[0]):
+    if len(val_substrings) == 2 and (is_job_id(val_substrings[0]) or is_localjob_id(val_substrings[0])):
         return {"job": val_substrings[0], "field": val_substrings[1]}
     else:
         if in_class.startswith('array:'):
@@ -398,14 +398,17 @@ def get_optional_input_str(param_desc):
     return param_desc.get('label', param_desc['name']) + ' (' + param_desc['name'] + ')'
 
 class ExecutableInputs(object):
-    def __init__(self, executable=None, input_name_prefix=None):
+    def __init__(self, executable=None, input_name_prefix=None, input_spec=None):
         self.executable = executable
         self._desc = {} if self.executable is None else executable.describe()
-        self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc else None
+        self.input_spec = collections.OrderedDict() if 'inputSpec' in self._desc or input_spec else None
         self.required_inputs, self.optional_inputs, self.array_inputs = [], [], set()
         self.input_name_prefix = input_name_prefix
 
-        for spec_atom in self._desc.get('inputSpec', []):
+        if input_spec is None:
+            input_spec = self._desc.get('inputSpec', [])
+
+        for spec_atom in input_spec:
             if spec_atom['class'].startswith('array:'):
                 self.array_inputs.add(spec_atom['name'])
             self.input_spec[spec_atom['name']] = spec_atom
@@ -448,7 +451,7 @@ class ExecutableInputs(object):
             try:
                 # Resolve "job-xxxx:output-name" syntax into a canonical job ref
                 job_id, field = split_unescaped(':', input_value)
-                if is_job_id(job_id):
+                if is_job_id(job_id) or is_localjob_id(job_id):
                     input_value = {"job": job_id, "field": field}
                     done = True
             except:
