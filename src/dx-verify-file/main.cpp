@@ -98,10 +98,12 @@ void verifyChunkMD5(vector<File> &files) {
       if (files[c->parentFileIndex].matchStatus == File::Status::FAILED_TO_MATCH_REMOTE_FILE) {
         // We have already marked file as a non-match, don't waste time reading more chunks from it
         c->log("File status == FAILED_TO_MATCH_REMOTE_FILE, Skipping the MD5 compute...");
+        c->clear();
         chunksSkipped.produce(c);
       } else {
         c->log("Computing MD5...");
         string computedMD5 = c->computeMD5();
+        c->clear();
         if (c->expectedMD5 != computedMD5) {
           c->log("MISMATCH between expected MD5 '" + c->expectedMD5 + "', and computed MD5 '" + computedMD5 + "' ... marking the file as Mismatch");
           files[c->parentFileIndex].matchStatus = File::Status::FAILED_TO_MATCH_REMOTE_FILE;

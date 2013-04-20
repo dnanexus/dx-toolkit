@@ -50,7 +50,7 @@ endif
 
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
-dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o
+dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o dxlog.o
 dx-verify-file_objs = options.o log.o chunk.o main.o File.o
 
 dxjson: $(dxjson_objs)
