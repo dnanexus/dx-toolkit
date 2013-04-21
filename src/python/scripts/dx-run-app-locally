@@ -31,6 +31,7 @@ import dxpy.utils.local_exec_utils as local_exec_utils
 
 parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx-build-app(let).')
 parser.add_argument('path', help='Local path to an app directory')
+parser.add_argument('--function', help='The name of an entry point to run', default='main')
 parser.add_argument('--workspace-path', help="Local directory in which jobs will have their home directories (default is a directory called 'test-job-workspaces' within the app directory)")
 parser.add_argument('-i', '--input', help=fill('An input to be used in calling the app "<input name>[:<class>]=<input value>", where class can be any job IO class, e.g. "string", "array:string", or "array".  If class is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string', width_adjustment=-24), action='append')
 parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
@@ -71,7 +72,9 @@ with open(path_to_dxapp_json, 'r') as fd:
 
 interpreter = dxapp_json['runSpec']['interpreter']
 
-job_inputs = ExecutableInputs(input_spec=dxapp_json.get('inputSpec'))
+running_main = args.function == 'main'
+
+job_inputs = ExecutableInputs(input_spec=(dxapp_json.get('inputSpec') if running_main else None))
 job_inputs.update_from_args(args)
 
 if args.workspace_path is None:
@@ -124,7 +127,7 @@ if args.verbose:
 print 'About to run app ' + dxapp_json['name'] + ' locally'
 print 'Local working directory: ' + job_homedirs
 
-main_job_id = local_exec_utils.queue_entry_point(function='main',
+main_job_id = local_exec_utils.queue_entry_point(function=args.function,
                                                  input_hash=job_inputs.inputs)
 local_exec_utils.run_entry_points(run_spec=dxapp_json['runSpec'])
 
