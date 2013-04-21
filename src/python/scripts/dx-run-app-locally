@@ -25,7 +25,7 @@ from dxpy.utils.printing import *
 from dxpy.utils.describe import io_val_to_str
 from dxpy.cli.exec_io import *
 from dxpy.scripts import dx_build_app
-import dxpy.utils.bash_exec_utils as bash_exec_utils
+import dxpy.utils.local_exec_utils as local_exec_utils
 
 # TODO: Perhaps allow a flag to allow running of a single entry point
 
@@ -120,9 +120,9 @@ if args.verbose:
 print 'About to run bash app ' + dxapp_json['name'] + ' locally'
 print 'Local working directory: ' + job_homedirs
 
-main_job_id = bash_exec_utils.queue_entry_point(function='main',
-                                                input_hash=job_inputs.inputs)
-bash_exec_utils.run_entry_points()
+main_job_id = local_exec_utils.queue_entry_point(function='main',
+                                                 input_hash=job_inputs.inputs)
+local_exec_utils.run_entry_points()
 
 print 'App finished successfully'
 with open(all_job_outputs_path, 'r') as fd:

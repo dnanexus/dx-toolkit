@@ -52,6 +52,6 @@ if os.environ.get('DX_JOB_ID') is not None:
 
     print resp["id"]
 else:
-    from dxpy.utils.bash_exec_utils import queue_entry_point
+    from dxpy.utils.local_exec_utils import queue_entry_point
     print queue_entry_point(function=args.function,
                             input_hash=entry_point_inputs.inputs)
