@@ -79,10 +79,10 @@ def run(function_name=None, function_input=None):
 
     If the environment variable *DX_JOB_ID* is not set, the function name may be given in *function_name*; if not set,
     it is assumed to be *main*. The function input may be given in *function_input*; if not set, it is set by parsing
-    JSON from the environment variable *DX_JOB_INPUT*; if that is not set, no input is given to the function.
+    JSON from the environment variable *DX_TEST_JOB_INPUT*; if that is not set, no input is given to the function.
 
     The absence of *DX_JOB_ID* signals to run() that execution is happening in the debug harness. In this mode of
-    operation, all calls to *dxpy.api.job_new* (and higher level handler methods which use it) are intercepted, and run()
+    operation, all calls to *dxpy.bindings.DXJob.new* (and higher level handler methods which use it) are intercepted, and run()
     is invoked instead with appropriate inputs. The initial invocation of *dxpy.run()* (with no arguments) need not be
     changed; instead, use the environment variable *DX_JOB_INPUT* and/or command line arguments:
 
@@ -94,6 +94,8 @@ def run(function_name=None, function_input=None):
     global RUN_COUNT
     RUN_COUNT += 1
 
+    dx_working_dir = os.getcwd()
+
     if dxpy.JOB_ID is not None:
         logging.basicConfig()
 
@@ -102,38 +104,15 @@ def run(function_name=None, function_input=None):
         except dxpy.exceptions.DXError:
             print "TODO: FIXME: the EE client should die if logging is not available"
 
-        dx_working_dir = os.getcwd()
-
         job = dxpy.describe(dxpy.JOB_ID)
     else:
         if function_name is None:
-            function_name = 'main'
+            function_name = os.environ.get('DX_TEST_FUNCTION', 'main')
         if function_input is None:
-            function_input = json.loads(os.environ.get('DX_JOB_INPUT', '{}'))
-
-            # Try to parse args from the command line
-            from dxpy.utils.printing import BOLD, ENDC, DNANEXUS_LOGO, fill
-            dx_app_help = fill('This is a ' + DNANEXUS_LOGO() + ''' application entry point. You can upload this
-            application by running ''' + BOLD() + 'dx-build-applet' + ENDC() + ' or ' + BOLD() + 'dx-build-app' +
-            ENDC() + ' in the directory containing its metadata definition file ' + BOLD() + 'dxapp.json' + ENDC() +
-            ', or run it in a local test harness by supplying the path to ' + BOLD() + 'dxapp.json' + ENDC() + ''' with
-            the --spec option. See http://wiki.dnanexus.com/Developer-Tutorials/App-Build-Process for more info.''')
-            args, remaining_args = None, None
-            try:
-                parser = argparse.ArgumentParser(description=dx_app_help)
-                parser.add_argument("-s", "--spec", help="Path to app metadata definition file (dxapp.json)")
-                args, remaining_args = parser.parse_known_args()
-                if args.spec is None:
-                    parser.print_help()
-                    parser.exit(1)
-            except Exception as e:
-                pass
-
-            if args is not None and args.spec is not None:
-                function_input.update(parse_args_as_job_input(args=remaining_args, app_spec=json.load(open(args.spec))))
+            function_input = json.loads(os.environ.get('DX_TEST_JOB_INPUT', '{}'))
 
         job = {'function': function_name, 'input': function_input}
-    job['input'] = resolve_job_refs_in_test(job['input'])
+
     with open("job_error_reserved_space", "w") as fh:
         fh.write("This file contains reserved space for writing job errors in case the filesystem becomes full.\n" + " "*1024*64)
 
@@ -160,14 +139,11 @@ def run(function_name=None, function_input=None):
 
     result = convert_handlers_to_dxlinks(result)
 
-    if dxpy.JOB_ID is not None:
-        if result is not None:
-            # TODO: protect against client removing its original working directory
-            os.chdir(dx_working_dir)
-            with open("job_output.json", "w") as fh:
-                fh.write(json.dumps(result) + "\n")
-    else:
-        result = resolve_job_refs_in_test(result)
+    if result is not None:
+        # TODO: protect against client removing its original working directory
+        os.chdir(dx_working_dir)
+        with open("job_output.json", "w") as fh:
+            fh.write(json.dumps(result) + "\n")
 
     return result
 
@@ -181,18 +157,6 @@ def convert_handlers_to_dxlinks(x):
     elif isinstance(x, list):
         for i in range(len(x)):
             x[i] = convert_handlers_to_dxlinks(x[i])
-    return x
-
-def resolve_job_refs_in_test(x):
-    if isinstance(x, collections.Mapping):
-        if "job" in x and "field" in x:
-            job_result = dxpy.bindings.dxjob._test_harness_jobs[x["job"]]._test_harness_result
-            return job_result[x["field"]]
-        for key, value in x.iteritems():
-            x[key] = resolve_job_refs_in_test(value)
-    elif isinstance(x, list):
-        for i in range(len(x)):
-            x[i] = resolve_job_refs_in_test(x[i])
     return x
 
 def parse_args_as_job_input(args, app_spec):

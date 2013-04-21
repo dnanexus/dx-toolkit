@@ -28,8 +28,7 @@ job creating a subjob.
 """
 
 from dxpy.bindings import *
-
-_test_harness_jobs = {}
+from dxpy.utils.local_exec_utils import queue_entry_point
 
 #########
 # DXJob #
@@ -147,10 +146,7 @@ class DXJob(DXObject):
             resp = dxpy.api.job_new(req_input, **kwargs)
             self.set_id(resp["id"])
         else:
-            result = dxpy.run(function_name=fn_name, function_input=fn_input)
-            self.set_id("job-" + str(len(_test_harness_jobs) + 1))
-            _test_harness_jobs[self.get_id()] = self
-            self._test_harness_result = result
+            self.set_id(queue_entry_point(function=fn_name, input_hash=fn_input))
 
     def set_id(self, dxid):
         '''
