@@ -119,6 +119,14 @@ if os.path.isdir(resources_path):
         os.environ['LD_LIBRARY_PATH'] = os.path.join(resources_path, 'lib') + os.pathsep + \
             os.path.join(resources_path, 'usr', 'lib') + old_ld_library_path
 
+if platform.system() == 'Darwin':
+    mac_resources_path = os.path.join(args.path, 'mac_resources')
+    if os.path.isdir(mac_resources_path):
+        os.environ['PATH'] = os.path.join(mac_resources_path, 'usr', 'bin') + os.pathsep + \
+            os.environ['PATH']
+        old_dyld_library_path = (os.pathsep + os.environ['DYLD_LIBRARY_PATH']) if 'DYLD_LIBRARY_PATH' in os.environ else ''
+        os.environ['DYLD_LIBRARY_PATH'] = os.path.join(mac_resources_path, 'usr', 'lib') + old_dyld_library_path
+
 os.environ['DX_TEST_CODE_PATH'] = code_path
 os.environ['DX_TEST_RESOURCES_PATH'] = resources_path
 os.environ['DX_TEST_JOB_HOMEDIRS'] = job_homedirs
