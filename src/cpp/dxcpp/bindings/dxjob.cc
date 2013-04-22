@@ -28,15 +28,34 @@ namespace dx {
   }
 
   void DXJob::create(const JSON &fn_input, const string &fn_name, const string &job_name, const vector<string> &depends_on, const JSON &instance_type) {
-    JSON input_params(JSON_OBJECT);
-    input_params["input"] = fn_input;
-    input_params["function"] = fn_name;
-    if (job_name.length() > 0)
-      input_params["name"] = job_name;
+    if (getenv("DX_JOB_ID") != NULL) {
+      JSON input_params(JSON_OBJECT);
+      input_params["input"] = fn_input;
+      input_params["function"] = fn_name;
+      if (job_name.length() > 0)
+        input_params["name"] = job_name;
 
-    appendDependsOnAndInstanceType(input_params, depends_on, fn_name, instance_type);    
-    const JSON resp = jobNew(input_params);
-    setID(resp["id"].get<string>());
+      appendDependsOnAndInstanceType(input_params, depends_on, fn_name, instance_type);
+      const JSON resp = jobNew(input_params);
+      setID(resp["id"].get<string>());
+    } else {
+      // Absence of DX_JOB_ID env var => running on a local machine outside of the cloud
+      FILE* pipe = popen(("dx-jobutil-new-job " + fn_name + " " + "-j '" + fn_input.toString() + "'").c_str(),
+                         "r");
+      if (!pipe) {
+        throw DXError("Could not call dx-jobutil-new-job to create a local job");
+      }
+      char buffer[128];
+      std::string new_job_id = "";
+      while(!feof(pipe)) {
+        if(fgets(buffer, 128, pipe) != NULL) {
+          new_job_id += buffer;
+        }
+      }
+      pclose(pipe);
+      new_job_id.erase(new_job_id.find_last_not_of(" \n\r\t")+1);
+      setID(new_job_id);
+    }
   }
 
   void DXJob::terminate() const {

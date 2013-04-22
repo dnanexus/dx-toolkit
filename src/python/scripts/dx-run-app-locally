@@ -25,20 +25,23 @@ from dxpy.utils.printing import *
 from dxpy.utils.describe import io_val_to_str
 from dxpy.cli.exec_io import *
 from dxpy.scripts import dx_build_app
-import dxpy.utils.bash_exec_utils as bash_exec_utils
+import dxpy.utils.local_exec_utils as local_exec_utils
 
 # TODO: Perhaps allow a flag to allow running of a single entry point
 
 parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx-build-app(let).')
 parser.add_argument('path', help='Local path to an app directory')
+parser.add_argument('--function', help='The name of an entry point to run', default='main')
 parser.add_argument('--workspace-path', help="Local directory in which jobs will have their home directories (default is a directory called 'test-job-workspaces' within the app directory)")
 parser.add_argument('-i', '--input', help=fill('An input to be used in calling the app "<input name>[:<class>]=<input value>", where class can be any job IO class, e.g. "string", "array:string", or "array".  If class is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string', width_adjustment=-24), action='append')
 parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 parser.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 parser.add_argument('--split-logs', help='Whether to split stderr and stdout into separate files for each job', action='store_true')
 parser.add_argument('--watch', help='Whether to also print job logs to the console after each local job finishes', action='store_true')
-parser.add_argument('-x', '--verbose', help='Adds the -x flag to bash invocations so that each command is echoed', action='store_true')
+parser.add_argument('-x', help='Adds the -x flag to bash invocations so that each command is echoed to stderr', action='store_true')
 args = parser.parse_args()
+
+args.path = os.path.abspath(args.path)
 
 # Run it through dx-build-app (dry run) to do some basic checking
 with tempfile.TemporaryFile() as fd:
@@ -69,10 +72,11 @@ path_to_dxapp_json = os.path.join(args.path, 'dxapp.json')
 with open(path_to_dxapp_json, 'r') as fd:
     dxapp_json = json.load(fd)
 
-if dxapp_json['runSpec']['interpreter'] != 'bash':
-    parser.exit(3, fill('Error: This testing utility is only for apps which use the bash interpreter') + '\n')
+interpreter = dxapp_json['runSpec']['interpreter']
 
-job_inputs = ExecutableInputs(input_spec=dxapp_json.get('inputSpec'))
+running_main = args.function == 'main'
+
+job_inputs = ExecutableInputs(input_spec=(dxapp_json.get('inputSpec') if running_main else None))
 job_inputs.update_from_args(args)
 
 if args.workspace_path is None:
@@ -94,12 +98,17 @@ job_queue_path = os.path.join(job_homedirs, 'job_queue.json')
 with open(job_queue_path, 'w') as fd:
     fd.write('[]\n')
 
-code_path = os.path.join(job_homedirs, 'code.sh')
+# Snapshot the script used in a file in job_homedirs
+# For Python: also make sure it's in dxapp_json['runSpec'] to cache it for later
+code_path = os.path.join(job_homedirs, 'code.' + ('sh' if interpreter == 'bash' else 'py'))
 if 'code' in dxapp_json['runSpec']:
     with open(code_path, 'w') as fd:
         fd.write(dxapp_json['runSpec']['code'])
 else:
     shutil.copy(os.path.join(args.path, dxapp_json['runSpec']['file']), code_path)
+    if interpreter == 'python2.7':
+        with open(code_path, 'r') as fd:
+            dxapp_json['runSpec']['code'] = fd.read()
 
 resources_path = os.path.join(args.path, 'resources')
 if os.path.isdir(resources_path):
@@ -107,22 +116,22 @@ if os.path.isdir(resources_path):
         os.path.join(resources_path, 'usr', 'local', 'bin') + os.pathsep + \
         os.path.join(resources_path, 'usr', 'bin') + os.pathsep + os.environ['PATH']
 
-os.environ['DX_BASHTEST_CODE_PATH'] = code_path
-os.environ['DX_BASHTEST_RESOURCES_PATH'] = resources_path
-os.environ['DX_BASHTEST_JOB_HOMEDIRS'] = job_homedirs
+os.environ['DX_TEST_CODE_PATH'] = code_path
+os.environ['DX_TEST_RESOURCES_PATH'] = resources_path
+os.environ['DX_TEST_JOB_HOMEDIRS'] = job_homedirs
 if args.split_logs:
-    os.environ['DX_BASHTEST_SPLIT_LOGS'] = '1'
+    os.environ['DX_TEST_SPLIT_LOGS'] = '1'
 if args.watch:
-    os.environ['DX_BASHTEST_WATCH'] = '1'
-if args.verbose:
-    os.environ['DX_BASHTEST_X_FLAG'] = '1'
+    os.environ['DX_TEST_WATCH'] = '1'
+if args.x:
+    os.environ['DX_TEST_X_FLAG'] = '1'
 
-print 'About to run bash app ' + dxapp_json['name'] + ' locally'
+print 'About to run app ' + dxapp_json['name'] + ' locally'
 print 'Local working directory: ' + job_homedirs
 
-main_job_id = bash_exec_utils.queue_entry_point(function='main',
-                                                input_hash=job_inputs.inputs)
-bash_exec_utils.run_entry_points()
+main_job_id = local_exec_utils.queue_entry_point(function=args.function,
+                                                 input_hash=job_inputs.inputs)
+local_exec_utils.run_entry_points(run_spec=dxapp_json['runSpec'])
 
 print 'App finished successfully'
 with open(all_job_outputs_path, 'r') as fd:

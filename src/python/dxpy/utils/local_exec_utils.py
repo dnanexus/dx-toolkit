@@ -17,7 +17,7 @@
 #   under the License.
 
 import os, sys, json, subprocess, pipes
-import collections
+import collections, datetime
 import dxpy
 from dxpy.utils.printing import *
 from dxpy.utils.resolver import *
@@ -91,11 +91,11 @@ def resolve_job_references(io_hash, job_outputs, should_resolve=True):
                     q.append(thing[field])
 
 def ensure_env_vars():
-    for var in ['DX_BASHTEST_CODE_PATH',
-                'DX_BASHTEST_RESOURCES_PATH',
-                'DX_BASHTEST_JOB_HOMEDIRS']:
+    for var in ['DX_TEST_CODE_PATH',
+                'DX_TEST_RESOURCES_PATH',
+                'DX_TEST_JOB_HOMEDIRS']:
         if var not in os.environ:
-            sys.exit('Error: Cannot run bash entry point locally if the environment variable ' + var + ' has not been set')
+            sys.exit('Error: Cannot run an entry point locally if the environment variable ' + var + ' has not been set')
 
 def queue_entry_point(function, input_hash):
     '''
@@ -104,16 +104,16 @@ def queue_entry_point(function, input_hash):
     :returns: new local job ID
 
     This function should only be called by a locally running job, so
-    all relevant DX_BASHTEST_* environment variables should be set.
+    all relevant DX_TEST_* environment variables should be set.
 
     This function will set up the home directory for the job, add an
     entry in job_outputs.json, and append the job information to the
     job_queue.json file.  (Both files found in
-    $DX_BASHTEST_JOB_HOMEDIRS.)
+    $DX_TEST_JOB_HOMEDIRS.)
     '''
     ensure_env_vars()
 
-    all_job_outputs_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], 'job_outputs.json')
+    all_job_outputs_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
 
     with open(all_job_outputs_path, 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
@@ -124,10 +124,10 @@ def queue_entry_point(function, input_hash):
         json.dump(all_job_outputs, fd, indent=4)
         fd.write('\n')
 
-    job_homedir = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], job_id)
+    job_homedir = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
     os.mkdir(job_homedir)
 
-    job_queue_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], 'job_queue.json')
+    job_queue_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
     with open(job_queue_path, 'r') as fd:
         job_queue = json.load(fd)
     job_queue.append({"id": job_id,
@@ -139,38 +139,43 @@ def queue_entry_point(function, input_hash):
 
     return job_id
 
-def run_one_entry_point(job_id, function, input_hash):
+def run_one_entry_point(job_id, function, input_hash, run_spec):
     '''
     :param job_id: job ID of the local job to run
+    :type job_id: string
     :param function: function to run
+    :type function: string
     :param input_hash: input for the job (may include job-based object references)
+    :type input_hash: dict
+    :param run_spec: run specification from the dxapp.json of the app
+    :type run_spec: dict
 
     Runs the specified entry point and retrieves the job's output,
-    updating job_outputs.json (in $DX_BASHTEST_JOB_HOMEDIRS) appropriately.
+    updating job_outputs.json (in $DX_TEST_JOB_HOMEDIRS) appropriately.
     '''
-    job_homedir = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], job_id)
+    job_homedir = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
     log_filenames = []
 
-    watch = os.environ.get('DX_BASHTEST_WATCH') == '1'
+    watch = os.environ.get('DX_TEST_WATCH') == '1'
 
-    if os.environ.get('DX_BASHTEST_SPLIT_LOGS'):
-        stdout_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], job_id + '-stdout.log')
+    if os.environ.get('DX_TEST_SPLIT_LOGS'):
+        stdout_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '-stdout.log')
         log_filenames.append(stdout_path)
         job_stdout = open(stdout_path, 'w+')
 
-        stderr_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], job_id + '-stderr.log')
+        stderr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '-stderr.log')
         log_filenames.append(stderr_path)
         job_stderr = open(stderr_path, 'w+')
     else:
-        stdouterr_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], job_id + '.log')
+        stdouterr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '.log')
         log_filenames.append(stdouterr_path)
         job_stdout = open(stdouterr_path, 'w+')
         job_stderr = job_stdout
 
     job_env = os.environ.copy()
-    job_env['HOME'] = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], job_id)
+    job_env['HOME'] = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
 
-    all_job_outputs_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], 'job_outputs.json')
+    all_job_outputs_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
 
     with open(all_job_outputs_path, 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
@@ -183,31 +188,62 @@ def run_one_entry_point(job_id, function, input_hash):
         json.dump(input_hash, fd, indent=4)
         fd.write('\n')
 
-    # Save job input to env vars
-    env_path = os.path.join(job_homedir, 'environment')
-    with open(env_path, 'w') as fd:
-        # Following code is what is used to generate env vars on the remote worker
-        fd.write("\n".join(["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in input_hash.iteritems()]))
+    if run_spec['interpreter'] == 'bash':
+        # Save job input to env vars
+        env_path = os.path.join(job_homedir, 'environment')
+        with open(env_path, 'w') as fd:
+            # Following code is what is used to generate env vars on the remote worker
+            fd.write("\n".join(["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in input_hash.iteritems()]))
 
     print job_id + ':' + function + ' -> ' + JOB_STATES('running')
+    start_time = datetime.datetime.now()
+    if run_spec['interpreter'] == 'bash':
+        script = '''
+          cd {homedir};
+          . {env_path};
+          . {code_path};
+          if [[ $(type -t {function}) == "function" ]];
+          then {function};
+          else echo "$0: Global scope execution complete. Not invoking entry point function {function} because it was not found" 1>&2;
+          fi'''.format(homedir=pipes.quote(job_homedir),
+                       env_path=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
+                       code_path=pipes.quote(os.environ['DX_TEST_CODE_PATH']),
+                       function=function)
 
-    fn_process = subprocess.Popen(['bash', '-c', '-e'] + \
-                                      (['-x'] if os.environ.get('DX_BASHTEST_X_FLAG') else []) + \
-                                      ['cd {homedir}; . {env}; . {code}; if [[ $(type -t {function}) == "function" ]]; then {function}; else echo "$0: Global scope execution complete. Not invoking entry point function {function} because it was not found" 1>&2; fi'.format(homedir=pipes.quote(job_homedir),
-                                                                                                                                                                                                                                                                                env=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
-                                                                                                                                                                                                                                                                                code=pipes.quote(os.environ['DX_BASHTEST_CODE_PATH']),
-                                                                                                                                                                                                                                                                                function=function)],
-                                  stdout=job_stdout,
-                                  stderr=job_stderr,
-                                  env=job_env)
+        fn_process = subprocess.Popen(['bash', '-c', '-e'] + \
+                                          (['-x'] if os.environ.get('DX_TEST_X_FLAG') else []) + \
+                                          [script],
+                                      stdout=job_stdout,
+                                      stderr=job_stderr,
+                                      env=job_env)
+    elif run_spec['interpreter'] == 'python2.7':
+        script = '''#!/usr/bin/env python
+import os
+os.chdir({homedir})
+
+{code}
+
+import dxpy, json
+if dxpy.utils.exec_utils.RUN_COUNT == 0:
+    dxpy.run()
+'''.format(homedir=repr(job_homedir),
+           code=run_spec['code'])
+
+        job_env['DX_TEST_FUNCTION'] = function
+
+        fn_process = subprocess.Popen(['python', '-c', script],
+                                      stdout=job_stdout,
+                                      stderr=job_stderr,
+                                      env=job_env)
 
     fn_process.communicate()
-    job_stderr.write('Exit code: ' + str(fn_process.returncode))
+    end_time = datetime.datetime.now()
+    job_stderr.write('----------------------\nLocal test harness log\nFunction: ' + function + '\nRunning time: ' + str(end_time - start_time) + '\nExit code: ' + str(fn_process.returncode) + '\n')
 
     if watch:
         print "Logs"
         print '-'*len("Logs")
-        if os.environ.get('DX_BASHTEST_SPLIT_LOGS'):
+        if os.environ.get('DX_TEST_SPLIT_LOGS'):
             job_stdout.seek(0)
             print GREEN() + 'stdout:' + ENDC()
             for line in job_stdout:
@@ -235,10 +271,10 @@ def run_one_entry_point(job_id, function, input_hash):
     else:
         job_output = {}
 
-    print job_id + ':' + function + ' -> ' + GREEN() + 'finished running' + ENDC()
+    print job_id + ':' + function + ' -> ' + GREEN() + 'finished running' + ENDC() + ' after ' + str(end_time - start_time)
     print job_output_to_str(job_output, prefix='  ')
 
-    with open(os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
+    with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
     all_job_outputs[job_id] = job_output
 
@@ -249,17 +285,20 @@ def run_one_entry_point(job_id, function, input_hash):
             continue
         resolve_job_references(all_job_outputs[other_job_id], all_job_outputs, should_resolve=False)
 
-    with open(os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'w') as fd:
+    with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'w') as fd:
         json.dump(all_job_outputs, fd, indent=4)
         fd.write('\n')
 
-def run_entry_points():
+def run_entry_points(run_spec):
     '''
+    :param run_spec: run specification from the dxapp.json of the app
+    :type run_spec: dict
+
     Runs all job entry points found in
-    $DX_BASHTEST_JOB_HOMEDIRS/job_queue.json in a first-in, first-out
+    $DX_TEST_JOB_HOMEDIRS/job_queue.json in a first-in, first-out
     manner until it is an empty array (or an error occurs).
     '''
-    job_queue_path = os.path.join(os.environ['DX_BASHTEST_JOB_HOMEDIRS'], 'job_queue.json')
+    job_queue_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
     while True:
         with open(job_queue_path, 'r') as fd:
             job_queue = json.load(fd)
@@ -271,4 +310,5 @@ def run_entry_points():
             fd.write('\n')
         run_one_entry_point(job_id=entry_point_to_run['id'],
                             function=entry_point_to_run['function'],
-                            input_hash=entry_point_to_run['input_hash'])
+                            input_hash=entry_point_to_run['input_hash'],
+                            run_spec=run_spec)
