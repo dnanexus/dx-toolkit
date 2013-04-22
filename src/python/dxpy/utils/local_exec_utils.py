@@ -91,8 +91,8 @@ def resolve_job_references(io_hash, job_outputs, should_resolve=True):
                     q.append(thing[field])
 
 def ensure_env_vars():
-    for var in ['DX_TEST_CODE_PATH',
-                'DX_TEST_RESOURCES_PATH',
+    for var in ['DX_FS_ROOT',
+                'DX_TEST_CODE_PATH',
                 'DX_TEST_JOB_HOMEDIRS']:
         if var not in os.environ:
             sys.exit('Error: Cannot run an entry point locally if the environment variable ' + var + ' has not been set')

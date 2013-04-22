@@ -127,8 +127,8 @@ if platform.system() == 'Darwin':
         old_dyld_library_path = (os.pathsep + os.environ['DYLD_LIBRARY_PATH']) if 'DYLD_LIBRARY_PATH' in os.environ else ''
         os.environ['DYLD_LIBRARY_PATH'] = os.path.join(mac_resources_path, 'usr', 'lib') + old_dyld_library_path
 
+os.environ['DX_FS_ROOT'] = resources_path
 os.environ['DX_TEST_CODE_PATH'] = code_path
-os.environ['DX_TEST_RESOURCES_PATH'] = resources_path
 os.environ['DX_TEST_JOB_HOMEDIRS'] = job_homedirs
 if args.split_logs:
     os.environ['DX_TEST_SPLIT_LOGS'] = '1'
