@@ -41,6 +41,8 @@ parser.add_argument('--watch', help='Whether to also print job logs to the conso
 parser.add_argument('-x', help='Adds the -x flag to bash invocations so that each command is echoed to stderr', action='store_true')
 args = parser.parse_args()
 
+args.path = os.path.abspath(args.path)
+
 # Run it through dx-build-app (dry run) to do some basic checking
 with tempfile.TemporaryFile() as fd:
     print "About to run 'dx-build-app --dry-run " + args.path + "'"
