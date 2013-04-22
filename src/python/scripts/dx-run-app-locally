@@ -27,8 +27,6 @@ from dxpy.cli.exec_io import *
 from dxpy.scripts import dx_build_app
 import dxpy.utils.local_exec_utils as local_exec_utils
 
-# TODO: Perhaps allow a flag to allow running of a single entry point
-
 parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx-build-app(let).')
 parser.add_argument('path', help='Local path to an app directory')
 parser.add_argument('--function', help='The name of an entry point to run', default='main')
