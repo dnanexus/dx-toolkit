@@ -21,6 +21,7 @@ import os, shutil, subprocess, tempfile
 import json
 import argparse
 import datetime
+import platform
 from dxpy.utils.printing import *
 from dxpy.utils.describe import io_val_to_str
 from dxpy.cli.exec_io import *
@@ -113,6 +114,10 @@ if os.path.isdir(resources_path):
     os.environ['PATH'] = os.path.join(resources_path, 'bin') + os.pathsep + \
         os.path.join(resources_path, 'usr', 'local', 'bin') + os.pathsep + \
         os.path.join(resources_path, 'usr', 'bin') + os.pathsep + os.environ['PATH']
+    if platform.system() == 'Linux':
+        old_ld_library_path = (os.pathsep + os.environ['LD_LIBRARY_PATH']) if 'LD_LIBRARY_PATH' in os.environ else ''
+        os.environ['LD_LIBRARY_PATH'] = os.path.join(resources_path, 'lib') + os.pathsep + \
+            os.path.join(resources_path, 'usr', 'lib') + old_ld_library_path
 
 os.environ['DX_TEST_CODE_PATH'] = code_path
 os.environ['DX_TEST_RESOURCES_PATH'] = resources_path
