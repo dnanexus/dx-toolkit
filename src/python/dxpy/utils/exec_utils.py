@@ -77,16 +77,16 @@ def run(function_name=None, function_input=None):
     This is the mode of operation used in the DNAnexus execution environment.
     WARNING: The parameters *function_name* and *function_input* are disregarded in this mode of operation.
 
-    If the environment variable *DX_JOB_ID* is not set, the function name may be given in *function_name*; if not set,
-    it is assumed to be *main*. The function input may be given in *function_input*; if not set, it is set by parsing
-    JSON from the environment variable *DX_TEST_JOB_INPUT*; if that is not set, no input is given to the function.
+    If the environment variable *DX_JOB_ID* is not set, the function
+    name may be given in *function_name*; if not set, it is set by the
+    environment variable *DX_TEST_FUNCTION*. The function input may be
+    given in *function_input*; if not set, it is set by the local file
+    *job_input.json* which is expected to be present.
 
     The absence of *DX_JOB_ID* signals to run() that execution is happening in the debug harness. In this mode of
     operation, all calls to *dxpy.bindings.DXJob.new* (and higher level handler methods which use it) are intercepted, and run()
     is invoked instead with appropriate inputs. The initial invocation of *dxpy.run()* (with no arguments) need not be
-    changed; instead, use the environment variable *DX_JOB_INPUT* and/or command line arguments:
-
-        script_name --spec=path/to/dxapp.spec --input1=value1 --input2=value2 ...
+    changed; instead, use a local file *job_input.json*.
 
     With this, no program code requires changing between the two modes.
     '''
@@ -109,7 +109,8 @@ def run(function_name=None, function_input=None):
         if function_name is None:
             function_name = os.environ.get('DX_TEST_FUNCTION', 'main')
         if function_input is None:
-            function_input = json.loads(os.environ.get('DX_TEST_JOB_INPUT', '{}'))
+            with open("job_input.json", "r") as fh:
+                function_input = json.load(fh)
 
         job = {'function': function_name, 'input': function_input}
 

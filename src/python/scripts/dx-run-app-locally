@@ -38,7 +38,7 @@ parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=i
 parser.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 parser.add_argument('--split-logs', help='Whether to split stderr and stdout into separate files for each job', action='store_true')
 parser.add_argument('--watch', help='Whether to also print job logs to the console after each local job finishes', action='store_true')
-parser.add_argument('-x', '--verbose', help='Adds the -x flag to bash invocations so that each command is echoed to stderr', action='store_true')
+parser.add_argument('-x', help='Adds the -x flag to bash invocations so that each command is echoed to stderr', action='store_true')
 args = parser.parse_args()
 
 # Run it through dx-build-app (dry run) to do some basic checking
@@ -121,7 +121,7 @@ if args.split_logs:
     os.environ['DX_TEST_SPLIT_LOGS'] = '1'
 if args.watch:
     os.environ['DX_TEST_WATCH'] = '1'
-if args.verbose:
+if args.x:
     os.environ['DX_TEST_X_FLAG'] = '1'
 
 print 'About to run app ' + dxapp_json['name'] + ' locally'

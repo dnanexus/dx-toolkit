@@ -230,7 +230,6 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
            code=run_spec['code'])
 
         job_env['DX_TEST_FUNCTION'] = function
-        job_env['DX_TEST_JOB_INPUT'] = json.dumps(input_hash)
 
         fn_process = subprocess.Popen(['python', '-c', script],
                                       stdout=job_stdout,
@@ -239,7 +238,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
 
     fn_process.communicate()
     end_time = datetime.datetime.now()
-    job_stderr.write('Exit code: ' + str(fn_process.returncode) + '\n')
+    job_stderr.write('----------------------\nLocal test harness log\nFunction: ' + function + '\nRunning time: ' + str(end_time - start_time) + '\nExit code: ' + str(fn_process.returncode) + '\n')
 
     if watch:
         print "Logs"
