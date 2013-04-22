@@ -62,8 +62,6 @@ class TestDXTabCompletion(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        os.environ['DX_SECURITY_CONTEXT'] = json.dumps({"auth_token": "outside", "auth_token_type": "Bearer"})
-        dxpy.set_security_context(json.loads(os.environ['DX_SECURITY_CONTEXT']))
         cls.project_id = dxpy.api.projectNew({"name": "tab-completion project"})['id']
         os.environ['DX_PROJECT_CONTEXT_ID'] = cls.project_id
         dxpy.set_workspace_id(cls.project_id)
