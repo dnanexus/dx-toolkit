@@ -2976,7 +2976,7 @@ def upgrade(args):
             recommended_version = re.match("A recommended update is available for your client/SDK \(v(.+?)\)", upgrade_header).group(1)
         except Exception as e:
             print e
-            recommended_version = "latest"
+            recommended_version = "current"
         print "Upgrading to", recommended_version
         args.args = [recommended_version]
 
