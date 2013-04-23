@@ -10,6 +10,16 @@ endif (NOT DEFINED ENV{DNANEXUS_HOME})
 # Set default build type, common compiler flags, etc
 include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_POLICY_SCOPE)
 
+#########################
+# Find Boost header files
+#########################
+# Note: SimpleHttpHeaders.cpp just needs a Boost header files (no libraries are required)
+#       Therefore, we just add boost include directory to include path
+find_package(Boost 1.48 REQUIRED)
+include_directories(BEFORE ${Boost_INCLUDE_DIR})
+message (STATUS "SimpleHttpLib CMakeLists.txt says: Boost 1.48+ header files found in location ${Boost_INCLUDE_DIR}")
+###################################
+
 # Get the output of command `git describe`, and save it in DXTOOLKIT_GITVERSION variable
 execute_process(COMMAND git describe WORKING_DIRECTORY $ENV{DNANEXUS_HOME} RESULT_VARIABLE GIT_DESCRIBE_STATUS_CODE OUTPUT_VARIABLE DXTOOLKIT_GITVERSION ERROR_VARIABLE GIT_DESCRIBE_ERROR)
 if (GIT_DESCRIBE_STATUS_CODE EQUAL 0)

@@ -152,6 +152,8 @@ namespace dx {
     HttpRequest req;
     unsigned int sec_to_wait = 2; // number of seconds to wait before retrying first time. Will keep on doubling the wait time for each subsequent retry.
     bool reqCompleted; // did last request actually went through, i.e., some response was received)
+    bool contentLengthMismatch;
+    bool contentLengthMissing;
     HttpRequestException hre;
 
     // The HTTP Request is always executed at least once,
@@ -162,8 +164,6 @@ namespace dx {
       // Note: Initial value of "false" is just a dummy value, toRetry will always be re-init before being used.
       //       This dummy initial value is provided, to prevent some spurious warnings from clang
       bool toRetry = false;
-
-      // TODO: Add check for Content-Length header (we should retry if content-length header mismatches with actual data received)
 
       reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
       try {
@@ -181,31 +181,48 @@ namespace dx {
 
       if (reqCompleted) {
         if (req.responseCode != 200) {
+          DXLOG(logWARNING) << "POST '" << url << "' returned with HTTP code '" << req.responseCode << "'; and body: '" << req.respData << "'";
           toRetry = isAlwaysRetryableHttpCode(req.responseCode);
         } else {
-          // Everything is fine, the request went through and 200 received
-          // So return back the response now
-          if (countTries != 0u) { 
-            // if at least one retry was made, print eventual success on stderr
-            DXLOG(logINFO) << "Request completed successfully in Retry #" << countTries;
-          }
-
-          try {
-            return JSON::parse(req.respData); // we always return json output
-          } catch (JSONException &je) {
-            ostringstream errStr;
-            errStr << "\nERROR: Unable to parse output returned by Apiserver as JSON" << endl;
-            errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode << "; response body: '" << req.respData << "'" << endl;
-            errStr << "JSONException: " << je.what() << endl;
-            throw DXError(errStr.str(), "UnableToParseAsJSON");
+          // We are here => The request went thru, we got 200 and a response
+          string clHeader; // content-length header
+          contentLengthMissing = !req.respHeader.getHeaderString("Content-Length", clHeader);
+          contentLengthMismatch = !contentLengthMissing && (boost::lexical_cast<int>(clHeader) != req.respData.size());
+          if (contentLengthMismatch) {
+            // This is an error situation for us, retry only if explicitly asked
+            toRetry = alwaysRetry;
+            DXLOG(logWARNING) << "POST '" << url << "': Expected Content-Length to be '" << clHeader << "' (from Content-Length header)"
+                              << "but received " << req.respData.size() << ", retry = " << ((alwaysRetry) ? "true" : "false");
+          } else {
+            try {
+              JSON out = JSON::parse(req.respData);
+              if (countTries != 0u) { 
+                // if at least one retry was made, print eventual success on stderr
+                DXLOG(logWARNING) << "Request completed successfully in Retry #" << countTries;
+              }
+              return out;
+            } catch (JSONException &je) {
+              if (contentLengthMissing) {
+                DXLOG(logWARNING) << "POST '" << url << "': Unable to parse response from server as valid JSON, and no 'Content-Length' header was found either"
+                                  << "retry = true";
+                toRetry = true;
+              } else {
+                DXLOG(logERROR) << "POST '" << url << "': Unable to parse response from server as valid JSON, and Content-Length header was present ("
+                                << clHeader << "). Will throw DXError()";
+                ostringstream errStr;
+                errStr << "\nERROR: Unable to parse output returned by Apiserver as JSON (and 'Content-length' header was present = " << clHeader << ")" << endl;
+                errStr << "HttpRequest url: " << url << "; response code: " << req.responseCode << "; response size: '" << req.respData.size()
+                       << "; response body: '" << req.respData.substr(0, 1000) << "'" << endl; // return at most 1000 characters from response (don't overwhelm user!)
+                errStr << "JSONException: '" << je.what() << "'" << endl;
+                throw DXError(errStr.str(), "UnableToParseAsJSON");
+              }
+            }
           }
         }
       }
 
       if (toRetry && (countTries < NUM_MAX_RETRIES)) {
-        if (reqCompleted) {
-          DXLOG(logWARNING) << "POST '" << url << "' returned with HTTP code ;" << req.responseCode << "' and body: '" << req.respData << "'";
-        } else {
+        if (!reqCompleted) {
           DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
         }
         DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
@@ -219,13 +236,13 @@ namespace dx {
 
     // We are here, implies, All retries were exhausted (or not attempted) with failure.
     if (reqCompleted) {
-      DXLOG(logERROR) << "POST '" + url + "' returned non-200 HTTP code in (at least) last of '" << countTries << "' attempts.";
+      DXLOG(logERROR) << "POST '" + url + "': failed after " << countTries << "' attempts. Response code: " << req.responseCode;
       JSON respJSON;
       try {
         respJSON = JSON::parse(req.respData);
       } catch (JSONException &e) {
         // If invalid json, throw general DXError
-        throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData + 
+        throw DXError("Server's response code: '" + boost::lexical_cast<string>(req.responseCode) + "', response: '" + req.respData.substr(0,1000) + 
                       "'. Could not parse response as valid JSON, error = '" + e.what() + "'", "UnableToParseAsJSON");
       }
       throw DXAPIError(respJSON["error"]["message"].get<string>(),

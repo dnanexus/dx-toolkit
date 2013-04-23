@@ -42,7 +42,7 @@ namespace dx {
                             "1. {\"$dnanexus_link\": \"obj_id\"} \n"
                             "2. {\"$dnanexus_link\": {\"project\": \"proj-id\", \"id\": \"obj-id\"}";
     if (dxlink.type() != JSON_HASH || dxlink.size() != 1) {
-      DXLOG(logERROR) << "Not a hash, or has more than one key: '" << dxlink.toString() << "'";
+      DXLOG(logWARNING) << "Not a hash, or has more than one key: '" << dxlink.toString() << "'";
       throw DXError(err_str, "InvalidDXLink");
     }
     if (dxlink["$dnanexus_link"].type() == JSON_STRING) {
@@ -51,13 +51,13 @@ namespace dx {
     } else {
       if (dxlink["$dnanexus_link"].type() == JSON_HASH && dxlink["$dnanexus_link"].size() == 2) {
         if (dxlink["$dnanexus_link"]["project"].type() != JSON_STRING || dxlink["$dnanexus_link"]["id"].type() != JSON_STRING) {
-          DXLOG(logERROR) << "At least one of the keys: 'project', or 'id' are not string" << endl;
+          DXLOG(logWARNING) << "At least one of the keys: 'project', or 'id' are not string" << endl;
           throw DXError(err_str, "InvalidDXLink");
         }
         dxid_ = dxlink["$dnanexus_link"]["id"].get<string>();
         proj_ = dxlink["$dnanexus_link"]["project"].get<string>();
       } else {
-        DXLOG(logERROR) << "The given dnanexus_link is neither a string, nor a valid dxlink hash." << endl;
+        DXLOG(logWARNING) << "DXDataObject::setIDs(): The given dnanexus_link is neither a string, nor a valid dxlink hash." << endl;
         throw DXError(err_str, "InvalidDXLink");
       }
     }

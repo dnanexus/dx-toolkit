@@ -37,7 +37,12 @@ namespace dx {
     size_t count() const {
       return header.size();
     }
-
+    
+    // Looks for the header "key" in list of all headers (in case-insensitive manner)
+    // Returns "true", if the header is found (and value is set in param "val"),
+    // otherwise returns "false" ("val" is untouched in this case)
+    bool getHeaderString(const std::string &key, std::string &val);
+    
     // It is user's responsbility to add content to already existing header with ","
     // See: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
     // Please note that calling this function as a RValue will create a blank header
