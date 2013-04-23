@@ -366,7 +366,7 @@ void Chunk::clear() {
 string Chunk::uploadURL() const {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
-  log("Generating Upload URL for index = " + params["index"].get<string>());
+  log("Generating Upload URL for index = " + boost::lexical_cast<string>(params["index"].get<int>()));
   dx::JSON result = fileUpload(fileID, params);
   return result["url"].get<string>();
 }
