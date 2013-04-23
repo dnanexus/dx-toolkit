@@ -2973,7 +2973,7 @@ def upgrade(args):
     if len(args.args) == 0:
         try:
             upgrade_header = dxpy.api.user_describe('org-dnanexus', want_full_response=True).headers.get('x-upgrade-info')
-            version_match = re.match("A recommended update is available for your client/SDK \(v(.+?)\)", upgrade_header)
+            version_match = re.match("A recommended update is available for your client/SDK \((.+?)\)", upgrade_header)
             if version_match:
                 recommended_version = version_match.group(1)
             else:

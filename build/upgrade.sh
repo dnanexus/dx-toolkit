@@ -33,7 +33,7 @@ else
     false
 fi
 
-pkg_name="dx-toolkit-v${new_version}-${build_target_name}.tar.gz"
+pkg_name="dx-toolkit-${new_version}-${build_target_name}.tar.gz"
 echo "Downloading $pkg_name..."
 (cd "$build_dir"; curl -O "http://wiki.dnanexus.com/images/files/${pkg_name}")
 
