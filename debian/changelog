@@ -1,3 +1,9 @@
+dx-toolkit (0.46.2) precise; urgency=low
+
+  * Remove dx-workflow-to-applet.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 23 Apr 2013 22:04:13 +0000
+
 dx-toolkit (0.46.1) precise; urgency=low
 
   * Bug fixes.
