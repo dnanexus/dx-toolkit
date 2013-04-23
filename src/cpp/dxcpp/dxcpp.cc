@@ -398,6 +398,7 @@ namespace dx {
       getFromEnvOrConfig("DX_APISERVER_PORT", APISERVER_PORT());
       getFromEnvOrConfig("DX_APISERVER_PROTOCOL", APISERVER_PROTOCOL());
       getFromEnvOrConfig("DX_CA_CERT", CA_CERT());
+      getFromEnvOrConfig("DX_LIBCURL_VERBOSE", LIBCURL_VERBOSE());
       getFromEnvOrConfig("DX_JOB_ID", JOB_ID());
       getFromEnvOrConfig("DX_WORKSPACE_ID", WORKSPACE_ID());
       getFromEnvOrConfig("DX_PROJECT_CONTEXT_ID", PROJECT_CONTEXT_ID());
@@ -436,6 +437,7 @@ namespace dx {
       DXLOG(logINFO) << "10. CA_CERT: " << getVariableForPrinting(CA_CERT());
       DXLOG(logINFO) << "11. Current Project: " << getVariableForPrinting(CURRENT_PROJECT());
       DXLOG(logINFO) << "12. User Agent String: " << getVariableForPrinting(USER_AGENT_STRING());
+      DXLOG(logINFO) << "13. Libcurl verbose: " << getVariableForPrinting(LIBCURL_VERBOSE());
       DXLOG(logINFO) << "***** Will exit loadFromEnvironment() function in dxcpp.cc *****";
       
       g_config_file_contents_old.clear(); // Remove the contents of config file - we no longer need them

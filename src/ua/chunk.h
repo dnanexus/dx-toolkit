@@ -25,6 +25,7 @@
 #include <queue>
 #include <boost/thread.hpp>
 #include "SimpleHttp.h"
+#include "dxcpp/dxlog.h"
 
 /** The variables below are used for computing instanteneous transfer speed: 
   *  1) instantaneousBytesAndTimestampQueue: A queue for keeping track of bytes transferred
@@ -100,7 +101,7 @@ public:
   void upload();
   void clear();
 
-  void log(const std::string &message) const;
+  void log(const std::string &message, const dx::LogLevel level = dx::logINFO) const;
   friend std::ostream &operator<<(std::ostream &out, const Chunk &chunk);
 
 private:

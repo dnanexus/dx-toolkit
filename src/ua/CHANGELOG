@@ -1,3 +1,14 @@
+DNAnexus Upload Agent 1.2.8 <support@dnanexus.com>, 2013-Apr-22
+---------------------------------------------------------------
+  * [PTFM-7251] SIGPIPE bug fix (UA crashed mysteriously sometime with exit code: 141)
+  * Using libcurl version 7.30 (forcing UA to use >= 7.30, so that we ensure that we make transition on all platforms)
+    Also --version flag now prints Boost and libcurl versions
+  * Capping maximum number of (default) compress threads to 8
+  * Support for DX_LIBCURL_VERBOSE is added
+  * More detailed error message is read from libcurl when /UPLOAD request fails
+  * chunk::log() now accepts level as a configurable param
+  * Setting CURLOPT_TIMEOUT to unlimited (0) in /UPLOAD route too
+
 DNAnexus Upload Agent 1.2.7 <support@dnanexus.com>, 2013-Mar-14
 ---------------------------------------------------------------
   * Relevant JIRA tickets: PTFM-4459, PTFM-6628, PTFM-6629

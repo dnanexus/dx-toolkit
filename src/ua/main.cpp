@@ -40,6 +40,10 @@
   #error "Cannot compile Upload Agent using Boost version < 1.48"
 #endif
 
+#if ((LIBCURL_VERSION_MAJOR < 7) || (LIBCURL_VERSION_MAJOR == 7 && LIBCURL_VERSION_MINOR < 30))
+  #error "From UA v1.2.8 onwards, we expect to compile UA on Libcurl v7.30+. If you need to override this behavior, edit main.cpp"
+#endif
+
 using namespace std;
 using namespace dx;
 
@@ -186,7 +190,7 @@ void uploadChunks(vector<File> &files) {
       } catch (runtime_error &e) {
         ostringstream msg;
         msg << "Upload failed: " << e.what();
-        c->log(msg.str());
+        c->log(msg.str(), logERROR);
       }
 
       if (uploaded) {
@@ -203,7 +207,7 @@ void uploadChunks(vector<File> &files) {
       } else if (c->triesLeft > 0) {
         int numTry = NUMTRIES_g - c->triesLeft + 1; // find out which try is it
         int timeout = (numTry > 6) ? 256 : 4 << numTry; // timeout is always between [8, 256] seconds
-        c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds");
+        c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds", logWARNING);
         --(c->triesLeft);
         c->clear(); // we will read & compress data again
         boost::this_thread::sleep(boost::posix_time::milliseconds(timeout * 1000));
@@ -212,7 +216,7 @@ void uploadChunks(vector<File> &files) {
         // thus giving rise to deadlock
         chunksToRead.produce(c);
       } else {
-        c->log("Not retrying");
+        c->log("Not retrying", logERROR);
         // TODO: Should we print it on stderr or DXLOG (verbose only) ??
         cerr << "\nFailed to upload Chunk [" << c->start << " - " << c->end << "] for local file ("
              << files[c->parentFileIndex].localFile << "). APIServer response for last try: '" << c->respData << "'" << endl;
@@ -515,7 +519,9 @@ int main(int argc, char * argv[]) {
   }
   if (opt.version()) {
     cout << "Upload Agent Version: " << UAVERSION << endl
-         << "git version: " << DXTOOLKIT_GITVERSION << endl;
+         << "git version: " << DXTOOLKIT_GITVERSION << endl
+         << "libboost version: " << (BOOST_VERSION / 100000) << "." << ((BOOST_VERSION / 100) % 1000) << "." << (BOOST_VERSION % 100) << endl
+         << "libcurl version: " << LIBCURL_VERSION_MAJOR << "." << LIBCURL_VERSION_MINOR << "." << LIBCURL_VERSION_PATCH << endl;
     return 0;
   } else if (opt.help() || opt.files.empty()) {
     opt.printHelp(argv[0]);
@@ -638,7 +644,7 @@ int main(int argc, char * argv[]) {
 
     while (!chunksFailed.empty()) {
       Chunk * c = chunksFailed.consume();
-      c->log("Chunk failed");
+      c->log("Chunk failed", logERROR);
       markFileAsFailed(files, c->fileID);
     }
 

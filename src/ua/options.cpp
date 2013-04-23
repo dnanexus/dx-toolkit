@@ -43,7 +43,7 @@ using namespace dx;
 const int DEFAULT_READ_THREADS = 2;
 
 Options::Options() {
-  int defaultCompressThreads = std::max(int(boost::thread::hardware_concurrency()) - 1, 1);
+  int defaultCompressThreads = std::min(8, std::max(int(boost::thread::hardware_concurrency()) - 1, 1)); //don't use more than 8 cores for compression (by default)
 
   vector<string> defaultFolders;
   defaultFolders.push_back("/");

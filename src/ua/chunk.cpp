@@ -29,6 +29,8 @@
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/utils.h"
 
+#include "SimpleHttpLib/ignore_sigpipe.h"
+
 extern "C" {
 #include "compress.h"
 }
@@ -120,7 +122,7 @@ void Chunk::compress() {
    */
   if (!lastChunk && dest.size() < MIN_CHUNK_SIZE) {
     log("Compression at level Z_DEFAULT_COMPRESSION (usually 6), resulted in data size = " + boost::lexical_cast<string>(dest.size()) + " bytes. " +
-        "We cannot upload data less than 5MB in any chunk (except last). So will append approppriate number of gzipped chunks of empty string.");
+        "We cannot upload data less than 5MB in any chunk (except last). So will append approppriate number of gzipped chunks of empty string.", dx::logWARNING);
     vector<char> zeroLengthGzip;
     get_empty_string_gzip(zeroLengthGzip);
     if (zeroLengthGzip.empty()) {
@@ -137,18 +139,22 @@ void Chunk::compress() {
   data.swap(dest);
 }
 
-void checkConfigCURLcode(CURLcode code) {
+void checkConfigCURLcode(CURLcode code, char *errorBuffer) {
+  string errMsg = errorBuffer; // copy it, since "errorBuffer" is a local variable of upload() and will be deleted after we throw
   if (code != 0) {
     ostringstream msg;
-    msg << "An error occurred while configuring the HTTP request (" << curl_easy_strerror(code) << ")" << endl;
+    msg << "An error occurred while configuring the HTTP request(" << code << ": " << curl_easy_strerror(code)
+        << "). Curl error buffer: '" << errMsg << "'" << endl;
     throw runtime_error(msg.str());
   }
 }
 
-void checkPerformCURLcode(CURLcode code) {
+void checkPerformCURLcode(CURLcode code, char *errorBuffer) {
+  string errMsg = errorBuffer; // copy it, since "errorBuffer" is a local variable of upload() and will be deleted after we throw
   if (code != 0) {
     ostringstream msg;
-    msg << "An error occurred while performing the HTTP request (" << curl_easy_strerror(code) << ")" << endl;
+    msg << "An error occurred while performing the HTTP request(" << code << ": " << curl_easy_strerror(code)
+        << "). Curl error buffer: '" << errMsg << "'" << endl;
     throw runtime_error(msg.str());
   }
 }
@@ -209,6 +215,11 @@ static size_t write_callback(void *buffer, size_t size, size_t nmemb, void *user
   return result;
 }
 
+// This function will catch the sigpipe and ignore it (after printing it in the logs)
+static void sigpipe_catcher(int sig) {
+  DXLOG(dx::logINFO) << "UA Chunk.cpp => Caught SIGPIPE(signal_num = " << sig << ")... will ignore";
+}
+
 void Chunk::upload() {
   string url = uploadURL();
   log("Upload URL: " + url);
@@ -219,49 +230,55 @@ void Chunk::upload() {
   if (curl == NULL) {
     throw runtime_error("An error occurred when initializing the HTTP connection");
   }
+  char errorBuffer[CURL_ERROR_SIZE + 1] = {0}; // setting to zero (since it can be the case that despite an error, nothing is written to the buffer)
+  // Set errorBuffer to recieve human readable error messages from libcurl
+  // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer), errorBuffer);
+ 
   // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
   if (dx::config::CA_CERT() == "NOVERIFY") {
-    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0));
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0), errorBuffer);
   } else {
     if (!dx::config::CA_CERT().empty()) {
-      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, dx::config::CA_CERT().c_str()));
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, dx::config::CA_CERT().c_str()), errorBuffer);
     } else {
       // Set verify on, and use default path for certificate
-      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1), errorBuffer);
     }
   }
+
   // Set time out to infinite
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l), errorBuffer);
   
-  if (opt.verbose) {
-    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1));
+  if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") { 
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), errorBuffer);
   }
 
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()), errorBuffer);
   // Internal CURL progressmeter must be disabled if we provide our own callback
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0), errorBuffer);
   // Install the callback function
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func), errorBuffer);
   myProgressStruct prog;
   prog.curl = curl;
   prog.uploadedBytes = 0;
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog), errorBuffer);
   
   /* Setting this option, since libcurl fails in multi-threaded environment otherwise */
   /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l), errorBuffer);
 
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1));
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()));
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction));
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1), errorBuffer);
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), errorBuffer);
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction), errorBuffer);
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this), errorBuffer);
   
   // Set callback for recieving the response data
   /** set callback function */
   respData.clear();
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) );
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) , errorBuffer);
   /** "respData" is a member variable of Chunk class*/
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData), errorBuffer);
 
   struct curl_slist * slist = NULL;
   /*
@@ -272,7 +289,7 @@ void Chunk::upload() {
     clen << "Content-Length: " << data.size();
     slist = curl_slist_append(slist, clen.str().c_str());
   }
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist));
+  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist), errorBuffer);
 
   // Compute the MD5 sum of data, and add the Content-MD5 header
   expectedMD5 = dx::getHexifiedMD5(data);
@@ -283,17 +300,32 @@ void Chunk::upload() {
   }
 
   log("Starting curl_easy_perform...\n");
-  checkPerformCURLcode(curl_easy_perform(curl));
-
+  
+  SIGPIPE_VARIABLE(pipe1);
+  sigpipe_ignore(&pipe1, sigpipe_catcher);
+  try {
+    checkPerformCURLcode(curl_easy_perform(curl), errorBuffer);
+  } catch(...) {
+    sigpipe_restore(&pipe1);
+    throw;
+  }
+  sigpipe_restore(&pipe1);
+  
   long responseCode;
-  checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode));
+  
+  checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode), errorBuffer);
   log("Returned from curl_easy_perform; responseCode is " + boost::lexical_cast<string>(responseCode));
 
   log("Performing curl cleanup");
   curl_slist_free_all(slist);
+
+  SIGPIPE_VARIABLE(pipe2);
+  sigpipe_ignore(&pipe2, sigpipe_catcher);
   curl_easy_cleanup(curl);
+  sigpipe_restore(&pipe2);
+  
   if ((responseCode < 200) || (responseCode >= 300)) {
-    log("Throwing runtime_error");
+    log("Runtime not in 2xx range ... throwing runtime_error", dx::logERROR);
     ostringstream msg;
     msg << "Request failed with HTTP status code " << responseCode << ", server Response: '" << respData << "'";
     throw runtime_error(msg.str());
@@ -334,6 +366,7 @@ void Chunk::clear() {
 string Chunk::uploadURL() const {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
+  log("Generating Upload URL for index = " + params["index"].get<string>());
   dx::JSON result = fileUpload(fileID, params);
   return result["url"].get<string>();
 }
@@ -341,8 +374,8 @@ string Chunk::uploadURL() const {
 /*
  * Logs a message about this chunk.
  */
-void Chunk::log(const string &message) const {
-  DXLOG(dx::logINFO) << "Chunk " << (*this) << ": " << message;
+void Chunk::log(const string &message, const enum dx::LogLevel level) const {
+  DXLOG(level) << "Chunk " << (*this) << ": " << message;
 }
 
 ostream &operator<<(ostream &out, const Chunk &chunk) {

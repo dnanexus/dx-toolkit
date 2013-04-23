@@ -15,6 +15,7 @@
 //   under the License.
 
 #include "SimpleHttp.h"
+#include "ignore_sigpipe.h"
 #include <stdexcept>
 
 #ifndef DXTOOLKIT_GITVERSION
@@ -27,6 +28,12 @@
   #include "SSLThreads.h"
 #endif
 
+// This function will catch the sigpipe and ignore it (after printing it in the logs)
+static void sigpipe_catcher(int sig) {
+// TODO: Refactor DXLOG to be separate from dxcpp, so that we can use it in SimpleHttpLib (as commented below)
+//  DXLOG(dx::logINFO) << "SimpleHttpLib => Caught SIGPIPE(signal_num = " << sig << ")... will ignore";
+}
+
 namespace dx {
   namespace config {
     // Returns a mutable reference to DX_CA_CERT which is used for storing value of
@@ -36,6 +43,11 @@ namespace dx {
       return local;
     }
     
+    std::string& LIBCURL_VERBOSE() {
+      static std::string local = "";
+      return local;
+    }
+
     // Returns a mutable reference to USER_AGENT_STRING()
     // This value will be used for setting user agent header, for all calls made by dxhttp 
     std::string& USER_AGENT_STRING() {
@@ -190,7 +202,6 @@ namespace dx {
       if (msg.size() > 0u)
         exceptionStr += "\n" + msg;
       exceptionStr += "\nError code (CURLcode) = " + itos(retVal) + "\nError Message: '";
-      errorBuffer[CURL_ERROR_SIZE] = 0;
       exceptionStr += std::string(errorBuffer) + "'";
       exceptionStr += "\n********\n";
       // If a response code is available - get it's value 
@@ -220,6 +231,11 @@ namespace dx {
       throw HttpRequestException("ERROR: curl member variable is already in use. Cannot be reused until previous operation is complete", HttpRequestException::ALREADY_IN_USE);
 
     curl = curl_easy_init();
+    
+    errorBuffer[0] = 0; // since it can be the case that nothing is written to the error buffer (despite an error occured)
+    // Set errorBuffer to recieve human readable error messages from libcurl
+    // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
+    assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer));
 
     if (curl != NULL) {
       if (config::CA_CERT() == "NOVERIFY") {
@@ -232,10 +248,6 @@ namespace dx {
           assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1));
         }
       }
-      // Set errorBuffer to recieve human readable error messages from libcurl
-      // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
-      assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, &errorBuffer));
-
       respData = "";
       // Set time out to infinite
       assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l));
@@ -258,7 +270,10 @@ namespace dx {
       if (header != NULL) {
         assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header));
       }
-  //    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+      
+      if (!config::LIBCURL_VERBOSE().empty() && config::LIBCURL_VERBOSE() != "0") {
+        assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1));
+      }
 
       /*
        * Set the URL that is about to receive our POST. This URL can
@@ -317,14 +332,26 @@ namespace dx {
       assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) );
       /** "respData" is a member variable of HttpRequest */
       assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData) );
-
-      /* Perform the actual request */
-      assertLibCurlFunctions( curl_easy_perform(curl), "Error in using curl_easy_perform.");
-
+      
+      SIGPIPE_VARIABLE(pipe1);
+      sigpipe_ignore(&pipe1, sigpipe_catcher);
+      try {
+        /* Perform the actual request */
+        assertLibCurlFunctions( curl_easy_perform(curl), "Error in using curl_easy_perform.");
+      } catch (...) {
+        sigpipe_restore(&pipe1);
+        throw;
+      }
+      sigpipe_restore(&pipe1);
+      
       assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode) );
 
       /* always cleanup */
+      SIGPIPE_VARIABLE(pipe2);
+      sigpipe_ignore(&pipe2, sigpipe_catcher);
       curl_easy_cleanup(curl);
+      sigpipe_restore(&pipe2);
+      
       curl = NULL;
     } else {
       throw HttpRequestException("Error: Unable to initialize object of type CURL", HttpRequestException::INIT_FAILED);

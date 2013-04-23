@@ -36,6 +36,7 @@ namespace dx {
   namespace config {
     std::string& CA_CERT();
     std::string& USER_AGENT_STRING();
+    std::string& LIBCURL_VERBOSE();
   }
 
   enum HttpMethod {

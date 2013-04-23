@@ -22,7 +22,7 @@
 # 	$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 DXTOOLKIT_GITVERSION := $(shell git describe)
-VERSION = 1.2.7
+VERSION = 1.2.8
 
 curl_dir = $(HOME)/sw/local
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
