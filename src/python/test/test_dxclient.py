@@ -442,12 +442,14 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertTrue(html.startswith("<html><body><img src=\"data:"))
 
     def test_remote_file(self):
-        report = json.loads(run(u"dx-build-report-html {d}/index.html --remote /html_report".format(d=self.temp_file_path)))
+        report = json.loads(run(u"dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
         fileId = report["fileIds"][0]
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=report["recordId"])))
         self.assertEquals(desc["types"], [u"Report", u"HTMLReport"])
         self.assertEquals(desc["name"], u"html_report")
         self.assertEquals(desc["details"]["files"][0]["$dnanexus_link"]["id"], fileId)
+        self.assertEquals(desc["details"]["width"], "47")
+        self.assertEquals(desc["details"]["height"], "63")
         desc = json.loads(run(u"dx describe {file} --details --json".format(file=fileId)))
         self.assertTrue(desc["hidden"])
         self.assertEquals(desc["name"], u"index.html")
