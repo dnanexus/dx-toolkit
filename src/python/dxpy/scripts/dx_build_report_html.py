@@ -32,9 +32,11 @@ import re
 import urllib2
 
 parser = argparse.ArgumentParser(description="Constructs and saves/uploads an HTML report from HTML and/or linked images")
-parser.add_argument("src", help="Source image or HTML file", nargs="+")
+parser.add_argument("src", help="Source image or HTML file(s)", nargs="+")
 parser.add_argument("-r", "--remote", help="Destination route. Can be: (1) a project ID, (2) a path, with or without object name (e.g. /PATH/REPORT_NAME), (3) project ID + path (e.g. PROJECT:/PATH/REPORT_NAME)")
 parser.add_argument("--local", help="Local file to save baked HTML to", default=None)
+parser.add_argument("-w", "--width", help="Width of the final report, in pixels", default=None)
+parser.add_argument("-g", "--height", help="Height of the final report, in pixels", default=None)
 
 
 def _image_to_data(img):
@@ -112,15 +114,20 @@ def upload_html(destination, html, name=None):
         parser.error("Could not upload HTML report to DNAnexus server! ({ex})".format(ex=ex))
 
 
-def create_record(destination, file_ids):
+def create_record(destination, file_ids, width=None, height=None):
     """
     Creates a master record for the HTML report; this doesn't contain contain the actual HTML, but reports
     are required to be records rather than files and we can link more than one HTML file to a report
     """
     [project, path, name] = parse_destination(destination)
     files = [dxpy.dxlink(file_id, project) for file_id in file_ids]
+    details = {"files": files}
+    if width:
+        details["width"] = width
+    if height:
+        details["height"] = height
     try:
-        dxrecord = dxpy.new_dxrecord(project=project, folder=path, types=["Report", "HTMLReport"], details={"files": files}, name=name)
+        dxrecord = dxpy.new_dxrecord(project=project, folder=path, types=["Report", "HTMLReport"], details=details, name=name)
         dxrecord.close()
         return dxrecord.get_id()
     except dxpy.DXAPIError as ex:
@@ -172,7 +179,7 @@ def main(**kwargs):
             save(filename, str(html))
     if len(remote_file_ids) > 0:
         json_out = {"fileIds": remote_file_ids}
-        json_out["recordId"] = create_record(args.remote, remote_file_ids)
+        json_out["recordId"] = create_record(args.remote, remote_file_ids, args.width, args.height)
         print json.dumps(json_out)
 
 
