@@ -1,3 +1,17 @@
+dx-toolkit (0.47.0) precise; urgency=low
+
+  * New command "dx upgrade".
+
+  * Most bindings retry truncated streaming API calls.
+
+  * New command "dx-run-app-locally".
+
+  * New command "dx-build-report-html".
+
+  * Various bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 23 Apr 2013 21:59:53 +0000
+
 dx-toolkit (0.46.0) precise; urgency=low
 
   * Better packaging for readline on Mac OS X.
