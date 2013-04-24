@@ -43,6 +43,7 @@ dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__fi
 if os.name == 'nt':
     dependencies.append("colorama==0.2.4")
 else:
+    dependencies.append("distribute==0.6.34")
     # If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
     # See also http://stackoverflow.com/questions/7116038
     # Warning: This may not work as intended in cross-compilation scenarios
