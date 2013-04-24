@@ -1,4 +1,4 @@
-dx-toolkit (0.47.1) precise quantal raring; urgency=low
+dx-toolkit (0.47.1) precise; urgency=low
 
   * Bug fixes for dx-build-report-html and Debian packaging.
 
