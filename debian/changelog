@@ -1,3 +1,9 @@
+dx-toolkit (0.47.2) precise; urgency=low
+
+  * Revert bogus Debian packaging change.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 24 Apr 2013 22:38:30 +0000
+
 dx-toolkit (0.47.1) precise; urgency=low
 
   * Bug fixes for dx-build-report-html and Debian packaging.
