@@ -447,7 +447,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=report["recordId"])))
         self.assertEquals(desc["types"], [u"Report", u"HTMLReport"])
         self.assertEquals(desc["name"], u"html_report")
-        self.assertEquals(desc["details"]["files"][0]["$dnanexus_link"]["id"], fileId)
+        self.assertEquals(desc["details"]["files"][0]["$dnanexus_link"], fileId)
         self.assertEquals(desc["details"]["width"], "47")
         self.assertEquals(desc["details"]["height"], "63")
         desc = json.loads(run(u"dx describe {file} --details --json".format(file=fileId)))
