@@ -3809,34 +3809,35 @@ parser_upgrade.add_argument('args', nargs='*')
 parser_upgrade.set_defaults(func=upgrade)
 parser_map['upgrade'] = (parser_upgrade, NoneCompleter())
 
-# Bash argument completer hook
-if os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
-    from dxpy.utils import argcomplete
-    try:
-        argcomplete.autocomplete(parser,
-                                 arg_completer=DXCLICompleter().get_argcomplete_matches,
-                                 subcommands=parser_map)
-    except:
-        sys.exit(124)
+def main():
+    # Bash argument completer hook
+    if os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
+        from dxpy.utils import argcomplete
+        try:
+            argcomplete.autocomplete(parser,
+                                     arg_completer=DXCLICompleter().get_argcomplete_matches,
+                                     subcommands=parser_map)
+        except:
+            sys.exit(124)
 
-# "Execution" starts here
+    if len(args_list) > 0:
+        args = parser.parse_args(args_list)
+        set_cli_colors(args)
+        set_delim(args)
+        set_env_from_args(args)
+        args.func(args)
+        # Flush buffered data in stdout before interpreter shutdown to ignore broken pipes
+        try:
+            sys.stdout.flush()
+        except IOError as e:
+            if e.errno == errno.EPIPE:
+                if dxpy._DEBUG:
+                    print >>sys.stderr, "Broken pipe"
+            else:
+                raise
+    else:
+        parser.print_help()
+        sys.exit(1)
 
-# Take in things from the pipe, respecting quoted substrings
-if len(args_list) > 0:
-    args = parser.parse_args(args_list)
-    set_cli_colors(args)
-    set_delim(args)
-    set_env_from_args(args)
-    args.func(args)
-    # Flush buffered data in stdout before interpreter shutdown to ignore broken pipes
-    try:
-        sys.stdout.flush()
-    except IOError as e:
-        if e.errno == errno.EPIPE:
-            if dxpy._DEBUG:
-                print >>sys.stderr, "Broken pipe"
-        else:
-            raise
-else:
-    parser.print_help()
-    sys.exit(1)
+if __name__ == '__main__':
+    main()
