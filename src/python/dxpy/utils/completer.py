@@ -22,30 +22,31 @@ dx for tab-completion, resolving naming conflicts, etc.
 import os
 import dxpy
 from dxpy.utils.resolver import *
+from argcomplete import warn
 
 def startswith(text):
     return (lambda string: string.startswith(text))
 
-def completion_escaper(match):
-    if match.group(0) == ":":
-        return "\\\\:"
-    elif match.group(0) == "/":
-        return "\\\\/"
-    elif match.group(0) == "*":
-        return "\\\\\\\\*"
-    elif match.group(0) == "?":
-        return "\\\\\\\\\?"
-    else:
-        return "\\" + match.group(0)
+# def completion_escaper(match):
+#     if match.group(0) == ":":
+#         return "\\\\:"
+#     elif match.group(0) == "/":
+#         return "\\\\/"
+#     elif match.group(0) == "*":
+#         return "\\\\\\\\*"
+#     elif match.group(0) == "?":
+#         return "\\\\\\\\\?"
+#     else:
+#         return "\\" + match.group(0)
 
-def escape_completion_name_str(string):
-    return re.sub("([#\?\*: ;&`\"'/!$\(\)\{\[<>|~])", completion_escaper, string.replace('\\', '\\\\\\\\'))
+# def escape_completion_name_str(string):
+#     return re.sub("([#\?\*: ;&`\"'/!$\(\)\{\[<>|~])", completion_escaper, string.replace('\\', '\\\\\\\\'))
 
 #def escape_completion_name_str(string):
 #    return string.replace('\\', '\\\\\\\\').replace(' ', '\ ').replace(':', '\\\\:').replace('/', '\\\\/').replace('*', '\\\\\\\\*').replace('?', '\\\\\\\\?').replace('(', '\\(').replace(')', '\\)')
 
-def unescape_completion_name_str(string):
-    return string.replace('\\)', ')').replace('\\(', '(').replace('\\\\\\\\?', '?').replace('\\\\\\\\*', '*').replace('\\\\/', '/').replace('\\\\:', ':').replace('\ ', ' ').replace('\\\\\\\\', '\\')
+# def unescape_completion_name_str(string):
+#     return string.replace('\\)', ')').replace('\\(', '(').replace('\\\\\\\\?', '?').replace('\\\\\\\\*', '*').replace('\\\\/', '/').replace('\\\\:', ':').replace('\ ', ' ').replace('\\\\\\\\', '\\')
 
 def get_folder_matches(text, delim_pos, dxproj, folderpath):
     '''
@@ -68,12 +69,10 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
                                folder_name[folder_name.rfind('/') + 1:],
                            dxproj.list_folder(folder=folderpath,
                                               only='folders')['folders'])
-        return filter(startswith(text),
-                      map(lambda folder_name:
-                              text[:delim_pos + 1] + \
-                              escape_completion_name_str(folder_name) + \
-                              '/',
-                          folder_names + (['.', '..'] if text != '' and delim_pos != len(text) - 1 else [])))
+        if text != '' and delim_pos != len(text) - 1:
+            folder_names += ['.', '..']
+        prefix = text[:delim_pos+1]
+        return [prefix+f+'/' for f in folder_names if f.startswith(text)]
     except:
         return []
 
@@ -97,7 +96,8 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
     and be in escaped form for consumption by the command-line.
     '''
 
-    unescaped_text = unescape_completion_name_str(text[delim_pos + 1:])
+    #unescaped_text = unescape_completion_name_str(text[delim_pos + 1:])
+    unescaped_text = text[delim_pos + 1:]
 
     try:
         results = list(dxpy.find_data_objects(project=dxproj.get_id(),
@@ -111,10 +111,8 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
                                               describe=True,
                                               typename=typespec))
         names = map(lambda result: result['describe']['name'], results)
-        return filter(startswith(text),
-                      map(lambda name:
-                              ('' if text == '' else text[:delim_pos + 1]) + escape_completion_name_str(name) + " ",
-                          names))
+        prefix = '' if text == '' else text[:delim_pos + 1]
+        return [prefix+n for n in names]
     except:
         return []
 
@@ -143,7 +141,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
     # First get projects if necessary
     matches = []
     if expected == 'project' and colon_pos > 0 and colon_pos == len(text) - 1:
-        if dxpy.find_one_project(zero_ok=True, name=unescape_name_str(text[:colon_pos])) is not None:
+        if dxpy.find_one_project(zero_ok=True, name=text[:colon_pos]) is not None:
             return [text + " "]
 
     if colon_pos < 0 and slash_pos < 0:
@@ -152,10 +150,11 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
         # Also, don't bother if text=="" and expected is NOT "project"
         # Also, add space if expected == "project"
         if text != "" or expected == 'project':
-            results = filter(lambda result: result['id'] != dxpy.WORKSPACE_ID or include_current_proj,
-                             list(dxpy.find_projects(describe=True, level=perm_level)))
-            matches += filter(startswith(text),
-                              [(escape_completion_name_str(result['describe']['name']) + ':' + (" " if expected == 'project' else "")) for result in results])
+            results = dxpy.find_projects(describe=True, level=perm_level)
+            if not include_current_proj:
+                results = [r for r in results if r['id'] != dxpy.WORKSPACE_ID]
+            suffix = ': ' if expected == 'project' else ':'
+            matches += [r['describe']['name'] for r in results if r['describe']['name'].startswith(text)]
 
     if expected == 'project':
         return matches
@@ -220,13 +219,7 @@ class DXPathCompleter():
                                       include_current_proj=self.include_current_proj)
 
     def get_matches(self, line, point, prefix, suffix):
-        # This implementation is reliant on bash behavior that ':' is
-        # treated as a word separator for determining prefix
-        if get_last_pos_of_char(' ', line) != point - 1:
-            prefix = split_unescaped(' ', line[:point])[-1]
-        self.matches = path_completer(prefix, self.expected, self.classes,
-                                      typespec=self.typespec,
-                                      include_current_proj=self.include_current_proj)
+        self._populate_matches(prefix)
 
         if prefix.rfind(':') != -1:
             for i in range(len(self.matches)):
@@ -234,12 +227,9 @@ class DXPathCompleter():
                 
         return self.matches
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0:
-            self.matches = path_completer(text, self.expected, self.classes,
-                                          typespec=self.typespec,
-                                          include_current_proj=self.include_current_proj)
-
+            self._populate_matches(text)
         if state < len(self.matches):
             return self.matches[state]
         else:
@@ -279,7 +269,7 @@ class DXAppCompleter():
         self._populate_matches(prefix)
         return self.matches
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0:
             self._populate_matches(text)
 
@@ -311,7 +301,7 @@ class LocalCompleter():
         self._populate_matches(prefix)
         return self.matches
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0:
             self._populate_matches(text)
 
@@ -347,7 +337,7 @@ class ListCompleter():
 
         return self.matches
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0:
             self._populate_matches(text)
 
@@ -361,6 +351,12 @@ class MultiCompleter():
         self.completers = completers
         self.matches = []
 
+    def _populate_matches(self, prefix):
+        self.matches = []
+        for completer in self.completers:
+            self.matches += completer.get_matches('', 0, prefix, '')
+        return self.matches
+
     def get_matches(self, line, point, prefix, suffix):
         # This implementation assumes the get_matches will handle any
         # special word separation
@@ -369,7 +365,7 @@ class MultiCompleter():
             self.matches += completer.get_matches(line, point, prefix, suffix)
         return self.matches
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0:
             self._populate_matches(text)
 

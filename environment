@@ -50,17 +50,4 @@ fi
 # encoding. We reset it here to avoid having to set it for every I/O operation explicitly.
 export PYTHONIOENCODING=UTF-8
 
-_dx_argcomplete() {
-    local IFS=$(echo -e '\v')
-    COMPREPLY=( $( \
-        IFS=$IFS \
-        COMP_LINE=$COMP_LINE  COMP_POINT=$COMP_POINT \
-        COMP_WORDS="${COMP_WORDS[*]}"  COMP_CWORD=$COMP_CWORD \
-    ARGPARSE_AUTO_COMPLETE=1 $1 ) )
-
-    # TODO: probably best done with an exit code, not special value
-    if [[ "${COMPREPLY[0]}" == "__DX_STOP_COMPLETION__" ]]; then
-        unset COMPREPLY
-    fi
-}
-complete -o nospace -o default -F _dx_argcomplete dx
+eval "$(register-python-argcomplete dx)"

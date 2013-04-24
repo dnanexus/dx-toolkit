@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 import os, sys, unittest, json, subprocess, re
+from tempfile import TemporaryFile, NamedTemporaryFile
 
 import dxpy
 from dxpy.utils.completer import *
 
-IFS = "\v"
+IFS = '\013'
 
 def split_line_like_bash(line, point):
     '''
@@ -62,32 +63,32 @@ class TestDXTabCompletion(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.project_id = dxpy.api.projectNew({"name": "tab-completion project"})['id']
+        cls.project_id = dxpy.api.project_new({"name": "tab-completion project"})['id']
         os.environ['DX_PROJECT_CONTEXT_ID'] = cls.project_id
         dxpy.set_workspace_id(cls.project_id)
         os.environ['IFS'] = IFS
 
     @classmethod
     def tearDownClass(cls):
-        dxpy.api.projectDestroy(dxpy.WORKSPACE_ID)
+        dxpy.api.project_destroy(dxpy.WORKSPACE_ID)
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
 
     def tearDown(self):
-        dxpy.api.projectRemoveFolder(dxpy.WORKSPACE_ID,
+        dxpy.api.project_remove_folder(dxpy.WORKSPACE_ID,
                                      {"folder": "/", "recurse": True})
 
     def get_bash_completions(self, line, point=None, stderr_contains=""):
-        os.environ['ARGPARSE_AUTO_COMPLETE'] = '1'
+        os.environ['_ARGCOMPLETE'] = '1'
         os.environ['COMP_LINE'] = line
         os.environ['COMP_POINT'] = point if point else str(len(line))
-        os.environ['COMP_WORDS'], os.environ['COMP_CWORD'] = split_line_like_bash(line,
-                                                                                  os.environ['COMP_POINT'])
-        p = subprocess.Popen(line, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        stderr_pipe = p.stderr
-        self.assertIn(stderr_contains, stderr_pipe.read())
-        stdout_pipe = p.stdout
-        return [result[:-1] if len(result) > 0 and result[-1] == "\n" else result for result in stdout_pipe.read().split(IFS)]
+        os.environ['COMP_WORDBREAKS'] = '"\'@><=;|&(:'
+        os.environ['_DX_ARC_DEBUG'] = '1'
+
+        p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.assertIn(stderr_contains, err)
+        return out.split(IFS)
 
     def assert_completion(self, line, completion):
         self.assertIn(completion, self.get_bash_completions(line))
@@ -102,20 +103,20 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assertNotIn(non_completion, self.get_bash_completions(line))
 
     def assert_no_completions(self, line, stderr_contains=""):
-        self.assertEqual(self.get_bash_completions(line, stderr_contains=stderr_contains), ["", ""])
+        self.assertEqual(self.get_bash_completions(line, stderr_contains=stderr_contains), [''])
 
     def test_command_completion(self):
         self.assert_completion("dx ru", "run ")
         self.assert_completion("dx run", "run ")
-        self.assert_completions("dx l", ["login ", "logout ", "ls "])
-        self.assert_completions("dx ", ["login ", "logout ", "cp "])
+        self.assert_completions("dx l", ["login", "logout", "ls"])
+        self.assert_completions("dx ", ["login", "logout", "cp"])
 
     def test_subcommand_completion(self):
-        self.assert_completions("dx find ", ["apps ", "data ", "jobs ", "projects "])
-        self.assert_completions("dx new   ", ["project ", "record ", "gtable "])
+        self.assert_completions("dx find ", ["apps", "data", "jobs", "projects"])
+        self.assert_completions("dx new   ", ["project", "record", "gtable"])
 
     def test_option_completion(self):
-        self.assert_completions("dx -", ["-h ", "--help ", "--env-help "])
+        self.assert_completions("dx -", ["-h", "--help", "--env-help"])
 
     def test_applet_completion(self):
         dxapplet = dxpy.DXApplet()
@@ -123,29 +124,25 @@ class TestDXTabCompletion(unittest.TestCase):
                      dxapi="1.0.0",
                      name="my applet")
 
-        self.assert_completion("dx ls my", "my\\ applet ")
+        self.assert_completion("dx ls my", "my applet ")
         self.assert_completion("dx ls", "ls ")
-        self.assert_completion("dx run my", "my\\ applet ")
-        self.assert_completion("dx ls ", "my\\ applet ")
+        self.assert_completion("dx run my", "my applet ")
+        self.assert_completion("dx ls ", "my applet ")
 
     def test_pipeline_completion(self):
         dxpipeline = dxpy.new_dxrecord(name="my workflow", types=["pipeline"])
-        self.assert_completion("dx run my", "my\\ workflow ")
+        self.assert_completion("dx run my", "my workflow ")
 
     def test_project_completion(self):
-        self.ids_to_destroy.append(dxpy.api.projectNew({"name": "to select"})['id'])
-        self.assert_completion("dx select to", "to\ select: ")
-        self.assert_completion("dx select to\ select:", " ")
+        self.ids_to_destroy.append(dxpy.api.project_new({"name": "to select"})['id'])
+        self.assert_completion("dx select to", "to select")
+        # self.assert_completion("dx select to\ select:", " ")
 
     def test_local_file_completion(self):
-        # For now, just test that the signal of the single completion
-        # "__DX_STOP_COMPLETION__" has been given; this will cause the
-        # bash completion to take over
-        self.assert_completion("dx upload ", "__DX_STOP_COMPLETION__")
+        with NamedTemporaryFile(dir=os.getcwd()) as local_file:
+            self.assert_completion("dx upload ", os.path.basename(local_file.name))
 
     def test_noninterference_of_local_files(self):
-        # The assert_no_completions method will assert ["", ""], which
-        # will not drop into the bash tab-completion
         self.assert_no_completions("dx ls ")
         self.assert_no_completions("dx ls noninter")
         self.assert_no_completions("dx ls nonexistent-project:", stderr_contains="Could not find a project named")
