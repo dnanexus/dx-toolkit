@@ -50,7 +50,9 @@ def _image_to_data(img):
         img_data = _load_file(img["src"]).read()
     img_type = imghdr.what("", img_data)
     img_b64 = base64.b64encode(img_data)
-    src_data = "data:image/{};base64,{}".format(img_type, img_b64)
+    src_data = "data:image/none;base64,"
+    if img_type:
+        src_data = "data:image/{};base64,{}".format(img_type, img_b64)
     img["src"] = src_data
 
 
