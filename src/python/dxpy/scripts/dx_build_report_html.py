@@ -122,7 +122,7 @@ def create_record(destination, file_ids, width=None, height=None):
     are required to be records rather than files and we can link more than one HTML file to a report
     """
     [project, path, name] = parse_destination(destination)
-    files = [dxpy.dxlink(file_id, project) for file_id in file_ids]
+    files = [dxpy.dxlink(file_id) for file_id in file_ids]
     details = {"files": files}
     if width:
         details["width"] = width
