@@ -14,13 +14,13 @@ Description: DNAnexus client libraries and tools
 
 Package: dx-toolkit-beta
 Architecture: any
-Depends: ${misc:Depends}, dx-toolkit
+Depends: ${misc:Depends}, dx-toolkit (= ${binary:Version})
 Description: Transitional package for DNAnexus client tools
  This is a dummy package that loads vanilla dx-toolkit.
 
 Package: dx-toolkit-unstable
 Architecture: any
-Depends: ${misc:Depends}, dx-toolkit
+Depends: ${misc:Depends}, dx-toolkit (= ${binary:Version})
 Description: Transitional package for DNAnexus client tools
  This is a dummy package that loads vanilla dx-toolkit.
 
