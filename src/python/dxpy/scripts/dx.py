@@ -1165,6 +1165,9 @@ def tree(args):
         parser.exit(1, fill(unicode(details)) + '\n')
 
 def describe(args):
+    if len(args.path) == 0:
+        parser.exit(3, fill('Error: Must provide a nonempty string to be described') + '\n')
+
     # Attempt to resolve name
     # First, if it looks like a hash id, do that.
     json_input = {}
