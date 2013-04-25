@@ -58,6 +58,34 @@ string trim(const string &str) {
   return out;
 }
 
+// This function is intended to solve a bug which only surface on some archaic platforms
+// (and, when compiled with very old libmagic version, e.g., we faced this on CentOS 5.4)
+// The problem is this:
+//   1) "file" command on these systems do not understand "--mime-type" flag (v4.17 was available where we tested)
+//   2) libmagic returns this string as mime type: "application/x-executable, for GNU/Linux 2.6.9, statically linked, for GNU/Linux 2.6.9, not stripped"
+// 
+// APIServer however refuse to accept any character outside [33, 126] range for "media" type (note the spaces in the libmagic output).
+// We will be more strict, and create a whitelist of characters that should appear in mime type,
+// and only use the string until first such enounter, or the end of the string.
+// 
+// Note: Call this function as the last transformation over the output string (e.g., after trim())
+string sanitizeMediaType(const string &str) {
+  string out;
+  string allowedExtraChars = "/-.><+"; // these characters, combined with isalnum() chars, should handle almost all cases we care about.
+  DXLOG(logINFO) << "Sanitizing media type string ('" << str << "')";
+  for (unsigned i = 0; i < str.length(); ++i) {
+    if (isalnum(str[i]) || allowedExtraChars.find(str[i]) != string::npos)
+      out += str[i];
+    else {
+      DXLOG(logWARNING) << "An invalid character('" << str[i] <<"') found in the mime type string ('"
+                        << str << "'). Will only use string upto first such occurrence ('" << out << "')";
+      return out;
+    }
+  }
+  DXLOG(logINFO) << "Nothing to sanitize in the media type string";
+  return out;
+}
+
 // - This function is our very last resort to detect compressed file (using file extension!)
 // - I added some of the common compressed file extensions to this list
 // - If the extension is one of the known compressed type, we return appropriate mime type
@@ -252,7 +280,7 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
       DXLOG(logINFO) << "Removing the temp symlink file ('" << sp.string() << "')";
       fs::remove(sp); // remove the temp symlink we created
       if (exec_success) {
-        return trim(sout); // we succesfuly determined mime type using "file" command, return it.
+        return sanitizeMediaType(trim(sout)); // we succesfuly determined mime type using "file" command, return it.
       }
     }
     // We are here => "file" command failed to execute for some reason (or one of the boost filesystem functions failed),
@@ -263,7 +291,7 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     try {
       DXLOG(logINFO) << "Unable to get mime type by running 'file' command ... will try to fetch mime type from libmagic ....";
       string temp = getMimeTypeUsingLibmagic(filePath);
-      return temp;
+      return sanitizeMediaType(temp);
     } catch (runtime_error &e) {
       DXLOG(logINFO) << "Fetching of mime type form libmagic also failed, error = " << e.what();
       // Ignore the error (it was expected anyway!)
@@ -273,7 +301,7 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     // (we only check for common compressed types), and return empty string if
     // file extension doesn't match few known types.
     DXLOG(logINFO) << "Both, execution of 'file' command, and fetching mime type from libmagic failed ... will try to match extension to common compressed types as a last resort ...";
-    return detectCompressTypesUsingExtension(filePath);
+    return detectCompressTypesUsingExtension(filePath); // no need to call sanitizeMediaType(), since we hand-curate this list anyhow
   }
 #endif
 
