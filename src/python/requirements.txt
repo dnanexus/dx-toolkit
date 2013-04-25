@@ -5,4 +5,4 @@ ws4py==0.2.2
 python-dateutil==2.1
 python-magic==0.4.3
 beautifulsoup4==4.1.3
-argcomplete==0.4.7
+argcomplete==0.4.8
