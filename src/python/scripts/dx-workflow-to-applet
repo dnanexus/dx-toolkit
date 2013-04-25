@@ -121,14 +121,12 @@ def stringify_thing(thing):
                                                                    field=thing['connectedTo']['output'])
     return repr(thing)
 
-for i in range(len(workflow['stages'])):
-    stage = workflow['stages'][i]
+for i, workflow_stage in enumerate(workflow['stages']):
+    for j in workflow_stage.get('inputs', {}):
+        if workflow_stage['inputs'][j] == "":
+            del workflow_stage['inputs'][j]
 
-    for j in stage.get('inputs', {}).keys():
-        if stage['inputs'][j] == "":
-            del stage['inputs'][j]
-
-    exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
+    exec_id = workflow_stage['app']['id'] if 'id' in workflow_stage['app'] else workflow_stage['app']
     if dxpy.is_dxlink(exec_id):
         exec_id = exec_id['$dnanexus_link']
     if exec_id.startswith('app-'):
@@ -140,7 +138,7 @@ for i in range(len(workflow['stages'])):
     # Sanitizing the app/applet name as an input name prefix
     exec_name_prefix = re.sub("[^a-zA-Z0-9\_]", "", exec_desc['name']).lstrip('0123456789')
 
-    stage_ids[stage['id']] = i
+    stage_ids[workflow_stage['id']] = i
     applet_stages.append({"name": exec_name_prefix + "_" + str(i),
                           "inputSpec": OrderedDict(),
                           "outputSpec": OrderedDict(),
@@ -158,7 +156,7 @@ for i in range(len(workflow['stages'])):
             applet_stage[spec][param["name"]] = param
 
     # Set bound inputs as default values in the appropriate stage
-    bound_input = stage["inputs"]
+    bound_input = workflow_stage["inputs"]
     for input_name, input_val in bound_input.iteritems():
         # Find 'connectedTo' hashes (in arrays or otherwise); if any
         # exist, then remove the input from the new applet's spec
