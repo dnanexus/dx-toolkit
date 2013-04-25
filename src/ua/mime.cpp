@@ -209,7 +209,7 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
   // @param cmd The actual command to be executed
   // @param output This will contain the stdout output of the command
   // @return a boolean indicating failure/success of command execution
-  bool exec(const string &cmd, string &output) {
+  bool execCommand(const string &cmd, string &output) {
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe)
       return false;
@@ -225,10 +225,10 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
           output += buffer;
       }
     } catch(const std::length_error &e1) {
-      DXLOG(logINFO) << "Exception thrown while appending to string in exec(), error = " << e1.what();
+      DXLOG(logINFO) << "Exception thrown while appending to string in execCommand(), error = " << e1.what();
       success = false;
     } catch(const std::bad_alloc &e2) {
-      DXLOG(logINFO) << "Exception thrown while appending to string in exec(), error = " << e2.what();
+      DXLOG(logINFO) << "Exception thrown while appending to string in execCommand(), error = " << e2.what();
       success = false;
     }
     int ret = pclose(pipe);
@@ -276,7 +276,16 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     if (fs_success) {
       string cmd = "file -L --brief --mime-type " + sp.string() + " 2>&1";
       string sout;
-      bool exec_success = exec(cmd, sout); // actually execute the file command
+      bool exec_success = execCommand(cmd, sout); // actually execute the file command
+
+      // On older versions of 'file', --mime-type option is not recognized, try the "-i/-mime" flag instead (which is more verbose)
+      // sanitizeMediaType() should take care of the verboseness of "-i" flag
+      if (!exec_success) {
+        DXLOG(logINFO) << "Previous call to 'file' command (with --mime-type) failed, trying with -i instead (for older versions of 'file')";
+        cmd = "file -L --brief -i " + sp.string() + " 2>&1";
+        exec_success = execCommand(cmd, sout); // execute the command
+      }
+
       DXLOG(logINFO) << "Removing the temp symlink file ('" << sp.string() << "')";
       fs::remove(sp); // remove the temp symlink we created
       if (exec_success) {
@@ -286,8 +295,7 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     // We are here => "file" command failed to execute for some reason (or one of the boost filesystem functions failed),
     // we can't really do much at this point, as libmagic *most* likely won't find
     // magic database either, but what the heck! let's try libmagic anyway.
-    // In most likely scenario: it will throw error because it 
-    // cannot find magic db: do catch them!
+    // As mentioned before, most likely libmagic call will fail too (cannot find magic.db): do catch them!
     try {
       DXLOG(logINFO) << "Unable to get mime type by running 'file' command ... will try to fetch mime type from libmagic ....";
       string temp = getMimeTypeUsingLibmagic(filePath);
