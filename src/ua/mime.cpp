@@ -281,6 +281,7 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
       // On older versions of 'file', --mime-type option is not recognized, try the "-i/-mime" flag instead (which is more verbose)
       // sanitizeMediaType() should take care of the verboseness of "-i" flag
       if (!exec_success) {
+        sout.clear();
         DXLOG(logINFO) << "Previous call to 'file' command (with --mime-type) failed, trying with -i instead (for older versions of 'file')";
         cmd = "file -L --brief -i " + sp.string() + " 2>&1";
         exec_success = execCommand(cmd, sout); // execute the command
