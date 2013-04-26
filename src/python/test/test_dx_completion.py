@@ -135,8 +135,9 @@ class TestDXTabCompletion(unittest.TestCase):
 
     def test_project_completion(self):
         self.ids_to_destroy.append(dxpy.api.project_new({"name": "to select"})['id'])
-        self.assert_completion("dx select to", "to select")
-        # self.assert_completion("dx select to\ select:", " ")
+        self.assert_completion("dx select to", "to select\\:")
+        self.assert_completion("dx select \"to", "\"to select:")
+        self.assert_completion("dx select to\ select:", " ")
 
     def test_local_file_completion(self):
         with NamedTemporaryFile(dir=os.getcwd()) as local_file:
@@ -153,7 +154,10 @@ class TestDXTabCompletion(unittest.TestCase):
         # (aside from special characters, escape the string so that
         # "*" and "?" aren't used as part of the glob pattern, escape
         # "/")
-        self.assertTrue(False)
+        r = dxpy.new_dxrecord(name='my <<awesome.>> record !@#$%^&*(){}[]|;:?`')
+        self.assert_completion('dx ls my', 'my \\<\\<awesome.\\>\\> record \\!\\@#$%^\\&*\\(\\){}[]\\|\\;\\\\:?\\` ')
+        self.assert_completion('dx ls "my', '"my <<awesome.>> record \\!@#\\$%^&*(){}[]|;\\:?\\`')
+        self.assert_completion("dx ls 'my", "'my <<awesome.>> record !@#$%^&*(){}[]|;\\:?`")
 
 if __name__ == '__main__':
     unittest.main()

@@ -3345,12 +3345,12 @@ parser_download = subparsers.add_parser('download', help='Download a file',
                                         description='Download the contents of a file object.  Use "-o -" to direct the output to stdout.',
                                         prog='dx download',
                                         parents=[env_args])
-parser_download.add_argument('path', help='Data object ID or name to access')
+parser_download.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
-parser_download = DXPathCompleter(classes=['file'])
+
 parser_map['download'] = parser_download
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['data']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))

@@ -27,6 +27,36 @@ from argcomplete import warn
 def startswith(text):
     return (lambda string: string.startswith(text))
 
+def escape_name(text):
+    return escape_colon(text).replace('/', '\\/')
+
+def escape_colon(text):
+    return text.replace(':', '\\:')
+
+def unescape_colon(text):
+    return text.replace('\\:', ':')
+
+def join_path(project, path, name):
+    project = escape_colon(project)
+    path = escape_colon(path)
+    name = escape_name(name)
+    if not path.startswith('/'):
+        path = '/' + path
+    if not path.endswith('/'):
+        path = path + '/'
+    return project+":"+path+name
+
+def split_path(path):
+    colon_pos = get_first_pos_of_char(':', path)
+    slash_pos = get_last_pos_of_char('/', path)
+    project, path, name = path[:colon_pos], path[colon_pos+1:slash_pos], path[slash_pos+1:]
+    if path == '':
+        path = '/'
+    project = unescape_colon(project)
+    path = unescape_colon(path)
+    name = unescape_colon(name).replace('\\/', '/')
+    return project, path, name
+
 # def completion_escaper(match):
 #     if match.group(0) == ":":
 #         return "\\\\:"
@@ -110,9 +140,8 @@ def get_data_matches(text, delim_pos, dxproj, folderpath, classname=None,
                                               limit=100,
                                               describe=True,
                                               typename=typespec))
-        names = map(lambda result: result['describe']['name'], results)
         prefix = '' if text == '' else text[:delim_pos + 1]
-        return [prefix+n for n in names]
+        return [prefix + escape_name(result['describe']['name']) for result in results]
     except:
         return []
 
@@ -153,8 +182,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
             results = dxpy.find_projects(describe=True, level=perm_level)
             if not include_current_proj:
                 results = [r for r in results if r['id'] != dxpy.WORKSPACE_ID]
-            suffix = ': ' if expected == 'project' else ':'
-            matches += [r['describe']['name'] for r in results if r['describe']['name'].startswith(text)]
+            matches += [escape_colon(r['describe']['name'])+':' for r in results if r['describe']['name'].startswith(text)]
 
     if expected == 'project':
         return matches
@@ -220,11 +248,6 @@ class DXPathCompleter():
 
     def get_matches(self, line, point, prefix, suffix):
         self._populate_matches(prefix)
-
-        if prefix.rfind(':') != -1:
-            for i in range(len(self.matches)):
-                self.matches[i] = self.matches[i][self.matches[i].rfind(':') + 1:]
-                
         return self.matches
 
     def complete(self, text, state):
