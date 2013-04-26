@@ -76,6 +76,12 @@ running_main = args.function == 'main'
 job_inputs = ExecutableInputs(input_spec=(dxapp_json.get('inputSpec') if running_main else None))
 job_inputs.update_from_args(args)
 
+# Extend job_inputs.inputs using "default" values in inputSpec
+if 'inputSpec' in dxapp_json:
+    for param in dxapp_json['inputSpec']:
+        if param['name'] not in job_inputs.inputs and 'default' in param:
+            job_inputs.inputs[param['name']] = param['default']
+
 if args.workspace_path is None:
     args.workspace_path = os.path.join(args.path, 'test-job-workspaces')
 

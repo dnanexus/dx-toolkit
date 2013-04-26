@@ -249,8 +249,8 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     except BaseException as e:
         sys.exit(job_name + ' ' + JOB_STATES('failed') + ' when resolving input:\n' + fill(str(e)))
 
-    # FIXME: Get list of non-closed data objects in the input that
-    # appear as DNAnexus links; append to depends_on
+    # Get list of non-closed data objects in the input that appear as
+    # DNAnexus links; append to depends_on
     if depends_on is None:
         depends_on = []
     get_implicit_depends_on(input_hash, depends_on)
