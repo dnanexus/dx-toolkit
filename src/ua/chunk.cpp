@@ -24,6 +24,9 @@
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <iostream>
+#include <stdio.h>
+
 #include "options.h"
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
@@ -84,14 +87,14 @@ void Chunk::read() {
   // For windows we use fseeko64() & fread(): since we
   // compile a 32bit UA version, and standard library functions
   // do not allow to read > 2GB locations in file
-  FILE *fp(localFile.c_str(), "rb");
+  FILE *fp = fopen(localFile.c_str(), "rb");
   if (!fp) {
     ostringstream msg;
     msg << "file('" << localFile.c_str() << "') cannot be opened for reading (errno=" << errno
         << ")... readdata failed on chunk " << (*this);
     throw runtime_error(msg.str());
   }
-  if(!fseeko64(fp, off64_t(start), SEEK_SET)) {
+  if(fseeko64(fp, off64_t(start), SEEK_SET) != 0) {
     ostringstream msg;
     msg << "unable to seek to location '" << off64_t(start) << "' in the file '" << localFile.c_str()
         << "' (errno=" << errno << ")... readdata failed on chunk " << (*this);
