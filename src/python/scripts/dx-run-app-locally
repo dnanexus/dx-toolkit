@@ -35,7 +35,7 @@ parser.add_argument('--workspace-path', help="Local directory in which jobs will
 parser.add_argument('-i', '--input', help=fill('An input to be used in calling the app "<input name>[:<class>]=<input value>", where class can be any job IO class, e.g. "string", "array:string", or "array".  If class is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string', width_adjustment=-24), action='append')
 parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
 parser.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
-parser.add_argument('--split-logs', help='Whether to split stderr and stdout into separate files for each job', action='store_true')
+parser.add_argument('--split-logs', help='Whether to split stderr and stdout into separate files', action='store_true')
 parser.add_argument('--watch', help='Whether to also print job logs to the console after each local job finishes', action='store_true')
 parser.add_argument('-x', help='Adds the -x flag to bash invocations so that each command is echoed to stderr', action='store_true')
 args = parser.parse_args()
@@ -148,4 +148,4 @@ print 'App finished successfully'
 with open(all_job_outputs_path, 'r') as fd:
     job_outputs = json.load(fd)
     if main_job_id in job_outputs:
-        print job_output_to_str(job_outputs[main_job_id], title="Final output: ")
+        print job_output_to_str(job_outputs[main_job_id], title="Final output: ").lstrip()

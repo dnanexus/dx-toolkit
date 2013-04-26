@@ -208,13 +208,13 @@ def io_val_to_str(val):
     else:
         return json.dumps(val)
 
-def job_output_to_str(job_output, prefix='', title="Output: "):
+def job_output_to_str(job_output, prefix='\n', title="Output: "):
     if len(job_output) == 0:
         return prefix + title + "-"
     else:
-        return prefix + title + (prefix+' '*8).join([fill(key + ' = ' + io_val_to_str(value),
-                                                               subsequent_indent=' '*9,
-                                                               break_long_words=False) for key, value in job_output.items()])
+        return prefix + title + (prefix+' '*len(title)).join([fill(key + ' = ' + io_val_to_str(value),
+                                                                   subsequent_indent=' '*9,
+                                                                   break_long_words=False) for key, value in job_output.items()])
 
 def get_io_field(io_hash, defaults={}, delim='=', highlight_fields=[]):
     if io_hash is None:
