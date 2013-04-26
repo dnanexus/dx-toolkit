@@ -128,7 +128,6 @@ void Chunk::read() {
   }
   in.read(&(data[0]), len);
   if (!in.good()) {
-  } else {
     ostringstream msg;
     msg << "unable to read '" << len << "' bytes from location '" << start << "' in the file '" 
         << localFile.c_str() << "' (fail bit = " << in.fail() << ", bad bit = " << in.bad() 
