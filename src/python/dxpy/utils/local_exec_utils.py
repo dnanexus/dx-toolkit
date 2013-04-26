@@ -158,19 +158,16 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
 
     watch = os.environ.get('DX_TEST_WATCH') == '1'
 
-    if os.environ.get('DX_TEST_SPLIT_LOGS'):
+    split_logs = os.environ.get('DX_TEST_SPLIT_LOGS')
+    if split_logs:
         stdout_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '-stdout.log')
         log_filenames.append(stdout_path)
-        job_stdout = open(stdout_path, 'w+')
 
         stderr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '-stderr.log')
         log_filenames.append(stderr_path)
-        job_stderr = open(stderr_path, 'w+')
     else:
-        stdouterr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '.log')
-        log_filenames.append(stdouterr_path)
-        job_stdout = open(stdouterr_path, 'w+')
-        job_stderr = job_stdout
+        stdout_path = stderr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '.log')
+        log_filenames.append(stdout_path)
 
     job_env = os.environ.copy()
     job_env['HOME'] = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
@@ -195,7 +192,8 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
             # Following code is what is used to generate env vars on the remote worker
             fd.write("\n".join(["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in input_hash.iteritems()]))
 
-    print job_id + ':' + function + ' -> ' + JOB_STATES('running')
+    print '======'
+    print BOLD() + BLUE() + job_id + ':' + function + ENDC() + ' -> ' + JOB_STATES('running')
     start_time = datetime.datetime.now()
     if run_spec['interpreter'] == 'bash':
         script = '''
@@ -209,13 +207,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
                        env_path=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
                        code_path=pipes.quote(os.environ['DX_TEST_CODE_PATH']),
                        function=function)
-
-        fn_process = subprocess.Popen(['bash', '-c', '-e'] + \
-                                          (['-x'] if os.environ.get('DX_TEST_X_FLAG') else []) + \
-                                          [script],
-                                      stdout=job_stdout,
-                                      stderr=job_stderr,
-                                      env=job_env)
+        invocation = 'bash -c -e ' + ('-x ' if os.environ.get('DX_TEST_X_FLAG') else '') + pipes.quote(script)
     elif run_spec['interpreter'] == 'python2.7':
         script = '''#!/usr/bin/env python
 import os
@@ -230,32 +222,40 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
            code=run_spec['code'])
 
         job_env['DX_TEST_FUNCTION'] = function
+        invocation = 'python -c ' + pipes.quote(script)
 
-        fn_process = subprocess.Popen(['python', '-c', script],
-                                      stdout=job_stdout,
-                                      stderr=job_stderr,
-                                      env=job_env)
+    if watch:
+        if split_logs:
+            fn_process = subprocess.Popen('{ ' + invocation + ' 2>&3 | tee -a ' + pipes.quote(stdout_path) + '; } 3>&1 1>&2 | tee -a ' + pipes.quote(stderr_path),
+                                          env=job_env,
+                                          shell=True)
+        else:
+            fn_process = subprocess.Popen(invocation + ' | tee -a ' + pipes.quote(stdout_path),
+                                          env=job_env,
+                                          shell=True)
+    else:
+        with open(stdout_path, 'a+') as job_stdout, open(stderr_path, 'a+') as job_stderr:
+            if split_logs:
+                fn_process = subprocess.Popen(invocation,
+                                              stdout=job_stdout,
+                                              stderr=job_stderr,
+                                              env=job_env,
+                                              shell=True)
+            else:
+                fn_process = subprocess.Popen(invocation,
+                                              stdout=job_stdout,
+                                              stderr=job_stderr,
+                                              env=job_env,
+                                              shell=True)
 
     fn_process.communicate()
     end_time = datetime.datetime.now()
-    job_stderr.write('----------------------\nLocal test harness log\nFunction: ' + function + '\nRunning time: ' + str(end_time - start_time) + '\nExit code: ' + str(fn_process.returncode) + '\n')
-
-    if watch:
-        print "Logs"
-        print '-'*len("Logs")
-        if os.environ.get('DX_TEST_SPLIT_LOGS'):
-            job_stdout.seek(0)
-            print GREEN() + 'stdout:' + ENDC()
-            for line in job_stdout:
-                print '> ' + line.strip()
-            job_stderr.seek(0)
-            print YELLOW() + 'stderr:' + ENDC()
-            for line in job_stderr:
-                print '> ' + line.strip()
-        else:
-            job_stdout.seek(0)
-            for line in job_stdout:
-                print '> ' + line.strip()
+    with open(stderr_path, 'a') as job_stderr:
+        job_stderr.write('----------------------\n')
+        job_stderr.write('Local test harness log\n')
+        job_stderr.write('Function: ' + function + '\n')
+        job_stderr.write('Running time: ' + str(end_time - start_time) + '\n')
+        job_stderr.write('Exit code: ' + str(fn_process.returncode) + '\n')
 
     if fn_process.returncode != 0:
         sys.exit(fill(job_id + ':' + function + ' ' + JOB_STATES('failed') + ' (error code ' + str(fn_process.returncode) + ')') + ('' if watch else '\n' + fill('Consult the job\'s logs in:') + '\n  ' + '\n  '.join(log_filenames)))
@@ -272,7 +272,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
         job_output = {}
 
     print job_id + ':' + function + ' -> ' + GREEN() + 'finished running' + ENDC() + ' after ' + str(end_time - start_time)
-    print job_output_to_str(job_output, prefix='  ')
+    print '  ' + job_output_to_str(job_output, prefix='\n  ').lstrip()
 
     with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
