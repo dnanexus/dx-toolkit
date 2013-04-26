@@ -208,11 +208,13 @@ def io_val_to_str(val):
     else:
         return json.dumps(val)
 
-def job_output_to_str(job_output, prefix='\n', title="Output: "):
+def job_output_to_str(job_output, prefix='\n', title="Output: ", title_len=None):
     if len(job_output) == 0:
         return prefix + title + "-"
     else:
-        return prefix + title + (prefix+' '*len(title)).join([fill(key + ' = ' + io_val_to_str(value),
+        if title_len is None:
+            title_len = len(title)
+        return prefix + title + (prefix+' '*title_len).join([fill(key + ' = ' + io_val_to_str(value),
                                                                    subsequent_indent=' '*9,
                                                                    break_long_words=False) for key, value in job_output.items()])
 

@@ -114,6 +114,21 @@ class DXJob(DXObject):
            :func:`dxpy.bindings.dxapp.DXApp.run`.
 
         '''
+        final_depends_on = []
+        if depends_on is not None:
+            if isinstance(depends_on, list):
+                for item in depends_on:
+                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
+                        if item.get_id() is None:
+                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
+                        final_depends_on.append(item.get_id())
+                    elif isinstance(item, basestring):
+                        final_depends_on.append(item)
+                    else:
+                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
+            else:
+                raise DXError('Expected depends_on field to be a list')
+
         if 'DX_JOB_ID' in os.environ:
             req_input = {}
             req_input["input"] = fn_input
@@ -128,25 +143,15 @@ class DXJob(DXObject):
                 else:
                     raise DXError('Expected instance_type field to be either a string or a dict')
             if depends_on is not None:
-                req_input["dependsOn"] = []
-                if isinstance(depends_on, list):
-                    for item in depends_on:
-                        if isinstance(item, DXJob) or isinstance(item, DXDataObject):
-                            if item.get_id() is None:
-                                raise DXError('A dxpy handler given in depends_on does not have an ID set')
-                            req_input["dependsOn"].append(item.get_id())
-                        elif isinstance(item, basestring):
-                            req_input['dependsOn'].append(item)
-                        else:
-                            raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
-                else:
-                    raise DXError('Expected depends_on field to be a list')
+                req_input["dependsOn"] = final_depends_on
             if details is not None:
                 req_input["details"] = details
             resp = dxpy.api.job_new(req_input, **kwargs)
             self.set_id(resp["id"])
         else:
-            self.set_id(queue_entry_point(function=fn_name, input_hash=fn_input))
+            self.set_id(queue_entry_point(function=fn_name, input_hash=fn_input,
+                                          depends_on=final_depends_on,
+                                          name=name))
 
     def set_id(self, dxid):
         '''

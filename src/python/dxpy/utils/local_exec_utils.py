@@ -39,21 +39,21 @@ def resolve_job_ref(jbor, job_outputs={}, should_resolve=True):
     if is_localjob_id(ref_job_id):
         if job_outputs.get(ref_job_id) is None:
             if should_resolve:
-                sys.exit('Error: Job ' + ref_job_id + ' not found in local finished jobs')
+                raise Exception('Job ' + ref_job_id + ' not found in local finished jobs')
             else:
                 return jbor
         if ref_job_field not in job_outputs[ref_job_id]:
-            sys.exit('Error: Cannot resolve a JBOR with job ID ' + ref_job_id + ' because field ' + ref_job_field + ' was not found in its output')
+            raise Exception('Cannot resolve a JBOR with job ID ' + ref_job_id + ' because field "' + ref_job_field + '" was not found in its output')
         return job_outputs[ref_job_id][ref_job_field]
     else:
         dxjob = dxpy.DXJob(ref_job_id)
         try:
             dxjob.wait_on_done()
         except Exception as e:
-            sys.exit('Error: Could not wait for ' + ref_job_id + ' to finish: ' + str(e))
+            raise Exception('Could not wait for ' + ref_job_id + ' to finish: ' + str(e))
         job_desc = dxjob.describe()
         if ref_job_field not in job_desc['output']:
-            sys.exit('Error: Cannot resolve a JBOR with job ID ' + ref_job_id + ' because field ' + ref_job_field + ' was not found in its output')
+            raise Exception('Cannot resolve a JBOR with job ID ' + ref_job_id + ' because field "' + ref_job_field + '" was not found in its output')
         return job_desc['output'][ref_job_field]
 
 def resolve_job_references(io_hash, job_outputs, should_resolve=True):
@@ -90,6 +90,70 @@ def resolve_job_references(io_hash, job_outputs, should_resolve=True):
                 elif isinstance(thing[field], list) or isinstance(thing[field], dict):
                     q.append(thing[field])
 
+def get_nonclosed_data_obj_link(thing):
+    obj_id = None
+    if isinstance(thing, dict) and '$dnanexus_link' in thing:
+        if isinstance(thing['$dnanexus_link'], basestring):
+            obj_id = thing['$dnanexus_link']
+        elif isinstance(thing['$dnanexus_link'], dict):
+            obj_id = thing['$dnanexus_link'].get('id')
+    if obj_id is None:
+        return None
+
+    obj_desc = dxpy.describe(obj_id)
+    if obj_desc.get('state') != 'closed':
+        return obj_id
+
+def get_implicit_depends_on(input_hash, depends_on):
+    '''
+    Add DNAnexus links to non-closed data objects in input_hash to depends_on
+    '''
+    q = []
+
+    for field in input_hash:
+        possible_dep = get_nonclosed_data_obj_link(input_hash[field])
+        if possible_dep is not None:
+            depends_on.append(possible_dep)
+        elif isinstance(input_hash[field], list) or isinstance(input_hash[field], dict):
+            q.append(input_hash[field])
+
+    while len(q) > 0:
+        thing = q.pop()
+        if isinstance(thing, list):
+            for i in range(len(thing)):
+                possible_dep = get_nonclosed_data_obj_link(thing[i])
+                if possible_dep is not None:
+                    depends_on.append(possible_dep)
+                elif isinstance(thing[i], list) or isinstance(thing[i], dict):
+                    q.append(thing[i])
+        else:
+            for field in thing:
+                possible_dep = get_nonclosed_data_obj_link(thing[field])
+                if possible_dep is not None:
+                    depends_on.append(possible_dep)
+                elif isinstance(thing[field], list) or isinstance(thing[field], dict):
+                    q.append(thing[field])
+
+def wait_for_depends_on(depends_on, all_job_outputs):
+    # Wait for depends_on and any data objects in the input to close
+    if len(depends_on) > 0:
+        print fill('Processing dependsOn and any DNAnexus links to closing objects in the input')
+        for an_id in depends_on:
+            try:
+                print '  Waiting for ' + an_id + '...'
+                if an_id.startswith('localjob'):
+                    if all_job_outputs.get(an_id) is None:
+                        raise Exception('Job ' + an_id + ' could not be found in local finished jobs')
+                elif an_id.startswith('job'):
+                    dxjob = dxpy.DXJob(an_id)
+                    dxjob.wait_on_done()
+                else:
+                    handler = dxpy.get_handler(an_id)
+                    desc = handler.describe()
+                    handler._wait_on_close()
+            except BaseException as e:
+                raise Exception('Could not wait for ' + an_id + ': ' + str(e))
+
 def ensure_env_vars():
     for var in ['DX_FS_ROOT',
                 'DX_TEST_CODE_PATH',
@@ -97,10 +161,13 @@ def ensure_env_vars():
         if var not in os.environ:
             sys.exit('Error: Cannot run an entry point locally if the environment variable ' + var + ' has not been set')
 
-def queue_entry_point(function, input_hash):
+def queue_entry_point(function, input_hash, depends_on=[], name=None):
     '''
     :param function: function to run
     :param input_hash: input to new job
+    :param depends_on: list of data object IDs and/or job IDs (local or remote) to wait for before the job can be run
+    :type depends_on: list of strings
+    :param name: job name (optional)
     :returns: new local job ID
 
     This function should only be called by a locally running job, so
@@ -130,16 +197,20 @@ def queue_entry_point(function, input_hash):
     job_queue_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
     with open(job_queue_path, 'r') as fd:
         job_queue = json.load(fd)
-    job_queue.append({"id": job_id,
-                      "function": function,
-                      "input_hash": input_hash})
+    job_entry = {"id": job_id,
+                 "function": function,
+                 "input_hash": input_hash,
+                 "depends_on": depends_on}
+    if name is not None:
+        job_entry['name'] = name
+    job_queue.append(job_entry)
     with open(job_queue_path, 'w') as fd:
         json.dump(job_queue, fd, indent=4)
         fd.write('\n')
 
     return job_id
 
-def run_one_entry_point(job_id, function, input_hash, run_spec):
+def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name=None):
     '''
     :param job_id: job ID of the local job to run
     :type job_id: string
@@ -153,21 +224,9 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
     Runs the specified entry point and retrieves the job's output,
     updating job_outputs.json (in $DX_TEST_JOB_HOMEDIRS) appropriately.
     '''
+    print '======'
+
     job_homedir = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
-    log_filenames = []
-
-    watch = os.environ.get('DX_TEST_WATCH') == '1'
-
-    split_logs = os.environ.get('DX_TEST_SPLIT_LOGS')
-    if split_logs:
-        stdout_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '-stdout.log')
-        log_filenames.append(stdout_path)
-
-        stderr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '-stderr.log')
-        log_filenames.append(stderr_path)
-    else:
-        stdout_path = stderr_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id + '.log')
-        log_filenames.append(stdout_path)
 
     job_env = os.environ.copy()
     job_env['HOME'] = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], job_id)
@@ -177,13 +236,37 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
     with open(all_job_outputs_path, 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
 
+    if isinstance(name, basestring):
+        name += ' (' + job_id + ':' + function + ')'
+    else:
+        name = job_id + ':' + function
+    job_name = BLUE() + BOLD() + name + ENDC()
+    print job_name
+
     # Resolve local job-based object references
-    resolve_job_references(input_hash, all_job_outputs)
+    try:
+        resolve_job_references(input_hash, all_job_outputs)
+    except BaseException as e:
+        sys.exit(job_name + ' ' + JOB_STATES('failed') + ' when resolving input:\n' + fill(str(e)))
+
+    # FIXME: Get list of non-closed data objects in the input that
+    # appear as DNAnexus links; append to depends_on
+    if depends_on is None:
+        depends_on = []
+    get_implicit_depends_on(input_hash, depends_on)
+
+    try:
+        wait_for_depends_on(depends_on, all_job_outputs)
+    except BaseException as e:
+        sys.exit(job_name + ' ' + JOB_STATES('failed') + ' when processing depends_on:\n' + fill(str(e)))
 
     # Save job input to job_input.json
     with open(os.path.join(job_homedir, 'job_input.json'), 'w') as fd:
         json.dump(input_hash, fd, indent=4)
         fd.write('\n')
+
+    print job_output_to_str(input_hash, title=(BOLD() + 'Input: ' + ENDC()),
+                            title_len=len("Input: ")).lstrip()
 
     if run_spec['interpreter'] == 'bash':
         # Save job input to env vars
@@ -192,8 +275,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
             # Following code is what is used to generate env vars on the remote worker
             fd.write("\n".join(["export {k}=( {vlist} )".format(k=k, vlist=" ".join([pipes.quote(vitem if isinstance(vitem, basestring) else json.dumps(vitem)) for vitem in v])) if isinstance(v, list) else "export {k}={v}".format(k=k, v=pipes.quote(v if isinstance(v, basestring) else json.dumps(v))) for k, v in input_hash.iteritems()]))
 
-    print '======'
-    print BOLD() + BLUE() + job_id + ':' + function + ENDC() + ' -> ' + JOB_STATES('running')
+    print BOLD() + 'Logs:' + ENDC()
     start_time = datetime.datetime.now()
     if run_spec['interpreter'] == 'bash':
         script = '''
@@ -207,7 +289,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec):
                        env_path=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
                        code_path=pipes.quote(os.environ['DX_TEST_CODE_PATH']),
                        function=function)
-        invocation = 'bash -c -e ' + ('-x ' if os.environ.get('DX_TEST_X_FLAG') else '') + pipes.quote(script)
+        invocation_args = ['bash', '-c', '-e'] + (['-x'] if os.environ.get('DX_TEST_X_FLAG') else []) + [script]
     elif run_spec['interpreter'] == 'python2.7':
         script = '''#!/usr/bin/env python
 import os
@@ -222,43 +304,16 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
            code=run_spec['code'])
 
         job_env['DX_TEST_FUNCTION'] = function
-        invocation = 'python -c ' + pipes.quote(script)
+        invocation_args = ['python', '-c', script]
 
-    if watch:
-        if split_logs:
-            fn_process = subprocess.Popen('{ ' + invocation + ' 2>&3 | tee -a ' + pipes.quote(stdout_path) + '; } 3>&1 1>&2 | tee -a ' + pipes.quote(stderr_path),
-                                          env=job_env,
-                                          shell=True)
-        else:
-            fn_process = subprocess.Popen(invocation + ' | tee -a ' + pipes.quote(stdout_path),
-                                          env=job_env,
-                                          shell=True)
-    else:
-        with open(stdout_path, 'a+') as job_stdout, open(stderr_path, 'a+') as job_stderr:
-            if split_logs:
-                fn_process = subprocess.Popen(invocation,
-                                              stdout=job_stdout,
-                                              stderr=job_stderr,
-                                              env=job_env,
-                                              shell=True)
-            else:
-                fn_process = subprocess.Popen(invocation,
-                                              stdout=job_stdout,
-                                              stderr=job_stderr,
-                                              env=job_env,
-                                              shell=True)
+    fn_process = subprocess.Popen(invocation_args,
+                                  env=job_env)
 
     fn_process.communicate()
     end_time = datetime.datetime.now()
-    with open(stderr_path, 'a') as job_stderr:
-        job_stderr.write('----------------------\n')
-        job_stderr.write('Local test harness log\n')
-        job_stderr.write('Function: ' + function + '\n')
-        job_stderr.write('Running time: ' + str(end_time - start_time) + '\n')
-        job_stderr.write('Exit code: ' + str(fn_process.returncode) + '\n')
 
     if fn_process.returncode != 0:
-        sys.exit(fill(job_id + ':' + function + ' ' + JOB_STATES('failed') + ' (error code ' + str(fn_process.returncode) + ')') + ('' if watch else '\n' + fill('Consult the job\'s logs in:') + '\n  ' + '\n  '.join(log_filenames)))
+        sys.exit(job_id + ':' + function + ' ' + JOB_STATES('failed') + ', exited with error code ' + str(fn_process.returncode) + ' after ' + str(end_time - start_time))
 
     # Now updating job output aggregation file with job's output
     job_output_path = os.path.join(job_env['HOME'], 'job_output.json')
@@ -271,8 +326,9 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
     else:
         job_output = {}
 
-    print job_id + ':' + function + ' -> ' + GREEN() + 'finished running' + ENDC() + ' after ' + str(end_time - start_time)
-    print '  ' + job_output_to_str(job_output, prefix='\n  ').lstrip()
+    print job_name + ' -> ' + GREEN() + 'finished running' + ENDC() + ' after ' + str(end_time - start_time)
+    print job_output_to_str(job_output, title=(BOLD() + "Output: " + ENDC()),
+                            title_len=len("Output: ")).lstrip()
 
     with open(os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json'), 'r') as fd:
         all_job_outputs = json.load(fd, object_pairs_hook=collections.OrderedDict)
@@ -311,4 +367,6 @@ def run_entry_points(run_spec):
         run_one_entry_point(job_id=entry_point_to_run['id'],
                             function=entry_point_to_run['function'],
                             input_hash=entry_point_to_run['input_hash'],
-                            run_spec=run_spec)
+                            run_spec=run_spec,
+                            depends_on=entry_point_to_run.get('depends_on', []),
+                            name=entry_point_to_run.get('name'))

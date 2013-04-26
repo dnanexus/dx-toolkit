@@ -40,8 +40,17 @@ namespace dx {
       setID(resp["id"].get<string>());
     } else {
       // Absence of DX_JOB_ID env var => running on a local machine outside of the cloud
-      FILE* pipe = popen(("dx-jobutil-new-job " + fn_name + " " + "-j '" + fn_input.toString() + "'").c_str(),
-                         "r");
+      string command = "dx-jobutil-new-job " + fn_name + " -j '" + fn_input.toString() + "'";
+      if (job_name.length() > 0) {
+        command += " --name " + job_name;
+      }
+      if (depends_on.size() > 0) {
+        command += " --depends-on";
+        for (int i = 0; i < depends_on.size(); i++) {
+          command += " " + depends_on[i];
+        }
+      }
+      FILE* pipe = popen(command.c_str(), "r");
       if (!pipe) {
         throw DXError("Could not call dx-jobutil-new-job to create a local job");
       }
