@@ -124,7 +124,7 @@ void handle_bad_alloc(const std::bad_alloc &e) {
 // Assuming that actual upload stage is the bottleneck (which is mostly the case), memory 
 // consumption of UA will roughly be the following:
 // 
-// Memory footprint = (#read-threads + 2 * (#compress-threads + #upload-threads)) * chunk-size
+// Memory footprint = [#read-threads + 2 * (#compress-threads + #upload-threads)] * chunk-size
 
 void readChunks() {
   try {

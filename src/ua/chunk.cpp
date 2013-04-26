@@ -80,15 +80,59 @@ void Chunk::read() {
     // For empty file case (empty chunk)
     return;
   }
-  ifstream in(localFile.c_str(), ifstream::in | ifstream::binary);
-  in.seekg(start);
-  in.read(&(data[0]), len);
-  if (in) {
-  } else {
+#ifdef WINDOWS_BUILD
+  // For windows we use fseeko64() & fread(): since we
+  // compile a 32bit UA version, and standard library functions
+  // do not allow to read > 2GB locations in file
+  FILE *fp(localFile.c_str(), "rb");
+  if (!fp) {
     ostringstream msg;
-    msg << "readData failed on chunk " << (*this);
+    msg << "file('" << localFile.c_str() << "') cannot be opened for reading (errno=" << errno
+        << ")... readdata failed on chunk " << (*this);
     throw runtime_error(msg.str());
   }
+  if(!fseeko64(fp, off64_t(start), SEEK_SET)) {
+    ostringstream msg;
+    msg << "unable to seek to location '" << off64_t(start) << "' in the file '" << localFile.c_str()
+        << "' (errno=" << errno << ")... readdata failed on chunk " << (*this);
+    fclose(fp);
+    throw runtime_error(msg.str());
+  }
+  fread(&(data[0]), 1, len, fp);
+  int errflg = ferror(fp); // get error status before we close the file handler
+  fclose(fp);
+  if (errflg) {
+    ostringstream msg;
+    msg << "unable to read '" << len << "' bytes from location '" << off64_t(start) << "' in the file '"
+        << localFile.c_str() << "' (errno=" << errno << ")... readdata failed on chunk " << (*this);
+    throw runtime_error(msg.str());
+  }
+#else
+  ifstream in(localFile.c_str(), ifstream::in | ifstream::binary);
+  if (!in) {
+    ostringstream msg;
+    msg << "file('" << localFile.c_str() << "') cannot be opened for reading..." <<
+           "readdata failed on chunk " << (*this);
+    throw runtime_error(msg.str());
+  }
+  in.seekg(start);
+  if (!in.good()) {
+    ostringstream msg;
+    msg << "unable to seek to location '" << start << "' in the file '" << localFile.c_str()
+        << "' (fail bit = " << in.fail() << ", bad bit = " << in.bad() << ", eofbit = "
+        << in.eof() <<")... readdata failed on chunk " << (*this);
+    throw runtime_error(msg.str());
+  }
+  in.read(&(data[0]), len);
+  if (!in.good()) {
+  } else {
+    ostringstream msg;
+    msg << "unable to read '" << len << "' bytes from location '" << start << "' in the file '" 
+        << localFile.c_str() << "' (fail bit = " << in.fail() << ", bad bit = " << in.bad() 
+        << ", eofbit = " << in.eof() <<")... readdata failed on chunk " << (*this);
+    throw runtime_error(msg.str());
+  }
+#endif
 }
 
 void Chunk::compress() {
