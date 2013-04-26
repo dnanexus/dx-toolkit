@@ -21,7 +21,7 @@
 #ifndef DX_IGNORE_SIGPIPE_H
 #define DX_IGNORE_SIGPIPE_H
 
-//#if !WINDOWS_BUILD
+#if !WINDOWS_BUILD
 #include <csignal>
 
 struct sigpipe {
@@ -68,11 +68,11 @@ static void sigpipe_restore(struct sigpipe *pipe) {
   sigaction(SIGPIPE, &pipe->action, NULL);
 }
 
-//#else
+#else
 
 /* for systems without sigaction */
-//#define sigpipe_ignore(x)
-//#define sigpipe_restore(x)
-//#define SIGPIPE_VARIABLE(x)
-//#endif
+#define sigpipe_ignore(x)
+#define sigpipe_restore(x)
+#define SIGPIPE_VARIABLE(x)
+#endif
 #endif
