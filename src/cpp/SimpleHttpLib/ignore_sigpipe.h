@@ -71,7 +71,7 @@ static void sigpipe_restore(struct sigpipe *pipe) {
 #else
 
 /* for systems without sigaction */
-#define sigpipe_ignore(x)
+#define sigpipe_ignore(x, y)
 #define sigpipe_restore(x)
 #define SIGPIPE_VARIABLE(x)
 #endif
