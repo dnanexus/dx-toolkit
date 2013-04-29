@@ -58,6 +58,14 @@ def _image_to_data(img):
     img["src"] = src_data
 
 
+def _topify_link(link):
+    """
+    Adds a target='_top' property to links so they can break out of iframes
+    """
+    if "target" not in link.attrs:
+        link["target"] = "_top"
+
+
 def _load_file(path, mode="r"):
     """
     Loads a file from the local filesystem
@@ -160,7 +168,7 @@ def main(**kwargs):
         html = bake(source)
         # Adjust all links in the HTML Report to address the top bar so they're still useful
         for link in html("a"):
-            link["target"] = "_top"
+            _topify_link(link)
 
         # If we're supposed to upload the report to the server, upload the individual HTML file
         if args.remote:

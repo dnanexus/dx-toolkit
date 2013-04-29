@@ -415,7 +415,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         gif_file.close()
         wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
         html_file = open("{}/index.html".format(self.temp_file_path), "w")
-        html = "<html><body><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
+        html = "<html><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
         html_file.write(html)
         html_file.close()
     def tearDown(self):
@@ -431,6 +431,8 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertTrue(re.search(self.gif_base64, html))
         self.assertEquals(len(re.split("src=\"data:image", html)), 3)
         self.assertEquals(len(re.split("<img", html)), 3)
+        self.assertTrue(re.search("target=\"_top\"", html))
+        self.assertTrue(re.search("target=\"_new\"", html))
 
     def test_image_only(self):
         run(u"dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
