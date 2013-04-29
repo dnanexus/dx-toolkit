@@ -528,7 +528,7 @@ int main(int argc, char * argv[]) {
     return 0;
   } else if (opt.help() || opt.files.empty()) {
     opt.printHelp(argv[0]);
-    return 1;
+    return (opt.help()) ? 0 : 1;
   }
   
   setUserAgentString(); // also sets dx::config::USER_AGENT_STRING()
