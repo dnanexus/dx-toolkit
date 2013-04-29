@@ -23,6 +23,17 @@ from dxpy.utils.printing import *
 from dxpy.utils.resolver import *
 from dxpy.cli.exec_io import *
 
+def exit_with_error(msg):
+    '''
+    :param msg: string message to print before exiting
+
+    Print the error message, as well as a blurb on where to find the
+    job workspaces
+    '''
+    msg += '\n'
+    msg += 'Local job workspaces can be found in: ' + str(os.environ.get('DX_TEST_JOB_HOMEDIRS'))
+    sys.exit(msg)
+
 def resolve_job_ref(jbor, job_outputs={}, should_resolve=True):
     '''
     :param jbor: a dict that is a valid job-based object reference
@@ -247,7 +258,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     try:
         resolve_job_references(input_hash, all_job_outputs)
     except BaseException as e:
-        sys.exit(job_name + ' ' + JOB_STATES('failed') + ' when resolving input:\n' + fill(str(e)))
+        exit_with_error(job_name + ' ' + JOB_STATES('failed') + ' when resolving input:\n' + fill(str(e)))
 
     # Get list of non-closed data objects in the input that appear as
     # DNAnexus links; append to depends_on
@@ -258,7 +269,7 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
     try:
         wait_for_depends_on(depends_on, all_job_outputs)
     except BaseException as e:
-        sys.exit(job_name + ' ' + JOB_STATES('failed') + ' when processing depends_on:\n' + fill(str(e)))
+        exit_with_error(job_name + ' ' + JOB_STATES('failed') + ' when processing depends_on:\n' + fill(str(e)))
 
     # Save job input to job_input.json
     with open(os.path.join(job_homedir, 'job_input.json'), 'w') as fd:
@@ -313,7 +324,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
     end_time = datetime.datetime.now()
 
     if fn_process.returncode != 0:
-        sys.exit(job_id + ':' + function + ' ' + JOB_STATES('failed') + ', exited with error code ' + str(fn_process.returncode) + ' after ' + str(end_time - start_time))
+        exit_with_error(job_name + ' ' + JOB_STATES('failed') + ', exited with error code ' + str(fn_process.returncode) + ' after ' + str(end_time - start_time))
 
     # Now updating job output aggregation file with job's output
     job_output_path = os.path.join(job_env['HOME'], 'job_output.json')
@@ -322,7 +333,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
             with open(job_output_path, 'r') as fd:
                 job_output = json.load(fd, object_pairs_hook=collections.OrderedDict)
         except BaseException as e:
-            sys.exit(fill(str(e.__class__) + ': ' + str(e)))
+            exit_with_error('Error: Could not load output of ' + job_name + ':\n' + fill(str(e.__class__) + ': ' + str(e)))
     else:
         job_output = {}
 

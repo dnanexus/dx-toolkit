@@ -138,7 +138,6 @@ if args.x:
     os.environ['DX_TEST_X_FLAG'] = '1'
 
 print 'About to run app ' + dxapp_json['name'] + ' locally'
-print 'Local working directory: ' + job_homedirs
 
 main_job_id = local_exec_utils.queue_entry_point(function=args.function,
                                                  input_hash=job_inputs.inputs)
@@ -149,3 +148,5 @@ with open(all_job_outputs_path, 'r') as fd:
     job_outputs = json.load(fd)
     if main_job_id in job_outputs:
         print job_output_to_str(job_outputs[main_job_id], title="Final output: ").lstrip()
+
+print 'Local job workspaces can be found in: ' + job_homedirs
