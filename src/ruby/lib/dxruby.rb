@@ -161,7 +161,17 @@ module DX
           else
             # Everything is OK, return the response (after parsing as JSON, if that content-type is provided by the server)
             if response['content-type'] && (/^\s*application\/json/i.match(response['content-type']) != nil)
-              return JSON.parse(response.body)
+              begin
+                return JSON.parse(response.body)
+              rescue JSON::ParserError
+                # If response cannot be parsed as valid JSON,
+                # we retry iff "content-length" header is absent (See PTFM-7182 for detail)
+                if response['content-length']
+                  raise
+                else
+                  ok_to_retry = true
+                end
+              end
             else
               return response.body
             end
