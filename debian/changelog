@@ -1,3 +1,17 @@
+dx-toolkit (0.48.0) precise; urgency=low
+
+  * Improvements to "dx-run-app-locally".
+
+  * New command "dx-workflow-to-applet".
+
+  * Fixes for "dx" tab completion.
+
+  * Improvements for Upload Agent.
+
+  * Various bug fixes.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 30 Apr 2013 17:34:55 +0000
+
 dx-toolkit (0.47.0) precise; urgency=low
 
   * New command "dx upgrade".
