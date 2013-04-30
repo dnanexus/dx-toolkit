@@ -41,7 +41,7 @@ class TestDXAppWizardAndRunAppLocally(unittest.TestCase):
         wizard.expect("Version")
         wizard.sendline()
         wizard.expect("1st input name")
-        wizard.sendline("i")
+        wizard.sendline("in1")
         wizard.expect("Label")
         wizard.sendline()
         wizard.expect("Choose a class")
@@ -51,7 +51,7 @@ class TestDXAppWizardAndRunAppLocally(unittest.TestCase):
         wizard.expect("2nd input name")
         wizard.sendline()
         wizard.expect("1st output name")
-        wizard.sendline("o")
+        wizard.sendline("out1")
         wizard.expect("Label")
         wizard.sendline()
         wizard.expect("Choose a class")
@@ -78,26 +78,28 @@ class TestDXAppWizardAndRunAppLocally(unittest.TestCase):
                     line = '    return { "answer": sum(process_outputs) }'
                 elif line == '    return { "output": "placeholder value" }':
                     line = '    return { "output": input1 ** 2 }'
+                elif line == '    for i in range(10):':
+                    line = '    for i in range(in1):'
                 elif line == '        subjob_input = { "input1": True }':
                     line = '        subjob_input = { "input1": i }'
-                elif line == '    output["o"] = o':
-                    src_fh.write('    o = postprocess_job.get_output_ref("answer")\n')
+                elif line == '    output["out1"] = out1':
+                    src_fh.write('    out1 = postprocess_job.get_output_ref("answer")\n')
                 src_fh.write(line + "\n")
 
-        output = subprocess.check_output(['dx-run-app-locally', appdir, '-ii=10'])
+        output = subprocess.check_output(['dx-run-app-locally', appdir, '-iin1=8'])
         print output
         self.assertIn("App finished successfully", output)
-        self.assertIn("Final output: o = 285", output)
+        self.assertIn("Final output: out1 = 140", output)
         return appdir
 
     def test_dx_run_app_locally_and_compare_results(self):
         appdir = self.test_dx_run_app_locally()
         applet_id = dx_build_app.main(args=[appdir, '--create-applet', '-f', '--json'])['id']
-        remote_job = dxpy.DXApplet(applet_id).run({"i": 10})
+        remote_job = dxpy.DXApplet(applet_id).run({"in1": 8})
         print "Waiting for", remote_job, "to complete"
         remote_job.wait_on_done()
         result = remote_job.describe()
-        self.assertEqual(result["output"]["o"], 285)
+        self.assertEqual(result["output"]["out1"], 140)
 
 if __name__ == '__main__':
     unittest.main()
