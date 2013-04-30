@@ -169,6 +169,8 @@ def main(**kwargs):
         # Adjust all links in the HTML Report to address the top bar so they're still useful
         for link in html("a"):
             _topify_link(link)
+        for link in html("area"):
+            _topify_link(link)
 
         # If we're supposed to upload the report to the server, upload the individual HTML file
         if args.remote:
