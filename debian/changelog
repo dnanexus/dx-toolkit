@@ -1,3 +1,9 @@
+dx-toolkit (0.47.4) precise; urgency=low
+
+  * Bug fixes.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 30 Apr 2013 17:40:02 +0000
+
 dx-toolkit (0.47.2) precise; urgency=low
 
   * Revert bogus Debian packaging change.
