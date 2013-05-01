@@ -36,9 +36,9 @@ clean:
 
 dist: all
 ifeq ($(UNAME), MINGW32_NT-6.1)
-	make -C build -f ../Makefile.mw dist
+	make -C build -f ../Makefile.mw dist VERSION=$(VERSION)
 else
-	make -C build -f ../Makefile.static dist
+	make -C build -f ../Makefile.static dist VERSION=$(VERSION)
 endif
 
 install: all
