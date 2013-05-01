@@ -12,7 +12,7 @@
     {"name": "trimmedReads", "class": "gtable"}
   ],
   "runSpec": {
-    "code": "export CLASSPATH=/:$CLASSPATH; java DXTrimReads",
+    "code": "export CLASSPATH=${DX_FS_ROOT}/:$CLASSPATH; java DXTrimReads",
     "interpreter": "bash",
     "execDepends": [
       {"name": "dx-java-bindings"},

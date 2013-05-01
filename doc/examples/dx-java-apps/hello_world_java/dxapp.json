@@ -11,7 +11,7 @@
     {"name": "greeting", "class": "string"}
   ],
   "runSpec": {
-    "code": "export CLASSPATH=/:$CLASSPATH; java DXHelloWorld",
+    "code": "export CLASSPATH=${DX_FS_ROOT}/:$CLASSPATH; java DXHelloWorld",
     "interpreter": "bash",
     "execDepends": [
       {"name": "dx-java-bindings"},
