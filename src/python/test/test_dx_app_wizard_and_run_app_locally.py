@@ -94,7 +94,10 @@ class TestDXAppWizardAndRunAppLocally(unittest.TestCase):
 
     def test_dx_run_app_locally_and_compare_results(self):
         appdir = self.test_dx_run_app_locally()
-        applet_id = dx_build_app.main(args=[appdir, '--create-applet', '-f', '--json'])['id']
+        applet_id = dx_build_app.build_and_upload_locally(appdir,
+                                                          mode='applet',
+                                                          overwrite=True,
+                                                          return_object_dump=True)['id']
         remote_job = dxpy.DXApplet(applet_id).run({"in1": 8})
         print "Waiting for", remote_job, "to complete"
         remote_job.wait_on_done()

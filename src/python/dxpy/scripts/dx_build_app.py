@@ -636,7 +636,7 @@ def main(**kwargs):
             print >> sys.stderr, "Error: %s" % (e.message,)
             sys.exit(3)
 
-        return output
+        return
 
     else:
         # REMOTE BUILD
