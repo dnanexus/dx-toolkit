@@ -13,7 +13,7 @@
     {"name": "results_file", "class": "file"}
   ],
   "runSpec": {
-    "code": "/random_gtable_app",
+    "code": "random_gtable_app",
     "interpreter": "bash"
   },
   "version": "0.0.1"
