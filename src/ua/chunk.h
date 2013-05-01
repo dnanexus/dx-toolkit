@@ -95,6 +95,14 @@ public:
  
   /* This stores the md5 sum of chunk (computed by UA) */
   std::string expectedMD5;
+  
+  ////// The variables below are to facilitate DNS round robin scheme in UA
+  // Host name, extracted from the URL returned by /file-xxxx/upload call
+  std::string hostName;
+  
+  // Resolved IP for the hostName (using a random ip selector function)
+  std::string resolvedIP;
+  /////////////////////////////////////////////////////////////////////////
 
   void read();
   void compress();
@@ -106,7 +114,8 @@ public:
 
 private:
 
-  std::string uploadURL() const;
+  std::string uploadURL();
+  void upload_cleanup(CURL**, curl_slist**, curl_slist**) const;
 };
 
 #endif

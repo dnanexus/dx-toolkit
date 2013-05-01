@@ -23,6 +23,7 @@
 #include <curl/curl.h>
 #include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include <iostream>
 #include <stdio.h>
@@ -39,6 +40,10 @@ extern "C" {
 }
 
 #include "dxcpp/dxlog.h"
+
+// These 2 header files below are required by getRandomIP() function
+#include <netdb.h>
+#include <arpa/inet.h>
 
 using namespace std;
 
@@ -266,110 +271,137 @@ static void sigpipe_catcher(int sig) {
   DXLOG(dx::logINFO) << "UA Chunk.cpp => Caught SIGPIPE(signal_num = " << sig << ")... will ignore";
 }
 
+void Chunk::upload_cleanup(CURL **curl, curl_slist **l1, curl_slist **l2) const {
+  log ("Performing curl cleanup");
+  if (*curl != NULL) {
+    SIGPIPE_VARIABLE(pipe2);
+    sigpipe_ignore(&pipe2, sigpipe_catcher);
+    curl_easy_cleanup(*curl);
+    sigpipe_restore(&pipe2);
+    *curl = NULL;
+  }
+  if (*l1 != NULL) {
+    curl_slist_free_all(*l1);
+    *l1 = NULL;
+  }
+  if (*l2 != NULL) {
+    curl_slist_free_all(*l2);
+    *l2 = NULL;
+  }
+}
+
 void Chunk::upload() {
-  string url = uploadURL();
-  log("Upload URL: " + url);
+  CURL *curl = NULL;
+  struct curl_slist *slist_resolved_ip = NULL;
+  struct curl_slist *slist_headers = NULL;
+  long responseCode;
 
-  uploadOffset = 0;
-  
-  CURL * curl = curl_easy_init();
-  if (curl == NULL) {
-    throw runtime_error("An error occurred when initializing the HTTP connection");
-  }
-  char errorBuffer[CURL_ERROR_SIZE + 1] = {0}; // setting to zero (since it can be the case that despite an error, nothing is written to the buffer)
-  // Set errorBuffer to recieve human readable error messages from libcurl
-  // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer), errorBuffer);
- 
-  // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
-  if (dx::config::CA_CERT() == "NOVERIFY") {
-    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0), errorBuffer);
-  } else {
-    if (!dx::config::CA_CERT().empty()) {
-      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, dx::config::CA_CERT().c_str()), errorBuffer);
-    } else {
-      // Set verify on, and use default path for certificate
-      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1), errorBuffer);
-    }
-  }
-
-  // Set time out to infinite
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l), errorBuffer);
-  
-  if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") { 
-    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), errorBuffer);
-  }
-
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()), errorBuffer);
-  // Internal CURL progressmeter must be disabled if we provide our own callback
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0), errorBuffer);
-  // Install the callback function
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func), errorBuffer);
-  myProgressStruct prog;
-  prog.curl = curl;
-  prog.uploadedBytes = 0;
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog), errorBuffer);
-  
-  /* Setting this option, since libcurl fails in multi-threaded environment otherwise */
-  /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l), errorBuffer);
-
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1), errorBuffer);
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), errorBuffer);
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction), errorBuffer);
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this), errorBuffer);
-  
-  // Set callback for recieving the response data
-  /** set callback function */
-  respData.clear();
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) , errorBuffer);
-  /** "respData" is a member variable of Chunk class*/
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData), errorBuffer);
-
-  struct curl_slist * slist = NULL;
-  /*
-   * Set the Content-Length header.
-   */
-  {
-    ostringstream clen;
-    clen << "Content-Length: " << data.size();
-    slist = curl_slist_append(slist, clen.str().c_str());
-  }
-  checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist), errorBuffer);
-
-  // Compute the MD5 sum of data, and add the Content-MD5 header
-  expectedMD5 = dx::getHexifiedMD5(data);
-  {
-    ostringstream cmd5;
-    cmd5 << "Content-MD5: " << expectedMD5;
-    slist = curl_slist_append(slist, cmd5.str().c_str());
-  }
-
-  log("Starting curl_easy_perform...\n");
-  
-  SIGPIPE_VARIABLE(pipe1);
-  sigpipe_ignore(&pipe1, sigpipe_catcher);
   try {
-    checkPerformCURLcode(curl_easy_perform(curl), errorBuffer);
-  } catch(...) {
+    uploadOffset = 0;
+    string url = uploadURL();
+    log("Upload URL: " + url);
+   
+    curl = curl_easy_init();
+    if (curl == NULL) {
+      throw runtime_error("An error occurred when initializing the HTTP connection");
+    }
+    char errorBuffer[CURL_ERROR_SIZE + 1] = {0}; // setting to zero (since it can be the case that despite an error, nothing is written to the buffer)
+    // Set errorBuffer to recieve human readable error messages from libcurl
+    // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer), errorBuffer);
+    
+    if (!hostName.empty() && !resolvedIP.empty()) {
+      log("Adding ip '" + resolvedIP + "' to resolve list for hostname '" + hostName + "'");
+      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":443:" + resolvedIP).c_str());
+      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":80:" + resolvedIP).c_str()); 
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_RESOLVE, slist_resolved_ip), errorBuffer);
+    }
+    // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
+    if (dx::config::CA_CERT() == "NOVERIFY") {
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0), errorBuffer);
+    } else {
+      if (!dx::config::CA_CERT().empty()) {
+        checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_CAINFO, dx::config::CA_CERT().c_str()), errorBuffer);
+      } else {
+        // Set verify on, and use default path for certificate
+        checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1), errorBuffer);
+      }
+    }
+
+    // Set time out to infinite
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l), errorBuffer);
+    
+    if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") { 
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), errorBuffer);
+    }
+
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgentString.c_str()), errorBuffer);
+    // Internal CURL progressmeter must be disabled if we provide our own callback
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0), errorBuffer);
+    // Install the callback function
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func), errorBuffer);
+    myProgressStruct prog;
+    prog.curl = curl;
+    prog.uploadedBytes = 0;
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog), errorBuffer);
+    
+    /* Setting this option, since libcurl fails in multi-threaded environment otherwise */
+    /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l), errorBuffer);
+
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_POST, 1), errorBuffer);
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), errorBuffer);
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction), errorBuffer);
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this), errorBuffer);
+    
+    // Set callback for recieving the response data
+    /** set callback function */
+    respData.clear();
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback) , errorBuffer);
+    /** "respData" is a member variable of Chunk class*/
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData), errorBuffer);
+
+    /*
+     * Set the Content-Length header.
+     */
+    {
+      ostringstream clen;
+      clen << "Content-Length: " << data.size();
+      slist_headers = curl_slist_append(slist_headers, clen.str().c_str());
+    }
+    checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist_headers), errorBuffer);
+
+    // Compute the MD5 sum of data, and add the Content-MD5 header
+    expectedMD5 = dx::getHexifiedMD5(data);
+    {
+      ostringstream cmd5;
+      cmd5 << "Content-MD5: " << expectedMD5;
+      slist_headers = curl_slist_append(slist_headers, cmd5.str().c_str());
+    }
+
+    log("Starting curl_easy_perform...\n");
+    
+    SIGPIPE_VARIABLE(pipe1);
+    sigpipe_ignore(&pipe1, sigpipe_catcher);
+    try {
+      checkPerformCURLcode(curl_easy_perform(curl), errorBuffer);
+    } catch (...) {
+      sigpipe_restore(&pipe1);
+      throw;
+    }
     sigpipe_restore(&pipe1);
+    
+    
+    checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode), errorBuffer);
+    log("Returned from curl_easy_perform; responseCode is " + boost::lexical_cast<string>(responseCode));
+    
+    upload_cleanup(&curl, &slist_headers, &slist_resolved_ip);
+  } catch (...) {
+    // This catch is only intended for cleanup (when checkPerformCURLcode() or checkConfigCURLcode() throw)
+    // We will rethrow the error again.
+    upload_cleanup(&curl, &slist_headers, &slist_resolved_ip);
     throw;
   }
-  sigpipe_restore(&pipe1);
-  
-  long responseCode;
-  
-  checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode), errorBuffer);
-  log("Returned from curl_easy_perform; responseCode is " + boost::lexical_cast<string>(responseCode));
-
-  log("Performing curl cleanup");
-  curl_slist_free_all(slist);
-
-  SIGPIPE_VARIABLE(pipe2);
-  sigpipe_ignore(&pipe2, sigpipe_catcher);
-  curl_easy_cleanup(curl);
-  sigpipe_restore(&pipe2);
-  
   if ((responseCode < 200) || (responseCode >= 300)) {
     log("Runtime not in 2xx range ... throwing runtime_error", dx::logERROR);
     ostringstream msg;
@@ -399,6 +431,7 @@ void Chunk::upload() {
   assert(apiserverResp["md5"].get<string>() == expectedMD5);
   /*************************************************************************************************************************************/
   /*************************************************************************************************************************************/
+
 }
 
 void Chunk::clear() {
@@ -409,12 +442,92 @@ void Chunk::clear() {
   respData.clear();
 }
 
-string Chunk::uploadURL() const {
+// HACK! HACK! HACK!
+// Returns hostname from /UPLOAD urls
+// We use regexp (really!) to parse the URL & extract host name, so certainly
+// not a general enough function.
+//
+// Returns empty string if regexp fails to parse url string for some reason
+static string extractHostFromURL(const string &url) {
+  boost::regex expression("^http[s]{0,1}://([^/]+)/", boost::regex::perl);
+  boost::match_results<string::const_iterator> what;
+  if (!boost::regex_search(url.begin(), url.end(), what, expression, boost::match_default)) {
+    return "";
+  }
+  if (what.size() != 2) {
+    return "";
+  }
+  return what[1];
+}
+
+boost::mutex getRandomIPMutex;
+// This function is memorizes the first successful call to it.
+// Host name, and ipList are cached after that, and all
+// subsequent calls just return a random value from that list.
+// (provided host value is same)
+static string getRandomIP(const string &host) {
+  static bool called = false;
+  static vector<string> ipList;
+  static string hname;
+  
+  // Note: It's NOT safe to call gethostbyname() in multiple thread.
+  boost::mutex::scoped_lock ipLock(getRandomIPMutex);
+  if (called && hname == host) {
+    if (!ipList.empty())
+      return ipList[rand() % ipList.size()];
+    else
+      return "";
+  }
+  //We are here => This function is called for the first time (or with a different
+  // value of "host")
+  hname = host;
+  ipList.clear();
+
+  struct hostent *he = gethostbyname(hname.c_str());
+  if (he == NULL) {
+    throw std::runtime_error("Call to gethostbyname failed. h_errno = " + boost::lexical_cast<string>(h_errno));
+  }
+  //printf("Official name is: %s\n", he->h_name);
+  struct in_addr **addr_list = (struct in_addr **)he->h_addr_list;
+  for(int i = 0; addr_list[i] != NULL; i++)
+    ipList.push_back(inet_ntoa(*addr_list[i]));
+
+  if (ipList.empty())
+    throw std::runtime_error("The host '" + host + "' did not resolve to any ip address");
+
+  // Everything was fine, set "called" == true (so other calls to this function are short circuited)
+  called = true;
+  return ipList[rand() % ipList.size()];
+}
+
+string Chunk::uploadURL() {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
   log("Generating Upload URL for index = " + boost::lexical_cast<string>(params["index"].get<int>()));
   dx::JSON result = fileUpload(fileID, params);
-  return result["url"].get<string>();
+  string url = result["url"].get<string>();
+  log("/" + fileID + "/upload call returned this url: " + url);
+  
+  resolvedIP.clear();
+  hostName = extractHostFromURL(url);
+  if (!hostName.empty()) {
+    string ip;
+    try {
+      resolvedIP = getRandomIP(hostName);
+    } catch (runtime_error &e) {
+      // log and ignore this error, return original url string (as returned by apiserver)
+      log(string("Call to getRandomIP() failed for host name: '") + hostName + "'. what() = '" + string(e.what()) + "'", dx::logWARNING);
+      resolvedIP.clear();
+    }
+    log("Call to getRandomIP() returned: '" + resolvedIP + "'");
+    return url;
+  } else {
+    // We fail to extract host name, log this error, but do not fail:
+    // instead return the original URL as returned by apiserver
+    log(string("Unable to extract host from URL('") + url + "')", dx::logWARNING);
+    return url;
+  }
+  // Unreachable
 }
 
 /*
