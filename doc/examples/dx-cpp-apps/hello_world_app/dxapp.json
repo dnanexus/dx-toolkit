@@ -11,7 +11,7 @@
     {"name": "greeting", "class": "string"}
   ],
   "runSpec": {
-    "code": "/hello_world_app",
+    "code": "hello_world_app",
     "interpreter": "bash"
   },
   "version": "0.0.1"
