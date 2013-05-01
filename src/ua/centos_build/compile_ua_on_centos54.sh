@@ -209,8 +209,8 @@ endif
 
 dist: all
 ifeq ($(UNAME), Linux)
-\tmv -v ua ua-$(VERSION)-linux
-\tbzip2 -9v ua-$(VERSION)-linux
+\tmv -v ua ua-$(VERSION)-linux-old-kernel
+\tbzip2 -9v ua-$(VERSION)-linux-old-kernel
 else ifeq ($(UNAME), Darwin)
 \tmkdir -pv ua-$(VERSION)-mac
 \tmv -v ua resources/ libstdc++.6.dylib libgcc_s.1.dylib ua-$(VERSION)-mac
