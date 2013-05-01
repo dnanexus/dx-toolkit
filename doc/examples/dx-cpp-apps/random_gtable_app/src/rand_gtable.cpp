@@ -21,7 +21,7 @@ int main() {
   input.read(ifs);
   
   // Get number of rows from input hash
-  int numRows = input["numRows"].get<int>();
+  int numRows = input["num_rows"].get<int>();
   
   ////////////////////
   // Create a GTable

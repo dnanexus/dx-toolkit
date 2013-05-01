@@ -5,7 +5,7 @@
   "description": "Creates a Random GTable with one column (integer), and computes the average of the column.\nThe app returns: GTable created, a floating point value (average), and a file which is written by the app during execution.",
   "dxapi": "1.0.0",
   "inputSpec": [
-    {"name": "numRows", "class": "int", "default": 1000}
+    {"name": "num_rows", "class": "int", "default": 1000}
   ],
   "outputSpec": [
     {"name": "rand_gtable", "class": "gtable"},
