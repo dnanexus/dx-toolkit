@@ -42,8 +42,10 @@ extern "C" {
 #include "dxcpp/dxlog.h"
 
 // These 2 header files below are required by getRandomIP() function
+#if !WINDOWS_BUILD
 #include <netdb.h>
 #include <arpa/inet.h>
+#endif
 
 using namespace std;
 
@@ -88,7 +90,7 @@ void Chunk::read() {
     // For empty file case (empty chunk)
     return;
   }
-#ifdef WINDOWS_BUILD
+#if WINDOWS_BUILD
   // For windows we use fseeko64() & fread(): since we
   // compile a 32bit UA version, and standard library functions
   // do not allow to read > 2GB locations in file
@@ -310,11 +312,13 @@ void Chunk::upload() {
     // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer), errorBuffer);
     
-    if (!hostName.empty() && !resolvedIP.empty()) {
+    if (!hostName.empty() && !resolvedIP.empty()) { // Will never be true when compiling on windows
       log("Adding ip '" + resolvedIP + "' to resolve list for hostname '" + hostName + "'");
       slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":443:" + resolvedIP).c_str());
       slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":80:" + resolvedIP).c_str()); 
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_RESOLVE, slist_resolved_ip), errorBuffer);
+      // Note: We don't remove this extra host name resolution info by setting "-HOST:PORT:IP" at the end,
+      // since we don't reuse the curl handle anyway
     }
     // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
     if (dx::config::CA_CERT() == "NOVERIFY") {
@@ -507,27 +511,32 @@ string Chunk::uploadURL() {
   dx::JSON result = fileUpload(fileID, params);
   string url = result["url"].get<string>();
   log("/" + fileID + "/upload call returned this url: " + url);
-  
-  resolvedIP.clear();
-  hostName = extractHostFromURL(url);
-  if (!hostName.empty()) {
-    string ip;
-    try {
-      resolvedIP = getRandomIP(hostName);
-    } catch (runtime_error &e) {
-      // log and ignore this error, return original url string (as returned by apiserver)
-      log(string("Call to getRandomIP() failed for host name: '") + hostName + "'. what() = '" + string(e.what()) + "'", dx::logWARNING);
-      resolvedIP.clear();
+  #if !WINDOWS_BUILD
+    resolvedIP.clear();
+    hostName = extractHostFromURL(url);
+    if (!hostName.empty()) {
+      string ip;
+      try {
+        resolvedIP = getRandomIP(hostName);
+      } catch (runtime_error &e) {
+        // log and ignore this error, return original url string (as returned by apiserver)
+        log(string("Call to getRandomIP() failed for host name: '") + hostName + "'. what() = '" + string(e.what()) + "'", dx::logWARNING);
+        resolvedIP.clear();
+      }
+      log("Call to getRandomIP() returned: '" + resolvedIP + "'");
+      return url;
+    } else {
+      // We fail to extract host name, log this error, but do not fail:
+      // instead return the original URL as returned by apiserver
+      log(string("Unable to extract host from URL('") + url + "')", dx::logWARNING);
+      return url;
     }
-    log("Call to getRandomIP() returned: '" + resolvedIP + "'");
+    // Unreachable
+  #else
+    // For Windows, we don't try to resolve IP address using gethostbyname
+    resolvedIP.clear(); hostName.clear(); // redundant ops since they will never be set anyway (but let's try to be a little future-proof)
     return url;
-  } else {
-    // We fail to extract host name, log this error, but do not fail:
-    // instead return the original URL as returned by apiserver
-    log(string("Unable to extract host from URL('") + url + "')", dx::logWARNING);
-    return url;
-  }
-  // Unreachable
+  #endif
 }
 
 /*

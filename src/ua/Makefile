@@ -22,12 +22,14 @@ ifndef PREFIX
 endif
 UNAME := $(shell uname)
 
+VERSION = 1.2.10
+
 all:
 	mkdir -pv build
 ifeq ($(UNAME), MINGW32_NT-6.1)
-	make -C build -f ../Makefile.mw all
+	make -C build -f ../Makefile.mw all VERSION=$(VERSION)
 else
-	make -C build -f ../Makefile.static all
+	make -C build -f ../Makefile.static all VERSION=$(VERSION)
 endif
 clean:
 	rm -rvf build

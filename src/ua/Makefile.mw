@@ -27,7 +27,6 @@ ifneq ($(UNAME), MINGW32_NT-6.1)
 endif
 
 DXTOOLKIT_GITVERSION := $(shell git describe)
-VERSION = 1.2.9
 
 sw_dir = $(HOME)/sw/local
 curl_dir = $(sw_dir)/curl

@@ -1,3 +1,14 @@
+DNAnexus Upload Agent 1.2.10 <support@dnanexus.com>, 2013-May-1
+---------------------------------------------------------------
+  * [PTFM-6706] UA now uses gethostbyname to do explicit DNS round robin
+    (only for Linux & Mac versions).
+  * [PTFM-6669] Uploading files >2GB should work on windows now.
+  * UA should exit normally  when --help is used.
+  * Fix for "file" command on old system (since they lack --mime-type flag)
+  * Windows version will remain on libcurl 7.27 (UA with 7.30 fails to make libcurl
+    requests properly for some reason). For that relaxed the relevant condition in main.cpp
+  * Various other minor fixes
+
 DNAnexus Upload Agent 1.2.9 <support@dnanexus.com>, 2013-Apr-22
 ---------------------------------------------------------------
   * Minor bug fix

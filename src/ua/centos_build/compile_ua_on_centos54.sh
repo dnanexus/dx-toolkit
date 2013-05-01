@@ -159,7 +159,6 @@ echo -e '# -*- mode: Makefile -*-
 # \t$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
 DXTOOLKIT_GITVERSION := $(shell git describe)
-VERSION = 1.2.9
 
 curl_dir = $(HOME)/sw/local/curl_build
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
