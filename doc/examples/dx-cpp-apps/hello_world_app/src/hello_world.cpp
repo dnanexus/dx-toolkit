@@ -5,7 +5,7 @@
 int main() {
   using namespace std;
   using namespace dx;
-  
+
   // Read app input from file: job_input.json
   JSON input;
   ifstream ifs("job_input.json");
