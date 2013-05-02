@@ -1,3 +1,9 @@
+dx-toolkit (0.48.1) precise; urgency=low
+
+  * Bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Thu, 02 May 2013 18:58:45 +0000
+
 dx-toolkit (0.48.0) precise; urgency=low
 
   * Improvements to "dx-run-app-locally".
