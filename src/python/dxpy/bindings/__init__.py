@@ -147,7 +147,7 @@ class DXDataObject(DXObject):
 
         if self._proj is None and project is None:
             self._proj = dxpy.WORKSPACE_ID
-        else:
+        elif project is not None:
             self._proj = project
 
     def get_id(self):
