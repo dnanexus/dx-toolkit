@@ -1,3 +1,9 @@
+dx-toolkit (0.47.5) precise; urgency=low
+
+  * Bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Thu, 02 May 2013 19:00:58 +0000
+
 dx-toolkit (0.47.4) precise; urgency=low
 
   * Bug fixes.
