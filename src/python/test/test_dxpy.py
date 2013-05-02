@@ -1021,6 +1021,32 @@ class TestHTTPResponses(unittest.TestCase):
         resp = dxpy.api.user_describe("user-000000000000000000000000", want_full_response=True)
         self.assertEqual(resp.headers['x-content-type-options'], 'nosniff')
 
+class TestDataobjectFunctions(unittest.TestCase):
+    def setUp(self):
+        self.proj_id = dxpy.api.project_new({'name': 'testing'})['id']
+
+    def tearDown(self):
+        dxpy.api.project_destroy(self.proj_id)
+
+    def test_get_handler(self):
+        dxrecord = dxpy.new_dxrecord(project=self.proj_id)
+        # Simple DXLink
+        dxlink = {'$dnanexus_link': dxrecord.get_id()}
+        handler = dxpy.get_handler(dxlink)
+        self.assertEqual(handler.get_id(), dxrecord.get_id())
+        # Default project is not going to be the correct one
+        self.assertNotEqual(handler.get_proj_id(), self.proj_id)
+
+        # Extended DXLink
+        dxlink = {'$dnanexus_link': {'id': dxrecord.get_id(),
+                                     'project': self.proj_id}}
+        handler = dxpy.get_handler(dxlink)
+        self.assertEqual(handler.get_id(), dxrecord.get_id())
+        self.assertEqual(handler.get_proj_id(), self.proj_id)
+
+        # Handle project IDs
+        dxproject = dxpy.get_handler(self.proj_id)
+
 if __name__ == '__main__':
     print "NOTE: This test requires environment variables to be set for DX_APISERVER_*, DX_SECURITY_CONTEXT, and a DX_PROJECT_CONTEXT_ID with which the security context has ADMINISTER access.  It should be run against a running API server and with a Mongo DB initialized with test entities such as the public test project project-0000000000000000000000pb."
     unittest.main()

@@ -50,9 +50,9 @@ def is_dxlink(x):
     :param x: A potential DNAnexus link
 
     Returns whether *x* appears to be a DNAnexus link (is a dict with
-    key ``"$dnanexus_link"``).
+    key ``"$dnanexus_link"``) with a referenced data object.
     '''
-    return isinstance(x, dict) and '$dnanexus_link' in x
+    return isinstance(x, dict) and '$dnanexus_link' in x and (isinstance(x['$dnanexus_link'], basestring) or isinstance(x['$dnanexus_link'], dict) and 'id' in x['$dnanexus_link'])
 
 def get_dxlink_ids(link):
     '''
@@ -65,13 +65,17 @@ def get_dxlink_ids(link):
     link.
     '''
     if isinstance(link['$dnanexus_link'], dict):
-        return link['$dnanexus_link']['id'], link['$dnanexus_link']['project']
+        return link['$dnanexus_link']['id'], link['$dnanexus_link'].get('project')
     else:
         return link['$dnanexus_link'], None
 
 def _guess_link_target_type(link):
     if is_dxlink(link):
-        link = link['$dnanexus_link']
+        # Guaranteed by is_dxlink that one of the following will work
+        if isinstance(link['$dnanexus_link'], basestring):
+            link = link['$dnanexus_link']
+        else:
+            link = link['$dnanexus_link']['id']
     class_name, _id = link.split("-")
     class_name = 'DX'+class_name.capitalize()
     if class_name == 'DXGtable':
@@ -95,6 +99,7 @@ def get_handler(id_or_link, project=None):
         if project is not None:
             return cls(id_or_link, project=project)
         else:
+            # This case is important for the DXProject handler
             return cls(id_or_link)
     except Exception as e:
         raise DXError("Could not parse link "+str(id_or_link))

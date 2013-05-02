@@ -52,7 +52,8 @@ def overrideEnvironment(**kwargs):
     env = os.environ.copy()
     for key in kwargs:
         if kwargs[key] is None:
-            del env[key]
+            if key in env:
+                del env[key]
         else:
             env[key] = kwargs[key]
     return env
