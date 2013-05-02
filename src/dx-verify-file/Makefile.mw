@@ -42,9 +42,9 @@ boost_dir = $(sw_dir)/boost_1_51_0
 VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(dx-verify-file_dir)
 
 CFLAGS = -g -Wall -Wextra -I/include -I$(zlib_dir)/include
-CXXFLAGS = -DSTATIC_BUILD -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DDX_VERIFY_FILE_VERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(dx-verify-file_dir) -I$(boost_dir) -I$(zlib_dir)/include
+CXXFLAGS = -DSTATIC_BUILD -DWINDOWS_BUILD -DBOOST_THREAD_USE_LIB -D_FILE_OFFSET_BITS=64 -DDX_VERIFY_FILE_VERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\" -g -Wall -Wextra -Werror=return-type -std=gnu++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(dx-verify-file_dir) -I$(boost_dir) -I$(zlib_dir)/include -I/include
 
-LDFLAGS := -static-libstdc++ -static-libgcc -DBOOST_THREAD_USE_LIB -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L/lib $(LDFLAGS) -L$(zlib_dir)/lib -lboost_program_options-mgw47-mt-1_51 -lboost_filesystem-mgw47-mt-1_51 -lboost_regex-mgw47-mt-1_51 -lboost_system-mgw47-mt-1_51 -lcurl -lcrypto -lmagic -lz -lboost_thread-mgw47-mt-1_51 -lboost_chrono-mgw47-mt-1_51
+LDFLAGS := -static-libstdc++ -static-libgcc -DBOOST_THREAD_USE_LIB -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L/lib $(LDFLAGS) -L$(zlib_dir)/lib -lboost_program_options-mgw47-mt-1_51 -lboost_filesystem-mgw47-mt-1_51 -lboost_regex-mgw47-mt-1_51 -lboost_system-mgw47-mt-1_51 -lcurl -lcrypto -lz -lboost_thread-mgw47-mt-1_51 -lboost_chrono-mgw47-mt-1_51
 
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o

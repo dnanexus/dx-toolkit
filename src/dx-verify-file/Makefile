@@ -48,4 +48,4 @@ else
 	make -C build_static -f ../Makefile.static dist
 endif
 
-.PHONY: all clean install static_build static_dist
+.PHONY: all clean install build_static dist_static
