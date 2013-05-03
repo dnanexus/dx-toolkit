@@ -1,5 +1,6 @@
 #include <vector>
 #include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
 #include "round_robin_dns.h"
 #include "dxcpp/dxlog.h"
 
@@ -104,8 +105,9 @@ boost::mutex getRandomIPMutex;
   }
 
 #else
+#include <winsock2.h> // To get definition of gethostbyname, inet_ntoa, etc, use -lws2_32 for linking
   // Windows case: We use gethostbyname() to generate random ip
-  static string getRandomIP(const string &host_name) {
+  string getRandomIP(const string &host_name) {
     static bool called = false;
     
     // Note: It's NOT safe to call gethostbyname() in multiple thread.
@@ -116,7 +118,7 @@ boost::mutex getRandomIPMutex;
     //We are here => This function is called for the first time (or with a different
     // value of "host")
     called = true;
-    last_host_name = host;
+    last_host_name = host_name;
     ipList.clear();
     
     if (host_name.empty()){
