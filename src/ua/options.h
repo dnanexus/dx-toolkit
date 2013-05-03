@@ -68,7 +68,8 @@ public:
   bool mappings;
   bool variants;
   std::string refGenome;
-
+  
+  bool noRoundRobinDNS;
 private:
   // These params (if provided) are used for overriding the relevant dx::config::* values
   std::string apiserverProtocol;

@@ -41,11 +41,8 @@ extern "C" {
 
 #include "dxcpp/dxlog.h"
 
-// These 2 header files below are required by getRandomIP() function
-#if !WINDOWS_BUILD
-#include <netdb.h>
-#include <arpa/inet.h>
-#endif
+#include "options.h" // to get value of variable opt.noRoundRobinDNS
+#include "round_robin_dns.h"
 
 using namespace std;
 
@@ -297,7 +294,6 @@ void Chunk::upload() {
   struct curl_slist *slist_resolved_ip = NULL;
   struct curl_slist *slist_headers = NULL;
   long responseCode;
-
   try {
     uploadOffset = 0;
     string url = uploadURL();
@@ -319,7 +315,10 @@ void Chunk::upload() {
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_RESOLVE, slist_resolved_ip), errorBuffer);
       // Note: We don't remove this extra host name resolution info by setting "-HOST:PORT:IP" at the end,
       // since we don't reuse the curl handle anyway
+    } else {
+      log("Not adding any explicit IP address using CURLOPT_RESOLVE. resolvedIP = '" + resolvedIP + "', hostName = '" + hostName + "'", dx::logWARNING);
     }
+
     // g_DX_CA_CERT is set by dxcppp (using env variable: DX_CA_CERT)
     if (dx::config::CA_CERT() == "NOVERIFY") {
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0), errorBuffer);
@@ -383,7 +382,7 @@ void Chunk::upload() {
       slist_headers = curl_slist_append(slist_headers, cmd5.str().c_str());
     }
 
-    log("Starting curl_easy_perform...\n");
+    log("Starting curl_easy_perform...");
     
     SIGPIPE_VARIABLE(pipe1);
     sigpipe_ignore(&pipe1, sigpipe_catcher);
@@ -464,46 +463,6 @@ static string extractHostFromURL(const string &url) {
   return what[1];
 }
 
-boost::mutex getRandomIPMutex;
-// This function is memorizes the first successful call to it.
-// Host name, and ipList are cached after that, and all
-// subsequent calls just return a random value from that list.
-// (provided host value is same)
-static string getRandomIP(const string &host) {
-  static bool called = false;
-  static vector<string> ipList;
-  static string hname;
-  
-  // Note: It's NOT safe to call gethostbyname() in multiple thread.
-  boost::mutex::scoped_lock ipLock(getRandomIPMutex);
-  if (called && hname == host) {
-    if (!ipList.empty())
-      return ipList[rand() % ipList.size()];
-    else
-      return "";
-  }
-  //We are here => This function is called for the first time (or with a different
-  // value of "host")
-  hname = host;
-  ipList.clear();
-
-  struct hostent *he = gethostbyname(hname.c_str());
-  if (he == NULL) {
-    throw std::runtime_error("Call to gethostbyname failed. h_errno = " + boost::lexical_cast<string>(h_errno));
-  }
-  //printf("Official name is: %s\n", he->h_name);
-  struct in_addr **addr_list = (struct in_addr **)he->h_addr_list;
-  for(int i = 0; addr_list[i] != NULL; i++)
-    ipList.push_back(inet_ntoa(*addr_list[i]));
-
-  if (ipList.empty())
-    throw std::runtime_error("The host '" + host + "' did not resolve to any ip address");
-
-  // Everything was fine, set "called" == true (so other calls to this function are short circuited)
-  called = true;
-  return ipList[rand() % ipList.size()];
-}
-
 string Chunk::uploadURL() {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
@@ -511,32 +470,19 @@ string Chunk::uploadURL() {
   dx::JSON result = fileUpload(fileID, params);
   string url = result["url"].get<string>();
   log("/" + fileID + "/upload call returned this url: " + url);
-  #if !WINDOWS_BUILD
+  
+  if (!opt.noRoundRobinDNS) { 
+    // Now, try to resolve the host name in url to an ip address (for explicit round robin DNS)
+    // If we are unable to do so, just leave the resolvedIP variable an empty string
     resolvedIP.clear();
     hostName = extractHostFromURL(url);
-    if (!hostName.empty()) {
-      string ip;
-      try {
-        resolvedIP = getRandomIP(hostName);
-      } catch (runtime_error &e) {
-        // log and ignore this error, return original url string (as returned by apiserver)
-        log(string("Call to getRandomIP() failed for host name: '") + hostName + "'. what() = '" + string(e.what()) + "'", dx::logWARNING);
-        resolvedIP.clear();
-      }
-      log("Call to getRandomIP() returned: '" + resolvedIP + "'");
-      return url;
-    } else {
-      // We fail to extract host name, log this error, but do not fail:
-      // instead return the original URL as returned by apiserver
-      log(string("Unable to extract host from URL('") + url + "')", dx::logWARNING);
-      return url;
-    }
-    // Unreachable
-  #else
-    // For Windows, we don't try to resolve IP address using gethostbyname
-    resolvedIP.clear(); hostName.clear(); // redundant ops since they will never be set anyway (but let's try to be a little future-proof)
-    return url;
-  #endif
+    log("Host name extracted from URL ('" + url + "'): '" + hostName + "'");
+    resolvedIP = getRandomIP(hostName);
+    log("Call to getRandomIP() returned: '" + resolvedIP + "'", dx::logWARNING);
+  } else {
+    log("Flag --no-round-robin-dns was set, so won't try to explicitly resolve ip address");
+  }
+  return url;
 }
 
 /*

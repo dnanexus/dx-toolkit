@@ -82,6 +82,7 @@ Options::Options() {
     ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
     ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
     ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.");
+    ("no-round-robin-dns", po::bool_switch(&noRoundRobinDNS), "Disable explicit resolution of ip address by /UPLOAD calls (for round robin DNS)");
     ;
 
   command_line_opts = new po::options_description();
@@ -426,17 +427,23 @@ ostream &operator<<(ostream &out, const Options &opt) {
       out << " \"" << opt.files[i] << "\"";
     out << endl;
 
-    out << "  read threads: " << opt.readThreads << endl
-        << "  compress threads: " << opt.compressThreads << endl
-        << "  upload threads: " << opt.uploadThreads << endl
-        << "  chunkSize: " << opt.chunkSize << endl
+    out << "  read-threads: " << opt.readThreads << endl
+        << "  compress-threads: " << opt.compressThreads << endl
+        << "  upload-threads: " << opt.uploadThreads << endl
+        << "  chunk-size: " << opt.chunkSize << endl
         << "  tries: " << opt.tries << endl
         << "  do-not-compress: " << opt.doNotCompress << endl
         << "  progress: " << opt.progress << endl
         << "  verbose: " << opt.verbose << endl
         << "  wait on close: " << opt.waitOnClose << endl
         << "  do-not-resume: " << opt.doNotResume << endl
-      ;
+        << "  reads: " << opt.reads << endl
+        << "  paired-reads: " << opt.pairedReads << endl
+        << "  mappings: " << opt.mappings << endl
+        << "  variants: " << opt.variants << endl
+        << "  ref-genome: " << opt.refGenome << endl
+        << "  certificate-file" << opt.certificateFile << endl
+        << "  no-round-robin-dns" << opt.noRoundRobinDNS << endl;
   }
   return out;
 }

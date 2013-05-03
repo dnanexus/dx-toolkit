@@ -1,3 +1,9 @@
+DNAnexus Upload Agent 1.2.11 <support@dnanexus.com>
+---------------------------------------------------------------
+  * [PTFM-6706] Use c-ares's ares_gethostbyname() to resolve ip address explicitly
+  * Round robin DNS should also work on windows
+  * Some minor changes
+
 DNAnexus Upload Agent 1.2.10 <support@dnanexus.com>, 2013-May-1
 ---------------------------------------------------------------
   * [PTFM-6706] UA now uses gethostbyname to do explicit DNS round robin

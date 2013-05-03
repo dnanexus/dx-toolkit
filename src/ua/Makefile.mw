@@ -50,7 +50,7 @@ LDFLAGS := -static-libstdc++ -static-libgcc -DBOOST_THREAD_USE_LIB -L$(boost_dir
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
 dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o dxlog.o 
-ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o
+ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o round_robin_dns.o
 
 dxjson: $(dxjson_objs)
 dxhttp: $(dxhttp_objs)
