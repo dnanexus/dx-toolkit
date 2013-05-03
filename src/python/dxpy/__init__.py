@@ -111,11 +111,11 @@ environment variables:
 
 .. envvar:: HTTP_PROXY
 
-   HTTP proxy, in the form 'hostname:port' (e.g. '10.10.1.10:3128')
+   HTTP proxy, in the form 'protocol://hostname:port' (e.g. 'http://10.10.1.10:3128')
 
 .. envvar:: HTTPS_PROXY
 
-   HTTPS proxy, in the form 'hostname:port'
+   HTTPS proxy, in the form 'protocol://hostname:port'
 
 '''
 
