@@ -20,7 +20,7 @@ object handlers, and its subclass :class:`DXDataObject` is the abstract
 base class for all remote data object handlers.
 """
 
-import time, re, requests, sys, json
+import time, re, sys, json
 from dxpy import *
 import dxpy.api
 from dxpy.exceptions import *

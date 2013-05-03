@@ -131,9 +131,9 @@ environment variables:
 #     pass
 
 import os, json, time, logging, httplib
-import requests
-from requests.exceptions import ConnectionError, HTTPError
-from requests.auth import AuthBase
+from .packages import requests
+from .packages.requests.exceptions import ConnectionError, HTTPError
+from .packages.requests.auth import AuthBase
 
 logger = logging.getLogger(__name__)
 

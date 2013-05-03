@@ -20,8 +20,7 @@
 import os, sys, datetime, urlparse, getpass, collections, re, json, time, urllib, argparse, textwrap, copy, hashlib, errno
 import shlex # respects quoted substrings when splitting
 
-import requests
-from requests.auth import HTTPBasicAuth
+from ..packages import requests
 
 # Try to reset encoding to utf-8
 # Note: This is incompatible with pypy
@@ -342,7 +341,7 @@ def login(args):
             parser.exit(1, '\n')
         except Exception as e:
             parser.exit(1, str(e) + "\n")
-        auth = HTTPBasicAuth(username, password)
+        auth = requests.auth.HTTPBasicAuth(username, password)
 
         session = requests.session()
         try:
