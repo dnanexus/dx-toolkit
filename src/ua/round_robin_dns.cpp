@@ -17,13 +17,14 @@ boost::mutex getRandomIPMutex;
 #include <ares.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include "dxcpp/dxcpp.h" // This is included so that we can use the macro: UNUSED
   #ifndef CARES_HAVE_ARES_LIBRARY_INIT
     #error "Unexpected: For non-windows platforms, we use c-ares (version > 1.70) library. CARES_HAVE_ARES_LIBRARY_INIT should be present"
   #endif
 
   // Inspired from https://gist.github.com/mopemope/992777
   
-  static void state_cb(void *data, int s, int read, int write) {
+  static void state_cb(void* UNUSED(data), int UNUSED(s), int UNUSED(read), int UNUSED(write)) {
     //currently null
   }
    
