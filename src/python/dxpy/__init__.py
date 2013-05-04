@@ -136,6 +136,7 @@ from .packages.requests.exceptions import ConnectionError, HTTPError
 from .packages.requests.auth import AuthBase
 
 logger = logging.getLogger(__name__)
+logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 from dxpy.exceptions import *
 from dxpy.toolkit_version import version as TOOLKIT_VERSION
