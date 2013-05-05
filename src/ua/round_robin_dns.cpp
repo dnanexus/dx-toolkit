@@ -1,5 +1,4 @@
 #include <vector>
-#include <boost/thread.hpp>
 #include <boost/lexical_cast.hpp>
 #include "round_robin_dns.h"
 #include "dxcpp/dxlog.h"
@@ -28,7 +27,7 @@ boost::mutex getRandomIPMutex;
     //currently null
   }
    
-  static void callback(void *arg, int status, int timeouts, struct hostent *host) {
+  static void callback(void *UNUSED(arg), int status, int UNUSED(timeouts), struct hostent *host) {
     if(!host || status != ARES_SUCCESS){
       DXLOG(dx::logWARNING) << "Failed to lookup " << ares_strerror(status);
       return;
@@ -69,7 +68,14 @@ boost::mutex getRandomIPMutex;
     
     // Note: Mutex is to ensure that only one call of this function makes the actual c-ares request
     boost::mutex::scoped_lock ipLock(getRandomIPMutex);
-    if (called && last_host_name == host_name) // short circuit the function, if it has been called before
+    bool forceRefresh;
+    {
+      boost::mutex::scoped_lock forceRefreshLock(forceRefreshDNSMutex);
+      forceRefresh = forceRefreshDNS;
+      forceRefreshDNS = false;
+      DXLOG(dx::logINFO) << "getRandomIP()--> forceRefreshDNS = " << ((forceRefreshDNS) ? "true" : "false");
+    }
+    if (!forceRefresh && called && last_host_name == host_name) // short circuit the function, if it has been called before
       return (ipList.empty()) ? "" : ipList[rand() % ipList.size()];
 
     called = true;
@@ -110,10 +116,16 @@ boost::mutex getRandomIPMutex;
   // Windows case: We use gethostbyname() to generate random ip
   string getRandomIP(const string &host_name) {
     static bool called = false;
-    
     // Note: It's NOT safe to call gethostbyname() in multiple thread.
     boost::mutex::scoped_lock ipLock(getRandomIPMutex);
-    if (called && last_host_name == host_name)
+    bool forceRefresh;
+    {
+      boost::mutex::scoped_lock forceRefreshLock(forceRefreshDNSMutex);
+      forceRefresh = forceRefreshDNS;
+      forceRefreshDNS = false;
+      DXLOG(dx::logINFO) << "getRandomIP()--> forceRefreshDNS = " << ((forceRefreshDNS) ? "true" : "false");
+    }
+    if (!forceRefresh && called && last_host_name == host_name) // short circuit the function, if it has been called before
       return (ipList.empty()) ? "" : ipList[rand() % ipList.size()];
 
     //We are here => This function is called for the first time (or with a different

@@ -1,4 +1,9 @@
 #include <string>
+#include <boost/thread.hpp>
+
+// The variable below are "extern" because main.cpp also uses them
+extern bool forceRefreshDNS;
+extern boost::mutex forceRefreshDNSMutex;
 
 // Get a random ip for the given host name
 // Returns empty string if ip address could not be found/host couldn't be resolved

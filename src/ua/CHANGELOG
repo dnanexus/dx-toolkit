@@ -1,7 +1,10 @@
 DNAnexus Upload Agent 1.2.11 <support@dnanexus.com>, 2013-May-3
 ---------------------------------------------------------------
-  * [PTFM-6706] Use c-ares's ares_gethostbyname() to resolve ip address explicitly
+  * [PTFM-6706] Use c-ares's ares_gethostbyname() to resolve ip address explicitly on 
+    linux/mac, and gethostbyname() on windows. Also, added a new command line flag
+    "--no-round-robin-dns" to disable this behavior.
   * Round robin DNS also works on windows
+  * Adding special "User-Agent" string for UA compilation on older kernels
   * Some minor changes
 
 DNAnexus Upload Agent 1.2.10 <support@dnanexus.com>, 2013-May-1

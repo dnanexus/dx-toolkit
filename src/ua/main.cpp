@@ -34,6 +34,7 @@
 #include "dxcpp/dxlog.h"
 #include "import_apps.h"
 #include "mime.h"
+#include "round_robin_dns.h"
 
 // http://www.boost.org/doc/libs/1_48_0/libs/config/doc/html/boost_config/boost_macro_reference.html
 #if ((BOOST_VERSION / 100000) < 1 || ((BOOST_VERSION/100000) == 1 && ((BOOST_VERSION / 100) % 1000) < 48))
@@ -50,6 +51,9 @@
 using namespace std;
 using namespace dx;
 
+// Definition of forceRefresh global variables (used in round_robin_dns.cpp)
+bool forceRefreshDNS = true;
+boost::mutex forceRefreshDNSMutex;
 
 int curlInit_call_count = 0;
 
@@ -211,6 +215,11 @@ void uploadChunks(vector<File> &files) {
         int numTry = NUMTRIES_g - c->triesLeft + 1; // find out which try is it
         int timeout = (numTry > 6) ? 256 : 4 << numTry; // timeout is always between [8, 256] seconds
         c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds", logWARNING);
+        if (!opt.noRoundRobinDNS) {
+          boost::mutex::scoped_lock forceRefreshLock(forceRefreshDNSMutex);
+          c->log("Setting forceRefreshDNS = true in main.cpp::upload()");
+          forceRefreshDNS = true; // refresh the DNS list in next call to getRandomIP() 
+        }
         --(c->triesLeft);
         c->clear(); // we will read & compress data again
         boost::this_thread::sleep(boost::posix_time::milliseconds(timeout * 1000));
@@ -481,6 +490,9 @@ void setUserAgentString() {
   platform = "mac";
 #endif
   userAgentString += " platform/" + platform;
+#if OLD_KERNEL_SUPPORT
+  userAgentString += "/old-kernel-support";
+#endif
   userAgentString += " uid/" + iHash.str();
   // Now append the agent string from dxcpp
   userAgentString += string(" ") + dx::config::USER_AGENT_STRING();
@@ -521,7 +533,11 @@ int main(int argc, char * argv[]) {
     return 0;
   }
   if (opt.version()) {
-    cout << "Upload Agent Version: " << UAVERSION << endl
+    cout << "Upload Agent Version: " << UAVERSION;
+#if OLD_KERNEL_SUPPORT
+    cout << " (old-kernel-support)";
+#endif
+    cout << endl
          << "git version: " << DXTOOLKIT_GITVERSION << endl
          << "libboost version: " << (BOOST_VERSION / 100000) << "." << ((BOOST_VERSION / 100) % 1000) << "." << (BOOST_VERSION % 100) << endl
          << "libcurl version: " << LIBCURL_VERSION_MAJOR << "." << LIBCURL_VERSION_MINOR << "." << LIBCURL_VERSION_PATCH << endl;
@@ -532,7 +548,6 @@ int main(int argc, char * argv[]) {
   }
   
   setUserAgentString(); // also sets dx::config::USER_AGENT_STRING()
-  
   DXLOG(logINFO) << "DNAnexus Upload Agent " << UAVERSION << " (git version: " << DXTOOLKIT_GITVERSION << ")";
   DXLOG(logINFO) << "Upload agent's User Agent string: '" << userAgentString << "'";
   DXLOG(logINFO) << "dxcpp's User Agent string: '" << dx::config::USER_AGENT_STRING() << "'";

@@ -81,8 +81,8 @@ Options::Options() {
     ("apiserver-protocol", po::value<string>(&apiserverProtocol), "API server protocol")
     ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
     ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
-    ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.");
-    ("no-round-robin-dns", po::bool_switch(&noRoundRobinDNS), "Disable explicit resolution of ip address by /UPLOAD calls (for round robin DNS)");
+    ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.")
+    ("no-round-robin-dns", po::bool_switch(&noRoundRobinDNS), "Disable explicit resolution of ip address by /UPLOAD calls (for round robin DNS)")
     ;
 
   command_line_opts = new po::options_description();

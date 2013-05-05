@@ -177,7 +177,7 @@ CFLAGS = -O3 -Wall -Wextra -pedantic
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
-  CXXFLAGS = -DLINUX_BUILD=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\\"$(VERSION)\\" -DDXTOOLKIT_GITVERSION=\\"$(DXTOOLKIT_GITVERSION)\\" -O3 -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir)
+  CXXFLAGS = -DLINUX_BUILD=1 -DOLD_KERNEL_SUPPORT=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\\"$(VERSION)\\" -DDXTOOLKIT_GITVERSION=\\"$(DXTOOLKIT_GITVERSION)\\" -O3 -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(boost_dir)
   LDFLAGS := -static -pthread -L/usr/lib -L$(curl_dir)/lib -L$(boost_dir)/stage/lib -L$(ssl_dir)/lib -L$(cares_lib) -lcurl -lcares -lssl -lcrypto -lrt -lz -ldl -lboost_program_options -lboost_filesystem -lboost_system -lboost_thread -lboost_regex -lmagic
 else ifeq ($(UNAME), Darwin)
   CXXFLAGS = -DMAC_BUILD=1 -D_FILE_OFFSET_BITS=64 -DUAVERSION=\\"$(VERSION)\\" -DDXTOOLKIT_GITVERSION=\\"$(DXTOOLKIT_GITVERSION)\\" -O3 -Wall -pedantic -Wextra -Werror=return-type -Wno-switch -std=c++0x -I$(curl_dir)/include -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
