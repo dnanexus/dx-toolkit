@@ -110,7 +110,7 @@ def write_env_var(var, value):
     std_vars = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID', 'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
     if var in std_vars:
         env_vars = parse_env_jsonfile(user_env_jsonfile_path)
-        if value is None:
+        if value is None and var in env_vars:
             del env_vars[var]
         else:
             env_vars[var] = value
@@ -416,16 +416,18 @@ def logout(args):
         session = requests.session()
         token = dxpy.AUTH_HELPER.security_context['auth_token']
         try:
-            response = session.delete(authserver + '/authorizations/' + hashlib.sha256(token).hexdigest()[:7], auth=dxpy.AUTH_HELPER)
-            response.raise_for_status()
+            token_sig = hashlib.sha256(token).hexdigest()
+            response = session.delete(authserver + '/authorizations/' + token_sig, auth=dxpy.AUTH_HELPER)
+            if response.status_code not in (requests.codes.forbidden, requests.codes.not_found):
+                response.raise_for_status()
+            if response.status_code == requests.codes.ok:
+                print 'Deleted token with signature', token_sig
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
         if not state['interactive']:
             write_env_var("DX_SECURITY_CONTEXT", None)
         else:
             dxpy.AUTH_HELPER = None
-    else:
-        parser.exit(1, 'No current auth token found\n')
 
 def set_api(protocol, host, port, write):
     os.environ['DX_APISERVER_PROTOCOL'] = protocol
