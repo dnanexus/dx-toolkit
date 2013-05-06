@@ -46,7 +46,11 @@ void checkForUpdates() {
 #if WINDOWS_BUILD
   platform = "windows";
 #elif LINUX_BUILD
+#if OLD_KERNEL_SUPPORT 
+  platform = "linux-old-kernel";
+#else
   platform = "linux";
+#endif
 #elif MAC_BUILD
   platform = "mac";
 #endif
@@ -54,7 +58,7 @@ void checkForUpdates() {
     inp["platform"] = platform;
   }
   JSON res;
-  DXLOG(logINFO) << "Checking for updates (calling /system/greet) ...";
+  DXLOG(logINFO) << "Checking for updates (calling /system/greet), inp = '" << inp.toString() << "' ...";
   try {
     res = systemGreet(inp, false); // don't retry this requests, not that essential
   } catch (exception &aerr) {
