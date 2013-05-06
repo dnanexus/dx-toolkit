@@ -25,6 +25,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
 #include <magic.h>
+
+#if LINUX_BUILD && OLD_KERNEL_SUPPORT
+#include <boost/thread.hpp>
+#endif
+
 #include "mime.h"
 #include "dxcpp/dxlog.h"
 
@@ -244,7 +249,9 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     success = success && (ret == 0);
     return success;
   }
-
+#if LINUX_BUILD && OLD_KERNEL_SUPPORT
+  boost::mutex envVarMutex;
+#endif
   // This function returns mime type of the given local file
   // (internally executes the "file" command)
   // If "file" command execution fails for some reason, we try and get mime type from
@@ -259,19 +266,41 @@ string getMimeTypeUsingLibmagic(const string& filePath) {
     bool fs_success = true; // will be false is any of the boost filesystem functions fail
     namespace fs = boost::filesystem;
     fs::path sp; // path of temp symlink file we will create
-    try {
-      sp = fs::unique_path(fs::temp_directory_path().string() + "/ua-symlink-%%%%%%%%%%%%%.tmp"); // Create it in a temp directory
-      DXLOG(logINFO) << "Generated path for unique temp file: '" << sp.string() << "'";
-      
-      // We need to find full system path of the file, 
-      // because otherwise symlink we create will be absurd
-      // (because we create symlink in a differnt directory than the one user used to specify the file path)
-      fs::path complete_path = fs::system_complete(filePath);
-      fs::create_symlink(complete_path, sp);
-      DXLOG(logINFO) << "Created symlink ('" << sp.string() << "') to file '" << complete_path.string() << "'";
-    } catch (exception &boost_err) {
-      DXLOG(logINFO) << "An exception occured while trying to create a temp symlink to existing file. Error message = '" << boost_err.what() << "'";
-      fs_success = false;
+    {
+#if LINUX_BUILD && OLD_KERNEL_SUPPORT
+      boost::mutex::scoped_lock envLock(envVarMutex);
+      char *orig = getenv("LC_ALL"); // note: this pointer will be modified by subsequent calls to setenv/unsetenv
+      string origValue;
+      bool alreadySet = (orig != NULL);
+      if (alreadySet) {
+        origValue = orig; // copy original value, since pointer returned by getenv can be modified later
+        DXLOG(logINFO) << "env variable LC_ALL already present, value = '" << origValue << "'";
+      } else {
+        DXLOG(logINFO) << "env variable LC_ALL is not previously set";
+      }
+      DXLOG(logINFO) << "Setting env variable LC_ALL to 'C', return value = " << setenv("LC_ALL", "C", 1);
+#endif
+      try {
+        sp = fs::unique_path(fs::temp_directory_path().string() + "/ua-symlink-%%%%%%%%%%%%%.tmp"); // Create it in a temp directory
+        DXLOG(logINFO) << "Generated path for unique temp file: '" << sp.string() << "'";
+        
+        // We need to find full system path of the file, 
+        // because otherwise symlink we create will be absurd
+        // (because we create symlink in a differnt directory than the one user used to specify the file path)
+        fs::path complete_path = fs::system_complete(filePath);
+        fs::create_symlink(complete_path, sp);
+        DXLOG(logINFO) << "Created symlink ('" << sp.string() << "') to file '" << complete_path.string() << "'";
+      } catch (exception &boost_err) {
+        DXLOG(logINFO) << "An exception occured while trying to create a temp symlink to existing file. Error message = '" << boost_err.what() << "'";
+        fs_success = false;
+      }
+#if LINUX_BUILD && OLD_KERNEL_SUPPORT
+      if (alreadySet) {
+        DXLOG(logINFO) << "Setting env variable LC_ALL back to '" << origValue << "', return value = " << setenv("LC_ALL", origValue.c_str(), 1);
+      } else {
+        DXLOG(logINFO) << "Unsetting env variable LC_ALL, return value = " << unsetenv("LC_ALL");
+      }
+#endif
     }
     if (fs_success) {
       string cmd = "file -L --brief --mime-type " + sp.string() + " 2>&1";
