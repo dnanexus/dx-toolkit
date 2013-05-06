@@ -190,7 +190,7 @@ if len(args_list) == 1 and args_list[0] == 'clearenv':
 
 # importing dxpy will now appropriately load env variables
 import dxpy
-from dxpy.utils import group_array_by_field
+from dxpy.utils import group_array_by_field, normalize_timedelta
 from dxpy.utils.env import parse_env_jsonfile, user_env_jsonfile_path
 from dxpy.utils.printing import *
 from dxpy.utils.pretty_print import format_tree, format_table
@@ -1686,6 +1686,24 @@ def unset_properties(args):
                                {"properties": properties})
         except BaseException as details:
             parser.exit(1, fill(unicode(details)) + '\n')
+
+def make_download_url(args):
+    project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    if entity_result is None:
+        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
+
+    if entity_result['describe']['class'] != 'file':
+        parser.exit(1, fill('Error: dx download is only for downloading file objects') + '\n')
+
+    try:
+        dxfile = dxpy.DXFile(entity_result['id'], project=project)
+        url, headers = dxfile.get_download_url(preauthenticated=True,
+                                               duration=normalize_timedelta(args.duration)/1000 if args.duration else 24*3600,
+                                               filename=args.filename,
+                                               project=project)
+        print url
+    except BaseException as details:
+        parser.exit(1, fill(unicode(details)) + '\n')
 
 def download(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
     if not already_parsed:
@@ -3814,6 +3832,18 @@ parser_map['api'] = parser_api
 parser_categories['all']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 parser_categories['other']['cmds'].append((subparsers._choices_actions[-1].dest, subparsers._choices_actions[-1].help))
 
+parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform')
+parser_upgrade.add_argument('args', nargs='*')
+parser_upgrade.set_defaults(func=upgrade)
+parser_map['upgrade'] = parser_upgrade
+
+parser_make_download_url = subparsers.add_parser('make_download_url', description='Create a pre-authenticated link that can be used to download a file without logging in')
+parser_make_download_url.set_defaults(func=make_download_url)
+parser_make_download_url.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file'])
+parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
+parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as')
+parser_map['make_download_url'] = parser_make_download_url
+
 parser_help = subparsers.add_parser('help', help='Displays help messages and dx commands by category', description=fill('Displays the help message for the given command (and subcommand if given), or displays the list of all commands in the given category.') + '\n\nCATEGORIES\n\n  ' + '\n  '.join([cat + parser_categories[cat]['desc'] for cat in parser_categories_sorted]) + '''
 
 EXAMPLE
@@ -3837,11 +3867,6 @@ parser_map['help run'] = parser_help
 for cat in parser_categories:
     parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()
-
-parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform')
-parser_upgrade.add_argument('args', nargs='*')
-parser_upgrade.set_defaults(func=upgrade)
-parser_map['upgrade'] = parser_upgrade
 
 def main():
     # Bash argument completer hook

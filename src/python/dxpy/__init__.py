@@ -230,6 +230,12 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
         auth = AUTH_HELPER
     if config is None:
         config = {}
+
+    # When *data* is a binary string but *headers* contains Unicode strings, httplib tries to concatenate them and
+    # decode *data*, which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard
+    # that here, and just encode them with the Python default (ascii) and fail for any non-ascii content.
+    headers = {k.encode(): v.encode() for k, v in headers.iteritems()}
+
     # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
     # config.setdefault('max_retries', MAX_RETRIES)
     if 'Content-Type' not in headers and method == 'POST':

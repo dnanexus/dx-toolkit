@@ -21,7 +21,7 @@ DXFile Handler
 This remote file handler is a Python file-like object.
 '''
 
-import os, logging, traceback, hashlib
+import os, logging, traceback, hashlib, copy
 import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
@@ -95,7 +95,7 @@ class DXFile(DXDataObject):
         self._read_bufsize = read_buffer_size
         self._write_bufsize = write_buffer_size
 
-        self._download_url, self._download_url_expires = None, None
+        self._download_url, self._download_url_headers, self._download_url_expires = None, None, None
         self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
 
@@ -398,7 +398,7 @@ class DXFile(DXDataObject):
 
         resp = dxpy.api.file_upload(self._dxid, req_input, **kwargs)
         url = resp["url"]
-        headers = {}
+        headers = resp.get("headers", {})
         headers['Content-Length'] = str(len(data))
         headers['Content-Type'] = 'application/octet-stream'
  
@@ -418,7 +418,7 @@ class DXFile(DXDataObject):
             md5.update(data)
 
         headers['Content-MD5'] = md5.hexdigest()
-        
+
         DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
 
         self._num_uploaded_parts += 1
@@ -429,16 +429,22 @@ class DXFile(DXDataObject):
         if report_progress_fn is not None:
             report_progress_fn(self, len(data))
 
-    def get_download_url(self, duration=24*3600, **kwargs):
+    def get_download_url(self, duration=24*3600, preauthenticated=False, filename=None, project=None, **kwargs):
+        args = {"duration": duration, "preauthenticated": preauthenticated}
+        if filename is not None:
+            args["filename"] = filename
+        if project is not None:
+            args["project"] = project
         if self._download_url is None or self._download_url_expires > time.time():
             # logging.debug("Download URL unset or expired, requesting a new one")
-            resp = dxpy.api.file_download(self._dxid, {"duration": duration}, **kwargs)
+            resp = dxpy.api.file_download(self._dxid, args, **kwargs)
             self._download_url = resp["url"]
+            self._download_url_headers = resp.get("headers", {})
             self._download_url_expires = time.time() + duration - 60 # Try to account for drift
-        return self._download_url
+        return self._download_url, self._download_url_headers
 
     def _generate_read_requests(self, start_pos=0, end_pos=None, **kwargs):
-        url = self.get_download_url(**kwargs)
+        url, headers = self.get_download_url(**kwargs)
 
         if self._file_length == None:
             desc = self.describe(**kwargs)
@@ -451,7 +457,8 @@ class DXFile(DXDataObject):
 
         for chunk_start_pos in xrange(start_pos, end_pos, self._read_bufsize):
             chunk_end_pos = min(chunk_start_pos + self._read_bufsize - 1, end_pos)
-            headers = {'Range': "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)}
+            headers = copy.copy(headers)
+            headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield DXHTTPRequest, [url, ''], {'method': 'GET',
                                              'headers': headers,
                                              'jsonify_data': False,
