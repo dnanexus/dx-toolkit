@@ -24,6 +24,8 @@ import cStringIO as StringIO
 import concurrent.futures
 from dxpy.bindings import *
 
+DXGTABLE_HTTP_THREADS = 4
+
 # Number of rows to request at a time when reading.
 #
 # TODO: adaptive buffer size. Start with small requests to improve interactivity and make
@@ -68,7 +70,7 @@ class DXGTable(DXDataObject):
     _list_projects = staticmethod(dxpy.api.gtable_list_projects)
 
     _http_threadpool = None
-    _http_threadpool_size = NUM_HTTP_THREADS
+    _http_threadpool_size = DXGTABLE_HTTP_THREADS
 
     @classmethod
     def set_http_threadpool_size(cls, num_threads):

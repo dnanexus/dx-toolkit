@@ -31,13 +31,12 @@ if dxpy.snappy_available:
     import snappy
 
 # TODO: adaptive buffer size
-DEFAULT_BUFFER_SIZE = 1024*1024*32
-DXFILE_HTTP_THREADS = NUM_HTTP_THREADS
+DXFILE_HTTP_THREADS = 8
+DEFAULT_BUFFER_SIZE = 1024*1024*16
 if dxpy.JOB_ID:
-    # Increase HTTP request buffer sizes when we are running within the
+    # Increase HTTP request buffer size when we are running within the
     # platform.
     DEFAULT_BUFFER_SIZE = 1024*1024*96
-    DXFILE_HTTP_THREADS = 8
 
 class DXFile(DXDataObject):
     '''
