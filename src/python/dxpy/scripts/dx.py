@@ -37,7 +37,7 @@ try:
 except:
     pass
 
-if not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
+if not os.environ.has_key('_ARGCOMPLETE'):
     try:
         # Hack: on some operating systems, like Mac, readline spews
         # escape codes into the output at import time if TERM is set to
