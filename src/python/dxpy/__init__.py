@@ -478,6 +478,7 @@ def _initialize(suppress_warning=False):
     else:
         if "DX_PROJECT_CONTEXT_ID" in os.environ:
             set_workspace_id(os.environ["DX_PROJECT_CONTEXT_ID"])
+            set_project_context(os.environ["DX_PROJECT_CONTEXT_ID"])
 
 _initialize()
 
