@@ -231,9 +231,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     if config is None:
         config = {}
 
-    # When *data* is a binary string but *headers* contains Unicode strings, httplib tries to concatenate them and
-    # decode *data*, which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard
-    # that here, and just encode them with the Python default (ascii) and fail for any non-ascii content.
+    # When *data* is bytes but *headers* contains Unicode strings, httplib tries to concatenate them and decode *data*,
+    # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
+    # just encode them with the Python default (ascii) and fail for any non-ascii content.
     headers = {k.encode(): v.encode() for k, v in headers.iteritems()}
 
     # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
@@ -270,7 +270,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
             response = SESSION_HANDLER.request(method, url, data=data, headers=headers, timeout=timeout,
                                                auth=auth, config=config, **kwargs)
 
-            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('ARGPARSE_AUTO_COMPLETE'):
+            if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
                 try:
                     with file(_UPGRADE_NOTIFY, 'a'):

@@ -34,6 +34,40 @@ def exit_with_error(msg):
     msg += 'Local job workspaces can be found in: ' + str(os.environ.get('DX_TEST_JOB_HOMEDIRS'))
     sys.exit(msg)
 
+def has_local_job_refs(io_hash):
+    '''
+    :param io_hash: input/output hash
+    :type io_hash: dict
+    :returns: boolean indicating whether any job-based object references are found in *io_hash*
+    '''
+    q = []
+
+    for field in io_hash:
+        if is_job_ref(io_hash[field]):
+            if get_job_from_jbor(io_hash[field]).startswith('localjob'):
+                return True
+        elif isinstance(io_hash[field], list) or isinstance(io_hash[field], dict):
+            q.append(io_hash[field])
+
+    while len(q) > 0:
+        thing = q.pop()
+        if isinstance(thing, list):
+            for i in range(len(thing)):
+                if is_job_ref(thing[i]):
+                    if get_job_from_jbor(thing[i]).startswith('localjob'):
+                        return True
+                elif isinstance(thing[i], list) or isinstance(thing[i], dict):
+                    q.append(thing[i])
+        else:
+            for field in thing:
+                if is_job_ref(thing[field]):
+                    if get_job_from_jbor(thing[field]).startswith('localjob'):
+                        return True
+                elif isinstance(thing[field], list) or isinstance(thing[field], dict):
+                    q.append(thing[field])
+
+    return False
+
 def resolve_job_ref(jbor, job_outputs={}, should_resolve=True):
     '''
     :param jbor: a dict that is a valid job-based object reference
@@ -366,15 +400,42 @@ def run_entry_points(run_spec):
     manner until it is an empty array (or an error occurs).
     '''
     job_queue_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_queue.json')
+    all_job_outputs_path = os.path.join(os.environ['DX_TEST_JOB_HOMEDIRS'], 'job_outputs.json')
+
     while True:
         with open(job_queue_path, 'r') as fd:
             job_queue = json.load(fd)
         if len(job_queue) == 0:
             return
-        entry_point_to_run = job_queue[0]
+
+        with open(all_job_outputs_path, 'r') as fd:
+            all_job_outputs = json.load(fd)
+
+        entry_point_to_run = None
+        for i, entry_point in enumerate(job_queue):
+            runnable = True
+            # See if its inputs are ready
+            while has_local_job_refs(entry_point['input_hash']):
+                try:
+                    resolve_job_references(entry_point['input_hash'], all_job_outputs)
+                except:
+                    runnable = False
+                    break
+            if runnable:
+                entry_point_to_run = job_queue.pop(i)
+                break
+
+        if entry_point_to_run is None:
+            # Just run the first entry point and let the runner throw
+            # the appropriate error
+            entry_point_to_run = job_queue.pop(0)
+
         with open(job_queue_path, 'w') as fd:
-            json.dump(job_queue[1:], fd)
+            # Update job queue with updated inputs and after having
+            # popped the entry point to be run
+            json.dump(job_queue, fd)
             fd.write('\n')
+
         run_one_entry_point(job_id=entry_point_to_run['id'],
                             function=entry_point_to_run['function'],
                             input_hash=entry_point_to_run['input_hash'],
