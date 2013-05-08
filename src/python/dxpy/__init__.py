@@ -131,8 +131,9 @@ environment variables:
 #     pass
 
 import os, json, time, logging, httplib
+
 import requests
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 from requests.auth import AuthBase
 
 logger = logging.getLogger(__name__)
@@ -313,7 +314,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                         streaming_response_truncated = 'content-length' not in response.headers
                         raise HTTPError("Invalid JSON received from server")
                 return decoded_content
-        except (DXAPIError, ConnectionError, HTTPError, httplib.HTTPException) as e:
+        except (DXAPIError, ConnectionError, HTTPError, Timeout, httplib.HTTPException) as e:
             last_error = e
 
             # TODO: support HTTP/1.1 503 Retry-After
