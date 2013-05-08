@@ -32,7 +32,7 @@ cd "${DNANEXUS_HOME}"
 make clean
 make
 rm Makefile
-rm -rf debian src/{java,javascript,perl,R,ruby,ua,python/build} share/dnanexus/lib/javascript
+rm -rf debian src/{java,javascript,perl,R,ruby,ua,python/build,{dx-verify-file,dx-contigset-to-fasta,dx-wig-to-wiggle}/build} build/py27_env share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
 
 # setuptools bakes the path of the Python interpreter into all installed Python scripts. Rewrite it back to the more
