@@ -44,7 +44,7 @@ parser.add_argument("src_dir", help="App or applet source directory (default: cu
 parser.set_defaults(mode="app")
 parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
-parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default=None)
+parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default='.')
 
 parser.set_defaults(use_temp_build_project=True)
 parser.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
@@ -602,7 +602,7 @@ def main(**kwargs):
     if args.src_dir is None:
         args.src_dir = os.getcwd()
 
-    if args.mode == "app" and args.destination:
+    if args.mode == "app" and args.destination != '.':
         parser.error("--destination cannot be used when creating an app (only an applet)")
 
     if not args.remote:
