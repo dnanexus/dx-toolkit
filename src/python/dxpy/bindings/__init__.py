@@ -489,14 +489,16 @@ class DXDataObject(DXObject):
             time.sleep(2)
             elapsed += 2
 
+from dxdataobject_functions import *
+
 from dxfile import *
 from dxfile_functions import *
 from dxgtable import *
 from dxgtable_functions import *
 from dxrecord import *
+from dxworkflow import *
 from dxproject import *
 from dxjob import *
 from dxapplet import *
 from dxapp import *
 from search import *
-from dxdataobject_functions import *
