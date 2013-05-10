@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.3.1 <support@dnanexus.com>, 2013-May-10
+---------------------------------------------------------------
+  * Bug fix: Libcurl silently added headers: "Content-Type: application/x-www-form-urlencoded"
+    for all POST requests. New File API disallows any Content-Type header with POST /F/U calls.
+
 DNAnexus Upload Agent 1.3.0 <support@dnanexus.com>, 2013-May-10
 ---------------------------------------------------------------
   * [PTFM-7309] [PTFM-7314] Upload Agent now supports revised File API

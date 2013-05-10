@@ -480,6 +480,7 @@ namespace dx {
         req_headers[it->first] = it->second.get<string>();
       
       req_headers["Content-Length"] = boost::lexical_cast<string>(n);
+      req_headers["Content-Type"] = ""; // this is necessary because libcurl otherwise adds "Content-Type: application/x-www-form-urlencoded"
       req_headers["Content-MD5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n); // Add the content MD5 header 
       HttpRequest resp2;
       try {

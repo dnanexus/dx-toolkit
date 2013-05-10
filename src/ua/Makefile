@@ -22,7 +22,7 @@ ifndef PREFIX
 endif
 UNAME := $(shell uname)
 
-VERSION = 1.3.0
+VERSION = 1.3.1
 
 all:
 	mkdir -pv build
