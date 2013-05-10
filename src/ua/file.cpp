@@ -95,7 +95,7 @@ void File::init(const bool tryResuming) {
   fs::path p(localFile);
   size = fs::file_size(p);
   if (size == 0) {
-    // Never try to compress empty file, no matter what :D !
+    // Never try to compress empty file!
     toCompress = false;
   }
   string remoteFileName = name;
@@ -149,9 +149,6 @@ void File::init(const bool tryResuming) {
     DXLOG(logINFO) << "fileID is " << fileID << endl;
     
     cerr << "Uploading file " << localFile << " to file object " << fileID;
-    if (opt.verbose) {
-      cerr << endl;
-    }
   }
 }
 

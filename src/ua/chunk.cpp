@@ -29,7 +29,6 @@
 #include <stdio.h>
 
 #include "options.h"
-#include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/utils.h"
 
@@ -296,7 +295,10 @@ void Chunk::upload() {
   long responseCode;
   try {
     uploadOffset = 0;
-    string url = uploadURL();
+    pair<string, dx::JSON> uploadResp = uploadURL();
+    const string &url = uploadResp.first;
+    const dx::JSON &headersToSend = uploadResp.second;
+
     log("Upload URL: " + url);
    
     curl = curl_easy_init();
@@ -381,6 +383,13 @@ void Chunk::upload() {
       cmd5 << "Content-MD5: " << expectedMD5;
       slist_headers = curl_slist_append(slist_headers, cmd5.str().c_str());
     }
+    
+    // Append additional headers requested by /file-xxxx/upload call
+    for (dx::JSON::const_object_iterator it = headersToSend.object_begin(); it != headersToSend.object_end(); ++it) {
+      ostringstream tempStream;
+      tempStream << it->first << ": " << it->second.get<string>();
+      slist_headers = curl_slist_append(slist_headers, tempStream.str().c_str());
+    }
 
     log("Starting curl_easy_perform...");
     
@@ -463,12 +472,13 @@ static string extractHostFromURL(const string &url) {
   return what[1];
 }
 
-string Chunk::uploadURL() {
+pair<string, dx::JSON> Chunk::uploadURL() {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
   log("Generating Upload URL for index = " + boost::lexical_cast<string>(params["index"].get<int>()));
   dx::JSON result = fileUpload(fileID, params);
-  string url = result["url"].get<string>();
+  pair<string, dx::JSON> toReturn = make_pair(result["url"].get<string>(), result["headers"]);
+  const string &url = toReturn.first;
   log("/" + fileID + "/upload call returned this url: " + url);
   
   if (!opt.noRoundRobinDNS) { 
@@ -482,7 +492,7 @@ string Chunk::uploadURL() {
   } else {
     log("Flag --no-round-robin-dns was set, so won't try to explicitly resolve ip address");
   }
-  return url;
+  return toReturn;
 }
 
 /*

@@ -619,6 +619,7 @@ int main(int argc, char * argv[]) {
       }
       files.push_back(File(opt.files[i], opt.projects[i], opt.folders[i], opt.names[i], toCompress, !opt.doNotResume, mimeType, opt.chunkSize, i));
       totalChunks += files[i].createChunks(chunksToRead, opt.tries);
+      cerr << endl;
     }
 
     if (opt.waitOnClose) {
@@ -665,12 +666,14 @@ int main(int argc, char * argv[]) {
       c->log("Chunk failed", logERROR);
       markFileAsFailed(files, c->fileID);
     }
-
+    if (opt.verbose) {
+      cerr << endl;
+    }
     for (unsigned int i = 0; i < files.size(); ++i) {
       if (files[i].failed) {
-        cerr << endl << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
+        cerr << "File \""<< files[i].localFile << "\" could not be uploaded." << endl;
       } else {
-        cerr << endl << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
+        cerr << "File \"" << files[i].localFile << "\" was uploaded successfully. Closing..." << endl;
         if (files[i].isRemoteFileOpen) {
           files[i].close();
         }

@@ -20,13 +20,13 @@
 #include <boost/date_time/posix_time/posix_time.hpp> //include all types plus i/o
 #include "dxfile.h"
 #include "SimpleHttp.h"
+#include "../dxlog.h"
 
 using namespace std;
 
 namespace dx {
   // A helper function for making http requests with retry logic
-  void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, const HttpHeaders &headers, const HttpMethod &method, const char *data = NULL, const size_t size=0u) {
-    const int MAX_TRIES = 5;
+  void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, const HttpHeaders &headers, const HttpMethod &method, const char *data = NULL, const size_t size=0u, const int MAX_TRIES = 5) {
     int retries = 0;
     bool someThingWentWrong = false;
     string wrongThingDescription = "";
@@ -39,7 +39,7 @@ namespace dx {
       }
       if (!someThingWentWrong && (resp.responseCode < 200 || resp.responseCode >= 300)) {
         someThingWentWrong = true;
-        wrongThingDescription = "Server returned HTTP Response code = " + boost::lexical_cast<string>(resp.responseCode) + ", Server response: '" + resp.respData + "'";
+        wrongThingDescription = "Response code: '" + boost::lexical_cast<string>(resp.responseCode) + "', Response body: '" + resp.respData + "'";
       }
       if (someThingWentWrong) {
         retries++;
@@ -50,20 +50,11 @@ namespace dx {
           for (int i = 0; i < hvec.size(); ++i) {
             headerStr += "\t" + boost::lexical_cast<string>(i + 1) + ")" +  hvec[i] + "\n";
           }
-          throw DXFileError(string("******\nERROR (Unrecoverable): while performing : '") + getHttpMethodName(method) + " " + url + "'" + ".\n" + headerStr + "Giving up after " + boost::lexical_cast<string>(retries) + " tries.\nError message: " + wrongThingDescription + "\n******\n");
+          throw DXFileError(string("\nERROR while performing : '") + getHttpMethodName(method) + " " + url + "'" + ".\n" + headerStr + "Giving up after " + boost::lexical_cast<string>(retries) + " tries.\nError message: " + wrongThingDescription + "\n");
         }
 
-        // TODO: Make printing to stderr thread safe someday ?
-        //       Though we are writing data to std::cerr in a single call to operator <<()
-        //       (rather than chaining <<). It is not clear if a single call is thread safe.
-        //       C++03 certainly did not provide any thread safe guarantees (it didn't
-        //       even recognize that "threads" exist at all!).
-        //       Not sure if C++11 provides a thread safe guarantee for call to operator<<()
-        //       (including the flush in case of std::cerr).
-        //       Anyway, *observed* behavior (when compiled in g++ 4.6.3) is that output is *NOT*
-        //       garbled, and work as if <<() was a thread safe call. :)
-        std::cerr<<("\nRetry #" + boost::lexical_cast<string>(retries) + ": Will start retrying '" + getHttpMethodName(method) + " " + url + "' in " + boost::lexical_cast<string>(1<<retries) + " seconds. Error in previous try: " + wrongThingDescription);
-        usleep((1<<retries) * 1000 * 1000);
+        DXLOG(logWARNING) << "Retry #" << retries << ": Will start retrying '" << getHttpMethodName(method) << " " << url << "' in " << (1<<retries) << " seconds. Error in previous try: " << wrongThingDescription;
+        boost::this_thread::sleep(boost::posix_time::milliseconds( (1<<retries) * 1000));
         someThingWentWrong = false;
         wrongThingDescription.clear();
         continue; // repeat the same request
@@ -140,8 +131,10 @@ namespace dx {
 
   void DXFile::read(char* ptr, int64_t n) {
     gcount_ = 0;
-    const JSON get_DL_url = fileDownload(dxid_);
-    const string url = get_DL_url["url"].get<string>();
+    JSON req(JSON_HASH);
+    req["preauthenticated"] = false;
+    const JSON dlResp = fileDownload(dxid_, req);
+    const string url = dlResp["url"].get<string>();
 
     // TODO: make sure all lower-case works.
     if (file_length_ < 0) {
@@ -162,8 +155,10 @@ namespace dx {
 
     HttpHeaders headers;
     headers["Range"] = "bytes=" + boost::lexical_cast<string>(pos_) + "-" + boost::lexical_cast<string>(endbyte);
-    pos_ = endbyte + 1;
+    for (JSON::const_object_iterator it = dlResp["headers"].object_begin(); it != dlResp["headers"].object_end(); ++it)
+      headers[it->first] = it->second.get<string>();
 
+    pos_ = endbyte + 1;
 
     HttpRequest resp;
     makeHTTPRequestForFileReadAndWrite(resp, url, headers, HTTP_GET);
@@ -187,9 +182,13 @@ namespace dx {
     lq_max_chunks_ = max_chunks;
     lq_next_result_ = lq_query_start_;
     lq_results_.clear();
-
-    const JSON get_DL_url = fileDownload(dxid_);
-    lq_url = get_DL_url["url"].get<string>();
+    lq_headers.clear();
+    
+    JSON req(JSON_HASH);
+    req["preauthenticated"] = false;
+    const JSON dlResp = fileDownload(dxid_, req);
+    lq_url = dlResp["url"].get<string>();
+    lq_headers = dlResp["headers"];
 
     for (unsigned i = 0; i < thread_count; ++i)
       lq_readThreads_.push_back(boost::thread(boost::bind(&DXFile::readChunk_, this)));
@@ -204,6 +203,8 @@ namespace dx {
       HttpHeaders headers;
       string range = boost::lexical_cast<string>(last_byte_in_result + 1) + "-" + boost::lexical_cast<string>(end);
       headers["Range"] = "bytes=" + range;
+      for (JSON::const_object_iterator it = lq_headers.object_begin(); it != lq_headers.object_end(); ++it)
+        headers[it->first] = it->second.get<string>();
 
       HttpRequest resp;
       makeHTTPRequestForFileReadAndWrite(resp, lq_url, headers, HTTP_GET);
@@ -308,7 +309,7 @@ namespace dx {
      * --> Once we know that request queue is empty, we issue interrupt() to all threads
      *     Note: interrupt() will only terminate threads, which are waiting on new request.
      *           So only threads which are blocked by .consume() operation will be terminated
-     *           immediatly.
+     *           immediately.
      * --> Now we use a condition based on two interleaved counters to wait until all the
      *     threads have finished the execution. (see writeChunk_() for understanding their usage)
      * --> Once we are sure that all threads have finished the requests, we join() them.
@@ -361,17 +362,17 @@ namespace dx {
     try {
       boost::mutex::scoped_lock cl(countThreadsMutex);
       cl.unlock();
-      /* This function is executed throughtout the lifetime of an addRows worker thread
+      /* This function is executed throughout the lifetime of an addRows worker thread
        * Brief note about various constructs used in the function:
        * --> uploadPartRequestsQueue.consume() will block if no pending requests to be
-       *     excuted are available.
+       *     executed are available.
        * --> uploadPart() does the actual upload of rows.
        * --> We use two interleaved counters (countThread{NOT}WaitingOnConsume) to
        *     know when it is safe to terminate the threads (see joinAllWriteThreads_()).
        *     We want to terminate only when thread is waiting on .consume(), and not
        *     when gtableAddRows() is being executed.
        */
-       // See C++11 working draft for details about atomics (used for counterS)
+       // See C++11 working draft for details about atomics (used for counters)
        // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3337.pdf
       while (true) {
         cl.lock();
@@ -396,13 +397,13 @@ namespace dx {
   }
 
   /* This function creates new worker thread for addRows
-   * Usually it wil be called once for a series of addRows() and then close() request
+   * Usually it will be called once for a series of addRows() and then close() request
    * However, if we call flush() in between, then we destroy any existing threads, thus
    * threads will be recreated for any further addRows() request
    */
   void DXFile::createWriteThreads_() {
     if (writeThreads.size() == 0) {
-      //reset counters if no pevious threads exist
+      //reset counters if no previous threads exist
       countThreadsWaitingOnConsume = 0;
       countThreadsNotWaitingOnConsume = 0;
       uploadPartRequestsQueue.setCapacity(max_write_threads_);
@@ -464,12 +465,34 @@ namespace dx {
     JSON input_params(JSON_OBJECT);
     if (index >= 1)
       input_params["index"] = index;
-    const JSON resp = fileUpload(dxid_, input_params);
-    HttpHeaders req_headers;
-    req_headers["Content-Length"] = boost::lexical_cast<string>(n);
-    req_headers["Content-MD5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n); // Add the content MD5 header 
-    HttpRequest resp2;
-    makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), req_headers, HTTP_POST, ptr, n);
+  
+    int MAX_TRIES = 5;
+    
+    for (int tries = 1; true; ++tries) {
+      // we exit this loop in one of the two cases:
+      //  1) Total number of tries are exhausted (in which case we "throw")
+      //  2) Request is completed (in which case we "break" from the loop)
+
+      HttpHeaders req_headers;
+      
+      const JSON resp = fileUpload(dxid_, input_params);
+      for (JSON::const_object_iterator it = resp["headers"].object_begin(); it != resp["headers"].object_end(); ++it)
+        req_headers[it->first] = it->second.get<string>();
+      
+      req_headers["Content-Length"] = boost::lexical_cast<string>(n);
+      req_headers["Content-MD5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n); // Add the content MD5 header 
+      HttpRequest resp2;
+      try {
+        makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), req_headers, HTTP_POST, ptr, n, 1);
+        break; // request successfully completed, break from the loop
+      } catch (DXFileError &e) {
+        if (tries >= MAX_TRIES)
+          throw DXFileError("POST '" + resp["url"].get<string>() + "' failed after " + boost::lexical_cast<string>(tries) + " number of tries. Giving up. Error message in last try: '" + e.what() + "'");
+        int sleep = (1<<tries);
+        DXLOG(logWARNING) << "POST '" << resp["url"].get<string>() << "' failed in try #" << tries << " of " << MAX_TRIES << ". Retrying in " << sleep << " seconds ... Error message: '" << e.what() << "'";
+        boost::this_thread::sleep(boost::posix_time::milliseconds( sleep * 1000));
+      }
+    }
     hasAnyPartBeenUploaded = true;
   }
 
@@ -485,7 +508,7 @@ namespace dx {
 
   bool DXFile::is_closed() const {
     // If is_closed_ is set to true, then we do not need to check
-    // since a file cannot be un-"closed" after closing.
+    // since a file cannot be reopened after closing.
     if (is_closed_ == true)
       return true;
 
