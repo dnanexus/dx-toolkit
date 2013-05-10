@@ -1719,48 +1719,57 @@ def download(args, **kwargs):
         download_one(args, **kwargs)
 
 def download_one(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
+    if args.output == '-':
+        cat(parser.parse_args(['cat', args.path]))
+        return
+
+    def download_one_file(project, id, dest_filename):
+        if not args.overwrite and os.path.exists(dest_filename):
+            parser.exit(1, fill('Error: path \"' + dest_filename + '\" already exists but -f/--overwrite was not set') + '\n')
+        try:
+            show_progress = args.show_progress
+        except AttributeError:
+            show_progress = False
+        try:
+            dxpy.download_dxfile(id, dest_filename, show_progress=show_progress,
+                                 project=project)
+        except BaseException as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
+
     if not already_parsed:
         # Attempt to resolve name
-        project, folderpath, entity_result = try_call(resolve_existing_path,
-                                                      args.path, expected='entity')
+        project, folderpath, entity_result = try_call(resolve_existing_path, args.path)
+
     if entity_result is None:
-        parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
-
-    if entity_result['describe']['class'] != 'file':
-        parser.exit(1, fill('Error: dx download is only for downloading file objects') + '\n')
-
-    use_stdout = False
-    if args.output == '-':
-        use_stdout = True
+        folders = dxpy.describe(project, input_params={'folders': True})['folders']
+        if folderpath not in folders:
+            parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
+        # visibility=
+        # return_handler=True
+        for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folderpath,
+                                               recurse=True, describe=True):
+            file_desc = f['describe']
+            dir_path = ''
+            for part in file_desc['folder'].split('/'):
+                if part == '':
+                    continue
+                dir_path = os.path.join(dir_path, part)
+                if not os.path.exists(dir_path):
+                    os.mkdir(dir_path)
+            dest_filename = os.path.join(file_desc['folder'].lstrip('/'), file_desc['name'])
+            download_one_file(project, file_desc['id'], dest_filename)
     else:
+        if entity_result['describe']['class'] != 'file':
+            parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
+
         filename = args.output
         if filename is None:
             filename = entity_result['describe']['name'].replace('/', '%2F')
         elif os.path.isdir(filename):
             filename += entity_result['describe']['name'].replace('/', '%2F')
 
-    if use_stdout:
-        try:
-            dxfile = dxpy.DXFile(entity_result['id'], project=project)
-            while True:
-                chunk = dxfile.read(1024*1024)
-                if len(chunk) == 0:
-                    break
-                sys.stdout.write(chunk)
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
-    else:
-        if not args.overwrite and os.path.exists(filename):
-            parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
-        try:
-            show_progress = args.show_progress
-        except AttributeError:
-            show_progress = False
-        try:
-            dxpy.download_dxfile(entity_result['id'], filename, show_progress=show_progress,
-                                 project=project)
-        except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+        download_one_file(project, entity_result['id'], filename)
+
 
 def get(args):
     # Attempt to resolve name
@@ -1819,8 +1828,23 @@ def get(args):
 
 def cat(args):
     for path in args.path:
-        download_args = parser.parse_args(['download', '-o', '-', path])
-        download(download_args)
+        project, folderpath, entity_result = try_call(resolve_existing_path, path)
+
+        if entity_result is None:
+            parser.exit(1, fill('Could not resolve ' + path + ' to a data object') + '\n')
+
+        if entity_result['describe']['class'] != 'file':
+            parser.exit(1, fill('Error: expected a file object') + '\n')
+
+        try:
+            dxfile = dxpy.DXFile(entity_result['id'], project=project)
+            while True:
+                chunk = dxfile.read(1024*1024)
+                if len(chunk) == 0:
+                    break
+                sys.stdout.write(chunk)
+        except BaseException as details:
+            parser.exit(1, fill(unicode(details)) + '\n')
 
 def head(args):
     # Attempt to resolve name
@@ -3768,7 +3792,9 @@ parser_make_download_url.add_argument('--filename', help='Name that the server w
 parser_make_download_url.set_defaults(func=make_download_url)
 register_subparser(parser_make_download_url)
 
-parser_help = subparsers.add_parser('help', help='Display help messages and dx commands by category', description=fill('Displays the help message for the given command (and subcommand if given), or displays the list of all commands in the given category.') + '\n\nCATEGORIES\n\n  ' + '\n  '.join([cat + parser_categories[cat]['desc'] for cat in parser_categories_sorted]) + '''
+category_list = '\n  '.join([category + parser_categories[category]['desc'] for category in parser_categories_sorted])
+parser_help = subparsers.add_parser('help', help='Display help messages and dx commands by category',
+                                    description=fill('Displays the help message for the given command (and subcommand if given), or displays the list of all commands in the given category.') + '\n\nCATEGORIES\n\n  ' + category_list + '''
 
 EXAMPLE
 
@@ -3788,8 +3814,8 @@ parser_help.set_defaults(func=print_help)
 #                                         DXPathCompleter(classes=['record'], typespec='pipeline')])
 parser_map['help'] = parser_help # TODO: a special help completer
 parser_map['help run'] = parser_help
-for cat in parser_categories:
-    parser_categories[cat]['cmds'].append(('help', subparsers._choices_actions[-1].help))
+for category in parser_categories:
+    parser_categories[category]['cmds'].append(('help', subparsers._choices_actions[-1].help))
 parser_categories['all']['cmds'].sort()
 
 def main():

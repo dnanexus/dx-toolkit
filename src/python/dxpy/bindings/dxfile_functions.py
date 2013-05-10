@@ -105,8 +105,13 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
         ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
         percent = int(round((bytes_downloaded / float(effective_file_size)) * 100))
 
-        fmt = "[{0}{1}] Downloaded {2}{3} bytes ({4}%)"
-        sys.stderr.write(fmt.format((('=' * (ticks - 1) + '>') if ticks > 0 else ''), ' ' * (num_ticks - ticks), bytes_downloaded, " of %d" % (file_size,) if file_size else "", percent))
+        fmt = "[{done}{pending}] Downloaded {done_bytes} of {total_bytes} bytes ({percent}%) {name}"
+        sys.stderr.write(fmt.format(done=('=' * (ticks - 1) + '>') if ticks > 0 else '',
+                                    pending=' ' * (num_ticks - ticks),
+                                    done_bytes=bytes_downloaded,
+                                    total_bytes=file_size if file_size else "",
+                                    percent=percent,
+                                    name=filename))
         sys.stderr.flush()
         sys.stderr.write("\r")
         sys.stderr.flush()
