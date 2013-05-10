@@ -22,9 +22,8 @@ contents of describe hashes for various DNAnexus entities (projects,
 containers, dataobjects, apps, and jobs).
 '''
 
-import datetime, time, json, math, sys
+import datetime, time, json, math, sys, copy
 from collections import defaultdict
-from copy import copy
 
 from dxpy.utils.printing import *
 
@@ -257,7 +256,7 @@ def render_bundleddepends(thing):
 def render_execdepends(thing):
     rendered = []
     for item in thing:
-        dep = copy(item)
+        dep = copy.copy(item)
         dep.setdefault('package_manager', 'apt')
         dep['version'] = ' = '+dep['version'] if 'version' in dep else ''
         rendered.append("{package_manager}: {name}{version}".format(**dep))

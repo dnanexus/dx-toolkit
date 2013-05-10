@@ -1705,7 +1705,13 @@ def make_download_url(args):
     except BaseException as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
-def download(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
+def download(args, **kwargs):
+    paths = copy.copy(args.path)
+    for path in paths:
+        args.path = path
+        download_one(args, **kwargs)
+
+def download_one(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
     if not already_parsed:
         # Attempt to resolve name
         project, folderpath, entity_result = try_call(resolve_existing_path,
@@ -3333,11 +3339,11 @@ parser_upload.add_argument('--no-progress', help='Do not show a progress bar', d
 parser_upload.set_defaults(func=upload, mute=False)
 register_subparser(parser_upload, categories='data')
 
-parser_download = subparsers.add_parser('download', help='Download a file',
-                                        description='Download the contents of a file object.  Use "-o -" to direct the output to stdout.',
+parser_download = subparsers.add_parser('download', help='Download file(s)',
+                                        description='Download the contents of a file object or multiple objects.  Use "-o -" to direct the output to stdout.',
                                         prog='dx download',
                                         parents=[env_args])
-parser_download.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file'])
+parser_download.add_argument('path', help='Data object ID or name to access', nargs='+').completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
