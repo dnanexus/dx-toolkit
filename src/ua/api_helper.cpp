@@ -16,6 +16,7 @@
 
 #include "api_helper.h"
 
+#include <boost/thread.hpp>
 #include <curl/curl.h>
 
 #include "dxjson/dxjson.h"
@@ -123,6 +124,8 @@ string urlEscape(const string &str) {
   return strEsc;
 }
 
+
+boost::mutex resolveProjectMutex;
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
  * Important: Only projects with >=CONTRIBUTE access are considered 
@@ -147,7 +150,13 @@ string urlEscape(const string &str) {
  * - If project list's size == 1, then we return the project ID.
  */
 string resolveProject(const string &projectSpec) {
+  static std::map<string, string> cache; // Projectspec => project id
+  boost::mutex::scoped_lock resolvePrjLock(resolveProjectMutex);
   DXLOG(logINFO) << "Resolving project specifier " << projectSpec << "...";
+  if (cache.count(projectSpec) > 0) {
+    DXLOG(logINFO) << "The project specifier was resolved previously, will just return value from cache('" << cache[projectSpec] << "')";
+    return cache[projectSpec];
+  }
   string projectID;
   map<string, string> matchingProjectIdToName;
 
@@ -191,7 +200,7 @@ string resolveProject(const string &projectSpec) {
   }
   
   DXLOG(logINFO) << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corresponding to project identifier \"" << projectSpec << "\"";
-  return matchingProjectIdToName.begin()->first;
+  return (cache[projectSpec] = matchingProjectIdToName.begin()->first);
 }
 
 /*

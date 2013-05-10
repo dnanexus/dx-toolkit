@@ -1,3 +1,9 @@
+DNAnexus Upload Agent 1.3.0 <support@dnanexus.com>, 2013-May-10
+---------------------------------------------------------------
+  * [PTFM-7309] [PTFM-7314] Upload Agent now supports revised File API
+  * resolveProject() function now caches previously returned values 
+  * Some minor cosmetic improvements
+
 DNAnexus Upload Agent 1.2.12 <support@dnanexus.com>, 2013-May-6
 ---------------------------------------------------------------
   * We are now explicitly setting LC_ALL=C in "linux-older-kernel" build

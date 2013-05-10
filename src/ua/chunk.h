@@ -26,6 +26,7 @@
 #include <boost/thread.hpp>
 #include "SimpleHttp.h"
 #include "dxcpp/dxlog.h"
+#include "dxjson/dxjson.h"
 
 /** The variables below are used for computing instanteneous transfer speed: 
   *  1) instantaneousBytesAndTimestampQueue: A queue for keeping track of bytes transferred
@@ -114,7 +115,7 @@ public:
 
 private:
 
-  std::string uploadURL();
+  std::pair<std::string, dx::JSON> uploadURL();
   void upload_cleanup(CURL**, curl_slist**, curl_slist**) const;
 };
 

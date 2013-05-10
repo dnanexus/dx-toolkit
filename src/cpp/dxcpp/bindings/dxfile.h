@@ -186,6 +186,7 @@ namespace dx {
     mutable unsigned lq_max_chunks_;
     mutable int64_t lq_next_result_;
     mutable std::string lq_url;
+    mutable dx::JSON lq_headers;
     mutable std::vector<boost::thread> lq_readThreads_;
     mutable boost::mutex lq_results_mutex_, lq_query_start_mutex_;
 
