@@ -192,13 +192,20 @@ if len(args_list) == 1 and args_list[0] == 'clearenv':
 import dxpy
 from dxpy.utils import group_array_by_field, normalize_timedelta
 from dxpy.utils.env import parse_env_jsonfile, user_env_jsonfile_path
-from dxpy.utils.printing import *
+from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
+                                 DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
+                                 tty_rows, tty_cols)
 from dxpy.utils.pretty_print import format_tree, format_table
-from dxpy.utils.resolver import *
-from dxpy.utils.completer import *
-from dxpy.utils.describe import *
-from dxpy.cli.parsers import *
-from dxpy.cli.exec_io import *
+from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
+                                 get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
+                                 resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped)
+from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
+                                  ListCompleter, MultiCompleter)
+from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
+                                 get_io_desc, get_find_jobs_string)
+from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
+                              get_output_flag, process_properties_args, process_dataobject_args, set_env_from_args)
+from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
 if "LESS" in os.environ:
