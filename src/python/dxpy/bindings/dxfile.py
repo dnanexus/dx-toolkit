@@ -455,8 +455,17 @@ class DXFile(DXDataObject):
         if end_pos > self._file_length:
             raise DXFileError("Invalid end_pos")
 
-        for chunk_start_pos in xrange(start_pos, end_pos, self._read_bufsize):
-            chunk_end_pos = min(chunk_start_pos + self._read_bufsize - 1, end_pos)
+        def chunk_ranges(start_pos, end_pos, init_chunk_size=1024*64, limit_chunk_size=self._read_bufsize, ramp=4):
+            cur_chunk_start = start_pos
+            cur_chunk_size = min(init_chunk_size, limit_chunk_size)
+            while cur_chunk_start < end_pos:
+                cur_chunk_end = min(cur_chunk_start + cur_chunk_size - 1, end_pos)
+                yield cur_chunk_start, cur_chunk_end
+                cur_chunk_start += cur_chunk_size
+                if cur_chunk_size < limit_chunk_size:
+                    cur_chunk_size = min(cur_chunk_size * ramp, limit_chunk_size)
+
+        for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
             headers = copy.copy(headers)
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield DXHTTPRequest, [url, ''], {'method': 'GET',
