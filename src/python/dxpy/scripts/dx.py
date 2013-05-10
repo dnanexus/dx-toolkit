@@ -1771,7 +1771,7 @@ def get(args):
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
     if entity_result['describe']['class'] == 'file':
-        download(args, True, project, folderpath, entity_result)
+        download_one(args, True, project, folderpath, entity_result)
         return
 
     if entity_result['describe']['class'] not in ['record', 'applet']:
