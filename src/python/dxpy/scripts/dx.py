@@ -1744,8 +1744,7 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
         folders = dxpy.describe(project, input_params={'folders': True})['folders']
         if folderpath not in folders:
             parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
-        # visibility=
-        # return_handler=True
+        # TODO: control visibility=hidden
         for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folderpath,
                                                recurse=True, describe=True):
             file_desc = f['describe']
@@ -1769,7 +1768,6 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
             filename += entity_result['describe']['name'].replace('/', '%2F')
 
         download_one_file(project, entity_result['id'], filename)
-
 
 def get(args):
     # Attempt to resolve name
