@@ -49,7 +49,7 @@ class Completer():
         self.matches = None
         self.choices = choices
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0:
             self.matches = filter(lambda choice: choice.startswith(text),
                                   self.choices)
@@ -64,7 +64,7 @@ def clean(s):
 
 def use_completer(completer=None):
     if completer_state['available']:
-        readline.set_completer(completer)
+        readline.set_completer(completer.complete)
 
 # Expect default to be a default string value
 # Expect choices to be a list of strings

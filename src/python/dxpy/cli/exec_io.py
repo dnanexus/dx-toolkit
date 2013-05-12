@@ -242,19 +242,19 @@ def get_input_array(param_desc):
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
-                                                   typespec=typespec))
+                                                   typespec=typespec).complete)
         elif in_class == 'boolean':
             from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=['true', 'false']))
+            readline.set_completer(ListCompleter(completions=['true', 'false']).complete)
         elif 'suggestions' in param_desc:
             from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])))
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])).complete)
         elif 'choices' in param_desc:
             from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])))
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])).complete)
         else:
             from dxpy.utils.completer import NoneCompleter
-            readline.set_completer(NoneCompleter())
+            readline.set_completer(NoneCompleter().complete)
     except:
         pass
     try:
@@ -344,19 +344,19 @@ def get_input_single(param_desc):
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
-                                                   typespec=typespec))
+                                                   typespec=typespec).complete)
         elif in_class == 'boolean':
             from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=['true', 'false']))
+            readline.set_completer(ListCompleter(completions=['true', 'false']).complete)
         elif 'suggestions' in param_desc:
             from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])))
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['suggestions'])).complete)
         elif 'choices' in param_desc:
             from dxpy.utils.completer import ListCompleter
-            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])))
+            readline.set_completer(ListCompleter(completions=map(str, param_desc['choices'])).complete)
         else:
             from dxpy.utils.completer import NoneCompleter
-            readline.set_completer(NoneCompleter())
+            readline.set_completer(NoneCompleter().complete)
     except:
         pass
     try:

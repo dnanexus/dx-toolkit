@@ -337,7 +337,7 @@ class NoneCompleter():
     def get_matches(self, line, point, prefix, suffix):
         return []
 
-    def __call__(self, text, state):
+    def complete(self, text, state):
         return None
 
 class ListCompleter():
