@@ -311,7 +311,7 @@ class DXCLICompleter():
         # Remove the leading "dx " and match only on the point up to the cursor
         return self.get_matches(cline[3:cpoint])
         
-    def __call__(self, text, state):
+    def complete(self, text, state):
         if state == 0 and self.text != text:
             self.get_matches(text, want_prefix=True)
 
@@ -2933,7 +2933,7 @@ def shell(orig_args):
 
         readline.set_completer_delims("")
 
-        readline.set_completer(DXCLICompleter())
+        readline.set_completer(DXCLICompleter().complete)
     except:
         pass
 
@@ -2941,7 +2941,7 @@ def shell(orig_args):
         # Reset the completer once we're done grabbing input
         try:
             if readline.get_completer() is None:
-                readline.set_completer(DXCLICompleter())
+                readline.set_completer(DXCLICompleter().complete)
                 readline.clear_history()
                 readline.read_history_file(os.path.expanduser('~/.dnanexus_config/.dx_history'))
         except:
