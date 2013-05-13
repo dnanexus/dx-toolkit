@@ -38,6 +38,7 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
     scripts.append("{s} = dxpy.scripts.{m}:main".format(s=script, m=module))
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
+test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "test_requirements.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if os.name == 'nt':
@@ -70,6 +71,8 @@ setup(
         "console_scripts": scripts,
     },
     install_requires = dependencies,
+    tests_require = test_dependencies,
+    test_suite = "test",
     use_2to3 = True,
     classifiers=[
         'Environment :: Console',

@@ -151,7 +151,7 @@ test_ruby: ruby
 	(source ../environment && ruby ruby/test/test_dxruby.rb)
 
 test_python:
-	for i in python/test/test_*.py; do python $$i; done
+	(cd python; ./setup.py test)
 
 test_perl:
 	(cd perl; prove)
