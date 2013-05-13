@@ -1,3 +1,9 @@
+dx-toolkit (0.48.3) precise; urgency=low
+
+  * Bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Mon, 13 May 2013 21:34:36 +0000
+
 dx-toolkit (0.48.2) precise; urgency=low
 
   * Bug fix.
