@@ -1744,17 +1744,23 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
         folders = dxpy.describe(project, input_params={'folders': True})['folders']
         if folderpath not in folders:
             parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
-        # TODO: control visibility=hidden
-        for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folderpath,
-                                               recurse=True, describe=True):
-            file_desc = f['describe']
+
+        for folder in folders:
             dir_path = ''
-            for part in file_desc['folder'].split('/'):
+            for part in folder.split('/'):
                 if part == '':
                     continue
                 dir_path = os.path.join(dir_path, part)
                 if not os.path.exists(dir_path):
                     os.mkdir(dir_path)
+
+        if not args.recursive:
+            parser.exit("Error: {path} is a folder but the -r/--recursive option was not given".format(path=args.path))
+
+        # TODO: control visibility=hidden
+        for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folderpath,
+                                               recurse=True, describe=True):
+            file_desc = f['describe']
             dest_filename = os.path.join(file_desc['folder'].lstrip('/'), file_desc['name'])
             download_one_file(project, file_desc['id'], dest_filename)
     else:
@@ -3375,6 +3381,7 @@ parser_download = subparsers.add_parser('download', help='Download file(s)',
 parser_download.add_argument('path', help='Data object ID or name, or folder to download', nargs='+').completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
+parser_download.add_argument('-r', '--recursive', help='Download folders recursively', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
 register_subparser(parser_download, categories='data')
