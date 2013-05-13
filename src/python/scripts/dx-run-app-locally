@@ -23,7 +23,7 @@ import argparse
 import datetime
 import platform
 from dxpy.utils.printing import *
-from dxpy.utils.describe import io_val_to_str
+from dxpy.utils.describe import job_output_to_str, io_val_to_str
 from dxpy.cli.exec_io import *
 from dxpy.scripts import dx_build_app
 import dxpy.utils.local_exec_utils as local_exec_utils

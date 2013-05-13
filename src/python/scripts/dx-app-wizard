@@ -20,7 +20,10 @@ import sys, os
 import json
 import argparse
 import re
-from dxpy.templating import *
+from dxpy.templating.utils import (print_intro, get_name, get_version, get_metadata, Completer, get_ordinal_str,
+                                   prompt_for_var, prompt_for_yn, use_completer, get_language, language_options,
+                                   get_pattern, get_parallelized_io, fill_in_name_and_ver, clean,
+                                   create_files_from_templates)
 from dxpy.utils.printing import *
 from collections import OrderedDict
 
