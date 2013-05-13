@@ -1745,8 +1745,15 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
         if folderpath not in folders:
             parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
 
+        if not args.recursive:
+            parser.exit("Error: {path} is a folder but the -r/--recursive option was not given".format(path=args.path))
+
+        destdir = args.output if args.output is not None else os.getcwd()
+
         for folder in folders:
-            dir_path = ''
+            if not folder.startswith(folderpath):
+                continue
+            dir_path = destdir
             for part in folder.split('/'):
                 if part == '':
                     continue
@@ -1754,14 +1761,11 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
                 if not os.path.exists(dir_path):
                     os.mkdir(dir_path)
 
-        if not args.recursive:
-            parser.exit("Error: {path} is a folder but the -r/--recursive option was not given".format(path=args.path))
-
         # TODO: control visibility=hidden
         for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folderpath,
                                                recurse=True, describe=True):
             file_desc = f['describe']
-            dest_filename = os.path.join(file_desc['folder'].lstrip('/'), file_desc['name'])
+            dest_filename = os.path.join(destdir, file_desc['folder'].lstrip('/'), file_desc['name'])
             download_one_file(project, file_desc['id'], dest_filename)
     else:
         if entity_result['describe']['class'] != 'file':
@@ -1935,13 +1939,18 @@ def upload(args):
             return
         else:
             upload_seen_paths.add(norm_path)
-        for f in os.listdir(args.filename):
-            sub_args = copy.copy(args)
-            sub_args.mute = True
-            sub_args.filename = os.path.join(args.filename, f)
-            sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
-            sub_args.parents = True
-            upload(sub_args)
+
+        dir_listing = os.listdir(args.filename)
+        if len(dir_listing) == 0: # Create empty folder
+            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder, os.path.basename(args.filename))})
+        else:
+            for f in dir_listing:
+                sub_args = copy.copy(args)
+                sub_args.mute = True
+                sub_args.filename = os.path.join(args.filename, f)
+                sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.parents = True
+                upload(sub_args)
     else:
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),

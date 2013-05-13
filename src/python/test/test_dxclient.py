@@ -21,6 +21,16 @@ import os, unittest, json, tempfile, subprocess, csv, shutil, re, base64
 
 from contextlib import contextmanager
 
+@contextmanager
+def chdir(dirname=None):
+    curdir = os.getcwd()
+    try:
+        if dirname is not None:
+            os.chdir(dirname)
+        yield
+    finally:
+        os.chdir(curdir)
+
 class DXCalledProcessError(subprocess.CalledProcessError):
     def __init__(self, returncode, cmd, output=None, stderr=None):
         self.returncode = returncode
@@ -69,7 +79,30 @@ def overrideEnvironment(**kwargs):
             env[key] = kwargs[key]
     return env
 
-class TestDXClient(unittest.TestCase):
+class DXTestCase(unittest.TestCase):
+    # Be sure to use the check_output defined in this module if you wish
+    # to use stderr_regexp. Python's usual subprocess.check_output
+    # doesn't propagate stderr back to us.
+    @contextmanager
+    def assertSubprocessFailure(self, output_regexp=None, stderr_regexp=None, exit_code=3):
+        try:
+            yield
+        except subprocess.CalledProcessError as e:
+            self.assertEqual(exit_code, e.returncode, "Expected command to return code %d but it returned code %d" % (exit_code, e.returncode))
+            if output_regexp:
+                print "stdout:"
+                print e.output
+                self.assertTrue(re.search(output_regexp, e.output), "Expected stdout to match '%s' but it didn't" % (output_regexp,))
+            if stderr_regexp:
+                if not hasattr(e, 'stderr'):
+                    raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
+                print "stderr:"
+                print e.stderr
+                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
+            return
+        self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
+
+class TestDXClient(DXTestCase):
     project = None
 
     def tearDown(self):
@@ -191,6 +224,26 @@ class TestDXClient(unittest.TestCase):
 
         run(u"yes|dx rmproject {p}".format(p=project))
 
+    def test_dx_upload_download(self):
+        wd = tempfile.mkdtemp()
+        os.mkdir(os.path.join(wd, "a"))
+        os.mkdir(os.path.join(wd, "a", u"б"))
+        os.mkdir(os.path.join(wd, "a", u"б", "c"))
+        with tempfile.NamedTemporaryFile(dir=os.path.join(wd, "a", u"б")) as fd:
+            fd.write("0123456789ABCDEF"*64)
+            fd.flush()
+            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
+                run(u'dx upload '+wd)
+            run(u'dx upload -r '+wd)
+            run(u'dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name))))
+            with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
+                run(u'dx download '+os.path.basename(wd))
+            with chdir(tempfile.mkdtemp()):
+                run(u'dx download -r '+os.path.basename(wd))
+                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                self.assertEqual(tree1, tree2)
+
     def test_dx_mkdir(self):
         project = run(u"dx new project mkdir_test --brief").strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = project
@@ -203,33 +256,11 @@ class TestDXClient(unittest.TestCase):
 
         run(u"dx rmproject --yes {p}".format(p=project))
 
-class TestDXBuildApp(unittest.TestCase):
+class TestDXBuildApp(DXTestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
-
-    # Be sure to use the check_output defined in this module if you wish
-    # to use stderr_regexp. Python's usual subprocess.check_output
-    # doesn't propagate stderr back to us.
-    @contextmanager
-    def assertSubprocessFailure(self, output_regexp=None, stderr_regexp=None, exit_code=3):
-        try:
-            yield
-        except subprocess.CalledProcessError as e:
-            self.assertEqual(exit_code, e.returncode, "Expected command to return code %d but it returned code %d" % (exit_code, e.returncode))
-            if output_regexp:
-                print "stdout:"
-                print e.output
-                self.assertTrue(re.search(output_regexp, e.output), "Expected stdout to match '%s' but it didn't" % (output_regexp,))
-            if stderr_regexp:
-                if not hasattr(e, 'stderr'):
-                    raise Exception('A stderr_regexp was supplied but the CalledProcessError did not return the contents of stderr')
-                print "stderr:"
-                print e.stderr
-                self.assertTrue(re.search(stderr_regexp, e.stderr), "Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
-            return
-        self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
     def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
         os.mkdir(os.path.join(self.temp_file_path, app_name))
