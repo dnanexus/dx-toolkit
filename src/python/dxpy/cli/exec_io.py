@@ -20,10 +20,13 @@ Functions and classes used when launching platform executables from the CLI.
 
 # TODO: refactor all dx run helper functions here
 
-import os, sys, json, collections
-import pipes
-import shlex
-from dxpy.utils.resolver import *
+import os, sys, json, collections, pipes, shlex
+
+import dxpy
+from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
+from dxpy.utils.describe import (get_find_jobs_string, get_ls_l_desc, parse_typespec)
+from dxpy.utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
+                                 resolve_existing_path, split_unescaped)
 from dxpy.utils import OrderedDefaultdict
 
 def stage_to_job_refs(x, launched_jobs):

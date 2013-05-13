@@ -19,10 +19,13 @@ This file contains utility functions for interactive scripts such as
 dx for tab-completion, resolving naming conflicts, etc.
 '''
 
-import os
-import dxpy
-from dxpy.utils.resolver import *
+import os, sys
+
 from argcomplete import warn
+import dxpy
+from dxpy.utils.resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
+                                 split_unescaped)
+from dxpy.utils.printing import fill
 
 def startswith(text):
     return (lambda string: string.startswith(text))

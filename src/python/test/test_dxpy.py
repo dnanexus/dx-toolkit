@@ -20,8 +20,8 @@
 import os, unittest, tempfile, filecmp
 
 import dxpy
+from dxpy.utils.describe import get_field_from_jbor, get_job_from_jbor, is_job_ref
 from dxpy.exceptions import *
-from dxpy.utils.resolver import *
 from dxpy.bindings import *
 
 from dxpy.utils import pretty_print

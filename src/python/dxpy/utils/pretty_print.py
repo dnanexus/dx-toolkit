@@ -17,9 +17,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import re
-import collections
-from dxpy.utils.printing import *
+import re, collections
+from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, get_delimiter, fill)
 
 REPLACEMENT_TABLE = (
     u'\\x00',    #  0x00 -> NULL

@@ -17,9 +17,9 @@
 # Miscellaneous utility classes and functions for the dx-app-wizard
 # command-line tool
 
-from dxpy.utils.printing import *
-import os, shutil, subprocess, re
-import json
+import os, shutil, subprocess, re, json
+
+from dxpy.utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 
 from . import python
 from . import cpp

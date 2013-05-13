@@ -19,10 +19,14 @@ Workflows are data objects which contain metadata to run an analysis
 or set of jobs.
 """
 
-from dxpy.bindings import *
+import json
 from collections import OrderedDict
-from dxpy.cli.exec_io import *
 from argparse import Namespace
+
+import dxpy
+from dxpy.bindings import DXDataObject, get_handler
+from dxpy.exceptions import DXError
+from dxpy.cli.exec_io import ExecutableInputs, stage_to_job_refs
 
 ##############
 # DXWorkflow #

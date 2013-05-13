@@ -23,9 +23,10 @@ names in the syntax of
 For more details, see external documentation [TODO: Put link here].
 '''
 
+import os, sys, json, re
+
 import dxpy
-import re, os, sys
-from dxpy.utils.describe import *
+from dxpy.utils.describe import get_ls_l_desc
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''

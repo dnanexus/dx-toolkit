@@ -21,7 +21,7 @@ those parsers.
 '''
 
 import argparse, json, os
-from dxpy.utils.printing import *
+from dxpy.utils.printing import fill
 from dxpy.utils.resolver import split_unescaped
 
 class DXParserError(Exception):

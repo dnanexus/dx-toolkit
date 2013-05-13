@@ -25,7 +25,7 @@ containers, dataobjects, apps, and jobs).
 import datetime, time, json, math, sys, copy
 from collections import defaultdict
 
-from dxpy.utils.printing import *
+from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, get_delimiter, fill)
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -574,7 +574,7 @@ def print_job_desc(desc):
             same_folder = cloned_hash["folder"] == desc["folder"] or not same_project
             print_field(" output folder", ("" if same_project else YELLOW()) + \
                             cloned_hash["project"] + \
-                            ("" if same_project else END()) + ":" + \
+                            ("" if same_project else ENDC()) + ":" + \
                             ("" if same_folder else YELLOW()) + \
                             cloned_hash["folder"] + \
                             (" (same)" if (same_project and same_folder) else "" if same_folder else ENDC()))
