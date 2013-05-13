@@ -1303,7 +1303,9 @@ def describe(args):
             except dxpy.DXAPIError as details:
                 if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
                     raise
-        else:
+        elif re.match("^[A-Za-z][0-9A-Za-z_\.]{2,}$", args.path):
+            # Try describing as a user if it's a valid handle (no
+            # hyphens, etc.)
             try:
                 desc = dxpy.DXHTTPRequest('/user-' + args.path.lower() + '/describe',
                                           {"appsInstalled": True,
