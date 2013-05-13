@@ -412,7 +412,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         # on presence of GNU tar). This might require propagating the
         # --version directly to the interior dx-build-app since in
         # general that can depend on the git metadata.
-        tar_subprocess = subprocess.Popen(["tar", "-czf", "-", "."], cwd=src_dir, stdout=subprocess.PIPE)
+        tar_subprocess = subprocess.Popen(["tar", "-czf", "-", ".", "--exclude", "./.git"], cwd=src_dir, stdout=subprocess.PIPE)
         with open(app_tarball_file, 'w') as tar_output_file:
             total_num_bytes = 0
             last_console_update = 0
