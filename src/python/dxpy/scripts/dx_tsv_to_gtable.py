@@ -20,6 +20,7 @@ import os, sys, json, argparse, csv
 import dxpy
 from dxpy.cli.parsers import *
 from dxpy.utils.resolver import *
+from dxpy.utils.describe import print_desc
 
 parser = argparse.ArgumentParser(description='Import a local file as a GenomicTable.  The table will be closed after creation.  If no flags are given, the file given will be interpreted based on its contents.',
                                  parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args])
