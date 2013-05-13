@@ -913,6 +913,7 @@ def main(record):
         self.workflow.remove()
         self.closedrecord.remove()
 
+    @unittest.skip("FIXME - does not run in standard test setup with no workers")
     def test_run_workflow(self):
         launched_jobs = self.workflow.run({"0.record": dxpy.dxlink(self.closedrecord)})
         self.assertEqual(len(launched_jobs), 2)
