@@ -21,6 +21,15 @@ import os, unittest, json, tempfile, subprocess, csv, shutil, re, base64
 
 from contextlib import contextmanager
 
+class DXCalledProcessError(subprocess.CalledProcessError):
+    def __init__(self, returncode, cmd, output=None, stderr=None):
+        self.returncode = returncode
+        self.cmd = cmd
+        self.output = output
+        self.stderr = stderr
+    def __str__(self):
+        return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
+
 def check_output(*popenargs, **kwargs):
     """
     Adapted version of the builtin subprocess.check_output which sets a
@@ -36,17 +45,19 @@ def check_output(*popenargs, **kwargs):
     output, err = process.communicate()
     retcode = process.poll()
     if retcode:
+        print err
         cmd = kwargs.get("args")
         if cmd is None:
             cmd = popenargs[0]
-        exc = subprocess.CalledProcessError(retcode, cmd, output=output)
-        exc.stderr = err
+        exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
         raise exc
     return output
 
 def run(command, **kwargs):
     print "$ %s" % (command,)
-    return check_output(command, shell=True, **kwargs)
+    output = check_output(command, shell=True, **kwargs)
+    print output
+    return output
 
 def overrideEnvironment(**kwargs):
     env = os.environ.copy()
