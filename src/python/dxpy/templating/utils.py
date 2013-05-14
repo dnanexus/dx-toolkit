@@ -63,7 +63,7 @@ def clean(s):
     return "\n".join(line.rstrip() for line in s.split("\n"))
 
 def use_completer(completer=None):
-    if completer_state['available']:
+    if completer_state['available'] and completer is not None:
         readline.set_completer(completer.complete)
 
 # Expect default to be a default string value
