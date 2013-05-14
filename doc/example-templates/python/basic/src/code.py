@@ -5,7 +5,7 @@
 # Basic execution pattern: Your app will run on a single machine from
 # beginning to end.
 #
-# See http://wiki.dnanexus.com/Developer-Portal for documentation and
+# See https://wiki.dnanexus.com/Developer-Portal for documentation and
 # tutorials on how to modify this file.
 #
 # DNAnexus Python Bindings (dxpy) documentation:

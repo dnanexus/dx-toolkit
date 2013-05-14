@@ -48,7 +48,7 @@ namespace dx {
   public:
     /**
      * This function is a wrapper around the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">/system/findDataObjects</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">/system/findDataObjects</a>
      * API method.
      *
      * @param query A JSON hash to be provided to /system/findDataObjects.
@@ -79,7 +79,7 @@ namespace dx {
 
     /**
      * This function is a wrapper around the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">/system/findJobs</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">/system/findJobs</a>
      * API method.
      *
      * @param query A JSON hash to be provided to /system/findJobs.
@@ -93,7 +93,7 @@ namespace dx {
 
     /**
      * This function is a wrapper around the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">/system/findProjects</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">/system/findProjects</a>
      * API method.
      *
      * @param query A JSON hash to be provided to /system/findProjects.
@@ -103,7 +103,7 @@ namespace dx {
 
     /**
      * This function is a wrapper around the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">/system/findApps</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">/system/findApps</a>
      * API method.
      *
      * @param query A JSON hash to be provided to /system/findApps.

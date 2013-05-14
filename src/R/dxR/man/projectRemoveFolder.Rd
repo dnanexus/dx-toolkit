@@ -37,7 +37,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FremoveFolder}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method\%3A-\%2Fclass-xxxx\%2FremoveFolder}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

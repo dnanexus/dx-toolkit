@@ -18,6 +18,6 @@ providing the ``systemRequirements`` field to ```/applet-XXXX/run``` or
     }
 
 See <a
-href="http://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Run-Specification">Run
+href="https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Run-Specification">Run
 Specification</a> in the API documentation for more information about the
 available instance types.

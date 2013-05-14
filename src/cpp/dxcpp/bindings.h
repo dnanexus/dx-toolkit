@@ -63,7 +63,7 @@ namespace dx {
      * Clones the object into the specified project and folder.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxxx/clone</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxxx/clone</a>
      * API method for more info.
      *
      * @param dest_proj_id ID of the project into which the object should be cloned
@@ -147,7 +147,7 @@ namespace dx {
      * See setWorkspaceID() and loadFromEnvironment() for more information.
      *
      * @param dxlink A JSON representing a <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     virtual void setIDs(const JSON &dxlink);
@@ -167,7 +167,7 @@ namespace dx {
      * Adds the specified types to the object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">/class-xxxx/addTypes</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">/class-xxxx/addTypes</a>
      * API method for more info.
      *
      * @param types JSON array of strings to add as types
@@ -178,7 +178,7 @@ namespace dx {
      * Removes the specified types from the object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">/class-xxxx/removeTypes</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">/class-xxxx/removeTypes</a>
      * API method for more info.
      *
      * @param types JSON array of strings to remove as types
@@ -189,7 +189,7 @@ namespace dx {
      * Retrieves the details stored in the object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">/class-xxxx/getDetails</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">/class-xxxx/getDetails</a>
      * API method for more info.
      *
      * @return JSON hash or array containing the remote object's details
@@ -200,7 +200,7 @@ namespace dx {
      * Stores the given JSON in the details of the remote object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">/class-xxxx/setDetails</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details%20and%20Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">/class-xxxx/setDetails</a>
      * API method for more info.
      *
      * @param details Arbitrary JSON hash or array to store as details
@@ -211,7 +211,7 @@ namespace dx {
      * Ensures that the remote object is hidden.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
      * API method for more info.
      */
     void hide() const;
@@ -220,7 +220,7 @@ namespace dx {
      * Ensures that the remote object is visible.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">/class-xxxx/setVisibility</a>
      * API method for more info.
      */
     void unhide() const;
@@ -229,7 +229,7 @@ namespace dx {
      * Renames the object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">/class-xxxx/rename</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">/class-xxxx/rename</a>
      * API method for more info.
      *
      * @param name New name for the object.
@@ -240,7 +240,7 @@ namespace dx {
      * Sets the specified properties.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">/class-xxxx/setProperties</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">/class-xxxx/setProperties</a>
      * API method for more info.
      *
      * @param properties JSON hash mapping strings to strings, containing names and values of
@@ -260,7 +260,7 @@ namespace dx {
      * Adds the specified tags to the object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">/class-xxxx/addTags</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">/class-xxxx/addTags</a>
      * API method for more info.
      *
      * @param tags JSON array of strings to add as tags.
@@ -271,7 +271,7 @@ namespace dx {
      * Removes the specified tags from the object.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">/class-xxxx/removeTags</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">/class-xxxx/removeTags</a>
      * API method for more info.
      *
      * @param tags JSON array of strings to remove as tags.

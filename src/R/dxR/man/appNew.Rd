@@ -33,7 +33,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

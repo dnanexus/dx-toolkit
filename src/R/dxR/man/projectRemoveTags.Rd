@@ -36,7 +36,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FremoveTags}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method\%3A-\%2Fproject-xxxx\%2FremoveTags}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

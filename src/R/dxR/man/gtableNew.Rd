@@ -33,7 +33,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method\%3A-\%2Fgtable\%2Fnew}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method\%3A-\%2Fgtable\%2Fnew}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

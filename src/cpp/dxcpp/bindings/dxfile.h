@@ -34,7 +34,7 @@ namespace dx {
 
   ///
   /// A File represents an opaque array of bytes (see the <a
-  /// href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files">API specification</a> for more
+  /// href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files">API specification</a> for more
   /// info). DXFile supports multithreaded uploading and downloading for high performance.
   ///
   /// When a File object is initialized, it is empty, in the "open" state, and writable. In order to
@@ -231,7 +231,7 @@ namespace dx {
      * Creates a %DXFile handler for the specified File object.
      *
      * @param dxlink A JSON representing a <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     DXFile(const dx::JSON &dxlink): DXDataObject() {
@@ -283,7 +283,7 @@ namespace dx {
      * its internal buffer to be written to the remote file, that data will be flushed.
      *
      * @param dxlink A JSON representing a <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
+     * href="https://wiki.dnanexus.com/API-Specification-v1.1.0/Details-and-Links#Linking">DNAnexus link</a>.
      *  You may also use the extended form: {"$dnanexus_link": {"project": proj-id, "id": obj-id}}.
      */
     void setIDs(const dx::JSON &dxlink);
@@ -295,7 +295,7 @@ namespace dx {
      * @param media_type String representing the media type of the file.
      * @param data_obj_fields JSON hash containing the optional fields with which to create the
      * object ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
      * API method.
      */
     void create(const std::string &media_type="",
@@ -475,7 +475,7 @@ namespace dx {
      * Calls flush() and issues a request to close the remote File.
      *
      * See the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">/file-xxxx/close</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">/file-xxxx/close</a>
      * API method for more info.
      *
      * @param block Boolean indicating whether the process should block until the remote file is in
@@ -555,7 +555,7 @@ namespace dx {
      * @param media_type String representing the media type of the file.
      * @param data_obj_fields JSON hash containing the optional fields with which to create the
      * object ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
      * API method.
      * @return DXFile remote file handler for a new remote file.
      */
@@ -589,7 +589,7 @@ namespace dx {
      * @param media_type String representing the media type of the file.
      * @param data_obj_fields JSON hash containing the optional fields with which to create the
      * object ("project", "types", "details", "hidden", "name", "properties", "tags"), as provided to the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">/file/new</a>
      * API method.
      * @param waitForClose If set to true, then function returns only after uploaded file is in the
      * "closed" state. Otherwise, returns directly after initiating the file close (the uploaded file

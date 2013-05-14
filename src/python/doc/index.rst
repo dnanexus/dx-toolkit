@@ -12,18 +12,18 @@ available to Python apps running within the DNAnexus Execution
 Environment, and can also be used in scripts you run that access the API
 from the outside. Before you start digging in, you may want to take a
 look at the `Introduction to the DNAnexus Platform
-<http://wiki.dnanexus.com/Introduction-to-the-DNAnexus-Platform>`_. The
+<https://wiki.dnanexus.com/Introduction-to-the-DNAnexus-Platform>`_. The
 following references may also be useful to you as you develop your own
 scripts and apps.
 
-`API Specification <http://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction>`_
+`API Specification <https://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction>`_
     Complete details on the API, the lifecycle of different data
     objects, project permissions, and more. Many methods in the bindings
     translate directly into API calls, so it will be helpful to have at
     least a general understanding of the API's structure.
-`Execution Environment Reference <http://wiki.dnanexus.com/Execution-Environment-Reference>`_
+`Execution Environment Reference <https://wiki.dnanexus.com/Execution-Environment-Reference>`_
     How applets and apps are run within the DNAnexus Platform.
-`Developer Portal <http://wiki.dnanexus.com/Developer-Portal>`_
+`Developer Portal <https://wiki.dnanexus.com/Developer-Portal>`_
     Links to all other docs, e.g. useful command-line tools.
 
 Table of Contents

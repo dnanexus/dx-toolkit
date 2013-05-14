@@ -35,7 +35,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method\%3A-\%2Fuser-xxxx\%2Fupdate}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method\%3A-\%2Fuser-xxxx\%2Fupdate}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

@@ -35,7 +35,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method\%3A-\%2Fclass-xxxx\%2FlistProjects}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

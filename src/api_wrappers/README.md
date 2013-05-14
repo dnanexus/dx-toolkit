@@ -25,7 +25,7 @@ whose elements are arrays themselves. This is what it looks like:
     {
       "objectMethod": false,
       "retryable": false,
-      "wikiLink": "http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
+      "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew"
     }
   ],
   ...,

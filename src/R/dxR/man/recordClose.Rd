@@ -35,7 +35,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Data\%20Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Data\%20Object-Lifecycle#API-method\%3A-\%2Fclass-xxxx\%2Fclose}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

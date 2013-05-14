@@ -34,7 +34,7 @@ namespace dx {
   /// first created, it may only reside in a single container. However, objects may be cloned into
   /// other containers once the objects have been closed (and their contents may no longer be
   /// modified). See <a
-  /// href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle">Data Object
+  /// href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data-Object-Lifecycle">Data Object
   /// Lifecycle</a> in the API specification for more information.
   ///
   /// Projects (DXProject) are containers that provide additional functionality for collaboration
@@ -90,7 +90,7 @@ namespace dx {
      * Moves the specified objects and/or folders in the associated data container to the specified
      * folder.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
      *
      * @param objects A JSON array of strings containing the object ID(s) to be moved.
      * @param folders A JSON array of strings containing the folder route(s) to be moved.
@@ -104,7 +104,7 @@ namespace dx {
      * Clones the specified objects and/or folders from the associated data container to another data
      * container.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
      *
      * @param objects A JSON array of strings containing the object ID(s) to be cloned.
      * @param folders A JSON array of strings containing the folder route(s) to be cloned.
@@ -139,7 +139,7 @@ namespace dx {
      * Moves a folder in the associated data container (and all the objects and subfolders it
      * contains) to the specified destination folder.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
      *
      * @param folder The full path of the folder to be moved.
      * @param dest_folder The full path of the destination folder.
@@ -162,7 +162,7 @@ namespace dx {
     /**
      * Move objects in the associated data container to the specified destination folder.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders%20and%20Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">/class-xxxx/move</a> API method for more info.
      *
      * @param objects A JSON array of strings containing the object ID(s) to be moved.
      * @param dest_folder The full path of the destination folder.
@@ -186,7 +186,7 @@ namespace dx {
      * Any hidden objects contained in a folder to be cloned are only cloned if a visible ancestor is
      * also cloned.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
      *
      * @param folder The full path of the folder to be cloned.
      * @param dest_container ID of the container into which the folder should be cloned.
@@ -201,7 +201,7 @@ namespace dx {
     /**
      * Clones the specified object(s) from the associated data container to another data container.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">/class-xxx/clone</a> API method for more info.
      *
      * @param objects A JSON array of strings containing the object ID(s) to be cloned.
      * @param dest_container ID of the container into which the selected objects should be cloned.
@@ -233,7 +233,7 @@ namespace dx {
 
     /**
      * Updates the remote project with the provided options, as specified in the <a
-     * href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">/project-xxxx/update</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">/project-xxxx/update</a>
      * method.
      *
      * @param to_update JSON hash to be provided to <code>/project-xxxx/update</code>.
@@ -250,7 +250,7 @@ namespace dx {
      * Invites another person (or PUBLIC) to the remote project. If the invitee is another person,
      * they will receive the specified permission when they accept the invitation.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations%20and%20Join%20Requests#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations%20and%20Join%20Requests#API-method%3A-%2Fproject-xxxx%2Finvite">/project-xxxx/invite</a> API method for more info.
      *
      * @param invitee Username (of the form "user-USERNAME") or email of the
      * person to be invited to the project. Use "PUBLIC" to make the project
@@ -262,7 +262,7 @@ namespace dx {
     /**
      * Decreases the permissions of the specified user in the remote project.
      *
-     * See the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
+     * See the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">/project-xxxx/decreasePermissions</a> API method for more info.
      *
      * @param member Username (of the form "user-USERNAME") of the project member
      * whose permissions will be decreased.

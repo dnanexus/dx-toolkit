@@ -51,7 +51,7 @@
 # C = the output of a "process" entry point
 # D = app output aggregated from the outputs of the "process" entry points
 #
-# See http://wiki.dnanexus.com/Developer-Portal for documentation and
+# See https://wiki.dnanexus.com/Developer-Portal for documentation and
 # tutorials on how to modify this file.
 #
 # DNAnexus Python Bindings (dxpy) documentation:

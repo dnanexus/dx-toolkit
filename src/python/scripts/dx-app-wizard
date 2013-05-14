@@ -308,7 +308,7 @@ manifest.append(os.path.join(name, 'dxapp.json'))
 print ''
 print fill('''Your app specification has been written to the
 dxapp.json file. You can specify more app options by editing this file
-directly (see http://wiki.dnanexus.com/Developer-Portal for complete
+directly (see https://wiki.dnanexus.com/Developer-Portal for complete
 documentation).''' + ('''  Note that without an input and output specification,
 your app can only be built as an APPLET on the system.  To publish it to
 the DNAnexus community, you must first specify your inputs and outputs.
@@ -340,7 +340,7 @@ print "Created files:"
 for filename in sorted(manifest):
     print "\t", filename
 print "\n" + fill('''App directory created!  See
-http://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
+https://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
 or run "dx-build-app(let) %s" while logged in with dx.''' % name) + "\n"
 print fill('''Running the DNAnexus build utility will create an
 executable on the DNAnexus platform.  Any files found in the ''' +

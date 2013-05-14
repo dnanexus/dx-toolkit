@@ -33,7 +33,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindProjects}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method\%3A-\%2Fsystem\%2FfindProjects}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

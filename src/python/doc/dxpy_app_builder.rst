@@ -6,8 +6,8 @@ objects.
 
 If you are developing apps, we strongly recommend that you use the command-line
 application builder tools `dx-build-applet
-<http://wiki.dnanexus.com/DxBuildApplet>`_ and `dx-build-app
-<http://wiki.dnanexus.com/DxBuildApp>`_ to compile and deploy applets and apps
+<https://wiki.dnanexus.com/DxBuildApplet>`_ and `dx-build-app
+<https://wiki.dnanexus.com/DxBuildApp>`_ to compile and deploy applets and apps
 onto the platform. (Those command-line tools are implemented using the methods
 in this module.)
 

@@ -42,7 +42,7 @@
 }
 \references{
   API spec documentation:
-  \url{http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/get}
+  \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx\%5B/yyyy\%5D/get}
 }
 \seealso{
   \code{\link{dxHTTPRequest}}

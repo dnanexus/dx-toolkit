@@ -5,7 +5,7 @@
  * Basic execution pattern: Your app will run on a single machine from
  * beginning to end.
  *
- * See http://wiki.dnanexus.com/Developer-Portal for documentation and
+ * See https://wiki.dnanexus.com/Developer-Portal for documentation and
  * tutorials on how to modify this file.
  *
  * By default, this template uses the DNAnexus C++ JSON library and
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
   //
   // int num = input["num"].get<int>();
   //
-  // See http://wiki.dnanexus.com/dxjson for more details on how to
+  // See https://wiki.dnanexus.com/dxjson for more details on how to
   // use the C++ JSON library.
 DX_APP_WIZARD_INITIALIZE_INPUTDX_APP_WIZARD_DOWNLOAD_ANY_FILES
   // Fill in your application code here.
