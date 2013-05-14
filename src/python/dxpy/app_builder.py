@@ -421,7 +421,6 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
         # (unpublished) version.
         no_published_versions = len(list(dxpy.find_apps(name=applet_name, published=True, limit=1))) == 0
         if no_published_versions:
-            print "Setting DEFAULT tag to newly created version"
             dxpy.api.app_add_tags(app_id, input_params={'tags': ['default']})
 
     return app_id
