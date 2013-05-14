@@ -17,7 +17,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, json, tempfile, subprocess, csv, shutil, re, base64
+import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64
+import dxpy
 
 from contextlib import contextmanager
 
@@ -107,6 +108,17 @@ class TestDXClient(DXTestCase):
         proj_name = u"dxclient_test_pröject"
         self.project = run(u"dx new project '{p}' --brief".format(p=proj_name)).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
+        # TODO: Fix this once process-wise sessions are in place.  For
+        # now, have to save the old current directory and overwrite
+        # the file.
+        if os.path.exists(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD')):
+            with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD')) as fd:
+                self.old_cwd = fd.read()
+            os.remove(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD'))
+        else:
+            self.old_cwd = None
+        if 'DX_CLI_WD' in os.environ:
+            del os.environ['DX_CLI_WD']
 
     def tearDown(self):
         try:
@@ -117,6 +129,9 @@ class TestDXClient(DXTestCase):
             os.remove("uploadedfile")
         except:
             pass
+        if self.old_cwd is not None:
+            with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD'), 'w') as fd:
+                fd.write(self.old_cwd)
 
     def test_dx_actions(self):
         with self.assertRaises(subprocess.CalledProcessError):
@@ -251,8 +266,12 @@ class TestDXClient(DXTestCase):
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
+        self.proj_id = dxpy.api.project_new({'name': 'TestDXBuildApp Project'})['id']
+        os.environ['DX_PROJECT_CONTEXT_ID'] = self.proj_id
+
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
+        dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
 
     def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
         os.mkdir(os.path.join(self.temp_file_path, app_name))
@@ -283,6 +302,8 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+    @unittest.skipIf('DXTEST_FULL' not in os.environ,
+                     'skipping test that would create apps')
     def test_build_app(self):
         app_spec = {
             "name": "minimal_app",
@@ -301,6 +322,8 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(app_describe["name"], "minimal_app")
         self.assertFalse("published" in app_describe)
 
+    @unittest.skipIf('DXTEST_FULL' not in os.environ,
+                     'skipping test that would create apps')
     def test_invalid_project_context(self):
         app_spec = {
             "name": "invalid_project_context",
@@ -359,6 +382,8 @@ class TestDXBuildApp(DXTestCase):
         with self.assertSubprocessFailure(exit_code=1):
             run("dx describe " + applet_id)
 
+    @unittest.skipIf('DXTEST_FULL' not in os.environ,
+                     'skipping test that would create apps')
     def test_update_app_categories(self):
         app1_spec = {
             "name": "update_app_categories",
@@ -386,6 +411,8 @@ class TestDXBuildApp(DXTestCase):
         run("dx-build-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
+    @unittest.skipIf('DXTEST_FULL' not in os.environ,
+                     'skipping test that would create apps')
     def test_build_app_autonumbering(self):
         app_spec = {
             "name": "build_app_autonumbering",
@@ -440,7 +467,6 @@ class TestDXBuildApp(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="Entry point file \\S+ has syntax errors"):
             run("dx-build-applet " + app_dir)
 
-
 class TestDXBuildReportHtml(unittest.TestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
@@ -453,8 +479,13 @@ class TestDXBuildReportHtml(unittest.TestCase):
         html = "<html><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
         html_file.write(html)
         html_file.close()
+
+        self.proj_id = dxpy.api.project_new({'name': 'TestDXBuildReportHtml Project'})['id']
+        os.environ['DX_PROJECT_CONTEXT_ID'] = self.proj_id
+
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
+        dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
 
     def test_local_file(self):
         run(u"dx-build-report-html {d}/index.html --local {d}/out.html".format(d=self.temp_file_path))
@@ -492,6 +523,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertEquals(desc["name"], u"index.html")
         run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
 
-
 if __name__ == '__main__':
+    if 'DXTEST_FULL' not in os.environ:
+        sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps will not be run\n')
     unittest.main()
