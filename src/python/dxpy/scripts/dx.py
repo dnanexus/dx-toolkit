@@ -1944,7 +1944,7 @@ def upload(args):
 
         dir_listing = os.listdir(args.filename)
         if len(dir_listing) == 0: # Create empty folder
-            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder, os.path.basename(args.filename))})
+            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder, os.path.basename(args.filename)), "parents": True})
         else:
             for f in dir_listing:
                 sub_args = copy.copy(args)

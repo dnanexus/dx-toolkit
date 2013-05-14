@@ -26,10 +26,6 @@ from dxpy.bindings import *
 
 from dxpy.utils import pretty_print
 
-# Store the following in PROJECT_CONTEXT_ID to make some of the tests pass
-proj_id = "project-000000000000000000000001"
-second_proj_id = 'project-000000000000000000000002'
-
 def get_objects_from_listf(listf):
     objects = []
     for result in listf["objects"]:
@@ -40,16 +36,29 @@ def remove_all(proj_id, folder="/"):
     dxproject = dxpy.DXProject(proj_id)
     dxproject.remove_folder(folder, recurse=True)
 
+def setUpTempProjects(thing):
+    thing.old_workspace_id = dxpy.WORKSPACE_ID
+    thing.proj_id = dxpy.api.project_new({'name': 'test project 1'})['id']
+    thing.second_proj_id = dxpy.api.project_new({'name': 'test project 2'})['id']
+    dxpy.set_workspace_id(thing.proj_id)
+
+def tearDownTempProjects(thing):
+    dxpy.api.project_destroy(thing.proj_id, {'terminateJobs': True})
+    dxpy.api.project_destroy(thing.second_proj_id, {'terminateJobs': True})
+    dxpy.set_workspace_id(thing.old_workspace_id)
+
 class TestDXProject(unittest.TestCase):
+    def setUp(self):
+        setUpTempProjects(self)
+
     def tearDown(self):
-        remove_all(proj_id)
-        remove_all(second_proj_id)
+        tearDownTempProjects(self)
 
     def test_update_describe(self):
         dxproject = dxpy.DXProject()
         dxproject.update(name="newprojname", protected=True, restricted=True, description="new description")
         desc = dxproject.describe()
-        self.assertEqual(desc["id"], proj_id)
+        self.assertEqual(desc["id"], self.proj_id)
         self.assertEqual(desc["class"], "project")
         self.assertEqual(desc["name"], "newprojname")
         self.assertEqual(desc["protected"], True)
@@ -121,19 +130,19 @@ class TestDXProject(unittest.TestCase):
             dxrecords.append(dxpy.new_dxrecord(name=("record-%d" % i)))
 
         with self.assertRaises(DXAPIError):
-            dxproject.clone(second_proj_id,
+            dxproject.clone(self.second_proj_id,
                             destination="/",
                             objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
                             folders=["/a/b/c/d"])
 
         dxrecords[0].close()
         dxrecords[1].close()
-        dxproject.clone(second_proj_id,
+        dxproject.clone(self.second_proj_id,
                         destination="/",
                         objects=[dxrecords[0].get_id(), dxrecords[1].get_id()],
                         folders=["/a/b/c/d"])
 
-        second_proj = dxpy.DXProject(second_proj_id)
+        second_proj = dxpy.DXProject(self.second_proj_id)
         listf = second_proj.list_folder()
         self.assertEqual(get_objects_from_listf(listf).sort(),
                          [dxrecords[0].get_id(), dxrecords[1].get_id()].sort())
@@ -173,6 +182,8 @@ class TestDXFile(unittest.TestCase):
         os.remove(cls.foo_file.name)
 
     def setUp(self):
+        setUpTempProjects(self)
+
         self.new_file = tempfile.NamedTemporaryFile(delete=False)
         self.new_file.close()
 
@@ -181,10 +192,7 @@ class TestDXFile(unittest.TestCase):
     def tearDown(self):
         os.remove(self.new_file.name)
 
-        try:
-            self.dxfile.destroy()
-        except:
-            pass
+        tearDownTempProjects(self)
 
     def test_upload_download_files_dxfile(self):
         self.dxfile = dxpy.upload_local_file(self.foo_file.name)
@@ -247,7 +255,7 @@ class TestDXFile(unittest.TestCase):
     def test_dxfile_errors(self):
         self.dxfile = dxpy.new_dxfile()
         self.dxfile.write("Line 1\nLine 2\nLine 3\n")
-        
+
         with self.assertRaises(DXFileError):
             self.dxfile.read(3)
         with self.assertRaises(DXFileError):
@@ -264,7 +272,6 @@ class TestDXFile(unittest.TestCase):
         file2._wait_on_close()
         self.assertEqual(file2.describe()["size"], 4)
 
-
     def test_file_context_manager_destructor(self):
         dxfile = dxpy.new_dxfile(mode='w')
         dxfile.write("Haha")
@@ -275,17 +282,14 @@ class TestDXGTable(unittest.TestCase):
     TODO: Test iterators, gri, and other queries
     """
     def setUp(self):
-        self.dxgtable = None
+        setUpTempProjects(self)
 
     def tearDown(self):
-        if self.dxgtable:
-            try:
-                state = self.dxgtable._get_state()
-                if state == 'closing':
-                    self.dxgtable._wait_on_close()
-                self.dxgtable.remove()
-            except:
-                pass
+        try:
+            self.dxgtable.flush()
+        except:
+            pass
+        tearDownTempProjects(self)
 
     def test_col_desc(self):
         columns = [dxpy.DXGTable.make_column_desc("a", "string"),
@@ -369,9 +373,9 @@ class TestDXGTable(unittest.TestCase):
         # Writing a new_dxgtable with parts
         with dxpy.new_dxgtable(
             [dxpy.DXGTable.make_column_desc("a", "string"),
-             dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as self.dxgtable:
+             dxpy.DXGTable.make_column_desc("b", "int32")], mode='w') as dxgtable:
             for i in range(64):
-                self.dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
+                dxgtable.add_rows(data=[["row"+str(i), i]], part=i+1)
 
         # Writing a new_dxgtable without parts
         with dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
@@ -400,10 +404,10 @@ class TestDXGTable(unittest.TestCase):
         table3.remove()
 
     def test_table_context_manager_destructor(self):
-        dxgtable = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
-                                      dxpy.DXGTable.make_column_desc("b", "int32")])
+        self.dxgtable = dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
+                                           dxpy.DXGTable.make_column_desc("b", "int32")])
         for i in range(64):
-            dxgtable.add_rows(data=[["row"+str(i), i]])
+            self.dxgtable.add_rows(data=[["row"+str(i), i]])
         # No assertion here, but this should print an error
 
     def test_table_context_manager_error_handling(self):
@@ -435,7 +439,6 @@ class TestDXGTable(unittest.TestCase):
             with dxpy.open_dxgtable(table3_id, mode='a') as table3:
                 table3.add_row(["", 68719476736]) # Not in int32 range
 
-
     def test_create_table_with_invalid_spec(self):
         with self.assertRaises(DXAPIError):
             dxpy.new_dxgtable([dxpy.DXGTable.make_column_desc("a", "string"),
@@ -452,7 +455,7 @@ class TestDXGTable(unittest.TestCase):
         self.dxgtable.close(block=True)
         rows = self.dxgtable.get_rows()['data']
         assert(len(rows) == 64)
-        
+
         # TODO: test get_rows parameters, genomic range index when
         # implemented
 
@@ -469,7 +472,7 @@ class TestDXGTable(unittest.TestCase):
             self.assertEqual(row[2], counter)
             counter += 1
         self.assertEqual(counter, 64)
-        
+
         counter = 0
         for row in self.dxgtable.iterate_rows(start=1):
             self.assertEqual(row[2], counter+1)
@@ -512,28 +515,28 @@ class TestDXGTable(unittest.TestCase):
         self.assertEqual(genomic_index, {"name": "gri", "type": "genomic",
                                          "chr": "foo", "lo": "bar", "hi": "baz"})
 
-        dxgtable = dxpy.new_dxgtable(columns, indices=[genomic_index])
-        desc = dxgtable.describe()
+        self.dxgtable = dxpy.new_dxgtable(columns, indices=[genomic_index])
+        desc = self.dxgtable.describe()
         self.assertEqual(desc["indices"], [genomic_index]);
 
-        dxgtable.add_rows(data10[:3], 1)
-        dxgtable.add_rows(data10[3:6], 10)
-        dxgtable.add_rows(data10[6:9], 100)
-        dxgtable.add_rows(data10[9:], 1000)
+        self.dxgtable.add_rows(data10[:3], 1)
+        self.dxgtable.add_rows(data10[3:6], 10)
+        self.dxgtable.add_rows(data10[6:9], 100)
+        self.dxgtable.add_rows(data10[9:], 1000)
 
-        dxgtable.close(True)
+        self.dxgtable.close(True)
 
-        desc = dxgtable.describe()
+        desc = self.dxgtable.describe()
         self.assertEqual(desc["length"], 10)
 
         # Offset + limit queries
-        result = dxgtable.get_rows(starting=0, limit=1);
+        result = self.dxgtable.get_rows(starting=0, limit=1);
         self.assertEqual(result["data"],
                          [[0, 'chr1',  0,  3, 'a']]);
         self.assertEqual(result["next"], 1);
         self.assertEqual(result["length"], 1);
 
-        result = dxgtable.get_rows(starting=4, limit=3);
+        result = self.dxgtable.get_rows(starting=4, limit=3);
         self.assertEqual(result["data"],
                          [[4, 'chr1', 15, 23, 'e'],
                           [5, 'chr1', 16, 21, 'f'],
@@ -543,7 +546,7 @@ class TestDXGTable(unittest.TestCase):
 
         # Range query
         genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 22, 25)
-        result = dxgtable.get_rows(query=genomic_query)
+        result = self.dxgtable.get_rows(query=genomic_query)
         self.assertEqual(result["data"],
                          [[4, 'chr1', 15, 23, 'e']]);
         self.assertEqual(result["next"], None);
@@ -551,7 +554,7 @@ class TestDXGTable(unittest.TestCase):
 
         # Range query with nonconsecutive rows in result
         genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 20, 26)
-        result = dxgtable.get_rows(query=genomic_query)
+        result = self.dxgtable.get_rows(query=genomic_query)
         self.assertEqual(result["data"],
                    [[4, 'chr1', 15, 23, 'e'],
                     [5, 'chr1', 16, 21, 'f'],
@@ -561,7 +564,7 @@ class TestDXGTable(unittest.TestCase):
 
         # Testing iterate_rows
         row_num = 5
-        for row in dxgtable.iterate_rows(5, 8):
+        for row in self.dxgtable.iterate_rows(5, 8):
             self.assertEqual(row_num, row[0])
             row_num += 1
         self.assertEqual(row_num, 8)
@@ -569,7 +572,7 @@ class TestDXGTable(unittest.TestCase):
         # Testing iterate_query_rows
         genomic_query = dxpy.DXGTable.genomic_range_query('chr1', 20, 26)
         result_num = 0
-        for row in dxgtable.iterate_query_rows(genomic_query):
+        for row in self.dxgtable.iterate_query_rows(genomic_query):
             if result_num == 0:
                 self.assertEqual(4, row[0])
             elif result_num == 1:
@@ -603,16 +606,18 @@ class TestDXRecord(unittest.TestCase):
     while using DXRecords as the most basic data object.
     """
 
+    def setUp(self):
+        setUpTempProjects(self)
+
     def tearDown(self):
-        remove_all(proj_id)
-        remove_all(second_proj_id)
+        tearDownTempProjects(self)
 
     def test_set_id(self):
         dxrecord = dxpy.new_dxrecord()
         second_dxrecord = dxpy.DXRecord()
         second_dxrecord.set_ids(dxrecord.get_id(), dxrecord.get_proj_id())
         self.assertEqual(second_dxrecord.get_id(), dxrecord.get_id())
-        self.assertEqual(second_dxrecord.get_proj_id(), proj_id)
+        self.assertEqual(second_dxrecord.get_proj_id(), self.proj_id)
         dxrecord.remove()
 
     def test_create_remove_dxrecord(self):
@@ -630,7 +635,7 @@ class TestDXRecord(unittest.TestCase):
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if firstDXRecord._proj has been set to proj_id
-        self.assertEqual(firstDXRecord.get_proj_id(), proj_id)
+        self.assertEqual(firstDXRecord.get_proj_id(), self.proj_id)
         # test if details were set
         self.assertEqual(firstDXRecord.get_details(), ["foo"])
 
@@ -644,7 +649,7 @@ class TestDXRecord(unittest.TestCase):
         '''Create a new DXRecord object which should generate a new ID
         and in a different project.
         '''
-        secondDXRecord.new(project=second_proj_id, details=["bar"])
+        secondDXRecord.new(project=self.second_proj_id, details=["bar"])
         self.assertNotEqual(firstDXRecord.get_id(), secondDXRecord.get_id())
         # test if secondDXRecord._dxid has been set to a valid ID
         try:
@@ -654,7 +659,7 @@ class TestDXRecord(unittest.TestCase):
         except AttributeError:
             self.fail("dxID was not stored in DXRecord creation")
         # test if secondDXRecord._proj has been set to second_proj_id
-        self.assertEqual(secondDXRecord.get_proj_id(), second_proj_id)
+        self.assertEqual(secondDXRecord.get_proj_id(), self.second_proj_id)
         # test if details were set
         self.assertEqual(secondDXRecord.get_details(), ["bar"])
 
@@ -699,7 +704,7 @@ class TestDXRecord(unittest.TestCase):
     def test_describe_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         desc = dxrecord.describe()
-        self.assertEqual(desc["project"], proj_id)
+        self.assertEqual(desc["project"], self.proj_id)
         self.assertEqual(desc["id"], dxrecord.get_id())
         self.assertEqual(desc["class"], "record")
         self.assertEqual(desc["types"], [])
@@ -737,7 +742,7 @@ class TestDXRecord(unittest.TestCase):
                                             parents=True,
                                             name=name)
         desc = second_dxrecord.describe(True, True)
-        self.assertEqual(desc["project"], proj_id)
+        self.assertEqual(desc["project"], self.proj_id)
         self.assertEqual(desc["id"], second_dxrecord.get_id())
         self.assertEqual(desc["class"], "record")
         self.assertEqual(desc["types"], types)
@@ -799,9 +804,9 @@ class TestDXRecord(unittest.TestCase):
     def test_list_projects_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
-        second_dxrecord = dxrecord.clone(second_proj_id)
-        self.assertTrue(proj_id in dxrecord.list_projects())
-        self.assertTrue(second_proj_id in dxrecord.list_projects())
+        second_dxrecord = dxrecord.clone(self.second_proj_id)
+        self.assertTrue(self.proj_id in dxrecord.list_projects())
+        self.assertTrue(self.second_proj_id in dxrecord.list_projects())
 
     def test_close_dxrecord(self):
         dxrecord = dxpy.new_dxrecord()
@@ -837,10 +842,10 @@ class TestDXRecord(unittest.TestCase):
         dxrecord = dxpy.new_dxrecord(name="firstname", tags=["tag"])
 
         with self.assertRaises(DXAPIError):
-            second_dxrecord = dxrecord.clone(second_proj_id)
+            second_dxrecord = dxrecord.clone(self.second_proj_id)
         dxrecord.close()
 
-        second_dxrecord = dxrecord.clone(second_proj_id)
+        second_dxrecord = dxrecord.clone(self.second_proj_id)
         second_dxrecord.rename("newname")
 
         first_desc = dxrecord.describe()
@@ -848,8 +853,8 @@ class TestDXRecord(unittest.TestCase):
 
         self.assertEqual(first_desc["id"], dxrecord.get_id())
         self.assertEqual(second_desc["id"], dxrecord.get_id())
-        self.assertEqual(first_desc["project"], proj_id)
-        self.assertEqual(second_desc["project"], second_proj_id)
+        self.assertEqual(first_desc["project"], self.proj_id)
+        self.assertEqual(second_desc["project"], self.second_proj_id)
         self.assertEqual(first_desc["name"], "firstname")
         self.assertEqual(second_desc["name"], "newname")
         self.assertEqual(first_desc["tags"], ["tag"])
@@ -877,6 +882,7 @@ class TestDXRecord(unittest.TestCase):
 
 class TestDXWorkflow(unittest.TestCase):
     def setUp(self):
+        setUpTempProjects(self)
         self.dxapplet = dxpy.DXApplet()
         self.dxapplet.new(name="identity-record",
                           dxapi="1.04",
@@ -909,11 +915,10 @@ def main(record):
         self.closedrecord.close()
 
     def tearDown(self):
-        self.dxapplet.remove()
-        self.workflow.remove()
-        self.closedrecord.remove()
+        tearDownTempProjects(self)
 
-    @unittest.skip("FIXME - does not run in standard test setup with no workers")
+    @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ and 'DXTEST_FULL' not in os.environ,
+                     'skipping test that would run a job')
     def test_run_workflow(self):
         launched_jobs = self.workflow.run({"0.record": dxpy.dxlink(self.closedrecord)})
         self.assertEqual(len(launched_jobs), 2)
@@ -925,11 +930,15 @@ def main(record):
         self.assertEqual(get_field_from_jbor(job_descs[1]['runInput']['record']), 'record')
         launched_jobs[1].wait_on_done()
 
-@unittest.skip("Skipping tables; not yet implemented")
-class TestDXTable(unittest.TestCase):
-    pass
-
+@unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ and 'DXTEST_FULL' not in os.environ,
+                 'skipping test that would run a job')
 class TestDXAppletJob(unittest.TestCase):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
     def test_run_dxapplet(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -938,7 +947,11 @@ class TestDXAppletJob(unittest.TestCase):
                                  {"name": "rowFetchChunk", "class": "int"}
                                  ],
                       outputSpec=[{"name": "mappings", "class": "record"}],
-                      runSpec={"code": "def main(): pass",
+                      runSpec={"code": '''
+@dxpy.entry_point('main')
+def main():
+    pass
+''',
                                "interpreter": "python2.7",
                                "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
@@ -963,7 +976,15 @@ class TestDXAppletJob(unittest.TestCase):
         self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
         dxjob.terminate()
 
+@unittest.skipIf('DXTEST_FULL' not in os.environ,
+                 'skipping test that would create apps')
 class TestDXApp(unittest.TestCase):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
     def test_create_app(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -991,21 +1012,27 @@ class TestDXApp(unittest.TestCase):
         self.assertEqual(appdesc, anothersameappdesc)
 
 class TestDXSearch(unittest.TestCase):
-    def find_data_objs(self):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
+    def test_find_data_objs(self):
         dxrecord = dxpy.new_dxrecord()
-        results = list(dxpy.search.find_data_objects(state="open"))
+        results = list(dxpy.search.find_data_objects(state="open", project=self.proj_id))
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"project": proj_id,
+        self.assertEqual(results[0], {"project": self.proj_id,
                                       "id": dxrecord.get_id()})
-        results = list(dxpy.search.find_data_objects(state="closed"))
+        results = list(dxpy.search.find_data_objects(state="closed", project=self.proj_id))
         self.assertEqual(len(results), 0)
         dxrecord.close()
-        results = list(dxpy.search.find_data_objects(state="closed"))
+        results = list(dxpy.search.find_data_objects(state="closed", project=self.proj_id))
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0], {"project": proj_id,
+        self.assertEqual(results[0], {"project": self.proj_id,
                                       "id": dxrecord.get_id()})
 
-    def find_projects(self):
+    def test_find_projects(self):
         dxproject = dxpy.DXProject()
         results = list(dxpy.find_projects())
         found_proj = False;
@@ -1019,14 +1046,16 @@ class TestDXSearch(unittest.TestCase):
         results = list(dxpy.find_projects(level='VIEW', describe=True))
         found_proj = False;
         for result in results:
-            if result["id"] == 'project-0000000000000000000000pb':
+            if result["id"] == self.second_proj_id:
                 self.assertEqual(result["level"], 'ADMINISTER')
                 found_proj = True
-            self.assertTrue('describe' in result)
-            self.assertEqual(result['describe']['name'], 'public-test-project')
+                self.assertTrue('describe' in result)
+                self.assertEqual(result['describe']['name'], 'test project 2')
         self.assertTrue(found_proj)
 
-    def find_jobs(self):
+    @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ and 'DXTEST_FULL' not in os.environ,
+                     'skipping test that would run a job')
+    def test_find_jobs(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      inputSpec=[{"name": "chromosomes", "class": "record"},
@@ -1075,12 +1104,14 @@ class TestHTTPResponses(unittest.TestCase):
 
 class TestDataobjectFunctions(unittest.TestCase):
     def setUp(self):
-        self.proj_id = dxpy.api.project_new({'name': 'testing'})['id']
+        setUpTempProjects(self)
 
     def tearDown(self):
-        dxpy.api.project_destroy(self.proj_id)
+        tearDownTempProjects(self)
 
     def test_get_handler(self):
+        dxpy.set_workspace_id(self.second_proj_id)
+
         dxrecord = dxpy.new_dxrecord(project=self.proj_id)
         # Simple DXLink
         dxlink = {'$dnanexus_link': dxrecord.get_id()}
@@ -1100,5 +1131,10 @@ class TestDataobjectFunctions(unittest.TestCase):
         dxproject = dxpy.get_handler(self.proj_id)
 
 if __name__ == '__main__':
-    print "NOTE: This test requires environment variables to be set for DX_APISERVER_*, DX_SECURITY_CONTEXT, and a DX_PROJECT_CONTEXT_ID with which the security context has ADMINISTER access.  It should be run against a running API server and with a Mongo DB initialized with test entities such as the public test project project-0000000000000000000000pb."
+    if dxpy.AUTH_HELPER is None:
+        sys.exit(1, 'Error: Need to be logged in to run these tests')
+    if 'DXTEST_FULL' not in os.environ:
+        sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps will not be run\n')
+        if 'DXTEST_RUN_JOBS' not in os.environ:
+            sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_RUN_JOBS are set; tests that run jobs will not be run\n')
     unittest.main()
