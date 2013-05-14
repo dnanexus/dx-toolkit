@@ -495,7 +495,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                 dxpy.DXProject(build_project_id).remove_objects([remote_file.get_id()])
     finally:
         if using_temp_project_for_remote_build:
-            dxpy.api.project_destroy(build_project_id)
+            dxpy.api.project_destroy(build_project_id, {"terminateJobs": True})
         shutil.rmtree(temp_dir)
 
     return
@@ -560,7 +560,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
                 objects_to_delete = [dxpy.get_dxlink_ids(bundled_resource_obj['id'])[0] for bundled_resource_obj in bundled_resources]
                 if objects_to_delete:
                     dxpy.api.project_remove_objects(dxpy.app_builder.get_destination_project(src_dir, project=working_project),
-                                                  input_params={"objects": objects_to_delete})
+                                                    input_params={"objects": objects_to_delete})
             raise
 
         if dry_run:
