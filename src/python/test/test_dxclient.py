@@ -103,11 +103,14 @@ class DXTestCase(unittest.TestCase):
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
 class TestDXClient(DXTestCase):
-    project = None
+    def setUp(self):
+        proj_name = u"dxclient_test_pröject"
+        self.project = run(u"dx new project '{p}' --brief".format(p=proj_name)).strip()
+        os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
 
     def tearDown(self):
         try:
-            run(u"yes|dx rmproject {p}".format(p=TestDXClient.project))
+            run(u"yes|dx rmproject {p}".format(p=self.project))
         except:
             pass
         try:
@@ -121,8 +124,6 @@ class TestDXClient(DXTestCase):
         run("dx help")
         proj_name = u"dxclient_test_pröject"
         folder_name = u"эксперимент 1"
-        project = run(u"dx new project '{p}' --brief".format(p=proj_name)).strip()
-        os.environ["DX_PROJECT_CONTEXT_ID"] = project
         run("dx cd /")
         run("dx ls")
         run(u"dx mkdir '{f}'".format(f=folder_name))
@@ -220,10 +221,6 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['size'], second_desc['size'])
         self.assertEqual(desc['length'], second_desc['length'])
 
-        # compare output of old and new
-
-        run(u"yes|dx rmproject {p}".format(p=project))
-
     def test_dx_upload_download(self):
         wd = tempfile.mkdtemp()
         os.mkdir(os.path.join(wd, "a"))
@@ -245,16 +242,11 @@ class TestDXClient(DXTestCase):
                 self.assertEqual(tree1, tree2)
 
     def test_dx_mkdir(self):
-        project = run(u"dx new project mkdir_test --brief").strip()
-        os.environ["DX_PROJECT_CONTEXT_ID"] = project
-
         with self.assertRaises(subprocess.CalledProcessError):
             run(u'dx mkdir mkdirtest/b/c')
         run(u'dx mkdir -p mkdirtest/b/c')
         run(u'dx mkdir -p mkdirtest/b/c')
         run(u'dx rm -r mkdirtest')
-
-        run(u"dx rmproject --yes {p}".format(p=project))
 
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
