@@ -3158,7 +3158,7 @@ def register_subparser(subparser, subparsers_action=None, categories=('other', )
         parser_categories[category]['cmds'].append((name, _help))
 
 
-parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  http://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')
@@ -3204,7 +3204,7 @@ parser_exit.set_defaults(func=exit_shell)
 register_subparser(parser_exit, categories='session')
 
 parser_env = subparsers.add_parser('env', help='Print all environment variables in use',
-                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttp://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
+                                   description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env',
                                    parents=[env_args])
 parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14), action='store_true')
@@ -3593,7 +3593,7 @@ parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], 
 parser_set_visibility.set_defaults(func=set_visibility)
 register_subparser(parser_set_visibility, categories='metadata')
 
-parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object', description='Add types to a data object.  See http://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object', description='Add types to a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
                                          prog='dx add_types',
                                          parents=[env_args, all_arg])
 parser_add_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
@@ -3601,7 +3601,7 @@ parser_add_types.add_argument('types', nargs='+', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
 register_subparser(parser_add_types, categories='metadata')
 
-parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object', description='Remove types from a data object.  See http://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.', prog='dx remove_types',
+parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object', description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.', prog='dx remove_types',
                                             parents=[env_args, all_arg])
 parser_remove_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
 parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
@@ -3773,7 +3773,7 @@ parser_api = subparsers.add_parser('api', help='Call an API method',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    description=fill('Call an API method directly.  The JSON response from the API server will be returned if successful.  No name resolution is performed; DNAnexus IDs must always be provided.  The API specification can be found at') + '''
 
-http://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction
+https://wiki.dnanexus.com/API-Specification-v1.0.0/Introduction
 
 EXAMPLE
 

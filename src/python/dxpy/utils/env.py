@@ -17,7 +17,7 @@
 '''
 Logic for determining environment variable values.  See external
 documentation
-http://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
+https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 

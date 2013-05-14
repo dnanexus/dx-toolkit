@@ -81,12 +81,12 @@ class DXApplet(DXDataObject):
 
         .. note:: It is highly recommended that the higher-level module
            :mod:`dxpy.app_builder` or (preferably) its frontend
-           `dx-build-applet <http://wiki.dnanexus.com/DxBuildApplet>`_ be used
+           `dx-build-applet <https://wiki.dnanexus.com/DxBuildApplet>`_ be used
            instead for applet creation.
 
         Creates an applet with the given parameters. See the API
         documentation for the `/applet/new
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew>`_
         method for more info. The applet is not run until :meth:`run()`
         is called.
 
@@ -112,7 +112,7 @@ class DXApplet(DXDataObject):
         Returns the contents of the applet. The result includes the
         key-value pairs as specified in the API documentation for the
         `/applet-xxxx/get
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget>`_
         method.
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)

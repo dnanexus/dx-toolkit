@@ -16,7 +16,7 @@
 
 '''
 Utilities for client-side usage of the streaming log API
-(http://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FstreamLog).
+(https://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FstreamLog).
 '''
 
 import json, re

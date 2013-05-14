@@ -19,7 +19,7 @@
 These functions provide shorthand functional interfaces for actions such
 as getting a :class:`~dxpy.bindings.DXDataObject` handler from an ID or
 `link
-<http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_,
+<https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#Linking>`_,
 or creating a link from a handler. In addition, there are functions for
 performing simple actions with an ID or link as input without creating a
 full object handler.

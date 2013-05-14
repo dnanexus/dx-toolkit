@@ -140,13 +140,13 @@ class DXApp(DXObject):
 
         .. note:: It is highly recommended that the higher-level module
            :mod:`dxpy.app_builder` or (preferably) its frontend `dx-build-app
-           <http://wiki.dnanexus.com/DxBuildApp>`_ be used instead for app
+           <https://wiki.dnanexus.com/DxBuildApp>`_ be used instead for app
            creation.
 
         Creates an app with the given parameters by using the specified
         applet or app as a base and overriding its attributes. See the
         API documentation for the `/app/new
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp%2Fnew>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%3A-%2Fapp%2Fnew>`_
         method for more info.
 
         Exactly one of *initializeFrom* and *applet* must be provided.
@@ -186,7 +186,7 @@ class DXApp(DXObject):
         Returns a dict with a description of the app. The result
         includes the key-value pairs as specified in the API
         documentation for the `/app-xxxx/describe
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fdescribe>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fdescribe>`_
         method.
 
         '''
@@ -208,7 +208,7 @@ class DXApp(DXObject):
 
         Updates the parameters of an existing app. See the API
         documentation for the `/app/update
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fupdate>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fupdate>`_
         method for more info.
 
         The current user must be a developer of the app.
@@ -284,7 +284,7 @@ class DXApp(DXObject):
         Returns the contents of the app. The result includes the
         key-value pairs as specified in the API documentation for the
         `/app-xxxx/get
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fget>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method%253A-%252Fapp-xxxx%255B%252Fyyyy%255D%252Fget>`_
         method.
         """
         if self._dxid is not None:

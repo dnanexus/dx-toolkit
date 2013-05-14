@@ -526,7 +526,7 @@ class DXGTable(DXDataObject):
 
         Returns a column descriptor with the given name and type. See
         the `API specification for GenomicTables
-        <http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#Columns>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#Columns>`_
         for information about the available types and acceptable column
         names.
 

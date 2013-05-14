@@ -20,7 +20,7 @@ import argparse, json, sys, os
 import dxpy
 
 
-arg_parser = argparse.ArgumentParser(description="Download a Spans object into a BED file.  The spans type definition can be found here:  http://wiki.dnanexus.com/Types/Spans.  Information about the BED file format is available here: http://genome.ucsc.edu/FAQ/FAQformat.html#format1")
+arg_parser = argparse.ArgumentParser(description="Download a Spans object into a BED file.  The spans type definition can be found here:  https://wiki.dnanexus.com/Types/Spans.  Information about the BED file format is available here: http://genome.ucsc.edu/FAQ/FAQformat.html#format1")
 arg_parser.add_argument("Spans", help="ID of the Spans object")
 arg_parser.add_argument("--output", help="Name of the output BED file", required=True)
 

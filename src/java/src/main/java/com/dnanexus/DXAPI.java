@@ -21,7 +21,7 @@ public class DXAPI {
     /**
      * Invokes the appAddCategories method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -31,7 +31,7 @@ public class DXAPI {
     /**
      * Invokes the appAddCategories method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -43,7 +43,7 @@ public class DXAPI {
     /**
      * Invokes the appAddDevelopers method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -53,7 +53,7 @@ public class DXAPI {
     /**
      * Invokes the appAddDevelopers method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -65,7 +65,7 @@ public class DXAPI {
     /**
      * Invokes the appAddTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -75,7 +75,7 @@ public class DXAPI {
     /**
      * Invokes the appAddTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -87,7 +87,7 @@ public class DXAPI {
     /**
      * Invokes the appDelete method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -97,7 +97,7 @@ public class DXAPI {
     /**
      * Invokes the appDelete method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -109,7 +109,7 @@ public class DXAPI {
     /**
      * Invokes the appDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -119,7 +119,7 @@ public class DXAPI {
     /**
      * Invokes the appDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -131,7 +131,7 @@ public class DXAPI {
     /**
      * Invokes the appGet method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -141,7 +141,7 @@ public class DXAPI {
     /**
      * Invokes the appGet method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -153,7 +153,7 @@ public class DXAPI {
     /**
      * Invokes the appInstall method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -163,7 +163,7 @@ public class DXAPI {
     /**
      * Invokes the appInstall method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -175,7 +175,7 @@ public class DXAPI {
     /**
      * Invokes the appListCategories method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -185,7 +185,7 @@ public class DXAPI {
     /**
      * Invokes the appListCategories method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -197,7 +197,7 @@ public class DXAPI {
     /**
      * Invokes the appListDevelopers method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -207,7 +207,7 @@ public class DXAPI {
     /**
      * Invokes the appListDevelopers method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -219,7 +219,7 @@ public class DXAPI {
     /**
      * Invokes the appPublish method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -229,7 +229,7 @@ public class DXAPI {
     /**
      * Invokes the appPublish method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -241,7 +241,7 @@ public class DXAPI {
     /**
      * Invokes the appRemoveCategories method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -251,7 +251,7 @@ public class DXAPI {
     /**
      * Invokes the appRemoveCategories method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -263,7 +263,7 @@ public class DXAPI {
     /**
      * Invokes the appRemoveDevelopers method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -273,7 +273,7 @@ public class DXAPI {
     /**
      * Invokes the appRemoveDevelopers method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -285,7 +285,7 @@ public class DXAPI {
     /**
      * Invokes the appRemoveTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -295,7 +295,7 @@ public class DXAPI {
     /**
      * Invokes the appRemoveTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -307,7 +307,7 @@ public class DXAPI {
     /**
      * Invokes the appRun method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -317,7 +317,7 @@ public class DXAPI {
     /**
      * Invokes the appRun method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -329,7 +329,7 @@ public class DXAPI {
     /**
      * Invokes the appUninstall method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -339,7 +339,7 @@ public class DXAPI {
     /**
      * Invokes the appUninstall method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -351,7 +351,7 @@ public class DXAPI {
     /**
      * Invokes the appUpdate method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -361,7 +361,7 @@ public class DXAPI {
     /**
      * Invokes the appUpdate method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -373,7 +373,7 @@ public class DXAPI {
     /**
      * Invokes the appNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
      */
     public static JsonNode appNew() throws Exception {
         return appNew(mapper.readTree("{}"));
@@ -381,7 +381,7 @@ public class DXAPI {
     /**
      * Invokes the appNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -392,7 +392,7 @@ public class DXAPI {
     /**
      * Invokes the appletAddTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -402,7 +402,7 @@ public class DXAPI {
     /**
      * Invokes the appletAddTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -414,7 +414,7 @@ public class DXAPI {
     /**
      * Invokes the appletDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -424,7 +424,7 @@ public class DXAPI {
     /**
      * Invokes the appletDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -436,7 +436,7 @@ public class DXAPI {
     /**
      * Invokes the appletGet method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -446,7 +446,7 @@ public class DXAPI {
     /**
      * Invokes the appletGet method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -458,7 +458,7 @@ public class DXAPI {
     /**
      * Invokes the appletGetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -468,7 +468,7 @@ public class DXAPI {
     /**
      * Invokes the appletGetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -480,7 +480,7 @@ public class DXAPI {
     /**
      * Invokes the appletListProjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -490,7 +490,7 @@ public class DXAPI {
     /**
      * Invokes the appletListProjects method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -502,7 +502,7 @@ public class DXAPI {
     /**
      * Invokes the appletRemoveTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -512,7 +512,7 @@ public class DXAPI {
     /**
      * Invokes the appletRemoveTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -524,7 +524,7 @@ public class DXAPI {
     /**
      * Invokes the appletRename method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -534,7 +534,7 @@ public class DXAPI {
     /**
      * Invokes the appletRename method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -546,7 +546,7 @@ public class DXAPI {
     /**
      * Invokes the appletRun method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -556,7 +556,7 @@ public class DXAPI {
     /**
      * Invokes the appletRun method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -568,7 +568,7 @@ public class DXAPI {
     /**
      * Invokes the appletSetProperties method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -578,7 +578,7 @@ public class DXAPI {
     /**
      * Invokes the appletSetProperties method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -590,7 +590,7 @@ public class DXAPI {
     /**
      * Invokes the appletNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
      */
     public static JsonNode appletNew() throws Exception {
         return appletNew(mapper.readTree("{}"));
@@ -598,7 +598,7 @@ public class DXAPI {
     /**
      * Invokes the appletNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -609,7 +609,7 @@ public class DXAPI {
     /**
      * Invokes the containerClone method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -619,7 +619,7 @@ public class DXAPI {
     /**
      * Invokes the containerClone method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -631,7 +631,7 @@ public class DXAPI {
     /**
      * Invokes the containerDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -641,7 +641,7 @@ public class DXAPI {
     /**
      * Invokes the containerDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -671,7 +671,7 @@ public class DXAPI {
     /**
      * Invokes the containerListFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -681,7 +681,7 @@ public class DXAPI {
     /**
      * Invokes the containerListFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -693,7 +693,7 @@ public class DXAPI {
     /**
      * Invokes the containerMove method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -703,7 +703,7 @@ public class DXAPI {
     /**
      * Invokes the containerMove method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -715,7 +715,7 @@ public class DXAPI {
     /**
      * Invokes the containerNewFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -725,7 +725,7 @@ public class DXAPI {
     /**
      * Invokes the containerNewFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -737,7 +737,7 @@ public class DXAPI {
     /**
      * Invokes the containerRemoveFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -747,7 +747,7 @@ public class DXAPI {
     /**
      * Invokes the containerRemoveFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -759,7 +759,7 @@ public class DXAPI {
     /**
      * Invokes the containerRemoveObjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -769,7 +769,7 @@ public class DXAPI {
     /**
      * Invokes the containerRemoveObjects method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -781,7 +781,7 @@ public class DXAPI {
     /**
      * Invokes the containerRenameFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -791,7 +791,7 @@ public class DXAPI {
     /**
      * Invokes the containerRenameFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -803,7 +803,7 @@ public class DXAPI {
     /**
      * Invokes the fileAddTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -813,7 +813,7 @@ public class DXAPI {
     /**
      * Invokes the fileAddTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -825,7 +825,7 @@ public class DXAPI {
     /**
      * Invokes the fileAddTypes method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -835,7 +835,7 @@ public class DXAPI {
     /**
      * Invokes the fileAddTypes method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -847,7 +847,7 @@ public class DXAPI {
     /**
      * Invokes the fileClose method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -857,7 +857,7 @@ public class DXAPI {
     /**
      * Invokes the fileClose method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -869,7 +869,7 @@ public class DXAPI {
     /**
      * Invokes the fileDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -879,7 +879,7 @@ public class DXAPI {
     /**
      * Invokes the fileDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -891,7 +891,7 @@ public class DXAPI {
     /**
      * Invokes the fileDownload method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -901,7 +901,7 @@ public class DXAPI {
     /**
      * Invokes the fileDownload method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -913,7 +913,7 @@ public class DXAPI {
     /**
      * Invokes the fileGetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -923,7 +923,7 @@ public class DXAPI {
     /**
      * Invokes the fileGetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -935,7 +935,7 @@ public class DXAPI {
     /**
      * Invokes the fileListProjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -945,7 +945,7 @@ public class DXAPI {
     /**
      * Invokes the fileListProjects method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -957,7 +957,7 @@ public class DXAPI {
     /**
      * Invokes the fileRemoveTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -967,7 +967,7 @@ public class DXAPI {
     /**
      * Invokes the fileRemoveTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -979,7 +979,7 @@ public class DXAPI {
     /**
      * Invokes the fileRemoveTypes method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -989,7 +989,7 @@ public class DXAPI {
     /**
      * Invokes the fileRemoveTypes method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1001,7 +1001,7 @@ public class DXAPI {
     /**
      * Invokes the fileRename method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1011,7 +1011,7 @@ public class DXAPI {
     /**
      * Invokes the fileRename method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1023,7 +1023,7 @@ public class DXAPI {
     /**
      * Invokes the fileSetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1033,7 +1033,7 @@ public class DXAPI {
     /**
      * Invokes the fileSetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1045,7 +1045,7 @@ public class DXAPI {
     /**
      * Invokes the fileSetProperties method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1055,7 +1055,7 @@ public class DXAPI {
     /**
      * Invokes the fileSetProperties method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1067,7 +1067,7 @@ public class DXAPI {
     /**
      * Invokes the fileSetVisibility method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1077,7 +1077,7 @@ public class DXAPI {
     /**
      * Invokes the fileSetVisibility method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1089,7 +1089,7 @@ public class DXAPI {
     /**
      * Invokes the fileUpload method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1099,7 +1099,7 @@ public class DXAPI {
     /**
      * Invokes the fileUpload method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1111,7 +1111,7 @@ public class DXAPI {
     /**
      * Invokes the fileNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
      */
     public static JsonNode fileNew() throws Exception {
         return fileNew(mapper.readTree("{}"));
@@ -1119,7 +1119,7 @@ public class DXAPI {
     /**
      * Invokes the fileNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -1130,7 +1130,7 @@ public class DXAPI {
     /**
      * Invokes the gtableAddRows method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1140,7 +1140,7 @@ public class DXAPI {
     /**
      * Invokes the gtableAddRows method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1152,7 +1152,7 @@ public class DXAPI {
     /**
      * Invokes the gtableAddTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1162,7 +1162,7 @@ public class DXAPI {
     /**
      * Invokes the gtableAddTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1174,7 +1174,7 @@ public class DXAPI {
     /**
      * Invokes the gtableAddTypes method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1184,7 +1184,7 @@ public class DXAPI {
     /**
      * Invokes the gtableAddTypes method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1196,7 +1196,7 @@ public class DXAPI {
     /**
      * Invokes the gtableClose method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1206,7 +1206,7 @@ public class DXAPI {
     /**
      * Invokes the gtableClose method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1218,7 +1218,7 @@ public class DXAPI {
     /**
      * Invokes the gtableDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1228,7 +1228,7 @@ public class DXAPI {
     /**
      * Invokes the gtableDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1240,7 +1240,7 @@ public class DXAPI {
     /**
      * Invokes the gtableGet method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1250,7 +1250,7 @@ public class DXAPI {
     /**
      * Invokes the gtableGet method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1262,7 +1262,7 @@ public class DXAPI {
     /**
      * Invokes the gtableGetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1272,7 +1272,7 @@ public class DXAPI {
     /**
      * Invokes the gtableGetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1284,7 +1284,7 @@ public class DXAPI {
     /**
      * Invokes the gtableListProjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1294,7 +1294,7 @@ public class DXAPI {
     /**
      * Invokes the gtableListProjects method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1306,7 +1306,7 @@ public class DXAPI {
     /**
      * Invokes the gtableNextPart method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1316,7 +1316,7 @@ public class DXAPI {
     /**
      * Invokes the gtableNextPart method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1328,7 +1328,7 @@ public class DXAPI {
     /**
      * Invokes the gtableRemoveTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1338,7 +1338,7 @@ public class DXAPI {
     /**
      * Invokes the gtableRemoveTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1350,7 +1350,7 @@ public class DXAPI {
     /**
      * Invokes the gtableRemoveTypes method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1360,7 +1360,7 @@ public class DXAPI {
     /**
      * Invokes the gtableRemoveTypes method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1372,7 +1372,7 @@ public class DXAPI {
     /**
      * Invokes the gtableRename method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1382,7 +1382,7 @@ public class DXAPI {
     /**
      * Invokes the gtableRename method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1394,7 +1394,7 @@ public class DXAPI {
     /**
      * Invokes the gtableSetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1404,7 +1404,7 @@ public class DXAPI {
     /**
      * Invokes the gtableSetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1416,7 +1416,7 @@ public class DXAPI {
     /**
      * Invokes the gtableSetProperties method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1426,7 +1426,7 @@ public class DXAPI {
     /**
      * Invokes the gtableSetProperties method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1438,7 +1438,7 @@ public class DXAPI {
     /**
      * Invokes the gtableSetVisibility method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1448,7 +1448,7 @@ public class DXAPI {
     /**
      * Invokes the gtableSetVisibility method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1460,7 +1460,7 @@ public class DXAPI {
     /**
      * Invokes the gtableNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
      */
     public static JsonNode gtableNew() throws Exception {
         return gtableNew(mapper.readTree("{}"));
@@ -1468,7 +1468,7 @@ public class DXAPI {
     /**
      * Invokes the gtableNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -1479,7 +1479,7 @@ public class DXAPI {
     /**
      * Invokes the jobDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1489,7 +1489,7 @@ public class DXAPI {
     /**
      * Invokes the jobDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1501,7 +1501,7 @@ public class DXAPI {
     /**
      * Invokes the jobStreamLog method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1511,7 +1511,7 @@ public class DXAPI {
     /**
      * Invokes the jobStreamLog method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1523,7 +1523,7 @@ public class DXAPI {
     /**
      * Invokes the jobTerminate method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1533,7 +1533,7 @@ public class DXAPI {
     /**
      * Invokes the jobTerminate method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1545,7 +1545,7 @@ public class DXAPI {
     /**
      * Invokes the jobNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
      */
     public static JsonNode jobNew() throws Exception {
         return jobNew(mapper.readTree("{}"));
@@ -1553,7 +1553,7 @@ public class DXAPI {
     /**
      * Invokes the jobNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -1594,7 +1594,7 @@ public class DXAPI {
     /**
      * Invokes the projectAddTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1604,7 +1604,7 @@ public class DXAPI {
     /**
      * Invokes the projectAddTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1616,7 +1616,7 @@ public class DXAPI {
     /**
      * Invokes the projectClone method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1626,7 +1626,7 @@ public class DXAPI {
     /**
      * Invokes the projectClone method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1638,7 +1638,7 @@ public class DXAPI {
     /**
      * Invokes the projectDecreasePermissions method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1648,7 +1648,7 @@ public class DXAPI {
     /**
      * Invokes the projectDecreasePermissions method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1660,7 +1660,7 @@ public class DXAPI {
     /**
      * Invokes the projectDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1670,7 +1670,7 @@ public class DXAPI {
     /**
      * Invokes the projectDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1682,7 +1682,7 @@ public class DXAPI {
     /**
      * Invokes the projectDestroy method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1692,7 +1692,7 @@ public class DXAPI {
     /**
      * Invokes the projectDestroy method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1704,7 +1704,7 @@ public class DXAPI {
     /**
      * Invokes the projectInvite method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1714,7 +1714,7 @@ public class DXAPI {
     /**
      * Invokes the projectInvite method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1726,7 +1726,7 @@ public class DXAPI {
     /**
      * Invokes the projectLeave method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1736,7 +1736,7 @@ public class DXAPI {
     /**
      * Invokes the projectLeave method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1748,7 +1748,7 @@ public class DXAPI {
     /**
      * Invokes the projectListFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1758,7 +1758,7 @@ public class DXAPI {
     /**
      * Invokes the projectListFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1770,7 +1770,7 @@ public class DXAPI {
     /**
      * Invokes the projectMove method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1780,7 +1780,7 @@ public class DXAPI {
     /**
      * Invokes the projectMove method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1792,7 +1792,7 @@ public class DXAPI {
     /**
      * Invokes the projectNewFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1802,7 +1802,7 @@ public class DXAPI {
     /**
      * Invokes the projectNewFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1814,7 +1814,7 @@ public class DXAPI {
     /**
      * Invokes the projectRemoveFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1824,7 +1824,7 @@ public class DXAPI {
     /**
      * Invokes the projectRemoveFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1836,7 +1836,7 @@ public class DXAPI {
     /**
      * Invokes the projectRemoveObjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1846,7 +1846,7 @@ public class DXAPI {
     /**
      * Invokes the projectRemoveObjects method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1858,7 +1858,7 @@ public class DXAPI {
     /**
      * Invokes the projectRemoveTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1868,7 +1868,7 @@ public class DXAPI {
     /**
      * Invokes the projectRemoveTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1880,7 +1880,7 @@ public class DXAPI {
     /**
      * Invokes the projectRenameFolder method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1890,7 +1890,7 @@ public class DXAPI {
     /**
      * Invokes the projectRenameFolder method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1902,7 +1902,7 @@ public class DXAPI {
     /**
      * Invokes the projectSetProperties method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1912,7 +1912,7 @@ public class DXAPI {
     /**
      * Invokes the projectSetProperties method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1924,7 +1924,7 @@ public class DXAPI {
     /**
      * Invokes the projectUpdate method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1934,7 +1934,7 @@ public class DXAPI {
     /**
      * Invokes the projectUpdate method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1946,7 +1946,7 @@ public class DXAPI {
     /**
      * Invokes the projectNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
      */
     public static JsonNode projectNew() throws Exception {
         return projectNew(mapper.readTree("{}"));
@@ -1954,7 +1954,7 @@ public class DXAPI {
     /**
      * Invokes the projectNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -1965,7 +1965,7 @@ public class DXAPI {
     /**
      * Invokes the recordAddTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1975,7 +1975,7 @@ public class DXAPI {
     /**
      * Invokes the recordAddTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -1987,7 +1987,7 @@ public class DXAPI {
     /**
      * Invokes the recordAddTypes method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -1997,7 +1997,7 @@ public class DXAPI {
     /**
      * Invokes the recordAddTypes method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2009,7 +2009,7 @@ public class DXAPI {
     /**
      * Invokes the recordClose method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2019,7 +2019,7 @@ public class DXAPI {
     /**
      * Invokes the recordClose method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2031,7 +2031,7 @@ public class DXAPI {
     /**
      * Invokes the recordDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2041,7 +2041,7 @@ public class DXAPI {
     /**
      * Invokes the recordDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2053,7 +2053,7 @@ public class DXAPI {
     /**
      * Invokes the recordGetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2063,7 +2063,7 @@ public class DXAPI {
     /**
      * Invokes the recordGetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2075,7 +2075,7 @@ public class DXAPI {
     /**
      * Invokes the recordListProjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2085,7 +2085,7 @@ public class DXAPI {
     /**
      * Invokes the recordListProjects method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2097,7 +2097,7 @@ public class DXAPI {
     /**
      * Invokes the recordRemoveTags method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2107,7 +2107,7 @@ public class DXAPI {
     /**
      * Invokes the recordRemoveTags method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2119,7 +2119,7 @@ public class DXAPI {
     /**
      * Invokes the recordRemoveTypes method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2129,7 +2129,7 @@ public class DXAPI {
     /**
      * Invokes the recordRemoveTypes method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2141,7 +2141,7 @@ public class DXAPI {
     /**
      * Invokes the recordRename method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2151,7 +2151,7 @@ public class DXAPI {
     /**
      * Invokes the recordRename method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2163,7 +2163,7 @@ public class DXAPI {
     /**
      * Invokes the recordSetDetails method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2173,7 +2173,7 @@ public class DXAPI {
     /**
      * Invokes the recordSetDetails method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2185,7 +2185,7 @@ public class DXAPI {
     /**
      * Invokes the recordSetProperties method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2195,7 +2195,7 @@ public class DXAPI {
     /**
      * Invokes the recordSetProperties method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2207,7 +2207,7 @@ public class DXAPI {
     /**
      * Invokes the recordSetVisibility method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2217,7 +2217,7 @@ public class DXAPI {
     /**
      * Invokes the recordSetVisibility method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2229,7 +2229,7 @@ public class DXAPI {
     /**
      * Invokes the recordNew method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
      */
     public static JsonNode recordNew() throws Exception {
         return recordNew(mapper.readTree("{}"));
@@ -2237,7 +2237,7 @@ public class DXAPI {
     /**
      * Invokes the recordNew method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2263,7 +2263,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindApps method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
      */
     public static JsonNode systemFindApps() throws Exception {
         return systemFindApps(mapper.readTree("{}"));
@@ -2271,7 +2271,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindApps method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2282,7 +2282,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindDataObjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
      */
     public static JsonNode systemFindDataObjects() throws Exception {
         return systemFindDataObjects(mapper.readTree("{}"));
@@ -2290,7 +2290,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindDataObjects method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2301,7 +2301,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindJobs method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
      */
     public static JsonNode systemFindJobs() throws Exception {
         return systemFindJobs(mapper.readTree("{}"));
@@ -2309,7 +2309,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindJobs method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2320,7 +2320,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindProjects method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
      */
     public static JsonNode systemFindProjects() throws Exception {
         return systemFindProjects(mapper.readTree("{}"));
@@ -2328,7 +2328,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindProjects method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2339,7 +2339,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindUsers method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
      */
     public static JsonNode systemFindUsers() throws Exception {
         return systemFindUsers(mapper.readTree("{}"));
@@ -2347,7 +2347,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindUsers method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2358,7 +2358,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindProjectMembers method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
      */
     public static JsonNode systemFindProjectMembers() throws Exception {
         return systemFindProjectMembers(mapper.readTree("{}"));
@@ -2366,7 +2366,7 @@ public class DXAPI {
     /**
      * Invokes the systemFindProjectMembers method with the specified input parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
      *
      * @param inputParams input parameters to the API call
      */
@@ -2407,7 +2407,7 @@ public class DXAPI {
     /**
      * Invokes the userDescribe method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2417,7 +2417,7 @@ public class DXAPI {
     /**
      * Invokes the userDescribe method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -2429,7 +2429,7 @@ public class DXAPI {
     /**
      * Invokes the userUpdate method.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      */
@@ -2439,7 +2439,7 @@ public class DXAPI {
     /**
      * Invokes the userUpdate method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="http://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call

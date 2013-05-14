@@ -344,7 +344,7 @@ def create_files_from_templates(template_dir, app_json, language,
 
 This is the source code for an app that runs on the DNAnexus Platform.
 For more information about how to run or modify it, see
-http://wiki.dnanexus.com/.
+https://wiki.dnanexus.com/.
 <!-- /dx-header -->
 
 {description}
@@ -356,7 +356,7 @@ your app that would be helpful to users. (Also see the
 Readme.developer.md.) Once you're done, you can remove these TODO
 comments.
 
-For more info, see http://wiki.dnanexus.com/Developer-Portal.
+For more info, see https://wiki.dnanexus.com/Developer-Portal.
 -->
 
 <!--
@@ -413,7 +413,7 @@ This app has the following entry points:
     }}
 
 See <a
-href="http://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Run-Specification">Run
+href="https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Run-Specification">Run
 Specification</a> in the API documentation for more information about the
 available instance types.
 '''
