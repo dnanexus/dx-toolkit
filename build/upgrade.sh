@@ -12,7 +12,7 @@ build_dir=$(dirname "$0")
 
 function cleanup() {
     echo "$(basename $0): Unable to update to version ${new_version} $@"
-    echo "Please visit http://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK and download an appropriate package for your system."
+    echo "Please visit https://wiki.dnanexus.com/Downloads#DNAnexus-Platform-SDK and download an appropriate package for your system."
 }
 
 trap cleanup ERR
@@ -35,7 +35,7 @@ fi
 
 pkg_name="dx-toolkit-${new_version}-${build_target_name}.tar.gz"
 echo "Downloading $pkg_name..."
-(cd "$build_dir"; curl -O "http://wiki.dnanexus.com/images/files/${pkg_name}")
+(cd "$build_dir"; curl -O "https://wiki.dnanexus.com/images/files/${pkg_name}")
 
 echo "Unpacking $pkg_name..."
 tar -C "$build_dir" -xzf "${build_dir}/${pkg_name}"

@@ -1,12 +1,12 @@
 DNAnexus Platform SDK
 =====================
 
-**To build ```dx-toolkit``` from source, see http://wiki.dnanexus.com/Downloads.**
+**To build ```dx-toolkit``` from source, see https://wiki.dnanexus.com/Downloads.**
 
 ```dx-toolkit``` contains the DNAnexus API language bindings and utilities for
 interacting with the DNAnexus platform.
 
-See http://wiki.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
+See https://wiki.dnanexus.com/ and http://autodoc.dnanexus.com/ for relevant
 documentation.
 
 Using the toolkit on your system
@@ -22,7 +22,7 @@ source dx-toolkit/environment
 ```
 
 You will then be able to use ```dx``` (the [DNAnexus Command Line
-Client](http://wiki.dnanexus.com/Command-Line-Client/Quickstart)) and other
+Client](https://wiki.dnanexus.com/Command-Line-Client/Quickstart)) and other
 utilities, and you will be able to use DNAnexus API bindings in the supported
 languages.
 
@@ -34,7 +34,7 @@ Supported languages
 
 If you wish to use bindings for the other supported languages (Java, Perl, R,
 Ruby), please see the [DNAnexus developer
-portal](http://wiki.dnanexus.com/Developer-Portal) for specific instructions
+portal](https://wiki.dnanexus.com/Developer-Portal) for specific instructions
 for your language. In general you can either build from the source
 distribution, or install a prebuilt package specific to the language.
 
