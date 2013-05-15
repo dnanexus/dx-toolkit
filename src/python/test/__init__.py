@@ -5,7 +5,7 @@ from contextlib import contextmanager
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
-        self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name)).strip()
+        self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
         # TODO: Fix this once process-wise sessions are in place.  For
         # now, have to save the old current directory and overwrite
@@ -21,7 +21,7 @@ class DXTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
-            subprocess.check_call(u"yes|dx rmproject {p}".format(p=self.project))
+            subprocess.check_call(u"yes|dx rmproject {p}".format(p=self.project), shell=True)
         except:
             pass
         try:
