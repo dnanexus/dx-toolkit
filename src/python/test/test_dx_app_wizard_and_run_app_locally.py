@@ -18,13 +18,14 @@
 #   under the License.
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
-
 import pexpect
+
+from . import DXTestCase
 
 import dxpy
 from dxpy.scripts import dx_build_app
 
-class TestDXAppWizardAndRunAppLocally(unittest.TestCase):
+class TestDXAppWizardAndRunAppLocally(DXTestCase):
     def test_dx_app_wizard(self):
         tempdir = tempfile.mkdtemp()
         os.chdir(tempdir)
