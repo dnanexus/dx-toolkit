@@ -95,6 +95,9 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 
     def test_dx_run_app_locally_and_compare_results(self):
         appdir = self.test_dx_run_app_locally()
+        print "Setting current project to", self.project
+        dxpy.WORKSPACE_ID = self.project
+        dxpy.PROJECT_CONTEXT_ID = self.project
         applet_id = dx_build_app.build_and_upload_locally(appdir,
                                                           mode='applet',
                                                           overwrite=True,
