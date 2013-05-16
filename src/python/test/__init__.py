@@ -2,6 +2,8 @@
 import os, sys, unittest, subprocess, re
 from contextlib import contextmanager
 
+import dxpy
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
@@ -18,6 +20,7 @@ class DXTestCase(unittest.TestCase):
             self.old_cwd = None
         if 'DX_CLI_WD' in os.environ:
             del os.environ['DX_CLI_WD']
+        dxpy._initialize(suppress_warning=True)
 
     def tearDown(self):
         try:
