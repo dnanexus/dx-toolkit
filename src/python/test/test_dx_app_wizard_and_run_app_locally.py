@@ -93,6 +93,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         self.assertIn("Final output: out1 = 140", output)
         return appdir
 
+    @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ,
+                     'skipping test that would run jobs')
     def test_dx_run_app_locally_and_compare_results(self):
         appdir = self.test_dx_run_app_locally()
         print "Setting current project to", self.project
