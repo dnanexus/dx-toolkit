@@ -429,8 +429,11 @@ def logout(args):
                 response.raise_for_status()
             if response.status_code == requests.codes.ok:
                 print 'Deleted token with signature', token_sig
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
         if not state['interactive']:
             write_env_var("DX_SECURITY_CONTEXT", None)
         else:
@@ -645,8 +648,11 @@ def api(args):
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                   json_input)
         print json.dumps(resp, indent=4)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def invite(args):
     # If --project is a valid project (ID or name), then appending ":"
@@ -661,8 +667,11 @@ def invite(args):
         resp = dxpy.DXHTTPRequest('/' + project + '/invite',
                                   {"invitee": args.invitee, "level": args.level})
         print 'Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')'
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def uninvite(args):
     project, none, none = try_call(resolve_existing_path,
@@ -673,8 +682,11 @@ def uninvite(args):
         dxpy.DXHTTPRequest('/' + project + '/decreasePermissions',
                            {args.entity: None})
         print 'Uninvited ' + args.entity + ' from ' + project
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def select(args):
     if args.project is not None:
@@ -772,8 +784,11 @@ def ls(args):
                         print_ls_l_desc(obj['describe'], include_project=False)
                     else:
                         print_ls_desc(obj['describe'], print_id=True if name_counts[obj['describe']['name']] > 1 else False)
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
     else:
         # We have results to describe
         name_counts = collections.Counter(obj['describe']['name'] for obj in entity_results)
@@ -978,8 +993,11 @@ def mv(args):
                                    {"folder": src_path,
                                     "newpath": dest_path})
                 return
+            except dxpy.DXAPIError as details:
+                parser.exit(3, fill(unicode(details)) + '\n')
             except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
         else:
             try:
                 if src_results[0]['describe']['folder'] != dest_folder:
@@ -993,8 +1011,11 @@ def mv(args):
                                        {"project": src_proj,
                                         "name": dest_name})
                 return
+            except dxpy.DXAPIError as details:
+                parser.exit(3, fill(unicode(details)) + '\n')
             except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
     if len(args.sources) == 0:
         parser.exit(1, 'No sources provided to move\n')
@@ -1016,8 +1037,11 @@ def mv(args):
                            {"objects": src_objects,
                             "folders": src_folders,
                             "destination": dest_path})
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 # ONLY for between DIFFERENT projects.  Will exit fatally otherwise.
 def cp(args):
@@ -1075,8 +1099,11 @@ def cp(args):
                 if len(exists) > 0:
                     print fill('The following objects already existed in the destination container and were not copied:') + '\n ' + '\n '.join(json.dumps(exists))
                 return
+            except dxpy.DXAPIError as details:
+                parser.exit(3, fill(unicode(details)) + '\n')
             except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
         else:
             try:
                 exists = dxpy.DXHTTPRequest('/' + src_proj + '/clone',
@@ -1092,8 +1119,11 @@ def cp(args):
                                            {"project": dest_proj,
                                             "name": dest_name})
                 return
+            except dxpy.DXAPIError as details:
+                parser.exit(3, fill(unicode(details)) + '\n')
             except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
     if len(args.sources) == 0:
         parser.exit(1, 'No sources provided to copy to another project\n')
@@ -1126,8 +1156,11 @@ def cp(args):
                                      "destination": dest_path})['exists']
         if len(exists) > 0:
             print fill('The following objects already existed in the destination container and were left alone:') + '\n ' + '\n '.join(exists)        
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def tree(args):
     project, folderpath, none = try_call(resolve_existing_path, args.path,
@@ -1169,8 +1202,11 @@ def tree(args):
             subtree[item_desc] = None
 
         print format_tree(tree, root=(BOLD() + BLUE() + args.path + ENDC()))
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def describe(args):
     if len(args.path) == 0:
@@ -1368,8 +1404,11 @@ def new_project(args):
             print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
         if args.select:
             set_project(resp['id'], write=True, name=args.name)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def new_record(args):
     get_output_flag(args)
@@ -1399,8 +1438,11 @@ def new_record(args):
             print dxrecord.get_id()
         else:
             print_desc(dxrecord.describe(incl_properties=True, incl_details=True), args.verbose)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def new_gtable(args):
     get_output_flag(args)
@@ -1444,8 +1486,11 @@ def new_gtable(args):
             print dxgtable.get_id()
         else:
             print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def set_visibility(args):
     had_error = False
@@ -1462,9 +1507,14 @@ def set_visibility(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setVisibility',
                                {"hidden": (args.visibility == 'hidden')})
-        except BaseException as details:
+        except dxpy.DXAPIError as details:
             print fill(unicode(details))
             had_error = True
+        except BaseException as details:
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            print fill(details.__class__.__name__ + ': ' + unicode(details))
+            had_error = True
+
     if had_error:
         parser.exit(1)
 
@@ -1478,8 +1528,11 @@ def get_details(args):
 
     try:
         print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def set_details(args):
     had_error = False
@@ -1500,8 +1553,12 @@ def set_details(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/setDetails',
                                args.details)
-        except BaseException as details:
+        except dxpy.DXAPIError as details:
             print(fill(unicode(details)))
+            had_error = True
+        except BaseException as details:
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            print fill(details.__class__.__name__ + ': ' + unicode(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1521,8 +1578,12 @@ def add_types(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTypes',
                                {"types": args.types})
-        except BaseException as details:
+        except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+        except BaseException as details:
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            print fill(details.__class__.__name__ + ': ' + unicode(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1542,8 +1603,12 @@ def remove_types(args):
         try:
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTypes',
                                {"types": args.types})
-        except BaseException as details:
+        except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+        except BaseException as details:
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            print fill(details.__class__.__name__ + ': ' + unicode(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1564,8 +1629,12 @@ def add_tags(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
                                {"project": project,
                                 "tags": args.tags})
-        except BaseException as details:
+        except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+        except BaseException as details:
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            print fill(details.__class__.__name__ + ': ' + unicode(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1586,8 +1655,12 @@ def remove_tags(args):
             dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
                                {"project": project,
                                 "tags": args.tags})
-        except BaseException as details:
+        except dxpy.DXAPIError as details:
             print fill(unicode(details))
+            had_error = True
+        except BaseException as details:
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            print fill(details.__class__.__name__ + ': ' + unicode(details))
             had_error = True
     if had_error:
         parser.exit(1)
@@ -1616,8 +1689,12 @@ is a project.\n''')
                 dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
                                    {"project": project,
                                     "name": args.name})
-            except BaseException as details:
+            except dxpy.DXAPIError as details:
                 print fill(unicode(details))
+                had_error = True
+            except BaseException as details:
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                print fill(details.__class__.__name__ + ': ' + unicode(details))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1627,8 +1704,11 @@ is a project.\n''')
         try:
             dxpy.DXHTTPRequest('/' + project + '/update',
                                {"name": args.name})
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)))
 
 def set_properties(args):
     had_error = False
@@ -1648,8 +1728,12 @@ def set_properties(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
                                    {"project": project,
                                     "properties": args.properties})
-            except BaseException as details:
+            except dxpy.DXAPIError as details:
                 print fill(unicode(details))
+                had_error = True
+            except BaseException as details:
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                print fill(details.__class__.__name__ + ': ' + unicode(details))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1659,8 +1743,11 @@ def set_properties(args):
         try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": args.properties})
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def unset_properties(args):
     had_error = False
@@ -1682,8 +1769,12 @@ def unset_properties(args):
                 dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
                                    {"project": project,
                                     "properties": properties})
-            except BaseException as details:
+            except dxpy.DXAPIError as details:
                 print fill(unicode(details))
+                had_error = True
+            except BaseException as details:
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                print fill(details.__class__.__name__ + ': ' + unicode(details))
                 had_error = True
         if had_error:
             parser.exit(1)
@@ -1693,8 +1784,11 @@ def unset_properties(args):
         try:
             dxpy.DXHTTPRequest('/' + project + '/setProperties',
                                {"properties": properties})
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def make_download_url(args):
     project, folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
@@ -1711,8 +1805,11 @@ def make_download_url(args):
                                                filename=args.filename,
                                                project=project)
         print url
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def download(args, **kwargs):
     paths = copy.copy(args.path)
@@ -1735,8 +1832,11 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
         try:
             dxpy.download_dxfile(id, dest_filename, show_progress=show_progress,
                                  project=project)
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
     if not already_parsed:
         # Attempt to resolve name
@@ -1816,23 +1916,32 @@ def get(args):
                 parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
             try:
                 fd = open(filename, 'w')
+            except dxpy.DXAPIError as details:
+                parser.exit(3, fill(unicode(details)) + '\n')
             except BaseException as details:
-                parser.exit(1, fill(unicode(details)) + '\n')
+                # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+                parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
     if entity_result['describe']['class'] == 'record':
         try:
             details = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails',
                                          {})
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
         fd.write(json.dumps(details, indent=4))
     elif entity_result['describe']['class'] == 'applet':
         dxapplet = dxpy.DXApplet(entity_result['id'], project=project)
         try:
             resp = dxapplet.get()
             run_spec = resp['runSpec']
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
         fd.write(run_spec['code'])
     fd.close()
 
@@ -1853,8 +1962,11 @@ def cat(args):
                 if len(chunk) == 0:
                     break
                 sys.stdout.write(chunk)
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def head(args):
     # Attempt to resolve name
@@ -1914,8 +2026,11 @@ def head(args):
                 sys.stdout.write(table_text + '\n')
         except StopIteration:
             pass
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 upload_seen_paths=set()
 def upload(args):
@@ -1973,8 +2088,11 @@ def upload(args):
                 print dxfile.get_id()
             elif not args.mute:
                 print_desc(dxfile.describe(incl_properties=True, incl_details=True))
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def import_csv(args):
     sys.argv = [sys.argv[0] + ' import csv'] + args.importer_args
@@ -2237,8 +2355,11 @@ def find_jobs(args):
             print "\n".join(output_ids)
         elif more_results and get_delimiter() is None:
             print fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  ')
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def find_data(args):
     get_output_flag(args)
@@ -2284,8 +2405,11 @@ def find_data(args):
                     print_data_obj_desc(result["describe"])
                 else:
                     print_ls_l_desc(result["describe"], include_folder=True, include_project=args.allprojects)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def find_projects(args):
     get_output_flag(args)
@@ -2308,8 +2432,11 @@ def find_projects(args):
                 print result["id"] + DELIMITER(" : ") + result['describe']['name'] + DELIMITER(' (') + result["level"] + DELIMITER(')')
         print ""
         return map(lambda result: result["id"], results)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def find_apps(args):
     def maybe_x(result):
@@ -2354,8 +2481,11 @@ def find_apps(args):
         else:
             for result in results:
                 print maybe_x(result) + DELIMITER(" ") + result["id"] + DELIMITER(" ") + result['describe'].get('title', result['describe']['name']) + DELIMITER(' (') + result["describe"]["name"] + DELIMITER('), v') + result['describe']['version'] + DELIMITER(" (") + ("published" if result["describe"].get("published", 0) > 0 else "unpublished") + DELIMITER(")")
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def close(args):
     handlers = []
@@ -2429,8 +2559,11 @@ def install(args):
         try:
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
             print 'Installed the ' + app_desc['name'] + ' app'
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
@@ -2440,8 +2573,11 @@ def uninstall(args):
         try:
             dxpy.DXHTTPRequest('/' + app_desc['id'] + '/uninstall', {})
             print 'Uninstalled the ' + app_desc['name'] + ' app'
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def get_exec_or_workflow_handler(path, alias):
     handler = None
@@ -2463,7 +2599,7 @@ def get_exec_or_workflow_handler(path, alias):
                     entity_results = None
         except BaseException as details:
             if app_desc is None:
-                parser.exit(1, fill(unicode(details)) + '\n')
+                parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
             else:
                 project, folderpath, entity_results = None, None, None
 
@@ -2516,8 +2652,11 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     if args.confirm and sys.stdout.isatty():
         try:
             value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
         if value != '' and not value.lower().startswith('y'):
             parser.exit(0)
 
@@ -2539,8 +2678,11 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
             print 'Job Log'
             print '-------'
             watch(watch_args)
+    except dxpy.DXAPIError as details:
+        parser.exit(3, fill(unicode(details)) + '\n')
     except BaseException as details:
-        parser.exit(1, fill(unicode(details)) + '\n')
+        # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+        parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
     return dxjob
 
@@ -2552,8 +2694,11 @@ def print_run_help(executable="", alias=None):
         handler = get_exec_or_workflow_handler(executable, alias)
         try:
             exec_desc = handler.describe()
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
         if isinstance(handler, dxpy.bindings.DXRecord):
             exec_help += ' [-iSTAGE_NUM.INPUT_NAME=VALUE ...]\n\n'
@@ -2916,8 +3061,11 @@ def terminate(args):
     for jobid in args.jobid:
         try:
             dxpy.api.job_terminate(jobid)
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)) + '\n')
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)) + '\n')
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
 
 def shell(orig_args):
     if orig_args.filename is not None:
@@ -2928,8 +3076,11 @@ def shell(orig_args):
                     set_cli_colors(args)
                     args.func(args)
             exit(0)
+        except dxpy.DXAPIError as details:
+            parser.exit(3, fill(unicode(details)))
         except BaseException as details:
-            parser.exit(1, fill(unicode(details)))
+            # TODO: remove this catchall error handler if/when above handlers are deemed sufficient
+            parser.exit(1, fill(details.__class__.__name__ + ': ' + unicode(details)) + '\n')
     elif not sys.stdin.isatty():
         for line in sys.stdin.read().splitlines():
             if len(line) > 0:
