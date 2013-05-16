@@ -24,7 +24,7 @@ import os, sys
 from argcomplete import warn
 import dxpy
 from dxpy.utils.resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
-                                 split_unescaped)
+                                 split_unescaped, ResolutionError)
 from dxpy.utils.printing import fill
 
 def startswith(text):
@@ -212,7 +212,7 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
         # object or folder anyway
         try:
             proj_ids, folderpath, entity_name = resolve_path(text, multi_projects=True)
-        except BaseException as details:
+        except ResolutionError as details:
             sys.stderr.write("\n" + fill(unicode(details)))
             return matches
         for proj in proj_ids:

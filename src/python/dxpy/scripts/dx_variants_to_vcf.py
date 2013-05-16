@@ -17,7 +17,7 @@
 #   under the License.
 
 import dxpy
-from dxpy.utils.resolver import *
+from dxpy.utils.resolver import ResolutionError, resolve_existing_path
 import math
 import argparse
 import re
@@ -42,7 +42,7 @@ def main(**kwargs):
     # Attempt to resolve variants gtable name
     try:
         project, folderpath, entity_result = resolve_existing_path(kwargs['path'], expected='entity')
-    except BaseException as details:
+    except ResolutionError as details:
         parser.exit(1, fill(unicode(details)) + '\n')
 
     if entity_result is None:
