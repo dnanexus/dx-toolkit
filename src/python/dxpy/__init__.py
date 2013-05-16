@@ -138,7 +138,7 @@ from .packages.requests.auth import AuthBase
 logger = logging.getLogger(__name__)
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
-from dxpy.exceptions import *
+from dxpy.exceptions import DXError, DXAPIError
 from dxpy.toolkit_version import version as TOOLKIT_VERSION
 
 snappy_available = True
@@ -201,12 +201,13 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                         - No response is received from the server, and either *always_retry* is True or the request *method* is "GET".
 
     :type max_retries: int
-    :param always_retry: If True, indicates that it is safe to retry a request on failure 
-                      
-                        - Note: It is not guaranteed that the request will be *always* retried on failure, rather an indication to the function that it is safe to do so.
+    :param always_retry: If True, indicates that it is safe to retry a request on failure
+
+                        - Note: It is not guaranteed that the request will *always* be retried on failure; rather, this is an indication to the function that it would be safe to do so.
+
     :type always_retry: boolean
     :returns: Response from API server in the format indicated by *want_full_response*. Note: if *want_full_response* is set to False and the header "content-type" is found in the response with value "application/json", the body of the response will **always** be converted from JSON to a Python list or dict before it is returned.
-    :raises: :exc:`requests.exceptions.HTTPError` if the response code was not 200 (OK), :exc:`ValueError` if the response from the API server cannot be decoded
+    :raises: :exc:`DXAPIError` if the server returned a non-200 status code; :exc:`requests.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`requests.exceptions.ConnectionError` if a connection cannot be established.
 
     Wrapper around :meth:`requests.request()` that makes an HTTP
     request, inserting authentication headers and (by default)
