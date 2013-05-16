@@ -66,16 +66,18 @@ class TestDXTabCompletion(unittest.TestCase):
         cls.project_id = dxpy.api.project_new({"name": "tab-completion project"})['id']
         os.environ['DX_PROJECT_CONTEXT_ID'] = cls.project_id
         dxpy.set_workspace_id(cls.project_id)
-        os.environ['IFS'] = IFS
-        os.environ['_ARGCOMPLETE'] = '1'
-        os.environ['_DX_ARC_DEBUG'] = '1'
-        os.environ['COMP_WORDBREAKS'] = '"\'@><=;|&(:'
 
     @classmethod
     def tearDownClass(cls):
         dxpy.api.project_destroy(dxpy.WORKSPACE_ID)
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
+
+    def setUp(self):
+        os.environ['IFS'] = IFS
+        os.environ['_ARGCOMPLETE'] = '1'
+        os.environ['_DX_ARC_DEBUG'] = '1'
+        os.environ['COMP_WORDBREAKS'] = '"\'@><=;|&(:'
 
     def tearDown(self):
         dxpy.api.project_remove_folder(dxpy.WORKSPACE_ID,
