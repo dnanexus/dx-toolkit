@@ -29,7 +29,12 @@ parser = argparse.ArgumentParser(description=fill('Takes a ' + BOLD() + 'workflo
 parser.add_argument('path', help=fill('DNAnexus path to a workflow, e.g. projectName:/folder/workflowname', width_adjustment=-24))
 parser.add_argument('--name', help=fill('Name of applet to be created (default is the workflow name)', width_adjustment=-24))
 parser.add_argument('--overwrite', '-f', help=fill('Whether to overwrite a local directory with the same name', width_adjustment=-24), action='store_true')
-args = parser.parse_args()
+
+if len(sys.argv) < 2:
+    parser.print_help()
+    parser.exit(3)
+else:
+    args = parser.parse_args()
 
 try:
     project, folder, result = resolve_existing_path(args.path, expected='entity')
