@@ -67,6 +67,9 @@ class TestDXTabCompletion(unittest.TestCase):
         os.environ['DX_PROJECT_CONTEXT_ID'] = cls.project_id
         dxpy.set_workspace_id(cls.project_id)
         os.environ['IFS'] = IFS
+        os.environ['_ARGCOMPLETE'] = '1'
+        os.environ['_DX_ARC_DEBUG'] = '1'
+        os.environ['COMP_WORDBREAKS'] = '"\'@><=;|&(:'
 
     @classmethod
     def tearDownClass(cls):
@@ -77,13 +80,13 @@ class TestDXTabCompletion(unittest.TestCase):
     def tearDown(self):
         dxpy.api.project_remove_folder(dxpy.WORKSPACE_ID,
                                      {"folder": "/", "recurse": True})
+        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS':
+            if var in os.environ:
+                del os.environ[var]
 
     def get_bash_completions(self, line, point=None, stderr_contains=""):
-        os.environ['_ARGCOMPLETE'] = '1'
         os.environ['COMP_LINE'] = line
         os.environ['COMP_POINT'] = point if point else str(len(line))
-        os.environ['COMP_WORDBREAKS'] = '"\'@><=;|&(:'
-        os.environ['_DX_ARC_DEBUG'] = '1'
 
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
