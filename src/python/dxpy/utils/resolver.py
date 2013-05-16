@@ -504,6 +504,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     :param all_mult: Whether to return all matching results without prompting (only applicable if allow_mult == True)
     :type all_mult: boolean
     :returns: A LIST of results when ask_to_resolve is False or allow_mult is True
+    :raises: :exc:`ResolutionError` if the request path was invalid, or a single result was requested and input is not a TTY
 
     Returns either a list of results or a single result (depending on
     how many is expected; if only one, then an interactive picking of
