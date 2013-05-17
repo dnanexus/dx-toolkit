@@ -106,7 +106,7 @@ def get_bash_export_cmds(env_vars):
 def write_env_var(var, value):
     try:
         os.mkdir(os.path.expanduser('~/.dnanexus_config/'), 0o700)
-    except:
+    except OSError:
         os.chmod(os.path.expanduser('~/.dnanexus_config/'), 0o700)
     std_vars = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID', 'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
     if var in std_vars:
@@ -158,7 +158,7 @@ def get_json_from_stdin():
     user_json = None
     try:
         user_json = json.loads(user_json_str)
-    except:
+    except ValueError:
         parser.exit(1, 'Error: user input could not be parsed as JSON\n')
         return None
     return user_json
@@ -199,7 +199,8 @@ from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLIN
 from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
-                                 resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped)
+                                 resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped,
+                                 ResolutionError)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
@@ -347,8 +348,6 @@ def login(args):
             password = getpass.getpass()
         except (KeyboardInterrupt, EOFError):
             parser.exit(1, '\n')
-        except Exception as e:
-            parser.exit(1, str(e) + "\n")
         auth = requests.auth.HTTPBasicAuth(username, password)
 
         session = requests.session()
@@ -495,9 +494,8 @@ def pick_and_set_project(args):
                                               level=('VIEW' if args.public else args.level),
                                               explicit_perms=(not args.public if not args.public else None),
                                               public=(args.public if args.public else None))
-
-    except BaseException as details:
-        parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
+    except:
+        err_exit('Error while listing available projects')
     any_results = False
     first_pass = True
     while True:
@@ -508,8 +506,8 @@ def pick_and_set_project(args):
                 any_results = True
             except StopIteration:
                 break
-            except BaseException as details:
-                parser.exit(1, fill('Error when listing available projects: ' + unicode(details)) + '\n')
+            except:
+                err_exit('Error while listing available projects')
         if not any_results:
             parser.exit(0, '\n' + fill('No projects to choose from.  You can create one with the command "dx new project".  To pick from projects for which you only have VIEW permissions, use \"dx select --level VIEW\" or \"dx select --public\".') + '\n')
         elif len(results) == 0:
@@ -639,15 +637,18 @@ def api(args):
             data = fd.read()
             try:
                 json_input = json.loads(data)
-            except:
+            except ValueError:
                 parser.exit(1, 'Error: file contents could not be parsed as JSON\n')
     resp = None
     try:
         resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
                                   json_input)
-        print json.dumps(resp, indent=4)
     except:
         err_exit()
+    try:
+        print json.dumps(resp, indent=4)
+    except ValueError:
+        parser.exit(1, 'Error: server response could not be parsed as JSON\n')
 
 def invite(args):
     # If --project is a valid project (ID or name), then appending ":"
@@ -661,9 +662,9 @@ def invite(args):
     try:
         resp = dxpy.DXHTTPRequest('/' + project + '/invite',
                                   {"invitee": args.invitee, "level": args.level})
-        print 'Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')'
     except:
         err_exit()
+    print 'Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')'
 
 def uninvite(args):
     project, none, none = try_call(resolve_existing_path,
@@ -673,9 +674,9 @@ def uninvite(args):
     try:
         dxpy.DXHTTPRequest('/' + project + '/decreasePermissions',
                            {args.entity: None})
-        print 'Uninvited ' + args.entity + ' from ' + project
     except:
         err_exit()
+    print 'Uninvited ' + args.entity + ' from ' + project
 
 def select(args):
     if args.project is not None:
@@ -796,7 +797,7 @@ def mkdir(args):
         # Resolve the path and add it to the list
         try:
             project, folderpath, none = resolve_path(path, expected='folder')
-        except BaseException as details:
+        except ResolutionError as details:
             print fill('Could not resolve \"' + path + '\": ' + unicode(details))
             had_error = True
             continue
@@ -816,7 +817,7 @@ def rmdir(args):
     for path in args.paths:
         try:
             project, folderpath, none = resolve_path(path, expected='folder')
-        except BaseException as details:
+        except ResolutionError as details:
             print fill('Could not resolve \"' + path + '\": ' + unicode(details))
             had_error = True
             continue
@@ -1044,8 +1045,13 @@ def cp(args):
         dest_name = dest_path[last_slash_pos + 1:].replace('\/', '/')
         try:
             dx_dest.list_folder(folder=dest_folder, only='folders')
+        except dxpy.DXAPIError as details:
+            if details.code == requests.codes.not_found:
+                parser.exit(1, 'The destination folder does not exist\n')
+            else:
+                raise
         except:
-            parser.exit(1, 'The destination folder does not exist\n')
+            err_exit()
 
         # Clone and rename either the data object or the folder
         # src_result is None if it could not be resolved to an object
@@ -1419,7 +1425,7 @@ def new_gtable(args):
         if ':' in args.columns[i]:
             try:
                 col_name, col_type = args.columns[i].split(':')
-            except:
+            except ValueError:
                 parser.exit(1, 'Too many colons found in column spec ' + args.columns[i] + '\n')
             if col_type.startswith('bool'):
                 col_type = 'boolean'
