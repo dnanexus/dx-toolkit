@@ -610,6 +610,15 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
 
 
 def main(**kwargs):
+    """
+    Entry point for dx-build-app(let).
+
+    Don't call this function as a subroutine in your program! It is liable to
+    sys.exit your program when it detects certain error conditions, so you
+    can't recover from those as you could if it raised exceptions. Instead,
+    call dx_build_app.build_and_upload_locally which provides the real
+    implementation for dx-build-app(let) but is easier to use in your program.
+    """
 
     if len(kwargs) == 0:
         args = parser.parse_args()
