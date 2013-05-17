@@ -18,7 +18,8 @@
 Exceptions for the :mod:`dxpy` package.
 '''
 
-import json
+import os, sys, json, traceback, httplib
+from .packages import requests
 
 class DXError(Exception):
     '''Base class for exceptions in this package.'''
@@ -94,3 +95,53 @@ class AppInternalError(DXError):
     through the DNAnexus API.
     '''
     pass
+
+def exit_with_exc_info(code=1, message='', print_tb=False):
+    '''
+    Exits the program, printing information about the last exception (if any) and an optional error message.
+    :param code: Exit code.
+    :type code: integer (valid exit code, 0-255)
+    :param message: Message to be printed after the exception information.
+    :type message: string
+    :param print_tb: If set to True, prints the exception traceback; otherwise, suppresses it.
+    :type print_tb: boolean
+    '''
+    exc_type, exc_value = sys.exc_info()[:2]
+    if exc_type is not None:
+        if print_tb:
+            traceback.print_exc()
+        else:
+            for line in traceback.format_exception_only(exc_type, exc_value):
+                sys.stderr.write(line)
+
+    sys.stderr.write(message)
+    if message != '' and not message.endswith('\n'):
+        sys.stderr.write('\n')
+    sys.exit(code)
+
+default_expected_exceptions = (DXAPIError,
+                               requests.ConnectionError,
+                               requests.HTTPError,
+                               requests.Timeout,
+                               httplib.HTTPException)
+
+def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None):
+    '''
+    Exits the program, printing information about the last exception (if any) and an optional error message. Uses **expected_exceptions** to set the error code decide whether to suppress the error traceback.
+    :param message: Message to be printed after the exception information.
+    :type message: string
+    :param code: Exit code.
+    :type code: integer (valid exit code, 0-255)
+    :param expected_exceptions: Exceptions for which to exit with error code 3 (expected error condition) and suppress the stack trace (unless the _DX_DEBUG environment variable is set).
+    :type expected_exceptions: iterable
+    :param arg_parser: argparse.ArgumentParser object used in the program (optional)
+    '''
+    if arg_parser is not None:
+        message = arg_parser.prog + ": " + message
+    exc = sys.exc_info()[1]
+    if isinstance(exc, expected_exceptions):
+        exit_with_exc_info(3, message, print_tb=True if '_DX_DEBUG' in os.environ else False)
+    else:
+        if code is None:
+            code = 1
+        exit_with_exc_info(code, message, print_tb=True)
