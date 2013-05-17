@@ -40,7 +40,7 @@ args = parser.parse_args()
 
 args.path = os.path.abspath(args.path)
 
-# Run it through dx-build-app (dry run) to do some basic checking
+# Do the equivalent of "dx-build-app --dry-run" to do some basic checking
 with tempfile.TemporaryFile() as fd:
     print "About to run 'dx-build-app --dry-run " + args.path + "'"
     import logging
@@ -48,10 +48,9 @@ with tempfile.TemporaryFile() as fd:
     logger.propagate = False
     sys.stdout = fd
     sys.stderr = fd
-    sys.argv = ['dx-build-app', '--dry-run', args.path]
     build_error = None
     try:
-        dx_build_app.main()
+        dx_build_app.build_and_upload_locally(args.path, 'app', dry_run=True)
     except BaseException as e:
         build_error = e
     sys.stdout = sys.__stdout__
