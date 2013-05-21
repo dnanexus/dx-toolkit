@@ -1,3 +1,9 @@
+dx-toolkit (0.50.1) precise; urgency=low
+
+  * Bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 21 May 2013 18:37:32 +0000
+
 dx-toolkit (0.50.0) precise; urgency=low
 
   * DXWorkflow handler for running workflows programmatically.
