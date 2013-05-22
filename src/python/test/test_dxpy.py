@@ -1130,6 +1130,20 @@ class TestDataobjectFunctions(unittest.TestCase):
         # Handle project IDs
         dxproject = dxpy.get_handler(self.proj_id)
 
+class TestResolver(unittest.TestCase):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
+    def test_basic_ops(self):
+        from dxpy.utils.resolver import resolve_existing_path, ResolutionError
+        with self.assertRaises(ResolutionError):
+            resolve_existing_path('')
+        proj_id, path, entity_id = resolve_existing_path(':')
+        self.assertEqual(proj_id, dxpy.WORKSPACE_ID)
+
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')

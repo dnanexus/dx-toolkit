@@ -20,7 +20,7 @@
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
 import pexpect
 
-from . import DXTestCase
+from dxpy_testutil import DXTestCase
 
 import dxpy
 from dxpy.scripts import dx_build_app

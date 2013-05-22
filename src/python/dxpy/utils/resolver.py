@@ -373,6 +373,8 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
 
     '''
 
+    if path == '':
+        raise ResolutionError('Error: Cannot parse ""; expected the path to be a non-empty string')
     try:
         possible_hash = json.loads(path)
         if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:

@@ -21,7 +21,7 @@ import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64
 from contextlib import contextmanager
 
 import dxpy
-from . import DXTestCase
+from dxpy_testutil import DXTestCase
 
 @contextmanager
 def chdir(dirname=None):
@@ -186,6 +186,9 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['length'], second_desc['length'])
 
     def test_dx_upload_download(self):
+        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=1):
+            run('dx download ""')
+        return
         wd = tempfile.mkdtemp()
         os.mkdir(os.path.join(wd, "a"))
         os.mkdir(os.path.join(wd, "a", u"б"))
