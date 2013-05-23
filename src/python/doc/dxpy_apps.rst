@@ -1,5 +1,5 @@
-Applets, Apps, and Jobs
-+++++++++++++++++++++++
+Applets, Apps, Workflows, and Jobs
+++++++++++++++++++++++++++++++++++
 
 An executable (applet or app) defines application logic that is to be
 run in the DNAnexus Platform's Execution Environment. In order to
@@ -19,12 +19,20 @@ the API or bindings directly. The following handlers for applets, apps,
 and jobs are most useful for running preexisting executables and
 monitoring their resulting jobs.
 
+Workflows created from the website UI can also be run using the
+:class:`~dxpy.bindings.dxworkflow.DXWorkflow` workflow handler.
+
 .. automodule:: dxpy.bindings.dxapplet
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: dxpy.bindings.dxapp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: dxpy.bindings.dxworkflow
    :members:
    :undoc-members:
    :show-inheritance:
