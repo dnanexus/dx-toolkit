@@ -2568,6 +2568,12 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         sys.stdout.flush()
         if args.wait and is_the_only_job:
             dxjob.wait_on_done()
+
+        if sys.stdin.isatty() and not args.watch:
+            answer = raw_input("Watch launched job now? [Y/n] ")
+            if len(answer) == 0 or answer.lower()[0] == 'y':
+                args.watch = True
+
         if args.watch and is_the_only_job:
             watch_args = parser.parse_args(['watch', dxjob.get_id()])
             print ''
@@ -2937,6 +2943,12 @@ def run(args):
         if args.wait:
             for stage in workflow['stages']:
                 launched_jobs[stage['id']].wait_on_done()
+
+        if sys.stdin.isatty() and not args.watch:
+            answer = raw_input("Watch launched jobs now? [Y/n] ")
+            if len(answer) == 0 or answer.lower()[0] == 'y':
+                args.watch = True
+
         if args.watch:
             for stage in workflow['stages']:
                 watch_args = parser.parse_args(['watch', launched_jobs[stage['id']].get_id()])
