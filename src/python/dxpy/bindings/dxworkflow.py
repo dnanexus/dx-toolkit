@@ -15,8 +15,17 @@
 #   under the License.
 
 """
-Workflows are data objects which contain metadata to run an analysis
-or set of jobs.
+DXWorkflow Handler
+++++++++++++++++++
+
+Workflows are records created via the website which contain metadata
+to run a series of jobs.  They can be run by calling the
+:func:`DXWorkflow.run` method.  Inputs that have not been bound yet in
+the workflow need to be provided using input field names of the form
+"N.name", where "name" is the name of an input to the Nth stage
+(starting from 0).  Inputs already bound in the workflow can be
+overridden by setting them here as well.
+
 """
 
 import json
@@ -93,7 +102,7 @@ class DXWorkflow(DXDataObject):
                 exec_id = get_app_from_path(exec_id)['id']
 
             executable = get_handler(exec_id)
-            job_name = executable.describe()['name']
+            job_name = executable.describe()['title']
             job_name += ' - ' + (name if name is not None else workflow_name)
 
             exec_inputs = ExecutableInputs(executable, input_name_prefix=str(stage['key'])+".")
@@ -107,6 +116,7 @@ class DXWorkflow(DXDataObject):
             input_json = exec_inputs.inputs
 
             launched_jobs[stage['id']] = executable.run(input_json, project=project, folder=folder,
-                                                        name=job_name)
+                                                        name=job_name,
+                                                        **kwargs)
 
         return launched_jobs.values()
