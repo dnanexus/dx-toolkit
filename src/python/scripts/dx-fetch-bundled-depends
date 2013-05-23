@@ -26,17 +26,18 @@ import dxpy
 parser = argparse.ArgumentParser(description=__doc__)
 args = parser.parse_args()
 
-job = dxpy.api.job_describe(dxpy.JOB_ID, {'io': False})
+if 'DX_JOB_ID' in os.environ:
+    job = dxpy.api.job_describe(dxpy.JOB_ID, {'io': False})
 
-executable = dxpy.api.app_describe(job['app']) if 'app' in job else dxpy.api.applet_describe(job["applet"])
+    executable = dxpy.api.app_describe(job['app']) if 'app' in job else dxpy.api.applet_describe(job["applet"])
 
-if 'bundledDepends' in executable['runSpec']:
-    for dep in executable['runSpec']['bundledDepends']:
-        if 'stages' in dep:
-            cur_stage = job.get('function', 'main')
-            if cur_stage not in dep['stages']:
-                continue
-        if dep['id']['$dnanexus_link'].startswith('file-'):
-            print "*** Downloading bundled file", dep['name']
-            dxpy.download_dxfile(dep['id'], dep['name'])
-            subprocess.check_call(['dx-unpack', dep['name']])
+    if 'bundledDepends' in executable['runSpec']:
+        for dep in executable['runSpec']['bundledDepends']:
+            if 'stages' in dep:
+                cur_stage = job.get('function', 'main')
+                if cur_stage not in dep['stages']:
+                    continue
+            if dep['id']['$dnanexus_link'].startswith('file-'):
+                print "*** Downloading bundled file", dep['name']
+                dxpy.download_dxfile(dep['id'], dep['name'])
+                subprocess.check_call(['dx-unpack', dep['name']])
