@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+'''
+Downloads the contents of runSpec.bundledDepends of a job running in the execution environment.
+'''
+
+import os, sys, argparse, subprocess
+import dxpy
+
+parser = argparse.ArgumentParser(description=__doc__)
+args = parser.parse_args()
+
+job = dxpy.api.job_describe(dxpy.JOB_ID, {'io': False})
+
+executable = dxpy.api.app_describe(job['app']) if 'app' in job else dxpy.api.applet_describe(job["applet"])
+
+if 'bundledDepends' in executable['runSpec']:
+    for dep in executable['runSpec']['bundledDepends']:
+        if 'stages' in dep:
+            cur_stage = job.get('function', 'main')
+            if cur_stage not in dep['stages']:
+                continue
+        if dep['id']['$dnanexus_link'].startswith('file-'):
+            print "*** Downloading bundled file", dep['name']
+            dxpy.download_dxfile(dep['id'], dep['name'])
+            subprocess.check_call(['dx-unpack', dep['name']])

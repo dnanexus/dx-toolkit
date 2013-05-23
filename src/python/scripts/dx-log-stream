@@ -16,13 +16,16 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+'''
+Redirects stdin to a DNAnexus log socket in the execution environment.
+'''
+
 import os, sys, logging, argparse
 import dxpy
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 
-parser = argparse.ArgumentParser(description="Redirects stdin to a DNAnexus log socket in the execution environment.")
-parser.add_argument("-p", "--prefix", help="Deprecated")
+parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("-l", "--level", help="Logging level to use", default='info')
 args = parser.parse_args()
 
