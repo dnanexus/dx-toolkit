@@ -27,6 +27,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 args = parser.parse_args()
 
 if 'DX_JOB_ID' in os.environ:
+    os.chdir('/')
     job = dxpy.api.job_describe(dxpy.JOB_ID, {'io': False})
 
     executable = dxpy.api.app_describe(job['app']) if 'app' in job else dxpy.api.applet_describe(job["applet"])
