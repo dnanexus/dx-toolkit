@@ -151,7 +151,7 @@ test_ruby: ruby
 	(source ../environment && ruby ruby/test/test_dxruby.rb)
 
 test_python:
-	(cd python; ./setup.py test)
+	(cd python; ./setup.py nosetests)
 
 test_perl:
 	(cd perl; prove)
