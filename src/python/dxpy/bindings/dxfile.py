@@ -401,7 +401,7 @@ class DXFile(DXDataObject):
         headers = resp.get("headers", {})
         headers['Content-Length'] = str(len(data))
         headers['Content-Type'] = 'application/octet-stream'
- 
+
         md5 = hashlib.md5()
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer
@@ -419,7 +419,7 @@ class DXFile(DXDataObject):
 
         headers['Content-MD5'] = md5.hexdigest()
 
-        DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True)
+        DXHTTPRequest(url, data, headers=headers, jsonify_data=False, prepend_srv=False, always_retry=True, auth=None)
 
         self._num_uploaded_parts += 1
 
@@ -470,6 +470,7 @@ class DXFile(DXDataObject):
             headers['Range'] = "bytes=" + str(chunk_start_pos) + "-" + str(chunk_end_pos)
             yield DXHTTPRequest, [url, ''], {'method': 'GET',
                                              'headers': headers,
+                                             'auth': None,
                                              'jsonify_data': False,
                                              'prepend_srv': False,
                                              'prefetch': True,
