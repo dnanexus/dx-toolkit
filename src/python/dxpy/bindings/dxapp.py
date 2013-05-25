@@ -191,9 +191,11 @@ class DXApp(DXObject):
 
         '''
         if self._dxid is not None:
-            return dxpy.api.app_describe(self._dxid, **kwargs)
+            self._desc = dxpy.api.app_describe(self._dxid, **kwargs)
         else:
-            return dxpy.api.app_describe('app-' + self._name, alias=self._alias, **kwargs)
+            self._desc = dxpy.api.app_describe('app-' + self._name, alias=self._alias, **kwargs)
+
+        return self._desc
 
     def update(self, **kwargs):
         '''

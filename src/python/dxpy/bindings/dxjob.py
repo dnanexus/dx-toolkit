@@ -190,7 +190,8 @@ class DXJob(DXObject):
         method.
 
         """
-        return dxpy.api.job_describe(self._dxid, {"io": io}, **kwargs)
+        self._desc = dxpy.api.job_describe(self._dxid, {"io": io}, **kwargs)
+        return self._desc
 
     def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
         '''

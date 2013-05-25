@@ -101,7 +101,8 @@ class DXContainer(DXObject):
         api_method = dxpy.api.container_describe
         if isinstance(self, DXProject):
             api_method = dxpy.api.project_describe
-        return api_method(self._dxid, **kwargs)
+        self._desc = api_method(self._dxid, **kwargs)
+        return self._desc
 
     def new_folder(self, folder, parents=False, **kwargs):
         """

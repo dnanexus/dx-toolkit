@@ -63,6 +63,17 @@ class DXObject(object):
     def __repr__(self):
         return self._repr()
 
+    def __getattr__(self, attr):
+        if not self._desc:
+            try:
+                self.describe()
+            except:
+                pass
+        try:
+            return self._desc[attr]
+        except:
+            raise AttributeError()
+
 class DXDataObject(DXObject):
     """Abstract base class for all remote data object handlers."""
 
