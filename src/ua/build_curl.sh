@@ -35,13 +35,22 @@ rm -f curl
 ln -s curl-7.30.0 curl
 cd curl
 
-# for installing on mac, use --enable-ares=/opt/local , instead of just --enable-ares
-./configure --prefix=${HOME}/sw/local --disable-ldap --disable-ldaps \
-  --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
-  --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
-  --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
-  --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
-  --without-winidn --without-libidn --enable-ares
-
+unamestr=`uname`
+if [[ "$unamestr" == 'Darwin' ]]; then
+  # for installing on mac, use --enable-ares=/opt/local , instead of just --enable-ares
+  ./configure --prefix=${HOME}/sw/local --disable-ldap --disable-ldaps \
+    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
+    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
+    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
+    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
+    --without-winidn --without-libidn --enable-ares=/opt/local
+else 
+  ./configure --prefix=${HOME}/sw/local --disable-ldap --disable-ldaps \
+    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
+    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
+    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
+    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
+    --without-winidn --without-libidn --enable-ares
+fi
 make
 make install
