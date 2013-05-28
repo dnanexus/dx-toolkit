@@ -1,3 +1,15 @@
+dx-toolkit (0.52.0) precise; urgency=low
+
+  * Improved error reporting.
+
+  * New script dx-fetch-bundled-depends.
+
+  * dxpy handler objects use and cache describe() for attribute lookup.
+
+  * Bindings fix needed for new file API.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 28 May 2013 18:46:03 +0000
+
 dx-toolkit (0.51.0) precise; urgency=low
 
   * Various bug fixes and tests added.
