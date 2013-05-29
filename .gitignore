@@ -13,6 +13,8 @@
 /src/java/target/
 /src/perl/DNAnexus-*
 /src/python/dxpy/toolkit_version.py
+/src/python/coverage-*.egg/
+/src/python/nose-*.egg/
 /src/ruby/lib/dxruby/version.rb
 /src/dx-wig-to-wiggle/build
 /src/R/install_dxR_deps.Rout
@@ -38,6 +40,7 @@ dxR.Rcheck
 /bin/dx-contigset-to-fasta
 /bin/dx-csv-to-gtable
 /bin/dx-fastq-to-reads
+/bin/dx-fetch-bundled-depends
 /bin/dx-genes-to-gff
 /bin/dx-genes-to-gtf
 /bin/dx-get-job-streams
