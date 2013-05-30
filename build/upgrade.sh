@@ -35,7 +35,7 @@ fi
 
 pkg_name="dx-toolkit-${new_version}-${build_target_name}.tar.gz"
 echo "Downloading $pkg_name..."
-(cd "$build_dir"; curl -O "https://wiki.dnanexus.com/images/files/${pkg_name}")
+(cd "$build_dir"; curl -O -L "https://wiki.dnanexus.com/images/files/${pkg_name}")
 
 echo "Unpacking $pkg_name..."
 tar -C "$build_dir" -xzf "${build_dir}/${pkg_name}"
