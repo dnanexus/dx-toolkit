@@ -417,6 +417,7 @@ class TestDXBuildApp(DXTestCase):
                                            code_content="def improper():\nprint 'oops'")
         with self.assertSubprocessFailure(stderr_regexp="Entry point file \\S+ has syntax errors"):
             run("dx-build-applet " + app_dir)
+        run("dx-build-applet --no-check-syntax " + app_dir)
 
 class TestDXBuildReportHtml(unittest.TestCase):
     def setUp(self):
