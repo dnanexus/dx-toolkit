@@ -82,16 +82,16 @@ def main(**kwargs):
             raise dxpy.AppError("output parameter is required")
 
     with open(kwargs['output'], 'wb') as out_fh:
-        exportToFile(columns=col, table=table, output_file=out_fh, hasName=hasName, hasQual=hasQual, FASTA=kwargs['output_FASTA'])
+        exportToFile(columns=col, table=table, output_file=out_fh, hasName=hasName, hasQual=hasQual, FASTA=kwargs['output_FASTA'], start_row=kwargs['start_row'], end_row=kwargs['end_row'])
 
     if isPaired == True:
         if kwargs['output2'] is None:
             raise dxpy.AppError("output2 parameter is required for paired reads")
         with open(kwargs['output2'], 'wb') as out_fh2:
-            exportToFile(columns=col2, table=table, output_file=out_fh2, hasName=hasName, hasQual=hasQual, FASTA=kwargs['output_FASTA'])
+            exportToFile(columns=col2, table=table, output_file=out_fh2, hasName=hasName, hasQual=hasQual, FASTA=kwargs['output_FASTA'], start_row=kwargs['start_row'], end_row=kwargs['end_row'])
 
-def exportToFile(columns, table, output_file, hasName = True, hasQual = True, FASTA = False):
-    for row in table.iterate_rows(columns=columns):
+def exportToFile(columns, table, output_file, hasName = True, hasQual = True, FASTA = False, start_row = 0, end_row = None):
+    for row in table.iterate_rows(start=start_row, end=end_row, columns=columns):
         if FASTA == True:
             if hasName == True:
                 # change comment character for FASTA
