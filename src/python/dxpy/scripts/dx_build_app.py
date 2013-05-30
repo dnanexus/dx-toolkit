@@ -84,6 +84,10 @@ parser.add_argument("--dx-toolkit-unstable-autodep", help="Auto-insert a dx-tool
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
+parser.set_defaults(check_syntax=True)
+parser.add_argument("--check-syntax", help="Fail when the entry point file contains invalid syntax", action="store_true", dest="check_syntax")
+parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found", action="store_false", dest="check_syntax")
+
 # TODO: remove this flag (once all calls to build_and_upload_locally are
 # in process
 #
@@ -227,11 +231,12 @@ def _lint(dxapp_json_filename):
             if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", output_field['name']):
                 logger.error('output %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, output_field['name']))
 
-def _check_syntax(code, lang):
+def _check_syntax(code, lang, enforce=True):
     """
     Checks that the code whose text is in CODE parses as LANG.
 
-    Raises subprocess.CalledProcessError if there is a problem.
+    Raises subprocess.CalledProcessError if there is a problem, and
+    "enforce" is True.
     """
     # This function needs the language to be explicitly set, so we can
     # generate an appropriate temp filename.
@@ -246,16 +251,17 @@ def _check_syntax(code, lang):
     try:
         with open(os.path.join(dirname, temp_basename), 'w') as ofile:
             ofile.write(code.encode('utf-8'))
-        _check_file_syntax(os.path.join(dirname, temp_basename), override_lang=lang)
+        _check_file_syntax(os.path.join(dirname, temp_basename), override_lang=lang, enforce=enforce)
     finally:
         shutil.rmtree(dirname)
 
-def _check_file_syntax(filename, override_lang=None):
+def _check_file_syntax(filename, override_lang=None, enforce=True):
     """
     Checks that the code in FILENAME parses, attempting to autodetect
     the language if necessary.
 
-    Raises subprocess.CalledProcessError if there is a problem.
+    Raises subprocess.CalledProcessError if there is a problem, and
+    "enforce" is True.
     """
     def check_python(filename):
         subprocess.check_output([sys.executable, "-m", "py_compile", filename], stderr=subprocess.STDOUT)
@@ -280,9 +286,10 @@ def _check_file_syntax(filename, override_lang=None):
         print >> sys.stderr, filename + " has a syntax error! Interpreter output:"
         for line in e.output.strip("\n").split("\n"):
             print >> sys.stderr, "  " + line.rstrip("\n")
-        raise
+        if enforce:
+            raise
 
-def _verify_app_source_dir(src_dir):
+def _verify_app_source_dir(src_dir, enforce=True):
     if not os.path.isdir(src_dir):
         parser.error("%s is not a directory" % src_dir)
     if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
@@ -300,27 +307,29 @@ def _verify_app_source_dir(src_dir):
             if "file" in manifest['runSpec']:
                 entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
                 try:
-                    _check_file_syntax(entry_point_file, override_lang=manifest['runSpec']['interpreter'])
+                    _check_file_syntax(entry_point_file, override_lang=manifest['runSpec']['interpreter'], enforce=enforce)
                 except subprocess.CalledProcessError:
-                    raise dxpy.app_builder.AppBuilderException('Entry point file %s has syntax errors, see above for details' % (entry_point_file,))
+                    raise dxpy.app_builder.AppBuilderException('Entry point file %s has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.' % (entry_point_file,))
             elif "code" in manifest['runSpec']:
                 try:
-                    _check_syntax(manifest['runSpec']['code'], lang=manifest['runSpec']['interpreter'])
+                    _check_syntax(manifest['runSpec']['code'], lang=manifest['runSpec']['interpreter'], enforce=enforce)
                 except subprocess.CalledProcessError:
-                    raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details')
+                    raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.')
 
     # Check all other files that are going to be in the resources tree.
     # For these we detect the language based on the filename extension.
     # Obviously this check can have false positives, since the app can
     # execute (or not execute!) all these files in whatever way it
-    # wishes, e.g. it could use Python != 2.7 or some non-bash shell. So
-    # if it is overzealous we may have to turn it off.
+    # wishes, e.g. it could use Python != 2.7 or some non-bash shell.
+    # Consequently errors here are non-fatal.
     files_with_problems = []
     for dirpath, dirnames, filenames in os.walk(os.path.abspath(os.path.join(src_dir, "resources"))):
         for filename in filenames:
             try:
-                _check_file_syntax(os.path.join(dirpath, filename))
+                _check_file_syntax(os.path.join(dirpath, filename), enforce=True)
             except subprocess.CalledProcessError:
+                # Suppresses errors from _check_file_syntax so we only
+                # print a nice error message
                 files_with_problems.append(os.path.join(dirpath, filename))
 
     if files_with_problems:
@@ -328,7 +337,7 @@ def _verify_app_source_dir(src_dir):
         #    "/path/to/my/app.py"
         # OR "/path/to/my/app.py and 3 other files"
         files_str = files_with_problems[0] if len(files_with_problems) == 1 else (files_with_problems[0] + " and " + str(len(files_with_problems) - 1) + " other file" + ("s" if len(files_with_problems) > 2 else ""))
-        raise dxpy.app_builder.AppBuilderException('%s contained syntax errors, see above for details' % (files_str,))
+        logging.warn('%s contained syntax errors, see above for details' % (files_str,))
 
 def _parse_app_spec(src_dir):
     with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
@@ -501,10 +510,10 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     return
 
 
-def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="auto", do_build_step=True, do_upload_step=True, dry_run=False, return_object_dump=False):
+def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="auto", do_build_step=True, do_upload_step=True, do_check_syntax=True, dry_run=False, return_object_dump=False):
 
     app_json = _parse_app_spec(src_dir)
-    _verify_app_source_dir(src_dir)
+    _verify_app_source_dir(src_dir, enforce=do_check_syntax)
 
     working_project = None
     using_temp_project = False
@@ -653,6 +662,7 @@ def main(**kwargs):
                 dx_toolkit_autodep=args.dx_toolkit_autodep,
                 do_build_step=args.build_step,
                 do_upload_step=args.upload_step,
+                do_check_syntax=args.check_syntax,
                 dry_run=args.dry_run,
                 return_object_dump=args.json
                 )
