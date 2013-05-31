@@ -58,6 +58,37 @@ def _image_to_data(img):
     img["src"] = src_data
 
 
+def _bake_css(link):
+    """
+    Takes a link element and turns it into an inline style link if applicable
+    """
+    if "href" in link.attrs and (re.search("\.css$", link["href"])) or ("rel" in link.attrs and link["rel"] is "stylesheet") or ("type" in link.attrs and link["type"] is "text/css"):
+        if re.match("https?://", link["href"]):
+            css_data = _load_url(link["href"]).read()
+        else:
+            css_data = _load_file(link["href"]).read()
+        link.clear()
+        link.string = css_data
+        link.name = "style"
+        del link["rel"]
+        del link["href"]
+
+
+def _bake_script(script):
+    """
+    Takes a script element and bakes it in only if it contains a remote resource
+    """
+    if "src" in script.attrs:
+        if re.match("https?://", script["src"]):
+            script_data = _load_url(script["src"]).read()
+        else:
+            script_data = _load_file(script["src"]).read()
+        script.clear()
+        script.string = "\n" + script_data + "\n"
+        del script["src"]
+        del script["type"]
+
+
 def _topify_link(link):
     """
     Adds a target='_top' property to links so they can break out of iframes
@@ -90,6 +121,20 @@ def _load_url(url):
         parser.error("{url} could not be loaded remotely! ({ex})".format(url=url, ex=ex))
 
 
+def _get_bs4_string(soup):
+    """
+    Outputs a BeautifulSoup object as a string that should hopefully be minimally modified
+    """
+    if len(soup.find_all("script")) == 0:
+        soup_str = soup.prettify(formatter=None).encode("utf-8").strip()
+    else:
+        soup_str = str(soup.html)
+        soup_str = re.sub("&amp;", "&", soup_str)
+        soup_str = re.sub("&lt;", "<", soup_str)
+        soup_str = re.sub("&gt;", ">", soup_str)
+    return soup_str
+
+
 def bake(src):
     """
     Runs the encoder on the given source file
@@ -108,6 +153,10 @@ def bake(src):
     images = bs_html.find_all("img")
     for image in images:
         _image_to_data(image)
+    for link in bs_html.find_all("link"):
+        _bake_css(link)
+    for script in bs_html.find_all("script"):
+        _bake_script(script)
     os.chdir(cwd)
     return bs_html
 
@@ -172,9 +221,10 @@ def main(**kwargs):
         for link in html("area"):
             _topify_link(link)
 
+        html_str = _get_bs4_string(html)
         # If we're supposed to upload the report to the server, upload the individual HTML file
         if args.remote:
-            remote_file_ids.append(upload_html(args.remote, str(html), os.path.basename(source)))
+            remote_file_ids.append(upload_html(args.remote, html_str, os.path.basename(source)))
 
         # If we're supposed to save locally, do that
         if args.local:
@@ -188,7 +238,7 @@ def main(**kwargs):
                 filename = re.sub("(\.html?)$", index_str + "\\1", filename)
             else:
                 filename += index_str + ".html"
-            save(filename, str(html))
+            save(filename, html_str)
     if len(remote_file_ids) > 0:
         json_out = {"fileIds": remote_file_ids}
         json_out["recordId"] = create_record(args.remote, remote_file_ids, args.width, args.height)

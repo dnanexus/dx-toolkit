@@ -420,6 +420,9 @@ class TestDXBuildApp(DXTestCase):
         run("dx-build-applet --no-check-syntax " + app_dir)
 
 class TestDXBuildReportHtml(unittest.TestCase):
+    js = "console.log('javascript');"
+    css = "body {background-color: green;}"
+
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
         self.gif_base64 = "R0lGODdhAQABAIAAAAQCBAAAACwAAAAAAQABAAACAkQBADs="
@@ -427,8 +430,14 @@ class TestDXBuildReportHtml(unittest.TestCase):
         gif_file.write(base64.b64decode(self.gif_base64))
         gif_file.close()
         wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
+        script_file = open("{}/index.js".format(self.temp_file_path), "w")
+        script_file.write(self.js)
+        script_file.close()
+        css_file = open("{}/index.css".format(self.temp_file_path), "w")
+        css_file.write(self.css)
+        css_file.close()
         html_file = open("{}/index.html".format(self.temp_file_path), "w")
-        html = "<html><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
+        html = "<html><head><link rel='stylesheet' href='index.css' type='text/css'/><script src='index.js'></script></head><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
         html_file.write(html)
         html_file.close()
 
@@ -451,6 +460,12 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertEquals(len(re.split("<img", html)), 3)
         self.assertTrue(re.search("target=\"_top\"", html))
         self.assertTrue(re.search("target=\"_new\"", html))
+        self.assertTrue(re.search("<style", html))
+        self.assertTrue(re.search(re.escape(self.css), html))
+        self.assertFalse(re.search("<link", html))
+        self.assertFalse(re.search("index.css", html))
+        self.assertTrue(re.search(re.escape(self.js), html))
+        self.assertFalse(re.search("index.js", html))
 
     def test_image_only(self):
         run(u"dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
@@ -459,7 +474,7 @@ class TestDXBuildReportHtml(unittest.TestCase):
         f = open(out_path, "r")
         html = f.read()
         f.close()
-        self.assertTrue(html.startswith("<html><body><img src=\"data:"))
+        self.assertTrue(re.search("<img src=\"data:", html))
 
     def test_remote_file(self):
         report = json.loads(run(u"dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
