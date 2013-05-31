@@ -24,7 +24,7 @@ class DXTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
-            subprocess.check_call(u"yes|dx rmproject {p}".format(p=self.project), shell=True)
+            subprocess.check_call(u"dx rmproject --yes {p}".format(p=self.project), shell=True)
         except:
             pass
         try:
