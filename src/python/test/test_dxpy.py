@@ -1099,7 +1099,7 @@ class TestPrettyPrint(unittest.TestCase):
 
 class TestHTTPResponses(unittest.TestCase):
     def test_content_type_no_sniff(self):
-        resp = dxpy.api.user_describe("user-000000000000000000000000", want_full_response=True)
+        resp = dxpy.api.system_find_projects({'limit': 1}, want_full_response=True)
         self.assertEqual(resp.headers['x-content-type-options'], 'nosniff')
 
 class TestDataobjectFunctions(unittest.TestCase):
