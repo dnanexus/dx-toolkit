@@ -348,7 +348,8 @@ def _parse_app_spec(src_dir):
 
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                       version_override=None, bill_to_override=None, dx_toolkit_autodep="auto",
-                      do_version_autonumbering=True, do_try_update=True, do_parallel_build=True):
+                      do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
+                      do_check_syntax=True):
     if mode == 'app':
         builder_app = 'app-tarball_app_builder'
     else:
@@ -404,6 +405,8 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         build_options['do_try_update'] = False
     if not do_parallel_build:
         build_options['do_parallel_build'] = False
+    if not do_check_syntax:
+        build_options['do_check_syntax'] = False
 
     using_temp_project_for_remote_build = False
 
@@ -718,6 +721,8 @@ def main(**kwargs):
             more_kwargs['do_try_update'] = False
         if not args.parallel_build:
             more_kwargs['do_parallel_build'] = False
+        if not args.check_syntax:
+            more_kwargs['do_check_syntax'] = False
 
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination, publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep, **more_kwargs)
 
