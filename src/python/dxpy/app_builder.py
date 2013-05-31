@@ -161,6 +161,31 @@ def upload_resources(src_dir, project=None):
     else:
         return []
 
+def _inline_documentation_files(app_spec, src_dir):
+    """
+    Modifies the provided app_spec dict (which may be an app or applet
+    spec, actually) to inline the contents of the readme file into
+    "description" and the developer readme into "developerNotes".
+    """
+    # Inline description from a readme file
+    if 'description' not in app_spec:
+        readme_filename = None
+        for filename in 'README.md', 'Readme.md', 'readme.md':
+            if os.path.exists(os.path.join(src_dir, filename)):
+                readme_filename = filename
+                break
+        if readme_filename is not None:
+            with open(os.path.join(src_dir, readme_filename)) as fh:
+                app_spec['description'] = fh.read()
+
+    # Inline developerNotes from Readme.developer.md
+    if 'developerNotes' not in app_spec:
+        for filename in 'README.developer.md', 'Readme.developer.md', 'readme.developer.md':
+            if os.path.exists(os.path.join(src_dir, filename)):
+                with open(os.path.join(src_dir, filename)) as fh:
+                    app_spec['developerNotes'] = fh.read()
+                break
+
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
     """
     Creates a new applet object.
@@ -213,24 +238,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     # -----
     # Override various fields from the pristine dxapp.json
 
-    # Inline description from a readme file
-    if 'description' not in applet_spec:
-        readme_filename = None
-        for filename in 'README.md', 'Readme.md', 'readme.md':
-            if os.path.exists(os.path.join(src_dir, filename)):
-                readme_filename = filename
-                break
-        if readme_filename is not None:
-            with open(os.path.join(src_dir, readme_filename)) as fh:
-                applet_spec['description'] = fh.read()
-
-    # Inline developerNotes from Readme.developer.md
-    if 'developerNotes' not in applet_spec:
-        for filename in 'README.developer.md', 'Readme.developer.md', 'readme.developer.md':
-            if os.path.exists(os.path.join(src_dir, filename)):
-                with open(os.path.join(src_dir, filename)) as fh:
-                    applet_spec['developerNotes'] = fh.read()
-                break
+    # Inline Readme.md and Readme.developer.md
+    _inline_documentation_files(applet_spec, src_dir)
 
     # Inline the code of the program
     if "runSpec" in applet_spec and "file" in applet_spec["runSpec"]:
@@ -344,6 +353,9 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
     app_spec["applet"] = applet_id
     app_spec["name"] = applet_name
+
+    # Inline Readme.md and Readme.developer.md
+    _inline_documentation_files(app_spec, src_dir)
 
     if billTo:
         app_spec["billTo"] = billTo
