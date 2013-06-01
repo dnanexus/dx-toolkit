@@ -326,16 +326,16 @@ def _verify_app_source_dir(src_dir, enforce=True):
     for dirpath, dirnames, filenames in os.walk(os.path.abspath(os.path.join(src_dir, "resources"))):
         for filename in filenames:
             # On Mac OS, the resource fork for "FILE.EXT" gets tarred up
-            # as a file named ".FILE.EXT". To a naive check this appears
-            # to be a file of the same extension. Therefore, we exclude
-            # dotfiles from syntax checking since they are likely to not
-            # parse as whatever language they appear to be.
-            if not filename.startswith("."):
+            # as a file named "._FILE.EXT". To a naive check this
+            # appears to be a file of the same extension. Therefore, we
+            # exclude these from syntax checking since they are likely
+            # to not parse as whatever language they appear to be.
+            if not filename.startswith("._"):
                 try:
                     _check_file_syntax(os.path.join(dirpath, filename), enforce=True)
                 except subprocess.CalledProcessError:
-                    # Suppresses errors from _check_file_syntax so we only
-                    # print a nice error message
+                    # Suppresses errors from _check_file_syntax so we
+                    # only print a nice error message
                     files_with_problems.append(os.path.join(dirpath, filename))
 
     if files_with_problems:
