@@ -1,3 +1,9 @@
+dx-toolkit (0.52.2) precise; urgency=low
+
+  * Make syntax checks less fatal.
+
+ -- Phil Sung <psung@dnanexus.com>  Sat, 01 Jun 2013 06:21:49 +0000
+
 dx-toolkit (0.52.1) precise; urgency=low
 
   * Bug fixes.
