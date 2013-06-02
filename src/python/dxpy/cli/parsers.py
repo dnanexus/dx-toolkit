@@ -21,10 +21,11 @@ those parsers.
 '''
 
 import argparse, json, os
-from dxpy.utils.printing import fill
-from dxpy.utils.resolver import split_unescaped
+from ..utils.printing import fill
+from ..utils.resolver import split_unescaped
+from ..exceptions import DXError
 
-class DXParserError(Exception):
+class DXParserError(DXError):
     def __init__(self, msg):
         self.msg = msg
 

@@ -20,7 +20,7 @@
 import os, sys, datetime, urlparse, getpass, collections, re, json, time, urllib, argparse, textwrap, copy, hashlib, errno, httplib
 import shlex # respects quoted substrings when splitting
 
-from ..exceptions import err_exit
+from ..exceptions import err_exit, default_expected_exceptions, DXError
 from ..packages import requests
 
 # Try to reset encoding to utf-8
@@ -95,7 +95,7 @@ def try_call(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except:
-        err_exit()
+        err_exit(expected_exceptions=default_expected_exceptions + (DXError,))
 
 def get_bash_export_cmds(env_vars):
     string = ''
@@ -1775,7 +1775,7 @@ def download_one(args, already_parsed=False, project=None, folderpath=None, enti
 
     if not already_parsed:
         # Attempt to resolve name
-        project, folderpath, entity_result = try_call(resolve_existing_path, args.path)
+        project, folderpath, entity_result = try_call(resolve_existing_path, args.path, allow_empty_string=False)
 
     if entity_result is None:
         folders = dxpy.describe(project, input_params={'folders': True})['folders']

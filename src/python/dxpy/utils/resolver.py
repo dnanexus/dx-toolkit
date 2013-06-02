@@ -26,7 +26,8 @@ For more details, see external documentation [TODO: Put link here].
 import os, sys, json, re
 
 import dxpy
-from dxpy.utils.describe import get_ls_l_desc
+from .describe import get_ls_l_desc
+from ..exceptions import DXError
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
@@ -130,7 +131,7 @@ cached_project_names = {}
 # Possible cache for the future of project ID->folderpath->object name->ID
 # cached_project_paths = {}
 
-class ResolutionError(Exception):
+class ResolutionError(DXError):
     def __init__(self, msg):
         self.msg = msg
 
@@ -354,7 +355,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         # len(results) > 1 and multi
         return map(lambda result: result['id'], results)
 
-def resolve_path(path, expected=None, expected_classes=None, multi_projects=False):
+def resolve_path(path, expected=None, expected_classes=None, multi_projects=False, allow_empty_string=True):
     '''
     :param path: A path to a data object to attempt to resolve
     :type path: string
@@ -365,6 +366,8 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     :returns: A tuple of 3 values: container_ID, folderpath, entity_name
     :rtype: string, string, string
     :raises: exc:`ResolutionError` if 1) a colon is provided but no project can be resolved, or 2) *expected* was set to "folder" but no project can be resolved from which to establish context
+    :param allow_empty_string: If false, a ResolutionError will be raised if *path* is an empty string. Use this when resolving the empty string could result in unexpected behavior.
+    :type allow_empty_string: boolean
 
     Attempts to resolve *path* to a project or container ID, a folder
     path, and a data object or folder name.  This method will NOT
@@ -373,7 +376,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
 
     '''
 
-    if path == '':
+    if path == '' and not allow_empty_string:
         raise ResolutionError('Error: Cannot parse ""; expected the path to be a non-empty string')
     try:
         possible_hash = json.loads(path)
@@ -495,7 +498,7 @@ def resolve_job_ref(job_id, name, describe={}):
 
     return results
 
-def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}, all_mult=False):
+def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_classes=None, allow_mult=False, describe={}, all_mult=False, allow_empty_string=True):
     '''
     :param ask_to_resolve: Whether picking may be necessary (if true, a list is returned; if false, only one result is returned)
     :type ask_to_resolve: boolean
@@ -507,6 +510,8 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     :type all_mult: boolean
     :returns: A LIST of results when ask_to_resolve is False or allow_mult is True
     :raises: :exc:`ResolutionError` if the request path was invalid, or a single result was requested and input is not a TTY
+    :param allow_empty_string: If false, a ResolutionError will be raised if *path* is an empty string. Use this when resolving the empty string could result in unexpected behavior.
+    :type allow_empty_string: boolean
 
     Returns either a list of results or a single result (depending on
     how many is expected; if only one, then an interactive picking of
@@ -523,7 +528,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     of the hash ID, it will return None for all fields.
     '''
 
-    project, folderpath, entity_name = resolve_path(path, expected)
+    project, folderpath, entity_name = resolve_path(path, expected, allow_empty_string=allow_empty_string)
 
     if entity_name is None:
         # Definitely a folder (or project)
