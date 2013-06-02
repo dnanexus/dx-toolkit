@@ -186,7 +186,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['length'], second_desc['length'])
 
     def test_dx_upload_download(self):
-        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=3):
             run('dx download ""')
         wd = tempfile.mkdtemp()
         os.mkdir(os.path.join(wd, "a"))

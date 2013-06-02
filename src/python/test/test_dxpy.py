@@ -1139,8 +1139,9 @@ class TestResolver(unittest.TestCase):
 
     def test_basic_ops(self):
         from dxpy.utils.resolver import resolve_existing_path, ResolutionError
+        resolve_existing_path('')
         with self.assertRaises(ResolutionError):
-            resolve_existing_path('')
+            resolve_existing_path('', allow_empty_string=False)
         proj_id, path, entity_id = resolve_existing_path(':')
         self.assertEqual(proj_id, dxpy.WORKSPACE_ID)
 
