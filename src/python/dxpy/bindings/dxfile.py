@@ -400,7 +400,6 @@ class DXFile(DXDataObject):
         url = resp["url"]
         headers = resp.get("headers", {})
         headers['Content-Length'] = str(len(data))
-        headers['Content-Type'] = 'application/octet-stream'
 
         md5 = hashlib.md5()
         if hasattr(data, 'seek') and hasattr(data, 'tell'):

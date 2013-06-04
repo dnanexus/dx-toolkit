@@ -239,10 +239,10 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
     # config.setdefault('max_retries', MAX_RETRIES)
-    if 'Content-Type' not in headers and method == 'POST':
-        headers['Content-Type'] = 'application/json'
     if jsonify_data:
         data = json.dumps(data)
+        if 'Content-Type' not in headers and method == 'POST':
+            headers['Content-Type'] = 'application/json'
 
     # If the input is a buffer, its data gets consumed by
     # requests.request (moving the read position). Record the initial
