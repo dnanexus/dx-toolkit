@@ -1,3 +1,11 @@
+dx-toolkit (0.53.0) precise; urgency=low
+
+  * Improvements to syntax checking.
+
+  * HTML reports can now embed CSS and JS inline.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 04 Jun 2013 20:00:53 +0000
+
 dx-toolkit (0.52.0) precise; urgency=low
 
   * Improved error reporting.
