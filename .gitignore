@@ -13,6 +13,7 @@
 /src/java/target/
 /src/perl/DNAnexus-*
 /src/python/dxpy/toolkit_version.py
+/src/python/coverage-reports/
 /src/python/coverage-*.egg/
 /src/python/nose-*.egg/
 /src/ruby/lib/dxruby/version.rb
