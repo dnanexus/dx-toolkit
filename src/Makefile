@@ -153,6 +153,9 @@ test_ruby: ruby
 test_python:
 	(cd python; ./setup.py nosetests)
 
+coverage_python:
+	(cd python; test/coveragereport.py --strip-prefix=$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7 --cover dxpy --exclude dxpy.packages)
+
 test_perl:
 	(cd perl; prove)
 
