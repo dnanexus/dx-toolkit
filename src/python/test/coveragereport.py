@@ -566,7 +566,7 @@ def make_coverage_reports(path, report_path, opts):
     tree = load_coverage(path, opts=opts)
     if opts.verbose:
         print(tree)
-    rev = get_svn_revision(os.path.join(path, os.path.pardir))
+    rev = get_git_revision(os.path.join(path, os.path.pardir))
     timestamp = str(datetime.datetime.utcnow())+"Z"
     footer = "Generated for revision %s on %s" % (rev, timestamp)
     create_report_path(report_path)
@@ -590,6 +590,18 @@ def get_svn_revision(path):
         rev = "UNKNOWN"
     return rev
 
+def get_git_revision(path):
+    """Return the Git describe output for a working directory."""
+    try:
+        pipe = subprocess.Popen(['git', 'describe', '--always'], stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdout, stderr = pipe.communicate()
+        rev = stdout.strip()
+    except OSError:
+        rev = ""
+    if not rev:
+        rev = "UNKNOWN"
+    return rev
 
 def main(args=None):
     """Process command line arguments and produce HTML coverage reports."""
