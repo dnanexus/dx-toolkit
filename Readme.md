@@ -51,6 +51,16 @@ toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
 
+### Ubuntu 13.04
+
+    sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
+      libboost1.53-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
+
+### Ubuntu 12.10
+
+    sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
+      libboost1.50-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
+
 ### Ubuntu 12.04
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
