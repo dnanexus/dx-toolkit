@@ -76,12 +76,12 @@ parser.set_defaults(update=True)
 parser.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
 parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
-parser.set_defaults(dx_toolkit_autodep="auto")
+parser.set_defaults(dx_toolkit_autodep="stable")
 parser.add_argument("--dx-toolkit-legacy-git-autodep", help="Auto-insert a dx-toolkit dependency on the latest git version (to be built from source at runtime)", action="store_const", dest="dx_toolkit_autodep", const="git")
 parser.add_argument("--dx-toolkit-stable-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit (stable) apt package", action="store_const", dest="dx_toolkit_autodep", const="stable")
-parser.add_argument("--dx-toolkit-beta-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit-beta apt package", action="store_const", dest="dx_toolkit_autodep", const="beta")
-parser.add_argument("--dx-toolkit-unstable-autodep", help="Auto-insert a dx-toolkit dependency on the dx-toolkit-unstable apt package", action="store_const", dest="dx_toolkit_autodep", const="unstable")
-parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")
+parser.add_argument("--dx-toolkit-beta-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="beta")         # deprecated
+parser.add_argument("--dx-toolkit-unstable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="unstable") # deprecated
+parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
 parser.set_defaults(check_syntax=True)
@@ -353,7 +353,7 @@ def _parse_app_spec(src_dir):
             raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.message)
 
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
-                      version_override=None, bill_to_override=None, dx_toolkit_autodep="auto",
+                      version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
                       do_check_syntax=True):
     if mode == 'app':
@@ -363,16 +363,9 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     temp_dir = tempfile.mkdtemp()
 
-    # If dx_toolkit_autodep is "auto", We have to resolve the correct
-    # dx-toolkit dependency type here and explicitly pass it into the
-    # interior call of dx-build-app, because within the execution
-    # environment of tarball_app(let)_builder, APISERVER_HOST is set to
-    # the address of the proxy (a 10.x.x.x address) and doesn't give us
-    # any information about whether we are talking to prod or not.
+    # TODO: this is vestigial, the "auto" setting should be removed.
     if dx_toolkit_autodep == "auto":
-        # "auto" (the default) means dx-toolkit (stable) on prod, and
-        # dx-toolkit-beta on all other systems.
-        dx_toolkit_autodep = "stable" if dxpy.APISERVER_HOST == "api.dnanexus.com" else "beta"
+        dx_toolkit_autodep = "stable"
 
     build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
 
@@ -519,7 +512,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     return
 
 
-def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="auto", do_build_step=True, do_upload_step=True, do_check_syntax=True, dry_run=False, return_object_dump=False):
+def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True, dry_run=False, return_object_dump=False):
 
     app_json = _parse_app_spec(src_dir)
     _verify_app_source_dir(src_dir, enforce=do_check_syntax)
@@ -555,10 +548,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
         bundled_resources = dxpy.app_builder.upload_resources(src_dir, project=working_project) if not dry_run else []
 
         try:
+            # TODO: the "auto" setting is vestigial and should be removed.
             if dx_toolkit_autodep == "auto":
-                # "auto" (the default) means dx-toolkit (stable) on
-                # prod, and dx-toolkit-beta on all other systems.
-                dx_toolkit_autodep = "stable" if dxpy.APISERVER_HOST == "api.dnanexus.com" else "beta"
+                dx_toolkit_autodep = "stable"
             applet_id, applet_spec = dxpy.app_builder.upload_applet(
                 src_dir,
                 bundled_resources,
@@ -651,6 +643,9 @@ def main(**kwargs):
 
     if args.mode == "app" and args.destination != '.':
         parser.error("--destination cannot be used when creating an app (only an applet)")
+
+    if args.dx_toolkit_autodep in ['beta', 'unstable']:
+        logging.warn('The --dx-toolkit-beta-autodep and --dx-toolkit-unstable-autodep flags have no effect and will be removed at some date in the future.')
 
     if not args.remote:
         # LOCAL BUILD

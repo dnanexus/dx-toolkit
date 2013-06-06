@@ -196,7 +196,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     :type override_folder: str
     :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
     :type override_name: str
-    :param dx_toolkit_autodep: What type of dx-toolkit dependency to inject if none is present. "stable", "beta", or "unstable" for the corresponding apt packages; "git" for HEAD of dx-toolkit master branch; or False for no dependency.
+    :param dx_toolkit_autodep: What type of dx-toolkit dependency to inject if none is present. "stable" for the APT package; "git" for HEAD of dx-toolkit master branch; or False for no dependency.
     :type dx_toolkit_autodep: boolean or string
     """
     applet_spec = _get_applet_spec(src_dir)
@@ -265,14 +265,11 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                           "url": "git://github.com/dnanexus/dx-toolkit.git",
                           "tag": "master",
                           "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
-    elif dx_toolkit_autodep == "stable":
+    # TODO: reject "beta" and "unstable" eventually
+    elif dx_toolkit_autodep in ("stable", "beta", "unstable"):
         dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
-    elif dx_toolkit_autodep == "beta":
-        dx_toolkit_dep = {"name": "dx-toolkit-beta", "package_manager": "apt"}
-    elif dx_toolkit_autodep == "unstable":
-        dx_toolkit_dep = {"name": "dx-toolkit-unstable", "package_manager": "apt"}
     elif dx_toolkit_autodep:
-        raise AppBuilderException("dx_toolkit_autodep must be one of 'stable', 'beta', 'unstable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
+        raise AppBuilderException("dx_toolkit_autodep must be one of 'stable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
 
     if dx_toolkit_autodep:
         applet_spec["runSpec"].setdefault("execDepends", [])
