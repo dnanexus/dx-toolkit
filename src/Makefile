@@ -150,11 +150,12 @@ test: test_python test_perl
 test_ruby: ruby
 	(source ../environment && ruby ruby/test/test_dxruby.rb)
 
+coverage_python:
+	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(ls -d $$(pwd)/coverage-*.egg)"; test/coveragereport.py --strip-prefix=$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7 --cover dxpy --exclude dxpy.packages)
+
 test_python:
 	(cd python; ./setup.py nosetests)
-
-coverage_python:
-	(cd python; test/coveragereport.py --strip-prefix=$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7 --cover dxpy --exclude dxpy.packages)
+	$(MAKE) coverage_python
 
 test_perl:
 	(cd perl; prove)
