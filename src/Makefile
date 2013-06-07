@@ -154,7 +154,7 @@ coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(ls -d $$(pwd)/coverage-*.egg)"; test/coveragereport.py --strip-prefix=$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7 --cover dxpy --cover scripts --exclude dxpy.packages)
 
 test_python:
-	(cd python; ./setup.py nosetests)
+	(cd python; ./setup.py nosetests --cover-inclusive)
 
 test_perl:
 	(cd perl; prove)
