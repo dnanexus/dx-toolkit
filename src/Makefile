@@ -151,7 +151,7 @@ test_ruby: ruby
 	(source ../environment && ruby ruby/test/test_dxruby.rb)
 
 coverage_python:
-	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(ls -d $$(pwd)/coverage-*.egg)"; \
+	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
 	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy --cover scripts --exclude dxpy.packages)
 
 test_python:
