@@ -170,7 +170,7 @@ class ContentLengthError(HTTPError):
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
-                  prepend_srv=True,
+                  prepend_srv=True, session_handler=SESSION_HANDLER,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -268,7 +268,7 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     for retry in range(max_retries + 1):
         streaming_response_truncated = False
         try:
-            response = SESSION_HANDLER.request(method, url, data=data, headers=headers, timeout=timeout,
+            response = session_handler.request(method, url, data=data, headers=headers, timeout=timeout,
                                                auth=auth, config=config, **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
