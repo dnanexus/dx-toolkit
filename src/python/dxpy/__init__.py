@@ -89,6 +89,10 @@ values:
    one, or the default project that is being used, for users accessing
    the platform from the outside.
 
+.. py:data:: USER_AGENT
+
+   The user agent string that dxpy will send to the server with each request.
+
 The :func:`dxpy.DXHTTPRequest` function uses the ``DX_SECURITY_CONTEXT``
 and ``DX_APISERVER_*`` variables to select an API server and provide
 appropriate authentication headers to it. (Note: all methods in the
