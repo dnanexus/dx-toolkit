@@ -3210,7 +3210,7 @@ parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, A
                           usage='%(prog)s [-h] [--version] command ...')
 parser.add_argument('--version', action='version', version='dx %s' % (dxpy.TOOLKIT_VERSION,))
 
-subparsers = parser.add_subparsers(help=argparse.SUPPRESS)
+subparsers = parser.add_subparsers(help=argparse.SUPPRESS, dest='command')
 subparsers.metavar = 'command'
 
 parser_login = subparsers.add_parser('login', help='Log in (interactively or with an existing API token)', description='Log in interactively and acquire credentials.  Use "--token" to log in with an existing API token.', prog='dx login',
@@ -3888,6 +3888,7 @@ def main():
 
     if len(args_list) > 0:
         args = parser.parse_args(args_list)
+        dxpy.USER_AGENT += " {prog}-{command}".format(prog=parser.prog, command=getattr(args, 'command', ''))
         set_cli_colors(args)
         set_delim(args)
         set_env_from_args(args)

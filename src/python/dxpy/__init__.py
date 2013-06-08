@@ -174,7 +174,7 @@ class ContentLengthError(HTTPError):
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
-                  prepend_srv=True, session_handler=SESSION_HANDLER, ua_extension=None,
+                  prepend_srv=True, session_handler=SESSION_HANDLER,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -197,8 +197,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     :type want_full_response: boolean
     :param prepend_srv: If True, prepends the API server location to the URL
     :type prepend_srv: boolean
-    :param ua_extension: If set, this string will be appended to the user agent header
-    :type ua_extension: string
     :param max_retries: Maximum number of retries to perform for a request. A "failed" request is retried if any of the following is true:
 
                         - A response is received from the server, and the content length received does not match the "Content-Length" header.
@@ -238,6 +236,11 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     if config is None:
         config = {}
 
+    # When *data* is bytes but *headers* contains Unicode strings, httplib tries to concatenate them and decode *data*,
+    # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
+    # just encode them with the Python default (ascii) and fail for any non-ascii content.
+    headers = {k.encode(): v.encode() for k, v in headers.iteritems()}
+
     # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
     # config.setdefault('max_retries', MAX_RETRIES)
     if jsonify_data:
@@ -255,8 +258,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     headers['DNAnexus-API'] = API_VERSION
     headers['User-Agent'] = USER_AGENT
-    if ua_extension:
-        headers['User-Agent'] += ' ' + ua_extension
 
     if use_compression == 'snappy':
         if not snappy_available:
@@ -267,11 +268,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
         kwargs['verify'] = os.environ['DX_CA_CERT']
         if os.environ['DX_CA_CERT'] == 'NOVERIFY':
             kwargs['verify'] = False
-
-    # When *data* is bytes but *headers* contains Unicode strings, httplib tries to concatenate them and decode *data*,
-    # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
-    # just encode them with the Python default (ascii) and fail for any non-ascii content.
-    headers = {k.encode(): v.encode() for k, v in headers.iteritems()}
 
     response, last_error = None, None
     for retry in range(max_retries + 1):
