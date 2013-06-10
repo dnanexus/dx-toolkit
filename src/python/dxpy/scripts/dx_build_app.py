@@ -209,7 +209,7 @@ def _lint(dxapp_json_filename):
 
     if 'categories' in app_spec:
         for category in app_spec['categories']:
-            if category not in ['Import', 'Export', 'Alignment', 'Variation calling', 'Annotation', 'Filtering', 'Reports', 'RNA-Seq', 'Statistics', 'Type validation', 'Debugging']:
+            if category not in ['Import', 'Export', 'Alignment', 'Variation calling', 'Annotation', 'Reports', 'RNA-Seq', 'Statistics', 'Debugging', 'Assembly']:
                 logger.warn('app has unrecognized category "%s"' % (category,))
             if category == 'Import':
                 if not app_spec['title'].endswith('Importer'):
