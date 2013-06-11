@@ -1,3 +1,9 @@
+dx-toolkit (0.54.0) precise; urgency=low
+
+  * Various bug fixes and tests.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 11 Jun 2013 22:02:10 +0000
+
 dx-toolkit (0.53.0) precise; urgency=low
 
   * Improvements to syntax checking.
