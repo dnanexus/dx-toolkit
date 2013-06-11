@@ -348,37 +348,25 @@ def login(args):
             password = getpass.getpass()
         except (KeyboardInterrupt, EOFError):
             parser.exit(1, '\n')
-        auth = requests.auth.HTTPBasicAuth(username, password)
 
-        session = requests.session()
+        def get_token(**data):
+            return dxpy.DXHTTPRequest(authserver+"/authorizations", data, prepend_srv=False, auth=None)
         try:
-            res = requests.post(authserver+"/oauth2/authorize",
-                                data={"response_type": "code", "client_id": "dnanexus.com", "redirect_uri": "https://platform.dnanexus.com"},
-                                auth=auth,
-                                allow_redirects=False)
-        except Exception as e:
-            # An error may be thrown here if the host is not reachable
-            # or if the port is not receiving connections
-            parser.exit(3, fill("Error: The authserver could not be contacted: {e}".format(e=e)) + "\n")
-        try:
-            if 'Location' not in res.headers:
-                raise Exception('"Location" header not found in response from server')
-            parsed_url = urlparse.parse_qs(urlparse.urlsplit(res.headers['Location'])[3])
-        except Exception as e:
-            # An error may be thrown here if the wrong port is specified
-            parser.exit(3, fill("Error: the response from the authserver could not be parsed: {e}".format(e=e)) + "\n")
-        if 'code' not in parsed_url:
-            parser.exit(1, 'Error: Incorrect username and/or password\n')
-        else:
-            code = parsed_url['code'][0]
-        
-        try:
-            res = requests.post(authserver+"/oauth2/token",
-                                data={"grant_type": "authorization_code", "code": code, "redirect_uri": "https://platform.dnanexus.com"})
-            assert(res.status_code == requests.codes.ok)
+            token_res = get_token(username=username, password=password)
+        except dxpy.DXAPIError as e:
+            if e.name == 'OTPRequiredError':
+                otp = raw_input('Verification code: ')
+                try:
+                    token_res = get_token(username=username, password=password, otp=otp)
+                except:
+                    err_exit("Login error", arg_parser=parser)
+            elif e.name == 'UsernameOrPasswordError':
+                err_exit("Incorrect username and/or password", arg_parser=parser)
+            else:
+                err_exit("Login error", arg_parser=parser)
         except:
-            parser.exit(3, 'Error: Please try again' + "\n")
-        token_res = json.loads(res.content)
+            err_exit("Login error", arg_parser=parser)
+
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
         if authserver == default_authserver:
