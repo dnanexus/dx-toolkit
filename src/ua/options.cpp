@@ -56,7 +56,7 @@ Options::Options() {
     ("auth-token,a", po::value<string>(&authToken), "Specify the authentication token")
     ("project,p", po::value<vector<string> >(&projects), "Name or ID of the destination project")
     ("folder,f", po::value<vector<string> >(&folders)->default_value(defaultFolders, "/"), "Name of the destination folder")
-    ("name,n", po::value<vector<string> >(&names), "Name of the file to be created")
+    ("name,n", po::value<vector<string> >(&names), "Name of the remote file (Note: Extension \".gz\" will be appended if the file is compressed before uploading)")
     ("read-threads", po::value<int>(&readThreads)->default_value(DEFAULT_READ_THREADS), "Number of parallel disk read threads")
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(DEFAULT_UPLOAD_THREADS), "Number of parallel upload threads")
