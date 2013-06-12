@@ -160,6 +160,7 @@ test_python:
 	(cd python; export COVERAGE_PROCESS_START="$$(pwd)/.coveragerc"; ./setup.py nosetests --cover-inclusive)
 	(cd python; mv build/*/.coverage* .)
 	(cd python; coverage combine)
+	(rm -f ../share/dnanexus/lib/python2.7/site-packages/sitecustomize.py)
 
 test_perl:
 	(cd perl; prove)
