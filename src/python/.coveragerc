@@ -1,2 +1,3 @@
 [run]
 omit = dxpy/packages/*
+parallel = True

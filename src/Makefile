@@ -152,10 +152,14 @@ test_ruby: ruby
 
 coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
-	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy --cover scripts --exclude dxpy.packages)
+	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy --cover scripts --exclude dxpy.packages --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))")
 
 test_python:
-	(cd python; ./setup.py nosetests --cover-inclusive)
+	(echo "import coverage; coverage.process_startup()" > ../share/dnanexus/lib/python2.7/site-packages/sitecustomize.py)
+	(cd python; rm -vf .coverage build/*/.coverage*)
+	(cd python; export COVERAGE_PROCESS_START="$$(pwd)/.coveragerc"; ./setup.py nosetests --cover-inclusive)
+	(cd python; mv build/*/.coverage* .)
+	(cd python; coverage combine)
 
 test_perl:
 	(cd perl; prove)
