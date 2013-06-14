@@ -38,7 +38,7 @@ from dxpy.utils.resolver import resolve_path, is_container_id
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
-APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)$")
+APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
 
 # COMMON OPTIONS
 parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
@@ -207,7 +207,7 @@ def _lint(dxapp_json_filename):
 
     if 'version' in app_spec:
         if not APP_VERSION_RE.match(app_spec['version']):
-            logger.warn('"version" %s should be of the form X.Y.Z' % (app_spec['version'],))
+            logger.warn('"version" %s should be semver compliant (e.g. of the form X.Y.Z)' % (app_spec['version'],))
 
     if 'categories' in app_spec:
         for category in app_spec['categories']:

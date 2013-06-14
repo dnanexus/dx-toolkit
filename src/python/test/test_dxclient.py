@@ -21,6 +21,7 @@ import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64
 from contextlib import contextmanager
 
 import dxpy
+from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
 
 @contextmanager
@@ -236,6 +237,16 @@ class TestDXBuildApp(DXTestCase):
     def test_help_without_security_context(self):
         env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None, DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
         run("dx-build-app -h", env=env)
+
+    def test_accepts_semver(self):
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41') is not None)
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41-rc.1') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('3.1.41-rc.1.') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('3.1.41-rc..1') is not None)
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef$') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef.') is not None)
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999-rc.1+git.abcdef') is not None)
 
     def test_build_applet(self):
         app_spec = {
