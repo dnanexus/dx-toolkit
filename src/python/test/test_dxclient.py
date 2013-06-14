@@ -220,35 +220,30 @@ class TestDXClient(DXTestCase):
         shell2 = pexpect.spawn("bash")
         shell1.logfile = shell2.logfile = sys.stdout
 
+        def expect_dx_env_cwd(shell, wd):
+            shell.expect(self.project)
+            shell.expect(wd)
+            shell.expect([">", "#"])
+
         shell1.sendline("dx select "+self.project)
         shell1.sendline("dx mkdir /sessiontest1")
         shell1.sendline("dx cd /sessiontest1")
         shell1.sendline("dx env")
-        shell1.expect(self.project)
-        shell1.expect("sessiontest1")
-        shell1.expect([">", "#"])
+        expect_dx_env_cwd(shell1, "sessiontest1")
 
         shell2.sendline("dx select "+self.project)
         shell2.sendline("dx mkdir /sessiontest2")
         shell2.sendline("dx cd /sessiontest2")
         shell2.sendline("dx env")
-        shell1.expect(self.project)
-        shell2.expect("sessiontest2")
-        shell1.expect([">", "#"])
+        expect_dx_env_cwd(shell2, "sessiontest2")
         shell2.sendline("bash -c 'dx env'")
-        shell1.expect(self.project)
-        shell2.expect("sessiontest2")
-        shell1.expect([">", "#"])
+        expect_dx_env_cwd(shell2, "sessiontest2")
 
         shell1.sendline("dx env")
-        shell1.expect(self.project)
-        shell1.expect("sessiontest1")
-        shell1.expect([">", "#"])
+        expect_dx_env_cwd(shell1, "sessiontest1")
         # Grandparent subprocess inherits session
         shell1.sendline("bash -c 'dx env'")
-        shell1.expect(self.project)
-        shell1.expect("sessiontest1")
-        shell1.expect([">", "#"])
+        expect_dx_env_cwd(shell1, "sessiontest1")
 
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
