@@ -268,7 +268,7 @@ clean:
 	$(MAKE) -C dx-wig-to-wiggle clean
 	-rm -f ../bin/dx-contigset-to-fasta
 	-rm -f ../bin/contigset2fasta
-	-rm -rf python/build
+	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
 	-rm -rf ../share
