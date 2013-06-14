@@ -97,62 +97,6 @@ def try_call(func, *args, **kwargs):
     except:
         err_exit(expected_exceptions=default_expected_exceptions + (DXError,))
 
-def get_bash_export_cmds(env_vars):
-    string = ''
-    for var in env_vars:
-        string += 'export ' + var + '=' + "'" + env_vars[var] + "'\n"
-    return string
-
-def write_env_var(var, value):
-    try:
-        os.mkdir(os.path.expanduser('~/.dnanexus_config/'), 0o700)
-    except OSError:
-        os.chmod(os.path.expanduser('~/.dnanexus_config/'), 0o700)
-    std_vars = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID', 'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
-    if var in std_vars:
-        env_vars = parse_env_jsonfile(user_env_jsonfile_path)
-        if value is None and var in env_vars:
-            del env_vars[var]
-        else:
-            env_vars[var] = value
-        # Make sure the file has 600 permissions
-        try:
-            os.remove(user_env_jsonfile_path)
-        except:
-            pass
-        with os.fdopen(os.open(user_env_jsonfile_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
-            json.dump(env_vars, fd, indent=4)
-            fd.write("\n")
-    else: # DX_CLI_WD, DX_USERNAME, DX_PROJECT_CONTEXT_NAME
-        # Make sure the file has 600 permissions
-        try:
-            os.remove(os.path.expanduser('~/.dnanexus_config/' + var))
-        except:
-            pass
-        with os.fdopen(os.open(os.path.expanduser('~/.dnanexus_config/' + var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
-            fd.write(value)
-    if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
-        with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
-            for var in std_vars:
-                fd.write('unset ' + var + '\n')
-
-def clearenv(args):
-    if state['interactive']:
-        parser.exit(1, 'Not allowed in interactive shell')
-    try:
-        os.remove(os.path.expanduser('~/.dnanexus_config/environment'))
-    except:
-        pass
-    try:
-        os.remove(os.path.expanduser('~/.dnanexus_config/environment.json'))
-    except:
-        pass
-    for f in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
-        try:
-            os.remove(os.path.expanduser('~/.dnanexus_config/' + f))
-        except:
-            pass
-
 def get_json_from_stdin():
     user_json_str = raw_input('Type JSON here> ')
     user_json = None
@@ -186,13 +130,14 @@ args_list = map(unicode, sys.argv[1:])
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
 if len(args_list) == 1 and args_list[0] == 'clearenv':
-    clearenv(argparse.Namespace())
+    from dxpy.utils.env import clearenv
+    clearenv(argparse.Namespace(interactive=False))
     exit(0)
 
 # importing dxpy will now appropriately load env variables
 import dxpy
 from dxpy.utils import group_array_by_field, normalize_timedelta
-from dxpy.utils.env import parse_env_jsonfile, user_env_jsonfile_path
+from dxpy.utils.env import clearenv, write_env_var
 from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                                  DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
                                  tty_rows, tty_cols)
@@ -3257,7 +3202,7 @@ register_subparser(parser_setenv, categories='other')
 
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx', 
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
-parser_clearenv.set_defaults(func=clearenv)
+parser_clearenv.set_defaults(func=clearenv, interactive=True)
 register_subparser(parser_clearenv, categories='session')
 
 parser_invite = subparsers.add_parser('invite',

@@ -51,3 +51,14 @@ fi
 export PYTHONIOENCODING=UTF-8
 
 eval "$(register-python-argcomplete dx|sed 's/-o default//')"
+
+# Clean up old session files
+(shopt -s nullglob;
+ if [[ $HOME != "" ]]; then
+     for session_dir in "${HOME}/.dnanexus_config/sessions/"*; do
+         if ! ps -p $(basename "$session_dir") &> /dev/null; then
+             rm -rf "$session_dir"
+         fi
+     done
+ fi
+)

@@ -21,35 +21,45 @@ https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-import os, shlex, sys, textwrap, json
+import os, sys, shutil, textwrap, json
+import psutil
 
-def parse_env_jsonfile(filename):
-    env_vars = {}
+def get_global_conf_dir():
+    return '/etc/dnanexus'
+
+def get_user_conf_dir():
+    return os.path.expanduser('~/.dnanexus_config')
+
+def get_session_conf_dir():
+    '''
+    Tries to find the session configuration directory by looking in ~/.dnanexus_config/sessions/<PID>,
+    where <PID> is pid of the parent of this process, then its parent, and so on.
+    If none of those exist, the path for the immediate parent is given, even if it doesn't exist.
+    '''
+    sessions_dir = os.path.join(get_user_conf_dir(), 'sessions')
+    parent_process = psutil.Process(os.getpid()).parent
+    default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
+    while parent_process is not None:
+        session_dir = os.path.join(sessions_dir, str(parent_process.pid))
+        if os.path.exists(session_dir):
+            return session_dir
+        parent_process = parent_process.parent
+    return default_session_dir
+
+def read_conf_dir(dirname):
     try:
-        with open(filename, 'r') as fd:
-            return json.load(fd)
+        with open(os.path.join(dirname, 'environment.json')) as fd:
+            env_vars = json.load(fd)
     except:
-        pass
+        env_vars = {}
+
+    for standalone_var in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
+        try:
+            with open(os.path.join(dirname, standalone_var)) as fd:
+                env_vars[standalone_var] = fd.read()
+        except:
+            pass
     return env_vars
-
-def parse_env_file(filename):
-    env_vars = {}
-    try:
-        with open(filename, 'r') as fd:
-            for line in fd:
-                if line.startswith('export DX'):
-                    env_vars[line[7: line.find('=')]] = ''.join(shlex.split(line[line.find('=') + 1:]))
-    except:
-        pass
-    return env_vars
-
-user_env_jsonfile_path = os.path.expanduser('~/.dnanexus_config/environment.json')
-
-def parse_user_env_file():
-    return parse_env_file(os.path.expanduser('~/.dnanexus_config/environment'))
-
-def parse_installed_env_file():
-    return parse_env_file('/opt/dnanexus/environment')
 
 def get_env(suppress_warning=False):
     '''
@@ -62,47 +72,90 @@ def get_env(suppress_warning=False):
     defaults in /opt/dnanexus/environment.
     '''
 
-    env_vars = {
-        'DX_APISERVER_HOST': os.environ.get('DX_APISERVER_HOST', None),
-        'DX_APISERVER_PORT': os.environ.get('DX_APISERVER_PORT', None),
-        'DX_APISERVER_PROTOCOL': os.environ.get('DX_APISERVER_PROTOCOL', None),
-        'DX_PROJECT_CONTEXT_ID': os.environ.get('DX_PROJECT_CONTEXT_ID', None),
-        'DX_WORKSPACE_ID': os.environ.get('DX_WORKSPACE_ID', None),
-        'DX_CLI_WD': os.environ.get('DX_CLI_WD', None),
-        'DX_USERNAME': os.environ.get('DX_USERNAME', None),
-        'DX_PROJECT_CONTEXT_NAME': os.environ.get('DX_PROJECT_CONTEXT_NAME', None),
-        'DX_SECURITY_CONTEXT': os.environ.get('DX_SECURITY_CONTEXT', None)
-        }
-
-    user_file_env_vars = parse_env_jsonfile(user_env_jsonfile_path)
-    old_user_file_env_vars = parse_user_env_file()
-    installed_file_env_vars = parse_installed_env_file()
-
-    for var in env_vars:
-        if env_vars[var] is None:
-            if var in user_file_env_vars:
-                env_vars[var] = user_file_env_vars[var]
-            elif var in old_user_file_env_vars:
-                env_vars[var] = old_user_file_env_vars[var]
-            elif var in installed_file_env_vars:
-                env_vars[var] = installed_file_env_vars[var]
-
-    for standalone_var in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
-        if env_vars[standalone_var] is None:
-            try:
-                with open(os.path.expanduser('~/.dnanexus_config/' + standalone_var)) as fd:
-                    env_vars[standalone_var] = fd.read()
-            except:
-                pass
+    env_vars = read_conf_dir(get_global_conf_dir())
+    env_vars.update(read_conf_dir(get_user_conf_dir()))
+    env_vars.update(read_conf_dir(get_session_conf_dir()))
+    var_names = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
+                 'DX_WORKSPACE_ID', 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME', 'DX_SECURITY_CONTEXT']
+    env_overrides = []
+    for var in var_names:
+        if var in os.environ:
+            env_vars[var] = os.environ[var]
+            env_overrides.append(var)
+        elif var not in env_vars:
+            env_vars[var] = None
 
     if sys.stdout.isatty():
-        already_set = []
-        for var in user_file_env_vars:
-            if var in env_vars and user_file_env_vars[var] != env_vars[var]:
-                already_set.append(var)
-
-        if not suppress_warning and len(already_set) > 0:
-            sys.stderr.write(textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(already_set), width=80) + '\n')
+        if not suppress_warning and len(env_overrides) > 0:
+            sys.stderr.write(textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(env_overrides), width=80) + '\n')
             sys.stderr.write(textwrap.fill("To use the values stored by dx, unset the environment variables in your shell by running \"source ~/.dnanexus_config/unsetenv\".  To clear the dx-stored values, run \"dx clearenv\".", width=80) + '\n')
 
     return env_vars
+
+def write_env_var(var, value):
+    user_conf_dir, session_conf_dir = get_user_conf_dir(), get_session_conf_dir()
+    try:
+        os.mkdir(user_conf_dir, 0o700)
+    except OSError:
+        os.chmod(user_conf_dir, 0o700)
+    try:
+        os.makedirs(session_conf_dir, 0o700)
+    except OSError:
+        os.chmod(session_conf_dir, 0o700)
+
+    write_env_var_to_conf_dir(var, value, user_conf_dir)
+    write_env_var_to_conf_dir(var, value, session_conf_dir)
+
+def write_env_var_to_conf_dir(var, value, conf_dir):
+    env_jsonfile_path = os.path.join(conf_dir, 'environment.json')
+    std_vars = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID', 'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
+    if var in std_vars:
+        try:
+            with open(env_jsonfile_path) as fd:
+                env_vars = json.load(fd)
+        except:
+            env_vars = {}
+        if value is None and var in env_vars:
+            del env_vars[var]
+        else:
+            env_vars[var] = value
+        # Make sure the file has 600 permissions
+        try:
+            os.remove(env_jsonfile_path)
+        except:
+            pass
+        with os.fdopen(os.open(env_jsonfile_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
+            json.dump(env_vars, fd, indent=4)
+            fd.write("\n")
+    else: # DX_CLI_WD, DX_USERNAME, DX_PROJECT_CONTEXT_NAME
+        # Make sure the file has 600 permissions
+        try:
+            os.remove(os.path.join(conf_dir, var))
+        except:
+            pass
+        with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
+            fd.write(value)
+
+    if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
+        with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
+            for var in std_vars:
+                fd.write('unset ' + var + '\n')
+
+def clearenv(args):
+    if args.interactive:
+        print 'Not allowed in interactive shell'
+        return
+    shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
+    try:
+        os.remove(os.path.expanduser('~/.dnanexus_config/environment'))
+    except:
+        pass
+    try:
+        os.remove(os.path.expanduser('~/.dnanexus_config/environment.json'))
+    except:
+        pass
+    for f in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
+        try:
+            os.remove(os.path.expanduser('~/.dnanexus_config/' + f))
+        except:
+            pass
