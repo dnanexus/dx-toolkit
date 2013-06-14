@@ -290,6 +290,9 @@ def get_input_array(param_desc):
         return input_array
 
 def format_choices_or_suggestions(header, items, obj_class, initial_indent=' ' * 8, subsequent_indent=' ' * 10):
+    if obj_class.startswith('array:'):
+        obj_class = obj_class[6:]
+
     def format_data_object_reference(item):
         if dxpy.is_dxlink(item):
             # Bare dxlink
