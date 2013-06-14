@@ -1,0 +1,22 @@
+{
+  "name": "parallelism_java",
+  "title": "Java Parallelism Example",
+  "summary": "Demonstrates spawning subjobs in Java",
+  "dxapi": "1.0.0",
+  "inputSpec": [
+    {"name": "input_file", "class": "file"},
+    {"name": "num_subtasks", "class": "int", "default": 5}
+  ],
+  "outputSpec": [
+    {"name": "output_file", "class": "file"}
+  ],
+  "runSpec": {
+    "file": "code.sh",
+    "interpreter": "bash",
+    "execDepends": [
+      {"name": "dx-java-bindings"},
+      {"name": "openjdk-6-jre-headless"}
+    ]
+  },
+  "version": "0.0.1"
+}
