@@ -80,8 +80,9 @@ def get_env(suppress_warning=False):
     env_overrides = []
     for var in var_names:
         if var in os.environ:
+            if var in env_vars and env_vars.get(var) != os.environ[var]:
+                env_overrides.append(var)
             env_vars[var] = os.environ[var]
-            env_overrides.append(var)
         elif var not in env_vars:
             env_vars[var] = None
 
