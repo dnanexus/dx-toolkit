@@ -248,6 +248,19 @@ class TestDXBuildApp(DXTestCase):
         self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef.') is not None)
         self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999-rc.1+git.abcdef') is not None)
 
+    def test_version_suffixes(self):
+        app_spec = {
+            "name": "test_versioning_app",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("test_versioning_app", json.dumps(app_spec), "code.py")
+        self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0').startswith('+build.'))
+        self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef').startswith('.build.'))
+
     def test_build_applet(self):
         app_spec = {
             "name": "minimal_applet",
