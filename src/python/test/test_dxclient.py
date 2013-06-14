@@ -19,6 +19,7 @@
 
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64
 from contextlib import contextmanager
+import pexpect
 
 import dxpy
 from dxpy_testutil import DXTestCase
@@ -213,6 +214,41 @@ class TestDXClient(DXTestCase):
         run(u'dx mkdir -p mkdirtest/b/c')
         run(u'dx mkdir -p mkdirtest/b/c')
         run(u'dx rm -r mkdirtest')
+
+    def test_dxpy_session_isolation(self):
+        shell1 = pexpect.spawn("bash")
+        shell2 = pexpect.spawn("bash")
+        shell1.logfile = shell2.logfile = sys.stdout
+
+        shell1.sendline("dx select "+self.project)
+        shell1.sendline("dx mkdir /sessiontest1")
+        shell1.sendline("dx cd /sessiontest1")
+        shell1.sendline("dx env")
+        shell1.expect(self.project)
+        shell1.expect("sessiontest1")
+        shell1.expect([">", "#"])
+
+        shell2.sendline("dx select "+self.project)
+        shell2.sendline("dx mkdir /sessiontest2")
+        shell2.sendline("dx cd /sessiontest2")
+        shell2.sendline("dx env")
+        shell1.expect(self.project)
+        shell2.expect("sessiontest2")
+        shell1.expect([">", "#"])
+        shell2.sendline("bash -c 'dx env'")
+        shell1.expect(self.project)
+        shell2.expect("sessiontest2")
+        shell1.expect([">", "#"])
+
+        shell1.sendline("dx env")
+        shell1.expect(self.project)
+        shell1.expect("sessiontest1")
+        shell1.expect([">", "#"])
+        # Grandparent subprocess inherits session
+        shell1.sendline("bash -c 'dx env'")
+        shell1.expect(self.project)
+        shell1.expect("sessiontest1")
+        shell1.expect([">", "#"])
 
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
