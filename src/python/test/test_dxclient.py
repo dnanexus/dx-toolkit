@@ -227,7 +227,7 @@ class TestDXClient(DXTestCase):
         def expect_dx_env_cwd(shell, wd):
             shell.expect(self.project)
             shell.expect(wd)
-            shell.expect([">", "#"])
+            shell.expect([">", "#", "$"]) # prompt
 
         shell1.sendline("dx select "+self.project)
         shell1.sendline("dx mkdir /sessiontest1")
