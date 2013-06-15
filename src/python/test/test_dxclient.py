@@ -217,7 +217,9 @@ class TestDXClient(DXTestCase):
         run(u'dx rm -r mkdirtest')
 
     def test_dxpy_session_isolation(self):
-        del os.environ["DX_PROJECT_CONTEXT_ID"], os.environ["DX_PROJECT_CONTEXT_NAME"], os.environ['DX_CLI_WD']
+        for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
+            if var in os.environ:
+                del os.environ[var]
         shell1 = pexpect.spawn("bash")
         shell2 = pexpect.spawn("bash")
         shell1.logfile = shell2.logfile = sys.stdout
