@@ -217,6 +217,7 @@ class TestDXClient(DXTestCase):
         run(u'dx rm -r mkdirtest')
 
     def test_dxpy_session_isolation(self):
+        del os.environ["DX_PROJECT_CONTEXT_ID"], os.environ["DX_PROJECT_CONTEXT_NAME"], os.environ['DX_CLI_WD']
         shell1 = pexpect.spawn("bash")
         shell2 = pexpect.spawn("bash")
         shell1.logfile = shell2.logfile = sys.stdout
@@ -224,7 +225,7 @@ class TestDXClient(DXTestCase):
         def expect_dx_env_cwd(shell, wd):
             shell.expect(self.project)
             shell.expect(wd)
-            #shell.expect([">", "#"])
+            shell.expect([">", "#"])
 
         shell1.sendline("dx select "+self.project)
         shell1.sendline("dx mkdir /sessiontest1")
@@ -242,7 +243,7 @@ class TestDXClient(DXTestCase):
 
         shell1.sendline("dx env")
         expect_dx_env_cwd(shell1, "sessiontest1")
-        # Grandparent subprocess inherits session
+        # Grandchild subprocess inherits session
         shell1.sendline("bash -c 'dx env'")
         expect_dx_env_cwd(shell1, "sessiontest1")
 
