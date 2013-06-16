@@ -33,7 +33,11 @@ export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
 #
 #   export MAKEFLAGS=-j8
 
-all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle
+all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq
+
+git_submodules:
+	(cd ..; git submodule init)
+	(cd ..; "`which git-retry || which git`" submodule update)
 
 # Client bindings and wrappers
 # ============================
@@ -256,6 +260,14 @@ doc_R: R
 doc_ruby: ruby
 	-rm -rf ../doc/ruby
 	(cd ruby; yard --output-dir "$(DNANEXUS_HOME)/doc/ruby")
+
+# Bundled utilities
+# =================
+
+jq: git_submodules
+	(cd jq && autoreconf && ./configure --disable-docs)
+	$(MAKE) -C jq -j
+	cp -f jq/jq ../bin/
 
 # Clean
 # =====
