@@ -22,6 +22,7 @@ from contextlib import contextmanager
 import pexpect
 
 import dxpy
+from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
 
 @contextmanager
@@ -216,6 +217,9 @@ class TestDXClient(DXTestCase):
         run(u'dx rm -r mkdirtest')
 
     def test_dxpy_session_isolation(self):
+        for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
+            if var in os.environ:
+                del os.environ[var]
         shell1 = pexpect.spawn("bash")
         shell2 = pexpect.spawn("bash")
         shell1.logfile = shell2.logfile = sys.stdout
@@ -223,7 +227,7 @@ class TestDXClient(DXTestCase):
         def expect_dx_env_cwd(shell, wd):
             shell.expect(self.project)
             shell.expect(wd)
-            #shell.expect([">", "#"])
+            shell.expect([">", "#", "$"]) # prompt
 
         shell1.sendline("dx select "+self.project)
         shell1.sendline("dx mkdir /sessiontest1")
@@ -241,7 +245,7 @@ class TestDXClient(DXTestCase):
 
         shell1.sendline("dx env")
         expect_dx_env_cwd(shell1, "sessiontest1")
-        # Grandparent subprocess inherits session
+        # Grandchild subprocess inherits session
         shell1.sendline("bash -c 'dx env'")
         expect_dx_env_cwd(shell1, "sessiontest1")
 
@@ -267,6 +271,29 @@ class TestDXBuildApp(DXTestCase):
     def test_help_without_security_context(self):
         env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None, DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
         run("dx-build-app -h", env=env)
+
+    def test_accepts_semver(self):
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41') is not None)
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41-rc.1') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('3.1.41-rc.1.') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('3.1.41-rc..1') is not None)
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef$') is not None)
+        self.assertFalse(dx_build_app.APP_VERSION_RE.match('22.0.999+git.abcdef.') is not None)
+        self.assertTrue(dx_build_app.APP_VERSION_RE.match('22.0.999-rc.1+git.abcdef') is not None)
+
+    def test_version_suffixes(self):
+        app_spec = {
+            "name": "test_versioning_app",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("test_versioning_app", json.dumps(app_spec), "code.py")
+        self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0').startswith('+build.'))
+        self.assertTrue(dx_build_app._get_version_suffix(app_dir, '1.0.0+git.abcdef').startswith('.build.'))
 
     def test_build_applet(self):
         app_spec = {
