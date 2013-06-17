@@ -267,7 +267,7 @@ doc_ruby: ruby
 jq: git_submodules
 	(cd jq; autoreconf --install)
 	(cd jq; ./configure --disable-docs)
-	$(MAKE) -C jq -j PATH=$$(echo /usr/local/Cellar/bison/*/bin):$$PATH
+	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
 	cp -f jq/jq ../bin/
 
 # Clean
