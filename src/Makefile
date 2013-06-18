@@ -35,9 +35,14 @@ export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
 
 all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq
 
+# Don't try to initialize the submodule in source distributions, it should
+# already be there and ready to build.
 git_submodules:
-	(cd ..; git submodule init)
-	(cd ..; "`which git-retry || which git`" submodule update)
+	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
+	    cd ..; \
+	    git submodule init; \
+	    "`which git-retry || which git`" submodule update; \
+	fi)
 
 # Client bindings and wrappers
 # ============================
