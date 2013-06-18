@@ -96,6 +96,12 @@ class AppInternalError(DXError):
     '''
     pass
 
+class DXCLIError(DXError):
+    '''
+    Exception class for generic errors in the command-line client
+    '''
+    pass
+
 def exit_with_exc_info(code=1, message='', print_tb=False):
     '''
     Exits the program, printing information about the last exception (if any) and an optional error message.
@@ -123,7 +129,9 @@ default_expected_exceptions = (DXAPIError,
                                requests.ConnectionError,
                                requests.HTTPError,
                                requests.Timeout,
-                               httplib.HTTPException)
+                               httplib.HTTPException,
+                               DXCLIError,
+                               KeyboardInterrupt)
 
 def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None):
     '''

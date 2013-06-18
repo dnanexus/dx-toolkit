@@ -20,7 +20,7 @@
 import os, sys, datetime, urlparse, getpass, collections, re, json, time, urllib, argparse, textwrap, copy, hashlib, errno, httplib
 import shlex # respects quoted substrings when splitting
 
-from ..exceptions import err_exit, default_expected_exceptions, DXError
+from ..exceptions import err_exit, default_expected_exceptions, DXError, DXCLIError
 from ..packages import requests
 
 # Try to reset encoding to utf-8
@@ -1113,182 +1113,188 @@ def tree(args):
         err_exit()
 
 def describe(args):
-    if len(args.path) == 0:
-        parser.exit(3, fill('Error: Must provide a nonempty string to be described') + '\n')
-
-    # Attempt to resolve name
-    # First, if it looks like a hash id, do that.
-    json_input = {}
-    json_input["properties"] = True
-    if args.name and (args.verbose or args.details or args.json):
-        parser.exit(1, fill('Cannot request --name in addition to one of --verbose, --details, or --json') + '\n')
-    # Always retrieve details too (just maybe don't render them)
-    json_input["details"] = True
-    if is_data_obj_id(args.path):
-        # Should prefer the current project's version if possible
-        if dxpy.WORKSPACE_ID is not None:
-            try:
-                # But only put it in the JSON if you still have
-                # access.
-                dxpy.api.project_list_folder(dxpy.WORKSPACE_ID)
-                json_input['project'] = dxpy.WORKSPACE_ID
-            except:
-                pass
-
-    # Otherwise, attempt to look for it as a data object.
     try:
-        project, folderpath, entity_results = resolve_existing_path(args.path,
-                                                                    expected='entity',
-                                                                    ask_to_resolve=False,
-                                                                    describe=json_input)
-    except:
-        project, folderpath, entity_results = None, None, None
+        if len(args.path) == 0:
+            raise DXCLIError('Must provide a nonempty string to be described')
 
-    found_match = False
+        # Attempt to resolve name
+        # First, if it looks like a hash id, do that.
+        json_input = {}
+        json_input["properties"] = True
+        if args.name and (args.verbose or args.details or args.json):
+            raise DXCLIError('Cannot request --name in addition to one of --verbose, --details, or --json')
+        # Always retrieve details too (just maybe don't render them)
+        json_input["details"] = True
+        if is_data_obj_id(args.path):
+            # Should prefer the current project's version if possible
+            if dxpy.WORKSPACE_ID is not None:
+                try:
+                    # But only put it in the JSON if you still have
+                    # access.
+                    dxpy.api.project_list_folder(dxpy.WORKSPACE_ID)
+                    json_input['project'] = dxpy.WORKSPACE_ID
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
 
-    json_output = []
+        # Otherwise, attempt to look for it as a data object.
+        try:
+            project, folderpath, entity_results = resolve_existing_path(args.path,
+                                                                        expected='entity',
+                                                                        ask_to_resolve=False,
+                                                                        describe=json_input)
+        except ResolutionError:
+            project, folderpath, entity_results = None, None, None
 
-    get_result_str = ResultCounter()
+        found_match = False
 
-    # Could be a project
-    json_input = {}
-    json_input['countObjects'] = True
-    if args.verbose:
-        json_input["permissions"] = True
-        json_input['appCaches'] = True
-    if entity_results is None:
-        if args.path[-1] == ':':
-            # It is the project.
-            try:
-                desc = dxpy.DXHTTPRequest('/' + project + '/describe',
-                                          json_input)
+        json_output = []
+
+        get_result_str = ResultCounter()
+
+        # Could be a project
+        json_input = {}
+        json_input['countObjects'] = True
+        if args.verbose:
+            json_input["permissions"] = True
+            json_input['appCaches'] = True
+        if entity_results is None:
+            if args.path[-1] == ':':
+                # It is the project.
+                try:
+                    desc = dxpy.DXHTTPRequest('/' + project + '/describe',
+                                              json_input)
+                    found_match = True
+                    if args.json:
+                        json_output.append(desc)
+                    elif args.name:
+                        print desc['name']
+                    else:
+                        print get_result_str()
+                        print_desc(desc, args.verbose)
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
+            elif is_container_id(args.path):
+                try:
+                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe',
+                                              json_input)
+                    found_match = True
+                    if args.json:
+                        json_output.append(desc)
+                    elif args.name:
+                        print desc['name']
+                    else:
+                        print get_result_str()
+                        print_desc(desc, args.verbose)
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
+
+        # Found data object or is an id
+        if entity_results is not None:
+            if len(entity_results) > 0:
                 found_match = True
-                if args.json:
-                    json_output.append(desc)
-                elif args.name:
-                    print desc['name']
-                else:
-                    print get_result_str()
-                    print_desc(desc, args.verbose)
-            except:
-                pass
-        elif is_container_id(args.path):
-            try:
-                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe',
-                                          json_input)
-                found_match = True
-                if args.json:
-                    json_output.append(desc)
-                elif args.name:
-                    print desc['name']
-                else:
-                    print get_result_str()
-                    print_desc(desc, args.verbose)
-            except:
-                pass
-
-    # Found data object or is an id
-    if entity_results is not None:
-        if len(entity_results) > 0:
-            found_match = True
-        for result in entity_results:
-            if args.json:
-                json_output.append(result['describe'])
-            elif args.name:
-                print result['describe']['name']
-            else:
-                print get_result_str()
-                print_desc(result['describe'], args.verbose or args.details)
-
-    if not is_hashid(args.path) and ':' not in args.path:
-
-        # Could be an app name
-        if args.path.startswith('app-'):
-            try:
-                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
-                if args.json:
-                    json_output.append(desc)
-                elif args.name:
-                    print desc['name']
-                else:
-                    print get_result_str()
-                    print_desc(desc, args.verbose)
-                found_match = True
-            except dxpy.DXAPIError as details:
-                if details.code != requests.codes.not_found:
-                    raise
-        else:
-            for result in dxpy.find_apps(name=args.path, describe=True):
+            for result in entity_results:
                 if args.json:
                     json_output.append(result['describe'])
                 elif args.name:
                     print result['describe']['name']
                 else:
                     print get_result_str()
-                    print_desc(result['describe'], args.verbose)
-                found_match = True
+                    print_desc(result['describe'], args.verbose or args.details)
 
-        # Could be a user
-        if args.path.startswith('user-'):
-            try:
-                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
-                found_match = True
-                if args.json:
-                    json_output.append(desc)
-                elif args.name:
-                    print unicode(desc['first']) + ' ' + unicode(desc['last'])
-                else:
-                    print get_result_str()
-                    print_desc(desc, args.verbose)
-            except dxpy.DXAPIError as details:
-                if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
-                    raise
-        elif re.match("^[A-Za-z][0-9A-Za-z_\.]{2,}$", args.path):
-            # Try describing as a user if it's a valid handle (no
-            # hyphens, etc.)
-            try:
-                desc = dxpy.DXHTTPRequest('/user-' + args.path.lower() + '/describe',
-                                          {"appsInstalled": True,
-                                           "subscriptions": True})
-                found_match = True
-                if args.json:
-                    json_output.append(desc)
-                elif args.name:
-                    print unicode(desc['first']) + ' ' + unicode(desc['last'])
-                else:
-                    print get_result_str()
-                    print_desc(desc, args.verbose)
-            except dxpy.DXAPIError as details:
-                if details.code != requests.codes.not_found and details.code != requests.codes.unprocessable_entity:
-                    raise
+        if not is_hashid(args.path) and ':' not in args.path:
 
-        # Could be an org or team
-        if args.path.startswith('org-') or args.path.startswith('team-'):
-            try:
-                desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
-                found_match = True
-                if args.json:
-                    json_output.append(desc)
-                elif args.name:
-                    print desc['id']
-                else:
-                    print get_result_str()
-                    print_desc(desc, args.verbose)
-            except dxpy.DXAPIError as details:
-                if details.code != requests.codes.not_found:
-                    raise
+            # Could be an app name
+            if args.path.startswith('app-'):
+                try:
+                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
+                    if args.json:
+                        json_output.append(desc)
+                    elif args.name:
+                        print desc['name']
+                    else:
+                        print get_result_str()
+                        print_desc(desc, args.verbose)
+                    found_match = True
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
+            else:
+                for result in dxpy.find_apps(name=args.path, describe=True):
+                    if args.json:
+                        json_output.append(result['describe'])
+                    elif args.name:
+                        print result['describe']['name']
+                    else:
+                        print get_result_str()
+                        print_desc(result['describe'], args.verbose)
+                    found_match = True
 
-    if args.json:
-        if args.multi:
-            print json.dumps(json_output, indent=4)
-        elif len(json_output) > 1:
-            parser.exit(1, fill('More than one match found for ' + args.path + '; to get all of them in JSON format, also provide the --multi flag.') + '\n')
-        elif len(json_output) == 0:
-            parser.exit(1, fill('No match found for ' + args.path) + '\n')
-        else:
-            print json.dumps(json_output[0], indent=4)
-    elif not found_match:
-        parser.exit(1, fill("No matches found for " + args.path) + '\n')
+            # Could be a user
+            if args.path.startswith('user-'):
+                try:
+                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {"appsInstalled": True, "subscriptions": True})
+                    found_match = True
+                    if args.json:
+                        json_output.append(desc)
+                    elif args.name:
+                        print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                    else:
+                        print get_result_str()
+                        print_desc(desc, args.verbose)
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
+            elif re.match("^[A-Za-z][0-9A-Za-z_\.]{2,}$", args.path):
+                # Try describing as a user if it's a valid handle (no
+                # hyphens, etc.)
+                try:
+                    desc = dxpy.DXHTTPRequest('/user-' + args.path.lower() + '/describe',
+                                              {"appsInstalled": True,
+                                               "subscriptions": True})
+                    found_match = True
+                    if args.json:
+                        json_output.append(desc)
+                    elif args.name:
+                        print unicode(desc['first']) + ' ' + unicode(desc['last'])
+                    else:
+                        print get_result_str()
+                        print_desc(desc, args.verbose)
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
+
+            # Could be an org or team
+            if args.path.startswith('org-') or args.path.startswith('team-'):
+                try:
+                    desc = dxpy.DXHTTPRequest('/' + args.path + '/describe', {})
+                    found_match = True
+                    if args.json:
+                        json_output.append(desc)
+                    elif args.name:
+                        print desc['id']
+                    else:
+                        print get_result_str()
+                        print_desc(desc, args.verbose)
+                except dxpy.DXAPIError as details:
+                    if details.code != requests.codes.not_found:
+                        raise
+
+        if args.json:
+            if args.multi:
+                print json.dumps(json_output, indent=4)
+            elif len(json_output) > 1:
+                raise DXCLIError('More than one match found for ' + args.path + '; to get all of them in JSON format, also provide the --multi flag.')
+            elif len(json_output) == 0:
+                raise DXCLIError('No match found for ' + args.path)
+            else:
+                print json.dumps(json_output[0], indent=4)
+        elif not found_match:
+            raise DXCLIError("No matches found for " + args.path)
+    except:
+        err_exit()
 
 def new_project(args):
     if args.name == None:

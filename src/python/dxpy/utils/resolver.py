@@ -492,7 +492,7 @@ def resolve_job_ref(job_id, name, describe={}):
             except BaseException as details:
                 raise ResolutionError(str(details))
         else:
-            raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is not of a data object class')        
+            raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is not of a data object class')
     else:
         raise ResolutionError('Error: Could not find \"' + name + '\" as an output field name of ' + job_id + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
 
