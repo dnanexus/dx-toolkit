@@ -1,3 +1,11 @@
+dx-toolkit (0.55.0) precise; urgency=low
+
+  * Improvements to version handling in dx-build-app.
+
+  * Various bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 18 Jun 2013 18:24:59 +0000
+
 dx-toolkit (0.54.0) precise; urgency=low
 
   * Various bug fixes and tests.
