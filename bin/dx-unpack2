@@ -1,0 +1,61 @@
+#!/bin/bash -e
+#
+# Copyright (C) 2013 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+info() {
+    echo -e "$@" >&2
+}
+
+warn() {
+    echo -e "$@" >&2
+}
+
+error() {
+    echo -e "$@" >&2
+}
+
+if [[ $# == 0 ]] || [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+    info "$(basename $0): Extract a file from an archive and print resulting filename."
+    info "Usage: $(basename $0) ARCHIVE [TARGET_FILENAME]"
+    exit 1
+fi
+
+prog="$(basename $0)"
+input="$1"
+output="$2"
+if [[ $output == "" ]]; then
+    output="$input.$RANDOM"
+fi
+input_type=$(file "$input")
+
+if [[ "$input_type" == *"gzip compressed data"* ]]; then
+    gzip --decompress --stdout "$input" > "$output"
+elif [[ "$input_type" == *"bzip2 compressed data"* ]]; then
+    bzip2 --decompress --stdout "$input" > "$output"
+elif [[ "$input_type" == *"XZ compressed data"* ]]; then
+    xz --decompress --stdout "$input" > "$output"
+elif [[ "$input_type" == *"Zip archive data"* ]]; then
+    unzip -p "$input" > "$output"
+elif [[ "$input_type" == *"7-zip archive data"* ]]; then
+    7z e -so -y "$input" > "$output"
+elif [[ "$input_type" == *"RAR archive data"* ]]; then
+    unrar p -ierr -y "$input" > "$output"
+else
+    warn "$prog $1: Unrecognized compression format. Leaving file intact."
+fi
+
+echo $output
