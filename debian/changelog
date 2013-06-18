@@ -1,3 +1,9 @@
+dx-toolkit (0.55.2) precise; urgency=low
+
+  * Build process fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 18 Jun 2013 23:05:23 +0000
+
 dx-toolkit (0.55.1) precise; urgency=low
 
   * Build process fixes.
