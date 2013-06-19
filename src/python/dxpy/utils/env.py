@@ -22,7 +22,6 @@ for more details.
 '''
 
 import os, sys, shutil, textwrap, json
-import psutil
 
 def get_global_conf_dir():
     return '/etc/dnanexus'
@@ -37,14 +36,18 @@ def get_session_conf_dir():
     If none of those exist, the path for the immediate parent is given, even if it doesn't exist.
     '''
     sessions_dir = os.path.join(get_user_conf_dir(), 'sessions')
-    parent_process = psutil.Process(os.getpid()).parent
-    default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
-    while parent_process is not None and parent_process.pid != 0:
-        session_dir = os.path.join(sessions_dir, str(parent_process.pid))
-        if os.path.exists(session_dir):
-            return session_dir
-        parent_process = parent_process.parent
-    return default_session_dir
+    try:
+        import psutil
+        parent_process = psutil.Process(os.getpid()).parent
+        default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
+        while parent_process is not None and parent_process.pid != 0:
+            session_dir = os.path.join(sessions_dir, str(parent_process.pid))
+            if os.path.exists(session_dir):
+                return session_dir
+            parent_process = parent_process.parent
+        return default_session_dir
+    except ImportError:
+        return os.path.join(sessions_dir, str(os.getppid()))
 
 def read_conf_dir(dirname):
     try:
