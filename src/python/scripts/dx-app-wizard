@@ -294,6 +294,37 @@ with open(os.path.join(template_dir, 'dxapp.json'), 'r') as template_app_json_fi
     for key in template_app_json['runSpec']:
         app_json['runSpec'][key] = template_app_json['runSpec'][key]
 
+##########################
+# APP ACCESS PERMISSIONS #
+##########################
+
+print ''
+print BOLD('Access Permissions')
+print fill('''If you request these extra permissions for your app, users will see this fact when launching your app,
+and certain other restrictions will apply. For more information, see ''' + 
+BOLD('https://wiki.dnanexus.com/App-Permissions') + '.')
+
+print ''
+print fill(UNDERLINE('Access to the Internet') + ' (other than accessing the DNAnexus API).')
+answer = raw_input("Will this app need access to the Internet? [y/N] ")
+if answer and answer.lower()[0] == 'y':
+    app_json.setdefault('access', {})
+    app_json['access']['network'] = ['*']
+    print fill('App has full access to the Internet. To narrow access to specific sites, edit the ' +
+               UNDERLINE('access.network') + ' field of dxapp.json once we generate the app.')
+
+print ''
+print fill(UNDERLINE('Direct access to the parent project') + '''. This is not needed if your app specifies outputs,
+which will be copied into the project after it's done running.''')
+answer = raw_input("Will this app need access to the parent project? [y/N] ")
+if answer and answer.lower()[0] == 'y':
+    app_json.setdefault('access', {})
+    app_json['access']['project'] = 'CONTRIBUTE'
+    print fill('App has CONTRIBUTE access to the parent project. To change the access level or request access to ' +
+               'other projects, edit the ' + UNDERLINE('access.project') + ' and ' + UNDERLINE('access.allProjects') +
+               ' fields of dxapp.json once we generate the app.')
+
+
 #################
 # WRITING FILES #
 #################
