@@ -54,17 +54,17 @@ toolkit that doesn't require them.
 ### Ubuntu 13.04
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
-      libboost1.53-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
+      libboost1.53-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison
 
 ### Ubuntu 12.10
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
-      libboost1.50-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
+      libboost1.50-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison
 
 ### Ubuntu 12.04
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv g++ cmake \
-      libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev
+      libboost1.48-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison
 
 ### Ubuntu 10.04
 
@@ -87,7 +87,7 @@ into ```/usr/local/lib```.
 The following additional dependencies are also needed:
 
     sudo apt-get install make g++ cmake libcurl4-openssl-dev zlib1g-dev \
-      libbz2-dev
+      libbz2-dev flex bison
 
 ### CentOS 5.x/6.x
 
