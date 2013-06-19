@@ -2637,10 +2637,10 @@ def print_run_help(executable="", alias=None):
             exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
 
             if isinstance(handler, dxpy.bindings.DXApp):
-                exec_help += "App: "
+                exec_help += BOLD("App: ")
                 exec_details = exec_desc['details']
             else:
-                exec_help += "Applet: "
+                exec_help += BOLD("Applet: ")
                 exec_details = handler.get_details()
             advanced_inputs = exec_details.get("advancedInputs", [])
             exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
@@ -2652,7 +2652,7 @@ def print_run_help(executable="", alias=None):
             if isinstance(handler, dxpy.bindings.DXApp):
                 exec_help += "See the app page for more information:\n  https://platform.dnanexus.com/app/" + exec_desc['name'] +"\n\n"
 
-            exec_help += "Inputs:"
+            exec_help += BOLD("Inputs:")
             advanced_inputs_help = "Advanced Inputs:"
             if 'inputSpec' in exec_desc:
                 if len(exec_desc['inputSpec']) == 0:
@@ -2660,10 +2660,10 @@ def print_run_help(executable="", alias=None):
                 else:
                     for group, params in group_array_by_field(exec_desc['inputSpec']).iteritems():
                         if group is not None:
-                            exec_help += "\n " + group
+                            exec_help += "\n " + BOLD(group)
                         for param in params:
                             param_string = "\n  "
-                            param_string += param.get('label', param['name']) + ": "
+                            param_string += UNDERLINE(param.get('label', param['name'])) + ": "
                             param_string += get_io_desc(param, app_help_version=True) + "\n"
                             helpstring = param.get('help', '')
 
@@ -2690,14 +2690,14 @@ def print_run_help(executable="", alias=None):
                 exec_help += " no specification provided"
             exec_help += "\n"
 
-            exec_help += "Outputs:"
+            exec_help += BOLD("Outputs:")
             if 'outputSpec' in exec_desc:
                 if len(exec_desc['outputSpec']) == 0:
                     exec_help += " <none>\n"
                 else:
                     for param in exec_desc['outputSpec']:
                         exec_help += "\n  "
-                        exec_help += param.get('label', param['name']) + ": "
+                        exec_help += UNDERLINE(param.get('label', param['name'])) + ": "
                         exec_help += get_io_desc(param) + "\n"
                         helpstring = param.get('help', '')
                         if helpstring != '':

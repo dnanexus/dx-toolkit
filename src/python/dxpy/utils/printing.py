@@ -35,29 +35,53 @@ else:
 
 delimiter = None
 
-def CYAN():
-    return '\033[36m' if color_state else ''
+def CYAN(message=None):
+    if message is None:
+        return '\033[36m' if color_state else ''
+    else:
+        return CYAN() + message + ENDC()
 
-def BLUE():
-    return '\033[34m' if color_state else ''
+def BLUE(message=None):
+    if message is None:
+        return '\033[34m' if color_state else ''
+    else:
+        return BLUE() + message + ENDC()
 
-def YELLOW():
-    return '\033[33m' if color_state else ''
+def YELLOW(message=None):
+    if message is None:
+        return '\033[33m' if color_state else ''
+    else:
+        return YELLOW() + message + ENDC()
 
-def GREEN():
-    return '\033[32m' if color_state else ''
+def GREEN(message=None):
+    if message is None:
+        return '\033[32m' if color_state else ''
+    else:
+        return GREEN() + message + ENDC()
 
-def RED():
-    return '\033[31m' if color_state else ''
+def RED(message=None):
+    if message is None:
+        return '\033[31m' if color_state else ''
+    else:
+        return RED() + message + ENDC()
 
-def WHITE():
-    return '\033[37m' if color_state else ''
+def WHITE(message=None):
+    if message is None:
+        return '\033[37m' if color_state else ''
+    else:
+        return WHITE() + message + ENDC()
 
-def UNDERLINE():
-    return '\033[4m' if color_state else ''
+def UNDERLINE(message=None):
+    if message is None:
+        return '\033[4m' if color_state else ''
+    else:
+        return UNDERLINE() + message + ENDC()
 
-def BOLD():
-    return '\033[1m' if color_state else ''
+def BOLD(message=None):
+    if message is None:
+        return '\033[1m' if color_state else ''
+    else:
+        return BOLD() + message + ENDC()
 
 def ENDC():
     return '\033[0m' if color_state else ''
