@@ -63,6 +63,10 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         wizard.sendline("Python")
         wizard.expect("Execution pattern")
         wizard.sendline("parallelized")
+        wizard.expect("Will this app need access to the Internet?")
+        wizard.sendline("y")
+        wizard.expect("Will this app need access to the parent project?")
+        wizard.sendline("y")
         wizard.expect("App directory created")
         wizard.close()
 
