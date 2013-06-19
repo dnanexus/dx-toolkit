@@ -388,7 +388,7 @@ class TestDXBuildApp(DXTestCase):
         run("dx-build-applet -f " + app_dir)
         # Verify that the original app was deleted by the previous
         # dx-build-applet -f
-        with self.assertSubprocessFailure(exit_code=1):
+        with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + applet_id)
 
     @unittest.skipIf('DXTEST_FULL' not in os.environ,
