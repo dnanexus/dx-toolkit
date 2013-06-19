@@ -25,10 +25,11 @@ from dxpy_testutil import DXTestCase
 import dxpy
 from dxpy.scripts import dx_build_app
 
-class TestDXAppWizardAndRunAppLocally(DXTestCase):
-    def test_dx_app_wizard(self):
-        tempdir = tempfile.mkdtemp()
-        os.chdir(tempdir)
+def run_dx_app_wizard():
+    old_cwd = os.getcwd()
+    tempdir = tempfile.mkdtemp()
+    os.chdir(tempdir)
+    try:
         wizard = pexpect.spawn("dx-app-wizard")
         wizard.logfile = sys.stdout
         wizard.expect("App Name:")
@@ -72,25 +73,34 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
 
         appdir = os.path.join(tempdir, "MyTestApp")
         return appdir
+    finally:
+        os.chdir(old_cwd)
+
+def create_app_dir():
+    appdir = run_dx_app_wizard()
+    with open(os.path.join(appdir, "src", "MyTestApp.py")) as src_fh:
+        src = [line.rstrip() for line in src_fh.readlines()]
+    with open(os.path.join(appdir, "src", "MyTestApp.py"), "w") as src_fh:
+        for line in src:
+            if line == '    return { "answer": "placeholder value" }':
+                line = '    return { "answer": sum(process_outputs) }'
+            elif line == '    return { "output": "placeholder value" }':
+                line = '    return { "output": input1 ** 2 }'
+            elif line == '    for i in range(10):':
+                line = '    for i in range(in1):'
+            elif line == '        subjob_input = { "input1": True }':
+                line = '        subjob_input = { "input1": i }'
+            elif line == '    output["out1"] = out1':
+                src_fh.write('    out1 = postprocess_job.get_output_ref("answer")\n')
+            src_fh.write(line + "\n")
+    return appdir
+
+class TestDXAppWizardAndRunAppLocally(DXTestCase):
+    def test_dx_app_wizard(self):
+        run_dx_app_wizard()
 
     def test_dx_run_app_locally(self):
-        appdir = self.test_dx_app_wizard()
-        with open(os.path.join(appdir, "src", "MyTestApp.py")) as src_fh:
-            src = [line.rstrip() for line in src_fh.readlines()]
-        with open(os.path.join(appdir, "src", "MyTestApp.py"), "w") as src_fh:
-            for line in src:
-                if line == '    return { "answer": "placeholder value" }':
-                    line = '    return { "answer": sum(process_outputs) }'
-                elif line == '    return { "output": "placeholder value" }':
-                    line = '    return { "output": input1 ** 2 }'
-                elif line == '    for i in range(10):':
-                    line = '    for i in range(in1):'
-                elif line == '        subjob_input = { "input1": True }':
-                    line = '        subjob_input = { "input1": i }'
-                elif line == '    output["out1"] = out1':
-                    src_fh.write('    out1 = postprocess_job.get_output_ref("answer")\n')
-                src_fh.write(line + "\n")
-
+        appdir = create_app_dir()
         output = subprocess.check_output(['dx-run-app-locally', appdir, '-iin1=8'])
         print output
         self.assertIn("App finished successfully", output)
@@ -100,7 +110,7 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
     @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ,
                      'skipping test that would run jobs')
     def test_dx_run_app_locally_and_compare_results(self):
-        appdir = self.test_dx_run_app_locally()
+        appdir = create_app_dir()
         print "Setting current project to", self.project
         dxpy.WORKSPACE_ID = self.project
         dxpy.PROJECT_CONTEXT_ID = self.project

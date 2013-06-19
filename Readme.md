@@ -78,6 +78,12 @@ for Ubuntu 10.04. You can install Python from there as follows (as root):
     apt-get install --yes python2.7 python-pip python-setuptools-deadsnakes
     pip-2.7 install virtualenv
 
+Since this repo doesn't contain the Python C headers, you will need to remove
+one (optional) compiled module from the dependencies (unless you have obtained
+the Python headers in some other way):
+
+    sed -i -e '/psutil/ d' src/python/requirements.txt
+
 Install boost 1.48 or higher (at least the ```filesystem```,
 ```program_options```, ```regex```, ```system``` and ```thread``` libraries).
 This version of boost is not available natively on Ubuntu 10.04. You can use
