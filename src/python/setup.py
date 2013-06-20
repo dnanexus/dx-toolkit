@@ -38,13 +38,16 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
     scripts.append("{s} = dxpy.scripts.{m}:main".format(s=script, m=module))
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
-test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "test_requirements.txt"))]
+test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
+dxfs_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_dxfs.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if os.name == 'nt':
     dependencies = [d for d in dependencies if not (d.startswith('distribute') or d.startswith('psutil'))]
     dependencies.append("colorama==0.2.4")
 else:
+    # dxfs is not compatible with Windows
+    dependencies.extend(dxfs_dependencies)
     # If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
     # See also http://stackoverflow.com/questions/7116038
     # Warning: This may not work as intended in cross-compilation scenarios

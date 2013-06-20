@@ -98,11 +98,11 @@ src_libs: api_wrappers
 
 python_deps: $(DNANEXUS_PY27_ENV)/lib
 
-$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt
+$(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt
 	rm -rf "$(DNANEXUS_PY27_ENV)"
 	virtualenv --python=python2.7 --distribute "$(DNANEXUS_PY27_ENV)"
 	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --requirement python/requirements.txt)
+	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed -r python/requirements.txt -r python/requirements_dxfs.txt)
 
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
@@ -208,7 +208,7 @@ debian_install: base_install
 	mkdir -p $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
 	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/dxpy* $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
 	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages/dxpy.pth
-	$(DESTDIR)/$(PREFIX)/share/dnanexus/bin/pip install -r python/requirements.txt
+	$(DESTDIR)/$(PREFIX)/share/dnanexus/bin/pip install -r python/requirements.txt -r python/requirements_dxfs.txt
 	rm -rf $(DESTDIR)/$(PREFIX)/share/dnanexus/bin                           # Remove residual stuff left by pip/virtualenv
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/local/*
 
