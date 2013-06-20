@@ -1,1 +1,2 @@
 include requirements.txt
+include test_requirements.txt
