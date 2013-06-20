@@ -31,9 +31,6 @@ from datetime import datetime
 import dxpy, dxpy.app_builder
 from dxpy import logger
 
-# Use default locale (used for formatting numbers nicely)
-locale.setlocale(locale.LC_ALL, '')
-
 from dxpy.utils.resolver import resolve_path, is_container_id
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
