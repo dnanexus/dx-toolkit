@@ -19,11 +19,10 @@ Utilities for client-side usage of the streaming log API
 (https://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FstreamLog).
 '''
 
-import json, re
+import json
 
 #from ws4py.client.threadedclient import WebSocketClient
 from ws4py.client import WebSocketBaseClient
-from ws4py.exc import HandshakeError
 
 import dxpy
 from dxpy.utils.describe import get_find_jobs_string

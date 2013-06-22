@@ -25,7 +25,7 @@ containers, dataobjects, apps, and jobs).
 import datetime, time, json, math, sys, copy
 from collections import defaultdict
 
-from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, get_delimiter, fill)
+from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, BOLD, ENDC, DELIMITER, get_delimiter, fill)
 
 def JOB_STATES(state):
     if state == 'failed':

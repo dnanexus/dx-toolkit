@@ -79,7 +79,7 @@ def wait_for_a_future(futures, print_traceback=False):
             break
         except concurrent.futures.TimeoutError:
             pass
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             if print_traceback:
                 traceback.print_stack()
             else:
@@ -107,7 +107,7 @@ def wait_for_all_futures(futures, print_traceback=False):
             waited_futures = concurrent.futures.wait(futures, timeout=60)
             if len(waited_futures.not_done) == 0:
                 break
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         if print_traceback:
             traceback.print_stack()
         else:

@@ -18,7 +18,7 @@
 #   under the License.
 
 import re, collections
-from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, get_delimiter, fill)
+from dxpy.utils.printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
 
 REPLACEMENT_TABLE = (
     u'\\x00',    #  0x00 -> NULL

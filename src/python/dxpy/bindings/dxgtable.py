@@ -354,15 +354,15 @@ class DXGTable(DXDataObject):
                                  starting=cursor,
                                  limit=(self._read_row_buffer_size if limit is None else min(limit - returned, self._read_row_buffer_size)),
                                  **kwargs)
-            buffer = resp['data']
+            _buffer = resp['data']
             cursor = resp['next']
-            if len(buffer) < 1: break
+            if len(_buffer) < 1: break
             if want_dict:
-                for row in buffer:
+                for row in _buffer:
                     returned += 1
                     yield dict(zip(col_names, row))
             else:
-                for row in buffer:
+                for row in _buffer:
                     returned += 1
                     yield row
 

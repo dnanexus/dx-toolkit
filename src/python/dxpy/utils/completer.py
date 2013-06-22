@@ -19,7 +19,7 @@ This file contains utility functions for interactive scripts such as
 dx for tab-completion, resolving naming conflicts, etc.
 '''
 
-import os, sys
+import sys
 
 from argcomplete import warn
 import dxpy
@@ -309,7 +309,7 @@ class LocalCompleter():
         self.matches = []
 
     def _populate_matches(self, prefix):
-        import subprocess, shlex, pipes
+        import subprocess, shlex
 
         lexer = shlex.shlex(prefix, posix=True)
         tomatch = lexer.get_token()

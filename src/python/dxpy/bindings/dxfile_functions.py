@@ -24,7 +24,6 @@ The following helper functions are useful shortcuts for interacting with File ob
 
 import os, math, mmap
 from dxpy.bindings import *
-from math import floor
 
 def open_dxfile(dxid, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE):
     '''
@@ -117,7 +116,7 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
         sys.stderr.flush()
 
     file_size = None
-    bytes = 0
+    _bytes = 0
 
     mode = 'ab' if append else 'wb'
     with DXFile(dxid, mode='r', project=project, read_buffer_size=chunksize) as dxfile, open(filename, mode) as fd:
@@ -129,8 +128,8 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
                 file_size = dxfile._file_length
 
             if show_progress:
-                bytes += len(file_content)
-                print_progress(bytes, file_size)
+                _bytes += len(file_content)
+                print_progress(_bytes, file_size)
 
             if len(file_content) == 0:
                 if show_progress:

@@ -67,7 +67,7 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
             prompt += ' [' + str(default) + ']'
         prompt += ': '
     while True:
-        try: 
+        try:
             value = raw_input(prompt)
         except KeyboardInterrupt:
             print ''
@@ -91,7 +91,7 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
             if choice not in range(len(choices)):
                 raise IndexError()
             return choice
-        except BaseException as details:
+        except BaseException:
             print 'Not a valid selection'
 
 def paginate_and_pick(generator, render_fn=unicode, filter_fn=None, page_len=10, **pick_opts):
@@ -640,6 +640,5 @@ def get_app_from_path(path):
         else:
             desc = dxpy.DXHTTPRequest('/' + path + '/' + alias + '/describe', {})
         return desc
-    except dxpy.DXAPIError as details:
+    except dxpy.DXAPIError:
         return None
-

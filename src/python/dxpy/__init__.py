@@ -152,7 +152,7 @@ except ImportError:
     snappy_available = False
 
 API_VERSION = '1.0.0'
-AUTH_HELPER = None
+AUTH_HELPER, SECURITY_CONTEXT = None, None
 JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
 
 APISERVER_PROTOCOL = 'https'

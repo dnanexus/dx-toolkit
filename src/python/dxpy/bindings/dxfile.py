@@ -160,22 +160,22 @@ class DXFile(DXDataObject):
             raise
 
     def __iter__(self):
-        buffer = self.read(self._read_bufsize)
+        _buffer = self.read(self._read_bufsize)
         done = False
         while not done:
-            if "\n" in buffer:
-                lines = buffer.splitlines()
+            if "\n" in _buffer:
+                lines = _buffer.splitlines()
                 for i in range(len(lines) - 1):
                     yield lines[i]
-                buffer = lines[len(lines) - 1]
+                _buffer = lines[len(lines) - 1]
             else:
                 more = self.read(self._read_bufsize)
                 if more == "":
                     done = True
                 else:
-                    buffer = buffer + more
-        if buffer:
-            yield buffer
+                    _buffer = _buffer + more
+        if _buffer:
+            yield _buffer
 
     def set_ids(self, dxid, project=None):
         '''
