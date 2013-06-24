@@ -184,7 +184,7 @@ base_install: all
 	mkdir -p $(DESTDIR)/$(PREFIX)/bin
 	rm -rf $(DESTDIR)/$(PREFIX)/lib/python2.7/site-packages/dxpy*              # Prevent file-overwriting-dir (or the opposite) problem
 
-	cp -a $(DNANEXUS_HOME)/bin/{dx*,contigset2fasta} $(DESTDIR)/$(PREFIX)/bin/ # binaries
+	cp -a $(DNANEXUS_HOME)/bin/* $(DESTDIR)/$(PREFIX)/bin/                     # binaries
 
 # Many apps have an autodep that says DESTDIR=/ PREFIX=/opt/dnanexus. Work
 # around that and install environment in the correct place until all those apps
