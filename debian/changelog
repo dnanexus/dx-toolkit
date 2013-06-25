@@ -1,3 +1,9 @@
+dx-toolkit (0.55.4) precise; urgency=low
+
+  * Various bug fixes.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 25 Jun 2013 18:04:00 +0000
+
 dx-toolkit (0.55.3) precise; urgency=low
 
   * Fallback when psutil is not available.
