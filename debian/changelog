@@ -1,3 +1,15 @@
+dx-toolkit (0.56.0) precise; urgency=low
+
+  * App Wizard now prompts for network and project access.
+
+  * Process ID-based session support for dx.
+
+  * Added the jq utility for command-line JSON parsing and manipulation.
+
+  * Various bug fixes.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 25 Jun 2013 17:52:04 +0000
+
 dx-toolkit (0.55.0) precise; urgency=low
 
   * Improvements to version handling in dx-build-app.
