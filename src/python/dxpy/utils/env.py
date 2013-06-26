@@ -47,7 +47,10 @@ def get_session_conf_dir():
             parent_process = parent_process.parent
         return default_session_dir
     except ImportError:
-        return os.path.join(sessions_dir, str(os.getppid()))
+        try:
+            return os.path.join(sessions_dir, str(os.getppid()))
+        except AttributeError: # os.getppid is not available on Windows
+            return os.path.join(sessions_dir, str(os.getpid()))
 
 def read_conf_dir(dirname):
     try:
