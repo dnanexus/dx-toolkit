@@ -3442,6 +3442,7 @@ parser_export.set_defaults(func=export)
 register_subparser(parser_export, categories='data')
 
 from dxpy.scripts.dx_build_app import parser as build_parser
+build_parser.set_defaults(mode="applet")
 
 parser_build = subparsers.add_parser('build', help='Upload and build a new applet/app',
                                      description='Build an applet or app object from a local source directory.  You can use dx-app-wizard to generate a skeleton directory with the necessary files.',
