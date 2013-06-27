@@ -225,6 +225,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     if 'dxapi' not in applet_spec:
         applet_spec['dxapi'] = dxpy.API_VERSION
 
+    archived_applet = None
     if check_name_collisions and not dry_run:
         destination_path = applet_spec['folder'] + ('/' if not applet_spec['folder'].endswith('/') else '') + applet_spec['name']
         logger.debug("Checking for existing applet at " + destination_path)
@@ -234,6 +235,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             elif archive:
+                logger.info("Archiving applet %s" % (result['id']))
                 proj = dxpy.DXProject(dest_project)
                 archive_folder = '/.Applet_archive'
                 try:
@@ -242,8 +244,10 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                     proj.new_folder(archive_folder)
 
                 proj.move(objects=[result['id']], destination=archive_folder)
-                applet = dxpy.DXApplet(result['id'])
-                applet.rename(applet.name + " ({d})".format(d=datetime.datetime.fromtimestamp(applet.created/1000).ctime()))
+                archived_applet = dxpy.DXApplet(result['id'])
+                now = datetime.datetime.fromtimestamp(archived_applet.created/1000).ctime()
+                new_name = archived_applet.name + " ({d})".format(d=now)
+                archived_applet.rename(new_name)
             else:
                 raise AppBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) or --archive (-a) options were not given" % (destination_path, result['id']))
 
@@ -311,6 +315,9 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     if "categories" in applet_spec:
         dxpy.DXApplet(applet_id, project=dest_project).add_tags(applet_spec["categories"])
+
+    if archived_applet:
+        archived_applet.set_properties({'replacedWith': archived_applet.get_id()})
 
     return applet_id, applet_spec
 
