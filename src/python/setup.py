@@ -42,7 +42,7 @@ test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if os.name == 'nt':
-    dependencies = [d for d in dependencies if not d.startswith('distribute') or d.startswith('psutil')]
+    dependencies = [d for d in dependencies if not (d.startswith('distribute') or d.startswith('psutil'))]
     dependencies.append("colorama==0.2.4")
 else:
     # If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
