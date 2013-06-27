@@ -663,6 +663,9 @@ def main(**kwargs):
     if args.dx_toolkit_autodep in ['beta', 'unstable']:
         logging.warn('The --dx-toolkit-beta-autodep and --dx-toolkit-unstable-autodep flags have no effect and will be removed at some date in the future.')
 
+    if args.overwrite and args.archive:
+        parser.error("Options -f/--overwrite and -a/--archive cannot be specified together")
+
     if not args.remote:
         # LOCAL BUILD
 
