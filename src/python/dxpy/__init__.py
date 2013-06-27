@@ -134,7 +134,7 @@ environment variables:
 # except:
 #     pass
 
-import os, json, time, logging, httplib, platform
+import os, json, time, logging, httplib, platform, collections
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
@@ -159,7 +159,7 @@ APISERVER_PROTOCOL = 'https'
 APISERVER_HOST = 'api.dnanexus.com'
 APISERVER_PORT = '443'
 
-SESSION_HANDLER=requests.session()
+SESSION_HANDLERS = collections.defaultdict(requests.session)
 
 DEFAULT_RETRIES = 5
 
@@ -178,7 +178,7 @@ class ContentLengthError(HTTPError):
 
 def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
                   use_compression=None, jsonify_data=True, want_full_response=False,
-                  prepend_srv=True, session_handler=SESSION_HANDLER,
+                  prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
     '''
     :param resource: API server route, e.g. "/record/new"
@@ -227,6 +227,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
        through to :func:`DXHTTPRequest`.
 
     '''
+    if session_handler is None:
+        session_handler = SESSION_HANDLERS[os.getpid()]
+
     global _UPGRADE_NOTIFY
 
     url = APISERVER + resource if prepend_srv else resource
