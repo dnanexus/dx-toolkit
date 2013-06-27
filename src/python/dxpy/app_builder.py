@@ -35,6 +35,7 @@ the effective destination project.
 '''
 
 import os, sys, json, subprocess, tempfile, multiprocessing
+import datetime
 import dxpy
 from dxpy import logger
 
@@ -186,7 +187,7 @@ def _inline_documentation_files(app_spec, src_dir):
                     app_spec['developerNotes'] = fh.read()
                 break
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
     """
     Creates a new applet object.
 
@@ -232,8 +233,19 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 logger.info("Deleting applet %s" % (result['id']))
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
+            elif archive:
+                proj = dxpy.DXProject(dest_project)
+                archive_folder = '/.Applet_archive'
+                try:
+                    proj.list_folder(archive_folder)
+                except dxpy.DXAPIError:
+                    proj.new_folder(archive_folder)
+
+                proj.move(objects=[result['id']], destination=archive_folder)
+                applet = dxpy.DXApplet(result['id'])
+                applet.rename(applet.name + " ({d})".format(d=datetime.datetime.fromtimestamp(applet.created/1000).ctime()))
             else:
-                raise AppBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) option was not given" % (destination_path, result['id']))
+                raise AppBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) or --archive (-a) options were not given" % (destination_path, result['id']))
 
     # -----
     # Override various fields from the pristine dxapp.json

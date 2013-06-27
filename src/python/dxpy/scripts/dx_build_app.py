@@ -63,6 +63,7 @@ parser.add_argument("--remote", help="Build the app remotely.", action="store_tr
 parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 parser.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.", action="store_true", default=False)
+parser.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder.", action="store_true", default=False)
 parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None, dest="version_override", metavar='VERSION')
 parser.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.", default=None, dest="bill_to", metavar='USER_OR_ORG')
 
@@ -523,8 +524,11 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     return
 
 
-def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, destination_override=None, version_override=None, bill_to_override=None, use_temp_build_project=True, do_parallel_build=True, do_version_autonumbering=True, do_try_update=True, dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True, dry_run=False, return_object_dump=False):
-
+def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
+                             version_override=None, bill_to_override=None, use_temp_build_project=True,
+                             do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
+                             dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True,
+                             dry_run=False, return_object_dump=False):
     app_json = _parse_app_spec(src_dir)
     _verify_app_source_dir(src_dir, enforce=do_check_syntax)
 
@@ -567,6 +571,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, publish=False, dest
                 bundled_resources,
                 check_name_collisions=(mode == "applet"),
                 overwrite=overwrite and mode == "applet",
+                archive=archive and mode == "applet",
                 project=working_project,
                 override_folder=override_folder,
                 override_name=override_applet_name,
@@ -666,6 +671,7 @@ def main(**kwargs):
                 args.src_dir,
                 args.mode,
                 overwrite=args.overwrite,
+                archive=args.archive,
                 publish=args.publish,
                 destination_override=args.destination,
                 version_override=args.version_override,
