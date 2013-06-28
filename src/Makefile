@@ -200,6 +200,8 @@ debian_install: base_install
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
+	../build/fix_shebang_lines.sh $(DESTDIR)/$(PREFIX)/bin --debian-system-install
+
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
 	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
 	virtualenv $(DESTDIR)/$(PREFIX)/share/dnanexus                           # Install dxpy into lib/python/dist-packages, deps under share/dnanexus
