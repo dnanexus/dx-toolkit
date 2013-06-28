@@ -284,7 +284,8 @@ def apply_path_aliases(cov, aliases):
         aliases.items(), key=lambda i: len(i[0]), reverse=True)
     def fixup_filename(filename):
         for alias, local in aliases:
-            return local + filename[len(alias):]
+            if filename.startswith(alias):
+                return local + filename[len(alias):]
         return filename
     cov.data.lines = map_dict_keys(fixup_filename, cov.data.lines)
     cov.data.arcs = map_dict_keys(fixup_filename, cov.data.arcs)
