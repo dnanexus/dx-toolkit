@@ -153,6 +153,7 @@ class TestDXClient(DXTestCase):
         run(u"dx find jobs --project :")
         run(u"dx find data --project :")
 
+    def test_dx_gtables(self):
         # new gtable
         gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr,mylo:int32,myhi:int32 --brief --property hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
         # Add rows to it (?)
@@ -169,6 +170,10 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['properties'], {"hello": "world"})
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], False)
+
+        # gri query
+        self.assertEqual(run(u"dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
+                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10', 'chr1\t5\t12', '']))
 
         # Download and re-import with gri
         with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
