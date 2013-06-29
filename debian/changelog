@@ -1,3 +1,9 @@
+dx-toolkit (0.56.1) precise; urgency=low
+
+  * Various bug fixes, including fix for tab completion packaging.
+
+ -- Phil Sung <psung@dnanexus.com>  Sat, 29 Jun 2013 20:03:48 +0000
+
 dx-toolkit (0.56.0) precise; urgency=low
 
   * App Wizard now prompts for network and project access.
