@@ -1,3 +1,9 @@
+dx-toolkit (0.55.7) precise; urgency=low
+
+  * Various bug fixes, including fix for tab completion packaging.
+
+ -- Phil Sung <psung@dnanexus.com>  Sat, 29 Jun 2013 20:04:32 +0000
+
 dx-toolkit (0.55.4) precise; urgency=low
 
   * Various bug fixes.
