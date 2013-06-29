@@ -1820,7 +1820,8 @@ def get(args):
         except:
             err_exit()
         fd.write(run_spec['code'])
-    fd.close()
+    if args.output != '-':
+        fd.close()
 
 def cat(args):
     for path in args.path:
