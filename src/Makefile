@@ -161,7 +161,7 @@ test_ruby: ruby
 
 coverage_python:
 	(cd python; export PYTHONPATH="$$PYTHONPATH:$$(echo $$(pwd)/coverage-*.egg)"; \
-	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))")
+	 test/coveragereport.py --strip-prefix="$$(readlink -f $$(pwd))/build/lib.linux-x86_64-2.7" --cover dxpy --cover scripts --exclude dxpy.packages --exclude EGG-INFO.scripts --exclude test --exclude setuptools --path-alias "$$(readlink -f $$(pwd)/../../share/dnanexus/lib/python2.7/site-packages/dxpy*.egg)"="$$(readlink -f $$(pwd))" --path-alias "$$(readlink -f $$(pwd)/build/lib.linux-x86_64-2.7)"="$$(readlink -f $$(pwd))")
 
 test_python:
 	(echo "import coverage; coverage.process_startup()" > ../share/dnanexus/lib/python2.7/site-packages/sitecustomize.py)
