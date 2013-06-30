@@ -3311,7 +3311,7 @@ EXAMPLES
 ''',
                                   prog='dx cp',
                                   parents=[env_args, all_arg])
-cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folder names to copy', nargs='+')
+cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folder names to copy', metavar='source', nargs='+')
 cp_sources_action.completer = DXPathCompleter()
 parser_cp.add_argument('destination', help=fill('Folder into which to copy the sources or new pathname (if only one source is provided).  Must be in a different project/container than all source paths.', width_adjustment=-15))
 parser_cp.set_defaults(func=cp)
@@ -3322,7 +3322,7 @@ parser_mv = subparsers.add_parser('mv', help='Move or rename objects and/or fold
                                   description=fill('Move or rename data objects and/or folders inside a single project.  To copy data between different projects, use \'dx cp\' instead.'),
                                   prog='dx mv',
                                   parents=[env_args, all_arg])
-mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folder names to move', nargs='+')
+mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folder names to move', metavar='source', nargs='+')
 mv_sources_action.completer = DXPathCompleter()
 parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
 parser_mv.set_defaults(func=mv)
@@ -3332,7 +3332,7 @@ parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder', prog='dx mkdir',
                                      parents=[env_args])
 parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
-mkdir_paths_action = parser_mkdir.add_argument('paths', help='Paths to folders to create', nargs='+')
+mkdir_paths_action = parser_mkdir.add_argument('paths', help='Paths to folders to create', metavar='path', nargs='+')
 mkdir_paths_action.completer = DXPathCompleter(expected='folder')
 parser_mkdir.set_defaults(func=mkdir)
 register_subparser(parser_mkdir, categories='fs')
@@ -3340,7 +3340,7 @@ register_subparser(parser_mkdir, categories='fs')
 parser_rmdir = subparsers.add_parser('rmdir', help='Remove a folder',
                                      description='Remove a folder', prog='dx rmdir',
                                      parents=[env_args])
-rmdir_paths_action = parser_rmdir.add_argument('paths', help='Paths to folders to remove', nargs='+')
+rmdir_paths_action = parser_rmdir.add_argument('paths', help='Paths to folders to remove', metavar='path', nargs='+')
 rmdir_paths_action.completer = DXPathCompleter(expected='folder')
 parser_rmdir.set_defaults(func=rmdir)
 register_subparser(parser_rmdir, categories='fs')
@@ -3348,7 +3348,7 @@ register_subparser(parser_rmdir, categories='fs')
 parser_rm = subparsers.add_parser('rm', help='Remove data objects and folders',
                                   description='Remove data objects and folders.', prog='dx rm',
                                   parents=[env_args, all_arg])
-rm_paths_action = parser_rm.add_argument('paths', help='Paths to remove', nargs='+')
+rm_paths_action = parser_rm.add_argument('paths', help='Paths to remove', metavar='path', nargs='+')
 rm_paths_action.completer = DXPathCompleter()
 parser_rm.add_argument('-r', '--recursive', help='Recurse into a directory', action='store_true')
 parser_rm.set_defaults(func=rm)
@@ -3529,7 +3529,7 @@ parser_rmproject = subparsers.add_parser('rmproject', help='Delete a project',
                                          description='Delete projects and all their associated data',
                                          prog='dx rmproject',
                                          parents=[env_args])
-parser_rmproject.add_argument('projects', help='Projects to remove', nargs='+').completer = DXPathCompleter(expected='project', include_current_proj=True)
+parser_rmproject.add_argument('projects', help='Projects to remove', metavar='project', nargs='+').completer = DXPathCompleter(expected='project', include_current_proj=True)
 parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_rmproject.set_defaults(func=rmproject)
 register_subparser(parser_rmproject, categories='fs')
@@ -3595,28 +3595,28 @@ parser_add_types = subparsers.add_parser('add_types', help='Add types to a data 
                                          prog='dx add_types',
                                          parents=[env_args, all_arg])
 parser_add_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
-parser_add_types.add_argument('types', nargs='+', help='Types to add')
+parser_add_types.add_argument('types', nargs='+', metavar='type', help='Types to add')
 parser_add_types.set_defaults(func=add_types)
 register_subparser(parser_add_types, categories='metadata')
 
 parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object', description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.', prog='dx remove_types',
                                             parents=[env_args, all_arg])
 parser_remove_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
-parser_remove_types.add_argument('types', nargs='+', help='Types to remove')
+parser_remove_types.add_argument('types', nargs='+', metavar='type', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
 register_subparser(parser_remove_types, categories='metadata')
 
 parser_tag = subparsers.add_parser('tag', help='Tag a data object', description='Tag a data object.  Note that a project context must be either set or specified.', prog='dx tag',
                                    parents=[env_args, all_arg])
 parser_tag.add_argument('path', help='Path to data object to modify').completer = DXPathCompleter()
-parser_tag.add_argument('tags', nargs='+', help='Tags to add')
+parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
 register_subparser(parser_tag, categories='metadata')
 
 parser_untag = subparsers.add_parser('untag', help='Untag a data object', description='Untag a data object.  Note that a project context must be either set or specified.', prog='dx untag',
                                      parents=[env_args, all_arg])
 parser_untag.add_argument('path', help='Path to data object to modify').completer = DXPathCompleter()
-parser_untag.add_argument('tags', nargs='+', help='Tags to remove')
+parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
 register_subparser(parser_untag, categories='metadata')
 
@@ -3634,7 +3634,7 @@ parser_set_properties = subparsers.add_parser('set_properties', help='Set proper
                                               description='Set properties of a data object.  Note that a project context must be either set or specified.', prog='dx set_properties',
                                               parents=[env_args, all_arg])
 parser_set_properties.add_argument('path', help='Path to data object to modify').completer = DXPathCompleter()
-parser_set_properties.add_argument('properties', nargs='+', help='Key-value pairs of properties, e.g. \'property_key=property_value another_property_key=another_property_value\'')
+parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value', help='Key-value pairs of property names and their new values')
 parser_set_properties.set_defaults(func=set_properties)
 register_subparser(parser_set_properties, categories='metadata')
 
@@ -3643,7 +3643,7 @@ parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset 
                                                 prog='dx unset_properties',
                                                 parents=[env_args, all_arg])
 parser_unset_properties.add_argument('path', help='Data object to modify').completer = DXPathCompleter()
-parser_unset_properties.add_argument('properties', nargs='+', help='Property names to unset')
+parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
 register_subparser(parser_unset_properties, categories='metadata')
 
