@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64
+import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 from contextlib import contextmanager
 import pexpect
 
@@ -157,6 +157,15 @@ class TestDXClient(DXTestCase):
         # Path resolution is used
         run(u"dx find jobs --project :")
         run(u"dx find data --project :")
+
+    def test_dx_remove_project_by_name(self):
+        # TODO: this test makes no use of the DXTestCase-provided
+        # project.
+        project_name = "test_dx_remove_project_by_name_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
+        project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
+        self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)).strip(), project_id)
+        run("dx rmproject -y {name}".format(name=project_name))
+        self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)), "")
 
     def test_dx_gtables(self):
         # new gtable
