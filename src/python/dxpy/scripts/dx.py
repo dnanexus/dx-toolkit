@@ -3043,12 +3043,11 @@ def watch(args):
 def upgrade(args):
     if len(args.args) == 0:
         try:
-            upgrade_header = dxpy.api.user_describe('org-dnanexus', want_full_response=True).headers.get('x-upgrade-info')
-            version_match = re.match("A recommended update is available for your client/SDK \((.+?)\)", upgrade_header)
-            if version_match:
-                recommended_version = version_match.group(1)
+            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION}, auth=None)
+            if greeting['update']['available']:
+                version = ['update']['version']
             else:
-                recommended_version = "current"
+                err_exit("Your SDK is up to date.", code=0)
         except (dxpy.DXAPIError, requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as e:
             print e
             recommended_version = "current"
