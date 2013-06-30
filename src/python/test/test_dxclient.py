@@ -98,8 +98,9 @@ class TestDXClient(DXTestCase):
             local_filename = f.name
             filename = folder_name
             run(u"echo xyzzt > {tf}".format(tf=local_filename))
-            fileid = run(u"dx upload {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
+            fileid = run(u"dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
             self.assertEqual(fileid, run(u"dx ls '../{f}/{f}' --brief".format(f=filename)))
+            self.assertEqual("xyzzt\n", run(u"dx head '../{f}/{f}'".format(f=filename)))
         run(u'dx pwd')
         run(u"dx cd ..")
         run(u'dx pwd')
@@ -132,11 +133,15 @@ class TestDXClient(DXTestCase):
         run(u"dx rename '{n}' '{n}'2".format(n=table_name))
         run(u"dx rename '{n}'2 '{n}'".format(n=table_name))
         run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
+        run(u"dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
+
+        self.assertTrue(self.project in run(u"dx find projects --brief"))
 
         run(u"dx new record -o :foo --verbose")
         record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --property foo=bar --property baz=quux --tag onetag --tag twotag --type foo --type bar --details '{\"hello\": \"world\"}'").strip()
         self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
+        self.assertEqual({"hello": "world"}, json.loads(run(u"dx get -o - :foo2")))
 
         # describe
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
