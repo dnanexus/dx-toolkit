@@ -56,7 +56,8 @@ RECOGNIZED_CATEGORIES = set([
 parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 
 parser.set_defaults(mode="app")
-parser.add_argument("--create-app", help=argparse.SUPPRESS, action="store_const", dest="mode", const="app")
+parser.add_argument("--create-app", help="Create an app (otherwise, creates an applet)", action="store_const",
+                    dest="mode", const="app")
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
 parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default='.')
 
@@ -65,11 +66,13 @@ parser.add_argument("--no-temp-build-project", help="When building an app, build
 
 parser.set_defaults(parallel_build=True)
 parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
-parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false", dest="parallel_build")
+parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false",
+                    dest="parallel_build")
 
 # --[no-]publish
 parser.set_defaults(publish=False)
-parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true", dest="publish")
+parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
+                    dest="publish")
 parser.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
 
 # --[no-]remote
@@ -77,10 +80,14 @@ parser.set_defaults(remote=False)
 parser.add_argument("--remote", help="Build the app remotely.", action="store_true", dest="remote")
 parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
-parser.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.", action="store_true", default=False)
-parser.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder.", action="store_true", default=False)
-parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None, dest="version_override", metavar='VERSION')
-parser.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.", default=None, dest="bill_to", metavar='USER_OR_ORG')
+parser.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.",
+                    action="store_true", default=False)
+parser.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder.",
+                    action="store_true", default=False)
+parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
+                    dest="version_override", metavar='VERSION')
+parser.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
+                    default=None, dest="bill_to", metavar='USER_OR_ORG')
 
 # --[no-]version-autonumbering
 parser.set_defaults(version_autonumbering=True)
