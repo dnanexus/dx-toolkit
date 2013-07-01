@@ -579,6 +579,39 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertEquals(desc["name"], u"index.html")
         run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
 
+
+class TestDXFastQToReads(DXTestCase):
+    def setUp(self):
+        super(TestDXFastQToReads, self).setUp()
+        self.fastq = """@HWI-ST689:7:1101:1246:1986#0/1
+NGGGGCCTAATTAAACTAAAGAGCTTCTGCACAGCAAAAGAAACTATGAACAGAGCAAACAGACAGAACAGGAGAAGATATTTGCAAATTATGCATCCAAC
++HWI-ST689:7:1101:1246:1986#0/1
+BP\ccccceegggh]ghhhhhhhhhhhhhhhhhhhghefgedfghhhhhhhhh`eghhehhhfgfhhfggegbcdaabbbdddcbcZ`bb_bbbdcbbbb]
+@HWI-ST689:7:1101:1477:1962#0/1
+NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATTACTTTTCTCCTACTCTAAGGT
++HWI-ST689:7:1101:1477:1962#0/1
+BP\ccceegfgggiiiifihhiihhihidghihfhfiiiiiiiiiihaffdghhgcgdbggfeeeedddR]bZLTZZ]bc`bccdcccccb`b`Y_BBBBB
+"""
+        self.expected_tsv = """name:string\tsequence:string\tquality:string\r
+HWI-ST689:7:1101:1246:1986#0/1\tNGGGGCCTAATTAAACTAAAGAGCTTCTGCACAGCAAAAGAAACTATGAACAGAGCAAACAGACAGAACAGGAGAAGATATTTGCAAATTATGCATCCAAC\t#1=DDDDDFFHHHI>HIIIIIIIIIIIIIIIIIIIHIFGHFEGHIIIIIIIIIAFHIIFIIIGHGIIGHHFHCDEBBCCCEEEDCD;ACC@CCCEDCCCC>\r
+HWI-ST689:7:1101:1477:1962#0/1\tNGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATTACTTTTCTCCTACTCTAAGGT\t#1=DDDFFHGHHHJJJJGJIIJJIIJIJEHIJIGIGJJJJJJJJJJIBGGEHIIHDHECHHGFFFFEEE3>C;-5;;>CDACDDEDDDDDCACA:@#####\r
+"""
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(TestDXFastQToReads, self).tearDown()
+
+    def test_fastq_to_reads_conversion(self):
+        tempfile1 = os.path.join(self.tempdir, 'test1.fq')
+        with open(tempfile1, 'w') as f:
+            f.write(self.fastq)
+        output = json.loads(run('dx-fastq-to-reads {f}'.format(f=tempfile1)).strip().split('\n')[-1])
+        table_id = output['table_id']
+        run('dx wait {g}'.format(g=table_id))
+        self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
+
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps will not be run\n')
