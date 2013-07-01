@@ -611,6 +611,25 @@ HWI-ST689:7:1101:1477:1962#0/1\tNGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGC
         run('dx wait {g}'.format(g=table_id))
         self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
 
+    def test_fastq_reads_roundtrip(self):
+        round_tripped_fastq = """@HWI-ST689:7:1101:1246:1986#0/1
+NGGGGCCTAATTAAACTAAAGAGCTTCTGCACAGCAAAAGAAACTATGAACAGAGCAAACAGACAGAACAGGAGAAGATATTTGCAAATTATGCATCCAAC
++
+#1=DDDDDFFHHHI>HIIIIIIIIIIIIIIIIIIIHIFGHFEGHIIIIIIIIIAFHIIFIIIGHGIIGHHFHCDEBBCCCEEEDCD;ACC@CCCEDCCCC>
+@HWI-ST689:7:1101:1477:1962#0/1
+NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATTACTTTTCTCCTACTCTAAGGT
++
+#1=DDDFFHGHHHJJJJGJIIJJIIJIJEHIJIGIGJJJJJJJJJJIBGGEHIIHDHECHHGFFFFEEE3>C;-5;;>CDACDDEDDDDDCACA:@#####
+"""
+        tempfile2 = os.path.join(self.tempdir, 'test2.fq')
+        with open(tempfile2, 'w') as f:
+            f.write(self.fastq)
+        output = json.loads(run('dx-fastq-to-reads {f}'.format(f=tempfile2)).strip().split('\n')[-1])
+        table_id = output['table_id']
+        run('dx wait {g}'.format(g=table_id))
+        run('dx-reads-to-fastq --output {o} {g}'.format(o=os.path.join(self.tempdir, 'roundtrip.fq'), g=table_id))
+        self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.fq')).read(), round_tripped_fastq)
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
