@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64
+import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, base64, random, time
 from contextlib import contextmanager
 import pexpect
 
@@ -98,8 +98,9 @@ class TestDXClient(DXTestCase):
             local_filename = f.name
             filename = folder_name
             run(u"echo xyzzt > {tf}".format(tf=local_filename))
-            fileid = run(u"dx upload {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
+            fileid = run(u"dx upload --wait {tf} -o '../{f}/{f}' --brief".format(tf=local_filename, f=filename))
             self.assertEqual(fileid, run(u"dx ls '../{f}/{f}' --brief".format(f=filename)))
+            self.assertEqual("xyzzt\n", run(u"dx head '../{f}/{f}'".format(f=filename)))
         run(u'dx pwd')
         run(u"dx cd ..")
         run(u'dx pwd')
@@ -132,11 +133,15 @@ class TestDXClient(DXTestCase):
         run(u"dx rename '{n}' '{n}'2".format(n=table_name))
         run(u"dx rename '{n}'2 '{n}'".format(n=table_name))
         run(u"dx set_properties '{n}' '{n}={n}' '{n}2={n}3'".format(n=table_name))
+        run(u"dx unset_properties '{n}' '{n}' '{n}2'".format(n=table_name))
         run(u"dx tag '{n}' '{n}'2".format(n=table_name))
+
+        self.assertTrue(self.project in run(u"dx find projects --brief"))
 
         run(u"dx new record -o :foo --verbose")
         record_id = run(u"dx new record -o :foo2 --brief --visibility hidden --property foo=bar --property baz=quux --tag onetag --tag twotag --type foo --type bar --details '{\"hello\": \"world\"}'").strip()
         self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
+        self.assertEqual({"hello": "world"}, json.loads(run(u"dx get -o - :foo2")))
 
         # describe
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
@@ -153,6 +158,28 @@ class TestDXClient(DXTestCase):
         run(u"dx find jobs --project :")
         run(u"dx find data --project :")
 
+    def test_dx_remove_project_by_name(self):
+        # TODO: this test makes no use of the DXTestCase-provided
+        # project.
+        project_name = "test_dx_remove_project_by_name_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
+        project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
+        self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)).strip(), project_id)
+        run("dx rmproject -y {name}".format(name=project_name))
+        self.assertEqual(run("dx find projects --brief --name {name}".format(name=project_name)), "")
+
+    def test_dx_cp(self):
+        project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
+        dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
+        try:
+            record_id = run(u"dx new record --brief --details '{\"hello\": 1}'").strip()
+            run("dx close --wait {r}".format(r=record_id))
+            self.assertEqual(run("dx ls --brief {p}".format(p=dest_project_id)), "")
+            run("dx cp {r} {p}".format(r=record_id, p=dest_project_id))
+            self.assertEqual(run("dx ls --brief {p}".format(p=dest_project_id)).strip(), record_id)
+        finally:
+            run("dx rmproject -y {p}".format(p=dest_project_id))
+
+    def test_dx_gtables(self):
         # new gtable
         gri_gtable_id = run(u"dx new gtable --gri mychr mylo myhi --columns mychr,mylo:int32,myhi:int32 --brief --property hello=world --details '{\"hello\":\"world\"}' --visibility visible").strip()
         # Add rows to it (?)
@@ -169,6 +196,10 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['properties'], {"hello": "world"})
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], False)
+
+        # gri query
+        self.assertEqual(run(u"dx export tsv {gt} --gri chr1 1 10 -o -".format(gt=gri_gtable_id)),
+                         '\r\n'.join(['mychr:string\tmylo:int32\tmyhi:int32', 'chr1\t3\t10', 'chr1\t5\t12', '']))
 
         # Download and re-import with gri
         with tempfile.NamedTemporaryFile(suffix='.csv') as fd:
@@ -547,6 +578,58 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertTrue(desc["hidden"])
         self.assertEquals(desc["name"], u"index.html")
         run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
+
+
+class TestDXFastQToReads(DXTestCase):
+    def setUp(self):
+        super(TestDXFastQToReads, self).setUp()
+        self.fastq = """@HWI-ST689:7:1101:1246:1986#0/1
+NGGGGCCTAATTAAACTAAAGAGCTTCTGCACAGCAAAAGAAACTATGAACAGAGCAAACAGACAGAACAGGAGAAGATATTTGCAAATTATGCATCCAAC
++HWI-ST689:7:1101:1246:1986#0/1
+BP\ccccceegggh]ghhhhhhhhhhhhhhhhhhhghefgedfghhhhhhhhh`eghhehhhfgfhhfggegbcdaabbbdddcbcZ`bb_bbbdcbbbb]
+@HWI-ST689:7:1101:1477:1962#0/1
+NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATTACTTTTCTCCTACTCTAAGGT
++HWI-ST689:7:1101:1477:1962#0/1
+BP\ccceegfgggiiiifihhiihhihidghihfhfiiiiiiiiiihaffdghhgcgdbggfeeeedddR]bZLTZZ]bc`bccdcccccb`b`Y_BBBBB
+"""
+        self.expected_tsv = """name:string\tsequence:string\tquality:string\r
+HWI-ST689:7:1101:1246:1986#0/1\tNGGGGCCTAATTAAACTAAAGAGCTTCTGCACAGCAAAAGAAACTATGAACAGAGCAAACAGACAGAACAGGAGAAGATATTTGCAAATTATGCATCCAAC\t#1=DDDDDFFHHHI>HIIIIIIIIIIIIIIIIIIIHIFGHFEGHIIIIIIIIIAFHIIFIIIGHGIIGHHFHCDEBBCCCEEEDCD;ACC@CCCEDCCCC>\r
+HWI-ST689:7:1101:1477:1962#0/1\tNGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATTACTTTTCTCCTACTCTAAGGT\t#1=DDDFFHGHHHJJJJGJIIJJIIJIJEHIJIGIGJJJJJJJJJJIBGGEHIIHDHECHHGFFFFEEE3>C;-5;;>CDACDDEDDDDDCACA:@#####\r
+"""
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(TestDXFastQToReads, self).tearDown()
+
+    def test_fastq_to_reads_conversion(self):
+        tempfile1 = os.path.join(self.tempdir, 'test1.fq')
+        with open(tempfile1, 'w') as f:
+            f.write(self.fastq)
+        output = json.loads(run('dx-fastq-to-reads {f}'.format(f=tempfile1)).strip().split('\n')[-1])
+        table_id = output['table_id']
+        run('dx wait {g}'.format(g=table_id))
+        self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
+
+    def test_fastq_reads_roundtrip(self):
+        round_tripped_fastq = """@HWI-ST689:7:1101:1246:1986#0/1
+NGGGGCCTAATTAAACTAAAGAGCTTCTGCACAGCAAAAGAAACTATGAACAGAGCAAACAGACAGAACAGGAGAAGATATTTGCAAATTATGCATCCAAC
++
+#1=DDDDDFFHHHI>HIIIIIIIIIIIIIIIIIIIHIFGHFEGHIIIIIIIIIAFHIIFIIIGHGIIGHHFHCDEBBCCCEEEDCD;ACC@CCCEDCCCC>
+@HWI-ST689:7:1101:1477:1962#0/1
+NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATTACTTTTCTCCTACTCTAAGGT
++
+#1=DDDFFHGHHHJJJJGJIIJJIIJIJEHIJIGIGJJJJJJJJJJIBGGEHIIHDHECHHGFFFFEEE3>C;-5;;>CDACDDEDDDDDCACA:@#####
+"""
+        tempfile2 = os.path.join(self.tempdir, 'test2.fq')
+        with open(tempfile2, 'w') as f:
+            f.write(self.fastq)
+        output = json.loads(run('dx-fastq-to-reads {f}'.format(f=tempfile2)).strip().split('\n')[-1])
+        table_id = output['table_id']
+        run('dx wait {g}'.format(g=table_id))
+        run('dx-reads-to-fastq --output {o} {g}'.format(o=os.path.join(self.tempdir, 'roundtrip.fq'), g=table_id))
+        self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.fq')).read(), round_tripped_fastq)
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:

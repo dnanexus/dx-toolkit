@@ -29,6 +29,7 @@ string proj_id = "";
 string second_proj_id = "";
 string third_proj_id = "";
 
+bool DXTEST_FULL = false;
 // TODO: Finish writing tests for other classes.
 
 JSON getObjFromListf(JSON &listf) {
@@ -242,7 +243,7 @@ TEST_F(DXProjectTest, CloneTest) {
   ASSERT_EQ(listf["folders"], expected);
 
   DXProject third_proj(third_proj_id);
-  
+
   dxproject.cloneFolder("/a/b/c/d", third_proj_id, "/");
   expected = JSON(JSON_ARRAY);
   expected.push_back("/d");
@@ -365,7 +366,7 @@ TEST_F(DXRecordTest, DescribeTest) {
   details["$dnanexus_link"] = dxrecord.getID();
   JSON links_to_expect = JSON(JSON_ARRAY);
   links_to_expect.push_back(dxrecord.getID());
-  
+
   settings["types"] = types;
   settings["tags"] = tags;
   settings["properties"] = properties;
@@ -531,7 +532,7 @@ TEST(ConstructFromDXLink_Tests, setIDAndConstructor) {
   options["name"] = "firstname";
   options["tags"] = JSON(JSON_ARRAY);
   options["tags"].push_back("tag");
- 
+
   DXRecord dxr = DXRecord::newDXRecord(options);
   DXRecord dxr2(JSON::parse("{\"$dnanexus_link\": \"" + dxr.getID() + + "\"}"));
   ASSERT_EQ(dxr2.getID(), dxr.getID());
@@ -540,7 +541,7 @@ TEST(ConstructFromDXLink_Tests, setIDAndConstructor) {
   JSON dxlink = JSON::parse("{\"$dnanexus_link\": {\"project\": \"" + proj_id + "\", \"id\": \"" + dxr.getID() + "\"}}");
   dxr3.setIDs(dxlink);
   ASSERT_EQ(dxr3.getID(), dxr.getID());
-  
+
   JSON invalid_dxlink = JSON::parse("{\"$dnanexus_link\": 12122}");
   ASSERT_THROW(dxr3.setIDs(invalid_dxlink), DXError);
 }
@@ -607,12 +608,12 @@ TEST_F(DXFileTest, CheckCopyConstructorAndAssignmentOperator) {
   DXFile dxf = DXFile::newDXFile();
   ASSERT_EQ(104857600, dxf.getMaxBufferSize());
   ASSERT_EQ(5, dxf.getNumWriteThreads());
-  
+
   dxf.setMaxBufferSize(5*1024*1024);
   dxf.setNumWriteThreads(10);
   ASSERT_EQ(dxf.getMaxBufferSize(), 5*1024*1024);
   ASSERT_EQ(dxf.getNumWriteThreads(), 10);
-  
+
   // Assignment operator test
   DXFile dxcpy = dxf;
   ASSERT_EQ(dxf.getMaxBufferSize(), 5*1024*1024);
@@ -630,7 +631,7 @@ TEST_F(DXFileTest, CheckCopyConstructorAndAssignmentOperator) {
   ASSERT_EQ(fv[0].getNumWriteThreads(), dxf.getNumWriteThreads());
   ASSERT_EQ(fv[0].getID(), dxf.getID());
   ASSERT_EQ(fv[0].getProjectID(), dxf.getProjectID());
-  
+
   // Check that exception is thrown if we try to set buffer size < 5 MB
   ASSERT_THROW(dxf.setMaxBufferSize(5*1024*1024 - 1), DXFileError);
 }
@@ -644,7 +645,7 @@ TEST_F(DXFileTest, UploadPartMultipleTime) {
   dxf.uploadPart(s);
   dxf.close(true);
   ASSERT_EQ(dxf.describe()["size"], 4);
-   
+
   dxf = DXFile::newDXFile();
   // since each part (except last) must be at least 5 mb
   int sizeFirstPart = 5242880 + 1;
@@ -654,14 +655,14 @@ TEST_F(DXFileTest, UploadPartMultipleTime) {
   char data[9] = {0};
   dxf.read(data, 8);
   ASSERT_EQ(string(data), string(8, 'x'));
-  ASSERT_EQ(dxf.describe()["size"], sizeFirstPart + 3); 
+  ASSERT_EQ(dxf.describe()["size"], sizeFirstPart + 3);
 }
 
 TEST_F(DXFileTest, UploadEmptyFile) {
   DXFile dxf = DXFile::newDXFile();
   dxf.close();
   ASSERT_EQ(dxf.describe()["size"], 0);
- 
+
   char fname[L_tmpnam];
   tmpnam(fname);
   ofstream lf(fname);
@@ -673,7 +674,7 @@ TEST_F(DXFileTest, UploadEmptyFile) {
 TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   // Upload a file with "file_size" number of '$' in it
   // and download it, check that it is same.
-  
+
   char fname[L_tmpnam];
   const int file_size = 25 * 1024 * 1024;
   tmpnam(fname);
@@ -694,7 +695,7 @@ TEST(DXFileTest_Async, UploadAndDownloadLargeFile_1_SLOW) {
   ifstream fp(fname);
   ASSERT_TRUE(fp.is_open());
   // Reserve memory for string upfront (to avoid having reallocation multiple time)
-  fp.seekg(0, ios::end);   
+  fp.seekg(0, ios::end);
   ASSERT_EQ(file_size, fp.tellg());
   fp.seekg(0, ios::beg);
   int count = 0;
@@ -822,7 +823,7 @@ protected:
 
 TEST_F(DXGTableTest, SimpleCloneTest) {
   DXGTable dxgtable(DXGTable::newDXGTable(DXGTableTest::columns));
-  
+
   dxgtable.addRows(JSON::parse("[[\"foo\", 1], [\"foo\", 2]]"));
   dxgtable.close(true);
   dxgtable.clone(second_proj_id);
@@ -849,7 +850,7 @@ TEST_F(DXGTableTest, CheckNullValueInDXGTable) {
   string rowstr = "[[\"Row1\", " + boost::lexical_cast<string>(DXGTable::NULL_VALUE) + "]]";
   dxgtable.addRows(JSON::parse(rowstr));
   dxgtable.close(true);
-  
+
   JSON rows = dxgtable.getRows();
   ASSERT_EQ(rows["data"].length(), rows["length"].get<size_t>());
   ASSERT_EQ(rows["length"], 1);
@@ -861,12 +862,12 @@ TEST_F(DXGTableTest, CheckCopyConstructorAndAssignmentOperator) {
   DXGTable dxg = DXGTable::newDXGTable(DXGTableTest::columns);
   ASSERT_EQ(104857600, dxg.getMaxBufferSize());
   ASSERT_EQ(5, dxg.getNumWriteThreads());
-  
+
   dxg.setMaxBufferSize(100);
   dxg.setNumWriteThreads(10);
   ASSERT_EQ(dxg.getMaxBufferSize(), 100);
   ASSERT_EQ(dxg.getNumWriteThreads(), 10);
-  
+
   // Assignment operator test
   DXGTable dxcpy = dxg;
   ASSERT_EQ(dxg.getMaxBufferSize(), 100);
@@ -883,7 +884,7 @@ TEST_F(DXGTableTest, CheckCopyConstructorAndAssignmentOperator) {
   ASSERT_EQ(gv[0].getMaxBufferSize(), dxg.getMaxBufferSize());
   ASSERT_EQ(gv[0].getNumWriteThreads(), dxg.getNumWriteThreads());
   ASSERT_EQ(gv[0].getID(), dxg.getID());
-  ASSERT_EQ(gv[0].getProjectID(), dxg.getProjectID()); 
+  ASSERT_EQ(gv[0].getProjectID(), dxg.getProjectID());
 }
 
 TEST_F(DXGTableTest, InitializeFromGTableTest) {
@@ -896,10 +897,10 @@ TEST_F(DXGTableTest, InitializeFromGTableTest) {
 
   DXGTable second_table = DXGTable::newDXGTable(dxgtable, JSON::parse("{\"name\": \"my dxgtable2\"}"));
   JSON desc = second_table.describe();
-  
+
   ASSERT_EQ(desc["tags"][0], "blah"); // "blah" should have been copied from parent gtable
-  ASSERT_EQ(desc["name"], "my dxgtable2"); // name should have been overridden 
-  
+  ASSERT_EQ(desc["name"], "my dxgtable2"); // name should have been overridden
+
   ASSERT_EQ(DXGTableTest::columns.size(), desc["columns"].size());
   for (int i = 0; i < DXGTableTest::columns.size(); i++) {
     ASSERT_EQ(DXGTableTest::columns[i]["name"].get<string>(),
@@ -987,13 +988,13 @@ int getRowCount(JSON desc) {
   return totalRows;
 }
 
-TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1_SLOW) {
+TEST_F(DXGTableTest, AddRowsMultiThreadingTest_SLOW) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
   DXGTable dxgtable2 = DXGTable::newDXGTable(DXGTableTest::columns);
-  
+
   JSON data(JSON_ARRAY);
   JSON temp(JSON_ARRAY);
-  
+
   data.push_back(std::string(10000, 'X'));
   data.push_back(0);
   int numRows = 100000;
@@ -1010,41 +1011,37 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_1_SLOW) {
   dxgtable2.flush();
 
   JSON desc = dxgtable.describe();
- 
+
   EXPECT_EQ(numRows, getRowCount(desc));
   EXPECT_EQ(numRows, getRowCount(dxgtable2.describe()));
   dxgtable.remove();
   dxgtable2.remove();
 }
 
-TEST_F(DXGTableTest, AddRowsMultiThreadingTest_2_SUPER_SLOW) {
+TEST_F(DXGTableTest, AddRowsMultipleTablesTest_SLOW) {
   // In this thread we try to add rows to NUM_GTABLES tables simultaneously
   const int NUM_GTABLES = 200;
   vector<DXGTable> tables;
   for (int i = 0; i < NUM_GTABLES; ++i)
     tables.push_back(DXGTable::newDXGTable(DXGTableTest::columns));
-  
+
   JSON data(JSON_ARRAY);
   JSON temp(JSON_ARRAY);
-  
+
   data.push_back(std::string(1000, 'X'));
   data.push_back(0);
 
-  int numRows = 1000;
+  int numRows = 10000;
   for (int i = 0; i < numRows; i++) {
     temp = JSON::parse("[]");
     data[1] = i;
     temp.push_back(data);
     for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++) {
-//      std::cerr<<"\nWill call for i = "<<i<<" , countgtables = "<<countGtable;
       tables[countGtable].addRows(temp);
     }
   }
-  for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++)
-  {
-//    std::cerr<<"\nCalling close on "<<countGtable<<" table";
+  for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++) {
     tables[countGtable].close();
-//    std::cerr<<"\nclose called on "<<countGtable<<" table";
   }
   for (int countGtable = 0; countGtable < NUM_GTABLES; countGtable++) {
     tables[countGtable].waitOnClose();
@@ -1055,18 +1052,18 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_2_SUPER_SLOW) {
 
 TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
   dxgtable = DXGTable::newDXGTable(DXGTableTest::columns);
-  
+
   JSON data(JSON_ARRAY);
   JSON temp(JSON_ARRAY);
-  
+
   int str_size = 10;
-  
+
   // These parameters will be used in second Linear query
   int start = 100;
   int limit = 10000;
   int chunk_size = 10;
   int numRows = 1000000; // should be > limit+start
-  
+
   data.push_back(std::string(str_size, 'X'));
   data.push_back(0);
   for (int i = 0; i < numRows; i++) {
@@ -1205,18 +1202,18 @@ TEST_F(DXGTableTest, LexicographicIndexTest) {
   vector<JSON> columns;
   columns.push_back(JSON::parse("{ \"name\": \"chr\", \"type\": \"string\" }"));
   columns.push_back(JSON::parse("{ \"name\": \"second\", \"type\": \"string\" }"));
-  
+
   vector<JSON> indices;
-  
+
   // build lexicographic index
   JSON index_cols(JSON_ARRAY);
   JSON elem(JSON_HASH);
-  elem["name"] = "chr"; 
+  elem["name"] = "chr";
   elem["order"] = "asc";
   elem["caseSensitive"] = false;
   index_cols.push_back(elem);
   indices.push_back(DXGTable::lexicographicIndex(index_cols, "l_index1"));
-  index_cols = JSON_ARRAY;    
+  index_cols = JSON_ARRAY;
   elem["name"] = "second";
   elem["caseSensitive"] = true;
   index_cols.push_back(elem);
@@ -1224,19 +1221,25 @@ TEST_F(DXGTableTest, LexicographicIndexTest) {
 
   dxgtable = DXGTable::newDXGTable(columns, indices);
   JSON desc = dxgtable.describe();
-  
+
   dxgtable.addRows(rows);
   dxgtable.close(true);
 
   desc = dxgtable.describe();
   ASSERT_EQ(desc["length"].get<int>(), 3);
-  
+
   JSON query(JSON_HASH);
   query["chr"] = JSON(JSON_HASH);
-  query["chr"]["$startsWith"] = "CHR";
+  query["chr"]["$startsWithCaseInsensitive"] = "CHR";
   JSON result = dxgtable.getRows(DXGTable::lexicographicQuery(query, "l_index1"));
   ASSERT_EQ(result["data"].size(), 3);
-  
+
+  query = JSON(JSON_HASH);
+  query["chr"] = JSON(JSON_HASH);
+  query["chr"]["$startsWith"] = "CHR"; // starts with is now case sensitive, so should not find any result
+  result = dxgtable.getRows(DXGTable::lexicographicQuery(query, "l_index1"));
+  ASSERT_EQ(result["data"].size(), 0);
+
   query = JSON(JSON_HASH);
   query["chr"] = JSON(JSON_HASH);
   query["chr"]["$gt"] = "chr1";
@@ -1251,46 +1254,53 @@ TEST_F(DXGTableTest, LexicographicIndexTest) {
 }
 
 TEST(DXSystemTest, findDataObjects) {
-  vector<DXGTable> dxg;
-  dxg.push_back(DXGTable("", ""));
-  dxg.push_back(DXGTable("", ""));
+  // We skip running of findDataObjects test in automated test suits (jenkins)
+  // because these tests rely heavily on server & client clock being in total sync
+  // (so they are good for running locally only)
+  if (DXTEST_FULL) {
+    vector<DXGTable> dxg;
+    dxg.push_back(DXGTable("", ""));
+    dxg.push_back(DXGTable("", ""));
 
-  // Note: Due to network delays, some of these test might fail.
-  //       Be aware of this fact while debugging.
-  usleep(1 * 1000000); // Sleep for 1s
-  int64_t ts1 = std::time(NULL) * 1000; // in ms => Time of object creation
-  usleep(10000); // Sleep for 10ms
-  DXRecord dxrecord = DXRecord::newDXRecord();
-  JSON q1(JSON_OBJECT);
-  q1["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<std::string>(ts1) + "}");
-  JSON res = DXSystem::findDataObjects(q1);
-//  std::cout<<endl<<res.toString()<<endl;
-  ASSERT_EQ(res["results"].size(), 1);
-  ASSERT_EQ(res["next"], JSON(JSON_NULL));
-  
-  ASSERT_EQ(res["results"][0], DXSystem::findOneDataObject(q1));
+    // Note: Due to clock differences on various machine, some of these test might fail.
+    //       Be aware of this fact while debugging.
+    usleep(1 * 1000000); // Sleep for 1s
+    int64_t ts1 = std::time(NULL) * 1000; // in ms => Time of object creation
+    usleep(10000); // Sleep for 10ms
+    DXRecord dxrecord = DXRecord::newDXRecord();
+    JSON q1(JSON_OBJECT);
+    q1["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<std::string>(ts1) + "}");
+    JSON res = DXSystem::findDataObjects(q1);
+  //  std::cout<<endl<<res.toString()<<endl;
+    ASSERT_EQ(res["results"].size(), 1);
+    ASSERT_EQ(res["next"], JSON(JSON_NULL));
 
-  // Sleep for .5 sec, and then find all objects modified in last .25 second
-  // should be zero
-  usleep(0.5 * 1000000); // Sleep for .5sec
-  q1 = JSON::parse("{\"modified\": {\"after\": \"-0.25s\"}}");
-  res = DXSystem::findDataObjects(q1);
-  ASSERT_EQ(res["results"].size(), 0);
-  ASSERT_EQ(res["next"], JSON(JSON_NULL));
-  
-  // find all objects modified after (ts1 - 1) seconds
-  q1["modified"]["after"] = boost::lexical_cast<std::string>(ts1/1000 - 1) + "s";
-  res = DXSystem::findDataObjects(q1);
-  ASSERT_EQ(res["results"].size(), 1);
-  ASSERT_EQ(res["next"], JSON(JSON_NULL));
-  
-  // find all objects in open state, and created after (ts1 - 1) seconds
-  q1 = JSON::parse("{\"state\": \"open\", \"created\":{\"after\":-" + boost::lexical_cast<std::string>(std::time(NULL)*1000 - ts1 + 1000) + "}}");
-  res = DXSystem::findDataObjects(q1);
-  ASSERT_EQ(res["results"].size(), 1);
+    ASSERT_EQ(res["results"][0], DXSystem::findOneDataObject(q1));
 
-  // Remove test data
-  dxrecord.remove();
+    // Sleep for .5 sec, and then find all objects modified in last .25 second
+    // should be zero
+    usleep(2 * 1000000); // Sleep for 2sec
+    q1 = JSON::parse("{\"modified\": {\"after\": \"-0.25s\"}}");
+    res = DXSystem::findDataObjects(q1);
+    ASSERT_EQ(res["results"].size(), 0);
+    ASSERT_EQ(res["next"], JSON(JSON_NULL));
+
+    // find all objects modified after (ts1 - 1) seconds
+    q1["modified"]["after"] = boost::lexical_cast<std::string>(ts1/1000 - 1) + "s";
+    res = DXSystem::findDataObjects(q1);
+    ASSERT_EQ(res["results"].size(), 1);
+    ASSERT_EQ(res["next"], JSON(JSON_NULL));
+
+    // find all objects in open state, and created after (ts1 - 1) seconds
+    q1 = JSON::parse("{\"state\": \"open\", \"created\":{\"after\":-" + boost::lexical_cast<std::string>(std::time(NULL)*1000 - ts1 + 1000) + "}}");
+    res = DXSystem::findDataObjects(q1);
+    ASSERT_EQ(res["results"].size(), 1);
+
+    // Remove test data
+    dxrecord.remove();
+  } else {
+    cerr << "Skipping findDataObjects test because DXTEST_FULL was not set" << endl;
+  }
 }
 
 TEST(DXSystemTest, findJobs) {
@@ -1298,11 +1308,11 @@ TEST(DXSystemTest, findJobs) {
   DXApplet apl;
   createANewApplet(apl);
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
-  
+
   JSON res = DXSystem::findJobs(JSON::parse("{\"project\": \"" + apl.getProjectID() + "\"}"));
   ASSERT_TRUE(res["results"].size() > 0);
   ASSERT_EQ(res["results"][0]["id"].get<string>(), job.getID());
-  
+
   JSON res2 = DXSystem::findJobs(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}}"));
   ASSERT_EQ(res2["results"].size(), 1);
   ASSERT_EQ(res["results"][0]["id"].get<string>(), job.getID());
@@ -1323,31 +1333,35 @@ TEST(DXSystemTest, findProjects) {
 }
 
 TEST(DXSystemTest, findApps) {
-  int64_t ts = std::time(NULL);
-  DXApplet apl;
-  createANewApplet(apl);
-  JSON inp(JSON_OBJECT);
-  inp["applet"] = apl.getID();
-  inp["version"] = "1";
-  inp["name"] = apl.getID() + "blah";
-  string appid = appNew(inp)["id"].get<string>();
-  DXApp app(appid);
-  
-  JSON res = DXSystem::findApps(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}, \"describe\": true}"));
-  ASSERT_EQ(res["results"].size(), 1);
-  ASSERT_EQ(res["results"][0]["describe"]["name"].get<string>(), apl.getID() + "blah");
-  
-  JSON res2 = DXSystem::findApps(JSON::parse("{\"modified\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}, \"describe\": true}"));
-  ASSERT_EQ(res2["results"].size(), 1);
-  ASSERT_EQ(res2["results"][0]["describe"]["name"].get<string>(), apl.getID() + "blah");
-  ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
-  
-  JSON res3 = DXSystem::findApps(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "},\"modified\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}}"));
-  ASSERT_EQ(res3["results"].size(), 1);
-  ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
-  
-  apl.remove();
-//  app.remove();
+  if (DXTEST_FULL) {
+    int64_t ts = std::time(NULL);
+    DXApplet apl;
+    createANewApplet(apl);
+    JSON inp(JSON_OBJECT);
+    inp["applet"] = apl.getID();
+    inp["version"] = "1";
+    inp["name"] = apl.getID() + "blah";
+    string appid = appNew(inp)["id"].get<string>();
+    DXApp app(appid);
+
+    JSON res = DXSystem::findApps(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}, \"describe\": true}"));
+    ASSERT_EQ(res["results"].size(), 1);
+    ASSERT_EQ(res["results"][0]["describe"]["name"].get<string>(), apl.getID() + "blah");
+
+    JSON res2 = DXSystem::findApps(JSON::parse("{\"modified\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}, \"describe\": true}"));
+    ASSERT_EQ(res2["results"].size(), 1);
+    ASSERT_EQ(res2["results"][0]["describe"]["name"].get<string>(), apl.getID() + "blah");
+    ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
+
+    JSON res3 = DXSystem::findApps(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "},\"modified\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}}"));
+    ASSERT_EQ(res3["results"].size(), 1);
+    ASSERT_EQ(res["results"][0]["id"], res2["results"][0]["id"]);
+
+    apl.remove();
+  //  app.remove();
+  } else {
+    cerr << "Skipping findApps test, as DXTEST_FULL is not set" << endl;
+  }
 }
 
 TEST(DXAppletTest, AllAppletTests) {
@@ -1355,7 +1369,7 @@ TEST(DXAppletTest, AllAppletTests) {
   createANewApplet(apl);
   ASSERT_EQ(apl.get()["inputSpec"], applet_details["inputSpec"]);
   ASSERT_EQ(apl.describe()["name"].get<string>(), "test_applet");
-  
+
   // Run the applet
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/");
   ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
@@ -1365,7 +1379,7 @@ TEST(DXAppletTest, AllAppletTests) {
   DXApplet apl2 = apl.clone(second_proj_id);
   apl.remove();
   ASSERT_EQ(apl2.get()["inputSpec"], applet_details["inputSpec"]);
-  apl2.remove(); 
+  apl2.remove();
 }
 
 // AllJobTests are slow because they wait for full execution
@@ -1376,7 +1390,7 @@ TEST(DXJobTest, AllJobTests_SLOW) {
   createANewApplet(apl);
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
   ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
-  
+
   // Check state after one minute
   job.waitOnDone(60);
   if (job.getState() == "failed" || job.getState() == "terminated") {
@@ -1385,14 +1399,14 @@ TEST(DXJobTest, AllJobTests_SLOW) {
   // otherwise give it 4 more minutes to finish
   job.waitOnDone(240);
 
-  // If state is not "done" after even 5min, that means job most probably failed: 
+  // If state is not "done" after even 5min, that means job most probably failed:
   // should not happen
   ASSERT_EQ(job.getState(), "done");
-  
+
   vector<string> depends;
   depends.push_back(job.getID());
   DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "dx_m1.small");
-  int64_t s1 = std::time(NULL); 
+  int64_t s1 = std::time(NULL);
   int timeout = 3;
   job2.waitOnDone(timeout);
   int64_t s2 = std::time(NULL);
@@ -1402,73 +1416,77 @@ TEST(DXJobTest, AllJobTests_SLOW) {
 }
 
 TEST(DXAppTest, AllAppTests) {
-  DXApplet apl;
-  createANewApplet(apl);
-  JSON inp(JSON_OBJECT);
-  inp["applet"] = apl.getID();
-  inp["version"] = "1";
-  inp["name"] = apl.getID() + "blah";
-  string appid = appNew(inp)["id"].get<string>();
-  DXApp app(appid);
+  if (DXTEST_FULL) {
+    DXApplet apl;
+    createANewApplet(apl);
+    JSON inp(JSON_OBJECT);
+    inp["applet"] = apl.getID();
+    inp["version"] = "1";
+    inp["name"] = apl.getID() + "blah";
+    string appid = appNew(inp)["id"].get<string>();
+    DXApp app(appid);
 
-  ASSERT_EQ(app.get()["inputSpec"], applet_details["inputSpec"]);
+    ASSERT_EQ(app.get()["inputSpec"], applet_details["inputSpec"]);
 
-//  app.update(JSON::parse("{\"name\": \"\"}"));
-  ASSERT_EQ(app.describe()["name"].get<string>(), apl.getID() + "blah");
-  ASSERT_EQ(app.describe()["installed"].get<bool>(), true);
+  //  app.update(JSON::parse("{\"name\": \"\"}"));
+    ASSERT_EQ(app.describe()["name"].get<string>(), apl.getID() + "blah");
+    ASSERT_EQ(app.describe()["installed"].get<bool>(), true);
 
-  // Test addTags() and removeTags()
-  app.addTags(JSON::parse("[\"blah-1\", \"blah-2\"]"));
-  JSON desc = app.describe();
-  int countTags = 0;
-  for (int i = 0; i < desc["aliases"].size(); ++i) {
-    if (desc["aliases"][i].get<string>() == "blah-1" || desc["aliases"][i].get<string>() == "blah-2")
-      countTags++;
+    // Test addTags() and removeTags()
+    app.addTags(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+    JSON desc = app.describe();
+    int countTags = 0;
+    for (int i = 0; i < desc["aliases"].size(); ++i) {
+      if (desc["aliases"][i].get<string>() == "blah-1" || desc["aliases"][i].get<string>() == "blah-2")
+        countTags++;
+    }
+    ASSERT_EQ(countTags, 2);
+
+    app.removeTags(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+    countTags = 0;
+    desc = app.describe();
+    for (int i = 0; i < desc["aliases"].size(); ++i) {
+      if (desc["aliases"][i].get<string>() == "blah-1" || desc["aliases"][i].get<string>() == "blah-2")
+        countTags++;
+    }
+    ASSERT_EQ(countTags, 0);
+
+    // Test addCategories() and removeCategories()
+    app.addCategories(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+    desc = app.describe();
+    int countCategories = 0;
+    for (int i = 0; i < desc["categories"].size(); ++i) {
+      if (desc["categories"][i].get<string>() == "blah-1" || desc["categories"][i].get<string>() == "blah-2")
+        countCategories++;
+    }
+    ASSERT_EQ(countCategories, 2);
+
+    app.removeCategories(JSON::parse("[\"blah-1\", \"blah-2\"]"));
+    desc = app.describe();
+    countCategories = 0;
+    for (int i = 0; i < desc["categories"].size(); ++i) {
+      if (desc["categories"][i].get<string>() == "blah-1" || desc["categories"][i].get<string>() == "blah-2")
+        countCategories++;
+    }
+    ASSERT_EQ(countCategories, 0);
+
+    //Test Install and uninstall
+    // TODO: We need to create another user to test uninstalltion
+    //       since a developer cannot uninstall the app
+
+    // Test publish()
+    ASSERT_EQ(app.describe().has("published"), false);
+    app.publish();
+    ASSERT_EQ(app.describe().has("published"), true);
+
+    // Remove the app
+    // app.remove();
+    //ASSERT_EQ(app.describe()["deleted"].get<bool>(), true);
+
+    //apl.remove();
+  } else {
+    cerr << "Skipping DXAppTest test, as DXTEST_FULL is not set" << endl;
   }
-  ASSERT_EQ(countTags, 2);
-
-  app.removeTags(JSON::parse("[\"blah-1\", \"blah-2\"]"));
-  countTags = 0;
-  desc = app.describe();
-  for (int i = 0; i < desc["aliases"].size(); ++i) {
-    if (desc["aliases"][i].get<string>() == "blah-1" || desc["aliases"][i].get<string>() == "blah-2")
-      countTags++;
-  }
-  ASSERT_EQ(countTags, 0);
-  
-  // Test addCategories() and removeCategories()
-  app.addCategories(JSON::parse("[\"blah-1\", \"blah-2\"]"));
-  desc = app.describe();
-  int countCategories = 0;
-  for (int i = 0; i < desc["categories"].size(); ++i) {
-    if (desc["categories"][i].get<string>() == "blah-1" || desc["categories"][i].get<string>() == "blah-2")
-      countCategories++;
-  }
-  ASSERT_EQ(countCategories, 2);
-
-  app.removeCategories(JSON::parse("[\"blah-1\", \"blah-2\"]"));
-  desc = app.describe();
-  countCategories = 0;
-  for (int i = 0; i < desc["categories"].size(); ++i) {
-    if (desc["categories"][i].get<string>() == "blah-1" || desc["categories"][i].get<string>() == "blah-2")
-      countCategories++;
-  }
-  ASSERT_EQ(countCategories, 0);
-  
-  //Test Install and uninstall
-  // TODO: We need to create another user to test uninstalltion
-  //       since a developer cannot uninstall the app
-  
-  // Test publish()
-  ASSERT_EQ(app.describe().has("published"), false);
-  app.publish();
-  ASSERT_EQ(app.describe().has("published"), true);
-
-  // Remove the app
-  // app.remove();
-  //ASSERT_EQ(app.describe()["deleted"].get<bool>(), true);
-
-//  apl.remove();
 }
 
 ///////////
@@ -1491,15 +1509,26 @@ TEST(DXAppTest, AllAppTests) {
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
+  {
+    DXTEST_FULL = false;
+    char *tmp = getenv("DXTEST_FULL");
+    if (tmp != NULL) {
+      if (string(tmp) != "0" && string(tmp) != "false") {
+        cerr << "DXTEST_FULL env variable is set. Will run all tests (including tests which create apps)" << endl;
+        DXTEST_FULL = true; // set the global variable
+      }
+    }
+  }
   JSON project_hash(JSON_OBJECT);
-  project_hash["name"] = "test_project";
+  project_hash["name"] = "test_project_dxcpp";
   JSON resp = projectNew(project_hash);
   proj_id = resp["id"].get<string>();
-  project_hash["name"] = "second_test_project";
+  project_hash["name"] = "second_test_project_dxcpp";
   resp = projectNew(project_hash);
   second_proj_id = resp["id"].get<string>();
-  
+
   resp = projectNew(project_hash);
+  project_hash["name"] = "third_test_project_dxcpp";
   third_proj_id = resp["id"].get<string>();
 
   config::CURRENT_PROJECT() = proj_id;

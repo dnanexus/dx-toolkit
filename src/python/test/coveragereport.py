@@ -284,11 +284,24 @@ def apply_path_aliases(cov, aliases):
         aliases.items(), key=lambda i: len(i[0]), reverse=True)
     def fixup_filename(filename):
         for alias, local in aliases:
-            return local + filename[len(alias):]
+            if filename.startswith(alias):
+                return local + filename[len(alias):]
         return filename
-    cov.data.lines = map_dict_keys(fixup_filename, cov.data.lines)
+    cov.data.lines = map_and_merge_dict_keys(fixup_filename, cov.data.lines)
     cov.data.arcs = map_dict_keys(fixup_filename, cov.data.arcs)
 
+def map_and_merge_dict_keys(fn, d):
+    def merge_fn(*args):
+        accumulated = set()
+        for l in args:
+            accumulated.update(l)
+        return sorted(accumulated)
+    output = {}
+    for k, v in d.iteritems():
+        if fn(k) not in output:
+            output[fn(k)] = []
+        output[fn(k)].append(v)
+    return dict((f_k, merge_fn(*v)) for f_k, v in output.iteritems())
 
 def map_dict_keys(fn, d):
     """Transform {x: y} to {fn(x): y}."""
