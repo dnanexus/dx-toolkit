@@ -544,8 +544,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True,
                              dry_run=False, return_object_dump=False):
-    app_json = _parse_app_spec(src_dir)
     _verify_app_source_dir(src_dir, enforce=do_check_syntax)
+
+    app_json = _parse_app_spec(src_dir)
 
     working_project = None
     using_temp_project = False
