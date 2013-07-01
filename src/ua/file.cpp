@@ -29,14 +29,14 @@ namespace fs = boost::filesystem;
 using namespace std;
 using namespace dx;
 
-string File::createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const string &name) {
+string File::createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const string &path) {
   using namespace boost;
   string toReturn;
   toReturn += lexical_cast<string>(fileSize) + " ";
   toReturn += lexical_cast<string>(modifiedTimestamp) + " ";
   toReturn += lexical_cast<string>(toCompress) + " ";
   toReturn += lexical_cast<string>(chunkSize) + " ";
-  toReturn += name;
+  toReturn += path;
   return toReturn;
 }
 
@@ -106,8 +106,8 @@ void File::init(const bool tryResuming) {
   const int64_t modifiedTimestamp = static_cast<int64_t>(fs::last_write_time(p));
   dx::JSON properties(dx::JSON_OBJECT);
   // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
-  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, p.filename().string());
-  
+  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).string());
+  DXLOG(logINFO) << "Resume info string: '" << properties[FILE_SIGNATURE_PROPERTY].get<string>() << "'"; 
   dx::JSON findResult;
   if (tryResuming) {
     // Now check if a resumable file already exist in the project
