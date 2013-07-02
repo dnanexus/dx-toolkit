@@ -1309,13 +1309,20 @@ TEST(DXSystemTest, findJobs) {
   createANewApplet(apl);
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
 
-  JSON res = DXSystem::findJobs(JSON::parse("{\"project\": \"" + apl.getProjectID() + "\"}"));
+  JSON query = JSON::parse("{\"project\": \"" + apl.getProjectID() + "\"}");
+
+  JSON res = DXSystem::findJobs(query);
   ASSERT_TRUE(res["results"].size() > 0);
   ASSERT_EQ(res["results"][0]["id"].get<string>(), job.getID());
 
-  JSON res2 = DXSystem::findJobs(JSON::parse("{\"created\": {\"after\": " + boost::lexical_cast<string>(ts*1000 - 1) + "}}"));
-  ASSERT_EQ(res2["results"].size(), 1);
-  ASSERT_EQ(res["results"][0]["id"].get<string>(), job.getID());
+  query["created"] = JSON::parse("{\"after\": " + boost::lexical_cast<string>(ts * 1000 - 5 * 60 * 1000) + "}"); // assuming clocks can be 5min out of sync
+  JSON res2 = DXSystem::findJobs(query);
+  ASSERT_TRUE(res2["results"].size() >= 1);
+
+  query["created"]["after"] = std::time(NULL) * 1000 + 5 * 60 * 1000;
+  JSON res3 = DXSystem::findJobs(query);
+  ASSERT_EQ(res3["results"].size(), 0);
+
   apl.remove();
   job.terminate();
 }
