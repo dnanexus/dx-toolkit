@@ -1,3 +1,13 @@
+dx-toolkit (0.57.0) precise; urgency=low
+
+  * Introduced "dx build", which will replace dx-build-app{,let}.
+
+  * Fixes for packaging of tab completion.
+
+  * Bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 02 Jul 2013 20:07:35 +0000
+
 dx-toolkit (0.56.0) precise; urgency=low
 
   * App Wizard now prompts for network and project access.
