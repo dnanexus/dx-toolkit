@@ -488,7 +488,7 @@ class TestDXBuildApp(DXTestCase):
 
     def test_dxapp_checks(self):
         app_dir = self.write_app_directory("dxapp_checks", "{\"invalid_json\":}", code_filename="code.py")
-        with self.assertSubprocessFailure(stderr_regexp="dxapp\\.json"):
+        with self.assertSubprocessFailure(stderr_regexp="dxapp\\.json", exit_code=1):
             run("dx-build-applet " + app_dir)
 
     def test_syntax_checks(self):
