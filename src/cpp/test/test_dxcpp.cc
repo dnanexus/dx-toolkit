@@ -995,9 +995,9 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_SLOW) {
   JSON data(JSON_ARRAY);
   JSON temp(JSON_ARRAY);
 
-  data.push_back(std::string(10000, 'X'));
+  data.push_back(std::string(1000, 'X'));
   data.push_back(0);
-  int numRows = 100000;
+  int numRows = 10000;
   for (int i = 0; i < numRows; i++) {
     temp = JSON::parse("[]");
     data[1] = i;
@@ -1020,7 +1020,7 @@ TEST_F(DXGTableTest, AddRowsMultiThreadingTest_SLOW) {
 
 TEST_F(DXGTableTest, AddRowsMultipleTablesTest_SLOW) {
   // In this thread we try to add rows to NUM_GTABLES tables simultaneously
-  const int NUM_GTABLES = 200;
+  const int NUM_GTABLES = 100;
   vector<DXGTable> tables;
   for (int i = 0; i < NUM_GTABLES; ++i)
     tables.push_back(DXGTable::newDXGTable(DXGTableTest::columns));
@@ -1031,7 +1031,7 @@ TEST_F(DXGTableTest, AddRowsMultipleTablesTest_SLOW) {
   data.push_back(std::string(1000, 'X'));
   data.push_back(0);
 
-  int numRows = 10000;
+  int numRows = 1000;
   for (int i = 0; i < numRows; i++) {
     temp = JSON::parse("[]");
     data[1] = i;
@@ -1321,11 +1321,11 @@ TEST(DXSystemTest, findJobs) {
 }
 
 TEST(DXSystemTest, findProjects) {
-  JSON q = JSON::parse("{}");
+  JSON q = JSON::parse("{\"name\": \"dxcpp_test_prj\"}");
   JSON res = DXSystem::findProjects(q);
   int len = res["results"].size();
 
-  std::string id = projectNew(std::string("{\"name\": \"test_prj\"}"))["id"].get<std::string>();
+  std::string id = projectNew(std::string("{\"name\": \"dxcpp_test_prj\"}"))["id"].get<std::string>();
 
   ASSERT_EQ(DXSystem::findProjects(q)["results"].size(), (len == 1000) ? len : len + 1);
   DXProject dxprj(id);
@@ -1405,7 +1405,7 @@ TEST(DXJobTest, AllJobTests_SLOW) {
 
   vector<string> depends;
   depends.push_back(job.getID());
-  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "dx_m1.small");
+  DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "dx_m1.medium");
   int64_t s1 = std::time(NULL);
   int timeout = 3;
   job2.waitOnDone(timeout);
