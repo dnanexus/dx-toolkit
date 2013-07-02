@@ -15,7 +15,7 @@ You can run the demonstration app locally as follows (on Linux or Mac):
 You can also build and run it in the Platform as follows:
 
     # Also supply --remote if on Mac
-    $ dx-build-applet path/to/cross_platform_debugging_example
+    $ dx build path/to/cross_platform_debugging_example
     $ dx run --watch ./cross_platform_debugging_example -iname=You
 
 ## Executables and libraries
@@ -47,7 +47,7 @@ added to your `PATH`, and `APPDIR/mac_resources/usr/lib` is added to your
 by name.
 
 When you are satisfied with local testing runs, you can deploy to the Platform
-using `dx-build-applet --remote cross_platform_debugging_example`, which
+using `dx build --remote cross_platform_debugging_example`, which
 performs the build steps in the Execution Environment to obtain the appropriate
 Linux artifacts. Built artifacts you had in `mac_resources/`, if any, are not
 uploaded.
