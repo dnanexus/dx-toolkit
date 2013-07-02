@@ -32,25 +32,11 @@ import dxpy, dxpy.app_builder
 from dxpy import logger
 
 from dxpy.utils.resolver import resolve_path, is_container_id
+from dxpy.app_categories import APP_CATEGORIES
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
-
-RECOGNIZED_CATEGORIES = set([
-    'Annotation',
-    'Assembly',
-    'Debugging',
-    'Export',
-    'Import',
-    'Mappings Manipulation',
-    'Read Manipulation',
-    'Read Mapping',
-    'Reports',
-    'RNA-Seq',
-    'Statistics',
-    'Variation Calling'
-])
 
 # COMMON OPTIONS
 parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
@@ -243,7 +229,7 @@ def _lint(dxapp_json_filename):
 
     if 'categories' in app_spec:
         for category in app_spec['categories']:
-            if category not in RECOGNIZED_CATEGORIES:
+            if category not in APP_CATEGORIES:
                 logger.warn('app has unrecognized category "%s"' % (category,))
             if category == 'Import':
                 if not app_spec['title'].endswith('Importer'):
