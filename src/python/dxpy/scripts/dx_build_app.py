@@ -655,6 +655,12 @@ def main(**kwargs):
     implementation for dx-build-app(let) but is easier to use in your program.
     """
 
+    if len(sys.argv) > 0:
+        if sys.argv[0].endswith('dx-build-app'):
+            logging.warn('Warning: dx-build-app has been replaced with "dx build --create-app". Please update your scripts.')
+        elif sys.argv[0].endswith('dx-build-applet'):
+            logging.warn('Warning: dx-build-applet has been replaced with "dx build". Please update your scripts.')
+
     if len(kwargs) == 0:
         args = parser.parse_args()
     else:
