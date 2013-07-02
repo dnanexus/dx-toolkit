@@ -389,7 +389,7 @@ for filename in sorted(manifest):
     print "\t", filename
 print "\n" + fill('''App directory created!  See
 https://wiki.dnanexus.com/Developer-Portal for tutorials on how to modify these files,
-or run "dx-build-app(let) %s" while logged in with dx.''' % name) + "\n"
+or run "dx build {n}" or "dx build --create-app {n}" while logged in with dx.'''.format(n=name)) + "\n"
 print fill('''Running the DNAnexus build utility will create an
 executable on the DNAnexus platform.  Any files found in the ''' +
 BOLD() + 'resources' + ENDC() + ''' directory will be uploaded so that

@@ -139,9 +139,9 @@ class DXApp(DXObject):
         :type resources: string or list
 
         .. note:: It is highly recommended that the higher-level module
-           :mod:`dxpy.app_builder` or (preferably) its frontend `dx-build-app
-           <https://wiki.dnanexus.com/DxBuildApp>`_ be used instead for app
-           creation.
+           :mod:`dxpy.app_builder` or (preferably) its frontend `dx build --create-app
+           <https://wiki.dnanexus.com/Command-Line-Client/Index-of-dx-Commands#build>`_
+           be used instead for app creation.
 
         Creates an app with the given parameters by using the specified
         applet or app as a base and overriding its attributes. See the

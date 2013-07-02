@@ -28,7 +28,7 @@ from dxpy.cli.exec_io import *
 from dxpy.scripts import dx_build_app
 import dxpy.utils.local_exec_utils as local_exec_utils
 
-parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx-build-app(let).')
+parser = argparse.ArgumentParser(description='Takes a local app directory and runs it locally for testing purposes.  This directory should have a valid dxapp.json file and can be built using dx build.')
 parser.add_argument('path', help='Local path to an app directory')
 parser.add_argument('--function', help='The name of an entry point to run', default='main')
 parser.add_argument('--workspace-path', help="Local directory in which jobs will have their home directories (default is a directory called 'test-job-workspaces' within the app directory)")
@@ -40,9 +40,9 @@ args = parser.parse_args()
 
 args.path = os.path.abspath(args.path)
 
-# Do the equivalent of "dx-build-app --dry-run" to do some basic checking
+# Do the equivalent of "dx build --dry-run" to do some basic checking
 with tempfile.TemporaryFile() as fd:
-    print "About to run 'dx-build-app --dry-run " + args.path + "'"
+    print "About to run 'dx build --dry-run " + args.path + "'"
     import logging
     logger = logging.getLogger('dxpy')
     logger.propagate = False
@@ -61,7 +61,7 @@ with tempfile.TemporaryFile() as fd:
         print fd.read()
         sys.exit(build_error)
     else:
-        print 'dx-build-app dry run successful'
+        print 'dx build dry run successful'
 
 path_to_dxapp_json = os.path.join(args.path, 'dxapp.json')
 
