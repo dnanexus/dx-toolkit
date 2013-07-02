@@ -25,6 +25,7 @@ from dxpy.templating.utils import (print_intro, get_name, get_version, get_metad
                                    get_pattern, get_parallelized_io, fill_in_name_and_ver, clean,
                                    create_files_from_templates)
 from dxpy.utils.printing import *
+from dxpy.app_categories import APP_CATEGORIES
 from collections import OrderedDict
 
 IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
@@ -89,6 +90,22 @@ else:
 
     app_json["dxapi"] = API_VERSION
     app_json["version"] = version
+
+    category_completer = Completer(sorted(APP_CATEGORIES))
+    use_completer(category_completer)
+    categories = []
+    print
+    print fill(BOLD() + 'App categories:' + ENDC() + ' provide categories to make your app easier to find in the App Library. (Visit https://platform.dnanexus.com/apps to see how your app might appear.) If you do not intend to publish your app, you can skip this step.')
+    while True:
+        input_class = prompt_for_var('Choose a category (<TAB> twice for choices, <ENTER> to finish)', allow_empty=True)
+        if input_class == '':
+            break
+        if input_class not in category_completer.choices:
+            answer = raw_input("This is not a recognized category name and users won't be able to browse this category to find your app. Use it anyway? [Y/n] ")
+            if answer.lower().startswith('n'):
+                continue
+        categories.append(input_class)
+    app_json["categories"] = categories
 
     ############
     # IO SPECS #
