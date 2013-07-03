@@ -292,8 +292,9 @@ class TestDXBuildApp(DXTestCase):
 
     def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
         os.mkdir(os.path.join(self.temp_file_path, app_name))
-        with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
-            manifest.write(dxapp_str)
+        if dxapp_str is not None:
+            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
+                manifest.write(dxapp_str)
         if code_filename:
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
                 code_file.write(code_content)
@@ -341,6 +342,16 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    def test_build_applet_with_no_dxapp_json(self):
+        app_dir = self.write_app_directory("applet_with_no_dxapp_json", None, "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
+            run("dx build " + app_dir)
+
+    def test_build_applet_with_malformed_dxapp_json(self):
+        app_dir = self.write_app_directory("applet_with_malformed_dxapp_json", "{", "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxapp\.json file', exit_code=3):
+            run("dx build " + app_dir)
 
     @unittest.skipIf('DXTEST_FULL' not in os.environ,
                      'skipping test that would create apps')
