@@ -2512,7 +2512,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
         dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
-                               details=args.details, delay_workspace_destruction=args.delay_workspace_destruction)
+                               details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
+                               instance_type=args.instance_type)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -2853,6 +2854,13 @@ def run(args):
         dest_proj, dest_path, none = try_call(resolve_existing_path,
                                               args.folder,
                                               expected='folder')
+
+    if args.instance_type and args.instance_type.strip().startswith('{'):
+        try:
+            args.instance_type = json.loads(args.instance_type)
+        except ValueError:
+            err_exit("Error while parsing JSON value for --instance-type",
+                     expected_exceptions=default_expected_exceptions + (ValueError,))
 
     if isinstance(handler, dxpy.bindings.DXRecord): # Identified as a workflow in get_exec_or_workflow_handler()
         if clone_desc is not None:
@@ -3494,6 +3502,7 @@ parser_run.add_argument('--input-help', help=fill('Print help and examples for h
 parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+parser_run.add_argument('--instance-type', help=fill('Specify instance type for the "main" function of the executable, or a JSON string like \'{"main": "dx_m1.large", ...}\''))
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
 register_subparser(parser_run, categories='exec')
 
