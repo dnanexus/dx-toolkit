@@ -210,6 +210,9 @@ def _lint(dxapp_json_filename):
     else:
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
 
+    if 'title' not in app_spec:
+        logger.warn('app is missing a title, please add one in the "title" field of dxapp.json')
+
     if 'summary' in app_spec:
         if app_spec['summary'].endswith('.'):
             logger.warn('summary "%s" should be a short phrase not ending in a period' % (app_spec['summary'],))
@@ -235,10 +238,10 @@ def _lint(dxapp_json_filename):
             if category not in APP_CATEGORIES:
                 logger.warn('app has unrecognized category "%s"' % (category,))
             if category == 'Import':
-                if not app_spec['title'].endswith('Importer'):
+                if 'title' in app_spec and not app_spec['title'].endswith('Importer'):
                     logger.warn('title "%s" should end in "Importer"' % (app_spec['title'],))
             if category == 'Export':
-                if not app_spec['title'].endswith('Exporter'):
+                if 'title' in app_spec and not app_spec['title'].endswith('Exporter'):
                     logger.warn('title "%s" should end in "Exporter"' % (app_spec['title'],))
 
     # Note that identical checks are performed on the server side (and
