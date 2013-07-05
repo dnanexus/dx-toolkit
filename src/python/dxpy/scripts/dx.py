@@ -1904,8 +1904,14 @@ def head(args):
         except:
             err_exit()
 
+def upload(args, **kwargs):
+    paths = copy.copy(args.filename)
+    for path in paths:
+        args.filename = path
+        upload_one(args, **kwargs)
+
 upload_seen_paths=set()
-def upload(args):
+def upload_one(args):
     try_call(process_dataobject_args, args)
 
     args.show_progress = args.show_progress and not args.brief
@@ -1939,7 +1945,7 @@ def upload(args):
                 sub_args.filename = os.path.join(args.filename, f)
                 sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
-                upload(sub_args)
+                upload_one(sub_args)
     else:
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
@@ -3389,7 +3395,8 @@ parser_upload = subparsers.add_parser('upload', help='Upload a file or directory
                                       description='Upload a local file or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
                                       parents=[parser_dataobject_args, stdout_args, env_args],
                                       prog="dx upload")
-upload_filename_action = parser_upload.add_argument('filename', help='Local file or directory to upload ("-" indicates stdin input)')
+upload_filename_action = parser_upload.add_argument('filename', nargs='+',
+                                                    help='Local file or directory to upload ("-" indicates stdin input)')
 #upload_filename_action.completer = LocalCompleter()
 parser_upload.add_argument('-r', '--recursive', help='Upload directories recursively', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
