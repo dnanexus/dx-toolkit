@@ -46,11 +46,20 @@ def get_session_conf_dir():
                 return session_dir
             parent_process = parent_process.parent
         return default_session_dir
-    except ImportError:
-        try:
-            return os.path.join(sessions_dir, str(os.getppid()))
-        except AttributeError: # os.getppid is not available on Windows
-            return os.path.join(sessions_dir, str(os.getpid()))
+    except (ImportError, IOError):
+        pass # psutil may not be available, or fail with IOError when /proc is not mounted
+    except Exception as e:
+        sys.stderr.write(textwrap.fill("Unexpected error while retrieving session configuration: {e}\n".format(e=e)))
+    return _get_ppid_session_conf_dir(sessions_dir)
+
+def _get_ppid_session_conf_dir(sessions_dir):
+    try:
+        return os.path.join(sessions_dir, str(os.getppid()))
+    except AttributeError:
+        pass # os.getppid is not available on Windows
+    except Exception as e:
+        sys.stderr.write(textwrap.fill("Unexpected error while retrieving session configuration: {e}\n".format(e=e)))
+    return os.path.join(sessions_dir, str(os.getpid()))
 
 def read_conf_dir(dirname):
     try:
