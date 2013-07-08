@@ -46,10 +46,10 @@ def get_session_conf_dir():
                 return session_dir
             parent_process = parent_process.parent
         return default_session_dir
-    except (ImportError, IOError):
-        pass # psutil may not be available, or fail with IOError when /proc is not mounted
+    except (ImportError, IOError, AttributeError):
+        pass # psutil may not be available, or fail with IOError or AttributeError when /proc is not mounted
     except Exception as e:
-        sys.stderr.write(textwrap.fill("Unexpected error while retrieving session configuration: {e}\n".format(e=e)))
+        sys.stderr.write(textwrap.fill("Unexpected error ({e}) while retrieving session configuration\n".format(e=type(e))))
     return _get_ppid_session_conf_dir(sessions_dir)
 
 def _get_ppid_session_conf_dir(sessions_dir):
@@ -58,7 +58,7 @@ def _get_ppid_session_conf_dir(sessions_dir):
     except AttributeError:
         pass # os.getppid is not available on Windows
     except Exception as e:
-        sys.stderr.write(textwrap.fill("Unexpected error while retrieving session configuration: {e}\n".format(e=e)))
+        sys.stderr.write(textwrap.fill("Unexpected error ({e}) while retrieving session configuration\n".format(e=type(e))))
     return os.path.join(sessions_dir, str(os.getpid()))
 
 def read_conf_dir(dirname):
@@ -111,7 +111,7 @@ def get_env(suppress_warning=False):
 def write_env_var(var, value):
     user_conf_dir, session_conf_dir = get_user_conf_dir(), get_session_conf_dir()
     try:
-        os.mkdir(user_conf_dir, 0o700)
+        os.makedirs(user_conf_dir, 0o700)
     except OSError:
         os.chmod(user_conf_dir, 0o700)
     try:
