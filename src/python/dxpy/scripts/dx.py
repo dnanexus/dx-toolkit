@@ -329,7 +329,7 @@ def login(args):
 
     greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
     if greeting.get('messages'):
-        print BOLD("New messages from DNAnexus")
+        print BOLD("New messages from ") + DNANEXUS_LOGO()
         for message in greeting['messages']:
             print BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime()
             print BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9)
