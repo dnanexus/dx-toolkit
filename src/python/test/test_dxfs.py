@@ -28,6 +28,8 @@ import dxpy
 class TestDXFS(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if 'DXTEST_FUSE' not in os.environ:
+            return
         proj_name = u"dxclient_test_pröject"
         cls.project_id = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = cls.project_id
@@ -48,8 +50,8 @@ class TestDXFS(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.fuse_driver.terminate()
         try:
+            cls.fuse_driver.terminate()
             subprocess.check_call(u"dx rmproject --yes {p}".format(p=cls.project_id), shell=True)
         except:
             pass
