@@ -176,7 +176,7 @@ class ContentLengthError(HTTPError):
     '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
     pass
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600, config=None,
+def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
@@ -240,8 +240,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     if auth is True:
         auth = AUTH_HELPER
-    if config is None:
-        config = {}
 
     # When *data* is bytes but *headers* contains Unicode strings, httplib tries to concatenate them and decode *data*,
     # which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll disregard that here, and
@@ -280,8 +278,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     for retry in range(max_retries + 1):
         streaming_response_truncated = False
         try:
-            response = session_handler.request(method, url, data=data, headers=headers, timeout=timeout,
-                                               auth=auth, config=config, **kwargs)
+            response = session_handler.request(method, url, data=data, headers=headers, timeout=timeout, auth=auth,
+                                               **kwargs)
 
             if _UPGRADE_NOTIFY and response.headers.get('x-upgrade-info', '').startswith('A recommended update is available') and not os.environ.has_key('_ARGCOMPLETE'):
                 logger.info(response.headers['x-upgrade-info'])
