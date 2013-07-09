@@ -16,14 +16,11 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import os, sys, re, math, argparse, collections, tempfile
+
 import dxpy
 from dxpy.utils.resolver import ResolutionError, resolve_existing_path
-import math
-import argparse
-import re
-import collections
-import sys
-import tempfile
+from dxpy.utils.printing import fill
 
 parser = argparse.ArgumentParser(description='Export a Variants gtable into a VCF file.  WARNING: This can take a while because it downloads the entire reference genome.  It is recommended that this script only be called from within an application running on the cloud.')
 parser.add_argument("path", help="Path to the Variants gtable")
