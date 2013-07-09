@@ -252,7 +252,7 @@ Optional support is available for mounting DNAnexus Platform projects as virtual
 Platform     | Dependency
 -------------|-----------
 Ubuntu 12.04 | `apt-get install libfuse2`
-OS X         | [Fuse for OS X](http://osxfuse.github.io/)
+OS X         | [FUSE for OS X](http://osxfuse.github.io/)
 
 See TODO for more information.
 
