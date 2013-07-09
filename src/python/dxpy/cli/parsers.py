@@ -63,7 +63,7 @@ def get_output_flag(args):
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
-parser_dataobject_args_gp.add_argument('path', help=fill('DNAnexus path for the new object (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
+parser_dataobject_args_gp.add_argument('--path', '--destination', help=fill('DNAnexus path for the new object (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
 parser_dataobject_args_gp.add_argument('-o', '--output', help=argparse.SUPPRESS)
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], dest='hidden', default='visible', help='Whether the object is hidden or not')
 parser_dataobject_args_gp.add_argument('--property', dest='properties', metavar='KEY=VALUE', help=fill('Key-value pair to add as a property; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--property key1=val1 --property key2=val2"', width_adjustment=-24, initial_indent=' ', subsequent_indent=' ', break_on_hyphens=False), action='append')
