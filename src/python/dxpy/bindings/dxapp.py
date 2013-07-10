@@ -52,7 +52,7 @@ from dxpy.bindings import *
 # DXApp #
 #########
 
-class DXApp(DXObject):
+class DXApp(DXObject, DXExecutable):
     '''
     Remote app object handler.
 
@@ -315,80 +315,3 @@ class DXApp(DXObject):
             return dxpy.api.app_delete(self._dxid, **kwargs)
         else:
             return dxpy.api.app_delete('app-' + self._name, alias=self._alias, **kwargs)
-
-    def run(self, app_input, project=None, folder="/", name=None, instance_type=None, depends_on=None,
-            details=None, delay_workspace_destruction=None, **kwargs):
-        '''
-        :param app_input: Hash of the app's input arguments
-        :type app_input: dict
-        :param project: Project ID of the project context
-        :type project: string
-        :param folder: Folder in which the app's outputs will be placed in *project*
-        :type folder: string
-        :param name: Name for the new job (default is "<name of the app>")
-        :type name: string
-        :param instance_type: Instance type on which the job with entry point "main" will be run, or a dict mapping function names to instance type requests
-        :type instance_type: string or dict
-        :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
-        :type depends_on: list
-        :param details: Details to set for the job
-        :type details: dict or list
-        :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
-        :type delay_workspace_destruction: boolean
-        :returns: Object handler of the newly created job
-        :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
-
-        Creates a new job that executes the function "main" of this app
-        with the given input *app_input*.
-
-        '''
-        if project is None:
-            project = dxpy.WORKSPACE_ID
-
-        run_input = {"input": app_input,
-                     "folder": folder}
-        if name is not None:
-            run_input["name"] = name
-
-        if dxpy.JOB_ID is None:
-            run_input["project"] = project
-
-        if instance_type is not None:
-            if isinstance(instance_type, basestring):
-                run_input["systemRequirements"] = {"main": {"instanceType": instance_type}}
-            elif isinstance(instance_type, dict):
-                run_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
-            else:
-                raise DXError('Expected instance_type field to be either a string or a dict')
-
-        if depends_on is not None:
-            run_input["dependsOn"] = []
-            if isinstance(depends_on, list):
-                for item in depends_on:
-                    if isinstance(item, DXJob) or isinstance(item, DXDataObject):
-                        if item.get_id() is None:
-                            raise DXError('A dxpy handler given in depends_on does not have an ID set')
-                        run_input["dependsOn"].append(item.get_id())
-                    elif isinstance(item, basestring):
-                        run_input['dependsOn'].append(item)
-                    else:
-                        raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
-            else:
-                raise DXError('Expected depends_on field to be a list')                    
-
-        if details is not None:
-            run_input["details"] = details
-
-        if delay_workspace_destruction is not None:
-            run_input["delayWorkspaceDestruction"] = delay_workspace_destruction
-
-        if self._dxid is not None:
-            return DXJob(dxpy.api.app_run(
-                    self._dxid,
-                    input_params=run_input,
-                    **kwargs)["id"])
-        else:
-            return DXJob(dxpy.api.app_run(
-                    'app-' + self._name, alias=self._alias,
-                    input_params=run_input,
-                    **kwargs)["id"])
