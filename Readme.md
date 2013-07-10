@@ -82,10 +82,18 @@ for Ubuntu 10.04. You can install Python from there as follows (as root):
     pip-2.7 install virtualenv
 
 Since this repo doesn't contain the Python C headers, you will need to remove
-one (optional) compiled module from the dependencies (unless you have obtained
-the Python headers in some other way):
+the following compiled modules from the dependencies.
 
     sed -i -e '/psutil/ d' src/python/requirements.txt
+    sed -i -e '/xattr/ d' src/python/requirements_dxfs.txt
+
+The `xattr` module in particular is needed for the FUSE module. To use the
+features provided by these modules on Ubuntu 10.04, you will need to arrange
+for one of the following:
+
+* Install the Python 2.7 C headers, and then skip the `sed` steps above to
+  allow the affected modules to be built from source.
+* Install the affected modules (`psutil` and `xattr`) in binary form.
 
 Install boost 1.48 or higher (at least the ```filesystem```,
 ```program_options```, ```regex```, ```system``` and ```thread``` libraries).

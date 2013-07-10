@@ -31,7 +31,6 @@ dxR.Rcheck
 *.a
 .DS_Store
 .coverage
-/bin/contigset2fasta
 /bin/dx
 /bin/dx-app-wizard
 /bin/dx-bed-to-spans
