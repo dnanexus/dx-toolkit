@@ -28,6 +28,8 @@ import dxpy
 from dxpy.bindings import *
 
 class DXExecutable:
+    ''' Methods in DXExecutable are used by both DXApp and DXApplet.
+    '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
 
@@ -85,7 +87,7 @@ class DXExecutable:
                     else:
                         raise DXError('Expected elements of depends_on to only be either instances of DXJob or DXDataObject, or strings')
             else:
-                raise DXError('Expected depends_on field to be a list')                    
+                raise DXError('Expected depends_on field to be a list')
 
         if details is not None:
             run_input["details"] = details
