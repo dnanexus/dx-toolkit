@@ -147,7 +147,7 @@ from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj
                                  resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped,
                                  ResolutionError)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
-                                  ListCompleter, MultiCompleter)
+                                  InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
                                  get_io_desc, get_find_jobs_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
@@ -3516,8 +3516,9 @@ parser_run.add_argument('--input-help', help=fill('Print help and examples for h
 parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
-parser_run.add_argument('--instance-type', metavar='{dx_m1.medium..dx_m2.4xlarge}',
-                        help=fill('Specify instance type for the "main" function of the executable, or a JSON string like \'{"main": "dx_m1.large", ...}\''))
+instance_type_action = parser_run.add_argument('--instance-type', metavar='{dx_m1.medium..dx_m2.4xlarge}',
+                                               help=fill('Specify instance type for the "main" function of the executable, or a JSON string like \'{"main": "dx_m1.large", ...}\''))
+instance_type_action.completer = InstanceTypesCompleter()
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
 register_subparser(parser_run, categories='exec')
 
