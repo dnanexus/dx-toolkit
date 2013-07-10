@@ -402,15 +402,15 @@ class MultiCompleter():
             return None
 
 class InstanceTypesCompleter():
-    InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Name', 'Memory', 'CPU_Cores', 'Scratch_Space'))
+    InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Name', 'Memory_GB', 'CPU_Cores', 'Scratch_Space_GB'))
     instance_types = OrderedDict()
-    for i in (InstanceTypeSpec('dx_m1.medium', 3.75, 1, 400),
-              InstanceTypeSpec('dx_m1.large', 7.5, 2, 400),
-              InstanceTypeSpec('dx_m1.xlarge', 15, 4, 400),
-              InstanceTypeSpec('dx_c1.xlarge', 7, 8, 400),
-              InstanceTypeSpec('dx_m2.xlarge', 17.1, 2, 400),
-              InstanceTypeSpec('dx_m2.2xlarge', 34.2, 4, 400),
-              InstanceTypeSpec('dx_m2.4xlarge', 68.4, 8, 400)):
+    for i in (InstanceTypeSpec('dx_m1.medium', 3.75, 1, 420),
+              InstanceTypeSpec('dx_m1.large', 7.5, 2, 840),
+              InstanceTypeSpec('dx_m1.xlarge', 15, 4, 1680),
+              InstanceTypeSpec('dx_c1.xlarge', 7, 8, 1680),
+              InstanceTypeSpec('dx_m2.xlarge', 17.1, 2, 420),
+              InstanceTypeSpec('dx_m2.2xlarge', 34.2, 4, 850),
+              InstanceTypeSpec('dx_m2.4xlarge', 68.4, 8, 1680)):
         instance_types[i.Name] = i
     instance_type_names = instance_types.keys()
 
