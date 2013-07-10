@@ -402,15 +402,16 @@ class MultiCompleter():
             return None
 
 class InstanceTypesCompleter():
-    InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Memory', 'CPU_Cores', 'Scratch_Space'))
+    InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Name', 'Memory', 'CPU_Cores', 'Scratch_Space'))
     instance_types = OrderedDict()
-    instance_types['dx_m1.medium'] = InstanceTypeSpec(3.75, 1, 400)
-    instance_types['dx_m1.large'] = InstanceTypeSpec(7.5, 2, 400)
-    instance_types['dx_m1.xlarge'] = InstanceTypeSpec(15, 4, 400)
-    instance_types['dx_c1.xlarge'] = InstanceTypeSpec(7, 8, 400)
-    instance_types['dx_m2.xlarge'] = InstanceTypeSpec(17.1, 2, 400)
-    instance_types['dx_m2.2xlarge'] = InstanceTypeSpec(34.2, 4, 400)
-    instance_types['dx_m2.4xlarge'] = InstanceTypeSpec(68.4, 8, 400)
+    for i in (InstanceTypeSpec('dx_m1.medium', 3.75, 1, 400),
+              InstanceTypeSpec('dx_m1.large', 7.5, 2, 400),
+              InstanceTypeSpec('dx_m1.xlarge', 15, 4, 400),
+              InstanceTypeSpec('dx_c1.xlarge', 7, 8, 400),
+              InstanceTypeSpec('dx_m2.xlarge', 17.1, 2, 400),
+              InstanceTypeSpec('dx_m2.2xlarge', 34.2, 4, 400),
+              InstanceTypeSpec('dx_m2.4xlarge', 68.4, 8, 400)):
+        instance_types[i.Name] = i
     instance_type_names = instance_types.keys()
 
     def complete(self, text, state):
