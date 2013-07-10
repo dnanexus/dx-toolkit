@@ -33,6 +33,8 @@ Workflows created from the website UI can also be run using the
    :undoc-members:
    :show-inheritance:
 
+For **DXApp.run()**, see :meth:`~dxpy.bindings.dxapplet.DXExecutable.run`.
+
 .. automodule:: dxpy.bindings.dxworkflow
    :members:
    :undoc-members:
