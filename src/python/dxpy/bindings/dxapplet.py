@@ -68,7 +68,7 @@ class DXExecutable:
             run_input["name"] = name
         if instance_type is not None:
             if isinstance(instance_type, basestring):
-                run_input["systemRequirements"] = {"main": {"instanceType": instance_type}}
+                run_input["systemRequirements"] = {"*": {"instanceType": instance_type}}
             elif isinstance(instance_type, dict):
                 run_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
             else:
