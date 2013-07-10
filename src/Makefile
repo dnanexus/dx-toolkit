@@ -166,7 +166,7 @@ coverage_python:
 test_python:
 	(echo "import coverage; coverage.process_startup()" > ../share/dnanexus/lib/python2.7/site-packages/sitecustomize.py)
 	(cd python; rm -vf .coverage build/*/.coverage*)
-	(cd python; export COVERAGE_PROCESS_START="$$(pwd)/.coveragerc"; ./setup.py nosetests --cover-inclusive)
+	(cd python; export COVERAGE_PROCESS_START="$$(pwd)/.coveragerc"; ./setup.py nosetests --cover-inclusive --ignore-files='(pyopenssl|ntlmpool)')
 	(cd python; mv build/*/.coverage* .)
 	(cd python; coverage combine)
 	(rm -f ../share/dnanexus/lib/python2.7/site-packages/sitecustomize.py)
