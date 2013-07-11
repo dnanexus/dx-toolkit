@@ -83,8 +83,8 @@ else:
     app_json = OrderedDict()
     app_json["name"] = name
 
-    app_json["title"] = title
-    app_json['summary'] = summary
+    app_json["title"] = title or name
+    app_json['summary'] = summary or name
 
     app_json["dxapi"] = API_VERSION
     app_json["version"] = version
