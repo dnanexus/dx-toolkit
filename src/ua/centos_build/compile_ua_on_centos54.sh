@@ -65,9 +65,9 @@ make install # Will install it in /usr/local/ssl
 # Install Libcurl from source (using c-ares)
 export LD_LIBRARY_PATH=/usr/local/ssl/lib # So that libcurl find the correct openssl we just built
 cd ${HOME}/sw
-wget "http://curl.haxx.se/download/curl-7.30.0.tar.bz2"
-tar -xjf curl-7.30.0.tar.bz2
-mv curl-7.30.0 curl
+wget "http://curl.haxx.se/download/curl-7.31.0.tar.bz2"
+tar -xjf curl-7.31.0.tar.bz2
+mv curl-7.31.0 curl
 cd curl
 ./configure --prefix=${HOME}/sw/local/curl_build --disable-ldap --disable-ldaps \
   --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \

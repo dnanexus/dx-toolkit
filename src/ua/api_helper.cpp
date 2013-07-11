@@ -91,7 +91,7 @@ void checkForUpdates() {
 void testServerConnection() {
   DXLOG(logINFO) << "Testing connection to API server...";
   try {
-    JSON result = systemFindUsers(JSON::parse("{\"limit\": 1}"), false); // don't retry this request
+    JSON result = systemFindUsers(JSON::parse("{\"limit\": 1}"), true);
     DXLOG(logINFO) << " success.";
   } catch (DXAPIError &aerr) {
     DXLOG(logINFO) << " failure.";
