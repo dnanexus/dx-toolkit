@@ -26,6 +26,10 @@ namespace fs = boost::filesystem;
 #include "api_helper.h"
 #include "dxcpp/dxlog.h"
 
+#if LINUX_BUILD && OLD_KERNEL_SUPPORT
+#include "common_utils.h"
+#endif
+
 using namespace std;
 using namespace dx;
 
@@ -91,7 +95,7 @@ void File::init(const bool tryResuming) {
   createFolder(projectID, folder);
 
   testLocalFileExists(localFile);
-  
+
   fs::path p(localFile);
   size = fs::file_size(p);
   if (size == 0) {
@@ -99,14 +103,26 @@ void File::init(const bool tryResuming) {
     toCompress = false;
   }
   string remoteFileName = name;
-  
+
   if (toCompress) 
     remoteFileName += ".gz";
- 
+
   const int64_t modifiedTimestamp = static_cast<int64_t>(fs::last_write_time(p));
   dx::JSON properties(dx::JSON_OBJECT);
-  // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
-  properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).string());
+
+  {
+    #if LINUX_BUILD && OLD_KERNEL_SUPPORT
+      boost::mutex::scoped_lock envLock(LC_ALL_Hack::LC_ALL_Mutex);
+      LC_ALL_Hack::set_LC_ALL_C();
+    #endif
+    // Add property {FILE_SIGNATURE_PROPERTY: "<size> <modified time stamp> <toCompress> <chunkSize> <name of file>"
+    properties[FILE_SIGNATURE_PROPERTY] = File::createResumeInfoString(size, modifiedTimestamp, toCompress, chunkSize, fs::canonical(p).string());
+
+    #if LINUX_BUILD && OLD_KERNEL_SUPPORT
+      LC_ALL_Hack::reset_LC_ALL();
+    #endif
+  }
+
   DXLOG(logINFO) << "Resume info string: '" << properties[FILE_SIGNATURE_PROPERTY].get<string>() << "'"; 
   dx::JSON findResult;
   if (tryResuming) {
@@ -147,7 +163,7 @@ void File::init(const bool tryResuming) {
     fileID = createFileObject(projectID, folder, remoteFileName, mimeType, properties);
     isRemoteFileOpen = true;
     DXLOG(logINFO) << "fileID is " << fileID << endl;
-    
+
     cerr << "Uploading file " << localFile << " to file object " << fileID;
   }
 }
@@ -162,7 +178,7 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
   const dx::JSON desc = dx::fileDescribe(fileID);
   // sanity check
   assert(desc["state"].get<string>() == "open");
- 
+
   // Treat special case of empty file here
   if (size == 0) {
     if (desc["parts"].has("1") && desc["parts"]["1"]["state"].get<string>() == "complete") {
@@ -175,7 +191,7 @@ unsigned int File::createChunks(dx::BlockingQueue<Chunk *> &queue, const int tri
     queue.produce(c);
     return 1;
   }
-  
+
   DXLOG(logINFO) << "Creating chunks:";
   fs::path p(localFile);
   unsigned int countChunks = 0; // to iterate over chunks

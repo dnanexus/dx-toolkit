@@ -190,7 +190,7 @@ endif
 dxjson_objs = dxjson.o
 dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
 dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o dxlog.o
-ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o round_robin_dns.o
+ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o round_robin_dns.o common_utils.o
 
 dxjson: $(dxjson_objs)
 dxhttp: $(dxhttp_objs)
