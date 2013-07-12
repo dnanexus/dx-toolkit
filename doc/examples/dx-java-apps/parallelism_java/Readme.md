@@ -12,7 +12,7 @@ this app as follows (supply a relative path to this directory,
 `parallelism_java`, if needed):
 
 ```
-dx-build-applet .
+dx build .
 ```
 
 Then you can run the app with:

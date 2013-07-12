@@ -1,0 +1,498 @@
+#!/usr/bin/env python
+
+import os, sys, stat, errno, argparse, json
+import logging
+
+from collections import defaultdict
+from errno import ENOENT, ENOTDIR
+from stat import S_IFDIR, S_IFLNK, S_IFREG
+from sys import argv, exit
+from time import time
+
+from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
+
+import dxpy
+
+if not hasattr(__builtins__, 'bytes'):
+    bytes = str
+
+class DXInode(object):
+    DIR  = 'dir'
+    FILE = 'file'
+    LINK = 'link'
+
+    def __init__(self, type, name, mode, uid, gid, ctime=None, mtime=None, size=0, dxid=None):
+        print "New inode!", type, name, mode, uid, gid
+        self.type = type
+        self.name = name     # file name
+        self.dev  = 0        # device ID (if special file)
+        self.mode = mode     # protection and file-type
+        self.uid  = uid      # user ID of owner
+        self.gid  = gid      # group ID of owner
+        self.size = size
+        self.dxid = dxid
+
+        self.now()
+
+        # Extended Attributes
+        self.xattr = {}
+
+        # Data 
+        if stat.S_ISDIR(mode):
+            self.data = set()
+        else:
+            self.data = ''
+        
+        if ctime:
+            self.ctime = ctime
+        if mtime:
+            self.mtime = mtime
+
+        self._handler = None
+
+    @property
+    def handler(self):
+        if self._handler is None and self.dxid is not None:
+            self._handler = dxpy.get_handler(self.dxid)
+        return self._handler
+
+    @handler.setter
+    def handler(self, h):
+        self._handler = h
+
+    def now(self):
+        self.atime = time()   # time of last access
+        self.mtime = self.atime    # time of last modification
+        self.ctime = self.atime    # time of last status change
+
+    def stat(self):
+        print "Constructing stat for", self.name
+        try:
+            stat = dict(
+                st_mode  = self.mode,       # protection bits
+                st_ino   = 0,               # inode number
+                st_dev   = self.dev,        # device
+                st_nlink = 2,               # number of hard links
+                st_uid   = self.uid,        # user ID of owner
+                st_gid   = self.gid,        # group ID of owner
+                st_size  = self.size,       # size of file, in bytes
+                st_atime = self.atime,      # time of most recent access
+                st_mtime = self.mtime,      # time of most recent content modification
+                st_ctime = self.ctime,      # platform dependent; time of most recent metadata change on Unix, or the time of creation on Windows
+            )
+        except Exception as e:
+            print "EXCEPTION", e
+        print "returning stat for", self.name
+        return stat
+
+    def child(self, path):
+        print self.name, 'asked for child', path
+        match = None
+        if self.type == DXInode.DIR:
+            nodes = path.split('/')
+            for child in self.data:
+                if child.name == nodes[0]:
+                    if len(nodes) > 1:
+                        match = child.child('/'.join(nodes[1:]))
+                    else:
+                        match = child
+        if match is not None:
+            print "Found child", match.name, match.__dict__
+        return match
+
+    def read(self, offset, length):
+        print "Reading from", self.name, offset, length
+        #stat.st_atime = time.now()
+        if self.dxid and self.dxid.startswith('file'):
+            if self.handler.state != 'closed':
+                self.handler = dxpy.get_handler(self.handler.get_id())
+            self.handler.seek(offset)
+            return self.handler.read(length)
+        elif self.dxid and self.dxid.startswith('gtable'):
+            # TODO: make this less naive
+            if self.handler.state != 'closed':
+                self.handler = dxpy.get_handler(self.handler.get_id())
+            rows = ""
+            for row in self.handler:
+                rows += ("\t".join(map(unicode, row))+"\n").encode('utf-8')
+                if len(rows) >= offset+length:
+                    break
+            return rows[offset:offset+length]
+        elif self.dxid and self.dxid.startswith('record'):
+            return json.dumps(self.handler.get_details(), encoding='utf-8')[offset:offset+length]
+        else:
+            return self.data[offset:offset+length]
+
+    def write(self, offset, data):
+        if self.dxid and self.dxid.startswith('file'):
+            # TODO: write seek
+            self.handler.write(data)
+        else:
+            raise NotImplementedError()
+
+        # TODO: update size of self
+        self.now()
+        return len(data)
+
+    def truncate(self, length):
+        print "Truncating", self.name
+        self.data = self.data[0:length]
+        self.now()
+
+
+class DXFS(LoggingMixIn, Operations):
+    def __init__(self, project_id):
+        self.fd = 0
+        self.uid = os.getuid()
+        self.gid = os.getgid()
+        self.project_id = project_id
+        self.root = DXInode(DXInode.DIR, 'root', 0755 | stat.S_IFDIR, self.uid, self.gid)
+
+    def init(self, root_path):
+        self.project = dxpy.DXProject(self.project_id)
+
+        print "Populating folders..."
+        folders = self.project.describe(input_params={"folders": True})['folders']
+        folders.sort(key=lambda item: (len(item), item))
+        print "Found", len(folders), "folders"
+        for path in folders:
+            if path == '/':
+                continue
+            self.mkdir(str(path), 0755 | stat.S_IFDIR, make_remote=False)
+
+        print "Populated", len(folders), "folders"
+        print "Populating data objects..."
+        def _get_size(obj):
+            if obj["class"] == "record":
+                # HACK to get records to sort of work for now. We need to know size in advance but the system doesn't report size of records. TODO: FIXME
+                return 1024*64
+            elif obj["class"] == "gtable":
+                # HACK to get gtables to sort of work for now. TODO: Add enough bytes to account for all the tabs and newlines in the tsv output.
+                return obj.get('size', 0) * 2
+            else:
+                return obj.get('size', 0)
+
+        for i in dxpy.search.find_data_objects(project=self.project_id, describe=True):
+            dataobject = i["describe"]
+            dataobject["folder"] = str(dataobject["folder"])
+            dataobject["name"] = str(dataobject["name"])
+            print dataobject
+
+            if dataobject["class"] == "applet" or (dataobject["class"] == "record" and "pipeline" in dataobject["types"]):
+                mode = 0755
+            else:
+                mode = 0644
+
+            path = os.path.join(dataobject["folder"], dataobject["name"])
+            self.create(path, mode,
+                        ctime=dataobject['created']/1000,
+                        mtime=dataobject['modified']/1000,
+                        size=_get_size(dataobject),
+                        dxid=dataobject['id'])
+
+    def chmod(self, path, mode):
+        print 'chmod path:%s mode:%s' % (path, mode)
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+        node.mode = mode
+        return 0
+
+    def chown(self, path, uid, gid):
+        print 'chown path:%s uid:%s gid:%s' % (path, uid, gid)
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+        node.uid = uid
+        node.gid = gid
+
+    def create(self, path, mode, ctime=None, mtime=None, size=0, dxid=None):
+        print 'create path:%s mode:%s' % (path, mode)
+        if ctime is None:
+            ctime = time()
+        if mtime is None:
+            mtime = time()
+
+        dirname, filename = os.path.split(path)
+        parent = self._parent(path)
+
+        if not parent:
+            print "No parent!"
+            raise FuseOSError(ENOENT)
+
+        if not parent.type == DXInode.DIR:
+            print "Parent is not a dir!"
+            raise FuseOSError(ENOTDIR)
+
+        if dxid is None:
+            f = dxpy.new_dxfile(name=filename, folder=dirname)
+            dxid = f.get_id()
+        node = DXInode(DXInode.FILE, filename, mode | stat.S_IFREG,
+                       self.uid, self.gid,
+                       ctime=ctime, mtime=mtime, size=size, dxid=dxid)
+
+        print "Adding file", node.name, "to", parent.name
+        parent.data.add(node)
+        #print "Parent contents:", parent.data
+
+        # self.files[path] = dict(st_mode=(S_IFREG | mode), st_nlink=1,
+        #                         st_size=0, st_ctime=time(), st_mtime=time(),
+        #                         st_atime=time())
+
+        self.fd += 1
+        return self.fd
+
+    def getattr(self, path, fh=None):
+        print 'getattr path:%s' % path
+        node = self._node(path)
+        if not node:
+            print "getattr: path", path, "not found"
+            raise FuseOSError(ENOENT)
+        else:
+            return node.stat()
+
+    def getxattr(self, path, name, position=0):
+        print 'getxattr path:%s name:%s' % (path, name)
+
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+        elif node.handler == None:
+            raise FuseOSError(ENOENT)
+
+        # See also ENOATTR
+        value = str(node.handler.describe().get(name, ''))
+
+        return value
+
+    def listxattr(self, path):
+        print 'listxattr path:%s' % path
+
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        attrs = [str(attr) for attr in node.handler.describe().keys()]
+        print attrs
+        return attrs
+
+    def mkdir(self, path, mode, make_remote=True):
+        print 'mkdir path:%s mode:%s' % (path, mode)
+
+        dirname, filename = os.path.split(path)
+        parent = self._parent(path)
+
+        if not parent:
+            raise FuseOSError(ENOENT)
+
+        if not parent.type == DXInode.DIR:
+            raise FuseOSError(ENOTDIR)
+
+        if make_remote:
+            self.project.new_folder(path)
+
+        node = DXInode(DXInode.DIR, filename, mode | stat.S_IFDIR, self.uid, self.gid)
+        print "Adding dir", node.name, "to", parent.name
+        parent.data.add(node)
+        print "Parent contents:", parent.data
+
+        # self.files[path] = dict(st_mode=(S_IFDIR | mode), st_nlink=2,
+        #                         st_size=0, st_ctime=time(), st_mtime=time(),
+        #                         st_atime=time())
+        # self.files['/']['st_nlink'] += 1
+
+    # def open(self, path, flags):
+    #     self.fd += 1
+    #     return self.fd
+
+    def read(self, path, size, offset, fh):
+        print 'read path:%s size:%s offset:%s' % (path, size, offset)
+
+        node = self._node(path)
+
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        return node.read(offset, size)
+
+    def readdir(self, path, fh):
+        print 'readdir path:%s' % path
+
+        node = self._node(path)
+        print "reading dir", node.name, len(node.data), "entries"
+
+        for meta in ['.', '..']:
+            print "yielding", meta
+            yield meta
+            #yield fuse.Direntry(meta)
+        for child in node.data:
+            print "yielding", child.name
+            yield child.name
+            #yield fuse.Direntry(child.name)
+
+    def readlink(self, path):
+        print 'readlink path:%s' % path
+
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        return node.data
+
+    def removexattr(self, path, name):
+        print 'removexattr path:%s name:%s' % (path, name)
+
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        if name in node.xattr:
+            del node.xattr[name]
+        # See also ENOATTR
+
+    def rename(self, oldpath, newpath):
+        print 'rename oldpath:%s newpath:%s' % (oldpath, newpath)
+
+        old_dirname, old_filename = os.path.split(oldpath)
+        new_dirname, new_filename = os.path.split(newpath)
+        old_parent = self._parent(oldpath)
+        new_parent = self._parent(newpath)
+        node       = self._node(oldpath) 
+
+        if not (old_parent or new_parent or node):
+            raise FuseOSError(ENOENT)
+
+        if not new_parent.type == DXInode.DIR:
+            raise FuseOSError(ENOTDIR)
+
+        node.name = new_filename
+        if node.type == DXInode.DIR:
+            dxpy.DXHTTPRequest('/' + self.project_id + '/renameFolder', {"folder": oldpath, "newpath": newpath})
+        else:
+            if new_dirname != old_dirname:
+                self.project.move(new_dirname, [node.handler.get_id()])
+            node.handler.rename(new_filename)
+
+        old_parent.data.remove(node)
+        new_parent.data.add(node)
+
+    def rmdir(self, path):
+        print 'rmdir path:%s' % path
+
+        parent      = self._parent(path)
+        node        = self._node(path)
+
+        if not (parent or node):
+            raise FuseOSError(ENOENT)
+
+        if not node.type == DXInode.DIR:
+            raise FuseOSError(ENOTDIR)
+
+        self.project.remove_folder(path)
+        parent.data.remove(node)
+
+    def setxattr(self, path, name, value, flags, position=0):
+        print 'setxattr path:%s name:%s value:%s flags:%s' % (path, name, value, flags)
+
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        if name == 'tag':
+            node.handler.add_tags([value])
+        elif name == 'property':
+            prop_name, prop_value = value.split(":")
+            node.handler.add_properties({prop_name: prop_value})
+        elif name == 'state' and value == 'closed':
+            print "closing", node
+            node.handler.close(block=True)
+            node.handler = dxpy.get_handler(node.handler.get_id())
+            node.size = node.handler.size
+            print "closed", node
+        node.xattr[name] = value
+
+    def statfs(self, path):
+        return dict(f_bsize=512, f_blocks=4096, f_bavail=2048)
+
+    def symlink(self, target, source):
+        print 'symlink path:%s newpath:%s' % (target, source)
+
+        source_node = self._node(target)
+        filename    = os.path.basename(source)
+        parent      = self._parent(source)
+
+        if not (parent or source_node):
+            raise FuseOSError(ENOENT)
+
+        if not parent.type == DXInode.DIR:
+            raise FuseOSError(ENOTDIR)
+
+        node = DXInode(DXInode.LINK, filename, 0644 | stat.S_IFLNK, self.uid, self.gid)
+        node.data = target
+
+        parent.data.add(node)
+
+    def truncate(self, path, length, fh=None):
+        print 'truncate path:%s len:%s' % (path, length)
+
+        node = self._node(path)
+
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        node.truncate(length)
+
+    def unlink(self, path):
+        print 'unlink path:%s' % path
+
+        parent = self._parent(path)
+        child  = self._node(path)
+
+        if not (parent or child):
+            raise FuseOSError(ENOENT)
+
+        print "Removing", child.handler
+        child.handler.remove()
+        parent.data.remove(child)
+
+    def utimens(self, path, times=None):
+        print 'utime path:%s times:%s' % (path, times)
+        node = self._node(path)
+        if not node:
+            raise FuseOSError(ENOENT)
+        node.ctime = node.mtime = times[0]
+
+    def write(self, path, data, offset, fh):
+        print 'write path:%s buflen:%s offset:%s' % (path, len(data), offset)
+
+        node = self._node(path)
+
+        if not node:
+            raise FuseOSError(ENOENT)
+
+        return node.write(offset, data)
+
+    # --- Tree Helpers
+    def _node(self, path):
+        if path == '/':
+            return self.root
+        else:
+            return self.root.child(path[1:])
+
+    def _parent(self, path):
+        parent_path = os.path.dirname(path)
+        return self._node(parent_path)
+
+parser = argparse.ArgumentParser(description="DNAnexus FUSE driver")
+parser.add_argument("mountpoint", help="Directory to mount the filesystem on")
+parser.add_argument("--project-id", help="DNAnexus project ID to mount", default=dxpy.WORKSPACE_ID, nargs='?')
+parser.add_argument("--debug", action='store_true')
+parser.add_argument("--foreground", action='store_true')
+args = parser.parse_args()
+
+if not args.debug:
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+
+logging.getLogger().setLevel(logging.DEBUG)
+fuse = FUSE(DXFS(project_id=args.project_id), args.mountpoint, foreground=args.foreground)

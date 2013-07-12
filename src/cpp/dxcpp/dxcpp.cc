@@ -21,6 +21,7 @@
 #include "dxlog.h"
 #include "dxcpp.h"
 #include "SimpleHttp.h"
+#include "ignore_sigpipe.h"
 #include "utils.h"
 
 #include <boost/version.hpp>
@@ -472,5 +473,28 @@ namespace dx {
         loadFromEnvironment();
       }
     }the_only_instance;
+  }
+
+  // Ignore SIGPIPE to deal with PTFM-8366 & PTFM-7251 (Also see: http://sourceforge.net/p/curl/bugs/1180/)
+  namespace _internal {
+    #if !WINDOWS_BUILD
+    // This function will called when SIGPIPE is caught
+    static void sigpipe_catcher(int sig) {
+      DXLOG(dx::logINFO) << "Caught SIGPIPE(signal_num = " << sig << ")... will ignore";
+    }
+    class IgnoreSIGPIPE {
+      SIGPIPE_VARIABLE(pipe);
+      public:
+        IgnoreSIGPIPE() {
+          DXLOG(logINFO) << "Ignoring SIGPIPE globally..."; // Note: won't be printed, unless env variable DXCPP_DEBUG is set
+          sigpipe_ignore(&pipe, sigpipe_catcher);
+        }
+        ~IgnoreSIGPIPE() {
+          DXLOG(logINFO) << "Restoring original SIGPIPE handler...";
+          sigpipe_restore(&pipe);
+        }
+    };
+    IgnoreSIGPIPE IgnoreSIGPIPE_static_initializer;
+    #endif
   }
 }

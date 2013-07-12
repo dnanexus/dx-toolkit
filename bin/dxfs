@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+# Alias for dx which puts it in dxfuse (DNAnexus Platform virtual filesystem) operation mode.
+
+export _DX_FUSE=1
+dx $@

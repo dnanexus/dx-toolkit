@@ -329,7 +329,7 @@ def login(args):
 
     greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
     if greeting.get('messages'):
-        print BOLD("New messages from DNAnexus")
+        print BOLD("New messages from ") + DNANEXUS_LOGO()
         for message in greeting['messages']:
             print BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime()
             print BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9)
@@ -1904,8 +1904,14 @@ def head(args):
         except:
             err_exit()
 
+def upload(args, **kwargs):
+    paths = copy.copy(args.filename)
+    for path in paths:
+        args.filename = path
+        upload_one(args, **kwargs)
+
 upload_seen_paths=set()
-def upload(args):
+def upload_one(args):
     try_call(process_dataobject_args, args)
 
     args.show_progress = args.show_progress and not args.brief
@@ -1939,7 +1945,7 @@ def upload(args):
                 sub_args.filename = os.path.join(args.filename, f)
                 sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
-                upload(sub_args)
+                upload_one(sub_args)
     else:
         try:
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
@@ -2345,8 +2351,12 @@ def find_apps(args):
         err_exit()
 
 def close(args):
+    if '_DX_FUSE' in os.environ:
+        from xattr import xattr
+
     handlers = []
     had_error = False
+
     for path in args.path:
         # Attempt to resolve name
         try:
@@ -2364,7 +2374,10 @@ def close(args):
             for result in entity_results:
                 try:
                     obj = dxpy.get_handler(result['id'], project=project)
-                    obj.close()
+                    if '_DX_FUSE' in os.environ:
+                        xattr(path)['state'] = 'closed'
+                    else:
+                        obj.close()
                     handlers.append(obj)
                 except BaseException as details:
                     print fill(unicode(details))
@@ -2512,7 +2525,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
     try:
         dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
-                               details=args.details, delay_workspace_destruction=args.delay_workspace_destruction)
+                               details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
+                               instance_type=args.instance_type)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -2853,6 +2867,13 @@ def run(args):
         dest_proj, dest_path, none = try_call(resolve_existing_path,
                                               args.folder,
                                               expected='folder')
+
+    if args.instance_type and args.instance_type.strip().startswith('{'):
+        try:
+            args.instance_type = json.loads(args.instance_type)
+        except ValueError:
+            err_exit("Error while parsing JSON value for --instance-type",
+                     expected_exceptions=default_expected_exceptions + (ValueError,))
 
     if isinstance(handler, dxpy.bindings.DXRecord): # Identified as a workflow in get_exec_or_workflow_handler()
         if clone_desc is not None:
@@ -3374,7 +3395,8 @@ parser_upload = subparsers.add_parser('upload', help='Upload a file or directory
                                       description='Upload a local file or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
                                       parents=[parser_dataobject_args, stdout_args, env_args],
                                       prog="dx upload")
-upload_filename_action = parser_upload.add_argument('filename', help='Local file or directory to upload ("-" indicates stdin input)')
+upload_filename_action = parser_upload.add_argument('filename', nargs='+',
+                                                    help='Local file or directory to upload ("-" indicates stdin input)')
 #upload_filename_action.completer = LocalCompleter()
 parser_upload.add_argument('-r', '--recursive', help='Upload directories recursively', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
@@ -3442,6 +3464,7 @@ parser_export.set_defaults(func=export)
 register_subparser(parser_export, categories='data')
 
 from dxpy.scripts.dx_build_app import parser as build_parser
+build_parser.prog = 'dx build'
 build_parser.set_defaults(mode="applet")
 
 parser_build = subparsers.add_parser('build', help='Upload and build a new applet/app',
@@ -3493,6 +3516,8 @@ parser_run.add_argument('--input-help', help=fill('Print help and examples for h
 parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
+parser_run.add_argument('--instance-type', metavar='{dx_m1.medium..dx_m2.4xlarge}',
+                        help=fill('Specify instance type for the "main" function of the executable, or a JSON string like \'{"main": "dx_m1.large", ...}\''))
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None)
 register_subparser(parser_run, categories='exec')
 

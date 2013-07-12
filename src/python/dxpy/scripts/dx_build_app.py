@@ -188,6 +188,8 @@ def _lint(dxapp_json_filename):
     """
     Examines the specified dxapp.json file and warns about any
     violations of app guidelines.
+
+    Precondition: the dxapp.json file exists and can be parsed.
     """
 
     def _find_readme(dirname):
@@ -196,16 +198,20 @@ def _lint(dxapp_json_filename):
                 return os.path.join(dirname, basename)
         return None
 
-    # Caller is responsible for ensuring that dxapp_json_filename can be
-    # parsed.
     app_spec = json.load(open(dxapp_json_filename))
 
-    if app_spec['name'] != app_spec['name'].lower():
-        logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
-
     dirname = os.path.basename(os.path.dirname(os.path.abspath(dxapp_json_filename)))
-    if dirname != app_spec['name']:
-        logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
+
+    if 'name' in app_spec:
+        if app_spec['name'] != app_spec['name'].lower():
+            logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
+        if dirname != app_spec['name']:
+            logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
+    else:
+        logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
+
+    if 'title' not in app_spec:
+        logger.warn('app is missing a title, please add one in the "title" field of dxapp.json')
 
     if 'summary' in app_spec:
         if app_spec['summary'].endswith('.'):
@@ -232,10 +238,10 @@ def _lint(dxapp_json_filename):
             if category not in APP_CATEGORIES:
                 logger.warn('app has unrecognized category "%s"' % (category,))
             if category == 'Import':
-                if not app_spec['title'].endswith('Importer'):
+                if 'title' in app_spec and not app_spec['title'].endswith('Importer'):
                     logger.warn('title "%s" should end in "Importer"' % (app_spec['title'],))
             if category == 'Export':
-                if not app_spec['title'].endswith('Exporter'):
+                if 'title' in app_spec and not app_spec['title'].endswith('Exporter'):
                     logger.warn('title "%s" should end in "Exporter"' % (app_spec['title'],))
 
     # Note that identical checks are performed on the server side (and
@@ -310,11 +316,10 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
             raise
 
 def _verify_app_source_dir(src_dir, enforce=True):
-    if not os.path.isdir(src_dir):
-        parser.error("%s is not a directory" % src_dir)
-    if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
-        parser.error("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
+    """Performs syntax and lint checks on the app source.
 
+    Precondition: the dxapp.json file exists and can be parsed.
+    """
     _lint(os.path.join(src_dir, "dxapp.json"))
 
     # Check that the entry point file parses as the type it is going to
@@ -366,6 +371,15 @@ def _verify_app_source_dir(src_dir, enforce=True):
         logging.warn('%s contained syntax errors, see above for details' % (files_str,))
 
 def _parse_app_spec(src_dir):
+    """Returns the parsed contents of dxapp.json.
+
+    Raises either AppBuilderException or a parser error (exit codes 3 or
+    2 respectively) if this cannot be done.
+    """
+    if not os.path.isdir(src_dir):
+        parser.error("%s is not a directory" % src_dir)
+    if not os.path.exists(os.path.join(src_dir, "dxapp.json")):
+        raise dxpy.app_builder.AppBuilderException("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
     with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
         try:
             return json.load(app_desc)
@@ -537,9 +551,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True,
                              dry_run=False, return_object_dump=False):
-    _verify_app_source_dir(src_dir, enforce=do_check_syntax)
-
     app_json = _parse_app_spec(src_dir)
+
+    _verify_app_source_dir(src_dir, enforce=do_check_syntax)
 
     working_project = None
     using_temp_project = False
@@ -654,6 +668,12 @@ def main(**kwargs):
     call dx_build_app.build_and_upload_locally which provides the real
     implementation for dx-build-app(let) but is easier to use in your program.
     """
+
+    if len(sys.argv) > 0:
+        if sys.argv[0].endswith('dx-build-app'):
+            logging.warn('Warning: dx-build-app has been replaced with "dx build --create-app". Please update your scripts.')
+        elif sys.argv[0].endswith('dx-build-applet'):
+            logging.warn('Warning: dx-build-applet has been replaced with "dx build". Please update your scripts.')
 
     if len(kwargs) == 0:
         args = parser.parse_args()

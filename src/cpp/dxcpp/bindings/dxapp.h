@@ -29,7 +29,7 @@
 /// Unlike applets, apps are published in a single global namespace.
 ///
 /// The %DXApp handler allows you to read and modify the metadata of existing app objects in the
-/// Platform. To create a new app object, use the <code>dx-build-app</code> command-line tool in
+/// Platform. To create a new app object, use the <code>dx build --create-app</code> command-line tool in
 /// the DNAnexus SDK.
 ///
 /// See <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps">Apps</a> in the API

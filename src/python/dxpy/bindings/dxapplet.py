@@ -81,8 +81,9 @@ class DXApplet(DXDataObject):
 
         .. note:: It is highly recommended that the higher-level module
            :mod:`dxpy.app_builder` or (preferably) its frontend
-           `dx-build-applet <https://wiki.dnanexus.com/DxBuildApplet>`_ be used
-           instead for applet creation.
+           :mod:`dxpy.app_builder` or (preferably) its frontend `dx build
+           <https://wiki.dnanexus.com/Command-Line-Client/Index-of-dx-Commands#build>`_
+           be used instead for applet creation.
 
         Creates an applet with the given parameters. See the API
         documentation for the `/applet/new

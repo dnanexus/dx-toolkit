@@ -266,7 +266,7 @@ class get_read( object ):
             if len(read_name) == 0:
                 raise dxpy.AppError("Expecting read name, found empty line.")
 
-            if read_name[0] == '+' and is_fasta:
+            if read_name[0] == '+' and self.is_fasta:
                 raise dxpy.AppError("Found read with quality scores while expecting all reads to not have quality scores.  Program does not support mixed FASTA/FASTQ")
 
             if read_name[0] != '@' and read_name[0] != '>':

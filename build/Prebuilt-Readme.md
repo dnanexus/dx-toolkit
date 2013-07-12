@@ -45,7 +45,7 @@ Runtime dependencies
 
     sudo apt-get install libboost-filesystem1.48.0 libboost-program-options1.48.0 \
         libboost-regex1.48.0 libboost-system1.48.0 libboost-thread1.48.0 libcurl3 \
-        libbz2 zlib1g
+        libbz2 zlib1g python-fuse python-pyxattr
 
 ### Ubuntu 10.04
 

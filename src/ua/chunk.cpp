@@ -32,8 +32,6 @@
 #include "dxcpp/dxcpp.h"
 #include "dxcpp/utils.h"
 
-#include "SimpleHttpLib/ignore_sigpipe.h"
-
 extern "C" {
 #include "compress.h"
 }
@@ -160,11 +158,11 @@ void Chunk::compress() {
   } else if (compressStatus != Z_OK) {
     throw runtime_error("compression failed: " + boost::lexical_cast<string>(compressStatus));
   }
-  
+
   if (destLen < (int64_t) dest.size()) {
     dest.resize(destLen);
   }
-   
+
   const size_t MIN_CHUNK_SIZE = 5 * 1024 * 1024;
   /* Special case: If the chunk is compressed below 5MB, append appropriate
    *               number of chunks representing gzip of empty string.
@@ -247,7 +245,7 @@ int progress_func(void* ptr, double UNUSED(TotalToDownload), double UNUSED(NowDo
   myp->uploadedBytes = int64_t(NowUploaded);
   instantaneousBytesAndTimestampQueue.push(make_pair(std::time(0), uploadedThisTime));
   sumOfInstantaneousBytes += uploadedThisTime;
-  
+
   lock.unlock();
   return 0;
 }
@@ -264,18 +262,10 @@ static size_t write_callback(void *buffer, size_t size, size_t nmemb, void *user
   return result;
 }
 
-// This function will catch the sigpipe and ignore it (after printing it in the logs)
-static void sigpipe_catcher(int sig) {
-  DXLOG(dx::logINFO) << "UA Chunk.cpp => Caught SIGPIPE(signal_num = " << sig << ")... will ignore";
-}
-
 void Chunk::upload_cleanup(CURL **curl, curl_slist **l1, curl_slist **l2) const {
   log ("Performing curl cleanup");
   if (*curl != NULL) {
-    SIGPIPE_VARIABLE(pipe2);
-    sigpipe_ignore(&pipe2, sigpipe_catcher);
     curl_easy_cleanup(*curl);
-    sigpipe_restore(&pipe2);
     *curl = NULL;
   }
   if (*l1 != NULL) {
@@ -300,7 +290,7 @@ void Chunk::upload() {
     const dx::JSON &headersToSend = uploadResp.second;
 
     log("Upload URL: " + url);
-   
+
     curl = curl_easy_init();
     if (curl == NULL) {
       throw runtime_error("An error occurred when initializing the HTTP connection");
@@ -309,7 +299,7 @@ void Chunk::upload() {
     // Set errorBuffer to recieve human readable error messages from libcurl
     // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer), errorBuffer);
-    
+
     if (!hostName.empty() && !resolvedIP.empty()) { // Will never be true when compiling on windows
       log("Adding ip '" + resolvedIP + "' to resolve list for hostname '" + hostName + "'");
       slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":443:" + resolvedIP).c_str());
@@ -335,7 +325,7 @@ void Chunk::upload() {
 
     // Set time out to infinite
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l), errorBuffer);
-    
+
     if (!dx::config::LIBCURL_VERBOSE().empty() && dx::config::LIBCURL_VERBOSE() != "0") { 
       checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_VERBOSE, 1), errorBuffer);
     }
@@ -349,7 +339,7 @@ void Chunk::upload() {
     prog.curl = curl;
     prog.uploadedBytes = 0;
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, &prog), errorBuffer);
-    
+
     /* Setting this option, since libcurl fails in multi-threaded environment otherwise */
     /* See: http://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Multi-threading */
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1l), errorBuffer);
@@ -358,7 +348,7 @@ void Chunk::upload() {
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), errorBuffer);
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READFUNCTION, curlReadFunction), errorBuffer);
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_READDATA, this), errorBuffer);
-    
+
     // Set callback for recieving the response data
     /** set callback function */
     respData.clear();
@@ -366,7 +356,7 @@ void Chunk::upload() {
     /** "respData" is a member variable of Chunk class*/
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData), errorBuffer);
 
-    
+
     // Set the Content-Length header.
     {
       ostringstream clen;
@@ -381,7 +371,7 @@ void Chunk::upload() {
       cmd5 << "Content-MD5: " << expectedMD5;
       slist_headers = curl_slist_append(slist_headers, cmd5.str().c_str());
     }
-    
+
     // Remove the Content-Type header (libcurl sets "Content-Type: application/x-www-form-urlencoded" by default for POST)
     {
       slist_headers = curl_slist_append(slist_headers, "Content-Type:");
@@ -395,23 +385,14 @@ void Chunk::upload() {
     }
 
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist_headers), errorBuffer);
-    
+
     log("Starting curl_easy_perform...");
-    
-    SIGPIPE_VARIABLE(pipe1);
-    sigpipe_ignore(&pipe1, sigpipe_catcher);
-    try {
-      checkPerformCURLcode(curl_easy_perform(curl), errorBuffer);
-    } catch (...) {
-      sigpipe_restore(&pipe1);
-      throw;
-    }
-    sigpipe_restore(&pipe1);
-    
-    
+
+    checkPerformCURLcode(curl_easy_perform(curl), errorBuffer);
+
     checkPerformCURLcode(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode), errorBuffer);
     log("Returned from curl_easy_perform; responseCode is " + boost::lexical_cast<string>(responseCode));
-    
+
     upload_cleanup(&curl, &slist_headers, &slist_resolved_ip);
   } catch (...) {
     // This catch is only intended for cleanup (when checkPerformCURLcode() or checkConfigCURLcode() throw)
@@ -425,11 +406,11 @@ void Chunk::upload() {
     msg << "Request failed with HTTP status code " << responseCode << ", server Response: '" << respData << "'";
     throw runtime_error(msg.str());
   }
-  
+
   /************************************************************************************************************************************/
   /*********** Assertions for testing APIservers checksum logic (in case of succesful /UPLOAD/xxxx request) ***************************/
   /*********** Can be removed later (when we are relatively confident of apisever's checksum logic) ***********************************/
-  
+
   // We check that /UPLOAD/xxxx returned back a hash of form {md5: xxxxx},
   // and that value is equal to md5 we computed (and sent as Content-MD5 header).
   // If the values differ - it's a MAJOR apiserver bug (since server must have rejected request with incorrect Content-MD5 anyway)
@@ -466,15 +447,29 @@ void Chunk::clear() {
 //
 // Returns empty string if regexp fails to parse url string for some reason
 static string extractHostFromURL(const string &url) {
-  boost::regex expression("^http[s]{0,1}://([^/]+)/", boost::regex::perl);
+  static const boost::regex expression("^http[s]{0,1}://([^/:]+)(/|:)", boost::regex::perl);
   boost::match_results<string::const_iterator> what;
   if (!boost::regex_search(url.begin(), url.end(), what, expression, boost::match_default)) {
     return "";
   }
-  if (what.size() != 2) {
+  if (what.size() != 3) {
     return "";
   }
   return what[1];
+}
+
+// This function looks at the hostname extracted from the url, and decides if we want to resolve the
+// ip address explicitly or not, e.g., we do not attempt to resolve a hostname if it is already an ip address
+// (which is actually the case when UA is run from within a job in DNAnexus)
+// Note: The regexp for IP address we use is quite lenient, and matches some non-valid ips, but that's 
+//       fine for our purpose here, since:
+//       1) Not resolving a hostname explicitly does not break anything (but the opposite can be dangerous),
+//       2) The input received by this function is not arbitrary but rather something decided by apiserver
+//          (i.e., output of /file-xxxx/upload call), so we know what to expect.
+static bool attemptExplicitDNSResolve(const string &host) {
+  static const boost::regex expression("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$", boost::regex::perl);
+  boost::match_results<string::const_iterator> what;
+  return !boost::regex_search(host.begin(), host.end(), what, expression, boost::match_default);
 }
 
 pair<string, dx::JSON> Chunk::uploadURL() {
@@ -485,15 +480,20 @@ pair<string, dx::JSON> Chunk::uploadURL() {
   pair<string, dx::JSON> toReturn = make_pair(result["url"].get<string>(), result["headers"]);
   const string &url = toReturn.first;
   log("/" + fileID + "/upload call returned this url: " + url);
-  
+
   if (!opt.noRoundRobinDNS) { 
     // Now, try to resolve the host name in url to an ip address (for explicit round robin DNS)
     // If we are unable to do so, just leave the resolvedIP variable an empty string
     resolvedIP.clear();
     hostName = extractHostFromURL(url);
     log("Host name extracted from URL ('" + url + "'): '" + hostName + "'");
-    resolvedIP = getRandomIP(hostName);
-    log("Call to getRandomIP() returned: '" + resolvedIP + "'", dx::logWARNING);
+
+    if (attemptExplicitDNSResolve(hostName)) {
+      resolvedIP = getRandomIP(hostName);
+      log("Call to getRandomIP() returned: '" + resolvedIP + "'", dx::logWARNING);
+    } else {
+      log("Not attempting to resolve hostname '" + hostName + "'");
+    }
   } else {
     log("Flag --no-round-robin-dns was set, so won't try to explicitly resolve ip address");
   }

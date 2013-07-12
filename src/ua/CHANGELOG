@@ -1,3 +1,18 @@
+DNAnexus Upload Agent 1.4.2 <support@dnanexus.com>, 2013-Jul-8
+--------------------------------------------------------------
+  * Bump up the minimum libcurl version required to be 7.31.0
+
+DNAnexus Upload Agent 1.4.1 <support@dnanexus.com>, 2013-Jul-8
+--------------------------------------------------------------
+  * A speculative fix for PTFM-8366 (reincarnation of PTFM-7251).
+    We now ignore SIGPIPE at dxcpp init time (and never reset it
+    until the process terminates).
+  * A fix for "LC_ALL" issue which resurfaced in v1.4.0 (due to changes
+    made for PTFM-8385)
+  * Extraction of hostname is better now (deals with port info in url),
+    also we identify ip addresses and do not resolve them explicitly (PTFM-8427)
+  * Not released on wiki
+
 DNAnexus Upload Agent 1.4.0 <support@dnanexus.com>, 2013-Jul-1
 --------------------------------------------------------------
   * UA should now use full file path for creating the file signature

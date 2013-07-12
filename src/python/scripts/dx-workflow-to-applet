@@ -24,7 +24,7 @@ import dxpy
 from dxpy.utils.resolver import ResolutionError, resolve_existing_path, get_app_from_path
 from dxpy.utils.printing import *
 
-parser = argparse.ArgumentParser(description=fill('Takes a ' + BOLD() + 'workflow' + ENDC() + ' on the DNAnexus platform and makes a local directory out of it which can be built as an ' + BOLD() + 'applet' + ENDC() + ' using the "dx-build-applet" command.') + '\n\n' + fill('When built, any referenced applets and data objects will be bundled with the applet (copying the applet from one project to another will also copy any dependencies).  If the applet is run without its dependencies in the same project, it may fail.') + '\n\n' + fill('You may also choose to build an app instead of an applet using the command "dx-build-app --no-temp-build-project", but make sure all applet and data dependencies are present in your current project at the time you run the command.  Otherwise, the dependencies will not be packaged with the app.'),
+parser = argparse.ArgumentParser(description=fill('Takes a ' + BOLD() + 'workflow' + ENDC() + ' on the DNAnexus platform and makes a local directory out of it which can be built as an ' + BOLD() + 'applet' + ENDC() + ' using the "dx build" command.') + '\n\n' + fill('When built, any referenced applets and data objects will be bundled with the applet (copying the applet from one project to another will also copy any dependencies).  If the applet is run without its dependencies in the same project, it may fail.') + '\n\n' + fill('You may also choose to build an app instead of an applet using the command "dx build --create-app --no-temp-build-project", but make sure all applet and data dependencies are present in your current project at the time you run the command.  Otherwise, the dependencies will not be packaged with the app.'),
                                  formatter_class=argparse.RawTextHelpFormatter)
 parser.add_argument('path', help=fill('DNAnexus path to a workflow, e.g. projectName:/folder/workflowname', width_adjustment=-24))
 parser.add_argument('--name', help=fill('Name of applet to be created (default is the workflow name)', width_adjustment=-24))
@@ -279,8 +279,8 @@ with open(os.path.join(args.name, 'run.py'), 'w') as fd:
 print 'Created applet directory successfully'
 if re.search("[^a-zA-Z0-9.\_\-]", args.name) is None and re.match("app-", args.name) is None:
     print 'You can also build this as an ' + BOLD() + 'app' + ENDC() + ' with:'
-    print '  dx-build-app --no-temp-build-project ' + pipes.quote(args.name)
+    print '  dx build --create-app --no-temp-build-project ' + pipes.quote(args.name)
 else:
     print fill('NOTE: The "name" field in your ' + pipes.quote(os.path.join(args.name, 'dxapp.json')) + ' file contains disallowed characters and cannot be built as an ' + BOLD() + 'app' + ENDC() + ' unless this is changed.')
 print 'You can build this as an ' + BOLD() + 'applet' + ENDC() + ' with:'
-print '  dx-build-applet ' + pipes.quote(args.name)
+print '  dx build ' + pipes.quote(args.name)

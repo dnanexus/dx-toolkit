@@ -15,7 +15,6 @@
 //   under the License.
 
 #include "SimpleHttp.h"
-#include "ignore_sigpipe.h"
 #include <stdexcept>
 
 #ifndef DXTOOLKIT_GITVERSION
@@ -27,12 +26,6 @@
   // in SSLThreads.h/.cpp
   #include "SSLThreads.h"
 #endif
-
-// This function will catch the sigpipe and ignore it (after printing it in the logs)
-static void sigpipe_catcher(int sig) {
-// TODO: Refactor DXLOG to be separate from dxcpp, so that we can use it in SimpleHttpLib (as commented below)
-//  DXLOG(dx::logINFO) << "SimpleHttpLib => Caught SIGPIPE(signal_num = " << sig << ")... will ignore";
-}
 
 namespace dx {
   namespace config {
@@ -55,18 +48,16 @@ namespace dx {
       return local;
     }
   }
-#ifndef WINDOWS_BUILD
+#if !WINDOWS_BUILD
   class SSLThreadsInitializer
   {
   public:
-    SSLThreadsInitializer()
-    {
+    SSLThreadsInitializer() {
   //    std::cerr << "SimpleHttp: Initializing openssl for thread safety -> Calling SSLThreadsSetup()" << std::endl;
       SSLThreadsSetup();
     }
 
-    ~SSLThreadsInitializer()
-    {
+    ~SSLThreadsInitializer() {
   //    std::cerr << "SimpleHttp: Cleaning up openssl thread safety mechanism -> Calling SSLThreadsCleanup()" << std::endl;
       SSLThreadsCleanup();
     }
@@ -77,6 +68,7 @@ namespace dx {
   // See: http://horstr.blogspot.com/2008/04/on-libcurl-openssl-and-thread-safety.html
   SSLThreadsInitializer SSLThreads_initializer;
 #endif
+
 
   class curlInitializer {
   public:
@@ -333,24 +325,13 @@ namespace dx {
       /** "respData" is a member variable of HttpRequest */
       assertLibCurlFunctions( curl_easy_setopt(curl, CURLOPT_WRITEDATA, &respData) );
       
-      SIGPIPE_VARIABLE(pipe1);
-      sigpipe_ignore(&pipe1, sigpipe_catcher);
-      try {
-        /* Perform the actual request */
-        assertLibCurlFunctions( curl_easy_perform(curl), "Error in using curl_easy_perform.");
-      } catch (...) {
-        sigpipe_restore(&pipe1);
-        throw;
-      }
-      sigpipe_restore(&pipe1);
+      /* Perform the actual request */
+      assertLibCurlFunctions( curl_easy_perform(curl), "Error in using curl_easy_perform.");
       
       assertLibCurlFunctions( curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode) );
 
       /* always cleanup */
-      SIGPIPE_VARIABLE(pipe2);
-      sigpipe_ignore(&pipe2, sigpipe_catcher);
       curl_easy_cleanup(curl);
-      sigpipe_restore(&pipe2);
       
       curl = NULL;
     } else {

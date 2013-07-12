@@ -19,6 +19,7 @@
 import os, sys, argparse, csv
 import dxpy
 from dxpy.utils.resolver import ResolutionError, resolve_existing_path
+from dxpy.utils.printing import fill
 
 parser = argparse.ArgumentParser(description="Download a gtable into a tab-separated file.  Provide the --csv flag for commas instead of tabs.  Arbitrary gtable queries can also be provided to obtain a simple filtered subset of the gtable.")
 parser.add_argument("path", help="Path to the GTable object")

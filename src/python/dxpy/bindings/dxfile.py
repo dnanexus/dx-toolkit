@@ -472,7 +472,6 @@ class DXFile(DXDataObject):
                                              'auth': None,
                                              'jsonify_data': False,
                                              'prepend_srv': False,
-                                             'prefetch': True,
                                              'always_retry': True}
 
     def _next_response_content(self):

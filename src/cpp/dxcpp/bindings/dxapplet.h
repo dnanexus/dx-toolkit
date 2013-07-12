@@ -29,7 +29,7 @@
 /// To publish your software for public consumption, create an App object (represented by DXApp)
 /// instead.
 ///
-/// To create a new applet object, consider using the <code>dx-build-applet</code> command-line
+/// To create a new applet object, consider using the <code>dx build</code> command-line
 /// tool in the DNAnexus SDK.
 ///
 /// See <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets">Applets</a> in the

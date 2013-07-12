@@ -292,8 +292,9 @@ class TestDXBuildApp(DXTestCase):
 
     def write_app_directory(self, app_name, dxapp_str, code_filename=None, code_content="\n"):
         os.mkdir(os.path.join(self.temp_file_path, app_name))
-        with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
-            manifest.write(dxapp_str)
+        if dxapp_str is not None:
+            with open(os.path.join(self.temp_file_path, app_name, 'dxapp.json'), 'w') as manifest:
+                manifest.write(dxapp_str)
         if code_filename:
             with open(os.path.join(self.temp_file_path, app_name, code_filename), 'w') as code_file:
                 code_file.write(code_content)
@@ -301,7 +302,7 @@ class TestDXBuildApp(DXTestCase):
 
     def test_help_without_security_context(self):
         env = overrideEnvironment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None, DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
-        run("dx-build-app -h", env=env)
+        run("dx build -h", env=env)
 
     def test_accepts_semver(self):
         self.assertTrue(dx_build_app.APP_VERSION_RE.match('3.1.41') is not None)
@@ -336,11 +337,21 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("minimal_applet", json.dumps(app_spec), "code.py")
-        new_applet = json.loads(run("dx-build-applet --json " + app_dir))
+        new_applet = json.loads(run("dx build --json " + app_dir))
         applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
         self.assertEqual(applet_describe["class"], "applet")
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
+
+    def test_build_applet_with_no_dxapp_json(self):
+        app_dir = self.write_app_directory("applet_with_no_dxapp_json", None, "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
+            run("dx build " + app_dir)
+
+    def test_build_applet_with_malformed_dxapp_json(self):
+        app_dir = self.write_app_directory("applet_with_malformed_dxapp_json", "{", "code.py")
+        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxapp\.json file', exit_code=3):
+            run("dx build " + app_dir)
 
     @unittest.skipIf('DXTEST_FULL' not in os.environ,
                      'skipping test that would create apps')
@@ -354,7 +365,7 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("minimal_app", json.dumps(app_spec), "code.py")
-        new_app = json.loads(run("dx-build-app --json " + app_dir))
+        new_app = json.loads(run("dx build --create-app --json " + app_dir))
         app_describe = json.loads(run("dx describe --json " + new_app["id"]))
         self.assertEqual(app_describe["class"], "app")
         self.assertEqual(app_describe["id"], app_describe["id"])
@@ -381,7 +392,7 @@ class TestDXBuildApp(DXTestCase):
         # shouldn't have any effect since building an app is supposed to
         # be hygienic.
         env = overrideEnvironment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
-        run("dx-build-app --json " + app_dir, env=env)
+        run("dx build --create-app --json " + app_dir, env=env)
 
     def test_invalid_execdepends(self):
         app_spec = {
@@ -398,7 +409,7 @@ class TestDXBuildApp(DXTestCase):
             }
         app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
-            run("dx-build-applet --json " + app_dir)
+            run("dx build --json " + app_dir)
 
     def test_overwrite_applet(self):
         app_spec = {
@@ -410,15 +421,15 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("applet_overwriting", json.dumps(app_spec), "code.py")
-        applet_id = json.loads(run("dx-build-applet --json " + app_dir))["id"]
+        applet_id = json.loads(run("dx build --json " + app_dir))["id"]
         # Verify that we can succeed by writing to a different folder.
         run("dx mkdir subfolder")
-        run("dx-build-applet --destination=subfolder/applet_overwriting " + app_dir)
+        run("dx build --destination=subfolder/applet_overwriting " + app_dir)
         with self.assertSubprocessFailure():
-            run("dx-build-applet " + app_dir)
-        run("dx-build-applet -f " + app_dir)
+            run("dx build " + app_dir)
+        run("dx build -f " + app_dir)
         # Verify that the original app was deleted by the previous
-        # dx-build-applet -f
+        # dx build -f
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + applet_id)
 
@@ -444,11 +455,11 @@ class TestDXBuildApp(DXTestCase):
             "categories": ["B"]
             }
         app_dir = self.write_app_directory("update_app_categories", json.dumps(app1_spec), "code.py")
-        app_id = json.loads(run("dx-build-app --json " + app_dir))['id']
+        app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['A'])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_categories", json.dumps(app2_spec), "code.py")
-        run("dx-build-app --json " + app_dir)
+        run("dx build --create-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
     @unittest.skipIf('DXTEST_FULL' not in os.environ,
@@ -463,10 +474,10 @@ class TestDXBuildApp(DXTestCase):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("build_app_autonumbering", json.dumps(app_spec), "code.py")
-        run("dx-build-app --json --publish " + app_dir)
+        run("dx build --create-app --json --publish " + app_dir)
         with self.assertSubprocessFailure(stderr_regexp="Could not create"):
-            print run("dx-build-app --json --no-version-autonumbering " + app_dir)
-        run("dx-build-app --json " + app_dir) # Creates autonumbered version
+            print run("dx build --create-app --json --no-version-autonumbering " + app_dir)
+        run("dx build --create-app --json " + app_dir) # Creates autonumbered version
 
     def test_build_failure(self):
         app_spec = {
@@ -481,15 +492,10 @@ class TestDXBuildApp(DXTestCase):
         with open(os.path.join(app_dir, 'Makefile'), 'w') as makefile:
             makefile.write("all:\n\texit 7")
         with self.assertSubprocessFailure(stderr_regexp="make -j[0-9]+ in target directory failed with exit code"):
-            run("dx-build-applet " + app_dir)
+            run("dx build " + app_dir)
         # Somewhat indirect test of --no-parallel-build
         with self.assertSubprocessFailure(stderr_regexp="make in target directory failed with exit code"):
-            run("dx-build-applet --no-parallel-build " + app_dir)
-
-    def test_dxapp_checks(self):
-        app_dir = self.write_app_directory("dxapp_checks", "{\"invalid_json\":}", code_filename="code.py")
-        with self.assertSubprocessFailure(stderr_regexp="dxapp\\.json", exit_code=1):
-            run("dx-build-applet " + app_dir)
+            run("dx build --no-parallel-build " + app_dir)
 
     def test_syntax_checks(self):
         app_spec = {
@@ -505,8 +511,8 @@ class TestDXBuildApp(DXTestCase):
                                            code_filename="code.py",
                                            code_content="def improper():\nprint 'oops'")
         with self.assertSubprocessFailure(stderr_regexp="Entry point file \\S+ has syntax errors"):
-            run("dx-build-applet " + app_dir)
-        run("dx-build-applet --no-check-syntax " + app_dir)
+            run("dx build " + app_dir)
+        run("dx build --no-check-syntax " + app_dir)
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"

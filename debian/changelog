@@ -1,3 +1,13 @@
+dx-toolkit (0.58.0) precise; urgency=low
+
+  * dx-build-app and dx-build-applet are now "dx build".
+
+  * Initial import of FUSE driver.
+
+  * New option dx run --instance-type.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 09 Jul 2013 19:32:55 +0000
+
 dx-toolkit (0.57.0) precise; urgency=low
 
   * Introduced "dx build", which will replace dx-build-app{,let}.
