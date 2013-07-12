@@ -52,6 +52,7 @@ dxR.Rcheck
 /bin/dx-log-stream
 /bin/dx-mappings-to-fastq
 /bin/dx-mappings-to-sam
+/bin/dx-mount
 /bin/dx-reads-to-fastq
 /bin/dx-reads-validator
 /bin/dx-run-app-locally
