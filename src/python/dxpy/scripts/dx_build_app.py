@@ -33,6 +33,8 @@ from dxpy import logger
 
 from dxpy.utils.resolver import resolve_path, is_container_id
 from dxpy.app_categories import APP_CATEGORIES
+from dxpy.exceptions import err_exit
+from dxpy.utils.printing import BOLD
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
@@ -135,6 +137,7 @@ parser.set_defaults(dry_run=False)
 parser.add_argument("--dry-run", "-n", help="Do not create an app(let): only perform local checks and compilation steps, and show the spec of the app(let) that would have been created.", action="store_true", dest="dry_run")
 parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
+parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+")", nargs=argparse.REMAINDER)
 
 def _get_timestamp_version_suffix(version):
     if "+" in version:
@@ -645,10 +648,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 print >> sys.stderr, "You can publish this app with:"
                 print >> sys.stderr, "  dx api app-%s/%s publish \"{\\\"makeDefault\\\": true}\"" % (app_describe["name"], app_describe["version"])
 
-            return app_describe if return_object_dump else None
+            return app_describe if return_object_dump else {"id": app_id}
 
         elif mode == "applet":
-            return dxpy.api.applet_describe(applet_id) if return_object_dump else None
+            return dxpy.api.applet_describe(applet_id) if return_object_dump else {"id": applet_id}
         else:
             raise dxpy.app_builder.AppBuilderException("Unrecognized mode %r" % (mode,))
 
@@ -727,6 +730,12 @@ def main(**kwargs):
             # that could reasonably have been anticipated by the user.
             print >> sys.stderr, "Error: %s" % (e.message,)
             sys.exit(3)
+
+        if args.run is not None:
+            if output is None:
+                err_exit("The --run option was given, but no executable was created")
+            cmd = os.path.join(os.environ['DNANEXUS_HOME'], 'bin', 'dx')
+            os.execv(cmd, ['dx', 'run', output['id']] + args.run)
 
         return
 
