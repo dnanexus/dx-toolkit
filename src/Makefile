@@ -114,7 +114,7 @@ python: api_wrappers toolkit_version python_deps
 	cp -a "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
 	cp -a "$(DNANEXUS_PY27_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
 	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python2.7 ./setup.py build; python2.7 ./setup.py install --prefix="$(DNANEXUS_HOME)" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
-	rm -f ../bin/easy_install*
+	rm -f ../bin/easy_install* ../bin/xattr
 
 # TODO: fix up perl and java targets
 
