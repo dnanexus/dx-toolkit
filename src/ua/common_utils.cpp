@@ -19,15 +19,19 @@ namespace LC_ALL_Hack {
       originalValue = make_pair(false, "");
       DXLOG(logINFO) << "env variable LC_ALL is not previously set";
     }
-    DXLOG(logINFO) << "Setting env variable LC_ALL to 'C', return value = " << setenv("LC_ALL", "C", 1);
+    int ret_val = setenv("LC_ALL", "C", 1);
+    DXLOG(logINFO) << "Setting env variable LC_ALL to 'C', return value = " << ret_val;
   }
 
   void reset_LC_ALL() {
     DXLOG(logINFO) << "In reset_LC_ALL() ...";
+    int ret_val;
     if (originalValue.first) {
-      DXLOG(logINFO) << "Setting env variable LC_ALL back to '" << originalValue.second << "', return value = " << setenv("LC_ALL", originalValue.second.c_str(), 1);
+      ret_val = setenv("LC_ALL", originalValue.second.c_str(), 1);
+      DXLOG(logINFO) << "Setting env variable LC_ALL back to '" << originalValue.second << "', return value = " << ret_val;
     } else {
-      DXLOG(logINFO) << "Unsetting env variable LC_ALL, return value = " << unsetenv("LC_ALL");
+      ret_val = unsetenv("LC_ALL");
+      DXLOG(logINFO) << "Unsetting env variable LC_ALL, return value = " << ret_val;
     }
   }
 }
