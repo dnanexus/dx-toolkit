@@ -501,7 +501,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
                     if sys.stderr.isatty():
                         if last_console_update > 0:
                             sys.stderr.write("\r")
-                        sys.stderr.write("Compressing target directory %s... (%s kb)" % (src_dir, locale.format("%d", (total_num_bytes / 1024,), grouping=True),))
+                        sys.stderr.write("Compressing target directory {dir}... ({kb_so_far:,} kb)".format(dir=src_dir, kb_so_far=total_num_bytes / 1024))
                         sys.stderr.flush()
                         last_console_update = current_time
                     elif not printed_static_message:
