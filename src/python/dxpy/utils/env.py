@@ -23,6 +23,11 @@ for more details.
 
 import os, sys, shutil, textwrap, json
 
+CORE_VAR_NAMES = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
+                  'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
+STANDALONE_VAR_NAMES = ['DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME']
+VAR_NAMES = CORE_VAR_NAMES + STANDALONE_VAR_NAMES
+
 def get_global_conf_dir():
     return '/etc/dnanexus'
 
@@ -68,7 +73,7 @@ def read_conf_dir(dirname):
     except:
         env_vars = {}
 
-    for standalone_var in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
+    for standalone_var in STANDALONE_VAR_NAMES:
         try:
             with open(os.path.join(dirname, standalone_var)) as fd:
                 env_vars[standalone_var] = fd.read()
@@ -90,10 +95,8 @@ def get_env(suppress_warning=False):
     env_vars = read_conf_dir(get_global_conf_dir())
     env_vars.update(read_conf_dir(get_user_conf_dir()))
     env_vars.update(read_conf_dir(get_session_conf_dir()))
-    var_names = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
-                 'DX_WORKSPACE_ID', 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME', 'DX_SECURITY_CONTEXT']
     env_overrides = []
-    for var in var_names:
+    for var in VAR_NAMES:
         if var in os.environ:
             if var in env_vars and env_vars.get(var) != os.environ[var]:
                 env_overrides.append(var)
@@ -124,8 +127,7 @@ def write_env_var(var, value):
 
 def write_env_var_to_conf_dir(var, value, conf_dir):
     env_jsonfile_path = os.path.join(conf_dir, 'environment.json')
-    std_vars = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID', 'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
-    if var in std_vars:
+    if var in CORE_VAR_NAMES:
         try:
             with open(env_jsonfile_path) as fd:
                 env_vars = json.load(fd)
@@ -154,7 +156,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
 
     if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
         with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:
-            for var in std_vars:
+            for var in CORE_VAR_NAMES:
                 fd.write('unset ' + var + '\n')
 
 def clearenv(args):
