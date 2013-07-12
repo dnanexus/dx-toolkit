@@ -1,18 +1,23 @@
+DNAnexus Upload Agent 1.4.5 <support@dnanexus.com>, 2013-Jul-11
+---------------------------------------------------------------
+  * v1.4.4 didn't compile properly on windows. Fixed that issue.
+  * Released on wiki.
+
 DNAnexus Upload Agent 1.4.4 <support@dnanexus.com>, 2013-Jul-11
 ---------------------------------------------------------------
   * Bug fix for LC_ALL hack (for older kernel)
-  * Released on wiki
+  * Not released on wiki.
 
 DNAnexus Upload Agent 1.4.3 <support@dnanexus.com>, 2013-Jul-11
 ---------------------------------------------------------------
   * Retry /findUsers request (to test apiserver connectivity)
   * Bumping up libcurl version in CentOS build script as well
-  * Released on wiki
+  * Released on wiki.
 
 DNAnexus Upload Agent 1.4.2 <support@dnanexus.com>, 2013-Jul-8
 --------------------------------------------------------------
   * Bump up the minimum libcurl version required to be 7.31.0
-  * Not released on wiki
+  * Not released on wiki.
 
 DNAnexus Upload Agent 1.4.1 <support@dnanexus.com>, 2013-Jul-8
 --------------------------------------------------------------
@@ -23,7 +28,7 @@ DNAnexus Upload Agent 1.4.1 <support@dnanexus.com>, 2013-Jul-8
     made for PTFM-8385)
   * Extraction of hostname is better now (deals with port info in url),
     also we identify ip addresses and do not resolve them explicitly (PTFM-8427)
-  * Not released on wiki
+  * Not released on wiki.
 
 DNAnexus Upload Agent 1.4.0 <support@dnanexus.com>, 2013-Jul-1
 --------------------------------------------------------------

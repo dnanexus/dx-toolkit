@@ -26,9 +26,7 @@
 #include <boost/filesystem.hpp>
 #include <magic.h>
 
-#if LINUX_BUILD && OLD_KERNEL_SUPPORT
 #include "common_utils.h"
-#endif
 
 #include "mime.h"
 #include "dxcpp/dxlog.h"
