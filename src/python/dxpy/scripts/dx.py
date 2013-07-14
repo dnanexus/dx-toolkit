@@ -2858,6 +2858,11 @@ def run(args):
     get_output_flag(args)
     handler = get_exec_or_workflow_handler(args.executable, args.alias)
 
+    if args.project is not None:
+        if args.folder is not None and not args.clone:
+            err_exit("Options --project and --folder/--destination cannot be specified together")
+        args.folder = args.project + ":/"
+
     if args.folder is None:
         dest_proj = dxpy.WORKSPACE_ID
         if dest_proj is None:
@@ -3506,7 +3511,8 @@ parser_run.add_argument('-h', '--help', help='show this help message and exit', 
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
                         help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
-parser_run.add_argument('--destination', '--dest', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--project', metavar='PROJECT', help=fill('Project name or ID in which to run the executable. This can also be specified together with the output folder in --destination.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
 parser_run.add_argument('--delay-workspace-destruction', help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24), action='store_true')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
