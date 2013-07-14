@@ -56,6 +56,7 @@ elif [[ "$input_type" == *"RAR archive data"* ]]; then
     unrar p -ierr -y "$input" > "$output"
 else
     warn "$prog $1: Unrecognized compression format. Leaving file intact."
+    ln -s "$input" "$output"
 fi
 
 echo $output
