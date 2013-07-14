@@ -2063,7 +2063,7 @@ def find_jobs(args):
                                            args.project, 'project')
         if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
             args.user = 'user-' + args.user.lower()
-        if args.allprojects:
+        if args.all_projects:
             project = None
     print_launched_by = (args.user is None) or args.verbose
     query = {'launched_by': args.user,
@@ -2236,7 +2236,7 @@ def find_jobs(args):
 def find_data(args):
     get_output_flag(args)
     try_call(process_properties_args, args)
-    if args.allprojects:
+    if args.all_projects:
         args.project = None
         args.folder = None
         args.recurse = True
@@ -2276,7 +2276,7 @@ def find_data(args):
                     print ""
                     print_data_obj_desc(result["describe"])
                 else:
-                    print_ls_l_desc(result["describe"], include_folder=True, include_project=args.allprojects)
+                    print_ls_l_desc(result["describe"], include_folder=True, include_project=args.all_projects)
     except:
         err_exit()
 
@@ -3745,7 +3745,7 @@ parser_find_jobs.add_argument('--id', help=fill('Show only the job tree or job c
 parser_find_jobs.add_argument('--name', help=fill('Restrict the search by job name (accepts wildcards "*" and "?")', width_adjustment=-24))
 parser_find_jobs.add_argument('--user', help=fill('Username who launched the job (use "self" to ask for your own jobs)', width_adjustment=-24))
 parser_find_jobs.add_argument('--project', help=fill('Project context (output project), default is current project if set', width_adjustment=-24))
-parser_find_jobs.add_argument('--allprojects', help=fill('Extend search to all projects', width_adjustment=-24), action='store_true')
+parser_find_jobs.add_argument('--all-projects', '--allprojects', help=fill('Extend search to all projects', width_adjustment=-24), action='store_true')
 parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help=fill('Applet or App ID that job is running', width_adjustment=-24))
 parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
 parser_find_jobs.add_argument('--origin', help=fill('Job ID of the top-level (user-initiated) job', width_adjustment=-24)) # Redundant but might as well
@@ -3764,7 +3764,7 @@ parser_find_jobs.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_data = subparsers_find.add_parser('data', help='Find data objects',
-                                              description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --allprojects (overrides --project, --folder, --norecurse).',
+                                              description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --all-projects (overrides --project, --folder, --norecurse).',
                                               parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
@@ -3774,7 +3774,7 @@ parser_find_data.add_argument('--property', dest='properties', metavar='KEY=VALU
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--tag', help='Tag of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
-parser_find_data.add_argument('--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
+parser_find_data.add_argument('--all-projects', '--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
 parser_find_data.add_argument('--folder', help='Folder path with which to restrict the results (\'--project\' must be used in this case)').completer = DXPathCompleter(expected='folder')
 parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')

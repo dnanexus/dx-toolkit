@@ -262,7 +262,7 @@ Platform     | Dependency
 Ubuntu 12.04 | `apt-get install libfuse2`
 OS X         | [FUSE for OS X](http://osxfuse.github.io/)
 
-See TODO for more information.
+See https://wiki.dnanexus.com/Virtual-Filesystem for more information.
 
 Reporting Bugs
 --------------
