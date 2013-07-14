@@ -44,7 +44,7 @@ APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(
 parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 
 parser.set_defaults(mode="app")
-parser.add_argument("--create-app", help="Create an app (otherwise, creates an applet)", action="store_const",
+parser.add_argument("--app", "--create-app", help="Create an app (otherwise, creates an applet)", action="store_const",
                     dest="mode", const="app")
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
 parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default='.')
