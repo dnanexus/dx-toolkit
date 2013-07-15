@@ -278,7 +278,7 @@ def print_json_field(label, json_value):
     print_field(label, json.dumps(json_value, ensure_ascii=False))
 
 def print_project_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo', 'version',
+    recognized_fields = ['id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified', 'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties', 'appCaches', 'billTo', 'version', 'createdBy',
                          # Following are app container-specific
                          'destroyAt', 'project', 'type', 'app', 'appName']
 
@@ -299,6 +299,8 @@ def print_project_desc(desc, verbose=False):
     if 'restricted' in desc:
         print_json_field("Restricted", desc["restricted"])
     print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    if 'createdBy' in desc:
+        print_field("Created by", desc['createdBy']['user'][desc['createdBy']['user'].find('-') + 1:])
     print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
     print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
     if 'sponsoredDataUsage' in desc:
