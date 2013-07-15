@@ -358,31 +358,9 @@ comments.
 
 For more info, see https://wiki.dnanexus.com/Developer-Portal.
 -->
-
-<!--
-TODO: Fill in additional info about how to use each input and output
-below.
--->
-
-## Inputs
-
-{inputs}
-
-## Outputs
-
-{outputs}
 '''
-    if len(app_json['inputSpec']) > 0:
-        inputs_str = '\n'.join([format_io_spec_to_markdown(input_spec) for input_spec in app_json['inputSpec']])
-    else:
-        inputs_str = '* None'
-    if len(app_json['outputSpec']) > 0:
-        outputs_str = '\n'.join([format_io_spec_to_markdown(output_spec) for output_spec in app_json['outputSpec']])
-    else:
-        outputs_str = '* None'
-
     with open(os.path.join(name, 'Readme.md'), 'w') as readme_file:
-        readme_file.write(readme_template.format(app_title=title, summary=summary, description=description, inputs=inputs_str, outputs=outputs_str))
+        readme_file.write(readme_template.format(app_title=title, summary=summary, description=description))
     manifest.append(os.path.join(name, 'Readme.md'))
 
     # Developer readme
