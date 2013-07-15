@@ -1398,15 +1398,22 @@ TEST(DXJobTest, AllJobTests_SLOW) {
   DXJob job = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"));
   ASSERT_EQ(job.describe()["applet"].get<string>(), apl.getID());
 
-  // Check state after one minute
-  job.waitOnDone(60);
+  // Check state after 2 minutes
+  job.waitOnDone(120);
   if (job.getState() == "failed" || job.getState() == "terminated") {
     ASSERT_TRUE(false); // Job has failed - unexpected
   }
-  // otherwise give it 4 more minutes to finish
-  job.waitOnDone(240);
 
-  // If state is not "done" after even 5min, that means job most probably failed:
+  // Check state again after 2 minutes
+  job.waitOnDone(120);
+  if (job.getState() == "failed" || job.getState() == "terminated") {
+    ASSERT_TRUE(false); // Job has failed - unexpected
+  }
+
+  // otherwise give it 6 more minutes to finish
+  job.waitOnDone(360);
+
+  // If state is not "done" after even 10min, that means job most probably failed:
   // should not happen
   ASSERT_EQ(job.getState(), "done");
 
