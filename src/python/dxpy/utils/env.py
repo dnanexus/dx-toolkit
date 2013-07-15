@@ -161,7 +161,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
 
 def clearenv(args):
     if args.interactive:
-        print 'Not allowed in interactive shell'
+        print 'The clearenv command is not available in interactive shell'
         return
     shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
     try:
