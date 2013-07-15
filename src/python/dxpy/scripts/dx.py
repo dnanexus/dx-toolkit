@@ -129,9 +129,9 @@ args_list = map(unicode, sys.argv[1:])
 
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
-if len(args_list) == 1 and args_list[0] == 'clearenv':
+if len(args_list) > 0 and args_list[0] == 'clearenv':
     from dxpy.utils.env import clearenv
-    clearenv(argparse.Namespace(interactive=False))
+    clearenv(argparse.Namespace(interactive=False, reset=True if '--reset' in args_list else False))
     exit(0)
 
 # importing dxpy will now appropriately load env variables
@@ -3246,6 +3246,7 @@ register_subparser(parser_setenv, categories='other')
 
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx', 
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
+parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.', action='store_true')
 parser_clearenv.set_defaults(func=clearenv, interactive=True)
 register_subparser(parser_clearenv, categories='session')
 

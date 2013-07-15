@@ -161,7 +161,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
 
 def clearenv(args):
     if args.interactive:
-        print 'The clearenv command is not available in interactive shell'
+        print 'The clearenv command is not available in the interactive shell'
         return
     shutil.rmtree(get_session_conf_dir(), ignore_errors=True)
     try:
@@ -172,8 +172,16 @@ def clearenv(args):
         os.remove(os.path.expanduser('~/.dnanexus_config/environment.json'))
     except:
         pass
-    for f in 'DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME':
+    for f in STANDALONE_VAR_NAMES:
         try:
             os.remove(os.path.expanduser('~/.dnanexus_config/' + f))
         except:
             pass
+
+    if args.reset:
+        for var in VAR_NAMES:
+            if var == 'DX_SECURITY_CONTEXT':
+                sec_context=json.dumps({'auth_token': '', 'auth_token_type': ''})
+                write_env_var(var, sec_context)
+            else:
+                write_env_var(var, '')
