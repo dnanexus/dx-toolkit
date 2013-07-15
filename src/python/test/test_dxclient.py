@@ -158,6 +158,11 @@ class TestDXClient(DXTestCase):
         run(u"dx find jobs --project :")
         run(u"dx find data --project :")
 
+    def test_dx_describe_project(self):
+        describe_output = run(u"dx describe :").strip()
+        self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pr\xc3\xb6ject' % (self.project,),
+                                  describe_output))
+
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
