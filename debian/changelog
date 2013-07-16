@@ -1,3 +1,11 @@
+dx-toolkit (0.59.0) precise; urgency=low
+
+  * dx build learned options --app and --run.
+
+  * dx clearenv learned option --reset.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 16 Jul 2013 18:53:44 +0000
+
 dx-toolkit (0.58.0) precise; urgency=low
 
   * dx-build-app and dx-build-applet are now "dx build".
