@@ -1400,13 +1400,15 @@ TEST(DXJobTest, AllJobTests_SLOW) {
 
   // Check state after 2 minutes
   job.waitOnDone(120);
-  if (job.getState() == "failed" || job.getState() == "terminated") {
+  string j1_state = job.getState();
+  if (j1_state == "failed" || j1_state == "terminated") {
     ASSERT_TRUE(false); // Job has failed - unexpected
   }
 
   // Check state again after 2 minutes
   job.waitOnDone(120);
-  if (job.getState() == "failed" || job.getState() == "terminated") {
+  j1_state = job.getState();
+  if (j1_state == "failed" || j1_state == "terminated") {
     ASSERT_TRUE(false); // Job has failed - unexpected
   }
 
@@ -1420,11 +1422,10 @@ TEST(DXJobTest, AllJobTests_SLOW) {
   vector<string> depends;
   depends.push_back(job.getID());
   DXJob job2 = apl.run(JSON::parse("{\"rowFetchChunk\": 100}"), "/", depends, "dx_m1.medium");
-  int64_t s1 = std::time(NULL);
-  int timeout = 3;
-  job2.waitOnDone(timeout);
-  int64_t s2 = std::time(NULL);
-  ASSERT_TRUE((s1 + timeout + 2) >= s2);
+  job2.waitOnDone(180);
+  string j2_state = job2.getState();
+  ASSERT_NE(j2_state, "failed");
+  ASSERT_NE(j2_state, "terminated");
   job2.terminate();
   apl.remove();
 }
