@@ -3524,7 +3524,7 @@ parser_run.add_argument('-i', '--input', help=fill('An input to be added using "
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 instance_type_action = parser_run.add_argument('--instance-type',
-                                               help=fill('Specify instance type for all jobs this executable will run, or a JSON string mapping function names to instance types, e.g. \'{"main": "dx_m1.large", ...}\'. Available instance types:')
+                                               help=fill('Specify instance type for all jobs this executable will run, or a JSON string mapping function names to instance types, e.g. \'{"main": "dx_m1.large", ...}\'. Available instance types:', width_adjustment=-24)
                                                     + '\n' + format_table(InstanceTypesCompleter.instance_types.values(),
                                                                           column_names=InstanceTypesCompleter.instance_types.values()[0]._fields))
 instance_type_action.completer = InstanceTypesCompleter()
