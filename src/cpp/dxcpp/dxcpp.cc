@@ -483,7 +483,7 @@ namespace dx {
       }
     }the_only_instance;
   }
-/*
+
   // Ignore SIGPIPE to deal with PTFM-8366 & PTFM-7251 (Also see: http://sourceforge.net/p/curl/bugs/1180/)
   namespace _internal {
     #if !WINDOWS_BUILD
@@ -506,5 +506,4 @@ namespace dx {
     IgnoreSIGPIPE IgnoreSIGPIPE_static_initializer;
     #endif
   }
-*/
 }
