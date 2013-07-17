@@ -137,6 +137,7 @@ parser.set_defaults(dry_run=False)
 parser.add_argument("--dry-run", "-n", help="Do not create an app(let): only perform local checks and compilation steps, and show the spec of the app(let) that would have been created.", action="store_true", dest="dry_run")
 parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
+parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+")", nargs=argparse.REMAINDER)
 
 def _get_timestamp_version_suffix(version):
@@ -553,7 +554,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_build_step=True, do_upload_step=True, do_check_syntax=True,
-                             dry_run=False, return_object_dump=False):
+                             dry_run=False, return_object_dump=False,
+                             **kwargs):
     app_json = _parse_app_spec(src_dir)
 
     _verify_app_source_dir(src_dir, enforce=do_check_syntax)
@@ -602,7 +604,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 override_folder=override_folder,
                 override_name=override_applet_name,
                 dx_toolkit_autodep=dx_toolkit_autodep,
-                dry_run=dry_run)
+                dry_run=dry_run,
+                **kwargs)
         except:
             # Avoid leaking any bundled_resources files we may have
             # created, if applet creation fails. Note that if
@@ -698,6 +701,8 @@ def main(**kwargs):
     if args.overwrite and args.archive:
         parser.error("Options -f/--overwrite and -a/--archive cannot be specified together")
 
+    extra_args = json.loads(args.extra_args) if args.extra_args else {}
+
     if not args.remote:
         # LOCAL BUILD
 
@@ -720,7 +725,8 @@ def main(**kwargs):
                 do_upload_step=args.upload_step,
                 do_check_syntax=args.check_syntax,
                 dry_run=args.dry_run,
-                return_object_dump=args.json
+                return_object_dump=args.json,
+                **extra_args
                 )
 
             if output is not None:

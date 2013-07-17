@@ -38,6 +38,7 @@ import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime
 import dxpy
 from dxpy import logger
+from dxpy.utils import deep_update
 
 NUM_CORES = multiprocessing.cpu_count()
 
@@ -187,7 +188,7 @@ def _inline_documentation_files(app_spec, src_dir):
                     app_spec['developerNotes'] = fh.read()
                 break
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False, **kwargs):
     """
     Creates a new applet object.
 
@@ -301,6 +302,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # Note: this can be set to "github.com" instead of "*" if the build doesn't download any deps
                 if "*" not in applet_spec["access"]["network"]:
                     applet_spec["access"]["network"].append("*")
+
+    deep_update(applet_spec, kwargs)
 
     # -----
     # Now actually create the applet
