@@ -136,7 +136,7 @@ if len(args_list) > 0 and args_list[0] == 'clearenv':
 
 # importing dxpy will now appropriately load env variables
 import dxpy
-from dxpy.utils import group_array_by_field, normalize_timedelta
+from dxpy.utils import group_array_by_field, normalize_timedelta, normalize_time_input
 from dxpy.utils.env import clearenv, write_env_var
 from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
                                  DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
@@ -297,12 +297,14 @@ def login(args):
         def get_token(**data):
             return dxpy.DXHTTPRequest(authserver+"/authorizations", data, prepend_srv=False, auth=None)
         try:
-            token_res = get_token(username=username, password=password)
+            token_res = get_token(username=username, password=password,
+                                  expires=normalize_time_input(args.timeout, future=True))
         except dxpy.DXAPIError as e:
             if e.name == 'OTPRequiredError':
                 otp = raw_input('Verification code: ')
                 try:
-                    token_res = get_token(username=username, password=password, otp=otp)
+                    token_res = get_token(username=username, password=password, otp=otp,
+                                          expires=normalize_time_input(args.timeout, future=True))
                 except:
                     err_exit("Login error", arg_parser=parser)
             elif e.name == 'UsernameOrPasswordError':
@@ -3198,6 +3200,7 @@ parser_login.add_argument('--port', type=int, help='Log into the given auth serv
 parser_login.add_argument('--protocol', help='Use the given protocol to contact auth server (by default, the correct protocol is guessed based on --port)')
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
+parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.add_argument('--prod', nargs=0, help=argparse.SUPPRESS, action=SetProdEnv)
 parser_login.add_argument('--preprod', nargs=0, help=argparse.SUPPRESS, action=SetPreprodEnv)

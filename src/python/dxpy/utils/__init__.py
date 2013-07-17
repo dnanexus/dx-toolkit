@@ -166,7 +166,7 @@ def string_buffer_length(buf):
     buf.seek(orig_pos)
     return buf_len
 
-def normalize_time_input(t):
+def normalize_time_input(t, future=False):
     ''' Converts inputs such as:
        "2012-05-01"
        "-5d"
@@ -182,8 +182,9 @@ def normalize_time_input(t):
                 t = int(time.mktime(dateutil.parser.parse(t).timetuple())*1000)
             except ValueError:
                 raise ValueError(error_msg.format(t=t))
-    if t < 0:
-        t += int(time.time()*1000)
+    now = int(time.time()*1000)
+    if t < 0 or (future and t < now):
+        t += now
     return t
 
 def normalize_timedelta(timedelta):
