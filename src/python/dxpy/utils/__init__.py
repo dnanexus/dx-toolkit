@@ -231,3 +231,15 @@ def group_array_by_field(array, field='group'):
             groups[None] = []
         groups[item.get(field)].append(item)
     return groups
+
+def deep_update(d, u):
+    ''' Recursively updates a dictionary.
+    Example: deep_update({"a": {"b": 1, "c": 2}}, {"a": {"b": 3}}) = {"a": {"b": 3, "c": 2}}
+    '''
+    for k, v in u.iteritems():
+        if isinstance(v, collections.Mapping):
+            r = deep_update(d.get(k, {}), v)
+            d[k] = r
+        else:
+            d[k] = u[k]
+    return d
