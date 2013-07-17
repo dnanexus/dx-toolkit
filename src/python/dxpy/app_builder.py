@@ -38,6 +38,7 @@ import os, sys, json, subprocess, tempfile, multiprocessing
 import datetime
 import dxpy
 from dxpy import logger
+from dxpy.utils import deep_update
 
 NUM_CORES = multiprocessing.cpu_count()
 
@@ -302,7 +303,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 if "*" not in applet_spec["access"]["network"]:
                     applet_spec["access"]["network"].append("*")
 
-    applet_spec.update(kwargs)
+    deep_update(applet_spec, kwargs)
 
     # -----
     # Now actually create the applet
