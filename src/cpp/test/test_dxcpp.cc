@@ -1087,7 +1087,7 @@ TEST_F(DXGTableTest, GetRowsLinearQueryTest_SLOW) {
       EXPECT_EQ(chunk[i][2].get<int>(), lq_row_count);
     }
     if (random() % 10 == 0) {
-      // Randomly stop the linear query, and cotinue from that point onwards
+      // Randomly stop the linear query, and continue from that point onwards
       dxgtable.stopLinearQuery();
       dxgtable.startLinearQuery(JSON(JSON_NULL), lq_row_count);
     }
