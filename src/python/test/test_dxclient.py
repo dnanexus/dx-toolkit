@@ -143,6 +143,9 @@ class TestDXClient(DXTestCase):
         self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
         self.assertEqual({"hello": "world"}, json.loads(run(u"dx get -o - :foo2")))
 
+        second_record_id = run(u"dx new record :somenewfolder/foo --parents --brief")
+        self.assertEqual(second_record_id, run(u"dx ls :somenewfolder/foo --brief").strip())
+
         # describe
         desc = json.loads(run(u"dx describe {record} --details --json".format(record=record_id)))
         self.assertEqual(desc['tags'], ['onetag', 'twotag'])
@@ -151,8 +154,12 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['details'], {"hello": "world"})
         self.assertEqual(desc['hidden'], True)
 
+        desc = json.loads(run(u"dx describe {record} --json".format(record=second_record_id)))
+        self.assertEqual(desc['folder'], '/somenewfolder')
+
         run(u"dx rm :foo")
         run(u"dx rm :foo2")
+        run(u"dx rm -r :somenewfolder")
 
         # Path resolution is used
         run(u"dx find jobs --project :")
@@ -239,6 +246,24 @@ class TestDXClient(DXTestCase):
                 tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
                 tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
+
+    def test_dx_upload_mult_paths(self):
+        testdir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(testdir, 'a'))
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("root-file")
+            fd.flush()
+            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+                fd2.write("a-file")
+                fd2.flush()
+
+                run(u'dx upload -r {testdir}/{rootfile} {testdir}/a --wait'.format(testdir=testdir,
+                                                                                   rootfile=os.path.basename(fd.name)))
+                listing = run(u'dx ls').split('\n')
+                self.assertIn("a/", listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                listing = run(u'dx ls a').split('\n')
+                self.assertIn(os.path.basename(fd2.name), listing)
 
     def test_dx_mkdir(self):
         with self.assertRaises(subprocess.CalledProcessError):
