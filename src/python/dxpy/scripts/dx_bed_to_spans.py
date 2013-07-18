@@ -595,7 +595,7 @@ def import_BED(**args):
     return job_outputs
 
 def main(**args):
-    return import_BED(**args)
+    import_BED(**args)
 
 if __name__ == '__main__':
     import_BED()
