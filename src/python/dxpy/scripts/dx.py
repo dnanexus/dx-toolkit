@@ -150,8 +150,8 @@ from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppComplete
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
                                  get_io_desc, get_find_jobs_string)
-from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
-                              get_output_flag, process_properties_args, process_dataobject_args, set_env_from_args)
+from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args, parser_single_dataobject_output_args,
+                              get_output_flag, process_properties_args, process_dataobject_args, process_single_dataobject_output_args, set_env_from_args)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
@@ -1332,6 +1332,7 @@ def new_project(args):
 def new_record(args):
     get_output_flag(args)
     try_call(process_dataobject_args, args)
+    try_call(process_single_dataobject_output_args, args)
     init_from = None
     if args.init is not None:
         init_project, init_folder, init_result = try_call(resolve_existing_path,
@@ -1363,6 +1364,7 @@ def new_record(args):
 def new_gtable(args):
     get_output_flag(args)
     try_call(process_dataobject_args, args)
+    try_call(process_single_dataobject_output_args, args)
 
     if args.output is None:
         project = dxpy.WORKSPACE_ID
@@ -1905,6 +1907,11 @@ def head(args):
             err_exit()
 
 def upload(args, **kwargs):
+    if args.output is not None and args.path is not None:
+        raise DXParserError('Error: Cannot provide both the -o/--output and --path/--destination arguments')
+    elif args.path is None:
+        args.path = args.output
+
     paths = copy.copy(args.filename)
     for path in paths:
         args.filename = path
@@ -1916,12 +1923,12 @@ def upload_one(args):
 
     args.show_progress = args.show_progress and not args.brief
 
-    if args.output is None:
+    if args.path is None:
         project = dxpy.WORKSPACE_ID
         folder = os.environ.get('DX_CLI_WD', '/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
-        project, folder, name = resolve_path(args.output)
+        project, folder, name = resolve_path(args.path)
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
 
@@ -1943,7 +1950,7 @@ def upload_one(args):
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.output = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
@@ -3397,13 +3404,15 @@ describe_path_action.completer = DXPathCompleter()
 parser_describe.set_defaults(func=describe)
 register_subparser(parser_describe, categories=('data', 'metadata'))
 
-parser_upload = subparsers.add_parser('upload', help='Upload a file or directory',
-                                      description='Upload a local file or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If -o/--output is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
+parser_upload = subparsers.add_parser('upload', help='Upload file(s) or directory',
+                                      description='Upload local file(s) or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If --path/--destination is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
                                       parents=[parser_dataobject_args, stdout_args, env_args],
                                       prog="dx upload")
 upload_filename_action = parser_upload.add_argument('filename', nargs='+',
-                                                    help='Local file or directory to upload ("-" indicates stdin input)')
+                                                    help='Local file or directory to upload ("-" indicates stdin input); provide multiple times to upload multiple files or directories')
 #upload_filename_action.completer = LocalCompleter()
+parser_upload.add_argument('-o', '--output', help=argparse.SUPPRESS) # deprecated; equivalent to --path/--destination
+parser_upload.add_argument('--path', '--destination', help=fill('DNAnexus path to upload file(s) to (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
 parser_upload.add_argument('-r', '--recursive', help='Upload directories recursively', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
 parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
@@ -3586,7 +3595,7 @@ register_subparser(parser_new_project, subparsers_action=subparsers_new, categor
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
-                                              parents=[parser_dataobject_args, stdout_args, env_args],
+                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args, stdout_args, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new record')
 parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata').completer = DXPathCompleter(classes=['record'])
@@ -3595,7 +3604,7 @@ register_subparser(parser_new_record, subparsers_action=subparsers_new, categori
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
-                                              parents=[parser_dataobject_args, stdout_args, env_args],
+                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args, stdout_args, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new gtable')
 parser_new_gtable.add_argument('--columns', help=fill('Comma-separated list of column names to use, e.g. "col1,col2,col3"; columns with non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.', width_adjustment=-24), required=True)

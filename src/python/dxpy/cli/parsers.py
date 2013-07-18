@@ -63,14 +63,16 @@ def get_output_flag(args):
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
-parser_dataobject_args_gp.add_argument('--path', '--destination', help=fill('DNAnexus path for the new object (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
-parser_dataobject_args_gp.add_argument('-o', '--output', help=argparse.SUPPRESS)
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], dest='hidden', default='visible', help='Whether the object is hidden or not')
 parser_dataobject_args_gp.add_argument('--property', dest='properties', metavar='KEY=VALUE', help=fill('Key-value pair to add as a property; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--property key1=val1 --property key2=val2"', width_adjustment=-24, initial_indent=' ', subsequent_indent=' ', break_on_hyphens=False), action='append')
 parser_dataobject_args_gp.add_argument('--type', metavar='TYPE', dest='types', help=fill('Type of the data object; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--type type1 --type type2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
 parser_dataobject_args_gp.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag of the data object; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--tag tag1 --tag tag2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
 parser_dataobject_args_gp.add_argument('--details', help='JSON to store as details')
 parser_dataobject_args_gp.add_argument('-p', '--parents', help='Create any parent folders necessary', action='store_true')
+
+parser_single_dataobject_output_args = argparse.ArgumentParser(add_help=False)
+parser_single_dataobject_output_args.add_argument('-o', '--output', help=argparse.SUPPRESS)
+parser_single_dataobject_output_args.add_argument('path', help=fill('DNAnexus path for the new data object (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
 
 def process_properties_args(args):
     # Properties
@@ -88,11 +90,6 @@ def process_properties_args(args):
 def process_dataobject_args(args):
     process_properties_args(args)
 
-    if args.path is not None and args.output is not None:
-        raise DXParserError('Error: Cannot provide both the positional PATH and -o/--output arguments')
-    elif args.output is None:
-        args.output = args.path
-
     # Visibility
     args.hidden = (args.hidden == 'hidden')
 
@@ -102,6 +99,12 @@ def process_dataobject_args(args):
             args.details = json.loads(args.details)
         except:
             raise DXParserError('Error: details could not be parsed as JSON')
+
+def process_single_dataobject_output_args(args):
+    if args.path is not None and args.output is not None:
+        raise DXParserError('Error: Cannot provide both the positional PATH and -o/--output arguments')
+    elif args.output is None:
+        args.output = args.path
 
 _env_args = argparse.ArgumentParser(add_help=False, prog='dx command ...')
 _env_args.add_argument('--apiserver-host', help='API server host')
