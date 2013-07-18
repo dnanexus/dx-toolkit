@@ -166,7 +166,7 @@ class TestDXClient(DXTestCase):
         self.assertEqual(record_id, run(u"dx ls :foo2 --brief").strip())
         self.assertEqual({"hello": "world"}, json.loads(run(u"dx get -o - :foo2")))
 
-        second_record_id = run(u"dx new record :somenewfolder/foo --parents --brief")
+        second_record_id = run(u"dx new record :somenewfolder/foo --parents --brief").strip()
         self.assertEqual(second_record_id, run(u"dx ls :somenewfolder/foo --brief").strip())
 
         # describe
