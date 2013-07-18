@@ -17,6 +17,7 @@
 #   under the License.
 
 import dxpy
+import json
 import string
 import random
 import sys
@@ -147,7 +148,7 @@ def find_num_columns(bed_file):
                 num_cols = len(line)
             line = bf.readline()
 
-    print "Found num cols: " + str(num_cols)
+    print >> sys.stderr, "Found num cols: " + str(num_cols)
 
     return num_cols
 
@@ -575,13 +576,13 @@ def import_BED(**args):
         current_file += 1
         bed_type = detect_type(import_filename)
         if bed_type == "genes":
-            print "Importing as Genes Type"
+            print >> sys.stderr,  "Importing as Genes Type"
             job_outputs.append(import_genes(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         elif bed_type == "named_spans":
-            print "Importing as Spans Type (with names)"
+            print >> sys.stderr,  "Importing as Spans Type (with names)"
             job_outputs.append(import_named_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         else:
-            print "Importing as Spans Type"
+            print >> sys.stderr, "Importing as Spans Type"
             job_outputs.append(import_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
 
         subprocess.check_call(" ".join(["rm", import_filename]), shell=True)
@@ -589,7 +590,7 @@ def import_BED(**args):
     if(bed_filename != bed_filename_uncomp):
         subprocess.check_call(" ".join(["rm", bed_filename_uncomp]), shell=True)
 
-    print job_outputs
+    print json.dumps(job_outputs)
 
     return job_outputs
 
