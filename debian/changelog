@@ -1,3 +1,9 @@
+dx-toolkit (0.59.1) precise; urgency=low
+
+  * Bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Thu, 18 Jul 2013 20:54:05 +0000
+
 dx-toolkit (0.59.0) precise; urgency=low
 
   * dx build learned options --app and --run.
