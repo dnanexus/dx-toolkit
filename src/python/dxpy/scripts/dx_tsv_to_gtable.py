@@ -23,7 +23,7 @@ from dxpy.utils.resolver import *
 from dxpy.utils.describe import print_desc
 
 parser = argparse.ArgumentParser(description='Import a local file as a GenomicTable.  The table will be closed after creation.  If no flags are given, the file given will be interpreted based on its contents.',
-                                 parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args])
+                                 parents=[stdout_args, json_arg, no_color_arg, parser_dataobject_args, parser_single_dataobject_output_args])
 parser.add_argument('filename', help='local filename to import ("-" indicates stdin input)')
 parser.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"')
 parser.add_argument('--indices', help='JSON for specifying any other indices')
@@ -54,6 +54,11 @@ def main(**kwargs):
 
     try:
         process_dataobject_args(args)
+    except BaseException as details:
+        parser.exit(1, unicode(details) + '\n')
+
+    try:
+        process_single_dataobject_output_args(args)
     except BaseException as details:
         parser.exit(1, unicode(details) + '\n')
 
