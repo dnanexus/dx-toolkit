@@ -83,6 +83,29 @@ def overrideEnvironment(**kwargs):
             env[key] = kwargs[key]
     return env
 
+def makeGenomeObject():
+    # NOTE: for these tests we don't upload a full sequence file (which
+    # would be huge, for hg19). Importers and exporters that need to
+    # look at the full sequence file can't be run on this test
+    # contigset.
+    sequence_file = dxpy.upload_string("")
+
+    genome_record = dxpy.new_dxrecord()
+    genome_record.set_details({
+        "flat_sequence_file": {"$dnanexus_link": sequence_file.get_id()},
+        "contigs": {
+            "offsets": [0],
+            "names": ["chr1"],
+            "sizes": [249250621]
+        }
+    })
+    genome_record.add_types(["ContigSet"])
+    genome_record.close()
+
+    sequence_file.wait_on_close()
+
+    return genome_record.get_id()
+
 class TestDXClient(DXTestCase):
     def test_dx_actions(self):
         with self.assertRaises(subprocess.CalledProcessError):
@@ -591,6 +614,31 @@ class TestDXBuildReportHtml(unittest.TestCase):
         run(u"dx rm {record} {file}".format(record=report["recordId"], file=fileId))
 
 
+class TestDXBedToSpans(DXTestCase):
+    def setUp(self):
+        super(TestDXBedToSpans, self).setUp()
+        self.bed = """chr1\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0
+"""
+        self.expected_tsv = """chr:string\tlo:int32\thi:int32\tname:string\tscore:float\tstrand:string\tthick_start:int32\tthick_end:int32\titem_rgb:string\r
+chr1\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0\r
+"""
+        self.tempdir = tempfile.mkdtemp()
+        self.genome_id = makeGenomeObject()
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(TestDXBedToSpans, self).tearDown()
+    def test_bed_to_spans_conversion(self):
+        tempfile1 = os.path.join(self.tempdir, 'test1.bed')
+        with open(tempfile1, 'w') as f:
+            f.write(self.bed)
+        output = json.loads(run('dx-bed-to-spans {f} {g}'.format(f=tempfile1, g=self.genome_id)).strip().split('\n')[-1])
+        table_id = output[0]['$dnanexus_link']
+        run('dx wait {g}'.format(g=table_id))
+        self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
+    #def test_bed_spans_roundtrip(self):
+    #    pass
+
+
 class TestDXFastQToReads(DXTestCase):
     def setUp(self):
         super(TestDXFastQToReads, self).setUp()
@@ -640,6 +688,69 @@ NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATT
         run('dx wait {g}'.format(g=table_id))
         run('dx-reads-to-fastq --output {o} {g}'.format(o=os.path.join(self.tempdir, 'roundtrip.fq'), g=table_id))
         self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.fq')).read(), round_tripped_fastq)
+
+
+class TestDXSamToMappings(DXTestCase):
+    def setUp(self):
+        super(TestDXSamToMappings, self).setUp()
+        self.tempdir = tempfile.mkdtemp()
+        self.expected_sam = """@SQ\tSN:chr1\tLN:249250621
+@RG\tID:0\tSM:Sample_0
+FOO.12345678\t0\t1\t54932369\t60\t7M1D93M\t*\t0\t0\tTAATAAGGTTGTTGTTGTTGTT\t1:1ADDDACFHA?HGFGIIE+<\tMD:Z:1A5^A93\tRG:Z:0
+"""
+        self.genome_id = makeGenomeObject()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(TestDXSamToMappings, self).tearDown()
+
+    def test_mappings_to_sam_conversion(self):
+        mappings_table = dxpy.new_dxgtable([
+            dxpy.DXGTable.make_column_desc("sequence", "string"),
+            dxpy.DXGTable.make_column_desc("quality", "string"),
+            dxpy.DXGTable.make_column_desc("name", "string"),
+            dxpy.DXGTable.make_column_desc("status", "string"),
+            dxpy.DXGTable.make_column_desc("chr", "string"),
+            dxpy.DXGTable.make_column_desc("lo", "int32"),
+            dxpy.DXGTable.make_column_desc("hi", "int32"),
+            dxpy.DXGTable.make_column_desc("negative_strand", "boolean"),
+            dxpy.DXGTable.make_column_desc("error_probability", "uint8"),
+            dxpy.DXGTable.make_column_desc("qc_fail", "boolean"),
+            dxpy.DXGTable.make_column_desc("duplicate", "boolean"),
+            dxpy.DXGTable.make_column_desc("cigar", "string"),
+            dxpy.DXGTable.make_column_desc("template_id", "int64"),
+            dxpy.DXGTable.make_column_desc("read_group", "uint16"),
+            dxpy.DXGTable.make_column_desc("sam_field_MD", "string"),
+            dxpy.DXGTable.make_column_desc("sam_field_XN", "int32")
+        ])
+        mappings_table.add_rows(data=[[
+            "TAATAAGGTTGTTGTTGTTGTT",
+            "1:1ADDDACFHA?HGFGIIE+<",
+            "FOO.12345678",
+            "PRIMARY",
+            "1",
+            54932368,
+            54932390,
+            False,
+            60,
+            False,
+            False,
+            "7M1D93M",
+            289090731,
+            0,
+            "1A5^A93",
+            -2147483648
+        ]], part=1)
+        mappings_table.set_details({
+            "read_groups": [
+                {"num_singles": 1, "num_pairs": 0}
+            ],
+            "original_contigset": {"$dnanexus_link": self.genome_id}
+        })
+        mappings_table.close(block=True)
+
+        self.assertEquals(run('dx-mappings-to-sam {g}'.format(g=mappings_table.get_id())),
+                          self.expected_sam)
 
 
 if __name__ == '__main__':
