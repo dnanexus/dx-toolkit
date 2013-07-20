@@ -1,3 +1,9 @@
+dx-toolkit (0.58.4) precise; urgency=low
+
+  * dx-mount bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Sat, 20 Jul 2013 23:20:40 +0000
+
 dx-toolkit (0.58.3) precise; urgency=low
 
   * Bug fix.
