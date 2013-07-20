@@ -17,6 +17,7 @@
 #   under the License.
 
 import dxpy
+import json
 import string
 import random
 import sys
@@ -38,7 +39,7 @@ def unpack(input):
         file_type = m.from_file(input)
     except Exception as e:
         raise dxpy.AppError("Error while identifying compression format: " + str(e))
-    
+
     # if we find a tar file throw a program error telling the user to unpack it
     if file_type == 'application/x-tar':
         raise dxpy.AppError("App does not support tar files.  Please unpack.")
@@ -57,7 +58,7 @@ def unpack(input):
         # just return input filename since it's already uncompressed
         return input
 
-    if uncomp_util != None:        
+    if uncomp_util != None:
         # bzcat does not support -t.  Use non streaming decompressors for testing input
         test_util = None
         if uncomp_util == 'xzcat':
@@ -84,7 +85,7 @@ def unpack(input):
         raise dxpy.AppError("Found a tar archive after decompression.  Please untar your files before importing")
     elif 'ASCII text' not in uncomp_type:
         raise dxpy.AppError("After decompression found file type other than plain text")
-    
+
     try:
         out_name = id_generator()
         subprocess.check_call(" ".join([uncomp_util, "--stdout", input, ">", out_name]), shell=True)
@@ -128,7 +129,7 @@ def split_on_track(bed_file):
                 curr_file.close()
                 files.append(current_filename)
                 break
-            
+
             curr_file.write(line)
             line = bf.readline()
 
@@ -147,7 +148,7 @@ def find_num_columns(bed_file):
                 num_cols = len(line)
             line = bf.readline()
 
-    print "Found num cols: " + str(num_cols)
+    print >> sys.stderr, "Found num cols: " + str(num_cols)
 
     return num_cols
 
@@ -199,7 +200,7 @@ def import_spans(bed_file, table_name, ref_id, file_id, additional_types, proper
 
 def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, property_keys, property_values, tags):
     num_cols = find_num_columns(bed_file)
-    
+
     possible_columns = [("chr", "string"),
                         ("lo", "int32"),
                         ("hi", "int32"),
@@ -222,14 +223,14 @@ def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, 
     default_row = possible_default_row[:num_cols]
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
-    
-    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), 
+
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'),
                dxpy.DXGTable.lexicographic_index([
                   dxpy.DXGTable.lexicographic_index_column("name", True, False),
                   dxpy.DXGTable.lexicographic_index_column("chr"),
                   dxpy.DXGTable.lexicographic_index_column("lo"),
                   dxpy.DXGTable.lexicographic_index_column("hi")], "search")]
-    
+
     with open(bed_file, 'rU') as bed, dxpy.new_dxgtable(column_descs, indices=indices, mode='w') as span:
         details = {"original_contigset": dxpy.dxlink(ref_id)}
         if file_id != None:
@@ -237,8 +238,8 @@ def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, 
         if len(property_keys) != len(property_values):
             raise dxpy.AppError("Expected each provided property to have a corresponding value.")
         for i in range(len(property_keys)):
-            details[property_keys[i]] = property_values[i]    
-    
+            details[property_keys[i]] = property_values[i]
+
         span.set_details(details)
 
         span.add_types(["Spans", "gri"])
@@ -286,7 +287,7 @@ def import_named_spans(bed_file, table_name, ref_id, file_id, additional_types, 
             # value error when fields are messed up and string gets converted to int, etc.  Throw these out.
             except ValueError:
                 continue
-            
+
             span.add_row(row)
 
     return dxpy.dxlink(span.get_id())
@@ -312,7 +313,7 @@ def generate_gene_row(line, block_size, block_start, span_type, default_row, par
         if parent_id != -1:
             row[2] = row[1] + block_size
         else:
-            row[2] = int(line[2])        
+            row[2] = int(line[2])
 
         # name
         row[3] = line[3]
@@ -371,8 +372,8 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                ("description", "string")]
 
     column_descs = [dxpy.DXGTable.make_column_desc(name, type) for name, type in columns]
-    
-    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'), 
+
+    indices = [dxpy.DXGTable.genomic_range_index("chr","lo","hi", 'gri'),
                dxpy.DXGTable.lexicographic_index([
                   dxpy.DXGTable.lexicographic_index_column("name", True, False),
                   dxpy.DXGTable.lexicographic_index_column("chr"),
@@ -432,18 +433,18 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                 # set thick* to be within the gene if outside
                 thickStart = min(max(int(line[6]), gene_lo), gene_hi)
                 thickEnd = max(min(int(line[7]), gene_hi), gene_lo)
-                
+
                 for i in range(blockCount):
                     # look to thickStart and thickEnd to get information about the type of this region
                     # if thick* are the same or cover the whole transcript then we ignore them
                     # else, we partition the exons into CDS and UTR based on their boundaries
                     if thickStart == thickEnd or (thickStart == gene_lo and thickEnd == gene_hi):
-                        span.add_row(generate_gene_row(line, 
-                                                       blockSizes[i], 
-                                                       blockStarts[i], 
-                                                       "exon", 
-                                                       default_row, 
-                                                       current_parent_id, 
+                        span.add_row(generate_gene_row(line,
+                                                       blockSizes[i],
+                                                       blockStarts[i],
+                                                       "exon",
+                                                       default_row,
+                                                       current_parent_id,
                                                        current_span_id))
                         current_span_id += 1
                     else:
@@ -452,21 +453,21 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
 
                         # we're all UTR if we enter either of these
                         if (exon_hi <= thickStart and line[5] == '+') or (exon_lo >= thickEnd and line[5] == '-'):
-                            span.add_row(generate_gene_row(line, 
-                                                           blockSizes[i], 
-                                                           blockStarts[i], 
-                                                           "5' UTR", 
-                                                           default_row, 
-                                                           current_parent_id, 
+                            span.add_row(generate_gene_row(line,
+                                                           blockSizes[i],
+                                                           blockStarts[i],
+                                                           "5' UTR",
+                                                           default_row,
+                                                           current_parent_id,
                                                            current_span_id))
                             current_span_id += 1
                         elif (exon_hi <= thickStart and line[5] == '-') or (exon_lo >= thickEnd and line[5] == '+'):
-                            span.add_row(generate_gene_row(line, 
-                                                           blockSizes[i], 
-                                                           blockStarts[i], 
-                                                           "3' UTR", 
-                                                           default_row, 
-                                                           current_parent_id, 
+                            span.add_row(generate_gene_row(line,
+                                                           blockSizes[i],
+                                                           blockStarts[i],
+                                                           "3' UTR",
+                                                           default_row,
+                                                           current_parent_id,
                                                            current_span_id))
                             current_span_id += 1
 
@@ -474,12 +475,12 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                         elif (exon_lo < thickEnd and exon_hi > thickStart):
                             # entirely contained
                             if exon_lo >= thickStart and exon_hi <= thickEnd:
-                                span.add_row(generate_gene_row(line, 
-                                                               blockSizes[i], 
-                                                               blockStarts[i], 
-                                                               "CDS", 
-                                                               default_row, 
-                                                               current_parent_id, 
+                                span.add_row(generate_gene_row(line,
+                                                               blockSizes[i],
+                                                               blockStarts[i],
+                                                               "CDS",
+                                                               default_row,
+                                                               current_parent_id,
                                                                current_span_id))
                                 current_span_id += 1
                             else:
@@ -490,12 +491,12 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                                     else:
                                         UTR_type = "3' UTR"
                                     UTR_size = (min(blockSizes[i], thickStart - exon_lo))
-                                    span.add_row(generate_gene_row(line, 
-                                                                   UTR_size, 
-                                                                   blockStarts[i], 
+                                    span.add_row(generate_gene_row(line,
+                                                                   UTR_size,
+                                                                   blockStarts[i],
                                                                    UTR_type,
-                                                                   default_row, 
-                                                                   current_parent_id, 
+                                                                   default_row,
+                                                                   current_parent_id,
                                                                    current_span_id))
                                     current_span_id += 1
 
@@ -503,12 +504,12 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                                 CDS_size = blockSizes[i] - (max(exon_lo, thickStart) - exon_lo)
                                 CDS_size -= (exon_hi - min(exon_hi, thickEnd))
                                 CDS_start = (max(exon_lo, thickStart) - exon_lo) + blockStarts[i]
-                                span.add_row(generate_gene_row(line, 
-                                                               CDS_size, 
-                                                               CDS_start, 
+                                span.add_row(generate_gene_row(line,
+                                                               CDS_size,
+                                                               CDS_start,
                                                                "CDS",
-                                                               default_row, 
-                                                               current_parent_id, 
+                                                               default_row,
+                                                               current_parent_id,
                                                                current_span_id))
                                 current_span_id += 1
 
@@ -520,12 +521,12 @@ def import_genes(bed_file, table_name, ref_id, file_id, additional_types, proper
                                         UTR_type = "5' UTR"
                                     UTR_size = (min(blockSizes[i], exon_hi - thickEnd))
                                     UTR_start = blockStarts[i] + thickEnd - exon_lo
-                                    span.add_row(generate_gene_row(line, 
-                                                                   UTR_size, 
-                                                                   UTR_start, 
+                                    span.add_row(generate_gene_row(line,
+                                                                   UTR_size,
+                                                                   UTR_start,
                                                                    UTR_type,
-                                                                   default_row, 
-                                                                   current_parent_id, 
+                                                                   default_row,
+                                                                   current_parent_id,
                                                                    current_span_id))
                                     current_span_id += 1
 
@@ -575,13 +576,13 @@ def import_BED(**args):
         current_file += 1
         bed_type = detect_type(import_filename)
         if bed_type == "genes":
-            print "Importing as Genes Type"
+            print >> sys.stderr,  "Importing as Genes Type"
             job_outputs.append(import_genes(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         elif bed_type == "named_spans":
-            print "Importing as Spans Type (with names)"
+            print >> sys.stderr,  "Importing as Spans Type (with names)"
             job_outputs.append(import_named_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
         else:
-            print "Importing as Spans Type"
+            print >> sys.stderr, "Importing as Spans Type"
             job_outputs.append(import_spans(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags))
 
         subprocess.check_call(" ".join(["rm", import_filename]), shell=True)
@@ -589,12 +590,12 @@ def import_BED(**args):
     if(bed_filename != bed_filename_uncomp):
         subprocess.check_call(" ".join(["rm", bed_filename_uncomp]), shell=True)
 
-    print job_outputs
+    print json.dumps(job_outputs)
 
     return job_outputs
 
 def main(**args):
-    return import_BED(**args)
+    import_BED(**args)
 
 if __name__ == '__main__':
     import_BED()

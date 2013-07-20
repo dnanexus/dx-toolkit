@@ -106,6 +106,11 @@ namespace dx {
 
   // Note: We only consider 200 as a successful response, all others are considered "failures"
   JSON DXHTTPRequest(const string &resource, const string &data, const bool alwaysRetry, const map<string, string> &headers) {
+    DXLOG(logDEBUG) << "In DXHTTPRequest(), inputs:" << endl
+                  << " --resources = '" << resource << "'" << endl
+                  << " --alwaysRetry = " << alwaysRetry << endl
+                  << " --data = '" << data.substr(0, 100) << "'" << endl
+                  << " --headers = '" << JSON(headers).toString() << "'";
     const unsigned int NUM_MAX_RETRIES = 5u; // maximum number of retries for an individual request
     
     if (config::APISERVER().empty()) {
@@ -168,9 +173,12 @@ namespace dx {
 
       reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
       try {
+        DXLOG(logDEBUG) << "Attempting the actual HTTP request (countTries = " << countTries << ")...";
         // Attempt a POST request
         req = HttpRequest::request(HTTP_POST, url, req_headers, data.data(), data.size());
+        DXLOG(logDEBUG) << "Request completed, responseCode = '" << req.responseCode << "'";
       } catch (HttpRequestException &e) {
+        DXLOG(logDEBUG) << "HttpRequestException thrown ... message = '" << e.what() << "'";
         // Retry the request in any of these three scenarios:
         //  - alwaysRetry = true in the call to this function
         //  - errorCode returned by HttpRequestException is < 0 (which implies that request was never made to the server)server
@@ -201,6 +209,7 @@ namespace dx {
                 // if at least one retry was made, print eventual success on stderr
                 DXLOG(logWARNING) << "Request completed successfully in Retry #" << countTries;
               }
+              DXLOG(logDEBUG) << "Exiting DXHTTPRequest() successfully";
               return out;
             } catch (JSONException &je) {
               if (contentLengthMissing) {
@@ -226,9 +235,9 @@ namespace dx {
         if (!reqCompleted) {
           DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
         }
-        DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ..." << endl;
-
+        DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ...";
         boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
+        DXLOG(logDEBUG) << "Sleep finished, will go & retry the request";
       } else {
         countTries++;
         break;
@@ -474,7 +483,7 @@ namespace dx {
       }
     }the_only_instance;
   }
-/*
+
   // Ignore SIGPIPE to deal with PTFM-8366 & PTFM-7251 (Also see: http://sourceforge.net/p/curl/bugs/1180/)
   namespace _internal {
     #if !WINDOWS_BUILD
@@ -497,5 +506,4 @@ namespace dx {
     IgnoreSIGPIPE IgnoreSIGPIPE_static_initializer;
     #endif
   }
-*/
 }

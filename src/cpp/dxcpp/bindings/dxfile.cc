@@ -27,13 +27,21 @@ using namespace std;
 namespace dx {
   // A helper function for making http requests with retry logic
   void makeHTTPRequestForFileReadAndWrite(HttpRequest &resp, const string &url, const HttpHeaders &headers, const HttpMethod &method, const char *data = NULL, const size_t size=0u, const int MAX_TRIES = 5) {
+    DXLOG(logDEBUG) << "In makeHTTPRequestForFileReadAndWrite(), inputs:" << endl
+                    << " --url = '" << url << "'" << endl
+                    << " --MAX_TRIES = " << MAX_TRIES << endl
+                    << " --data size = '" << size << "'" << endl
+                    << " --method = '" << int(method) << "'";
     int retries = 0;
     bool someThingWentWrong = false;
     string wrongThingDescription = "";
     while (true) {
       try {
+        DXLOG(logDEBUG) << "Attempting the actual HTTP request ...";
         resp = HttpRequest::request(method, url, headers, data, size);
+        DXLOG(logDEBUG) << "Request completed, responseCode = '" << resp.responseCode << "'";
       } catch(HttpRequestException e) {
+        DXLOG(logDEBUG) << "HttpRequestException thrown ... message = '" << e.what() << "'";
         someThingWentWrong = true;
         wrongThingDescription = e.what();
       }
@@ -43,6 +51,7 @@ namespace dx {
       }
       if (someThingWentWrong) {
         retries++;
+        DXLOG(logDEBUG) << "someThingWentWrong = " << someThingWentWrong << ", retries = " << retries;
         if (retries >= MAX_TRIES) {
           vector<string> hvec = headers.getAllHeadersAsVector();
           string headerStr = "HTTP Headers sent with request:";
@@ -55,10 +64,12 @@ namespace dx {
 
         DXLOG(logWARNING) << "Retry #" << retries << ": Will start retrying '" << getHttpMethodName(method) << " " << url << "' in " << (1<<retries) << " seconds. Error in previous try: " << wrongThingDescription;
         boost::this_thread::sleep(boost::posix_time::milliseconds( (1<<retries) * 1000));
+        DXLOG(logDEBUG) << "Sleep finished, will continue retrying the makeHTTPRequestForFileReadAndWrite() request ...";
         someThingWentWrong = false;
         wrongThingDescription.clear();
         continue; // repeat the same request
       }
+      DXLOG(logDEBUG) << "Exiting makeHTTPRequestForFileReadAndWrite() successfully...";
       return;
     }
   }
@@ -484,14 +495,18 @@ namespace dx {
       req_headers["Content-MD5"] = getHexifiedMD5(reinterpret_cast<const unsigned char*>(ptr), n); // Add the content MD5 header 
       HttpRequest resp2;
       try {
+        DXLOG(logDEBUG) << "In uploadPart(), index = " << index << ", calling makeHTTPRequestForFileReadAndWrite() ...";
         makeHTTPRequestForFileReadAndWrite(resp2, resp["url"].get<string>(), req_headers, HTTP_POST, ptr, n, 1);
+        DXLOG(logDEBUG) << "In uploadPart(), index = " << index << ", makeHTTPRequestForFileReadAndWrite() finished";
         break; // request successfully completed, break from the loop
       } catch (DXFileError &e) {
+        DXLOG(logDEBUG) << "DXFileError thrown, tries = " << tries << ", MAX_TRIES = " << MAX_TRIES;
         if (tries >= MAX_TRIES)
           throw DXFileError("POST '" + resp["url"].get<string>() + "' failed after " + boost::lexical_cast<string>(tries) + " number of tries. Giving up. Error message in last try: '" + e.what() + "'");
         int sleep = (1<<tries);
         DXLOG(logWARNING) << "POST '" << resp["url"].get<string>() << "' failed in try #" << tries << " of " << MAX_TRIES << ". Retrying in " << sleep << " seconds ... Error message: '" << e.what() << "'";
         boost::this_thread::sleep(boost::posix_time::milliseconds( sleep * 1000));
+        DXLOG(logDEBUG) << "Sleep finished, will continue retrying the uploadPart() request...";
       }
     }
     hasAnyPartBeenUploaded = true;
