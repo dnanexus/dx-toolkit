@@ -20,7 +20,6 @@ import dxpy
 import math
 import argparse
 import re
-import string
 import sys
 
 #Usage: sample input: dx_MappingsTableToSamBwa --table_id <gtable_id> --output <filename>
@@ -298,9 +297,15 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, writeRowId, 
     else:
         sys.stdout.write(out_row)
 
-COMPLEMENT = string.maketrans("ATGCatgc", "TACGTACG")
+
 def reverseComplement(seq):
-    return seq.translate(COMPLEMENT)[::-1]
+    rc = {"A":"T", "T":"A", "G":"C", "C":"G", "a":"T", "t":"A", "c":"G", "g":"C"}
+    result = ''
+    for x in seq[::-1]:
+        result += rc.get(x, x)
+    return result
+        
 
 if __name__ == '__main__':
     main()
+
