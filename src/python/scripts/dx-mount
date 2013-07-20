@@ -149,7 +149,10 @@ class DXFS(LoggingMixIn, Operations):
         self.root = DXInode(DXInode.DIR, 'root', 0755 | stat.S_IFDIR, self.uid, self.gid)
 
     def init(self, root_path):
-        self.project = dxpy.DXProject(self.project_id)
+        if self.project_id.startswith('project-'):
+            self.project = dxpy.DXProject(self.project_id)
+        elif self.project_id.startswith('container-'):
+            self.project = dxpy.DXContainer(self.project_id)
 
         print "Populating folders..."
         folders = self.project.describe(input_params={"folders": True})['folders']
@@ -489,6 +492,9 @@ parser.add_argument("--project-id", help="DNAnexus project ID to mount", default
 parser.add_argument("--debug", action='store_true')
 parser.add_argument("--foreground", action='store_true')
 args = parser.parse_args()
+
+if not args.project_id.startswith('project-') and not args.project_id.startswith('container-'):
+    parser.exit(3, "Error: A valid project or container ID was not provided for --project-id\n")
 
 if not args.debug:
     sys.stdout = open(os.devnull, 'w')
