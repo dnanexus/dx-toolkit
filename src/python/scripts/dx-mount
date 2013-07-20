@@ -495,4 +495,8 @@ if not args.debug:
     sys.stderr = open(os.devnull, 'w')
 
 logging.getLogger().setLevel(logging.DEBUG)
-fuse = FUSE(DXFS(project_id=args.project_id), args.mountpoint, foreground=args.foreground)
+fuse = FUSE(DXFS(project_id=args.project_id),
+            args.mountpoint,
+            foreground=args.foreground,
+            fsname='dnanexus:'+args.project_id,
+            subtype='dxfs')
