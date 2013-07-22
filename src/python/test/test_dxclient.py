@@ -715,6 +715,47 @@ NGTAACTCCTCTTTGCAACACCACAGCCATCGCCCCCTACCTCCTTGCCAATCCCAGGCTCCTCTCCTGATGGTAACATT
         self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.fq')).read(), round_tripped_fastq)
 
 
+class TestDXGtfToGenes(DXTestCase):
+    def setUp(self):
+        super(TestDXGtfToGenes, self).setUp()
+        self.expected_gtf = """chr1\t.\texon\t101\t200\t.\t+\t.\tgene_id ""; transcript_id "mytranscript-noncoding"
+chr1\t.\tCDS\t151\t200\t.\t+\t0\tgene_id "mygene-coding"; transcript_id "mytranscript-coding"
+"""
+        self.tempdir = tempfile.mkdtemp()
+        self.genome_id = makeGenomeObject()
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(TestDXGtfToGenes, self).tearDown()
+    def test_genes_to_gtf_conversion(self):
+        genes_table = dxpy.new_dxgtable([
+            dxpy.DXGTable.make_column_desc("type", "string"),
+            dxpy.DXGTable.make_column_desc("span_id", "int64"),
+            dxpy.DXGTable.make_column_desc("name", "string"),
+            dxpy.DXGTable.make_column_desc("strand", "string"),
+            dxpy.DXGTable.make_column_desc("is_coding", "boolean"),
+            dxpy.DXGTable.make_column_desc("parent_id", "int64"),
+            dxpy.DXGTable.make_column_desc("frame", "int64"),
+            dxpy.DXGTable.make_column_desc("description", "string"),
+            dxpy.DXGTable.make_column_desc("chr", "string"),
+            dxpy.DXGTable.make_column_desc("lo", "int64"),
+            dxpy.DXGTable.make_column_desc("hi", "int64")
+        ])
+        genes_table.add_rows(data=[
+            ["transcript", 5, "mytranscript-noncoding", "+", False, -1, -1, "my test transcript", "chr1", 100, 200],
+            ["exon", 6, "", "+", False, 5, -1, "", "chr1", 100, 200],
+            ["gene", 54, "mygene-coding", "+", True, -1, -1, "my test gene", "chr1", 150, 200],
+            ["transcript", 55, "mytranscript-coding", "+", True, 54, -1, "my test transcript", "chr1", 150, 200],
+            ["CDS", 75, "", "+", True, 55, 0, "", "chr1", 150, 200]
+        ])
+        genes_table.set_details({
+            "original_contigset": {"$dnanexus_link": self.genome_id}
+        })
+        genes_table.close(block=True)
+
+        self.assertEquals(run('dx-genes-to-gtf {g}'.format(g=genes_table.get_id())),
+                          self.expected_gtf)
+
+
 class TestDXSamToMappings(DXTestCase):
     def setUp(self):
         super(TestDXSamToMappings, self).setUp()
