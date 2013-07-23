@@ -22,6 +22,8 @@ import argparse
 import re
 import sys
 
+from dxpy.utils.genomic_utils import reverse_complement as reverseComplement
+
 #Usage: sample input: dx_MappingsTableToSamBwa --table_id <gtable_id> --output <filename>
 #Example: dx_MappingsTableToSamBwa --table_id gtable-9yZvF200000PYKJyV4k00005 --output mappings.sam
 
@@ -296,15 +298,6 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, writeRowId, 
         outputFile.write(out_row)
     else:
         sys.stdout.write(out_row)
-
-
-def reverseComplement(seq):
-    rc = {"A":"T", "T":"A", "G":"C", "C":"G", "a":"T", "t":"A", "c":"G", "g":"C"}
-    result = ''
-    for x in seq[::-1]:
-        result += rc.get(x, x)
-    return result
-        
 
 if __name__ == '__main__':
     main()
