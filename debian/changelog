@@ -1,3 +1,9 @@
+dx-toolkit (0.59.4) precise; urgency=low
+
+  * Restore compatibility of DXApp/let.run().
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 23 Jul 2013 19:06:31 +0000
+
 dx-toolkit (0.59.3) precise; urgency=low
 
   * dx-mount bug fix.
