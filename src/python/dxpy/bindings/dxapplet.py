@@ -198,3 +198,15 @@ class DXApplet(DXDataObject, DXExecutable):
         method.
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)
+
+    def run(self, applet_input, **kwargs):
+        """
+        Creates a new job that executes the function "main" of this
+        applet with the given input *applet_input*.
+
+        The keyword args are the same as those that may be provided to
+        :meth:`dxpy.bindings.dxapplet.DXExecutable.run`.
+        """
+        # Rename applet_input arg to executable_input to preserve API
+        # compatibility when calling DXApplet.run(applet_input=...)
+        return super(DXApplet, self).run(applet_input, **kwargs)
