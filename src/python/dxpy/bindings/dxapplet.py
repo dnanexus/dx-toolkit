@@ -201,7 +201,7 @@ class DXApplet(DXDataObject, DXExecutable):
 
     def run(self, applet_input, project=None, folder="/", name=None,
             instance_type=None, depends_on=None, details=None,
-            delay_workspace_destruction=None, **kwargs)
+            delay_workspace_destruction=None, **kwargs):
         """
         Creates a new job that executes the function "main" of this applet with
         the given input *applet_input*.
