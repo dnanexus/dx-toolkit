@@ -315,3 +315,15 @@ class DXApp(DXObject, DXExecutable):
             return dxpy.api.app_delete(self._dxid, **kwargs)
         else:
             return dxpy.api.app_delete('app-' + self._name, alias=self._alias, **kwargs)
+
+    def run(self, app_input, **kwargs):
+        """
+        Creates a new job that executes the function "main" of this app
+        with the given input *app_input*.
+
+        The keyword args are the same as those that may be provided to
+        :meth:`dxpy.bindings.dxapplet.DXExecutable.run`.
+        """
+        # Rename app_input arg to executable_input to preserve API
+        # compatibility when calling DXApp.run(app_input=...)
+        return super(DXApp, self).run(app_input, **kwargs)
