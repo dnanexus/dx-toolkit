@@ -1,3 +1,17 @@
+dx-toolkit (0.60.0) precise; urgency=low
+
+  * dx-bed-to-spans is more scriptable.
+
+  * dx login learned option --timeout.
+
+  * dx build learned option --extra-args.
+
+  * Bug fixes for dxfs.
+
+  * Various other bug fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 23 Jul 2013 19:04:40 +0000
+
 dx-toolkit (0.59.0) precise; urgency=low
 
   * dx build learned options --app and --run.
