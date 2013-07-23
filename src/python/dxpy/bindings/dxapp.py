@@ -316,14 +316,30 @@ class DXApp(DXObject, DXExecutable):
         else:
             return dxpy.api.app_delete('app-' + self._name, alias=self._alias, **kwargs)
 
-    def run(self, app_input, **kwargs):
+    def run(self, app_input, project=None, folder="/", name=None,
+            instance_type=None, depends_on=None, details=None,
+            delay_workspace_destruction=None, **kwargs):
         """
-        Creates a new job that executes the function "main" of this app
-        with the given input *app_input*.
+        Creates a new job that executes the function "main" of this app with
+        the given input *app_input*.
 
-        The keyword args are the same as those that may be provided to
-        :meth:`dxpy.bindings.dxapplet.DXExecutable.run`.
+        See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the meanings of
+        the keyword args.
         """
         # Rename app_input arg to executable_input to preserve API
         # compatibility when calling DXApp.run(app_input=...)
-        return super(DXApp, self).run(app_input, **kwargs)
+        #
+        # If we don't allow the possibility of calling the named args
+        # positionally, we can change this to:
+        #   return super(DXApp, self).run(app_input, **kwargs)
+        return super(DXApp, self).run(
+            app_input,
+            project=project,
+            folder=folder,
+            name=name,
+            instance_type=instance_type,
+            depends_on=depends_on,
+            details=details,
+            delay_workspace_destruction=delay_workspace_destruction,
+            **kwargs
+        )
