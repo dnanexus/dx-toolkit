@@ -271,7 +271,7 @@ def writeRow(row, col, defaultCol, outputFile, idAsName, idPrepend, writeRowId, 
         try:
             seq = reverseComplement(seq)
         except ValueError as e:
-            raise ValueError("Error converting row %d: %s" % (row["__id__"], e.message))
+            raise dxpy.AppError("Error converting row %d: %s" % (row["__id__"], e.message))
         qual = qual[::-1]
     
     if values["mate_id"] == -1 or values["chr"] != values["chr2"] or values["chr"] == '' or values["chr"] == '*':
