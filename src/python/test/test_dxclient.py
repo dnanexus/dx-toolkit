@@ -88,7 +88,7 @@ def makeGenomeObject():
     # would be huge, for hg19). Importers and exporters that need to
     # look at the full sequence file can't be run on this test
     # contigset.
-    sequence_file = dxpy.upload_string("")
+    sequence_file = dxpy.upload_string("", hidden=True)
 
     genome_record = dxpy.new_dxrecord()
     genome_record.set_details({
