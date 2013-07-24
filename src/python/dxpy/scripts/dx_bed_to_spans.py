@@ -17,6 +17,7 @@
 #   under the License.
 
 import dxpy
+import json
 import string
 import random
 import sys
@@ -101,7 +102,7 @@ def detect_type(bed_file):
             if "browser" not in header:
                 break
         if "type=bedDetail" in header:
-            print "File is a BED detail file"
+            print >> sys.stderr, "File is a BED detail file"
             return {"type": "bedDetail", "delimiter": delimiter}
             
     num_cols = find_num_columns(bed_file, delimiter)
@@ -154,7 +155,7 @@ def find_num_columns(bed_file, delimiter="\t"):
                 num_cols = len(line)
             line = bf.readline()
 
-    print "Found num cols: " + str(num_cols)
+    print >> sys.stderr, "Found num cols: " + str(num_cols)
     return num_cols
 
 def find_delimiter(bed_file):
@@ -165,13 +166,13 @@ def find_delimiter(bed_file):
         tab_split = line.split("\t")
         
         if len(tab_split) >= 3: 
-            print "Bed file is tab delimited"
+            print >> sys.stderr, "Bed file is tab delimited"
             return "\t"
         else: 
             space_split = line.split()
             if len(space_split) < 3: 
                 raise dxpy.AppError("File is not a valid bed file (neither space delimited nor tab delimited")
-            print "Bed file is space delimited"
+            print >> sys.stderr, "Bed file is space delimited"
             return " "
             
 def import_spans(bed_file, table_name, ref_id, file_id, additional_types, property_keys, property_values, tags, isBedDetail, delimiter="\t"):
@@ -585,15 +586,15 @@ def import_BED(**args):
         current_file += 1
         bed_type = detect_type(import_filename)["type"]
         delimiter = detect_type(import_filename)["delimiter"]
-        
-        print "Bed type is : " + bed_type        
+
+        print >> sys.stderr, "Bed type is : " + bed_type
         if bed_type == "genes":
-            print "Importing as Genes Type"
+            print >> sys.stderr, "Importing as Genes Type"
             job_outputs.append(import_genes(import_filename, name, reference, file_id, additional_types, property_keys, property_values, tags, delimiter))
         elif bed_type == "spans" or bed_type == "bedDetail":
-            print "Importing as Spans Type"
+            print >> sys.stderr, "Importing as Spans Type"
             if bed_type == "bedDetail":
-                print "input file is in 'bedDetails' format..."
+                print >> sys.stderr, "input file is in 'bedDetails' format..."
                 bedDetail=True
             else:
                 bedDetail=False
@@ -606,7 +607,7 @@ def import_BED(**args):
     if(bed_filename != bed_filename_uncomp):
         subprocess.check_call(" ".join(["rm", bed_filename_uncomp]), shell=True)
 
-    print job_outputs
+    print json.dumps(job_outputs)
     return job_outputs
 
 def validate_line(line):
