@@ -21,6 +21,7 @@ import os, unittest, json, tempfile, subprocess, csv, shutil, re
 from dxpy import AppError
 from dxpy.utils import describe
 from dxpy.utils import exec_utils
+from dxpy.utils import genomic_utils
 
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):
@@ -68,6 +69,16 @@ class TestErrorSanitizing(unittest.TestCase):
     def test_formatting_exceptions(self):
         self.assertEqual(exec_utils._format_exception_message(ValueError("foo")), "ValueError: foo")
         self.assertEqual(exec_utils._format_exception_message(AppError("foo")), "foo")
+
+class TestGenomicUtils(unittest.TestCase):
+    def test_reverse_complement(self):
+        self.assertEqual("TTTTAAACCG", genomic_utils.reverse_complement("CGGTTTAAAA"))
+        self.assertEqual("TTTTAAACCG", genomic_utils.reverse_complement(u"CGGTTTAAAA"))
+        self.assertEqual("TTTTAAACCG", genomic_utils.reverse_complement("cggtttaaaa"))
+        self.assertEqual("TTTTAAACCG", genomic_utils.reverse_complement(u"cggtttaaaa"))
+        self.assertEqual("NNNNNTTTTAAACCG", genomic_utils.reverse_complement("CGGTTTAAAANNNNN"))
+        with self.assertRaises(ValueError):
+            genomic_utils.reverse_complement("oops")
 
 if __name__ == '__main__':
     unittest.main()
