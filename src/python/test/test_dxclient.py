@@ -188,6 +188,52 @@ class TestDXClient(DXTestCase):
         run(u"dx find jobs --project :")
         run(u"dx find data --project :")
 
+    def test_dx_object_tagging(self):
+        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
+        # tag
+        record_id = run(u"dx new record Ψ --brief").strip()
+        run(u"dx tag Ψ " + u" ".join(the_tags))
+        mytags = dxpy.describe(record_id)['tags']
+        for tag in the_tags:
+            self.assertIn(tag, mytags)
+        # untag
+        run(u"dx untag Ψ " + u" ".join(the_tags[:2]))
+        mytags = dxpy.describe(record_id)['tags']
+        for tag in the_tags[:2]:
+            self.assertNotIn(tag, mytags)
+        self.assertIn(the_tags[2], mytags)
+
+        # -a flag
+        second_record_id = run(u"dx new record Ψ --brief").strip()
+        self.assertNotEqual(record_id, second_record_id)
+        run(u"dx tag -a Ψ " + u" ".join(the_tags))
+        mytags = dxpy.describe(record_id)['tags']
+        for tag in the_tags:
+            self.assertIn(tag, mytags)
+        second_tags = dxpy.describe(second_record_id)['tags']
+        for tag in the_tags:
+            self.assertIn(tag, second_tags)
+
+        run(u"dx untag -a Ψ " + u" ".join(the_tags))
+        mytags = dxpy.describe(record_id)['tags']
+        self.assertEqual(len(mytags), 0)
+        second_tags = dxpy.describe(second_record_id)['tags']
+        self.assertEqual(len(second_tags), 0)
+
+    def test_dx_project_tagging(self):
+        the_tags = [u"$my.tag", u"secoиdtag", u"тhird тagggg"]
+        # tag
+        run(u"dx tag : \\" + the_tags[0] + u" " + the_tags[1] + u" '" + the_tags[2] + u"'")
+        mytags = dxpy.describe(self.project)['tags']
+        for tag in the_tags:
+            self.assertIn(tag, mytags)
+        # untag
+        run(u"dx untag : \\" + the_tags[0] + u" '" + the_tags[2] + u"'")
+        mytags = dxpy.describe(self.project)['tags']
+        self.assertIn(the_tags[1], mytags)
+        for tag in [the_tags[0], the_tags[2]]:
+            self.assertNotIn(tag, mytags)
+
     def test_dx_describe_project(self):
         describe_output = run(u"dx describe :").strip()
         self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pr\xc3\xb6ject' % (self.project,),

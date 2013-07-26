@@ -1523,73 +1523,84 @@ def remove_types(args):
     if had_error:
         parser.exit(1)
 
-def add_tags(args):
-    had_error = False
+def resolve_to_objects_or_project(path, all_matching_results=False):
     # Attempt to resolve name
     project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
+                                                   path,
                                                    expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
+                                                   allow_mult=True, all_mult=all_matching_results)
 
-    if entity_results is None:
-        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
-
-    for result in entity_results:
-        try:
-            dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
-                               {"project": project,
-                                "tags": args.tags})
-        except dxpy.DXAPIError as details:
-            print fill(unicode(details))
-            had_error = True
-        except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-            print fill(details.__class__.__name__ + ': ' + unicode(details))
-            had_error = True
-    if had_error:
-        parser.exit(1)
-
-def remove_tags(args):
-    had_error = False
-    # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
-
-    if entity_results is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
-
-    for result in entity_results:
-        try:
-            dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
-                               {"project": project,
-                                "tags": args.tags})
-        except dxpy.DXAPIError as details:
-            print fill(unicode(details))
-            had_error = True
-        except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
-            print fill(details.__class__.__name__ + ': ' + unicode(details))
-            had_error = True
-    if had_error:
-        parser.exit(1)
-
-def rename(args):
-    had_error = False
-    # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
-
-    if entity_results is None and not is_container_id(args.path):
+    if entity_results is None and not is_container_id(path):
         if project is None:
             parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
         elif folderpath != None and folderpath != '/':
             parser.exit(1,
-                        'Could not resolve \"' + args.path + \
+                        'Could not resolve \"' + path + \
                             '''\" to an existing data object or folder; if you
 were attempting to refer to a project, please append a colon ":" to indicate that it
 is a project.\n''')
+    return project, folderpath, entity_results
+
+def add_tags(args):
+    had_error = False
+    # Attempt to resolve name
+    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
+                                   {"project": project,
+                                    "tags": args.tags})
+            except dxpy.DXAPIError as details:
+                print fill(unicode(details))
+                had_error = True
+            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
+                print fill(details.__class__.__name__ + ': ' + unicode(details))
+                had_error = True
+        if had_error:
+            parser.exit(1)
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot add tags to a non-project data container\n')
+    else:
+        try:
+            dxpy.DXHTTPRequest('/' + project + '/addTags',
+                               {"tags": args.tags})
+        except:
+            err_exit()
+
+def remove_tags(args):
+    had_error = False
+    # Attempt to resolve name
+    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+
+    if entity_results is not None:
+        for result in entity_results:
+            try:
+                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
+                                   {"project": project,
+                                    "tags": args.tags})
+            except dxpy.DXAPIError as details:
+                print fill(unicode(details))
+                had_error = True
+            except (requests.ConnectionError, requests.HTTPError, requests.Timeout, httplib.HTTPException) as details:
+                print fill(details.__class__.__name__ + ': ' + unicode(details))
+                had_error = True
+        if had_error:
+            parser.exit(1)
+    elif not project.startswith('project-'):
+        parser.exit(1, 'Cannot remove tags from a non-project data container\n')
+    else:
+        try:
+            dxpy.DXHTTPRequest('/' + project + '/removeTags',
+                               {"tags": args.tags})
+        except:
+            err_exit()
+
+def rename(args):
+    had_error = False
+    # Attempt to resolve name
+    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1617,13 +1628,7 @@ is a project.\n''')
 def set_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
-
-    if entity_results is None and project is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
 
     try_call(process_properties_args, args)
     if entity_results is not None:
@@ -1652,13 +1657,7 @@ def set_properties(args):
 def unset_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   args.path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=args.all)
-
-    if entity_results is None and project is None:
-        parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
 
     properties = {}
     for prop in args.properties:
@@ -3653,16 +3652,16 @@ parser_remove_types.add_argument('types', nargs='+', metavar='type', help='Types
 parser_remove_types.set_defaults(func=remove_types)
 register_subparser(parser_remove_types, categories='metadata')
 
-parser_tag = subparsers.add_parser('tag', help='Tag a data object', description='Tag a data object.  Note that a project context must be either set or specified.', prog='dx tag',
+parser_tag = subparsers.add_parser('tag', help='Tag a data object or a project', description='Tag a data object or a project.', prog='dx tag',
                                    parents=[env_args, all_arg])
-parser_tag.add_argument('path', help='Path to data object to modify').completer = DXPathCompleter()
+parser_tag.add_argument('path', help='ID or path to data object or project to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
 register_subparser(parser_tag, categories='metadata')
 
-parser_untag = subparsers.add_parser('untag', help='Untag a data object', description='Untag a data object.  Note that a project context must be either set or specified.', prog='dx untag',
+parser_untag = subparsers.add_parser('untag', help='Untag a data object or a project', description='Untag a data object or project.', prog='dx untag',
                                      parents=[env_args, all_arg])
-parser_untag.add_argument('path', help='Path to data object to modify').completer = DXPathCompleter()
+parser_untag.add_argument('path', help='ID or path to data object or project to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
 register_subparser(parser_untag, categories='metadata')
