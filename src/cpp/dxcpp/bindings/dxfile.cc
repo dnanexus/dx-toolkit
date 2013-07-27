@@ -19,6 +19,7 @@
 #include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp> //include all types plus i/o
 #include "dxfile.h"
+#include "../utils.h"
 #include "SimpleHttp.h"
 #include "../dxlog.h"
 
@@ -63,7 +64,8 @@ namespace dx {
         }
 
         DXLOG(logWARNING) << "Retry #" << retries << ": Will start retrying '" << getHttpMethodName(method) << " " << url << "' in " << (1<<retries) << " seconds. Error in previous try: " << wrongThingDescription;
-        boost::this_thread::sleep(boost::posix_time::milliseconds( (1<<retries) * 1000));
+        boost::this_thread::interruption_point();
+        _internal::sleepUsingNanosleep(1<<retries);
         DXLOG(logDEBUG) << "Sleep finished, will continue retrying the makeHTTPRequestForFileReadAndWrite() request ...";
         someThingWentWrong = false;
         wrongThingDescription.clear();
@@ -505,7 +507,8 @@ namespace dx {
           throw DXFileError("POST '" + resp["url"].get<string>() + "' failed after " + boost::lexical_cast<string>(tries) + " number of tries. Giving up. Error message in last try: '" + e.what() + "'");
         int sleep = (1<<tries);
         DXLOG(logWARNING) << "POST '" << resp["url"].get<string>() << "' failed in try #" << tries << " of " << MAX_TRIES << ". Retrying in " << sleep << " seconds ... Error message: '" << e.what() << "'";
-        boost::this_thread::sleep(boost::posix_time::milliseconds( sleep * 1000));
+        boost::this_thread::interruption_point();
+        _internal::sleepUsingNanosleep(sleep);
         DXLOG(logDEBUG) << "Sleep finished, will continue retrying the uploadPart() request...";
       }
     }

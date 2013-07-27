@@ -14,15 +14,17 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
-#ifndef WINDOWS_BUILD
+#if !WINDOWS_BUILD
   #include <pwd.h>
   #include <unistd.h>
 #endif
+#include <boost/thread.hpp>
 #include <cstdlib>
 #include <openssl/md5.h>
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <ctime>
 #include "utils.h"
 
 using namespace std;
@@ -30,7 +32,7 @@ using namespace std;
 namespace dx {
   // Return path to user's home directory
   string getUserHomeDirectory() {
-#ifndef WINDOWS_BUILD
+#if !WINDOWS_BUILD
     // see if HOME env variable is set
     if (getenv("HOME") != NULL)
       return getenv("HOME");
@@ -53,7 +55,7 @@ namespace dx {
   }
 
   string joinPath(const string &first_path, const string &second_path, const string &third_path) {
-#ifndef WINDOWS_BUILD
+#if !WINDOWS_BUILD
     string result = first_path + "/" + second_path;
     if (third_path != "") {
       result = result + "/" + third_path;
@@ -91,5 +93,19 @@ namespace dx {
 
   std::string getHexifiedMD5(const std::string &inp) {
     return getHexifiedMD5(reinterpret_cast<const unsigned char*>(inp.data()), inp.size());
+  }
+
+  namespace _internal {
+    int sleepUsingNanosleep(unsigned int sec) {
+#if !WINDOWS_BUILD
+      struct timespec d;
+      d.tv_sec = static_cast<time_t>(sec);
+      d.tv_nsec = 0l;
+      return nanosleep(&d, NULL);
+#else
+      boost::this_thread::sleep(boost::posix_time::milliseconds(sec * 1000));
+      return 0;
+#endif
+    }
   }
 }

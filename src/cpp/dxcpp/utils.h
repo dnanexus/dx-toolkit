@@ -34,6 +34,12 @@ namespace dx {
   std::string getHexifiedMD5(const std::vector<char> &inp);
   std::string getHexifiedMD5(const unsigned char *ptr, const unsigned long size);
   std::string getHexifiedMD5(const std::string &inp);
+
+  namespace _internal {
+    // Sleep for "duration" seconds using nanosleep (for posix systems)
+    // and using boost::this_thread::sleep() on windows
+    int sleepUsingNanosleep(unsigned int sec);
+  }
 }
 
 #endif

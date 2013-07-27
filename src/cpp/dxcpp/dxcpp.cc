@@ -236,7 +236,8 @@ namespace dx {
           DXLOG(logWARNING) << "Unable to complete request: POST '" << url << "' (in retry #" << (countTries + 1) << "). Details: '" << hre.what() << "'";
         }
         DXLOG(logWARNING) << "Waiting ... " << sec_to_wait << " seconds before retry " << (countTries + 1) << " of " << NUM_MAX_RETRIES << " ...";
-        boost::this_thread::sleep(boost::posix_time::milliseconds(sec_to_wait * 1000));
+        boost::this_thread::interruption_point();
+        _internal::sleepUsingNanosleep(sec_to_wait);
         DXLOG(logDEBUG) << "Sleep finished, will go & retry the request";
       } else {
         countTries++;
