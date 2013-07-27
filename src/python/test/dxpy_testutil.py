@@ -4,6 +4,11 @@ from contextlib import contextmanager
 
 import dxpy
 
+_run_all_tests = 'DXTEST_FULL' in os.environ
+TEST_CREATE_APPS = _run_all_tests or 'DXTEST_CREATE_APPS' in os.environ
+TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
+TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
+
 class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"

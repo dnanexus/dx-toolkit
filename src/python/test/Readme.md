@@ -11,5 +11,7 @@ tests, the following variables can be set:
 
 Environment Variable | Tests included
 ---------------------|---------------
-`DXTEST_FULL`        | All tests will be run, including those which create apps and run jobs
-`DXTEST_RUN_JOBS`    | Tests that will run jobs will be run
+`DXTEST_FULL`        | Run tests in all categories below
+`DXTEST_CREATE_APPS` | Run tests that create apps
+`DXTEST_FUSE`        | Run tests against FUSE filesystems
+`DXTEST_RUN_JOBS`    | Run tests that run jobs

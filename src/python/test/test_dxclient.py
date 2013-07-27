@@ -24,6 +24,7 @@ import pexpect
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
+import dxpy_testutil as testutil
 
 @contextmanager
 def chdir(dirname=None):
@@ -452,8 +453,8 @@ class TestDXBuildApp(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Could not parse dxapp\.json file', exit_code=3):
             run("dx build " + app_dir)
 
-    @unittest.skipIf('DXTEST_FULL' not in os.environ,
-                     'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
     def test_build_app(self):
         app_spec = {
             "name": "minimal_app",
@@ -472,8 +473,8 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(app_describe["name"], "minimal_app")
         self.assertFalse("published" in app_describe)
 
-    @unittest.skipIf('DXTEST_FULL' not in os.environ,
-                     'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
     def test_invalid_project_context(self):
         app_spec = {
             "name": "invalid_project_context",
@@ -532,8 +533,8 @@ class TestDXBuildApp(DXTestCase):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + applet_id)
 
-    @unittest.skipIf('DXTEST_FULL' not in os.environ,
-                     'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
     def test_update_app_categories(self):
         app1_spec = {
             "name": "update_app_categories",
@@ -561,8 +562,8 @@ class TestDXBuildApp(DXTestCase):
         run("dx build --create-app --json " + app_dir)
         self.assertEquals(json.loads(run("dx api " + app_id + " listCategories"))["categories"], ['B'])
 
-    @unittest.skipIf('DXTEST_FULL' not in os.environ,
-                     'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                         'skipping test that would create apps')
     def test_build_app_autonumbering(self):
         app_spec = {
             "name": "build_app_autonumbering",

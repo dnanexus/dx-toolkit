@@ -20,6 +20,7 @@
 import os, unittest, tempfile, filecmp
 
 import dxpy
+import dxpy_testutil as testutil
 from dxpy.utils.describe import get_field_from_jbor, get_job_from_jbor, is_job_ref
 from dxpy.exceptions import *
 from dxpy.bindings import *
@@ -917,8 +918,8 @@ def main(record):
     def tearDown(self):
         tearDownTempProjects(self)
 
-    @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ and 'DXTEST_FULL' not in os.environ,
-                     'skipping test that would run a job')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run a job')
     def test_run_workflow(self):
         launched_jobs = self.workflow.run({"0.record": dxpy.dxlink(self.closedrecord)})
         self.assertEqual(len(launched_jobs), 2)
@@ -930,8 +931,8 @@ def main(record):
         self.assertEqual(get_field_from_jbor(job_descs[1]['runInput']['record']), 'record')
         launched_jobs[1].wait_on_done()
 
-@unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ and 'DXTEST_FULL' not in os.environ,
-                 'skipping test that would run a job')
+@unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                     'skipping test that would run a job')
 class TestDXAppletJob(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
@@ -976,8 +977,8 @@ def main():
         self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
         dxjob.terminate()
 
-@unittest.skipIf('DXTEST_FULL' not in os.environ,
-                 'skipping test that would create apps')
+@unittest.skipUnless(testutil.TEST_CREATE_APPS,
+                     'skipping test that would create an app')
 class TestDXApp(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
@@ -1053,8 +1054,8 @@ class TestDXSearch(unittest.TestCase):
                 self.assertEqual(result['describe']['name'], 'test project 2')
         self.assertTrue(found_proj)
 
-    @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ and 'DXTEST_FULL' not in os.environ,
-                     'skipping test that would run a job')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run a job')
     def test_find_jobs(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",

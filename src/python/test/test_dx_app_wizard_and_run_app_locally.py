@@ -21,6 +21,7 @@ import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
 import pexpect
 
 from dxpy_testutil import DXTestCase
+import dxpy_testutil as testutil
 
 import dxpy
 from dxpy.scripts import dx_build_app
@@ -111,8 +112,8 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
         self.assertIn("Final output: out1 = 140", output)
         return appdir
 
-    @unittest.skipIf('DXTEST_RUN_JOBS' not in os.environ,
-                     'skipping test that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
     def test_dx_run_app_locally_and_compare_results(self):
         appdir = create_app_dir()
         print "Setting current project to", self.project

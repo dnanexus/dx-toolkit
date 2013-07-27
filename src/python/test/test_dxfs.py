@@ -20,11 +20,12 @@
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re, time
 
 from dxpy_testutil import DXTestCase
+import dxpy_testutil as testutil
 
 import dxpy
 
-@unittest.skipIf('DXTEST_FUSE' not in os.environ,
-                 'skipping tests that would mount FUSE filesystems')
+@unittest.skipUnless(testutil.TEST_FUSE,
+                     'skipping tests that would mount FUSE filesystems')
 class TestDXFS(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
