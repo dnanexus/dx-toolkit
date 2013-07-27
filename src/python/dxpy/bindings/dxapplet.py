@@ -199,30 +199,14 @@ class DXApplet(DXDataObject, DXExecutable):
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)
 
-    def run(self, applet_input, project=None, folder="/", name=None,
-            instance_type=None, depends_on=None, details=None,
-            delay_workspace_destruction=None, **kwargs):
+    def run(self, applet_input, *args, **kwargs):
         """
         Creates a new job that executes the function "main" of this applet with
         the given input *applet_input*.
 
-        See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the meanings of
-        the keyword args.
+        See :meth:`dxpy.bindings.dxapplet.DXExecutable.run` for the available
+        args.
         """
-        # Rename applet_input arg to executable_input to preserve API
-        # compatibility when calling DXApplet.run(applet_input=...)
-        #
-        # If we don't allow the possibility of calling the named args
-        # positionally, we can change this to:
-        #   return super(DXApplet, self).run(applet_input, **kwargs)
-        return super(DXApplet, self).run(
-            applet_input,
-            project=project,
-            folder=folder,
-            name=name,
-            instance_type=instance_type,
-            depends_on=depends_on,
-            details=details,
-            delay_workspace_destruction=delay_workspace_destruction,
-            **kwargs
-        )
+        # Rename applet_input arg to preserve API compatibility when calling
+        # DXApplet.run(applet_input=...)
+        return super(DXApplet, self).run(applet_input, *args, **kwargs)
