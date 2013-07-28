@@ -235,7 +235,7 @@ def group_array_by_field(array, field='group'):
 
 def merge(d, u):
     ''' Recursively updates a dictionary.
-    Example: deep_update({"a": {"b": 1, "c": 2}}, {"a": {"b": 3}}) = {"a": {"b": 3, "c": 2}}
+    Example: merge({"a": {"b": 1, "c": 2}}, {"a": {"b": 3}}) = {"a": {"b": 3, "c": 2}}
     '''
     for k, v in u.iteritems():
         if isinstance(v, collections.Mapping):
