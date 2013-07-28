@@ -103,6 +103,7 @@ $(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt
 	virtualenv --python=python2.7 --distribute "$(DNANEXUS_PY27_ENV)"
 	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
 	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed -r python/requirements.txt -r python/requirements_dxfs.txt)
+	rm -rf "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages"/{distribute*,setuptools*,easy*install*}
 
 # We are going to install libraries to lib/python2.7 and then move them
 # elsewhere (to share/dnanexus/lib/python2.7). Modify PYTHONPATH temporarily so
