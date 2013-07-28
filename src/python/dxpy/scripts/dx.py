@@ -257,7 +257,7 @@ class DXCLICompleter():
     def get_argcomplete_matches(self, cline, cpoint, prefix, suffix):
         # Remove the leading "dx " and match only on the point up to the cursor
         return self.get_matches(cline[3:cpoint])
-        
+
     def complete(self, text, state):
         if state == 0 and self.text != text:
             self.get_matches(text, want_prefix=True)
@@ -2098,7 +2098,7 @@ def find_jobs(args):
                     output_ids.append(args.id)
                 else:
                     print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True, show_outputs=args.show_outputs))
-            else:   
+            else:
                 i = 0
                 for job_result in dxpy.find_jobs(**query):
                     i += 1
@@ -2412,7 +2412,7 @@ def wait(args):
                 project, folderpath, entity_result = resolve_existing_path(path, expected='entity')
             except:
                 project, folderpath, entity_result = None, None, None
-            
+
             if entity_result is None:
                 print fill('Could not resolve ' + path + ' to a data object')
                 had_error = True
@@ -3057,7 +3057,7 @@ def watch(args):
 
     input_params = {"numRecentMessages": args.num_recent_messages,
                     "recurseJobs": args.tree}
-    
+
     if args.levels:
         input_params['levels'] = args.levels
 
@@ -3146,7 +3146,7 @@ class runInputHelp(argparse.Action):
         print_run_input_help()
 
 class SetStagingEnv(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):        
+    def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, 'host', 'stagingauth.dnanexus.com')
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
@@ -3154,7 +3154,7 @@ class SetStagingEnv(argparse.Action):
         set_api(protocol='https', host='stagingapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
 class SetProdEnv(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):        
+    def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, 'host', 'prodauth.dnanexus.com')
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
@@ -3162,7 +3162,7 @@ class SetProdEnv(argparse.Action):
         set_api(protocol='https', host='prodapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
 class SetPreprodEnv(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):        
+    def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, 'host', 'preprodauth.dnanexus.com')
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
@@ -3254,7 +3254,7 @@ parser_setenv.add_argument('--current', help='Do not prompt for new values and j
 parser_setenv.set_defaults(func=setenv)
 register_subparser(parser_setenv, categories='other')
 
-parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx', 
+parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx',
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
 parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.', action='store_true')
 parser_clearenv.set_defaults(func=clearenv, interactive=True)
@@ -3355,7 +3355,7 @@ parser_cp.set_defaults(func=cp)
 register_subparser(parser_cp, categories='fs')
 
 parser_mv = subparsers.add_parser('mv', help='Move or rename objects and/or folders inside a project',
-                                  formatter_class=argparse.RawTextHelpFormatter, 
+                                  formatter_class=argparse.RawTextHelpFormatter,
                                   description=fill('Move or rename data objects and/or folders inside a single project.  To copy data between different projects, use \'dx cp\' instead.'),
                                   prog='dx mv',
                                   parents=[env_args, all_arg])
