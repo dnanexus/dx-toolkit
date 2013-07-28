@@ -437,6 +437,28 @@ class TestDXClient(DXTestCase):
         shell1.sendline("bash -c 'dx env'")
         expect_dx_env_cwd(shell1, "sessiontest1")
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_dx_run_extra_args(self):
+        # success
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+        job_id = run("dx run " + applet_id + ' -inumber=32 --name overwritten_name --delay-workspace-destruction --extra-args \'{"input": {"second": true}, "name": "new_name"}\' --brief -y').strip()
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertTrue(job_desc['delayWorkspaceDestruction'])
+        self.assertEqual(job_desc['name'], 'new_name')
+        self.assertIn('number', job_desc['input'])
+        self.assertEqual(job_desc['input']['number'], 32)
+        self.assertIn('second', job_desc['input'])
+        self.assertEqual(job_desc['input']['second'], True)
+
+        # parsing error
+        with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
+            run("dx run " + applet_id + " --extra-args not-a-JSON-string")
+
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
         self.temp_file_path = tempfile.mkdtemp()
@@ -925,5 +947,5 @@ FOO.12345678\t0\t1\t54932369\t60\t7M1D93M\t*\t0\t0\tTAATAAGGTTGTTGTTGTTGTT\t1:1A
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
-        sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps will not be run\n')
+        sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
     unittest.main()

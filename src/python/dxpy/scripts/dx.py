@@ -151,7 +151,8 @@ from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppComplete
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
                                  get_io_desc, get_find_jobs_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args, parser_single_dataobject_output_args,
-                              get_output_flag, process_properties_args, process_dataobject_args, process_single_dataobject_output_args, set_env_from_args)
+                              get_output_flag, process_properties_args, process_dataobject_args, process_single_dataobject_output_args, set_env_from_args,
+                              extra_args, process_extra_args)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
@@ -860,7 +861,7 @@ def rmproject(args):
                     print fill('Aborting deletion of project \"' + proj_desc['name'] + '\"')
                     continue
             try:
-                dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {})
+                dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": not args.confirm})
             except dxpy.DXAPIError as apierror:
                 if apierror.name == 'InvalidState':
                     value = raw_input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
@@ -2535,7 +2536,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     try:
         dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
                                details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
-                               instance_type=args.instance_type)
+                               instance_type=args.instance_type, extra_args=args.extra_args)
         if not args.brief:
             print "Job ID: " + dxjob.get_id()
         else:
@@ -2790,6 +2791,8 @@ SPECIFYING JSON INPUT
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
+
+    try_call(process_extra_args, args)
 
     if args.clone is None and args.executable == "":
         parser_map['run'].print_help()
@@ -3515,7 +3518,7 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "dx run --input-help" for more details.')),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
-                                   parents=[stdout_args, env_args])
+                                   parents=[stdout_args, env_args, extra_args])
 run_executable_action = parser_run.add_argument('executable', help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24), nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
                                        DXPathCompleter(classes=['applet']),

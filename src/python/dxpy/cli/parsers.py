@@ -167,3 +167,13 @@ def set_env_from_args(args):
     if require_initialize:
         from dxpy import _initialize
         _initialize(suppress_warning=True)
+
+extra_args = argparse.ArgumentParser(add_help=False)
+extra_args.add_argument('--extra-args', help=fill("Arguments (in JSON format) to pass to the underlying API method, overriding the default settings", width_adjustment=-24))
+
+def process_extra_args(args):
+    if args.extra_args is not None:
+        try:
+            args.extra_args = json.loads(args.extra_args)
+        except:
+            raise DXParserError('Value given for --extra-args could not be parsed as JSON')

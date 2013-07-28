@@ -26,6 +26,7 @@ signatures. They can be run by calling the :func:`DXApplet.run` method.
 
 import dxpy
 from dxpy.bindings import *
+from dxpy.utils import merge
 
 class DXExecutable:
     ''' Methods in DXExecutable are used by both DXApp and DXApplet.
@@ -34,7 +35,8 @@ class DXExecutable:
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
 
     def run(self, executable_input, project=None, folder="/", name=None, instance_type=None,
-            depends_on=None, details=None, delay_workspace_destruction=None, **kwargs):
+            depends_on=None, details=None, delay_workspace_destruction=None,
+            extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -52,6 +54,8 @@ class DXExecutable:
         :type details: dict or list
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
         :type delay_workspace_destruction: boolean
+        :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
+        :type extra_args: dict
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
@@ -97,6 +101,9 @@ class DXExecutable:
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project
+
+        if extra_args is not None:
+            merge(run_input, extra_args)
 
         if isinstance(self, DXApplet):
             return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
