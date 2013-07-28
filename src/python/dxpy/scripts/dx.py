@@ -1172,6 +1172,7 @@ def describe(args):
         if args.verbose:
             json_input["permissions"] = True
             json_input['appCaches'] = True
+            json_input['properties'] = True
         if entity_results is None:
             if args.path[-1] == ':':
                 # It is the project.
@@ -3652,16 +3653,16 @@ parser_remove_types.add_argument('types', nargs='+', metavar='type', help='Types
 parser_remove_types.set_defaults(func=remove_types)
 register_subparser(parser_remove_types, categories='metadata')
 
-parser_tag = subparsers.add_parser('tag', help='Tag a data object or a project', description='Tag a data object or a project.', prog='dx tag',
+parser_tag = subparsers.add_parser('tag', help='Tag a project or data object', description='Tag a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx tag',
                                    parents=[env_args, all_arg])
-parser_tag.add_argument('path', help='ID or path to data object or project to modify').completer = DXPathCompleter()
+parser_tag.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
 register_subparser(parser_tag, categories='metadata')
 
-parser_untag = subparsers.add_parser('untag', help='Untag a data object or a project', description='Untag a data object or project.', prog='dx untag',
+parser_untag = subparsers.add_parser('untag', help='Untag a project or data object', description='Untag a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx untag',
                                      parents=[env_args, all_arg])
-parser_untag.add_argument('path', help='ID or path to data object or project to modify').completer = DXPathCompleter()
+parser_untag.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
 register_subparser(parser_untag, categories='metadata')
@@ -3676,19 +3677,19 @@ parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
 register_subparser(parser_rename, categories='metadata')
 
-parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of a data object',
-                                              description='Set properties of a data object.  Note that a project context must be either set or specified.', prog='dx set_properties',
+parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of a project or data object',
+                                              description='Set properties of a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx set_properties',
                                               parents=[env_args, all_arg])
-parser_set_properties.add_argument('path', help='Path to data object to modify').completer = DXPathCompleter()
+parser_set_properties.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
 parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value', help='Key-value pairs of property names and their new values')
 parser_set_properties.set_defaults(func=set_properties)
 register_subparser(parser_set_properties, categories='metadata')
 
-parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of a data object',
-                                                description='Unset properties of a data object.  Note that a project context must be either set or specified.',
+parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of a project or data object',
+                                                description='Unset properties of a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.',
                                                 prog='dx unset_properties',
                                                 parents=[env_args, all_arg])
-parser_unset_properties.add_argument('path', help='Data object to modify').completer = DXPathCompleter()
+parser_unset_properties.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
 parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
 register_subparser(parser_unset_properties, categories='metadata')

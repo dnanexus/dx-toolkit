@@ -235,10 +235,67 @@ class TestDXClient(DXTestCase):
         for tag in [the_tags[0], the_tags[2]]:
             self.assertNotIn(tag, mytags)
 
+    def test_dx_object_properties(self):
+        property_names = [u"Σ_1^n", u"helloo0", u"ωω"]
+        property_values = [u"n", u"world z", u"ω()"]
+        # set_properties
+        record_id = run(u"dx new record Ψ --brief").strip()
+        run(u"dx set_properties Ψ " + u" ".join([u"'" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]))
+        my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
+        for (name, value) in zip(property_names, property_values):
+            self.assertIn(name, my_properties)
+            self.assertEqual(value, my_properties[name])
+        # unset_properties
+        run(u"dx unset_properties Ψ '" + u"' '".join(property_names[:2]) + u"'")
+        my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
+        for name in property_names[:2]:
+            self.assertNotIn(name, my_properties)
+        self.assertIn(property_names[2], my_properties)
+        self.assertEqual(property_values[2], my_properties[property_names[2]])
+
+        # -a flag
+        second_record_id = run(u"dx new record Ψ --brief").strip()
+        self.assertNotEqual(record_id, second_record_id)
+        run(u"dx set_properties -a Ψ " + u" ".join([u"'" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]))
+        my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
+        for (name, value) in zip(property_names, property_values):
+            self.assertIn(name, my_properties)
+            self.assertEqual(value, my_properties[name])
+        second_properties = dxpy.api.record_describe(second_record_id, {"properties": True})['properties']
+        for (name, value) in zip(property_names, property_values):
+            self.assertIn(name, my_properties)
+            self.assertEqual(value, my_properties[name])
+
+        run(u"dx unset_properties -a Ψ '" + u"' '".join(property_names) + u"'")
+        my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
+        self.assertEqual(len(my_properties), 0)
+        second_properties = dxpy.api.record_describe(second_record_id, {"properties": True})['properties']
+        self.assertEqual(len(second_properties), 0)
+
+    def test_dx_project_properties(self):
+        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
+        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
+        # set_properties
+        run(u"dx set_properties : " + u" ".join([u"'" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]))
+        my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
+        for (name, value) in zip(property_names, property_values):
+            self.assertIn(name, my_properties)
+            self.assertEqual(value, my_properties[name])
+        # unset_properties
+        run(u"dx unset_properties : '" + property_names[0] + u"' '" + property_names[2] + u"'")
+        my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
+        self.assertIn(property_names[1], my_properties)
+        self.assertEqual(property_values[1], my_properties[property_names[1]])
+        for name in [property_names[0], property_names[2]]:
+            self.assertNotIn(name, my_properties)
+
     def test_dx_describe_project(self):
         describe_output = run(u"dx describe :").strip()
         self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pr\xc3\xb6ject' % (self.project,),
                                   describe_output))
+        self.assertNotIn('Properties', describe_output)
+        describe_output = run(u"dx describe : --verbose")
+        self.assertIn('Properties', describe_output)
 
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
