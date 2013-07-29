@@ -145,7 +145,7 @@ from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                                  resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped,
-                                 ResolutionError)
+                                 ResolutionError, get_first_pos_of_char)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
@@ -1705,72 +1705,131 @@ def make_download_url(args):
     except:
         err_exit()
 
-def download(args, **kwargs):
-    paths = copy.copy(args.path)
-    for path in paths:
-        args.path = path
-        download_one(args, **kwargs)
+def download_one_file(project, file_desc, dest_filename, args):
+    if not args.overwrite:
+        if os.path.exists(dest_filename):
+            err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
 
-def download_one(args, already_parsed=False, project=None, folderpath=None, entity_result=None):
-    if args.output == '-':
-        cat(parser.parse_args(['cat', args.path]))
+    if file_desc['class'] != 'file':
+        print >>sys.stderr, "Skipping non-file data object {name} ({id})".format(**file_desc)
         return
 
-    def download_one_file(project, id, dest_filename):
-        if not args.overwrite and os.path.exists(dest_filename):
-            parser.exit(1, fill('Error: path \"' + dest_filename + '\" already exists but -f/--overwrite was not set') + '\n')
-        try:
-            show_progress = args.show_progress
-        except AttributeError:
-            show_progress = False
-        try:
-            dxpy.download_dxfile(id, dest_filename, show_progress=show_progress,
-                                 project=project)
-        except:
-            err_exit()
+    if file_desc['state'] != 'closed':
+        print >>sys.stderr, "Skipping file {name} ({id}) because it is not closed".format(**file_desc)
+        return
+                    
+    try:
+        show_progress = args.show_progress
+    except AttributeError:
+        show_progress = False
 
-    if not already_parsed:
-        # Attempt to resolve name
-        project, folderpath, entity_result = try_call(resolve_existing_path, args.path, allow_empty_string=False)
+    try:
+        dxpy.download_dxfile(file_desc['id'], dest_filename, show_progress=show_progress, project=project)
+    except:
+        err_exit()
 
-    if entity_result is None:
-        folders = dxpy.describe(project, input_params={'folders': True})['folders']
-        if folderpath not in folders:
-            parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
+def download(args):
+    if args.output == '-':
+        cat(parser.parse_args(['cat'] + args.paths))
+        return
 
+    import fnmatch
+
+    def ensure_local_dir(d):
+        if not os.path.isdir(d):
+            if os.path.exists(d):
+                err_exit(fill('Error: path "' + d + '" already exists and is not a directory'))
+            os.makedirs(d)
+
+    def download_one_folder(project, folder, strip_prefix, destdir):
+        assert(folder.startswith(strip_prefix))
         if not args.recursive:
-            parser.exit("Error: {path} is a folder but the -r/--recursive option was not given".format(path=args.path))
-
-        destdir = args.output if args.output is not None else os.getcwd()
-
-        for folder in folders:
-            if not folder.startswith(folderpath):
-                continue
-            dir_path = destdir
-            for part in folder.split('/'):
-                if part == '':
-                    continue
-                dir_path = os.path.join(dir_path, part)
-                if not os.path.exists(dir_path):
-                    os.mkdir(dir_path)
+            err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
+        
+        for subfolder in list_subfolders(project, folder, recurse=True):
+            ensure_local_dir(os.path.join(destdir, subfolder[len(strip_prefix)+1:]))
 
         # TODO: control visibility=hidden
-        for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folderpath,
+        for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
                                                recurse=True, describe=True):
             file_desc = f['describe']
-            dest_filename = os.path.join(destdir, file_desc['folder'].lstrip('/'), file_desc['name'])
-            download_one_file(project, file_desc['id'], dest_filename)
+            dest_filename = os.path.join(destdir, file_desc['folder'][len(strip_prefix)+1:], file_desc['name'])
+            download_one_file(project, file_desc, dest_filename, args)
+
+    def download_files(files, destdir, dest_filename=None):
+        for project in files:
+            for f in files[project]:
+                file_desc = f['describe']
+                dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
+                download_one_file(project, file_desc, dest, args)
+
+    def download_folders(folders, destdir):
+        for project in folders:
+            for folder, strip_prefix in folders[project]:
+                download_one_folder(project, folder, strip_prefix, destdir)
+
+    def is_glob(path):
+        return get_first_pos_of_char('*', path) > -1 or get_first_pos_of_char('?', path) > -1
+
+    def rel2abs(path, project):
+        if path.startswith('/') or dxpy.WORKSPACE_ID != project:
+            abs_path, strip_prefix = path, ''
+        else:
+            wd = os.environ.get('DX_CLI_WD', '/')
+            abs_path, strip_prefix = os.path.join(wd, path), wd
+        if len(abs_path) > 1:
+            abs_path = abs_path.rstrip('/')
+        return abs_path, strip_prefix
+
+    cached_folder_lists = {}
+    def list_subfolders(project, path, recurse=True):
+        if project not in cached_folder_lists:
+            cached_folder_lists[project] = dxpy.DXProject(project).describe(input_params={'folders': True})['folders']
+        # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
+        # return fnmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
+        if recurse:
+            return [f for f in cached_folder_lists[project] if f.startswith(path)]
+        else:
+            return [f for f in cached_folder_lists[project] if f.startswith(path) and '/' not in f[len(path)+1:]]
+
+    folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
+    for path in args.paths:
+        # Attempt to resolve name. If --all is given or the path looks like a glob, download all matches.
+        # Otherwise, the resolver will display a picker (or error out if there is no tty to display to).
+        resolver_kwargs = {'allow_empty_string': False}
+        if args.all or is_glob(path):
+            resolver_kwargs.update({'allow_mult': True, 'all_mult': True})
+        project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
+        if matching_files is None:
+            matching_files = []
+        elif not isinstance(matching_files, list):
+            matching_files = [matching_files]
+
+        abs_path, strip_prefix = rel2abs(path, project)
+
+        parent_folder = os.path.dirname(abs_path)
+        #folder_listing = dxpy.DXProject(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
+        folder_listing = list_subfolders(project, parent_folder, recurse=False)
+        matching_folders = fnmatch.filter(folder_listing, abs_path)
+
+        if len(matching_files) == 0 and len(matching_folders) == 0:
+            err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))
+
+        files_to_get[project].extend(matching_files)
+        folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
+        count += len(matching_files) + len(matching_folders)
+
+    if args.output is None:
+        destdir, dest_filename = os.getcwd(), None
+    elif count > 1:
+        if not os.path.exists(args.output):
+            err_exit(fill("Error: When downloading multiple objects, --output must be an existing directory"))
+        destdir, dest_filename = args.output, None
     else:
-        if entity_result['describe']['class'] != 'file':
-            parser.exit(1, fill('Error: {path} is neither a file nor a folder name'.format(path=args.path)) + '\n')
+        destdir, dest_filename = os.getcwd(), args.output
 
-        filename = args.output
-        if filename is None:
-            filename = entity_result['describe']['name'].replace('/', '%2F')
-        elif os.path.isdir(filename):
-            filename += entity_result['describe']['name'].replace('/', '%2F')
-
-        download_one_file(project, entity_result['id'], filename)
+    download_folders(folders_to_get, destdir)
+    download_files(files_to_get, destdir, dest_filename=dest_filename)
 
 def get(args):
     # Attempt to resolve name
@@ -1781,7 +1840,7 @@ def get(args):
         parser.exit(1, fill('Could not resolve ' + args.path + ' to a data object') + '\n')
 
     if entity_result['describe']['class'] == 'file':
-        download_one(args, True, project, folderpath, entity_result)
+        download_one_file(project, entity_result['describe'], entity_result['describe']['name'], args)
         return
 
     if entity_result['describe']['class'] not in ['record', 'applet']:
@@ -3429,10 +3488,12 @@ parser_download = subparsers.add_parser('download', help='Download file(s)',
                                         description='Download the contents of a file object or multiple objects.  Use "-o -" to direct the output to stdout.',
                                         prog='dx download',
                                         parents=[env_args])
-parser_download.add_argument('path', help='Data object ID or name, or folder to download', nargs='+').completer = DXPathCompleter(classes=['file'])
+parser_download_paths_arg = parser_download.add_argument('paths', help='Data object ID or name, or folder to download', nargs='+', metavar='path')
+parser_download_paths_arg.completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('-r', '--recursive', help='Download folders recursively', action='store_true')
+parser_download.add_argument('-a', '--all', help='If multiple objects match the input, download all of them', action='store_true')
 parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
 register_subparser(parser_download, categories='data')
