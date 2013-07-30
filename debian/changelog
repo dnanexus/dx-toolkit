@@ -1,3 +1,11 @@
+dx-toolkit (0.61.0) precise; urgency=low
+
+  * dx tag/untag now works for projects.
+
+  * dx set_properties/unset_properties now works for projects.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Jul 2013 19:04:52 +0000
+
 dx-toolkit (0.60.0) precise; urgency=low
 
   * dx-bed-to-spans is more scriptable.
