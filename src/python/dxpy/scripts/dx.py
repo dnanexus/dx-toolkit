@@ -1747,13 +1747,13 @@ def download(args):
             err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
         
         for subfolder in list_subfolders(project, folder, recurse=True):
-            ensure_local_dir(os.path.join(destdir, subfolder[len(strip_prefix)+1:]))
+            ensure_local_dir(os.path.join(destdir, subfolder[len(strip_prefix):].lstrip('/')))
 
         # TODO: control visibility=hidden
         for f in dxpy.search.find_data_objects(classname='file', state='closed', project=project, folder=folder,
                                                recurse=True, describe=True):
             file_desc = f['describe']
-            dest_filename = os.path.join(destdir, file_desc['folder'][len(strip_prefix)+1:], file_desc['name'])
+            dest_filename = os.path.join(destdir, file_desc['folder'][len(strip_prefix):].lstrip('/'), file_desc['name'])
             download_one_file(project, file_desc, dest_filename, args)
 
     def download_files(files, destdir, dest_filename=None):
