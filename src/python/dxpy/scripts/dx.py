@@ -1733,7 +1733,7 @@ def download(args):
         cat(parser.parse_args(['cat'] + args.paths))
         return
 
-    import fnmatch
+    from dxpy.utils import pathmatch
 
     def ensure_local_dir(d):
         if not os.path.isdir(d):
@@ -1786,7 +1786,7 @@ def download(args):
         if project not in cached_folder_lists:
             cached_folder_lists[project] = dxpy.DXProject(project).describe(input_params={'folders': True})['folders']
         # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
-        # return fnmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
+        # return pathmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
         if recurse:
             return [f for f in cached_folder_lists[project] if f.startswith(path)]
         else:
@@ -1810,7 +1810,7 @@ def download(args):
         parent_folder = os.path.dirname(abs_path)
         #folder_listing = dxpy.DXProject(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
         folder_listing = list_subfolders(project, parent_folder, recurse=False)
-        matching_folders = fnmatch.filter(folder_listing, abs_path)
+        matching_folders = pathmatch.filter(folder_listing, abs_path)
 
         if len(matching_files) == 0 and len(matching_folders) == 0:
             err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))
