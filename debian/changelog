@@ -1,3 +1,9 @@
+dx-toolkit (0.60.1) precise; urgency=low
+
+  * Don't advertise cc1.4xlarge.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 30 Jul 2013 19:06:12 +0000
+
 dx-toolkit (0.60.0) precise; urgency=low
 
   * dx-bed-to-spans is more scriptable.
