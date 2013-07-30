@@ -411,7 +411,6 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('dx_m2.xlarge', 17.1, 2, 420),
               InstanceTypeSpec('dx_m2.2xlarge', 34.2, 4, 850),
               InstanceTypeSpec('dx_m2.4xlarge', 68.4, 8, 1680),
-              InstanceTypeSpec('dx_cc1.4xlarge', 22, 16, 1680 ),
               InstanceTypeSpec('dx_cc2.8xlarge', 60.5, 32, 3360),
               InstanceTypeSpec('dx_cg1.4xlarge', 22.5, 16, 1680),
               InstanceTypeSpec('dx_cr1.8xlarge', 244, 32, 240)):
