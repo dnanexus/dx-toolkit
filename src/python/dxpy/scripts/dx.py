@@ -3073,7 +3073,8 @@ def shell(orig_args):
         if cmd == '':
             continue
         try:
-            args = parser.parse_args(shlex.split(cmd))
+            sys.argv[1:] = shlex.split(cmd)
+            args = parser.parse_args(sys.argv[1:])
             set_cli_colors(args)
             set_delim(args)
             args.func(args)
