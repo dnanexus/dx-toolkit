@@ -205,13 +205,8 @@ debian_install: base_install
 
 	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
 	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment
-	virtualenv $(DESTDIR)/$(PREFIX)/share/dnanexus                           # Install dxpy into lib/python/dist-packages, deps under share/dnanexus
-	mkdir -p $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
-	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/dxpy* $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages
-	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/lib/python2.7/dist-packages/dxpy.pth
-	$(DESTDIR)/$(PREFIX)/share/dnanexus/bin/pip install -r python/requirements.txt -r python/requirements_dxfs.txt
-	rm -rf $(DESTDIR)/$(PREFIX)/share/dnanexus/bin                           # Remove residual stuff left by pip/virtualenv
-	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/local/*
+	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/
+	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python2.7/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python2.7/site-packages/dxpy.pth
 
 debian_java_install: java
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/java
