@@ -784,10 +784,48 @@ chr1\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0\r
             f.write(self.bed)
         output = json.loads(run('dx-bed-to-spans {f} {g}'.format(f=tempfile1, g=self.genome_id)).strip().split('\n')[-1])
         table_id = output[0]['$dnanexus_link']
+        self.assertTrue('Spans' in dxpy.api.gtable_describe(table_id, {})['types'])
         run('dx wait {g}'.format(g=table_id))
         self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
-    #def test_bed_spans_roundtrip(self):
-    #    pass
+    def test_bed_spans_roundtrip(self):
+        round_tripped_bed = """chr1\t127471196\t127472363\tPos1\t0\t+\t127471196\t127472363\t255,0,0
+"""
+        tempfile1 = os.path.join(self.tempdir, 'test1.bed')
+        with open(tempfile1, 'w') as f:
+            f.write(self.bed)
+        output = json.loads(run('dx-bed-to-spans {f} {g}'.format(f=tempfile1, g=self.genome_id)).strip().split('\n')[-1])
+        table_id = output[0]['$dnanexus_link']
+        run('dx wait {g}'.format(g=table_id))
+        run('dx-spans-to-bed --output {o} {g}'.format(o=os.path.join(self.tempdir, 'roundtrip.bed'), g=table_id))
+        self.assertEquals(open(os.path.join(self.tempdir, 'roundtrip.bed')).read(), round_tripped_bed)
+
+
+class TestDXBedToGenes(DXTestCase):
+    def setUp(self):
+        super(TestDXBedToGenes, self).setUp()
+        self.bed = """chr1\t66999824\t67210768\tNM_032291\t0\t+\t67000041\t67208778\t0\t3\t227,64,25,\t0,91705,98928,
+"""
+        self.expected_tsv = """chr:string\tlo:int32\thi:int32\tname:string\tspan_id:int32\ttype:string\tstrand:string\tis_coding:boolean\tparent_id:int32\tframe:int16\tdescription:string\r
+chr1\t66999824\t67000041\tNM_032291\t1\t5' UTR\t+\tFalse\t0\t-1\t\r
+chr1\t66999824\t67210768\tNM_032291\t0\ttranscript\t+\tFalse\t-1\t-1\t\r
+chr1\t67000041\t67000051\tNM_032291\t2\tCDS\t+\tTrue\t0\t-1\t\r
+chr1\t67091529\t67091593\tNM_032291\t3\tCDS\t+\tTrue\t0\t-1\t\r
+chr1\t67098752\t67098777\tNM_032291\t4\tCDS\t+\tTrue\t0\t-1\t\r
+"""
+        self.tempdir = tempfile.mkdtemp()
+        self.genome_id = makeGenomeObject()
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        super(TestDXBedToGenes, self).tearDown()
+    def test_bed_to_genes_conversion(self):
+        tempfile1 = os.path.join(self.tempdir, 'test1.bed')
+        with open(tempfile1, 'w') as f:
+            f.write(self.bed)
+        output = json.loads(run('dx-bed-to-spans {f} {g}'.format(f=tempfile1, g=self.genome_id)).strip().split('\n')[-1])
+        table_id = output[0]['$dnanexus_link']
+        run('dx wait {g}'.format(g=table_id))
+        self.assertTrue('Genes' in dxpy.api.gtable_describe(table_id, {})['types'])
+        self.assertEquals(run('dx export tsv -o - {g}'.format(g=table_id)), self.expected_tsv)
 
 
 class TestDXFastQToReads(DXTestCase):
