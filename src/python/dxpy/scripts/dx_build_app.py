@@ -21,8 +21,6 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
-import locale
-import pipes
 import re
 import shutil
 import tempfile
