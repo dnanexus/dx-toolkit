@@ -736,6 +736,9 @@ def main(**kwargs):
             # that could reasonably have been anticipated by the user.
             print >> sys.stderr, "Error: %s" % (e.message,)
             sys.exit(3)
+        except dxpy.exceptions.DXAPIError as e:
+            print >> sys.stderr, "Error: %s" % (e,)
+            sys.exit(3)
 
         if args.run is not None:
             if output is None:
