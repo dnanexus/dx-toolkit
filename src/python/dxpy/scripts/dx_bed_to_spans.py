@@ -547,7 +547,7 @@ parser = argparse.ArgumentParser(description='Import a local BED file as a Spans
 parser.add_argument('filename', help='local filename to import')
 parser.add_argument('reference', help='ID of ContigSet object (reference) that this BED file annotates')
 parser.add_argument('--file_id', default=None, help='the DNAnexus file-id of the original file. If provided, a link to this id will be added in the type details')
-parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the type \"Spans\", or \"Genes\" which is added automatically')
+parser.add_argument('--additional_type', default=[], action='append', help='This will be added to the list of object types (in addition to the type \"Spans\", or \"Genes\" which is added automatically)')
 parser.add_argument('--property_key', default=[], action='append', help='The keys in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
 parser.add_argument('--property_value', default=[], action='append', help='The values in key-value pairs that will be added to the details of the object. The nth property key will be paired with the nth property value. The number of keys must equal the number of values provided')
 parser.add_argument('--tag', default=[], action='append', help='"A set of tags (string labels) that will be added to the resulting Variants table object. (You can use tags and properties to better describe and organize your data)')
