@@ -152,7 +152,7 @@ from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc,
                                  get_io_desc, get_find_jobs_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args, parser_single_dataobject_output_args,
                               get_output_flag, process_properties_args, process_dataobject_args, process_single_dataobject_output_args, set_env_from_args,
-                              extra_args, process_extra_args)
+                              extra_args, process_extra_args, DXParserError)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
@@ -1534,13 +1534,12 @@ def resolve_to_objects_or_project(path, all_matching_results=False):
 
     if entity_results is None and not is_container_id(path):
         if project is None:
-            parser.exit(1, 'Could not resolve \"' + args.path + '\" to a name or ID\n')
+            err_exit('Could not resolve "' + path + '" to a name or ID')
         elif folderpath != None and folderpath != '/':
-            parser.exit(1,
-                        'Could not resolve \"' + path + \
-                            '''\" to an existing data object or folder; if you
+            err_exit('Could not resolve "' + path + \
+                            '''" to an existing data object or folder; if you
 were attempting to refer to a project, please append a colon ":" to indicate that it
-is a project.\n''')
+is a project.''')
     return project, folderpath, entity_results
 
 def add_tags(args):
