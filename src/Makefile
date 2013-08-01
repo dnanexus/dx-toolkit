@@ -54,9 +54,10 @@ toolkit_version:
 	    echo UNKNOWN_VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 	(if [ -d "$(DNANEXUS_HOME)/.git" ]; then \
-	    echo "version = \"`git describe --always`\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
-	    git describe --always | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
-	    git describe --always > "$(DNANEXUS_HOME)/build/info/version"; \
+	    VERSION=$$(git describe --always|sed 's/-/+/'); \
+	    echo "version = \"$$VERSION\"" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
+	    echo $$VERSION | perl -ne '/^v(\d+.\d+.\d+)/ and print "module DX\n  VERSION = \"$$1\"\nend\n"' > "$(DNANEXUS_HOME)/src/ruby/lib/dxruby/version.rb"; \
+	    echo $$VERSION > "$(DNANEXUS_HOME)/build/info/version"; \
 	fi)
 
 python/dxpy/api.py: api_wrappers/wrapper_table.json api_wrappers/generatePythonAPIWrappers.py
