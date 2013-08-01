@@ -194,7 +194,16 @@ class HTTPAdapter(BaseAdapter):
 
         if proxy:
             proxy = prepend_scheme_if_needed(proxy, urlparse(url).scheme)
-            conn = ProxyManager(self.poolmanager.connection_from_url(proxy))
+            proxy_headers = None
+
+            username, password = get_auth_from_url(proxy)
+
+            if username and password:
+                username = unquote(username)
+                password = unquote(password)
+                proxy_headers = {'Proxy-Authorization': _basic_auth_str(username, password)}
+
+            conn = ProxyManager(self.poolmanager.connection_from_url(proxy), proxy_headers=proxy_headers)
         else:
             conn = self.poolmanager.connection_from_url(url)
 
