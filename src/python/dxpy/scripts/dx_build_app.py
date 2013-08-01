@@ -40,6 +40,9 @@ parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 APP_VERSION_RE = re.compile("^([1-9][0-9]*|0)\.([1-9][0-9]*|0)\.([1-9][0-9]*|0)(-[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?(\+[-0-9A-Za-z]+(\.[-0-9A-Za-z]+)*)?$")
 
+app_options = parser.add_argument_group('options for creating apps', '(Only valid when --app/--create-app is specified)')
+applet_options = parser.add_argument_group('options for creating applets', '(Only valid when --app/--create-app is NOT specified)')
+
 # COMMON OPTIONS
 parser.add_argument("src_dir", help="App or applet source directory (default: current directory)", nargs='?')
 
@@ -47,44 +50,56 @@ parser.set_defaults(mode="app")
 parser.add_argument("--app", "--create-app", help="Create an app (otherwise, creates an applet)", action="store_const",
                     dest="mode", const="app")
 parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
-parser.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default='.')
 
-parser.set_defaults(use_temp_build_project=True)
-parser.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
+applet_options.add_argument("-d", "--destination", help="Specifies the destination project, destination folder, and/or name for the applet, in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]]. Overrides the project, folder, and name fields of the dxapp.json, if they were supplied.", default='.')
 
-parser.set_defaults(parallel_build=True)
-parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
-parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false",
-                    dest="parallel_build")
+# --[no-]dry-run
+#
+# The --dry-run flag can be used to see the applet spec that would be
+# provided to /applet/new, for debugging purposes. However, the output
+# would deviate from that of a real run in the following ways:
+#
+# * Any bundled resources are NOT uploaded and are not reflected in the
+#   app(let) spec.
+# * No temporary project is created (if building an app) and the
+#   "project" field is not set in the app spec.
+parser.set_defaults(dry_run=False)
+parser.add_argument("--dry-run", "-n", help="Do not create an app(let): only perform local checks and compilation steps, and show the spec of the app(let) that would have been created.", action="store_true", dest="dry_run")
+parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
 # --[no-]publish
-parser.set_defaults(publish=False)
-parser.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
-                    dest="publish")
-parser.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+app_options.set_defaults(publish=False)
+app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
+                         dest="publish")
+app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
 
 # --[no-]remote
 parser.set_defaults(remote=False)
 parser.add_argument("--remote", help="Build the app remotely.", action="store_true", dest="remote")
 parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
-parser.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.",
-                    action="store_true", default=False)
-parser.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder.",
-                    action="store_true", default=False)
+applet_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder.",
+                            action="store_true", default=False)
+applet_options.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder.",
+                            action="store_true", default=False)
 parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
                     dest="version_override", metavar='VERSION')
-parser.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
-                    default=None, dest="bill_to", metavar='USER_OR_ORG')
+app_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
+                         default=None, dest="bill_to", metavar='USER_OR_ORG')
+
+# --[no-]check-syntax
+parser.set_defaults(check_syntax=True)
+parser.add_argument("--check-syntax", help="Fail when the entry point file contains invalid syntax", action="store_true", dest="check_syntax")
+parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
-parser.set_defaults(version_autonumbering=True)
-parser.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
-parser.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
+app_options.set_defaults(version_autonumbering=True)
+app_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
+app_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
 # --[no-]update
-parser.set_defaults(update=True)
-parser.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
-parser.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
+app_options.set_defaults(update=True)
+app_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
+app_options.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
 parser.set_defaults(dx_toolkit_autodep="stable")
 parser.add_argument("--dx-toolkit-legacy-git-autodep", help="Auto-insert a dx-toolkit dependency on the latest git version (to be built from source at runtime)", action="store_const", dest="dx_toolkit_autodep", const="git")
@@ -94,9 +109,14 @@ parser.add_argument("--dx-toolkit-unstable-autodep", help=argparse.SUPPRESS, act
 parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
 parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency if it's absent from the runSpec. See the documentation for more details.", action="store_false", dest="dx_toolkit_autodep")
 
-parser.set_defaults(check_syntax=True)
-parser.add_argument("--check-syntax", help="Fail when the entry point file contains invalid syntax", action="store_true", dest="check_syntax")
-parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found", action="store_false", dest="check_syntax")
+# --[no-]parallel-build
+parser.set_defaults(parallel_build=True)
+parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="store_true", dest="parallel_build")
+parser.add_argument("--no-parallel-build", help="Build with make instead of make -jN.", action="store_false",
+                    dest="parallel_build")
+
+app_options.set_defaults(use_temp_build_project=True)
+app_options.add_argument("--no-temp-build-project", help="When building an app, build its applet in the current project instead of a temporary project", action="store_false", dest="use_temp_build_project")
 
 # TODO: remove this flag (once all calls to build_and_upload_locally are
 # in process
@@ -122,20 +142,6 @@ parser.add_argument("--no-upload-step", help=argparse.SUPPRESS, action="store_fa
 parser.set_defaults(json=False)
 parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
-
-# --[no-]dry-run
-#
-# The --dry-run flag can be used to see the applet spec that would be
-# provided to /applet/new, for debugging purposes. However, the output
-# would deviate from that of a real run in the following ways:
-#
-# * Any bundled resources are NOT uploaded and are not reflected in the
-#   app(let) spec.
-# * No temporary project is created (if building an app) and the
-#   "project" field is not set in the app spec.
-parser.set_defaults(dry_run=False)
-parser.add_argument("--dry-run", "-n", help="Do not create an app(let): only perform local checks and compilation steps, and show the spec of the app(let) that would have been created.", action="store_true", dest="dry_run")
-parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
 parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+")", nargs=argparse.REMAINDER)
