@@ -112,7 +112,6 @@ class TestDXClient(DXTestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             run("dx")
         run("dx help")
-        proj_name = u"dxclient_test_pröject"
         folder_name = u"эксперимент 1"
         run("dx cd /")
         run("dx ls")
