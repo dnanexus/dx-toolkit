@@ -5,6 +5,12 @@ import os
 import subprocess
 
 parser = argparse.ArgumentParser(description="Runs Python integration tests and merges the resulting test coverage files.")
+parser.add_argument(
+    '--tests',
+    help='Specify a specific test to run.',
+    metavar='test.test_module:TestCase.test_method',
+    nargs='*'
+)
 
 TOOLKIT_ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 PYTHON_DIR = os.path.join(TOOLKIT_ROOT_DIR, 'src', 'python')
@@ -21,7 +27,11 @@ def run():
         site_customize_file.write("import coverage; coverage.process_startup()\n")
     try:
         subprocess.check_call("rm -vf .coverage build/*/.coverage*", cwd=PYTHON_DIR, shell=True)
-        subprocess.check_call(["./setup.py", "nosetests", "--cover-inclusive", "--ignore-files=(pyopenssl|ntlmpool)"], cwd=PYTHON_DIR, env=env)
+        nose_cmd = ["./setup.py", "nosetests", "--cover-inclusive", "--ignore-files=(pyopenssl|ntlmpool)"]
+        if args.tests:
+            nose_cmd.append('--tests')
+            nose_cmd.extend(args.tests)
+        subprocess.check_call(nose_cmd, cwd=PYTHON_DIR, env=env)
         subprocess.check_call("mv build/*/.coverage* .", cwd=PYTHON_DIR, shell=True)
         subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
     finally:
