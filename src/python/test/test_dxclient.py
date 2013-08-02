@@ -692,6 +692,30 @@ class TestDXBuildApp(DXTestCase):
             run("dx build " + app_dir)
         run("dx build --no-check-syntax " + app_dir)
 
+    def test_applet_help(self):
+        app_spec = {
+            "name": "applet_help",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [
+                {"name": "reads", "class": "array:gtable", "type": "LetterReads", "label": "Reads", "help": "One or more Reads table objects."},
+                {"name": "required", "class": "file", "label": "Required", "help": "Another parameter"},
+                {"name": "optional", "class": "file", "label": "Optional", "help": "Optional parameter", "optional": True}
+            ],
+            "outputSpec": [
+                {"name": "mappings", "class": "gtable", "type": "LetterMappings", "label": "Mappings", "help": "The mapped reads."}
+            ],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("applet_help", json.dumps(app_spec), code_filename="code.py", code_content="")
+        applet_id = json.loads(run("dx build --json " + app_dir))["id"]
+        applet_help = run("dx run " + applet_id + " -h")
+        self.assertTrue("Reads: -ireads=(gtable, type LetterReads) [-ireads=... [...]]" in applet_help)
+        self.assertTrue("Required: -irequired=(file)" in applet_help)
+        self.assertTrue("Optional: [-ioptional=(file)]" in applet_help)
+        self.assertTrue("Mappings: mappings (gtable, type LetterMappings)" in applet_help)
+
+
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
     css = "body {background-color: green;}"
