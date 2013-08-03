@@ -318,12 +318,12 @@ def login(args):
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
         if authserver == default_authserver:
-            set_api('https', 'api.dnanexus.com', '443', args.save)
+            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
     else:
         sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
         # Ensure correct API server
         if args.host is None:
-            set_api('https', 'api.dnanexus.com', '443', args.save)
+            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
 
     os.environ['DX_SECURITY_CONTEXT'] = sec_context
     dxpy.set_security_context(json.loads(sec_context))
@@ -347,7 +347,7 @@ def login(args):
     args.level = 'CONTRIBUTE'
     args.public = False
 
-    if args.host is not None and not args.staging and not args.prod and not args.preprod:
+    if args.host is not None and not args.staging and not args.prod:
         setenv(args)
     elif args.projects:
         pick_and_set_project(args)
@@ -363,8 +363,6 @@ def logout(args):
             authserver = 'https://prodauth.dnanexus.com'
         elif dxpy.APISERVER_HOST == 'api.dnanexus.com':
             authserver = 'https://auth.dnanexus.com'
-        elif dxpy.APISERVER_HOST == 'preprodapi.dnanexus.com':
-            authserver = 'https://preprodauth.dnanexus.com'
         else:
             parser.exit(3, fill("Please specify the authserver host and port to log out from") + "\n")
         print 'Deleting credentials from ' + authserver + '...'
@@ -3223,14 +3221,6 @@ class SetProdEnv(argparse.Action):
         setattr(namespace, 'prod', True)
         set_api(protocol='https', host='prodapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
-class SetPreprodEnv(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, 'host', 'preprodauth.dnanexus.com')
-        setattr(namespace, 'port', '443')
-        setattr(namespace, 'protocol', 'https')
-        setattr(namespace, 'preprod', True)
-        set_api(protocol='https', host='preprodapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
-
 class DXArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         self.print_help(sys.stderr)
@@ -3272,7 +3262,6 @@ parser_login.add_argument('--save', help='Save token and other environment varia
 parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.add_argument('--prod', nargs=0, help=argparse.SUPPRESS, action=SetProdEnv)
-parser_login.add_argument('--preprod', nargs=0, help=argparse.SUPPRESS, action=SetPreprodEnv)
 parser_login.set_defaults(staging=False, prod=False, func=login)
 register_subparser(parser_login, categories='session')
 
