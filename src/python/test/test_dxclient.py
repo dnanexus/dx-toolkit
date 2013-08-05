@@ -372,10 +372,11 @@ class TestDXClient(DXTestCase):
             run(u'dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name))))
             with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
                 run(u'dx download '+os.path.basename(wd))
-            run(u'dx download -r {dir_to_download} -o {output_dir}'.format(dir_to_download=os.path.basename(wd), output_dir=tempfile.mkdtemp()))
-            tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
-            tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
-            self.assertEqual(tree1, tree2)
+            with chdir(tempfile.mkdtemp()):
+                run(u'dx download -r '+os.path.basename(wd))
+                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                self.assertEqual(tree1, tree2)
 
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()
