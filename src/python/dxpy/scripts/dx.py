@@ -410,7 +410,6 @@ def set_project(project, write, name=None):
         os.environ['DX_WORKSPACE_ID'] = project
         if write:
             write_env_var('DX_WORKSPACE_ID', project)
-    set_wd('/', write)
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
@@ -1329,6 +1328,7 @@ def new_project(args):
             print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
         if args.select:
             set_project(resp['id'], write=True, name=args.name)
+            set_wd('/', write=True)
     except:
         err_exit()
 
