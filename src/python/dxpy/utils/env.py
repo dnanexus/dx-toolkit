@@ -182,7 +182,8 @@ def clearenv(args):
         defaults = {'DX_SECURITY_CONTEXT': json.dumps({'auth_token': '', 'auth_token_type': ''}),
                     'DX_APISERVER_PROTOCOL': dxpy.DEFAULT_APISERVER_PROTOCOL,
                     'DX_APISERVER_HOST': dxpy.DEFAULT_APISERVER_HOST,
-                    'DX_APISERVER_PORT': dxpy.DEFAULT_APISERVER_PORT}
+                    'DX_APISERVER_PORT': dxpy.DEFAULT_APISERVER_PORT,
+                    'DX_CLI_WD': '/'}
         for var in VAR_NAMES:
             if var in defaults:
                 write_env_var(var, defaults[var])
