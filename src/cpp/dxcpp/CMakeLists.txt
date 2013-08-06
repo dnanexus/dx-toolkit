@@ -12,18 +12,7 @@ include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_PO
 # Set an additional flag (to disable some dxcpp specific warnings)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-overloaded-virtual -Wno-switch")
 
-# Get the output of command `git describe`, and save it in DXTOOLKIT_GITVERSION variable
-execute_process(COMMAND git describe WORKING_DIRECTORY $ENV{DNANEXUS_HOME} RESULT_VARIABLE GIT_DESCRIBE_STATUS_CODE OUTPUT_VARIABLE DXTOOLKIT_GITVERSION ERROR_VARIABLE GIT_DESCRIBE_ERROR)
-if (GIT_DESCRIBE_STATUS_CODE EQUAL 0)
-  # Trim the newline at the end of "git describe" output
-  string(REGEX REPLACE "\n" "" DXTOOLKIT_GITVERSION ${DXTOOLKIT_GITVERSION})
-  message(STATUS "dxcpp CMakeLists.txt says: DXTOOLKIT_GITVERSION= ${DXTOOLKIT_GITVERSION}")
-else()
-  set(DXTOOLKIT_GITVERSION unknown)
-  message(STATUS "dxcpp CMakeLists.txt says: The command 'git describe' failed.")
-  message(STATUS "\terror message: '${GIT_DESCRIBE_ERROR}'. Will set DXTOOLKIT_GITVERSION='${DXTOOLKIT_GITVERSION}'")
-endif()
-add_definitions(-DDXTOOLKIT_GITVERSION=\"${DXTOOLKIT_GITVERSION}\")
+include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_build_version.txt" NO_POLICY_SCOPE)
 
 ####################################
 # Find libcrypto (and openssl/md5.h)
@@ -36,7 +25,7 @@ if (OPENSSL_INCLUDE_DIR AND CRYPTO_LIBRARY_PATH)
   message(STATUS "\t** OPENSSL_INCLUDE_PATH = \"${OPENSSL_INCLUDE_DIR}\"")
   message(STATUS "\t** CRYPTO_LIBRARY_PATH = \"${CRYPTO_LIBRARY_PATH}\"")
 else()
-  message(FATAL_ERROR "\ndxcpp says: Unable to find 'libcrypto', and/or 'openssl/md5.h'. OPENSSL_INCLUDE_PATH = \"${OPENSSL_INCLUDE_DIR}\", CRYPTO_LIBRARY_PATH = \"${CRYPTO_LIBRARY_PATH}\"")
+  message(FATAL_ERROR "\ndxcpp says: Unable to find 'libcrypto' and/or 'openssl/md5.h'. OPENSSL_INCLUDE_PATH = \"${OPENSSL_INCLUDE_DIR}\", CRYPTO_LIBRARY_PATH = \"${CRYPTO_LIBRARY_PATH}\"")
 endif()
 include_directories(BEFORE ${OPENSSL_INCLUDE_DIR})
 ###################################

@@ -13,18 +13,7 @@ include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_compiler_flags.txt" NO_PO
 #dx-verify-file version
 set (DX_VERIFY_FILE_VERSION 0.0.1)
 
-# Get the output of command `git describe`, and save it in DXTOOLKIT_GITVERSION variable
-execute_process(COMMAND git describe WORKING_DIRECTORY $ENV{DNANEXUS_HOME} RESULT_VARIABLE GIT_DESCRIBE_STATUS_CODE OUTPUT_VARIABLE DXTOOLKIT_GITVERSION ERROR_VARIABLE GIT_DESCRIBE_ERROR)
-if (GIT_DESCRIBE_STATUS_CODE EQUAL 0)
-  # Trim the newline at the end of "git describe" output
-  string(REGEX REPLACE "\n" "" DXTOOLKIT_GITVERSION ${DXTOOLKIT_GITVERSION})
-  message(STATUS "dx-verify-file CMakeLists.txt says: DXTOOLKIT_GITVERSION= ${DXTOOLKIT_GITVERSION}")
-else()
-  set(DXTOOLKIT_GITVERSION unknown)
-  message(STATUS "dx-verify-file CMakeLists.txt says: The command 'git describe' failed.")
-  message(STATUS "\terror message: '${GIT_DESCRIBE_ERROR}'. Will set DXTOOLKIT_GITVERSION='${DXTOOLKIT_GITVERSION}'")
-endif()
-add_definitions(-DDXTOOLKIT_GITVERSION=\"${DXTOOLKIT_GITVERSION}\")
+include("$ENV{DNANEXUS_HOME}/src/cpp/cmake_include/set_build_version.txt" NO_POLICY_SCOPE)
 
 #########################################################################
 # Find Boost library >= 1.48 (using the cmake find_package functionality)

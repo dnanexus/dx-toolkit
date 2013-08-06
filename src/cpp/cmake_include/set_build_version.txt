@@ -1,0 +1,3 @@
+# Get the build version and save it in the DXTOOLKIT_GITVERSION variable
+file(STRINGS "$ENV{DNANEXUS_HOME}/build/info/version" DXTOOLKIT_GITVERSION)
+add_definitions(-DDXTOOLKIT_GITVERSION=\"${DXTOOLKIT_GITVERSION}\")
