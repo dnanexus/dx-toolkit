@@ -74,6 +74,8 @@ class DXJobLogStreamClient(WebSocketBaseClient):
             for job_id in self.seen_jobs.keys():
                 self.seen_jobs[job_id] = dxpy.describe(job_id)
                 print get_find_jobs_string(self.seen_jobs[job_id], has_children=False, show_outputs=True)
+        else:
+            self.seen_jobs[self.job_id] = dxpy.describe(self.job_id)
 
         if self.seen_jobs[self.job_id].get('state') == 'failed':
             err_exit(code=3)
