@@ -84,7 +84,7 @@ R/dxR/R/api.R: api_wrappers/wrapper_table.json api_wrappers/generateRAPIWrappers
 ruby/lib/dxruby/api.rb: api_wrappers/wrapper_table.json api_wrappers/generateRubyAPIWrappers.py
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateRubyAPIWrappers.py > ruby/lib/dxruby/api.rb
 
-api_wrappers: python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R ruby/lib/dxruby/api.rb
+api_wrappers: toolkit_version python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc javascript/DNAnexusAPI.js perl/lib/DNAnexus/API.pm java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R ruby/lib/dxruby/api.rb
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
@@ -278,6 +278,7 @@ distclean: clean
 clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
 	$(MAKE) -C dx-wig-to-wiggle clean
+	$(MAKE) -C dx-verify-file clean
 	-rm -f ../bin/dx-contigset-to-fasta
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target

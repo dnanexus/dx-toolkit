@@ -26,7 +26,7 @@ ifneq ($(UNAME), MINGW32_NT-6.1)
 	$(error This Makefile should be used only with MINGW32_NT-6.1)
 endif
 
-DXTOOLKIT_GITVERSION := $(shell git describe)
+DXTOOLKIT_GITVERSION := $(shell git describe|sed 's/-/+/')
 
 sw_dir = $(HOME)/sw/local
 curl_dir = $(sw_dir)/curl
