@@ -23,6 +23,8 @@ for more details.
 
 import os, sys, shutil, textwrap, json
 
+from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
+
 CORE_VAR_NAMES = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
                   'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
 STANDALONE_VAR_NAMES = ['DX_CLI_WD', 'DX_USERNAME', 'DX_PROJECT_CONTEXT_NAME']
@@ -180,9 +182,9 @@ def clearenv(args):
 
     if args.reset:
         defaults = {'DX_SECURITY_CONTEXT': json.dumps({'auth_token': '', 'auth_token_type': ''}),
-                    'DX_APISERVER_PROTOCOL': dxpy.DEFAULT_APISERVER_PROTOCOL,
-                    'DX_APISERVER_HOST': dxpy.DEFAULT_APISERVER_HOST,
-                    'DX_APISERVER_PORT': dxpy.DEFAULT_APISERVER_PORT,
+                    'DX_APISERVER_PROTOCOL': DEFAULT_APISERVER_PROTOCOL,
+                    'DX_APISERVER_HOST': DEFAULT_APISERVER_HOST,
+                    'DX_APISERVER_PORT': DEFAULT_APISERVER_PORT,
                     'DX_CLI_WD': '/'}
         for var in VAR_NAMES:
             if var in defaults:
