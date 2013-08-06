@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, sys, datetime, urlparse, getpass, collections, re, json, time, urllib, argparse, textwrap, copy, hashlib, errno, httplib
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, httplib
 import shlex # respects quoted substrings when splitting
 
 from ..exceptions import err_exit, default_expected_exceptions, DXError, DXCLIError
