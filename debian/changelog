@@ -1,3 +1,17 @@
+dx-toolkit (0.62.0) precise; urgency=low
+
+  * dx download now accepts glob patterns.
+
+  * Support for HTTPS proxies with authentication.
+
+  * Watching a failed job in dx now exits with exit code 3.
+
+  * Various test improvements.
+
+  * Various other bug fixes and improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 06 Aug 2013 20:33:55 +0000
+
 dx-toolkit (0.61.0) precise; urgency=low
 
   * dx tag/untag now works for projects.
