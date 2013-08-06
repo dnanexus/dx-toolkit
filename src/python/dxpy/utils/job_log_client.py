@@ -25,7 +25,8 @@ import json
 from ws4py.client import WebSocketBaseClient
 
 import dxpy
-from dxpy.utils.describe import get_find_jobs_string
+from .describe import get_find_jobs_string
+from ..exceptions import err_exit
 
 class DXJobLogStreamingException(Exception):
     pass
@@ -70,8 +71,12 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         elif self.print_job_info:
             if self.job_id not in self.seen_jobs:
                 self.seen_jobs[self.job_id] = {}
-            for job_id in self.seen_jobs:
-                print get_find_jobs_string(dxpy.describe(job_id), has_children=False, show_outputs=True)
+            for job_id in self.seen_jobs.keys():
+                self.seen_jobs[job_id] = dxpy.describe(job_id)
+                print get_find_jobs_string(self.seen_jobs[job_id], has_children=False, show_outputs=True)
+
+        if self.seen_jobs[self.job_id].get('state') == 'failed':
+            err_exit(code=3)
 
     def received_message(self, message):
         message = json.loads(str(message))
