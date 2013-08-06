@@ -11,6 +11,7 @@ TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):
+        subprocess.check_call("dx clearenv --reset", shell=True)
         proj_name = u"dxclient_test_pröject"
         self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
