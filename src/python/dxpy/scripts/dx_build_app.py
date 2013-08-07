@@ -29,6 +29,7 @@ from datetime import datetime
 import dxpy, dxpy.app_builder
 from dxpy import logger
 
+from dxpy.utils import json_load_raise_on_duplicates
 from dxpy.utils.resolver import resolve_path, is_container_id
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.exceptions import err_exit
@@ -390,7 +391,7 @@ def _parse_app_spec(src_dir):
         raise dxpy.app_builder.AppBuilderException("Directory %s does not contain dxapp.json: not a valid DNAnexus app source directory" % src_dir)
     with open(os.path.join(src_dir, "dxapp.json")) as app_desc:
         try:
-            return json.load(app_desc)
+            return json_load_raise_on_duplicates(app_desc)
         except Exception as e:
             raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + e.message)
 

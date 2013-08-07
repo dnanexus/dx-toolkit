@@ -18,7 +18,7 @@
 Utilities shared by dxpy modules.
 '''
 
-import os, sys, collections, concurrent.futures, signal, traceback, time, gc
+import os, sys, json, collections, concurrent.futures, signal, traceback, time, gc
 import dateutil.parser
 from exec_utils import *
 
@@ -244,3 +244,26 @@ def merge(d, u):
         else:
             d[k] = u[k]
     return d
+
+def _dict_raise_on_duplicates(ordered_pairs):
+    """Reject duplicate keys."""
+    d = {}
+    for k, v in ordered_pairs:
+        if k in d:
+           raise ValueError("duplicate key: %r" % (k,))
+        else:
+           d[k] = v
+    return d
+
+def json_load_raise_on_duplicates(*args, **kwargs):
+    ''' Like json.load(), but raises an error on duplicate keys.
+    '''
+    kwargs['object_pairs_hook'] = _dict_raise_on_duplicates
+    return json.load(*args, **kwargs)
+
+
+def json_loads_raise_on_duplicates(*args, **kwargs):
+    ''' Like json.loads(), but raises an error on duplicate keys.
+    '''
+    kwargs['object_pairs_hook'] = _dict_raise_on_duplicates
+    return json.loads(*args, **kwargs)
