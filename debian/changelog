@@ -1,3 +1,9 @@
+dx-toolkit (0.62.1) precise; urgency=low
+
+  * Fix "dx download" in containers.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 07 Aug 2013 20:12:53 +0000
+
 dx-toolkit (0.62.0) precise; urgency=low
 
   * dx download now accepts glob patterns.
