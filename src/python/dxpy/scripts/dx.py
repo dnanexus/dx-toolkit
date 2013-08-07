@@ -2613,7 +2613,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
             print 'Job Log'
             print '-------'
             watch(watch_args)
-    except:
+    except Exception:
         err_exit()
 
     return dxjob

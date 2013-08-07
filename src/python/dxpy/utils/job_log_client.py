@@ -77,7 +77,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         else:
             self.seen_jobs[self.job_id] = dxpy.describe(self.job_id)
 
-        if self.seen_jobs[self.job_id].get('state') == 'failed':
+        if self.seen_jobs[self.job_id].get('state') in ['failed', 'terminated']:
             err_exit(code=3)
 
     def received_message(self, message):
