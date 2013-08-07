@@ -641,7 +641,7 @@ def cd(args):
                                          args.path, 'folder')
 
     if project is not None:
-        project_name = try_call(dxpy.DXProject(project).describe)['name']
+        project_name = try_call(dxpy.get_handler(project).describe)['name']
 
         # It is obvious what the project is
         if project != dxpy.WORKSPACE_ID or 'DX_PROJECT_CONTEXT_NAME' not in os.environ:
@@ -1782,7 +1782,7 @@ def download(args):
     cached_folder_lists = {}
     def list_subfolders(project, path, recurse=True):
         if project not in cached_folder_lists:
-            cached_folder_lists[project] = dxpy.DXProject(project).describe(input_params={'folders': True})['folders']
+            cached_folder_lists[project] = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
         # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
         # return pathmatch.filter(cached_folder_lists[project], os.path.join(path, '*'))
         if recurse:
@@ -1806,7 +1806,7 @@ def download(args):
         abs_path, strip_prefix = rel2abs(path, project)
 
         parent_folder = os.path.dirname(abs_path)
-        #folder_listing = dxpy.DXProject(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
+        #folder_listing = dxpy.get_handler(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
         folder_listing = list_subfolders(project, parent_folder, recurse=False)
         matching_folders = pathmatch.filter(folder_listing, abs_path)
 
