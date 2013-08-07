@@ -158,7 +158,7 @@ echo -e '# -*- mode: Makefile -*-
 # curl:
 # \t$(DNANEXUS_HOME)/src/ua/build_curl.sh $(curl_build_dir)
 
-DXTOOLKIT_GITVERSION := $(shell git describe)
+DXTOOLKIT_GITVERSION := $(shell git describe|sed 's/-/+/')
 
 curl_dir = $(HOME)/sw/local/curl_build
 cpp_dir = $(DNANEXUS_HOME)/src/cpp
