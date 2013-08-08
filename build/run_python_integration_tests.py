@@ -17,6 +17,7 @@ PYTHON_DIR = os.path.join(TOOLKIT_ROOT_DIR, 'src', 'python')
 
 env = os.environ.copy()
 env['COVERAGE_PROCESS_START'] = os.path.join(PYTHON_DIR, '.coveragerc')
+env['COVERAGE_FILE'] = os.path.join(PYTHON_DIR, '.coverage')
 
 def run():
     # Somewhat hacky-- ensures that all subprocess calls to dx-* tools
@@ -26,13 +27,12 @@ def run():
     with open(site_customize_filename, 'w') as site_customize_file:
         site_customize_file.write("import coverage; coverage.process_startup()\n")
     try:
-        subprocess.check_call("rm -vf .coverage build/*/.coverage*", cwd=PYTHON_DIR, shell=True)
+        subprocess.check_call("rm -vf .coverage .coverage.*", cwd=PYTHON_DIR, shell=True)
         nose_cmd = ["./setup.py", "nosetests", "--cover-inclusive", "--ignore-files=(pyopenssl|ntlmpool)"]
         if args.tests:
             nose_cmd.append('--tests')
             nose_cmd.extend(args.tests)
         subprocess.check_call(nose_cmd, cwd=PYTHON_DIR, env=env)
-        subprocess.check_call("mv build/*/.coverage* .", cwd=PYTHON_DIR, shell=True)
         subprocess.check_call(["coverage", "combine"], cwd=PYTHON_DIR)
     finally:
         os.unlink(site_customize_filename)

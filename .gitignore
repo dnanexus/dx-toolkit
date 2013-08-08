@@ -30,7 +30,6 @@ dxR.Rcheck
 *.pyc
 *.a
 .DS_Store
-.coverage
 /bin/dx
 /bin/dx-app-wizard
 /bin/dx-bed-to-spans
