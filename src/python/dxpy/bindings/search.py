@@ -24,7 +24,6 @@ provides search functionality over all data objects in the system. The
 
 import dxpy
 from dxpy.bindings import *
-import time
 
 def _find(api_method, query, limit, return_handler, **kwargs):
     ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its
