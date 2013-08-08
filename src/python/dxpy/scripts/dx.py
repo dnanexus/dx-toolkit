@@ -145,7 +145,7 @@ from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                                  resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped,
-                                 ResolutionError, get_first_pos_of_char)
+                                 ResolutionError, get_first_pos_of_char, resolve_to_objects_or_project)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
@@ -1524,27 +1524,12 @@ def remove_types(args):
     if had_error:
         parser.exit(1)
 
-def resolve_to_objects_or_project(path, all_matching_results=False):
-    # Attempt to resolve name
-    project, folderpath, entity_results = try_call(resolve_existing_path,
-                                                   path,
-                                                   expected='entity',
-                                                   allow_mult=True, all_mult=all_matching_results)
-
-    if entity_results is None and not is_container_id(path):
-        if project is None:
-            err_exit('Could not resolve "' + path + '" to a name or ID')
-        elif folderpath != None and folderpath != '/':
-            err_exit('Could not resolve "' + path + \
-                            '''" to an existing data object or folder; if you
-were attempting to refer to a project, please append a colon ":" to indicate that it
-is a project.''')
-    return project, folderpath, entity_results
-
 def add_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                   args.path,
+                                                   args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1572,7 +1557,9 @@ def add_tags(args):
 def remove_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                   args.path,
+                                                   args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1600,7 +1587,9 @@ def remove_tags(args):
 def rename(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                   args.path,
+                                                   args.all)
 
     if entity_results is not None:
         for result in entity_results:
@@ -1628,7 +1617,9 @@ def rename(args):
 def set_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                   args.path,
+                                                   args.all)
 
     try_call(process_properties_args, args)
     if entity_results is not None:
@@ -1657,7 +1648,9 @@ def set_properties(args):
 def unset_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_to_objects_or_project(args.path, args.all)
+    project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
+                                                   args.path,
+                                                   args.all)
 
     properties = {}
     for prop in args.properties:
@@ -1715,7 +1708,7 @@ def download_one_file(project, file_desc, dest_filename, args):
     if file_desc['state'] != 'closed':
         print >>sys.stderr, "Skipping file {name} ({id}) because it is not closed".format(**file_desc)
         return
-                    
+
     try:
         show_progress = args.show_progress
     except AttributeError:

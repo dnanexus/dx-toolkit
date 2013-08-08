@@ -220,6 +220,12 @@ class TestDXClient(DXTestCase):
         second_tags = dxpy.describe(second_record_id)['tags']
         self.assertEqual(len(second_tags), 0)
 
+        # nonexistent name
+        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            run(u"dx tag nonexistent atag")
+        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            run(u"dx untag nonexistent atag")
+
     def test_dx_project_tagging(self):
         the_tags = [u"$my.tag", u"secoиdtag", u"тhird тagggg"]
         # tag
@@ -233,6 +239,12 @@ class TestDXClient(DXTestCase):
         self.assertIn(the_tags[1], mytags)
         for tag in [the_tags[0], the_tags[2]]:
             self.assertNotIn(tag, mytags)
+
+        # nonexistent name
+        with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
+            run(u"dx tag nonexistent: atag")
+        with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
+            run(u"dx untag nonexistent: atag")
 
     def test_dx_object_properties(self):
         property_names = [u"Σ_1^n", u"helloo0", u"ωω"]
@@ -271,6 +283,12 @@ class TestDXClient(DXTestCase):
         second_properties = dxpy.api.record_describe(second_record_id, {"properties": True})['properties']
         self.assertEqual(len(second_properties), 0)
 
+        # nonexistent name
+        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            run(u"dx set_properties nonexistent key=value")
+        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            run(u"dx unset_properties nonexistent key")
+
     def test_dx_project_properties(self):
         property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
         property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
@@ -287,6 +305,12 @@ class TestDXClient(DXTestCase):
         self.assertEqual(property_values[1], my_properties[property_names[1]])
         for name in [property_names[0], property_names[2]]:
             self.assertNotIn(name, my_properties)
+
+        # nonexistent name
+        with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
+            run(u"dx set_properties nonexistent: key=value")
+        with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
+            run(u"dx unset_properties nonexistent: key")
 
     def test_dx_describe_project(self):
         describe_output = run(u"dx describe :").strip()

@@ -646,3 +646,31 @@ def get_app_from_path(path):
         return desc
     except dxpy.DXAPIError:
         return None
+
+def resolve_to_objects_or_project(path, all_matching_results=False):
+    '''
+    :param path: Path to resolve
+    :type path: string
+    :param all_matching_results: Whether to return a list of all matching results
+    :type all_matching_results: boolean
+
+    A thin wrapper over :meth:`resolve_existing_path` which throws an
+    error if the path does not look like a project and doesn't match a
+    data object path.
+
+    Returns either a list of results or a single result (depending on
+    how many is expected; if only one, then an interactive picking of
+    a choice will be initiated if input is a tty, or else throw an error).
+    '''
+    # Attempt to resolve name
+    project, folderpath, entity_results = resolve_existing_path(path,
+                                                                expected='entity',
+                                                                allow_mult=True,
+                                                                all_mult=all_matching_results)
+    if entity_results is None and not is_container_id(path):
+        if folderpath != None and folderpath != '/':
+            raise ResolutionError('Could not resolve "' + path + \
+                                  '''" to an existing data object or to only a project;
+                                  if you were attempting to refer to a project by name,
+                                  please append a colon ":" to indicate that it is a project.''')
+    return project, folderpath, entity_results
