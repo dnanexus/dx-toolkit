@@ -345,7 +345,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([results[0]['id']] if multi else results[0]['id'])
     elif len(results) == 0:
         if is_error:
-            raise ResolutionError('Error: Could not find a project named \"' + string + '\"')
+            raise ResolutionError('Could not find a project named \"' + string + '\"')
         return ([] if multi else None)
     elif not multi:
         print 'Found multiple projects with name \"' + string + '\"'
@@ -381,7 +381,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         path = xattr(path)['project'] + ":" + xattr(path)['id']
 
     if path == '' and not allow_empty_string:
-        raise ResolutionError('Error: Cannot parse ""; expected the path to be a non-empty string')
+        raise ResolutionError('Cannot parse ""; expected the path to be a non-empty string')
     try:
         possible_hash = json.loads(path)
         if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
@@ -395,12 +395,12 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     # Easy case: ":"
     if path == ':':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Error: Cannot parse ":"; expected a project name or ID to the left of a colon or for a current project to be set')
+            raise ResolutionError('Cannot parse ":"; expected a project name or ID to the left of a colon or for a current project to be set')
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
     # Second easy case: empty string
     if path == '':
         if dxpy.WORKSPACE_ID is None:
-            raise ResolutionError('Error: Expected a project name or ID to the left of a colon or for a current project to be set')
+            raise ResolutionError('Expected a project name or ID to the left of a colon or for a current project to be set')
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), os.environ.get('DX_CLI_WD', '/'), None
     # Third easy case: hash ID
     if is_container_id(path):
@@ -418,7 +418,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     if last_colon >= 0:
         last_last_colon = get_last_pos_of_char(':', path[:last_colon])
         if last_last_colon >= 0:
-            raise ResolutionError('Error: Cannot parse \"' + path + '\" as a path; at most one unescaped colon can be present')
+            raise ResolutionError('Cannot parse \"' + path + '\" as a path; at most one unescaped colon can be present')
 
     substrings = split_unescaped(':', path)
 
@@ -440,7 +440,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         wd = '/'
         if path.startswith(':'):
             if dxpy.WORKSPACE_ID is None:
-                raise ResolutionError('Error: Cannot parse \"' + path + '\" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
+                raise ResolutionError('Cannot parse \"' + path + '\" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
             project = dxpy.WORKSPACE_ID
         else:
             # One nonempty string to the left of a colon
@@ -451,7 +451,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # project
         project = dxpy.WORKSPACE_ID
         if expected == 'folder' and project is None:
-            raise ResolutionError('Error: a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in \"' + path + '\"')
+            raise ResolutionError('a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in \"' + path + '\"')
         wd = os.environ.get('DX_CLI_WD', '/')
 
     # Determine folderpath and entity_name if necessary
@@ -472,7 +472,7 @@ def resolve_job_ref(job_id, name, describe={}):
     project = job_desc['project']
     describe['project'] = project
     if job_desc['state'] != 'done':
-        raise ResolutionError('Error: the job ' + job_id + ' is ' + job_desc['state'] + ', and it must be in the done state for its outputs to be accessed')
+        raise ResolutionError('the job ' + job_id + ' is ' + job_desc['state'] + ', and it must be in the done state for its outputs to be accessed')
 
     output_field = job_desc['output'].get(name, None)
     results = []
@@ -480,7 +480,7 @@ def resolve_job_ref(job_id, name, describe={}):
         if isinstance(output_field, list):
             if len(output_field) > 0:
                 if not isinstance(output_field[0], dict) or '$dnanexus_link' not in output_field[0]:
-                    raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an array of non-data objects')
+                    raise ResolutionError('Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an array of non-data objects')
                 ids = [link['$dnanexus_link'] for link in output_field]
                 try:
                     results = [{"id": out_id,
@@ -488,7 +488,7 @@ def resolve_job_ref(job_id, name, describe={}):
                 except BaseException as details:
                     raise ResolutionError(str(details))
             else:
-                raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an empty array')
+                raise ResolutionError('Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an empty array')
         elif isinstance(output_field, dict) and '$dnanexus_link' in output_field:
             obj_id = output_field['$dnanexus_link']
             try:
@@ -496,9 +496,9 @@ def resolve_job_ref(job_id, name, describe={}):
             except BaseException as details:
                 raise ResolutionError(str(details))
         else:
-            raise ResolutionError('Error: Found \"' + name + '\" as an output field name of ' + job_id + ', but it is not of a data object class')
+            raise ResolutionError('Found \"' + name + '\" as an output field name of ' + job_id + ', but it is not of a data object class')
     else:
-        raise ResolutionError('Error: Could not find \"' + name + '\" as an output field name of ' + job_id + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
+        raise ResolutionError('Could not find \"' + name + '\" as an output field name of ' + job_id + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
 
     return results
 
@@ -568,7 +568,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         else:
             return project, folderpath, [result]
     elif project is None:
-        raise ResolutionError('Error: Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
+        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
     else:
         msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object
@@ -615,7 +615,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                 else:
                     return project, None, ([results[choice]] if allow_mult else results[choice])
             else:
-                raise ResolutionError('Error: The given path \"' + path + '\" resolves to ' + str(len(results)) + ' data objects')
+                raise ResolutionError('The given path \"' + path + '\" resolves to ' + str(len(results)) + ' data objects')
         elif len(results) == 1:
             return project, None, ([results[0]] if allow_mult else results[0])
 
