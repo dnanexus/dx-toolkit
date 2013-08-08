@@ -337,6 +337,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
     if "runSpec" in manifest:
         if "interpreter" not in manifest['runSpec']:
             raise dxpy.app_builder.AppBuilderException('runSpec.interpreter field was not present')
+
         if manifest['runSpec']['interpreter'] in ["python2.7", "bash"]:
             if "file" in manifest['runSpec']:
                 entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
@@ -349,6 +350,19 @@ def _verify_app_source_dir(src_dir, enforce=True):
                     _check_syntax(manifest['runSpec']['code'], lang=manifest['runSpec']['interpreter'], enforce=enforce)
                 except subprocess.CalledProcessError:
                     raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.')
+
+        if 'execDepends' in manifest['runSpec']:
+            if not isinstance(manifest['runSpec']['execDepends'], list):
+                raise dxpy.app_builder.AppBuilderException('Expected runSpec.execDepends to be an array. Rerun with --no-check-syntax to proceed anyway.')
+            if not all(isinstance(dep, dict) for dep in manifest['runSpec']['execDepends']):
+                raise dxpy.app_builder.AppBuilderException('Expected runSpec.execDepends to be an array of hashes. Rerun with --no-check-syntax to proceed anyway.')
+            if any(dep.get('package_manager', 'apt') != 'apt' for dep in manifest['runSpec']['execDepends']):
+                if not isinstance(manifest.get('access'), dict) or 'network' not in manifest['access']:
+                    msg = '\n'.join(['runSpec.execDepends specifies non-APT dependencies, but no network access spec is given.',
+                    'Add {"access": {"network": ["*"]}} to allow dependencies to install.',
+                    'See https://wiki.dnanexus.com/Developer-Tutorials/Request-Additional-App-Resources#Network-Access.',
+                    'Rerun with --no-check-syntax to proceed anyway.'])
+                    raise dxpy.app_builder.AppBuilderException(msg)
 
     # Check all other files that are going to be in the resources tree.
     # For these we detect the language based on the filename extension.

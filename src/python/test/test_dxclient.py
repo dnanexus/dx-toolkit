@@ -615,6 +615,40 @@ class TestDXBuildApp(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
             run("dx build --json " + app_dir)
 
+    def test_duplicate_keys_in_spec(self):
+        app_spec = {
+            "name": "test_duplicate_keys_in_spec",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7"
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        spec = json.dumps(app_spec).replace('"file": "code.py"', '"file": "code.py", "file": "code.py"')
+        app_dir = self.write_app_directory("duplicate_keys_in_spec", spec, "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="duplicate key: "):
+            run("dx build --json " + app_dir)
+
+    def test_deps_without_network_access(self):
+        app_spec = {
+            "name": "test_deps_without_network_access",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "execDepends": [{"name": "ddd", "package_manager": "pip"}]
+                },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("deps_without_network_access", json.dumps(app_spec), "code.py")
+        with self.assertSubprocessFailure(stderr_regexp="runSpec.execDepends specifies non-APT dependencies, but no network access spec is given"):
+            run("dx build --json " + app_dir)
+
     def test_overwrite_applet(self):
         app_spec = {
             "name": "applet_overwriting",
