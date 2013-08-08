@@ -1033,6 +1033,32 @@ class TestDXSearch(unittest.TestCase):
         self.assertEqual(results[0], {"project": self.proj_id,
                                       "id": dxrecord.get_id()})
 
+    def test_find_data_objs_in_workspace(self):
+        old_workspace = dxpy.WORKSPACE_ID
+        dxpy.WORKSPACE_ID = self.proj_id
+        try:
+            record1 = dxpy.new_dxrecord(name="foo")
+            record1.close()
+            record2 = dxpy.new_dxrecord(name="bar", folder='/a', parents=True)
+            record2.close()
+            record3 = dxpy.new_dxrecord(name="baz", folder='/a/b', parents=True)
+            record3.close()
+            # find_data_objects should run search in workspace without
+            # being explicitly told a project to search in.
+            results1 = list(dxpy.search.find_data_objects(folder='/a', recurse=False))
+            self.assertEqual(results1, [{"project": self.proj_id, "id": record2.get_id()}])
+            results2 = list(dxpy.search.find_data_objects(folder='/a', recurse=True))
+            self.assertEqual(set([result['id'] for result in results2]),
+                             set([record2.get_id(), record3.get_id()]))
+            self.assertEqual(list(dxpy.search.find_data_objects(name="foo")),
+                             [{"project": self.proj_id, "id": record1.get_id()}])
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba*"))), 0)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba*", name_mode="glob"))), 2)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba.*"))), 0)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba.*", name_mode="regexp"))), 2)
+        finally:
+            dxpy.WORKSPACE_ID = old_workspace
+
     def test_find_projects(self):
         dxproject = dxpy.DXProject()
         results = list(dxpy.find_projects())
