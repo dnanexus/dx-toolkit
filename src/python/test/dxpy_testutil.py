@@ -33,10 +33,6 @@ class DXTestCase(unittest.TestCase):
             subprocess.check_call(u"dx rmproject --yes {p}".format(p=self.project), shell=True)
         except:
             pass
-        try:
-            os.remove("uploadedfile")
-        except:
-            pass
         if self.old_cwd is not None:
             with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD'), 'w') as fd:
                 fd.write(self.old_cwd)

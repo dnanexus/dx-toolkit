@@ -373,6 +373,10 @@ class TestDXClient(DXTestCase):
             run(u"dx upload {fd} -o uploadedfile --wait".format(fd=fd.name))
             run(u"dx download uploadedfile -f")
             run(u"dx download uploadedfile -o -")
+        try:
+            os.remove("uploadedfile")
+        except IOError:
+            pass
 
         second_desc = json.loads(run(u"dx describe gritableimport --json"))
         self.assertEqual(second_desc['types'], ['gri'])
