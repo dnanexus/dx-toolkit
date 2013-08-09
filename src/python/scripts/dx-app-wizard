@@ -37,6 +37,7 @@ manifest = []
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
 parser.add_argument('--json-file', help='Use the metadata and IO spec found in the given file')
 parser.add_argument('--language', help='Programming language of your app')
+parser.add_argument('name', help='Name of your app', nargs='?')
 args = parser.parse_args()
 
 dx_home_dir = os.environ.get('DNANEXUS_HOME', None)
@@ -53,7 +54,7 @@ if args.json_file is not None:
     with open(args.json_file, 'r') as json_file:
         app_json = json.loads(json_file.read())
         # Re-confirm the name
-        name = get_name(default=app_json.get('name'))
+        name = get_name(default=args.name or app_json.get('name'))
         app_json['name'] = name
         version = get_version(default=app_json.get('version'))
         app_json['version'] = version
@@ -68,7 +69,7 @@ else:
     # BASIC METADATA #
     ##################
 
-    name = get_name()
+    name = get_name(default=args.name)
 
     try:
         os.mkdir(name)
