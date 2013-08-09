@@ -74,17 +74,45 @@ parser_single_dataobject_output_args = argparse.ArgumentParser(add_help=False)
 parser_single_dataobject_output_args.add_argument('-o', '--output', help=argparse.SUPPRESS)
 parser_single_dataobject_output_args.add_argument('path', help=fill('DNAnexus path for the new data object (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
 
+find_by_properties_and_tags_args = argparse.ArgumentParser(add_help=False)
+find_by_properties_and_tags_args.add_argument('--property', dest='properties',
+                                              metavar='KEY[=VALUE]',
+                                              help='Key-value pair of a property or simply a property key; if only a key is provided, matches a result that has the key with any value; repeat as necessary, e.g. "--property key1=val1 --property key2"',
+                                              action='append')
+find_by_properties_and_tags_args.add_argument('--tag',
+                                              help='Tag to match; repeat as necessary, e.g. "--tag tag1 --tag tag2" will require both tags',
+                                              action='append')
+
 def process_properties_args(args):
     # Properties
     properties = None
     if args.properties is not None:
         properties = {}
         for keyeqval in args.properties:
-            try:
-                key, val = split_unescaped('=', keyeqval)
-            except:
+            substrings = split_unescaped('=', keyeqval, include_empty_strings=True)
+            if len(substrings) != 2:
                 raise DXParserError('Property key-value pair must be given using syntax "property_key=property_value"')
-            properties[key] = val
+            elif substrings[0] == '':
+                raise DXParserError('Property keys must be nonempty strings')
+            else:
+                properties[substrings[0]] = substrings[1]
+    args.properties = properties
+
+def process_find_by_property_args(args):
+    properties = None
+    if args.properties is not None:
+        properties = {}
+        for keyeqval in args.properties:
+            substrings = split_unescaped('=', keyeqval, include_empty_strings=True)
+            if len(substrings) > 2:
+                raise DXParserError('Property value must be given using syntax "property_key" or "property_key=property_value"')
+            elif substrings[0] == '':
+                raise DXParserError('Property keys must be nonempty strings')
+            elif len(substrings) == 1:
+                properties[keyeqval] = True
+            else:
+                properties[substrings[0]] = substrings[1]
+
     args.properties = properties
 
 def process_dataobject_args(args):
