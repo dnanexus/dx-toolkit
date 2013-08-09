@@ -237,7 +237,7 @@ def get_first_pos_of_char(char, string):
             first_pos = pos
     return first_pos
 
-def split_unescaped(char, string):
+def split_unescaped(char, string, include_empty_strings=False):
     '''
     :param char: The character on which to split the string
     :type char: string
@@ -257,10 +257,10 @@ def split_unescaped(char, string):
     while pos >= 0:
         pos = get_last_pos_of_char(char, string[:lastpos])
         if pos >= 0:
-            if pos + 1 != lastpos:
+            if pos + 1 != lastpos or include_empty_strings:
                 words.append(string[pos + 1: lastpos])
             lastpos = pos
-    if lastpos != 0:
+    if lastpos != 0 or include_empty_strings:
         words.append(string[:lastpos])
     words.reverse()
     return words

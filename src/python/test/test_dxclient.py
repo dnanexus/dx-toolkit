@@ -289,6 +289,24 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
             run(u"dx unset_properties nonexistent key")
 
+        # Errors parsing --property value
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties -a Ψ ''")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties -a Ψ foo=bar=baz")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties -a Ψ =foo=bar=")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties -a Ψ foo")
+        # Property keys must be nonempty
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx set_properties -a Ψ =bar")
+        # Empty string values should be okay
+        run("dx set_properties -a Ψ bar=")
+
+        my_properties = dxpy.api.record_describe(record_id, {"properties": True})['properties']
+        self.assertEqual(my_properties["bar"], "")
+
     def test_dx_project_properties(self):
         property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
         property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
@@ -311,6 +329,24 @@ class TestDXClient(DXTestCase):
             run(u"dx set_properties nonexistent: key=value")
         with self.assertSubprocessFailure(stderr_regexp='Could not find a project named', exit_code=3):
             run(u"dx unset_properties nonexistent: key")
+
+        # Errors parsing --property value
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties : ''")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties : foo=bar=baz")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties : =foo=bar=")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx set_properties : foo")
+        # Property keys must be nonempty
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx set_properties : =bar")
+        # Empty string values should be okay
+        run("dx set_properties : bar=")
+
+        my_properties = dxpy.api.project_describe(self.project, {"properties": True})['properties']
+        self.assertEqual(my_properties["bar"], "")
 
     def test_dx_describe_project(self):
         describe_output = run(u"dx describe :").strip()
@@ -335,7 +371,7 @@ class TestDXClient(DXTestCase):
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
 
     def test_dx_find_data_by_property(self):
-        record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar").strip(),
+        record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar --property bar=").strip(),
                       run("dx new record --brief --property Ψ=notworld --property foo=bar").strip()]
 
         found_records = run(u"dx find data --property Ψ=world --property foo=bar --brief").strip()
@@ -352,6 +388,21 @@ class TestDXClient(DXTestCase):
         found_records = run("dx find data --property Ψ --property foo=bar --brief").strip().split("\n")
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
         self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+        # Empty string values should be okay
+        found_records = run("dx find data --property bar= --brief").strip()
+        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
+
+        # Errors parsing --property value
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find data --property ''")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find data --property foo=bar=baz")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find data --property =foo=bar=")
+        # Property keys must be nonempty
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find data --property =bar")
 
     def test_dx_find_projects_by_tag(self):
         other_project_id = run("dx new project other --brief").strip()
@@ -380,15 +431,19 @@ class TestDXClient(DXTestCase):
     def test_dx_find_projects_by_property(self):
         other_project_id = run("dx new project other --brief").strip()
         try:
-            run(u"dx set_properties : Ψ=world foo=bar")
+            run(u"dx set_properties : Ψ=world foo=bar bar=")
             proj_desc = dxpy.api.project_describe(dxpy.WORKSPACE_ID, {"properties": True})
-            self.assertEqual(len(proj_desc["properties"]), 2)
+            self.assertEqual(len(proj_desc["properties"]), 3)
             self.assertEqual(proj_desc["properties"][u"Ψ"], "world")
             self.assertEqual(proj_desc["properties"]["foo"], "bar")
+            self.assertEqual(proj_desc["properties"]["bar"], "")
 
             run(u"dx set_properties other: Ψ=notworld foo=bar")
 
             found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip()
+            self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
+
+            found_projects = run(u"dx find projects --property bar= --brief").strip()
             self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
 
             # presence
@@ -406,6 +461,19 @@ class TestDXClient(DXTestCase):
             raise
         finally:
             run("dx rmproject -y other")
+
+        # Errors parsing --property value
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find projects --property ''")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find projects --property foo=bar=baz")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find projects --property =foo=bar=")
+        # Property keys must be nonempty
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find projects --property =bar")
+        # Empty string values should be okay
+        run("dx find projects --property bar=")
 
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided

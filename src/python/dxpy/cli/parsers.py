@@ -89,11 +89,13 @@ def process_properties_args(args):
     if args.properties is not None:
         properties = {}
         for keyeqval in args.properties:
-            try:
-                key, val = split_unescaped('=', keyeqval)
-            except:
+            substrings = split_unescaped('=', keyeqval, include_empty_strings=True)
+            if len(substrings) != 2:
                 raise DXParserError('Property key-value pair must be given using syntax "property_key=property_value"')
-            properties[key] = val
+            elif substrings[0] == '':
+                raise DXParserError('Property keys must be nonempty strings')
+            else:
+                properties[substrings[0]] = substrings[1]
     args.properties = properties
 
 def process_find_by_property_args(args):
@@ -101,14 +103,16 @@ def process_find_by_property_args(args):
     if args.properties is not None:
         properties = {}
         for keyeqval in args.properties:
-            if '=' in keyeqval:
-                try:
-                    key, val = split_unescaped('=', keyeqval)
-                except:
-                    raise DXParserError('Property key-value pair must be given using syntax "property_key=property_value"')
-                properties[key] = val
-            else:
+            substrings = split_unescaped('=', keyeqval, include_empty_strings=True)
+            if len(substrings) > 2:
+                raise DXParserError('Property value must be given using syntax "property_key" or "property_key=property_value"')
+            elif substrings[0] == '':
+                raise DXParserError('Property keys must be nonempty strings')
+            elif len(substrings) == 1:
                 properties[keyeqval] = True
+            else:
+                properties[substrings[0]] = substrings[1]
+
     args.properties = properties
 
 def process_dataobject_args(args):

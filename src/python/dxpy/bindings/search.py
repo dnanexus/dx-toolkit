@@ -74,9 +74,9 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type properties: dict
     :param typename: Type constraint that each result must conform to
     :type typename: string or dict
-    :param tag: Tag that each result must be tagged with (deprecated)
+    :param tag: Tag that each result must be tagged with (deprecated in favor of *tags*)
     :type tag: string
-    :param tags: Tags that each result must have
+    :param tags: List of tags that each result must have ALL of
     :type tags: list of strings
     :param link: ID of an object that each result must link to
     :type link: string
@@ -153,7 +153,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if typename is not None:
         query["type"] = typename
     if tag is not None and tags is not None:
-        raise DXError('find_data_objects: both "tag" and "tags" cannot both be provided')
+        raise DXError('find_data_objects: Arguments"tag" and "tags" cannot both be provided')
     if tag is not None:
         query["tag"] = tag
     if tags is not None:
