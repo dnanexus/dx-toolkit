@@ -150,8 +150,12 @@ from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppComplete
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
                                  get_io_desc, get_find_jobs_string)
-from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args, parser_single_dataobject_output_args,
-                              get_output_flag, process_properties_args, process_dataobject_args, process_single_dataobject_output_args, set_env_from_args,
+from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
+                              parser_dataobject_args, parser_single_dataobject_output_args,
+                              get_output_flag, process_properties_args,
+                              find_by_properties_and_tags_args, process_find_by_property_args,
+                              process_dataobject_args, process_single_dataobject_output_args,
+                              set_env_from_args,
                               extra_args, process_extra_args, DXParserError)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
@@ -2295,7 +2299,7 @@ def find_jobs(args):
 
 def find_data(args):
     get_output_flag(args)
-    try_call(process_properties_args, args)
+    try_call(process_find_by_property_args, args)
     if args.all_projects:
         args.project = None
         args.folder = None
@@ -2315,7 +2319,7 @@ def find_data(args):
                                               name=args.name,
                                               name_mode='glob',
                                               typename=args.type,
-                                              tag=args.tag, link=args.link,
+                                              tags=args.tag, link=args.link,
                                               project=args.project,
                                               folder=args.folder,
                                               recurse=(args.recurse if not args.recurse else None),
@@ -2342,8 +2346,10 @@ def find_data(args):
 
 def find_projects(args):
     get_output_flag(args)
+    try_call(process_find_by_property_args, args)
     try:
         results = list(dxpy.find_projects(name=args.name, name_mode='glob',
+                                          properties=args.properties, tags=args.tag,
                                           level=('VIEW' if args.public else args.level),
                                           describe=(not args.brief),
                                           explicit_perms=(not args.public if not args.public else None),
@@ -3831,14 +3837,12 @@ register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categori
 
 parser_find_data = subparsers_find.add_parser('data', help='Find data objects',
                                               description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --all-projects (overrides --project, --folder, --norecurse).',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args], prog='dx find data')
+                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args], prog='dx find data')
 parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'gtable', 'applet'], help='Data object class')
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')
-parser_find_data.add_argument('--property', dest='properties', metavar='KEY=VALUE', help='Key-value pair of a property; repeat as necessary, e.g. "--property key1=val1 --property key2=val2"', action='append')
 parser_find_data.add_argument('--type', help='Type of the data object')
-parser_find_data.add_argument('--tag', help='Tag of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
 parser_find_data.add_argument('--all-projects', '--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
 parser_find_data.add_argument('--project', help='Project with which to restrict the results')
@@ -3853,7 +3857,7 @@ register_subparser(parser_find_data, subparsers_action=subparsers_find, categori
 
 parser_find_projects = subparsers_find.add_parser('projects', help='Find projects',
                                                   description='Finds projects with the given search parameters.  Use the --public flag to list all public projects.',
-                                                  parents=[stdout_args, json_arg, delim_arg, env_args],
+                                                  parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
                                                   prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')

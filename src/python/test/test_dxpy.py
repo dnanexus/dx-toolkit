@@ -1032,6 +1032,8 @@ class TestDXSearch(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {"project": self.proj_id,
                                       "id": dxrecord.get_id()})
+        with self.assertRaises(DXError):
+            dxpy.search.find_data_objects(tag='foo', tags=['foo', 'bar'])
 
     def test_find_data_objs_in_workspace(self):
         old_workspace = dxpy.WORKSPACE_ID
