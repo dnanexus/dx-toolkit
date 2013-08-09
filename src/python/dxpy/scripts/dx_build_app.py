@@ -557,7 +557,18 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
             app_run_result = dxpy.api.app_run(builder_app, input_params=api_options)
             job_id = app_run_result["id"]
             print "Started builder job %s" % (job_id,)
-            subprocess.check_call(["dx", "watch", job_id])
+            try:
+                subprocess.check_call(["dx", "watch", job_id])
+            except subprocess.CalledProcessError as e:
+                if e.returncode == 3:
+                    # Some kind of failure to build the app. The reason
+                    # for the failure is probably self-evident from the
+                    # job log (and if it's not, the CalledProcessError
+                    # is not informative anyway), so just propagate the
+                    # return code without additional remarks.
+                    sys.exit(3)
+                else:
+                    raise e
         finally:
             if not using_temp_project_for_remote_build:
                 dxpy.DXProject(build_project_id).remove_objects([remote_file.get_id()])
