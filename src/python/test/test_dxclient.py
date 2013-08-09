@@ -352,8 +352,6 @@ class TestDXClient(DXTestCase):
         describe_output = run(u"dx describe :").strip()
         self.assertTrue(re.search(r'ID\s+%s.*\n.*\nName\s+dxclient_test_pr\xc3\xb6ject' % (self.project,),
                                   describe_output))
-        self.assertNotIn('Properties', describe_output)
-        describe_output = run(u"dx describe : --verbose")
         self.assertIn('Properties', describe_output)
 
     def test_dx_find_data_by_tag(self):

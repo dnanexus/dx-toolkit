@@ -1172,10 +1172,10 @@ def describe(args):
         # Could be a project
         json_input = {}
         json_input['countObjects'] = True
+        json_input['properties'] = True
         if args.verbose:
             json_input["permissions"] = True
             json_input['appCaches'] = True
-            json_input['properties'] = True
         if entity_results is None:
             if args.path[-1] == ':':
                 # It is the project.
