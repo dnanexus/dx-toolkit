@@ -33,7 +33,7 @@ def _find(api_method, query, limit, return_handler, **kwargs):
 
     while True:
         resp = api_method(query, **kwargs)
-        
+
         for i in resp["results"]:
             if num_results == limit:
                 raise StopIteration()
@@ -52,7 +52,7 @@ def _find(api_method, query, limit, return_handler, **kwargs):
 
 def find_data_objects(classname=None, state=None, visibility=None,
                       name=None, name_mode='exact', properties=None,
-                      typename=None, tag=None,
+                      typename=None, tag=None, tags=None,
                       link=None, project=None, folder=None, recurse=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
@@ -74,8 +74,10 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type properties: dict
     :param typename: Type constraint that each result must conform to
     :type typename: string or dict
-    :param tag: Tag that each result must be tagged with
+    :param tag: Tag that each result must be tagged with (deprecated)
     :type tag: string
+    :param tags: Tags that each result must have
+    :type tags: list of strings
     :param link: ID of an object that each result must link to
     :type link: string
     :param project: ID of a project in which each result must appear
@@ -145,13 +147,17 @@ def find_data_objects(classname=None, state=None, visibility=None,
         elif name_mode == 'regexp':
             query['name'] = {'regexp': name}
         else:
-            raise DXError('find_data: Unexpected value found for argument name_mode')
+            raise DXError('find_data_objects: Unexpected value found for argument name_mode')
     if properties is not None:
         query["properties"] = properties
     if typename is not None:
         query["type"] = typename
+    if tag is not None and tags is not None:
+        raise DXError('find_data_objects: both "tag" and "tags" cannot both be provided')
     if tag is not None:
         query["tag"] = tag
+    if tags is not None:
+        query["tags"] = {"$and": tags}
     if link is not None:
         query["link"] = link
     if project is not None:
@@ -279,7 +285,7 @@ def find_jobs(launched_by=None, executable=None, project=None,
 
     return _find(dxpy.api.system_find_jobs, query, limit, return_handler, **kwargs)
 
-def find_projects(name=None, name_mode='exact', properties=None,
+def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=None, explicit_perms=None,
                   public=None, limit=None, return_handler=False, **kwargs):
     """
@@ -289,6 +295,8 @@ def find_projects(name=None, name_mode='exact', properties=None,
     :type name_mode: string
     :param properties: Properties (key-value pairs) that each result must have
     :type properties: dict
+    :param tags: Tags that each result must have
+    :type tags: list of strings
     :param level: One of "VIEW", "CONTRIBUTE", or "ADMINSTER". If specified, only returns projects where the current user has at least the specified permission level.
     :type level: string
     :param describe: Either false or the input to the describe call for the project
@@ -324,6 +332,8 @@ def find_projects(name=None, name_mode='exact', properties=None,
             raise DXError('find_projects: Unexpected value found for argument name_mode')
     if properties is not None:
         query["properties"] = properties
+    if tags is not None:
+        query["tags"] = {"$and": tags}
     if level is not None:
         query["level"] = level
     if describe is not None:

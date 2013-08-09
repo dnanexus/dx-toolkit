@@ -320,6 +320,93 @@ class TestDXClient(DXTestCase):
         describe_output = run(u"dx describe : --verbose")
         self.assertIn('Properties', describe_output)
 
+    def test_dx_find_data_by_tag(self):
+        record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
+                      run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
+
+        found_records = run(u"dx find data --tag baz --brief").strip()
+        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
+
+        found_records = run(u"dx find data --tag Ψ --tag foo --tag foobar --brief").strip()
+        self.assertEqual(found_records, '')
+
+        found_records = run(u"dx find data --tag foo --tag Ψ --brief").strip().split("\n")
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+    def test_dx_find_data_by_property(self):
+        record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar").strip(),
+                      run("dx new record --brief --property Ψ=notworld --property foo=bar").strip()]
+
+        found_records = run(u"dx find data --property Ψ=world --property foo=bar --brief").strip()
+        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
+
+        # presence
+        found_records = run(u"dx find data --property Ψ --brief").strip().split("\n")
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+        found_records = run(u"dx find data --property Ψ --property foo=baz --brief").strip()
+        self.assertEqual(found_records, '')
+
+        found_records = run("dx find data --property Ψ --property foo=bar --brief").strip().split("\n")
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+    def test_dx_find_projects_by_tag(self):
+        other_project_id = run("dx new project other --brief").strip()
+        try:
+            run(u"dx tag : Ψ world")
+            proj_desc = dxpy.describe(dxpy.WORKSPACE_ID)
+            self.assertEqual(len(proj_desc["tags"]), 2)
+            self.assertIn(u"Ψ", proj_desc["tags"])
+            self.assertIn("world", proj_desc["tags"])
+
+            found_projects = run(u"dx find projects --tag Ψ --tag world --brief").strip()
+            self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
+
+            found_projects = run(u"dx find projects --tag Ψ --tag world --tag foobar --brief").strip()
+            self.assertEqual(found_projects, '')
+
+            run(u"dx tag other: Ψ world foobar")
+            found_projects = run("dx find projects --tag world --tag Ψ --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertIn(other_project_id, found_projects)
+        except:
+            raise
+        finally:
+            run("dx rmproject -y other")
+
+    def test_dx_find_projects_by_property(self):
+        other_project_id = run("dx new project other --brief").strip()
+        try:
+            run(u"dx set_properties : Ψ=world foo=bar")
+            proj_desc = dxpy.api.project_describe(dxpy.WORKSPACE_ID, {"properties": True})
+            self.assertEqual(len(proj_desc["properties"]), 2)
+            self.assertEqual(proj_desc["properties"][u"Ψ"], "world")
+            self.assertEqual(proj_desc["properties"]["foo"], "bar")
+
+            run(u"dx set_properties other: Ψ=notworld foo=bar")
+
+            found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip()
+            self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
+
+            # presence
+            found_projects = run(u"dx find projects --property Ψ --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertIn(other_project_id, found_projects)
+
+            found_projects = run(u"dx find projects --property Ψ --property foo=baz --brief").strip()
+            self.assertEqual(found_projects, '')
+
+            found_projects = run("dx find projects --property Ψ --property foo=bar --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertIn(other_project_id, found_projects)
+        except:
+            raise
+        finally:
+            run("dx rmproject -y other")
+
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
