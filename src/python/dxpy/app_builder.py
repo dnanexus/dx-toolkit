@@ -85,11 +85,10 @@ def build(src_dir, parallel_build=True):
     if it exists (building with as many parallel tasks as there are CPUs on the
     system).
     """
-    logger.debug("Building in " + os.path.abspath(src_dir))
     # TODO: use Gentoo or deb buildsystem
     config_script = os.path.join(src_dir, "configure")
     if os.path.isfile(config_script) and os.access(config_script, os.X_OK):
-        logger.debug("Running ./configure")
+        logger.debug("Running ./configure in {cwd}".format(cwd=os.path.abspath(src_dir)))
         try:
             subprocess.check_call([config_script])
         except subprocess.CalledProcessError as e:
@@ -101,7 +100,7 @@ def build(src_dir, parallel_build=True):
             make_shortcmd = "make -j%d" % (NUM_CORES,)
         else:
             make_shortcmd = "make"
-        logger.debug("Building with " + make_shortcmd)
+        logger.debug("Building with {make} in {cwd}".format(make=make_shortcmd, cwd=os.path.abspath(src_dir)))
         try:
             make_cmd = ["make", "-C", src_dir]
             if parallel_build:
