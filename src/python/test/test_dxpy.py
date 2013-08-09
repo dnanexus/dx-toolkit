@@ -1050,12 +1050,12 @@ class TestDXSearch(unittest.TestCase):
             results2 = list(dxpy.search.find_data_objects(folder='/a', recurse=True))
             self.assertEqual(set([result['id'] for result in results2]),
                              set([record2.get_id(), record3.get_id()]))
-            self.assertEqual(list(dxpy.search.find_data_objects(name="foo")),
+            self.assertEqual(list(dxpy.search.find_data_objects(name="foo", folder='/')),
                              [{"project": self.proj_id, "id": record1.get_id()}])
-            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba*"))), 0)
-            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba*", name_mode="glob"))), 2)
-            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba.*"))), 0)
-            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba.*", name_mode="regexp"))), 2)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba*", folder='/'))), 0)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba*", name_mode="glob", folder='/'))), 2)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba.*", folder='/'))), 0)
+            self.assertEqual(len(list(dxpy.search.find_data_objects(name="ba.*", name_mode="regexp", folder='/'))), 2)
         finally:
             dxpy.WORKSPACE_ID = old_workspace
 
