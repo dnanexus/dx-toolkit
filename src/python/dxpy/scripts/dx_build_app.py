@@ -32,7 +32,7 @@ from dxpy import logger
 from dxpy.utils import json_load_raise_on_duplicates
 from dxpy.utils.resolver import resolve_path, is_container_id
 from dxpy.app_categories import APP_CATEGORIES
-from dxpy.exceptions import err_exit
+from dxpy.exceptions import err_exit, DXError
 from dxpy.utils.printing import BOLD
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
@@ -393,6 +393,33 @@ def _verify_app_source_dir(src_dir, enforce=True):
         files_str = files_with_problems[0] if len(files_with_problems) == 1 else (files_with_problems[0] + " and " + str(len(files_with_problems) - 1) + " other file" + ("s" if len(files_with_problems) > 2 else ""))
         logging.warn('%s contained syntax errors, see above for details' % (files_str,))
 
+def _verify_app_writable(app_name):
+    app_name_already_exists = True
+    try:
+        current_developers = dxpy.api.app_list_developers('app-' + app_name)['developers']
+    except dxpy.exceptions.DXAPIError as e:
+        if e.name == 'ResourceNotFound':
+            app_name_already_exists = False
+        else:
+            raise e
+
+    if not app_name_already_exists:
+        # This app doesn't exist yet so its creation will succeed
+        # (or at least, not fail on the basis of the ACL).
+        return
+
+    try:
+        me = dxpy.user_info()['userId']
+    except DXError:
+        # Not being able to contact the auth server to do this check
+        # is a non fatal error, since this scenario is common in
+        # testing and the API call to build the app will eventually
+        # fail anyway.
+        print >> sys.stderr, "Warning: could not contact auth server to determine current username."
+        return
+    if me not in current_developers:
+        raise dxpy.app_builder.AppBuilderException('User {user} is not a listed developer for app {app}'.format(user=me, app=app_name))
+
 def _parse_app_spec(src_dir):
     """Returns the parsed contents of dxapp.json.
 
@@ -589,6 +616,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     app_json = _parse_app_spec(src_dir)
 
     _verify_app_source_dir(src_dir, enforce=do_check_syntax)
+    if mode == "app":
+        _verify_app_writable(app_json['name'])
 
     working_project = None
     using_temp_project = False
@@ -782,8 +811,10 @@ def main(**kwargs):
         # REMOTE BUILD
 
         try:
-            _parse_app_spec(args.src_dir)
+            app_json = _parse_app_spec(args.src_dir)
             _verify_app_source_dir(args.src_dir)
+            if args.mode == "app":
+                _verify_app_writable(app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
             print >> sys.stderr, "Error: %s" % (e.message,)
             sys.exit(3)
