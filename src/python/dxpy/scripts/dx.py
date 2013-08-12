@@ -334,6 +334,18 @@ def login(args):
     if args.save:
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
+    # If login via token, obtain current username from auth server.
+    if args.token is not None:
+        host, port = None, None
+        if dxpy.APISERVER_HOST not in ['api.dnanexus.com', 'stagingapi.dnanexus.com']:
+            host, port = args.host, args.port
+        try:
+            write_env_var('DX_USERNAME', dxpy.user_info(host, port)['username'])
+        except DXError as details:
+            # Consider failure to obtain username to be a non-fatal error.
+            print >> sys.stderr, "Could not obtain username from auth server. Consider setting both --host and --port."
+            print >> sys.stderr, fill(unicode(details))
+
     greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
     if greeting.get('messages'):
         print BOLD("New messages from ") + DNANEXUS_LOGO()
@@ -358,17 +370,7 @@ def login(args):
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
-        if args.host is not None or args.port is not None:
-            authserver = 'http://' + args.host
-            authserver += ':' + str(args.port)
-        elif dxpy.APISERVER_HOST == 'stagingapi.dnanexus.com':
-            authserver = 'https://stagingauth.dnanexus.com'
-        elif dxpy.APISERVER_HOST == 'prodapi.dnanexus.com':
-            authserver = 'https://prodauth.dnanexus.com'
-        elif dxpy.APISERVER_HOST == 'api.dnanexus.com':
-            authserver = 'https://auth.dnanexus.com'
-        else:
-            parser.exit(3, fill("Please specify the authserver host and port to log out from") + "\n")
+        authserver = dxpy.get_auth_server_name(args.host, args.port)
         print 'Deleting credentials from ' + authserver + '...'
         session = requests.session()
         token = dxpy.AUTH_HELPER.security_context['auth_token']
@@ -496,6 +498,19 @@ def pick_and_set_project(args):
             state['currentproj'] = results[choice]['describe']['name']
             set_wd('/', not state['interactive'] or args.save)
             return
+
+def whoami(args):
+    if dxpy.AUTH_HELPER is None:
+        parser.exit(3, 'You are not logged in; run "dx login" to obtain a token.\n')
+    try:
+        user_info = dxpy.user_info(args.host, args.port)
+    except DXError as details:
+        print >> sys.stderr, "Error obtaining user info; consider setting --host and --port."
+        parser.exit(3, fill(unicode(details)))
+    if args.user_id:
+        print user_info['userId']
+    else:
+        print user_info['username']
 
 def setenv(args):
     if not state['interactive']:
@@ -3213,14 +3228,6 @@ class SetStagingEnv(argparse.Action):
         setattr(namespace, 'staging', True)
         set_api(protocol='https', host='stagingapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
-class SetProdEnv(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, 'host', 'prodauth.dnanexus.com')
-        setattr(namespace, 'port', '443')
-        setattr(namespace, 'protocol', 'https')
-        setattr(namespace, 'prod', True)
-        set_api(protocol='https', host='prodapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
-
 class DXArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         self.print_help(sys.stderr)
@@ -3261,7 +3268,6 @@ parser_login.add_argument('--noprojects', dest='projects', help='Do not print av
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
-parser_login.add_argument('--prod', nargs=0, help=argparse.SUPPRESS, action=SetProdEnv)
 parser_login.set_defaults(staging=False, prod=False, func=login)
 register_subparser(parser_login, categories='session')
 
@@ -3286,6 +3292,14 @@ register_subparser(parser_shell, categories='session')
 parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', description='Exit out of the interactive shell', prog='dx exit')
 parser_exit.set_defaults(func=exit_shell)
 register_subparser(parser_exit, categories='session')
+
+parser_whoami = subparsers.add_parser('whoami', help='Print the username of the current user',
+                                      description='Print the username of the current user, in the form "user-USERNAME"')
+parser_whoami.add_argument('--host', help='Query the specified auth server host (port must also be given)')
+parser_whoami.add_argument('--port', type=int, help='Query the specified auth server port (host must also be given)')
+parser_whoami.add_argument('--id', help='Print user ID instead of username', action='store_true', dest='user_id')
+parser_whoami.set_defaults(func=whoami)
+register_subparser(parser_whoami, categories='session')
 
 parser_env = subparsers.add_parser('env', help='Print all environment variables in use',
                                    description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
