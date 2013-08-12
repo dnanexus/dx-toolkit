@@ -1,4 +1,4 @@
-futures==2.1.2
+futures==2.1.4
 ctypes-snappy==1.02
 ws4py==0.2.2
 python-dateutil==2.1
