@@ -783,11 +783,10 @@ def main(**kwargs):
 
         try:
             _parse_app_spec(args.src_dir)
+            _verify_app_source_dir(args.src_dir)
         except dxpy.app_builder.AppBuilderException as e:
             print >> sys.stderr, "Error: %s" % (e.message,)
             sys.exit(3)
-
-        _verify_app_source_dir(args.src_dir)
 
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
