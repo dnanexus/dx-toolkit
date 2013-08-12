@@ -512,4 +512,5 @@ from dxproject import *
 from dxjob import *
 from dxapplet import *
 from dxapp import *
+from .auth import user_info
 from search import *

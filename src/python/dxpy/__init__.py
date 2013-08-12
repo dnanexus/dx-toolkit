@@ -461,6 +461,24 @@ def set_project_context(dxid):
 
 from dxpy.utils.env import get_env
 
+def get_auth_server_name(host_override=None, port_override=None):
+    """
+    Chooses the auth server name from the currently configured API server name.
+
+    Raises DXError if the auth server name cannot be guessed and the overrides
+    are not provided (or improperly provided).
+    """
+    if host_override is not None or port_override is not None:
+        if host_override is None or port_override is None:
+            raise DXError("Both host and port must be specified if either is specified")
+        return 'http://' + host_override + ':' + str(port_override)
+    elif dxpy.APISERVER_HOST == 'stagingapi.dnanexus.com':
+        return 'https://stagingauth.dnanexus.com'
+    elif dxpy.APISERVER_HOST == 'api.dnanexus.com':
+        return 'https://auth.dnanexus.com'
+    else:
+        raise DXError("Could not determine which auth server is associated with {apiserver}.".format(apiserver=dxpy.APISERVER_HOST))
+
 def _initialize(suppress_warning=False):
     '''
     :param suppress_warning: Whether to suppress the warning message for any mismatch found in the environment variables and the dx configuration file
