@@ -363,8 +363,6 @@ def logout(args):
             authserver += ':' + str(args.port)
         elif dxpy.APISERVER_HOST == 'stagingapi.dnanexus.com':
             authserver = 'https://stagingauth.dnanexus.com'
-        elif dxpy.APISERVER_HOST == 'prodapi.dnanexus.com':
-            authserver = 'https://prodauth.dnanexus.com'
         elif dxpy.APISERVER_HOST == 'api.dnanexus.com':
             authserver = 'https://auth.dnanexus.com'
         else:
@@ -3213,14 +3211,6 @@ class SetStagingEnv(argparse.Action):
         setattr(namespace, 'staging', True)
         set_api(protocol='https', host='stagingapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
 
-class SetProdEnv(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, 'host', 'prodauth.dnanexus.com')
-        setattr(namespace, 'port', '443')
-        setattr(namespace, 'protocol', 'https')
-        setattr(namespace, 'prod', True)
-        set_api(protocol='https', host='prodapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
-
 class DXArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         self.print_help(sys.stderr)
@@ -3261,7 +3251,6 @@ parser_login.add_argument('--noprojects', dest='projects', help='Do not print av
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
 parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
-parser_login.add_argument('--prod', nargs=0, help=argparse.SUPPRESS, action=SetProdEnv)
 parser_login.set_defaults(staging=False, prod=False, func=login)
 register_subparser(parser_login, categories='session')
 
