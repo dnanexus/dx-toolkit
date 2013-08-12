@@ -334,6 +334,18 @@ def login(args):
     if args.save:
         write_env_var('DX_SECURITY_CONTEXT', sec_context)
 
+    # If login via token, obtain current username from auth server.
+    if args.token is not None:
+        host, port = None, None
+        if dxpy.APISERVER_HOST not in ['api.dnanexus.com', 'stagingapi.dnanexus.com']:
+            host, port = args.host, args.port
+        try:
+            write_env_var('DX_USERNAME', dxpy.user_info(host, port)['username'])
+        except DXError as details:
+            # Consider failure to obtain username to be a non-fatal error.
+            print >> sys.stderr, "Could not obtain username from auth server. Consider setting both --host and --port."
+            print >> sys.stderr, fill(unicode(details))
+
     greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
     if greeting.get('messages'):
         print BOLD("New messages from ") + DNANEXUS_LOGO()
