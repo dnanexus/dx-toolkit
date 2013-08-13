@@ -1100,12 +1100,13 @@ class TestDXSearch(unittest.TestCase):
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
         dxjob = dxapplet.run(applet_input=prog_input)
-        results = list(dxpy.find_jobs(launched_by='user-000000000000000000000000',
-                                      applet=dxapplet,
+        me = dxpy.user_info()['userId']
+        results = list(dxpy.find_jobs(launched_by=me,
+                                      executable=dxapplet,
                                       project=dxapplet.get_proj_id(),
                                       origin_job=dxjob.get_id(),
-                                      parent_job=None,
-                                      created_after=0,
+                                      parent_job='none',
+                                      created_after='-15s',
                                       describe=True))
         self.assertEqual(len(results), 1)
         result = results[0]
