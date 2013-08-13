@@ -42,8 +42,8 @@
 #endif
 
 #if !WINDOWS_BUILD
-#if ((LIBCURL_VERSION_MAJOR < 7) || (LIBCURL_VERSION_MAJOR == 7 && LIBCURL_VERSION_MINOR < 31))
-  #error "From UA v1.4.1 onwards, we expect to compile UA on libcurl v7.31+. If you need to override this behavior, edit main.cpp"
+#if ((LIBCURL_VERSION_MAJOR < 7) || (LIBCURL_VERSION_MAJOR == 7 && LIBCURL_VERSION_MINOR < 32))
+  #error "From UA > v1.4.5, we expect to compile UA on libcurl v7.32+. If you need to override this behavior, edit main.cpp"
 #endif
 #endif
 
