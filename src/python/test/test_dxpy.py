@@ -1077,7 +1077,7 @@ class TestDXSearch(unittest.TestCase):
                                       project=dxapplet.get_proj_id(),
                                       origin_job=dxjob.get_id(),
                                       parent_job=None,
-                                      modified_after=0,
+                                      created_after=0,
                                       describe=True))
         self.assertEqual(len(results), 1)
         result = results[0]
