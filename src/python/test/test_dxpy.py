@@ -1087,6 +1087,7 @@ class TestDXSearch(unittest.TestCase):
     def test_find_jobs(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
+                     dxapi="1.0.0",
                      inputSpec=[{"name": "chromosomes", "class": "record"},
                                 {"name": "rowFetchChunk", "class": "int"}
                                 ],
