@@ -1,3 +1,9 @@
+dx-toolkit (0.62.2) precise; urgency=low
+
+  * Test fixes.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 13 Aug 2013 19:12:04 +0000
+
 dx-toolkit (0.62.1) precise; urgency=low
 
   * Fix "dx download" in containers.
