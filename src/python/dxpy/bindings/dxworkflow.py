@@ -102,7 +102,10 @@ class DXWorkflow(DXDataObject):
                 exec_id = get_app_from_path(exec_id)['id']
 
             executable = get_handler(exec_id)
-            job_name = executable.describe()['title']
+            executable_desc = executable.describe()
+            job_name = executable_desc.get('title', '')
+            if job_name == '':
+                job_name = executable_desc['name']
             job_name += ' - ' + (name if name is not None else workflow_name)
 
             exec_inputs = ExecutableInputs(executable, input_name_prefix=str(stage['key'])+".")
