@@ -1,3 +1,11 @@
+dx-toolkit (0.63.0) precise; urgency=low
+
+  * New command "dx whoami".
+
+  * New options --property and --tag to "dx find projects".
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 13 Aug 2013 19:09:08 +0000
+
 dx-toolkit (0.62.0) precise; urgency=low
 
   * dx download now accepts glob patterns.
