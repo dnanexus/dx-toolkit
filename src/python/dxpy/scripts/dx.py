@@ -889,7 +889,8 @@ def rmproject(args):
                     dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": True})
                 else:
                     raise apierror
-            print fill('Successfully deleted project \"' + proj_desc['name'] + '\"')
+            if not args.quiet:
+                print fill('Successfully deleted project \"' + proj_desc['name'] + '\"')
         except EOFError:
             print ''
             parser.exit(1)
@@ -3645,6 +3646,7 @@ parser_rmproject = subparsers.add_parser('rmproject', help='Delete a project',
                                          parents=[env_args])
 parser_rmproject.add_argument('projects', help='Projects to remove', metavar='project', nargs='+').completer = DXPathCompleter(expected='project', include_current_proj=True)
 parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
+parser_rmproject.add_argument('-q', '--quiet', help='Do not print purely informational messages', action='store_true')
 parser_rmproject.set_defaults(func=rmproject)
 register_subparser(parser_rmproject, categories='fs')
 
