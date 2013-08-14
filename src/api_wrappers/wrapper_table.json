@@ -1,5 +1,14 @@
 [
     [
+        "/app-xxxx/addAuthorizedUsers",
+        "appAddAuthorizedUsers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers"
+        }
+    ],
+    [
         "/app-xxxx/addCategories",
         "appAddCategories(req, objectId)",
         {
@@ -63,6 +72,15 @@
         }
     ],
     [
+        "/app-xxxx/listAuthorizedUsers",
+        "appListAuthorizedUsers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers"
+        }
+    ],
+    [
         "/app-xxxx/listCategories",
         "appListCategories(req, objectId)",
         {
@@ -87,6 +105,15 @@
             "objectMethod": true,
             "retryable": true,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish"
+        }
+    ],
+    [
+        "/app-xxxx/removeAuthorizedUsers",
+        "appRemoveAuthorizedUsers(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers"
         }
     ],
     [

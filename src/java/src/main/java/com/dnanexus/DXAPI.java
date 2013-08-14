@@ -19,6 +19,28 @@ public class DXAPI {
 
 
     /**
+     * Invokes the appAddAuthorizedUsers method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode appAddAuthorizedUsers(String objectId) throws Exception {
+        return appAddAuthorizedUsers(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the appAddAuthorizedUsers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addAuthorizedUsers", inputParams);
+    }
+
+    /**
      * Invokes the appAddCategories method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
@@ -173,6 +195,28 @@ public class DXAPI {
     }
 
     /**
+     * Invokes the appListAuthorizedUsers method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode appListAuthorizedUsers(String objectId) throws Exception {
+        return appListAuthorizedUsers(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the appListAuthorizedUsers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listAuthorizedUsers", inputParams);
+    }
+
+    /**
      * Invokes the appListCategories method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
@@ -236,6 +280,28 @@ public class DXAPI {
      */
     public static JsonNode appPublish(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "publish", inputParams);
+    }
+
+    /**
+     * Invokes the appRemoveAuthorizedUsers method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode appRemoveAuthorizedUsers(String objectId) throws Exception {
+        return appRemoveAuthorizedUsers(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the appRemoveAuthorizedUsers method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams);
     }
 
     /**
