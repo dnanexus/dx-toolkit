@@ -103,6 +103,12 @@ class DXWorkflow(DXDataObject):
 
             executable = get_handler(exec_id)
             executable_desc = executable.describe()
+
+            if exec_id.startswith('app-'):
+                stage['app'] = {
+                    "$dnanexus_link": 'app-' + executable_desc['name'] + '/' + executable_desc['version']
+                }
+
             job_name = executable_desc.get('title', '')
             if job_name == '':
                 job_name = executable_desc['name']
@@ -121,5 +127,8 @@ class DXWorkflow(DXDataObject):
             launched_jobs[stage['id']] = executable.run(input_json, project=project, folder=folder,
                                                         name=job_name,
                                                         **kwargs)
+
+        # Update workflow with updated executable IDs
+        self.set_details(workflow_spec)
 
         return launched_jobs.values()
