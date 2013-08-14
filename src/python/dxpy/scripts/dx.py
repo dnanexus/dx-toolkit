@@ -2678,6 +2678,11 @@ def print_run_help(executable="", alias=None):
                     else:
                         exec_desc = dxpy.get_handler(exec_id).describe()
 
+                if exec_id.startswith('app-'):
+                    stage['app'] = {
+                        "$dnanexus_link": 'app-' + exec_desc['name'] + '/' + exec_desc['version']
+                    }
+
                 input_spec = exec_desc.get('inputSpec')
                 output_spec = exec_desc.get('outputSpec')
 
@@ -2742,6 +2747,8 @@ def print_run_help(executable="", alias=None):
                             exec_help += '\n    ' + param['name']
 
                 exec_help += "\n"
+
+            handler.set_details(workflow)
         else:
             exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
 
@@ -2993,6 +3000,13 @@ def run(args):
                 exec_id = get_app_from_path(exec_id)['id']
 
             executable = dxpy.get_handler(exec_id)
+
+            if exec_id.startswith('app-'):
+                executable_desc = executable.describe()
+                stage['app'] = {
+                    "$dnanexus_link": 'app-' + executable_desc['name'] + '/' + executable_desc['version']
+                }
+
             if requested_job_name is None:
                 # TODO: name and describe caching in dxobject
                 # TODO: does apiserver append entry point name to parent/subjobs if job name is given? (or should we use :main here?)
@@ -3002,6 +3016,9 @@ def run(args):
                                                  preset_inputs=inputs_from_stage,
                                                  input_name_prefix=str(stage['key'])+".",
                                                  is_the_only_job=False)
+
+        handler.set_details(workflow)
+
         if args.wait:
             for stage in workflow['stages']:
                 launched_jobs[stage['id']].wait_on_done()
