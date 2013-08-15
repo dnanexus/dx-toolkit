@@ -1,3 +1,9 @@
+dx-toolkit (0.63.2) precise; urgency=low
+
+  * Update workflow records with app versions when run.
+
+ -- Katherine Lai <klai@dnanexus.com>  Thu, 15 Aug 2013 17:27:56 +0000
+
 dx-toolkit (0.63.1) precise; urgency=low
 
   * Bug fixes.
