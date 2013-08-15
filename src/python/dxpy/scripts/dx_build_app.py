@@ -616,7 +616,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     app_json = _parse_app_spec(src_dir)
 
     _verify_app_source_dir(src_dir, enforce=do_check_syntax)
-    if mode == "app":
+    if mode == "app" and not dry_run:
         _verify_app_writable(app_json['name'])
 
     working_project = None
@@ -813,7 +813,7 @@ def main(**kwargs):
         try:
             app_json = _parse_app_spec(args.src_dir)
             _verify_app_source_dir(args.src_dir)
-            if args.mode == "app":
+            if args.mode == "app" and not args.dry_run:
                 _verify_app_writable(app_json['name'])
         except dxpy.app_builder.AppBuilderException as e:
             print >> sys.stderr, "Error: %s" % (e.message,)
