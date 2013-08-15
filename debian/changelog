@@ -1,3 +1,9 @@
+dx-toolkit (0.62.3) precise; urgency=low
+
+  * Fix issue with dependency on the "distribute" package.
+
+ -- Andrey Kislyuk <akislyuk@peptide>  Thu, 15 Aug 2013 15:18:57 -0700
+
 dx-toolkit (0.62.2) precise; urgency=low
 
   * Test fixes.
