@@ -25,6 +25,7 @@ import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
 import dxpy_testutil as testutil
+from dxpy.packages import requests
 
 @contextmanager
 def chdir(dirname=None):
@@ -640,6 +641,49 @@ class TestDXClient(DXTestCase):
         # parsing error
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
+
+
+@unittest.skipUnless(testutil.TEST_HTTP_PROXY,
+                     'skipping HTTP Proxy support test that needs squid3')
+class TestHTTPProxySupport(DXTestCase):
+    def setUp(self):
+        squid_wd = os.path.join(os.path.dirname(__file__), 'http_proxy')
+        self.proxy_process = subprocess.Popen(['squid3', '-N', '-f', 'squid.conf'], cwd=squid_wd)
+        time.sleep(1)
+
+        print "Waiting for squid to come up..."
+        t = 0
+        while True:
+            try:
+                if requests.get("http://localhost:3129").status_code == requests.codes.bad_request:
+                    if self.proxy_process.poll() is not None:
+                        # Got a response on port 3129, but our proxy quit with an error, so it must be another process.
+                        raise Exception("Tried launching squid, but port 3129 is already bound")
+                    print "squid is up"
+                    break
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(0.5)
+            t += 1
+            if t > 16:
+                raise Exception("Failed to launch Squid")
+
+        self.proxy_env_no_auth = os.environ.copy()
+        self.proxy_env_no_auth["HTTP_PROXY"] = "http://localhost:3129"
+        self.proxy_env_no_auth["HTTPS_PROXY"] = "http://localhost:3129"
+
+        self.proxy_env = os.environ.copy()
+        self.proxy_env["HTTP_PROXY"] = "http://proxyuser:proxypassword@localhost:3129"
+        self.proxy_env["HTTPS_PROXY"] = "http://proxyuser:proxypassword@localhost:3129"
+
+    def test_proxy(self):
+        run("dx find projects", env=self.proxy_env)
+        with self.assertSubprocessFailure(stderr_regexp="407 Proxy Authentication Required"):
+            run("dx find projects", env=self.proxy_env_no_auth)
+
+    def tearDown(self):
+        self.proxy_process.terminate()
+
 
 class TestDXBuildApp(DXTestCase):
     def setUp(self):
