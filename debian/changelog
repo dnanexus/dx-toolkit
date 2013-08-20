@@ -1,3 +1,11 @@
+dx-toolkit (0.64.0) precise; urgency=low
+
+  * Improvements to dx-app-wizard and the app skeleton test suite it produces.
+
+  * Minor bug and test suite fixes.
+
+ -- Andrey Kislyuk <akislyuk@localhost>  Tue, 20 Aug 2013 20:47:54 +0000
+
 dx-toolkit (0.63.0) precise; urgency=low
 
   * New command "dx whoami".
