@@ -953,6 +953,37 @@ class TestDXBuildApp(DXTestCase):
             run("dx build " + app_dir)
         run("dx build --no-check-syntax " + app_dir)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_build_and_run_applet_remote(self):
+        app_spec = {
+            "name": "build_applet_remote",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [
+                {"name": "in1", "class": "int"},
+            ],
+            "outputSpec": [
+                {"name": "out1", "class": "int"}
+            ],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory('build_applet_remote', json.dumps(app_spec), code_filename='code.py', code_content="""import dxpy
+@dxpy.entry_point("main")
+def main(in1):
+    return {"out1": in1 + 1}
+""")
+        remote_build_output = run('dx build --remote ' + app_dir).strip().split('\n')[-1]
+        # TODO: it would be nice to have the output of dx build --remote
+        # more machine readable (perhaps when --json is specified)
+        build_job_id = re.search('job-[A-Za-z0-9]{24}', remote_build_output).group(0)
+        build_job_describe = json.loads(run('dx describe --json ' + build_job_id))
+        applet_id = build_job_describe['output']['output_applet']['$dnanexus_link']
+        invocation_job_id = run('dx run --brief --yes ' + applet_id + ' -iin1=8675309').strip()
+        run('dx wait ' + invocation_job_id)
+        invocation_job_describe = json.loads(run('dx describe --json ' + invocation_job_id))
+        self.assertEquals(invocation_job_describe['output']['out1'], 8675310)
+
     def test_applet_help(self):
         app_spec = {
             "name": "applet_help",
