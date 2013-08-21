@@ -968,11 +968,13 @@ class TestDXBuildApp(DXTestCase):
             ],
             "version": "1.0.0"
             }
-        app_dir = self.write_app_directory('build_applet_remote', json.dumps(app_spec), code_filename='code.py', code_content="""import dxpy
+        app_code = """import dxpy
 @dxpy.entry_point("main")
 def main(in1):
     return {"out1": in1 + 1}
-""")
+"""
+        app_dir = self.write_app_directory(
+            'build_applet_remote', json.dumps(app_spec), code_filename='code.py', code_content=app_code)
         remote_build_output = run('dx build --remote ' + app_dir).strip().split('\n')[-1]
         # TODO: it would be nice to have the output of dx build --remote
         # more machine readable (perhaps when --json is specified)
