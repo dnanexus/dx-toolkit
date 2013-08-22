@@ -2649,6 +2649,7 @@ def print_run_help(executable="", alias=None):
             exec_help += "Workflow: " + exec_desc['name'] + "\n\n"
 
             workflow = handler.get_details()
+            workflow_details = copy.deepcopy(workflow)
             if workflow.get('version') not in range(2, 6):
                 parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
 
@@ -2666,7 +2667,7 @@ def print_run_help(executable="", alias=None):
                     if workflow['stages'][k]['inputs'][i] == "":
                         del workflow['stages'][k]['inputs'][i]
 
-            for stage in workflow['stages']:
+            for k, stage in enumerate(workflow['stages']):
                 exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
                 if workflow.get('version') < 3:
                     exec_desc = stage['app']
@@ -2679,7 +2680,7 @@ def print_run_help(executable="", alias=None):
                         exec_desc = dxpy.get_handler(exec_id).describe()
 
                 if exec_id.startswith('app-'):
-                    stage['app'] = {
+                    workflow_details['stages'][k]['app'] = {
                         "$dnanexus_link": 'app-' + exec_desc['name'] + '/' + exec_desc['version']
                     }
 
@@ -2748,7 +2749,7 @@ def print_run_help(executable="", alias=None):
 
                 exec_help += "\n"
 
-            handler.set_details(workflow)
+            handler.set_details(workflow_details)
         else:
             exec_help += ' [-iINPUT_NAME=VALUE ...]\n\n'
 
@@ -2977,6 +2978,7 @@ def run(args):
         if not args.brief:
             print "Executing workflow", handler
         workflow = handler.get_details()
+        workflow_details = copy.deepcopy(workflow)
         if workflow.get('version') not in range(2, 6):
             parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow['version'], w=handler))
         launched_jobs = {stage['id']: None for stage in workflow['stages']}
@@ -2988,7 +2990,7 @@ def run(args):
                 if workflow['stages'][k]['inputs'][i] == "":
                     del workflow['stages'][k]['inputs'][i]
 
-        for stage in workflow['stages']:
+        for k, stage in enumerate(workflow['stages']):
             if not args.brief:
                 print "Processing stage", stage['key'], "(id", stage['id'] + ")"
             inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
@@ -3003,7 +3005,7 @@ def run(args):
 
             if exec_id.startswith('app-'):
                 executable_desc = executable.describe()
-                stage['app'] = {
+                workflow_details['stages'][k]['app'] = {
                     "$dnanexus_link": 'app-' + executable_desc['name'] + '/' + executable_desc['version']
                 }
 
@@ -3017,7 +3019,7 @@ def run(args):
                                                  input_name_prefix=str(stage['key'])+".",
                                                  is_the_only_job=False)
 
-        handler.set_details(workflow)
+        handler.set_details(workflow_details)
 
         if args.wait:
             for stage in workflow['stages']:
