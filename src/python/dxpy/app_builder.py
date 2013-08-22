@@ -124,7 +124,7 @@ def get_destination_project(src_dir, project=None):
         return project
     return _get_applet_spec(src_dir)['project']
 
-def upload_resources(src_dir, project=None):
+def upload_resources(src_dir, project=None, folder='/'):
     """
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
@@ -154,7 +154,7 @@ def upload_resources(src_dir, project=None):
                     dxpy.DXProject(dest_project).new_folder(applet_spec['folder'], parents=True)
                 except dxpy.exceptions.DXAPIError:
                     pass # TODO: make this better
-            target_folder = applet_spec['folder'] if 'folder' in applet_spec else '/'
+            target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
             dx_resource_archive = dxpy.upload_local_file(tar_fh.name, wait_on_close=True,
                                                          project=dest_project, folder=target_folder, hidden=True)
             archive_link = dxpy.dxlink(dx_resource_archive.get_id())

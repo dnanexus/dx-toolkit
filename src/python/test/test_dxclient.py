@@ -1009,6 +1009,28 @@ def main(in1):
         self.assertTrue("Optional: [-ioptional=(file)]" in applet_help)
         self.assertTrue("Mappings: mappings (gtable, type LetterMappings)" in applet_help)
 
+    def test_upload_resources(self):
+        run("dx mkdir /subfolder")
+        run("dx cd /subfolder")
+        app_spec = {
+            "name": "upload_resources",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("upload_resources", json.dumps(app_spec), "code.py")
+        os.mkdir(os.path.join(app_dir, 'resources'))
+        with open(os.path.join(app_dir, 'resources', 'test.txt'), 'w') as resources_file:
+            resources_file.write('test\n')
+        new_applet = json.loads(run("dx build --json " + app_dir))
+        applet_describe = json.loads(run("dx describe --json " + new_applet["id"]))
+        resources_file = applet_describe['runSpec']['bundledDepends'][0]['id']['$dnanexus_link']
+        resources_file_describe = json.loads(run("dx describe --json " + resources_file))
+        # Verify that the bundled depends appear in the same folder.
+        self.assertEqual(resources_file_describe['folder'], '/subfolder')
+
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"

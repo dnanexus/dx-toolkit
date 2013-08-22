@@ -661,7 +661,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if not do_upload_step:
             return
 
-        bundled_resources = dxpy.app_builder.upload_resources(src_dir, project=working_project) if not dry_run else []
+        bundled_resources = dxpy.app_builder.upload_resources(
+            src_dir, project=working_project, folder=override_folder) if not dry_run else []
 
         try:
             # TODO: the "auto" setting is vestigial and should be removed.
