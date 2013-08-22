@@ -29,6 +29,7 @@ overridden by setting them here as well.
 """
 
 import json
+import copy
 from collections import OrderedDict
 from argparse import Namespace
 
@@ -78,6 +79,7 @@ class DXWorkflow(DXDataObject):
 
         workflow_name = self.describe()['name']
         workflow_spec = self.get_details()
+        workflow_details = copy.deepcopy(workflow_spec)
         if workflow_spec.get('version') not in range(2, 6):
             raise DXError("Unrecognized workflow version {v} in {w}\n".format(v=workflow_spec.get('version', '<none>'), w=self))
 
@@ -91,7 +93,7 @@ class DXWorkflow(DXDataObject):
                 if workflow_spec['stages'][k]['inputs'][i] == "":
                     del workflow_spec['stages'][k]['inputs'][i]
 
-        for stage in workflow_spec['stages']:
+        for k, stage in enumerate(workflow_spec['stages']):
             inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
 
             exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
@@ -105,7 +107,7 @@ class DXWorkflow(DXDataObject):
             executable_desc = executable.describe()
 
             if exec_id.startswith('app-'):
-                stage['app'] = {
+                workflow_details['stages'][k]['app'] = {
                     "$dnanexus_link": 'app-' + executable_desc['name'] + '/' + executable_desc['version']
                 }
 
@@ -129,6 +131,6 @@ class DXWorkflow(DXDataObject):
                                                         **kwargs)
 
         # Update workflow with updated executable IDs
-        self.set_details(workflow_spec)
+        self.set_details(workflow_details)
 
         return launched_jobs.values()
