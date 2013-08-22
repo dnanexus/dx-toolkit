@@ -295,6 +295,8 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
     Checks that the code in FILENAME parses, attempting to autodetect
     the language if necessary.
 
+    Raises IOError if the file cannot be read.
+
     Raises subprocess.CalledProcessError if there is a problem, and
     "enforce" is True.
     """
@@ -314,6 +316,10 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
     else:
         # Ignore other kinds of files.
         return
+
+    # Do a test read of the file to catch errors like the file not
+    # existing or not being readable.
+    open(filename)
 
     try:
         checker_fn(filename)
@@ -343,7 +349,10 @@ def _verify_app_source_dir(src_dir, enforce=True):
                 entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
                 try:
                     _check_file_syntax(entry_point_file, override_lang=manifest['runSpec']['interpreter'], enforce=enforce)
-                except subprocess.CalledProcessError:
+                except IOError as e:
+                    raise dxpy.app_builder.AppBuilderException(
+                        'Could not open runSpec.file=%r. The problem was: %s' % (entry_point_file, e))
+                except subprocess.CalledProcessError as e:
                     raise dxpy.app_builder.AppBuilderException('Entry point file %s has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.' % (entry_point_file,))
             elif "code" in manifest['runSpec']:
                 try:
@@ -381,6 +390,11 @@ def _verify_app_source_dir(src_dir, enforce=True):
             if not filename.startswith("._"):
                 try:
                     _check_file_syntax(os.path.join(dirpath, filename), enforce=True)
+                except IOError as e:
+                    raise dxpy.app_builder.AppBuilderException(
+                        'Could not open file in resources directory %r. The problem was: %s' %
+                        (os.path.join(dirpath, filename), e)
+                    )
                 except subprocess.CalledProcessError:
                     # Suppresses errors from _check_file_syntax so we
                     # only print a nice error message
