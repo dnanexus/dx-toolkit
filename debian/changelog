@@ -1,3 +1,9 @@
+dx-toolkit (0.63.3) precise; urgency=low
+
+  * Bug fix for running workflows with linked array inputs.
+
+ -- Katherine Lai <klai@dnanexus.com>  Fri, 23 Aug 2013 00:03:29 +0000
+
 dx-toolkit (0.63.2) precise; urgency=low
 
   * Update workflow records with app versions when run.
