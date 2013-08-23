@@ -547,21 +547,24 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                     found_valid_class = True
         if not found_valid_class:
             return None, None, None
+
+        if 'project' not in describe:
+            if project != dxpy.WORKSPACE_ID:
+                describe['project'] = project
+            elif dxpy.WORKSPACE_ID is not None:
+                describe['project'] = dxpy.WORKSPACE_ID
         try:
-            if 'project' not in describe:
-                if project != dxpy.WORKSPACE_ID:
-                    describe['project'] = project
-                elif dxpy.WORKSPACE_ID is not None:
-                    describe['project'] = dxpy.WORKSPACE_ID
             desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
-        except:
+        except Exception as details:
             if 'project' in describe:
                 # Now try it without the hint
                 del describe['project']
                 try:
                     desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
-                except BaseException as details:
+                except Exception as details:
                     raise ResolutionError(str(details))
+            else:
+                raise ResolutionError(str(details))
         result = {"id": entity_name, "describe": desc}
         if ask_to_resolve and not allow_mult:
             return project, folderpath, result
