@@ -1,3 +1,9 @@
+dx-toolkit (0.64.1) precise; urgency=low
+
+  * Bug fix for running workflows with linked array inputs.
+
+ -- Katherine Lai <klai@dnanexus.com>  Fri, 23 Aug 2013 00:02:30 +0000
+
 dx-toolkit (0.64.0) precise; urgency=low
 
   * Improvements to dx-app-wizard and the app skeleton test suite it produces.
