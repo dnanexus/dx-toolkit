@@ -144,7 +144,7 @@ from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLIN
 from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
-                                 resolve_existing_path, get_app_from_path, cached_project_names, split_unescaped,
+                                 resolve_existing_path, get_app_from_path, resolve_app, cached_project_names, split_unescaped,
                                  ResolutionError, get_first_pos_of_char, resolve_to_objects_or_project)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
@@ -2503,16 +2503,72 @@ def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
     dx_build_app.main()
 
+def process_list_of_usernames(thing):
+    return ['user-' + name if name != 'PUBLIC' and
+            not name.startswith('org-') and
+            not name.startswith('user-')
+            else name
+            for name in thing]
+
+def add_users(args):
+    app_desc = try_call(resolve_app, args.app)
+    args.users = process_list_of_usernames(args.users)
+    try:
+        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/addAuthorizedUsers', {"authorizedUsers": args.users})
+    except:
+        err_exit()
+
+def remove_users(args):
+    app_desc = try_call(resolve_app, args.app)
+    args.users = process_list_of_usernames(args.users)
+
+    try:
+        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/removeAuthorizedUsers', {"authorizedUsers": args.users})
+    except:
+        err_exit()
+
+def list_users(args):
+    app_desc = try_call(resolve_app, args.app)
+
+    for user in app_desc['authorizedUsers']:
+        print user
+
+def add_developers(args):
+    app_desc = try_call(resolve_app, args.app)
+    args.developers = process_list_of_usernames(args.developers)
+    if any(entity.startswith('org-') for entity in args.developers):
+        err_exit('Error: organizations as developers of an app is currently unsupported', code=3)
+    try:
+        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/addDevelopers', {"developers": args.developers})
+    except:
+        err_exit()
+
+def list_developers(args):
+    app_desc = try_call(resolve_app, args.app)
+
+    try:
+        for user in dxpy.DXHTTPRequest('/' + app_desc['id'] + '/listDevelopers', {})['developers']:
+            print user
+    except:
+        err_exit()
+
+def remove_developers(args):
+    app_desc = try_call(resolve_app, args.app)
+    args.developers = process_list_of_usernames(args.developers)
+
+    try:
+        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/removeDevelopers', {"developers": args.developers})
+    except:
+        err_exit()
+
 def install(args):
-    app_desc = get_app_from_path(args.app)
-    if app_desc is None:
-        parser.exit(1, 'Could not find the app\n')
-    else:
-        try:
-            dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
-            print 'Installed the ' + app_desc['name'] + ' app'
-        except:
-            err_exit()
+    app_desc = try_call(resolve_app, args.app)
+
+    try:
+        dxpy.DXHTTPRequest('/' + app_desc['id'] + '/install', {})
+        print 'Installed the ' + app_desc['name'] + ' app'
+    except:
+        err_exit()
 
 def uninstall(args):
     app_desc = get_app_from_path(args.app)
@@ -3588,6 +3644,77 @@ parser_build = subparsers.add_parser('build', help='Upload and build a new apple
 parser_build.set_defaults(func=build)
 #parser_build.completer = LocalCompleter()
 register_subparser(parser_build, categories='exec')
+
+parser_add = subparsers.add_parser('add', help='Add one or more items to a list',
+                                   description='Use this command with one of the availabile subcommands to perform various actions such as adding other users to the list of developers or authorized users of an app',
+                                   prog='dx add')
+subparsers_add = parser_add.add_subparsers(parser_class=DXArgumentParser)
+subparsers_add.metavar = 'list_type'
+register_subparser(parser_add, categories=())
+
+parser_add_users = subparsers_add.add_parser('users', help='Add authorized users for an app',
+                                             description='Add users or orgs to the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers.',
+                                             prog='dx add users')
+parser_add_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
+parser_add_users.add_argument('users', metavar='authorizedUser', help='One or more users or orgs to add; use "PUBLIC" to allow all access',
+                              nargs='+')
+parser_add_users.set_defaults(func=add_users)
+register_subparser(parser_add_users, subparsers_action=subparsers_add, categories='exec')
+
+parser_add_developers = subparsers_add.add_parser('developers', help='Add developers for an app',
+                                                  description='Add users to the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
+                                                  prog='dx add developers')
+parser_add_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
+parser_add_developers.add_argument('developers', metavar='developer', help='One or more users to add',
+                              nargs='+')
+parser_add_developers.set_defaults(func=add_developers)
+register_subparser(parser_add_developers, subparsers_action=subparsers_add, categories='exec')
+
+parser_list = subparsers.add_parser('list', help='Print the members of a list',
+                                   description='Use this command with one of the availabile subcommands to perform various actions such as printing the list of developers or authorized users of an app.',
+                                   prog='dx list')
+subparsers_list = parser_list.add_subparsers(parser_class=DXArgumentParser)
+subparsers_list.metavar = 'list_type'
+register_subparser(parser_list, categories=())
+
+parser_list_users = subparsers_list.add_parser('users', help='List authorized users for an app',
+                                                   description='List the authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
+                                                   prog='dx list users')
+parser_list_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
+parser_list_users.set_defaults(func=list_users)
+register_subparser(parser_list_users, subparsers_action=subparsers_list, categories='exec')
+
+parser_list_developers = subparsers_list.add_parser('developers', help='List developers for an app',
+                                                        description='List the developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
+                                                        prog='dx list developers')
+parser_list_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
+parser_list_developers.set_defaults(func=list_developers)
+register_subparser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
+
+parser_remove = subparsers.add_parser('remove', help='Remove one or more items to a list',
+                                   description='Use this command with one of the availabile subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
+                                   prog='dx remove')
+subparsers_remove = parser_remove.add_subparsers(parser_class=DXArgumentParser)
+subparsers_remove.metavar = 'list_type'
+register_subparser(parser_remove, categories=())
+
+parser_remove_users = subparsers_remove.add_parser('users', help='Remove authorized users for an app',
+                                                   description='Remove users or orgs from the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
+                                                   prog='dx remove users')
+parser_remove_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
+parser_remove_users.add_argument('users', metavar='authorizedUser', help='One or more users or orgs to remove; use "PUBLIC" to remove public access',
+                                            nargs='+')
+parser_remove_users.set_defaults(func=remove_users)
+register_subparser(parser_remove_users, subparsers_action=subparsers_remove, categories='exec')
+
+parser_remove_developers = subparsers_remove.add_parser('developers', help='Remove developers for an app',
+                                                        description='Remove users from the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
+                                                        prog='dx remove developers')
+parser_remove_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
+parser_remove_developers.add_argument('developers', metavar='developer', help='One or more users to remove',
+                                      nargs='+')
+parser_remove_developers.set_defaults(func=remove_developers)
+register_subparser(parser_remove_developers, subparsers_action=subparsers_remove, categories='exec')
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.', prog='dx install',

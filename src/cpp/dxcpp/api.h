@@ -23,6 +23,11 @@
 
 namespace dx {
 
+  JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+  JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+  JSON appAddAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+  JSON appAddAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
+
   JSON appAddCategories(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
   JSON appAddCategories(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
   JSON appAddCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
@@ -58,6 +63,11 @@ namespace dx {
   JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
   JSON appInstallWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
+  JSON appListAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+  JSON appListAuthorizedUsers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+  JSON appListAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+  JSON appListAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
+
   JSON appListCategories(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
   JSON appListCategories(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
   JSON appListCategoriesWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
@@ -72,6 +82,11 @@ namespace dx {
   JSON appPublish(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
   JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
   JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
+
+  JSON appRemoveAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
+  JSON appRemoveAuthorizedUsers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
+  JSON appRemoveAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
+  JSON appRemoveAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool retry=true);
 
   JSON appRemoveCategories(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
   JSON appRemoveCategories(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);

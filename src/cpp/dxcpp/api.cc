@@ -6,6 +6,22 @@
 #include "api.h"
 namespace dx {
 
+  JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addAuthorizedUsers"), input_params, retry);
+  }
+
+  JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const JSON &input_params, const bool retry) {
+    return appAddAuthorizedUsers(app_id_or_name, input_params.toString(), retry);
+  }
+
+  JSON appAddAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool retry) {
+    return appAddAuthorizedUsers(app_name + std::string("/") + app_alias, input_params, retry);
+  }
+
+  JSON appAddAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool retry) {
+    return appAddAuthorizedUsersWithAlias(app_name, app_alias, input_params.toString(), retry);
+  }
+
   JSON appAddCategories(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addCategories"), input_params, retry);
   }
@@ -118,6 +134,22 @@ namespace dx {
     return appInstallWithAlias(app_name, app_alias, input_params.toString(), retry);
   }
 
+  JSON appListAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/listAuthorizedUsers"), input_params, retry);
+  }
+
+  JSON appListAuthorizedUsers(const std::string &app_id_or_name, const JSON &input_params, const bool retry) {
+    return appListAuthorizedUsers(app_id_or_name, input_params.toString(), retry);
+  }
+
+  JSON appListAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool retry) {
+    return appListAuthorizedUsers(app_name + std::string("/") + app_alias, input_params, retry);
+  }
+
+  JSON appListAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool retry) {
+    return appListAuthorizedUsersWithAlias(app_name, app_alias, input_params.toString(), retry);
+  }
+
   JSON appListCategories(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/listCategories"), input_params, retry);
   }
@@ -164,6 +196,22 @@ namespace dx {
 
   JSON appPublishWithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool retry) {
     return appPublishWithAlias(app_name, app_alias, input_params.toString(), retry);
+  }
+
+  JSON appRemoveAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/removeAuthorizedUsers"), input_params, retry);
+  }
+
+  JSON appRemoveAuthorizedUsers(const std::string &app_id_or_name, const JSON &input_params, const bool retry) {
+    return appRemoveAuthorizedUsers(app_id_or_name, input_params.toString(), retry);
+  }
+
+  JSON appRemoveAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params, const bool retry) {
+    return appRemoveAuthorizedUsers(app_name + std::string("/") + app_alias, input_params, retry);
+  }
+
+  JSON appRemoveAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const JSON &input_params, const bool retry) {
+    return appRemoveAuthorizedUsersWithAlias(app_name, app_alias, input_params.toString(), retry);
   }
 
   JSON appRemoveCategories(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
