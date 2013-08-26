@@ -26,11 +26,13 @@ from ..packages import requests
 # Try to reset encoding to utf-8
 # Note: This is incompatible with pypy
 # Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
-try:
-    import sys, locale
-    reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
-except:
-    pass
+import platform
+if platform.python_implementation() != "PyPy":
+    try:
+        import locale
+        reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+    except:
+        pass
 
 try:
     import colorama
