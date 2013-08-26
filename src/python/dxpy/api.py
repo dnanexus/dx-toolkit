@@ -7,6 +7,25 @@ import sys
 
 from dxpy import DXHTTPRequest
 
+def appAddAuthorizedUsers(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`app_add_authorized_users()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.appAddAuthorizedUsers is deprecated; please use app_add_authorized_users instead."
+    return app_add_authorized_users(*args, **kwargs)
+
+def app_add_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /app-xxxx/addAuthorizedUsers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers
+    """
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/addAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
 def appAddCategories(*args, **kwargs):
     """
 
@@ -140,6 +159,25 @@ def app_install(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/install' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
+def appListAuthorizedUsers(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`app_list_authorized_users()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.appListAuthorizedUsers is deprecated; please use app_list_authorized_users instead."
+    return app_list_authorized_users(*args, **kwargs)
+
+def app_list_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /app-xxxx/listAuthorizedUsers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers
+    """
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/listAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
 def appListCategories(*args, **kwargs):
     """
 
@@ -196,6 +234,25 @@ def app_publish(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     """
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def appRemoveAuthorizedUsers(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`app_remove_authorized_users()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.appRemoveAuthorizedUsers is deprecated; please use app_remove_authorized_users instead."
+    return app_remove_authorized_users(*args, **kwargs)
+
+def app_remove_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /app-xxxx/removeAuthorizedUsers API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers
+    """
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/removeAuthorizedUsers' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
 def appRemoveCategories(*args, **kwargs):
     """
