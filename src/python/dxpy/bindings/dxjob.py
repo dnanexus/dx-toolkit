@@ -199,7 +199,7 @@ class DXJob(DXObject):
         :type interval: integer
         :param timeout: Maximum amount of time to wait, in seconds, until the job is done running
         :type timeout: integer
-        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the job has finished running
+        :raises: :exc:`~dxpy.exceptions.DXError` if the timeout is reached before the job has finished running, or :exc:`dxpy.exceptions.DXJobFailureError` if the job fails
 
         Waits until the job has finished running.
         '''
@@ -239,7 +239,7 @@ class DXJob(DXObject):
         to refer to an output of this job.
         '''
 
-        return {"job": self._dxid, "field": field}
+        return {"$dnanexus_link": {"job": self._dxid, "field": field}}
 
     def _get_state(self, **kwargs):
         '''
