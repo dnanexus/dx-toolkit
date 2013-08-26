@@ -443,6 +443,17 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
     if categories_to_remove:
         dxpy.api.app_remove_categories(app_id, input_params={'categories': list(categories_to_remove)})
 
+    # Set authorizedUsers list appropriately, but only if provided.
+    authorized_users_to_set = app_spec.get("authorizedUsers")
+    if authorized_users_to_set is not None:
+        existing_authorized_users = dxpy.api.app_list_authorized_users(app_id)['authorizedUsers']
+        authorized_users_to_add = set(authorized_users_to_set) - set(existing_authorized_users)
+        authorized_users_to_remove = set(existing_authorized_users) - set(authorized_users_to_set)
+        if authorized_users_to_add:
+            dxpy.api.app_add_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_add)})
+        if authorized_users_to_remove:
+            dxpy.api.app_remove_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_remove)})
+
     if publish:
         dxpy.api.app_publish(app_id, input_params={'makeDefault': set_default})
     else:

@@ -647,6 +647,25 @@ def get_app_from_path(path):
     except dxpy.DXAPIError:
         return None
 
+def resolve_app(path):
+    '''
+    :param path: A string which is supposed to identify an app
+    :type path: string
+    :returns: The describe hash of the app object
+    :raises: :exc:`ResolutionError` if it cannot be found
+
+    *path* is expected to have one of the following forms:
+
+    - hash ID, e.g. "app-B8GZ8bQ0xky1PKY6FjGQ000J"
+    - named ID, e.g. "app-myapp"
+    - named ID with alias (version or tag), e.g. "app-myapp/1.2.0"
+    '''
+    desc = get_app_from_path(path)
+    if desc is None:
+        raise ResolutionError('The given path \"' + path + '\" could not be resolved to an accessible app')
+    else:
+        return desc
+
 def resolve_to_objects_or_project(path, all_matching_results=False):
     '''
     :param path: Path to resolve

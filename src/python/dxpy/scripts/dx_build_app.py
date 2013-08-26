@@ -364,6 +364,13 @@ def _verify_app_source_dir(src_dir, enforce=True):
                     'Rerun with --no-check-syntax to proceed anyway.'])
                     raise dxpy.app_builder.AppBuilderException(msg)
 
+    if 'authorizedUsers' in manifest:
+        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], basestring):
+            raise dxpy.app_builder.AppBuilderException('Expected authorizedUsers to be a list of strings')
+        for thing in manifest['authorizedUsers']:
+            if thing != 'PUBLIC' and (not isinstance(thing, basestring) or not re.match("^(org-|user-)", thing)):
+                raise dxpy.app_builder.AppBuilderException('authorizedUsers field contains an entry which is not either the string "PUBLIC" or a user or org ID')
+
     # Check all other files that are going to be in the resources tree.
     # For these we detect the language based on the filename extension.
     # Obviously this check can have false positives, since the app can

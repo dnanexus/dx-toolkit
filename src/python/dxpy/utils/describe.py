@@ -335,8 +335,8 @@ def print_project_desc(desc, verbose=False):
             print_json_field(field, desc[field])
 
 def print_app_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes']
-    # NOTE: Hiding "billing" for now
+    recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes',
+                         'authorizedUsers']
 
     advanced_inputs = [] if verbose else desc["details"].get("advancedInputs")
     if "advancedInputs" in desc["details"]:
@@ -388,6 +388,8 @@ def print_app_desc(desc, verbose=False):
             print_field("Resources", desc['resources'])
     if 'installs' in desc:
         print_field('# Installs', str(desc['installs']))
+    if 'authorizedUsers' in desc:
+        print_list_field('AuthorizedUsers', desc["authorizedUsers"])
 
     for field in desc:
         if field not in recognized_fields:
