@@ -1137,7 +1137,7 @@ def tree(args):
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
-                if item['describe']['class'] == 'applet' or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
+                if item['describe']['class'] in ['applet', 'workflow'] or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
@@ -2594,13 +2594,13 @@ def get_exec_or_workflow_handler(path, alias):
             project, folderpath, entity_results = resolve_existing_path(path,
                                                                         expected='entity',
                                                                         ask_to_resolve=False,
-                                                                        expected_classes=['applet', 'record'])
-            def is_applet(i):
-                return (i['describe']['class'] == 'applet')
-            def is_workflow(i):
+                                                                        expected_classes=['applet', 'record', 'workflow'])
+            def is_applet_or_workflow(i):
+                return (i['describe']['class'] in ['applet', 'workflow'])
+            def is_record_workflow(i):
                 return ('pipeline' in i['describe']['types'])
             if entity_results is not None:
-                entity_results = [i for i in entity_results if is_applet(i) or is_workflow(i)]
+                entity_results = [i for i in entity_results if is_applet_or_workflow(i) or is_record_workflow(i)]
                 if len(entity_results) == 0:
                     entity_results = None
         except:
@@ -2820,7 +2820,7 @@ def print_run_help(executable="", alias=None):
                 exec_help += BOLD("App: ")
                 exec_details = exec_desc['details']
             else:
-                exec_help += BOLD("Applet: ")
+                exec_help += BOLD(exec_desc['class'].capitalize() + ": ")
                 exec_details = handler.get_details()
             advanced_inputs = exec_details.get("advancedInputs", [])
             exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
@@ -3785,7 +3785,7 @@ run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
-                                                  DXPathCompleter(classes=['applet']),
+                                                  DXPathCompleter(classes=['applet', 'workflow']),
                                                   DXPathCompleter(classes=['record'], typespec='pipeline')])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))

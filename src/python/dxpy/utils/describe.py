@@ -32,8 +32,10 @@ def JOB_STATES(state):
         return BOLD() + RED() + state + ENDC()
     elif state == 'done':
         return BOLD() + GREEN() + state + ENDC()
-    elif state == 'running':
+    elif state in ['running', 'in_progress']:
         return GREEN() + state + ENDC()
+    elif state == 'partially_failed':
+        return RED() + state + ENDC()
     else:
         return YELLOW() + state + ENDC()
 
@@ -83,7 +85,7 @@ def get_io_desc(parameter, include_class=True, show_opt=True, app_help_version=F
             return get_io_desc(scalar_parameter, include_class=include_class, show_opt=False, app_help_version=app_help_version) + " [-i%s=... [...]]" % (parameter["name"],)
 
     desc = ""
-    is_optional = False;
+    is_optional = False
     if show_opt:
         if "default" in parameter or parameter.get("optional"):
             is_optional = True
@@ -262,6 +264,24 @@ def render_execdepends(thing):
         rendered.append("{package_manager}: {name}{version}".format(**dep))
     return rendered
 
+def render_stage(title, stage):
+    lines_to_print = [(title, stage['name'] + ' (' + stage['id'] + ')'),
+                      ('  Executable', stage['executable'])]
+    if 'execution' in stage:
+        if 'state' in stage['execution']:
+            lines_to_print.append(('  Execution', stage['execution']['id'] + ' (' + JOB_STATES(stage['execution']['state']) + ')'))
+        else:
+            lines_to_print.append(('  Execution', stage['execution']['id']))
+
+    for line in lines_to_print:
+        print_field(line[0], line[1])
+
+def render_short_timestamp(timestamp):
+    return str(datetime.datetime.fromtimestamp(timestamp/1000))
+
+def render_timestamp(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp/1000).ctime()
+
 def print_field(label, value):
     if get_delimiter() is not None:
         sys.stdout.write(label + get_delimiter() + value + '\n')
@@ -298,10 +318,10 @@ def print_project_desc(desc, verbose=False):
         print_json_field("Protected", desc["protected"])
     if 'restricted' in desc:
         print_json_field("Restricted", desc["restricted"])
-    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    print_field("Created", render_timestamp(desc['created']))
     if 'createdBy' in desc:
         print_field("Created by", desc['createdBy']['user'][desc['createdBy']['user'].find('-') + 1:])
-    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+    print_field("Last modified", render_timestamp(desc['modified']))
     print_field("Data usage", ('%.2f' % desc["dataUsage"]) + ' GB')
     if 'sponsoredDataUsage' in desc:
         print_field("Sponsored data", ('%.2f' % desc["sponsoredDataUsage"]) + ' GB')
@@ -324,7 +344,7 @@ def print_project_desc(desc, verbose=False):
     if 'project' in desc:
         print_field("Assoc. project", desc["project"])
     if 'destroyAt' in desc:
-        print_field("To be destroyed", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+        print_field("To be destroyed", render_timestamp(desc['modified']))
     if 'app' in desc:
         print_field("Assoc. App ID", desc["app"])
     if 'appName' in desc:
@@ -350,8 +370,8 @@ def print_app_desc(desc, verbose=False):
     print_field("Version", desc["version"])
     print_list_field("Aliases", desc["aliases"])
     print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
-    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
-    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+    print_field("Created", render_timestamp(desc['created']))
+    print_field("Last modified", render_timestamp(desc['modified']))
     print_field("Created from", desc["applet"])
     print_json_field('Installed', desc['installed'])
     print_json_field('Open source', desc['openSource'])
@@ -360,7 +380,7 @@ def print_app_desc(desc, verbose=False):
         if 'published' not in desc or desc["published"] < 0:
             print_field("Published", "-")
         else:
-            print_field("Published", datetime.datetime.fromtimestamp(desc['published']/1000).ctime())
+            print_field("Published", render_timestamp(desc['published']))
         if "title" in desc and desc['title'] is not None:
             print_field("Title", desc["title"])
         if "subtitle" in desc and desc['subtitle'] is not None:
@@ -399,7 +419,8 @@ def get_col_str(col_desc):
     return col_desc['name'] + DELIMITER(" (") + col_desc['type'] + DELIMITER(")")
 
 def print_data_obj_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes']
+    recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
+                         'stages', 'latestAnalysis', 'editVersion']
 
     advanced_inputs = [] if verbose else desc["details"].get("advancedInputs") if "details" in desc else []
 
@@ -425,14 +446,16 @@ def print_data_obj_desc(desc, verbose=False):
         print_json_field("Details", desc["details"])
     if 'links' in desc:
         print_list_field("Outgoing links", desc['links'])
-    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    print_field("Created", render_timestamp(desc['created']))
     if 'createdBy' in desc:
         print_field("Created by", desc['createdBy']['user'][5:])
         if 'job' in desc["createdBy"]:
             print_field(" via the job", desc['createdBy']['job'])
             if verbose and 'executable' in desc['createdBy']:
                 print_field(" running", desc['createdBy']['executable'])
-    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+    print_field("Last modified", render_timestamp(desc['modified']))
+    if "editVersion" in desc:
+        print_field("Edit Version", str(desc['editVersion']))
     if "title" in desc:
         print_field("Title", desc["title"])
     if "subtitle" in desc:
@@ -457,6 +480,13 @@ def print_data_obj_desc(desc, verbose=False):
             print_list_field("execDepends", render_execdepends(desc["runSpec"]["execDepends"]))
         if "systemRequirements" in desc['runSpec']:
             print_json_field('Sys Requirements', desc['runSpec']['systemRequirements'])
+    if 'stages' in desc:
+        for i, stage in enumerate(desc["stages"]):
+            render_stage("Stage " + str(i), stage)
+    if 'latestAnalysis' in desc and desc['latestAnalysis'] is not None:
+        print_field("Last execution", desc["latestAnalysis"]["id"])
+        print_field("  run at", render_timestamp(desc["latestAnalysis"]["created"]))
+        print_field("  state", JOB_STATES(desc["latestAnalysis"]["state"]))
 
     for field in desc:
         if field in recognized_fields:
@@ -488,14 +518,17 @@ def print_data_obj_desc(desc, verbose=False):
             else: # Unhandled prettifying
                 print_json_field(field, desc[field])
 
-def print_job_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'app', 'state', 'parentJob', 'originJob',
+def print_execution_desc(desc):
+    recognized_fields = ['id', 'class', 'project', 'workspace',
+                         'app', 'applet', 'executable', 'workflow',
+                         'state',
+                         'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
-                         'dependsOn', 'resources', 'projectCache', 'applet', 'details',
+                         'dependsOn', 'resources', 'projectCache', 'details',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
-                         'delayWorkspaceDestruction']
+                         'delayWorkspaceDestruction', 'stages']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -515,15 +548,31 @@ def print_job_desc(desc):
         print_field("App", desc["app"])
     elif "applet" in desc:
         print_field("Applet", desc["applet"])
+    elif "workflow" in desc:
+        print_field("Workflow", desc["workflow"]["id"])
     if "instanceType" in desc and desc['instanceType'] is not None:
         print_field("Instance Type", desc["instanceType"])
     print_field("State", JOB_STATES(desc["state"]))
+    if "rootExecution" in desc:
+        print_field("Root execution", desc["rootExecution"])
+    if "originJob" in desc:
+        print_field("Origin job", desc["originJob"])
     if desc["parentJob"] is None:
         print_field("Parent job", "-")
     else:
         print_field("Parent job", desc["parentJob"])
-    print_field("Origin job", desc["originJob"])
-    print_field("Function", desc["function"])
+    if "parentAnalysis" in desc:
+        if desc["parentAnalysis"] is not None:
+            print_field("Parent analysis", desc["parentAnalysis"])
+    if "analysis" in desc and desc["analysis"] is not None:
+        print_field("Analysis", desc["analysis"])
+        print_field("Stage", desc["stage"])
+    if "stages" in desc:
+        for i, (stage, analysis_stage) in enumerate(zip(desc["workflow"]["stages"], desc["stages"])):
+            stage['execution'] = analysis_stage['execution']
+            render_stage("Stage " + str(i), stage)
+    if "function" in desc:
+        print_field("Function", desc["function"])
     if 'runInput' in desc:
         default_fields = {k: v for k, v in desc["originalInput"].iteritems() if k not in desc["runInput"]}
         print_nofill_field("Input", get_io_field(desc["runInput"], defaults=default_fields))
@@ -540,18 +589,18 @@ def print_job_desc(desc):
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
     print_field("Launched by", desc["launchedBy"][5:])
-    print_field("Created", datetime.datetime.fromtimestamp(desc['created']/1000).ctime())
+    print_field("Created", render_timestamp(desc['created']))
     if 'startedRunning' in desc:
         if 'stoppedRunning' in desc:
-            print_field("Started running", datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime())
+            print_field("Started running", render_timestamp(desc['startedRunning']))
         else:
-            print_field("Started running", "{t} (running for {rt})".format(t=datetime.datetime.fromtimestamp(desc['startedRunning']/1000).ctime(),
+            print_field("Started running", "{t} (running for {rt})".format(t=render_timestamp(desc['startedRunning']),
                 rt=datetime.timedelta(seconds=int(time.time())-desc['startedRunning']/1000)))
     if 'stoppedRunning' in desc:
         print_field("Stopped running", "{t} (Runtime: {rt})".format(
-            t=datetime.datetime.fromtimestamp(desc['stoppedRunning']/1000).ctime(),
+            t=render_timestamp(desc['stoppedRunning']),
             rt=datetime.timedelta(seconds=(desc['stoppedRunning']-desc['startedRunning'])/1000)))
-    print_field("Last modified", datetime.datetime.fromtimestamp(desc['modified']/1000).ctime())
+    print_field("Last modified", render_timestamp(desc['modified']))
     if 'waitingOnChildren' in desc:
         print_list_field('Pending subjobs', desc['waitingOnChildren'])
     if 'dependsOn' in desc:
@@ -615,8 +664,8 @@ def print_desc(desc, verbose=False):
         print_project_desc(desc, verbose=verbose)
     elif desc['class'] == 'app':
         print_app_desc(desc, verbose=verbose)
-    elif desc['class'] == 'job':
-        print_job_desc(desc)
+    elif desc['class'] in ['job', 'analysis']:
+        print_execution_desc(desc)
     elif desc['class'] == 'user':
         print_user_desc(desc)
     elif desc['class'] in ['org', 'team']:
@@ -626,7 +675,7 @@ def print_desc(desc, verbose=False):
 
 def get_ls_desc(desc, print_id=False):
     addendum = ' : ' + desc['id'] if print_id is True else ''
-    if desc['class'] == 'applet' or (desc['class'] == 'record' and 'pipeline' in desc['types']):
+    if desc['class'] in ['applet', 'workflow'] or (desc['class'] == 'record' and 'pipeline' in desc['types']):
         return BOLD() + GREEN() + desc['name'] + ENDC() + addendum
     else:
         return desc['name'] + addendum
@@ -651,7 +700,7 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 
     name_str += desc['name']
 
-    if desc['class'] == 'applet' or (desc['class'] == 'record' and 'pipeline' in desc['types']):
+    if desc['class'] in ['applet', 'workflow'] or (desc['class'] == 'record' and 'pipeline' in desc['types']):
         name_str = BOLD() + GREEN() + name_str + ENDC()
 
     size_str = ''
@@ -661,7 +710,7 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
         size_str = str(desc['length']) + ' rows'
     size_padding = ' '*(max(0, 8 - len(size_str)))
 
-    return state_str + DELIMITER(' '*(8 - state_len)) + str(datetime.datetime.fromtimestamp(desc['modified']/1000)) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
+    return state_str + DELIMITER(' '*(8 - state_len)) + render_short_timestamp(desc['modified']) + DELIMITER(' ') + size_str + DELIMITER(size_padding + ' ') + name_str + DELIMITER(' (') + ((desc['project'] + DELIMITER(':')) if include_project else '') + desc['id'] + DELIMITER(')')
 
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
@@ -678,11 +727,11 @@ def get_find_jobs_string(jobdesc, has_children, single_result=False, show_output
     job_name = jobdesc.get('name', '<no name>')
     result += BOLD() + BLUE() + job_name + ENDC()
     if job_name != canonical_job_name and job_name+":main" != canonical_job_name:
-        result += ' (' + canonical_job_name + ')'    
+        result += ' (' + canonical_job_name + ')'
     result += DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id']
     result += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
     result += jobdesc['launchedBy'][5:] + DELIMITER(' ')
-    result += str(datetime.datetime.fromtimestamp(jobdesc['created']/1000))
+    result += render_short_timestamp(jobdesc['created'])
     if jobdesc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
         # TODO: Remove this check once all jobs are migrated to have these values
         if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
