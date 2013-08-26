@@ -6,6 +6,15 @@
 var dx = require('DNAnexus');
 
 
+exports.appAddAuthorizedUsers = function(app_id_or_name, input_params) {
+  return dx.DXHTTPRequest('/' + app_id_or_name + '/addAuthorizedUsers', input_params);
+};
+
+exports.appAddAuthorizedUsersWithAlias = function(app_name, app_alias, input_params) {
+  return exports.appAddAuthorizedUsers(app_name + '/' + app_alias, input_params);
+};
+
+
 exports.appAddCategories = function(app_id_or_name, input_params) {
   return dx.DXHTTPRequest('/' + app_id_or_name + '/addCategories', input_params);
 };
@@ -69,6 +78,15 @@ exports.appInstallWithAlias = function(app_name, app_alias, input_params) {
 };
 
 
+exports.appListAuthorizedUsers = function(app_id_or_name, input_params) {
+  return dx.DXHTTPRequest('/' + app_id_or_name + '/listAuthorizedUsers', input_params);
+};
+
+exports.appListAuthorizedUsersWithAlias = function(app_name, app_alias, input_params) {
+  return exports.appListAuthorizedUsers(app_name + '/' + app_alias, input_params);
+};
+
+
 exports.appListCategories = function(app_id_or_name, input_params) {
   return dx.DXHTTPRequest('/' + app_id_or_name + '/listCategories', input_params);
 };
@@ -93,6 +111,15 @@ exports.appPublish = function(app_id_or_name, input_params) {
 
 exports.appPublishWithAlias = function(app_name, app_alias, input_params) {
   return exports.appPublish(app_name + '/' + app_alias, input_params);
+};
+
+
+exports.appRemoveAuthorizedUsers = function(app_id_or_name, input_params) {
+  return dx.DXHTTPRequest('/' + app_id_or_name + '/removeAuthorizedUsers', input_params);
+};
+
+exports.appRemoveAuthorizedUsersWithAlias = function(app_name, app_alias, input_params) {
+  return exports.appRemoveAuthorizedUsers(app_name + '/' + app_alias, input_params);
 };
 
 

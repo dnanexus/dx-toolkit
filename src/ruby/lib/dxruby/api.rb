@@ -7,6 +7,15 @@ require 'dxruby'
 
 module DX
   module API
+    # Invokes the /app-xxxx/addAuthorizedUsers API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers
+    def self.app_add_authorized_users(app_name_or_id, app_alias=nil, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
+      return DX::http_request("/#{fully_qualified_version}/addAuthorizedUsers", input_params, opts)
+    end
+
     # Invokes the /app-xxxx/addCategories API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories
@@ -70,6 +79,15 @@ module DX
       return DX::http_request("/#{fully_qualified_version}/install", input_params, opts)
     end
 
+    # Invokes the /app-xxxx/listAuthorizedUsers API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers
+    def self.app_list_authorized_users(app_name_or_id, app_alias=nil, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
+      return DX::http_request("/#{fully_qualified_version}/listAuthorizedUsers", input_params, opts)
+    end
+
     # Invokes the /app-xxxx/listCategories API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories
@@ -95,6 +113,15 @@ module DX
       opts = { "always_retry" => true }.merge(opts)
       fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
       return DX::http_request("/#{fully_qualified_version}/publish", input_params, opts)
+    end
+
+    # Invokes the /app-xxxx/removeAuthorizedUsers API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers
+    def self.app_remove_authorized_users(app_name_or_id, app_alias=nil, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      fully_qualified_version = app_name_or_id + (app_alias ? ('/' + app_alias) : '')
+      return DX::http_request("/#{fully_qualified_version}/removeAuthorizedUsers", input_params, opts)
     end
 
     # Invokes the /app-xxxx/removeCategories API method.

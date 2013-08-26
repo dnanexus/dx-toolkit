@@ -10,6 +10,19 @@ use Exporter;
 use DNAnexus qw(DXHTTPRequest);
 
 
+sub appAddAuthorizedUsers($;$%) {
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$app_id_or_name.'/addAuthorizedUsers', $input_params, %kwargs);
+}
+
+sub appAddAuthorizedUsersWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appAddAuthorizedUsers($app_name.'/'.$app_alias, $input_params, %kwargs);
+}
+
+
 sub appAddCategories($;$%) {
     my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -101,6 +114,19 @@ sub appInstallWithAlias($;$%) {
 }
 
 
+sub appListAuthorizedUsers($;$%) {
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$app_id_or_name.'/listAuthorizedUsers', $input_params, %kwargs);
+}
+
+sub appListAuthorizedUsersWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appListAuthorizedUsers($app_name.'/'.$app_alias, $input_params, %kwargs);
+}
+
+
 sub appListCategories($;$%) {
     my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -137,6 +163,19 @@ sub appPublishWithAlias($;$%) {
     my ($app_name, $app_alias, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return appPublish($app_name.'/'.$app_alias, $input_params, %kwargs);
+}
+
+
+sub appRemoveAuthorizedUsers($;$%) {
+    my ($app_id_or_name, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$app_id_or_name.'/removeAuthorizedUsers', $input_params, %kwargs);
+}
+
+sub appRemoveAuthorizedUsersWithAlias($;$%) {
+    my ($app_name, $app_alias, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return appRemoveAuthorizedUsers($app_name.'/'.$app_alias, $input_params, %kwargs);
 }
 
 
@@ -905,5 +944,5 @@ sub userUpdate($;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListCategories appListDevelopers appPublish appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate);
+our @EXPORT_OK = qw(appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate);
 
