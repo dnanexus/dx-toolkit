@@ -3521,6 +3521,13 @@ parser_download.add_argument('--no-progress', help='Do not show a progress bar',
 parser_download.set_defaults(func=download)
 register_subparser(parser_download, categories='data')
 
+parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing', description='Creates a pre-authenticated link that can be used to download a file without logging in.')
+parser_make_download_url.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file'])
+parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
+parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as')
+parser_make_download_url.set_defaults(func=make_download_url)
+register_subparser(parser_make_download_url, categories='data')
+
 parser_cat = subparsers.add_parser('cat', help='Print file(s) to stdout', prog='dx cat',
                                    parents=[env_args])
 cat_path_action = parser_cat.add_argument('path', help='File ID or name(s) to print to stdout', nargs='+')
@@ -3930,14 +3937,6 @@ parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the 
 parser_upgrade.add_argument('args', nargs='*')
 parser_upgrade.set_defaults(func=upgrade)
 register_subparser(parser_upgrade)
-
-
-parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing', description='Creates a pre-authenticated link that can be used to download a file without logging in.')
-parser_make_download_url.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file'])
-parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
-parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as')
-parser_make_download_url.set_defaults(func=make_download_url)
-register_subparser(parser_make_download_url)
 
 category_list = '\n  '.join([category + parser_categories[category]['desc'] for category in parser_categories_sorted])
 parser_help = subparsers.add_parser('help', help='Display help messages and dx commands by category',
