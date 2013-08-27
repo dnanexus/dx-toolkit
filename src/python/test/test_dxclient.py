@@ -412,20 +412,22 @@ class TestDXClient(DXTestCase):
             self.assertIn(u"Ψ", proj_desc["tags"])
             self.assertIn("world", proj_desc["tags"])
 
-            found_projects = run(u"dx find projects --tag Ψ --tag world --brief").strip()
-            self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
+            found_projects = run(u"dx find projects --tag Ψ --tag world --brief").strip().split('\n')
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
 
-            found_projects = run(u"dx find projects --tag Ψ --tag world --tag foobar --brief").strip()
-            self.assertEqual(found_projects, '')
+            found_projects = run(u"dx find projects --tag Ψ --tag world --tag foobar --brief").strip().split('\n')
+            self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
 
-            run(u"dx tag other: Ψ world foobar")
+            run(u"dx tag " + other_project_id + u" Ψ world foobar")
             found_projects = run("dx find projects --tag world --tag Ψ --brief").strip().split("\n")
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertIn(other_project_id, found_projects)
         except:
             raise
         finally:
-            run("dx rmproject -y other")
+            run("dx rmproject -y " + other_project_id)
 
     def test_dx_find_projects_by_property(self):
         other_project_id = run("dx new project other --brief").strip()
@@ -437,21 +439,24 @@ class TestDXClient(DXTestCase):
             self.assertEqual(proj_desc["properties"]["foo"], "bar")
             self.assertEqual(proj_desc["properties"]["bar"], "")
 
-            run(u"dx set_properties other: Ψ=notworld foo=bar")
+            run(u"dx set_properties " + other_project_id + u" Ψ=notworld foo=bar")
 
-            found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip()
-            self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
+            found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
 
-            found_projects = run(u"dx find projects --property bar= --brief").strip()
-            self.assertEqual(found_projects, dxpy.WORKSPACE_ID)
+            found_projects = run(u"dx find projects --property bar= --brief").strip().split('\n')
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
 
             # presence
             found_projects = run(u"dx find projects --property Ψ --brief").strip().split("\n")
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
             self.assertIn(other_project_id, found_projects)
 
-            found_projects = run(u"dx find projects --property Ψ --property foo=baz --brief").strip()
-            self.assertEqual(found_projects, '')
+            found_projects = run(u"dx find projects --property Ψ --property foo=baz --brief").strip().split("\n")
+            self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
 
             found_projects = run("dx find projects --property Ψ --property foo=bar --brief").strip().split("\n")
             self.assertIn(dxpy.WORKSPACE_ID, found_projects)
@@ -459,7 +464,7 @@ class TestDXClient(DXTestCase):
         except:
             raise
         finally:
-            run("dx rmproject -y other")
+            run("dx rmproject -y " + other_project_id)
 
         # Errors parsing --property value
         with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
