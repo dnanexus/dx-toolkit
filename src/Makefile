@@ -265,7 +265,9 @@ doc_ruby: ruby
 # Bundled utilities
 # =================
 
-jq: git_submodules
+jq: git_submodules ../bin/jq
+
+../bin/jq: jq/
 	(cd jq; autoreconf --install)
 	(cd jq; ./configure --disable-docs)
 	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
