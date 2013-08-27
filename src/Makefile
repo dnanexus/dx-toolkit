@@ -194,6 +194,8 @@ install: base_install
 
 debian_install: base_install
 	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
+	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/build
+	cp -a $(DNANEXUS_HOME)/build/info $(DESTDIR)/$(PREFIX)/share/dnanexus/build/
 	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
 	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
 
