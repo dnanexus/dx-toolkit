@@ -16,6 +16,11 @@
 
 SHELL=/bin/bash -e
 
+ifndef MAKEOPTS
+	MAKEOPTS=-j
+endif
+MAKE:=$(MAKE) $(MAKEOPTS)
+
 # If installing into the system directories you probably want to set
 #   DESTDIR=/ PREFIX=/usr
 ifndef DESTDIR
@@ -283,11 +288,12 @@ clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
 	$(MAKE) -C dx-wig-to-wiggle clean
 	$(MAKE) -C dx-verify-file clean
-	-rm -f ../bin/dx-contigset-to-fasta
+	-find ../bin -type f \( -name jq -or -name '*argcomplete*' -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
 	-rm -rf ../share
+	-rm ../build/info/version
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
 
 .PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby
