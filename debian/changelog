@@ -1,3 +1,13 @@
+dx-toolkit (0.65.0) precise; urgency=low
+
+  * Support for app publishing to limited audiences.
+
+  * New commands dx add users, add developers, remove users, remove developers.
+
+  * Various bug and test suite fixes.
+
+ -- Andrey Kislyuk <akislyuk@localhost>  Tue, 27 Aug 2013 22:37:33 +0000
+
 dx-toolkit (0.64.0) precise; urgency=low
 
   * Improvements to dx-app-wizard and the app skeleton test suite it produces.
