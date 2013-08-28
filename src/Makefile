@@ -288,7 +288,7 @@ clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
 	$(MAKE) -C dx-wig-to-wiggle clean
 	$(MAKE) -C dx-verify-file clean
-	-find ../bin -type f \( -name jq -or -name '*argcomplete*' -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
+	-find ../bin -type f \( -name jq -or -name dx -or -name '*argcomplete*' -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
 	-rm -rf ../lib
