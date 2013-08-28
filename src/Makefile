@@ -17,7 +17,7 @@
 SHELL=/bin/bash -e
 
 ifndef MAKEOPTS
-	MAKEOPTS=-j
+	MAKEOPTS=-j -l 2.0
 endif
 MAKE:=$(MAKE) $(MAKEOPTS)
 
@@ -32,11 +32,6 @@ endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
 export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
-
-# For parallel builds, add the following to your .bashrc or other build
-# environment initialization file:
-#
-#   export MAKEFLAGS=-j8
 
 all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq
 
