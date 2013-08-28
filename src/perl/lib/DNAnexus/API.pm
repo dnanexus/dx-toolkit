@@ -10,6 +10,20 @@ use Exporter;
 use DNAnexus qw(DXHTTPRequest);
 
 
+sub analysisDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub analysisTerminate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/terminate', $input_params, %kwargs);
+}
+
+
 sub appAddAuthorizedUsers($;$%) {
     my ($app_id_or_name, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -943,6 +957,132 @@ sub userUpdate($;$%) {
 }
 
 
+sub workflowAddStage($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addStage', $input_params, %kwargs);
+}
+
+
+sub workflowAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub workflowAddTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
+}
+
+
+sub workflowClose($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/close', $input_params, %kwargs);
+}
+
+
+sub workflowDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub workflowGetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
+}
+
+
+sub workflowListProjects($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/listProjects', $input_params, %kwargs);
+}
+
+
+sub workflowMoveStage($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/moveStage', $input_params, %kwargs);
+}
+
+
+sub workflowRemoveStage($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeStage', $input_params, %kwargs);
+}
+
+
+sub workflowRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub workflowRemoveTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+}
+
+
+sub workflowRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub workflowRun($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/run', $input_params, %kwargs);
+}
+
+
+sub workflowSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub workflowSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub workflowSetStageInputs($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setStageInputs', $input_params, %kwargs);
+}
+
+
+sub workflowSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
+sub workflowNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/workflow/new', $input_params, %kwargs);
+}
+
+
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate);
+our @EXPORT_OK = qw(analysisDescribe analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobStreamLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowGetDetails workflowListProjects workflowMoveStage workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowNew);
 

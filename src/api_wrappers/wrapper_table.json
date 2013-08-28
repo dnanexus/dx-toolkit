@@ -1,5 +1,23 @@
 [
     [
+        "/analysis-xxxx/describe",
+        "analysisDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe"
+        }
+    ],
+    [
+        "/analysis-xxxx/terminate",
+        "analysisTerminate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate"
+        }
+    ],
+    [
         "/app-xxxx/addAuthorizedUsers",
         "appAddAuthorizedUsers(req, objectId)",
         {
@@ -1050,6 +1068,168 @@
             "objectMethod": true,
             "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate"
+        }
+    ],
+    [
+        "/workflow-xxxx/addStage",
+        "workflowAddStage(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage"
+        }
+    ],
+    [
+        "/workflow-xxxx/addTags",
+        "workflowAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags"
+        }
+    ],
+    [
+        "/workflow-xxxx/addTypes",
+        "workflowAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes"
+        }
+    ],
+    [
+        "/workflow-xxxx/close",
+        "workflowClose(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose"
+        }
+    ],
+    [
+        "/workflow-xxxx/describe",
+        "workflowDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe"
+        }
+    ],
+    [
+        "/workflow-xxxx/getDetails",
+        "workflowGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails"
+        }
+    ],
+    [
+        "/workflow-xxxx/listProjects",
+        "workflowListProjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects"
+        }
+    ],
+    [
+        "/workflow-xxxx/moveStage",
+        "workflowMoveStage(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage"
+        }
+    ],
+    [
+        "/workflow-xxxx/removeStage",
+        "workflowRemoveStage(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage"
+        }
+    ],
+    [
+        "/workflow-xxxx/removeTags",
+        "workflowRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags"
+        }
+    ],
+    [
+        "/workflow-xxxx/removeTypes",
+        "workflowRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes"
+        }
+    ],
+    [
+        "/workflow-xxxx/rename",
+        "workflowRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename"
+        }
+    ],
+    [
+        "/workflow-xxxx/run",
+        "workflowRun(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": false,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage"
+        }
+    ],
+    [
+        "/workflow-xxxx/setDetails",
+        "workflowSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails"
+        }
+    ],
+    [
+        "/workflow-xxxx/setProperties",
+        "workflowSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties"
+        }
+    ],
+    [
+        "/workflow-xxxx/setStageInputs",
+        "workflowSetStageInputs(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs"
+        }
+    ],
+    [
+        "/workflow-xxxx/setVisibility",
+        "workflowSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility"
+        }
+    ],
+    [
+        "/workflow/new",
+        "workflowNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew"
         }
     ]
 ]

@@ -6,6 +6,16 @@
 var dx = require('DNAnexus');
 
 
+exports.analysisDescribe = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
+};
+
+
+exports.analysisTerminate = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/terminate', input_params);
+};
+
+
 exports.appAddAuthorizedUsers = function(app_id_or_name, input_params) {
   return dx.DXHTTPRequest('/' + app_id_or_name + '/addAuthorizedUsers', input_params);
 };
@@ -664,5 +674,95 @@ exports.userDescribe = function(object_id, input_params) {
 
 exports.userUpdate = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/update', input_params);
+};
+
+
+exports.workflowAddStage = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addStage', input_params);
+};
+
+
+exports.workflowAddTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
+};
+
+
+exports.workflowAddTypes = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addTypes', input_params);
+};
+
+
+exports.workflowClose = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/close', input_params);
+};
+
+
+exports.workflowDescribe = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
+};
+
+
+exports.workflowGetDetails = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/getDetails', input_params);
+};
+
+
+exports.workflowListProjects = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/listProjects', input_params);
+};
+
+
+exports.workflowMoveStage = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/moveStage', input_params);
+};
+
+
+exports.workflowRemoveStage = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeStage', input_params);
+};
+
+
+exports.workflowRemoveTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeTags', input_params);
+};
+
+
+exports.workflowRemoveTypes = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeTypes', input_params);
+};
+
+
+exports.workflowRename = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/rename', input_params);
+};
+
+
+exports.workflowRun = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/run', input_params);
+};
+
+
+exports.workflowSetDetails = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setDetails', input_params);
+};
+
+
+exports.workflowSetProperties = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
+};
+
+
+exports.workflowSetStageInputs = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setStageInputs', input_params);
+};
+
+
+exports.workflowSetVisibility = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setVisibility', input_params);
+};
+
+
+exports.workflowNew = function(input_params) {
+  return dx.DXHTTPRequest('/workflow/new', input_params);
 };
 

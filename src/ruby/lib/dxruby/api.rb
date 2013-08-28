@@ -7,6 +7,22 @@ require 'dxruby'
 
 module DX
   module API
+    # Invokes the /analysis-xxxx/describe API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe
+    def self.analysis_describe(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/describe", input_params, opts)
+    end
+
+    # Invokes the /analysis-xxxx/terminate API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate
+    def self.analysis_terminate(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/terminate", input_params, opts)
+    end
+
     # Invokes the /app-xxxx/addAuthorizedUsers API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers
@@ -948,6 +964,150 @@ module DX
     def self.user_update(object_id, input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/update", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/addStage API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage
+    def self.workflow_add_stage(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addStage", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/addTags API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    def self.workflow_add_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addTags", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/addTypes API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    def self.workflow_add_types(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addTypes", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/close API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
+    def self.workflow_close(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/close", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/describe API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe
+    def self.workflow_describe(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/describe", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/getDetails API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    def self.workflow_get_details(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/getDetails", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/listProjects API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    def self.workflow_list_projects(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/listProjects", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/moveStage API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage
+    def self.workflow_move_stage(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/moveStage", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/removeStage API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    def self.workflow_remove_stage(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeStage", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/removeTags API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    def self.workflow_remove_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeTags", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/removeTypes API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    def self.workflow_remove_types(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeTypes", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/rename API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    def self.workflow_rename(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/rename", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/run API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    def self.workflow_run(object_id, input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/#{object_id}/run", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/setDetails API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    def self.workflow_set_details(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setDetails", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/setProperties API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    def self.workflow_set_properties(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setProperties", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/setStageInputs API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs
+    def self.workflow_set_stage_inputs(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setStageInputs", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/setVisibility API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    def self.workflow_set_visibility(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
+    end
+
+    # Invokes the /workflow/new API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew
+    def self.workflow_new(input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/workflow/new", input_params, opts)
     end
 
   end

@@ -23,6 +23,12 @@
 
 namespace dx {
 
+  JSON analysisDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON analysisDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON analysisTerminate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON analysisTerminate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
   JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params="{}", const bool retry=true);
   JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const dx::JSON &input_params, const bool retry=true);
   JSON appAddAuthorizedUsersWithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{}", const bool retry=true);
@@ -411,6 +417,60 @@ namespace dx {
 
   JSON userUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
   JSON userUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
+
+  JSON workflowAddStage(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowAddStage(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowClose(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowClose(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowMoveStage(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowMoveStage(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowRemoveStage(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowRemoveStage(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowRename(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowRename(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowRun(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+  JSON workflowRun(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
+
+  JSON workflowSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowSetStageInputs(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowSetStageInputs(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowNew(const std::string &input_params="{}", const bool retry=false);
+  JSON workflowNew(const dx::JSON &input_params, const bool retry=false);
 
 }
 #include "dxcpp.h"

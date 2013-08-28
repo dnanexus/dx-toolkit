@@ -6,6 +6,22 @@
 #include "api.h"
 namespace dx {
 
+  JSON analysisDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
+  }
+
+  JSON analysisDescribe(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return analysisDescribe(object_id, input_params.toString(), retry);
+  }
+
+  JSON analysisTerminate(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/terminate"), input_params, retry);
+  }
+
+  JSON analysisTerminate(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return analysisTerminate(object_id, input_params.toString(), retry);
+  }
+
   JSON appAddAuthorizedUsers(const std::string &app_id_or_name, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + app_id_or_name + std::string("/addAuthorizedUsers"), input_params, retry);
   }
@@ -1092,6 +1108,150 @@ namespace dx {
 
   JSON userUpdate(const std::string &object_id, const JSON &input_params, const bool retry) {
     return userUpdate(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowAddStage(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addStage"), input_params, retry);
+  }
+
+  JSON workflowAddStage(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowAddStage(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowAddTags(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, retry);
+  }
+
+  JSON workflowAddTags(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowAddTags(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowAddTypes(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params, retry);
+  }
+
+  JSON workflowAddTypes(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowAddTypes(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowClose(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/close"), input_params, retry);
+  }
+
+  JSON workflowClose(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowClose(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
+  }
+
+  JSON workflowDescribe(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowDescribe(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowGetDetails(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params, retry);
+  }
+
+  JSON workflowGetDetails(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowGetDetails(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowListProjects(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params, retry);
+  }
+
+  JSON workflowListProjects(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowListProjects(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowMoveStage(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/moveStage"), input_params, retry);
+  }
+
+  JSON workflowMoveStage(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowMoveStage(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowRemoveStage(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeStage"), input_params, retry);
+  }
+
+  JSON workflowRemoveStage(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowRemoveStage(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowRemoveTags(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params, retry);
+  }
+
+  JSON workflowRemoveTags(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowRemoveTags(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowRemoveTypes(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params, retry);
+  }
+
+  JSON workflowRemoveTypes(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowRemoveTypes(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowRename(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params, retry);
+  }
+
+  JSON workflowRename(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowRename(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowRun(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/run"), input_params, retry);
+  }
+
+  JSON workflowRun(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowRun(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowSetDetails(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params, retry);
+  }
+
+  JSON workflowSetDetails(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowSetDetails(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowSetProperties(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params, retry);
+  }
+
+  JSON workflowSetProperties(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowSetProperties(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowSetStageInputs(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setStageInputs"), input_params, retry);
+  }
+
+  JSON workflowSetStageInputs(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowSetStageInputs(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowSetVisibility(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params, retry);
+  }
+
+  JSON workflowSetVisibility(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowSetVisibility(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowNew(const std::string &input_params, const bool retry) {
+    return DXHTTPRequest("/workflow/new", input_params, retry);
+  }
+
+  JSON workflowNew(const JSON &input_params, const bool retry) {
+    return workflowNew(input_params.toString(), retry);
   }
 
 }
