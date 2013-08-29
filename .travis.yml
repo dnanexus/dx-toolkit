@@ -11,4 +11,4 @@ notifications:
   email: false
 env:
   global:
-    secure: pR6JkkcNA9rfJWYeKZfSw11qd8CUH8QJWfS0defYuBbf9ITG9Oq5//qny0QyQ7gAsK588M9zh/zIci+RzXV10xmGUqRozsrwrqXjy89nOj2ex/ZKQ1vrJ7MbgkvnwDnFWz78YTgtDonUAlBUdtnBjPiWcBSTRl8AQZ1aZspbIiw=
+    secure: pM1RWGnjss8+LtPAKZ0n34To57IRCTCAvmSbViyrnHjJLVLck5/bRSR9n5gCdP9aG4+1kSDMzfdmYdEZeW3LCP8PEX3Dcz4cWXk+RFidWIliVVBJgJiwKVO1bHOx1mIiqUEGPusvL3g8zU4s2qXcYsGenPQwoEaLOnrRsg8x23w=
