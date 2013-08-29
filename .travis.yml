@@ -1,16 +1,14 @@
 language: python
 python:
-  - "3.3"
-  - "2.7"
-  - "pypy"
-
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+- '3.3'
+- '2.7'
+- pypy
 install:
-  - make python
-
-# command to run tests, e.g. python setup.py test
+- make python
 script:
-  - make test_python
-
+- make test_python
 notifications:
   email: false
+env:
+  global:
+    secure: pR6JkkcNA9rfJWYeKZfSw11qd8CUH8QJWfS0defYuBbf9ITG9Oq5//qny0QyQ7gAsK588M9zh/zIci+RzXV10xmGUqRozsrwrqXjy89nOj2ex/ZKQ1vrJ7MbgkvnwDnFWz78YTgtDonUAlBUdtnBjPiWcBSTRl8AQZ1aZspbIiw=
