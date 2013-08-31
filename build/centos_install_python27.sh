@@ -48,11 +48,11 @@ PYTHON=/usr/local/bin/python2.7
 
 cd ..
 
-curl -O http://pypi.python.org/packages/source/d/distribute/distribute-0.6.30.tar.gz
+curl -O https://pypi.python.org/packages/source/d/distribute/distribute-0.6.30.tar.gz
 tar -xzf distribute-0.6.30.tar.gz
 (cd distribute-0.6.30; $MAYBE_SUDO $PYTHON setup.py install)
 
-curl -O http://pypi.python.org/packages/source/p/pip/pip-1.2.1.tar.gz
+curl -O https://pypi.python.org/packages/source/p/pip/pip-1.2.1.tar.gz
 tar -xzf pip-1.2.1.tar.gz
 (cd pip-1.2.1; $MAYBE_SUDO $PYTHON setup.py install)
 
