@@ -238,7 +238,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
 
     url = APISERVER + resource if prepend_srv else resource
     method = method.upper() # Convert method name to uppercase, to ease string comparisons later
-    if _DEBUG:
+    if _DEBUG == '2':
+        print >>sys.stderr, method, url, "=>\n" + json.dumps(data, indent=2)
+    elif _DEBUG:
         from repr import Repr
         print >>sys.stderr, method, url, "=>", Repr().repr(data)
 
@@ -294,7 +296,9 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                     pass
                 _UPGRADE_NOTIFY = False
 
-            if _DEBUG:
+            if _DEBUG == '2':
+                print >>sys.stderr, method, url, "<=", response.status_code, "\n" + json.dumps(response.content, indent=2)
+            elif _DEBUG:
                 print >>sys.stderr, method, url, "<=", response.status_code, Repr().repr(response.content)
 
             # If HTTP code that is not 200 (OK) is received and the content is
@@ -485,7 +489,7 @@ def _initialize(suppress_warning=False):
     :type suppress_warning: boolean
     '''
     global _DEBUG, _UPGRADE_NOTIFY
-    _DEBUG = True if '_DX_DEBUG' in os.environ else False
+    _DEBUG = os.environ.get('_DX_DEBUG', False)
     _UPGRADE_NOTIFY = os.path.expanduser('~/.dnanexus_config/.upgrade_notify')
     if os.path.exists(_UPGRADE_NOTIFY) and os.path.getmtime(_UPGRADE_NOTIFY) > time.time() - 86400: # 24 hours
         _UPGRADE_NOTIFY = False
