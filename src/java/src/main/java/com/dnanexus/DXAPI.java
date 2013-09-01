@@ -2409,6 +2409,44 @@ public class DXAPI {
     }
 
     /**
+     * Invokes the systemFindExecutions method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.
+     */
+    public static JsonNode systemFindExecutions() throws Exception {
+        return systemFindExecutions(mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the systemFindExecutions method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode systemFindExecutions(JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/system/findExecutions", inputParams);
+    }
+
+    /**
+     * Invokes the systemFindAnalyses method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses">API specification</a>.
+     */
+    public static JsonNode systemFindAnalyses() throws Exception {
+        return systemFindAnalyses(mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the systemFindAnalyses method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode systemFindAnalyses(JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/system/findAnalyses", inputParams);
+    }
+
+    /**
      * Invokes the systemFindJobs method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
