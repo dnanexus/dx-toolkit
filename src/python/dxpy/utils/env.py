@@ -21,9 +21,11 @@ https://wiki.dnanexus.com/Command-Line-Client/Environment%20Variables
 for more details.
 '''
 
-import os, sys, shutil, textwrap, json
+import os, sys, shutil, textwrap, json, locale
 
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
+
+sys_encoding = locale.getdefaultlocale()[1]
 
 CORE_VAR_NAMES = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
                   'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
@@ -154,7 +156,7 @@ def write_env_var_to_conf_dir(var, value, conf_dir):
         except:
             pass
         with os.fdopen(os.open(os.path.join(conf_dir, var), os.O_CREAT | os.O_WRONLY, 0o600), 'w') as fd:
-            fd.write(value)
+            fd.write(value.encode(sys_encoding))
 
     if not os.path.exists(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv'):
         with open(os.path.expanduser('~/.dnanexus_config/') + 'unsetenv', 'w') as fd:

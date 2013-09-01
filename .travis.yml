@@ -3,12 +3,15 @@ python:
 - '3.3'
 - '2.7'
 - pypy
+before_install:
+- pip install --quiet coverage
 install:
 - make python
 script:
+- source environment
 - make test_python
 notifications:
   email: false
 env:
   global:
-    secure: pzb3utxXOug74KoU0pk34bt1p3ZcVhc6WwL0cxEvWppQABATOCnD5eoaMrvtt/6ErmbAIMAOviae3yMKZcIAHXBW/xY7Wq6//Gn1EsPC4bwb5wCTTAsR05Pnj8sMmigY0lYK1TMKg6OZlG1HHd0flZR723P2AOqWZcLdadpTJus=
+    secure: q8M16jIP5uoo9A+KFiKzPSzsHvO0SMey55upbd1v5YG3aNS3lN7Ix8qtPHbtev6uE7tW94Tn0tkIiMdVUhgfylC+nSwBAfNqEznZxq+FE3lBYnkHz5QPwEWe3DD3d8QrpknKZjc2jDWxDDELFotL5Ey7n9vSCdiE2HBQZFe7S60=

@@ -26,11 +26,11 @@ from ..packages import requests
 # Try to reset encoding to utf-8
 # Note: This is incompatible with pypy
 # Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
-import platform
+import platform, locale
+sys_encoding = locale.getdefaultlocale()[1]
 if platform.python_implementation() != "PyPy":
     try:
-        import locale
-        reload(sys).setdefaultencoding(locale.getdefaultlocale()[1])
+        reload(sys).setdefaultencoding(sys_encoding)
     except:
         pass
 
@@ -126,8 +126,7 @@ def set_delim(args=argparse.Namespace()):
 
 # Loading environment
 
-#args_list = [unicode(arg, 'utf-8') for arg in sys.argv[1:]]
-args_list = map(unicode, sys.argv[1:])
+args_list = [unicode(arg, sys_encoding) for arg in sys.argv[1:]]
 
 # Hard-coding a shortcut so that it won't print out the warning in
 # import dxpy when clearing it anyway.
@@ -421,7 +420,7 @@ def set_project(project, write, name=None):
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
-    os.environ['DX_CLI_WD'] = folder
+    os.environ['DX_CLI_WD'] = folder.encode(sys_encoding)
     if write:
         write_env_var("DX_CLI_WD", folder)
 

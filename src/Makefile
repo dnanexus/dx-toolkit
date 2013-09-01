@@ -103,7 +103,7 @@ $(DNANEXUS_PY27_ENV)/lib: python/requirements.txt python/requirements_dxfs.txt
 	rm -rf "$(DNANEXUS_PY27_ENV)"
 	virtualenv --python=python2.7 --distribute "$(DNANEXUS_PY27_ENV)"
 	virtualenv --relocatable "$(DNANEXUS_PY27_ENV)"
-	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed -r python/requirements.txt -r python/requirements_dxfs.txt)
+	(source "$(DNANEXUS_PY27_ENV)/bin/activate"; pip install --ignore-installed --install-option="--install-lib=$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" -r python/requirements.txt -r python/requirements_dxfs.txt)
 	rm -rf "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages"/{distribute*,setuptools*,easy*install*}
 
 # We are going to install libraries to lib/python2.7 and then move them
@@ -115,7 +115,7 @@ python: api_wrappers toolkit_version python_deps
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/lib"
 	cp -a "$(DNANEXUS_PY27_ENV)/lib/python2.7/site-packages" "$(DNANEXUS_HOME)/lib/python2.7/"
 	cp -a "$(DNANEXUS_PY27_ENV)/bin/"*python-argcomplete* "$(DNANEXUS_HOME)/bin/"
-	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python2.7 ./setup.py build; python2.7 ./setup.py install --prefix="$(DNANEXUS_HOME)" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
+	(source ../environment; export PYTHONPATH="$(DNANEXUS_HOME)/lib/python2.7/site-packages:${PYTHONPATH}"; cd python; python2.7 ./setup.py build; python2.7 ./setup.py install --install-lib="$(DNANEXUS_HOME)/lib/python2.7/site-packages" --install-scripts="$(DNANEXUS_HOME)/bin"; mv $(DNANEXUS_HOME)/lib/python2.7 $(DNANEXUS_HOME)/share/dnanexus/lib)
 	rm -f ../bin/easy_install* ../bin/xattr
 
 # TODO: fix up perl and java targets

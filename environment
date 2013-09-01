@@ -62,3 +62,7 @@ eval "$(register-python-argcomplete dx|sed 's/-o default//')"
      done
  fi
 )
+
+if [[ -z "$DX_SECURITY_CONTEXT" && -n "$DX_AUTH_TOKEN" ]]; then
+    export DX_SECURITY_CONTEXT="{\"auth_token_type\":\"Bearer\",\"auth_token\":\"$DX_AUTH_TOKEN\"}"
+fi
