@@ -57,7 +57,7 @@ stdout_args_gp.add_argument('--summary', help='Display summary output (default)'
 stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
                             action='store_true')
 
-def get_output_flag(args):
+def process_output_args(args):
     if not args.brief and not args.summary and not args.verbose:
         args.summary = True
 

@@ -34,15 +34,21 @@ def _find(api_method, query, limit, return_handler, **kwargs):
     while True:
         resp = api_method(query, **kwargs)
 
+        by_parent = resp.get('byParent')
+        descriptions = resp.get('describe')
+        def format_result(result):
+            if return_handler:
+                result = dxpy.get_handler(result['id'], project=result.get('project'))
+            if by_parent is not None:
+                return result, by_parent, descriptions
+            else:
+                return result
+
         for i in resp["results"]:
             if num_results == limit:
                 raise StopIteration()
             num_results += 1
-            if return_handler:
-                handler = dxpy.get_handler(i['id'], project=i.get('project'))
-                yield handler
-            else:
-                yield i
+            yield format_result(i)
 
         # set up next query
         if resp["next"] is not None:
@@ -199,7 +205,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
 def find_jobs(launched_by=None, executable=None, project=None,
               state=None, origin_job=None, parent_job=None,
               created_after=None, created_before=None, describe=False,
-              name=None, name_mode="exact", limit=None, return_handler=False,
+              name=None, name_mode="exact", limit=None, return_handler=False, format=None,
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
@@ -228,6 +234,8 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type limit: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
+    :param format: If set, must be set to "trees". When set to "trees", each result is a tuple (result, jobs_by_parent, job_descriptions).
+    :type format: string
     :rtype: generator
 
     Returns a generator that yields all jobs that match the query. It
@@ -280,6 +288,8 @@ def find_jobs(launched_by=None, executable=None, project=None,
             query['name'] = {'regexp': name}
         else:
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
+    if format is not None:
+        query["format"] = format
     if limit is not None:
         query["limit"] = limit
 
