@@ -202,11 +202,11 @@ def find_data_objects(classname=None, state=None, visibility=None,
 
     return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, **kwargs)
 
-def find_jobs(launched_by=None, executable=None, project=None,
-              state=None, origin_job=None, parent_job=None,
-              created_after=None, created_before=None, describe=False,
-              name=None, name_mode="exact", limit=None, return_handler=False, format=None,
-              **kwargs):
+def find_executions(classname=None, launched_by=None, executable=None, project=None,
+                    state=None, origin_job=None, parent_job=None,
+                    created_after=None, created_before=None, describe=False,
+                    name=None, name_mode="exact", limit=None, return_handler=False, format=None,
+                    **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
     :type launched_by: string
@@ -238,20 +238,21 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type format: string
     :rtype: generator
 
-    Returns a generator that yields all jobs that match the query. It
-    transparently handles paging through the result set if necessary.
-    For all parameters that are omitted, the search is not restricted by
+    Returns a generator that yields all executions (jobs or analyses) that match the query. It transparently handles
+    paging through the result set if necessary. For all parameters that are omitted, the search is not restricted by
     the corresponding field.
 
     The following example iterates through all finished jobs in a
     particular project that were launched in the last two days::
 
-      for result in find_jobs(state="done", project=proj_id, created_after="-2d"):
+      for result in find_executions(state="done", project=proj_id, created_after="-2d"):
           print "Found job with object id " + result["id"]
 
     '''
 
     query = {}
+    if classname is not None:
+        query["class"] = classname
     if launched_by is not None:
         query["launchedBy"] = launched_by
     if executable is not None:
@@ -294,6 +295,20 @@ def find_jobs(launched_by=None, executable=None, project=None,
         query["limit"] = limit
 
     return _find(dxpy.api.system_find_jobs, query, limit, return_handler, **kwargs)
+
+def find_jobs(*args, **kwargs):
+    """
+    This method is identical to :meth:`find_executions()` with the class constraint set to "job".
+    """
+    kwargs['classname'] = 'job'
+    return find_executions(*args, **kwargs)
+
+def find_analyses(*args, **kwargs):
+    """
+    This method is identical to :meth:`find_executions()` with the class constraint set to "analysis".
+    """
+    kwargs['classname'] = 'analysis'
+    return find_executions(*args, **kwargs)
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=None, explicit_perms=None,
