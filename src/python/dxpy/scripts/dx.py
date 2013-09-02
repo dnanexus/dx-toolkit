@@ -657,8 +657,7 @@ def select(args):
 
 def cd(args):
     # entity_result should be None because expected='folder'
-    project, folderpath, none = try_call(resolve_existing_path,
-                                         args.path, 'folder')
+    project, folderpath = try_call(resolve_existing_path, args.path, 'folder')[:2]
 
     if project is not None:
         project_name = try_call(dxpy.get_handler(project).describe)['name']
@@ -1429,7 +1428,7 @@ def new_gtable(args):
         else:
             print_desc(dxgtable.describe(incl_properties=True, incl_details=True))
     except:
-        err_exit();
+        err_exit()
 
 def set_visibility(args):
     had_error = False
@@ -1934,7 +1933,7 @@ def head(args):
     if args.lines > 0:
         try:
             if handler._class == 'file':
-                handler._read_bufsize = 1024*32;
+                handler._read_bufsize = 1024*32
                 for line in handler:
                     print line
                     counter += 1
@@ -1991,7 +1990,7 @@ def upload(args, **kwargs):
         args.filename = path
         upload_one(args, **kwargs)
 
-upload_seen_paths=set()
+upload_seen_paths = set()
 def upload_one(args):
     try_call(process_dataobject_args, args)
 
@@ -2997,7 +2996,6 @@ def run(args):
         if args.folder is None:
             args.folder = clone_desc["project"] + ":" + clone_desc["folder"]
         if args.name is None:
-            import re
             match_obj = re.search("\(re-run\)$", clone_desc["name"])
             if match_obj is None:
                 args.name = clone_desc["name"] + " (re-run)"
