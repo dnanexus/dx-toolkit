@@ -1969,7 +1969,7 @@ def head(args):
                     if tty_rows <= table_rows or tty_cols <= table_cols:
                         try:
                             pipe = os.popen('less -RS', 'w')
-                            pipe.write(table_text.encode('utf-8'))
+                            pipe.write(table_text.encode(sys_encoding))
                             pipe.close()
                             return
                         except:
@@ -2018,7 +2018,8 @@ def upload_one(args):
 
         dir_listing = os.listdir(args.filename)
         if len(dir_listing) == 0: # Create empty folder
-            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder, os.path.basename(args.filename)), "parents": True})
+            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder, os.path.basename(args.filename)),
+                                                  "parents": True})
         else:
             for f in dir_listing:
                 sub_args = copy.copy(args)
@@ -2169,7 +2170,8 @@ def find_jobs(args):
                 elif args.brief:
                     output_ids.append(args.id)
                 else:
-                    print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True, show_outputs=args.show_outputs))
+                    print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True,
+                                                               show_outputs=args.show_outputs))
             else:
                 i = 0
                 for job_result in dxpy.find_jobs(**query):
@@ -2182,7 +2184,8 @@ def find_jobs(args):
                     elif args.brief:
                         output_ids.append(job_result['id'])
                     else:
-                        print format_tree({}, get_find_jobs_string(job_result['describe'], has_children=False, single_result=True, show_outputs=args.show_outputs))
+                        print format_tree({}, get_find_jobs_string(job_result['describe'], has_children=False,
+                                                                   single_result=True, show_outputs=args.show_outputs))
         else:
             origin_jobs = []  # List of origin job IDs (ordered by search results)
             job_descs = {}    # job ID -> job desc
@@ -2238,7 +2241,8 @@ def find_jobs(args):
                     if args.json:
                         json_output.append(job_descs[origin_job])
                     elif not args.brief:
-                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], has_children=False, show_outputs=args.show_outputs))
+                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], has_children=False,
+                                                                   show_outputs=args.show_outputs))
             else: # args.trees
 
                 def process_children(parent_job, parent_hash=None):
@@ -2619,7 +2623,8 @@ def get_exec_or_workflow_handler(path, alias):
                 choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
             choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
-                handler = dxpy.get_handler(entity_results[choice]['id'], project=entity_results[choice]['describe']['project'])
+                handler = dxpy.get_handler(entity_results[choice]['id'],
+                                           project=entity_results[choice]['describe']['project'])
             else:
                 handler = dxpy.DXApp(dxid=app_desc['id'])
                 desc = app_desc
@@ -2661,7 +2666,8 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
             parser.exit(0)
 
     if not args.brief:
-        print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path, subsequent_indent='  ') + '\n'
+        print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
+                   subsequent_indent='  ') + '\n'
     try:
         dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
                                details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
@@ -2708,7 +2714,8 @@ def print_run_help(executable="", alias=None):
             workflow = handler.get_details()
             workflow_details = copy.deepcopy(workflow)
             if workflow.get('version') not in range(2, 6):
-                parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'), w=handler))
+                parser.exit(1, "Unrecognized workflow version {v} in {w}\n".format(v=workflow.get('version', '<none>'),
+                                                                                   w=handler))
 
             exec_help += fill("To run this workflow, specify values for all required inputs to each stage which are not yet bound (shown without square brackets and the value \"<unbound>\").  To specify an input, use the stage's number and input name, e.g.") + '\n\n'
             exec_help += '  -i0.input_name=3\n\n'
@@ -2844,14 +2851,16 @@ def print_run_help(executable="", alias=None):
                             stanzas = []
 
                             if 'choices' in param:
-                                stanzas.append(format_choices_or_suggestions('Choices:', param['choices'], param['class']))
-
+                                stanzas.append(format_choices_or_suggestions('Choices:',
+                                                                             param['choices'],
+                                                                             param['class']))
                             if helpstring != '':
                                 stanzas.append(fill(helpstring, initial_indent='        ', subsequent_indent='        '))
 
                             if param.get('suggestions'):
-                                stanzas.append(format_choices_or_suggestions('Suggestions:', param['suggestions'], param['class']))
-
+                                stanzas.append(format_choices_or_suggestions('Suggestions:',
+                                                                             param['suggestions'],
+                                                                             param['class']))
                             param_string += "\n\n".join(stanzas) + "\n"
 
                             if param['name'] in advanced_inputs:
@@ -2885,7 +2894,7 @@ def print_run_help(executable="", alias=None):
             if tty_rows <= exec_help.count("\n"):
                 try:
                     pipe = os.popen('less -RS', 'w')
-                    pipe.write(exec_help.encode('utf-8'))
+                    pipe.write(exec_help.encode(sys_encoding))
                     pipe.close()
                     parser.exit(0)
                 except:
@@ -3016,7 +3025,7 @@ def run(args):
         dest_proj = dxpy.WORKSPACE_ID
         if dest_proj is None:
             parser.exit(1, 'Unable to find project to run the app in. Please run "dx select" to set the working project, or use --folder=project:path\n')
-        dest_path = os.environ.get('DX_CLI_WD', '/').decode('utf-8')
+        dest_path = os.environ.get('DX_CLI_WD', '/').decode(sys_encoding)
     else:
         dest_proj, dest_path, none = try_call(resolve_existing_path,
                                               args.folder,
@@ -3050,7 +3059,8 @@ def run(args):
         for k, stage in enumerate(workflow['stages']):
             if not args.brief:
                 print "Processing stage", stage['key'], "(id", stage['id'] + ")"
-            inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs) for k, v in stage['inputs'].iteritems() if v is not None}
+            inputs_from_stage = {k: stage_to_job_refs(v, launched_jobs)
+                                 for k, v in stage['inputs'].iteritems() if v is not None}
 
             exec_id = stage['app']['id'] if 'id' in stage['app'] else stage['app']
             if dxpy.is_dxlink(exec_id):
@@ -3224,9 +3234,6 @@ def watch(args):
         log_client.connect()
     except Exception as details:
         parser.exit(3, fill(unicode(details)) + '\n')
-#    except KeyboardInterrupt:
-#        sys.exit(1)
-#        print "Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else ""))
 
 def upgrade(args):
     if len(args.args) == 0:
@@ -3303,7 +3310,8 @@ class SetStagingEnv(argparse.Action):
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
         setattr(namespace, 'staging', True)
-        set_api(protocol='https', host='stagingapi.dnanexus.com', port='443', write=(not state['interactive'] or namespace.save))
+        set_api(protocol='https', host='stagingapi.dnanexus.com', port='443',
+                write=(not state['interactive'] or namespace.save))
 
 class DXArgumentParser(argparse.ArgumentParser):
     def error(self, message):
@@ -3335,14 +3343,16 @@ parser.add_argument('--version', action='version', version='dx %s' % (dxpy.TOOLK
 subparsers = parser.add_subparsers(help=argparse.SUPPRESS, dest='command')
 subparsers.metavar = 'command'
 
-parser_login = subparsers.add_parser('login', help='Log in (interactively or with an existing API token)', description='Log in interactively and acquire credentials.  Use "--token" to log in with an existing API token.', prog='dx login',
-                                     parents=[env_args])
+parser_login = subparsers.add_parser('login', help='Log in (interactively or with an existing API token)',
+                                     description='Log in interactively and acquire credentials.  Use "--token" to log in with an existing API token.',
+                                     prog='dx login', parents=[env_args])
 parser_login.add_argument('--token', help='Authentication token to use')
 parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
 parser_login.add_argument('--port', type=int, help='Log into the given auth server port (host must also be given)')
 parser_login.add_argument('--protocol', help='Use the given protocol to contact auth server (by default, the correct protocol is guessed based on --port)')
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
-parser_login.add_argument('--save', help='Save token and other environment variables for future sessions', action='store_true')
+parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
+                          action='store_true')
 parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.set_defaults(staging=False, prod=False, func=login)
@@ -3366,7 +3376,8 @@ parser_shell.add_argument('filename', help='File of dx commands to execute', nar
 parser_shell.set_defaults(func=shell)
 register_subparser(parser_shell, categories='session')
 
-parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell', description='Exit out of the interactive shell', prog='dx exit')
+parser_exit = subparsers.add_parser('exit', help='Exit out of the interactive shell',
+                                    description='Exit out of the interactive shell', prog='dx exit')
 parser_exit.set_defaults(func=exit_shell)
 register_subparser(parser_exit, categories='session')
 
@@ -3382,8 +3393,10 @@ parser_env = subparsers.add_parser('env', help='Print all environment variables 
                                    description=fill('Prints all environment variables in use as they have been resolved from environment variables and configuration files.  For more details, see') + '\n\nhttps://wiki.dnanexus.com/Command-Line-Client/Environment-Variables',
                                    formatter_class=argparse.RawTextHelpFormatter, prog='dx env',
                                    parents=[env_args])
-parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14), action='store_true')
-parser_env.add_argument('--dx-flags', help=fill('Prints the dx options to override the environment variables', width_adjustment=-14), action='store_true')
+parser_env.add_argument('--bash', help=fill('Prints a list of bash commands to export the environment variables', width_adjustment=-14),
+                        action='store_true')
+parser_env.add_argument('--dx-flags', help=fill('Prints the dx options to override the environment variables', width_adjustment=-14),
+                        action='store_true')
 parser_env.set_defaults(func=env)
 register_subparser(parser_env, categories='session')
 
@@ -3391,14 +3404,17 @@ parser_setenv = subparsers.add_parser('setenv',
                                       help='Sets environment variables for the session',
                                       description='Sets environment variables for communication with the API server')
 parser_setenv.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
-parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session', action='store_true')
-parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.', action='store_true')
+parser_setenv.add_argument('--save', help='Save settings for future sessions.  Only one set of settings can be saved at a time.  Always set to true if login is run in a non-interactive session',
+                           action='store_true')
+parser_setenv.add_argument('--current', help='Do not prompt for new values and just save current settings for future sessions.  Overrides --save to be true.',
+                           action='store_true')
 parser_setenv.set_defaults(func=setenv)
 register_subparser(parser_setenv, categories='other')
 
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx',
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
-parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.', action='store_true')
+parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.',
+                             action='store_true')
 parser_clearenv.set_defaults(func=clearenv, interactive=True)
 register_subparser(parser_clearenv, categories='session')
 
@@ -3409,7 +3425,8 @@ parser_invite = subparsers.add_parser('invite',
                                       parents=[env_args])
 parser_invite.add_argument('invitee', help='Entity to invite')
 parser_invite.add_argument('project', help='Project to invite the invitee to', default=':', nargs='?')
-parser_invite.add_argument('level', help='Permissions level the new member should have', choices=['VIEW', 'CONTRIBUTE', 'ADMINISTER'], default='VIEW', nargs='?')
+parser_invite.add_argument('level', help='Permissions level the new member should have',
+                           choices=['VIEW', 'CONTRIBUTE', 'ADMINISTER'], default='VIEW', nargs='?')
 parser_invite.set_defaults(func=invite)
 # parser_invite.completer = TODO
 register_subparser(parser_invite, categories='other')
@@ -3434,7 +3451,8 @@ ls_output_args.add_argument('-l', '--long', dest='verbose', help='Alias for "ver
 parser_ls.add_argument('--obj', help='show only objects', action='store_true')
 parser_ls.add_argument('--folders', help='show only folders', action='store_true')
 parser_ls.add_argument('--full', help='show full paths of folders', action='store_true')
-ls_path_action = parser_ls.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
+ls_path_action = parser_ls.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path',
+                                        nargs='?', default='.')
 ls_path_action.completer = DXPathCompleter()
 parser_ls.set_defaults(func=ls)
 register_subparser(parser_ls, categories='fs')
@@ -3445,7 +3463,8 @@ parser_tree = subparsers.add_parser('tree', help='List folders and objects in a 
                                     prog='dx tree')
 parser_tree.add_argument('-a', '--all', help='show hidden files', action='store_true')
 parser_tree.add_argument('-l', '--long', help='use a long listing format', action='store_true')
-tree_path_action = parser_tree.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path', nargs='?', default='.')
+tree_path_action = parser_tree.add_argument('path', help='Folder (possibly in another project) to list the contents of, default is the current directory in the current project.  Syntax: projectID:/folder/path',
+                                            nargs='?', default='.')
 tree_path_action.completer = DXPathCompleter(expected='folder')
 parser_tree.set_defaults(func=tree)
 register_subparser(parser_tree, categories='fs')
@@ -3461,18 +3480,22 @@ parser_select = subparsers.add_parser('select', help='List and select a project 
                                       description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
                                       prog='dx select',
                                       parents=[env_args])
-select_project_action = parser_select.add_argument('project', help='Name or ID of a project to switch to; if not provided a list will be provided for you', nargs='?', default=None)
+select_project_action = parser_select.add_argument('project', help='Name or ID of a project to switch to; if not provided a list will be provided for you',
+                                                   nargs='?', default=None)
 select_project_action.completer = DXPathCompleter(expected='project', include_current_proj=False)
 parser_select.add_argument('--name', help='Name of the project (wildcard patterns supported)')
-parser_select.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected', default='CONTRIBUTE')
-parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)', action='store_true')
+parser_select.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'],
+                           help='Minimum level of permissions expected', default='CONTRIBUTE')
+parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)',
+                           action='store_true')
 parser_select.set_defaults(func=select, save=False)
 register_subparser(parser_select, categories='fs')
 
 parser_cd = subparsers.add_parser('cd', help='Change the current working directory',
                                   description='Change the current working directory', prog='dx cd',
                                   parents=[env_args])
-cd_path_action = parser_cd.add_argument('path', help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project', nargs='?', default='/')
+cd_path_action = parser_cd.add_argument('path', nargs='?', default='/',
+                                        help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project')
 cd_path_action.completer = DXPathCompleter(expected='folder')
 parser_cd.set_defaults(func=cd)
 register_subparser(parser_cd, categories='fs')
@@ -3490,7 +3513,8 @@ EXAMPLES
 ''',
                                   prog='dx cp',
                                   parents=[env_args, all_arg])
-cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folder names to copy', metavar='source', nargs='+')
+cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folder names to copy', metavar='source',
+                                           nargs='+')
 cp_sources_action.completer = DXPathCompleter()
 parser_cp.add_argument('destination', help=fill('Folder into which to copy the sources or new pathname (if only one source is provided).  Must be in a different project/container than all source paths.', width_adjustment=-15))
 parser_cp.set_defaults(func=cp)
@@ -3501,7 +3525,8 @@ parser_mv = subparsers.add_parser('mv', help='Move or rename objects and/or fold
                                   description=fill('Move or rename data objects and/or folders inside a single project.  To copy data between different projects, use \'dx cp\' instead.'),
                                   prog='dx mv',
                                   parents=[env_args, all_arg])
-mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folder names to move', metavar='source', nargs='+')
+mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folder names to move', metavar='source',
+                                           nargs='+')
 mv_sources_action.completer = DXPathCompleter()
 parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
 parser_mv.set_defaults(func=mv)
@@ -3510,7 +3535,8 @@ register_subparser(parser_mv, categories='fs')
 parser_mkdir = subparsers.add_parser('mkdir', help='Create a new folder',
                                      description='Create a new folder', prog='dx mkdir',
                                      parents=[env_args])
-parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed', action='store_true')
+parser_mkdir.add_argument('-p', '--parents', help='no error if existing, create parent directories as needed',
+                          action='store_true')
 mkdir_paths_action = parser_mkdir.add_argument('paths', help='Paths to folders to create', metavar='path', nargs='+')
 mkdir_paths_action.completer = DXPathCompleter(expected='folder')
 parser_mkdir.set_defaults(func=mkdir)
@@ -3543,7 +3569,8 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
 parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
 parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
-parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24), action='store_true')
+parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24),
+                             action='store_true')
 describe_path_action = parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 describe_path_action.completer = DXPathCompleter()
 parser_describe.set_defaults(func=describe)
@@ -3557,10 +3584,13 @@ upload_filename_action = parser_upload.add_argument('filename', nargs='+',
                                                     help='Local file or directory to upload ("-" indicates stdin input); provide multiple times to upload multiple files or directories')
 #upload_filename_action.completer = LocalCompleter()
 parser_upload.add_argument('-o', '--output', help=argparse.SUPPRESS) # deprecated; equivalent to --path/--destination
-parser_upload.add_argument('--path', '--destination', help=fill('DNAnexus path to upload file(s) to (default uses current project and folder if not provided)', width_adjustment=-24), nargs='?')
+parser_upload.add_argument('--path', '--destination',
+                           help=fill('DNAnexus path to upload file(s) to (default uses current project and folder if not provided)', width_adjustment=-24),
+                           nargs='?')
 parser_upload.add_argument('-r', '--recursive', help='Upload directories recursively', action='store_true')
 parser_upload.add_argument('--wait', help='Wait until the file has finished closing', action='store_true')
-parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
+parser_upload.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
+                           action='store_false', default=sys.stderr.isatty())
 parser_upload.set_defaults(func=upload, mute=False)
 register_subparser(parser_upload, categories='data')
 
@@ -3568,18 +3598,23 @@ parser_download = subparsers.add_parser('download', help='Download file(s)',
                                         description='Download the contents of a file object or multiple objects.  Use "-o -" to direct the output to stdout.',
                                         prog='dx download',
                                         parents=[env_args])
-parser_download_paths_arg = parser_download.add_argument('paths', help='Data object ID or name, or folder to download', nargs='+', metavar='path')
+parser_download_paths_arg = parser_download.add_argument('paths', help='Data object ID or name, or folder to download',
+                                                         nargs='+', metavar='path')
 parser_download_paths_arg.completer = DXPathCompleter(classes=['file'])
 parser_download.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output); if not supplied or a directory is given, the object\'s name on the platform will be used, along with any applicable extensions')
 parser_download.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
 parser_download.add_argument('-r', '--recursive', help='Download folders recursively', action='store_true')
-parser_download.add_argument('-a', '--all', help='If multiple objects match the input, download all of them', action='store_true')
-parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress', action='store_false', default=sys.stderr.isatty())
+parser_download.add_argument('-a', '--all', help='If multiple objects match the input, download all of them',
+                             action='store_true')
+parser_download.add_argument('--no-progress', help='Do not show a progress bar', dest='show_progress',
+                             action='store_false', default=sys.stderr.isatty())
 parser_download.set_defaults(func=download)
 register_subparser(parser_download, categories='data')
 
-parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing', description='Creates a pre-authenticated link that can be used to download a file without logging in.')
-parser_make_download_url.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file'])
+parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
+                                                 description='Creates a pre-authenticated link that can be used to download a file without logging in.')
+path_action = parser_make_download_url.add_argument('path', help='Data object ID or name to access')
+path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
 parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as')
 parser_make_download_url.set_defaults(func=make_download_url)
@@ -3597,13 +3632,19 @@ parser_head = subparsers.add_parser('head',
                                     description='Print the first part of a file or a gtable.  By default, prints the first 10 lines or rows, respectively.  Additional query parameters can be provided in the case of gtables.  The output for gtables is formatted for human-readability; to print rows in a machine-readable format, see "dx export tsv".',
                                     parents=[no_color_arg, env_args],
                                     prog='dx head')
-parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines or rows (default 10)', default=10)
+parser_head.add_argument('-n', '--lines', type=int, metavar='N', help='Print the first N lines or rows (default 10)',
+                         default=10)
 head_gtable_args = parser_head.add_argument_group(title='GTable-specific options')
-head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display', default=32)
+head_gtable_args.add_argument('-w', '--max-col-width', type=int, help='Maximum width of each column to display',
+                              default=32)
 head_gtable_args.add_argument('--starting', type=int, help='Specify starting row ID', default=0)
 head_gtable_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help='Specify chromosome name, low coordinate, and high coordinate for Genomic Range Index')
-head_gtable_args.add_argument('--gri-mode', help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')', default="overlap")
-head_gtable_args.add_argument('--gri-name', help='Override the default name of the Genomic Range Index (default: "gri"))', default="gri")
+head_gtable_args.add_argument('--gri-mode',
+                              help='Specify the mode of the GRI query (\'overlap\' or \'enclose\'; default \'overlap\')',
+                              default="overlap")
+head_gtable_args.add_argument('--gri-name',
+                              help='Override the default name of the Genomic Range Index (default: "gri"))',
+                              default="gri")
 head_path_action = parser_head.add_argument('path', help='File or gtable ID or name to access')
 head_path_action.completer = DXPathCompleter(classes=['file', 'gtable'])
 parser_head.set_defaults(func=head)
@@ -3616,7 +3657,8 @@ parser_import = subparsers.add_parser('import',
                                       prog='dx import',
                                       parents=[env_args])
 parser_import.add_argument('format', help='Format to import from')
-import_args_action = parser_import.add_argument('importer_args', help=fill('Arguments passed to the importer', width_adjustment=-24), nargs=argparse.REMAINDER)
+import_args_action = parser_import.add_argument('importer_args', help=fill('Arguments passed to the importer', width_adjustment=-24),
+                                                nargs=argparse.REMAINDER)
 #import_args_action.completer = LocalCompleter()
 parser_import.set_defaults(func=dximport)
 register_subparser(parser_import, categories='data')
@@ -3628,7 +3670,8 @@ parser_export = subparsers.add_parser('export',
                                       prog='dx export',
                                       parents=[env_args])
 parser_export.add_argument('format', help='Format to export to')
-parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24), nargs=argparse.REMAINDER)
+parser_export.add_argument('exporter_args', help=fill('Arguments passed to the exporter', width_adjustment=-24),
+                           nargs=argparse.REMAINDER)
 parser_export.set_defaults(func=export)
 register_subparser(parser_export, categories='data')
 
@@ -3657,7 +3700,8 @@ parser_add_users = subparsers_add.add_parser('users', help='Add authorized users
                                              description='Add users or orgs to the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers.',
                                              prog='dx add users')
 parser_add_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
-parser_add_users.add_argument('users', metavar='authorizedUser', help='One or more users or orgs to add; use "PUBLIC" to allow all access',
+parser_add_users.add_argument('users', metavar='authorizedUser',
+                              help='One or more users or orgs to add; use "PUBLIC" to allow all access',
                               nargs='+')
 parser_add_users.set_defaults(func=add_users)
 register_subparser(parser_add_users, subparsers_action=subparsers_add, categories='exec')
@@ -3679,22 +3723,22 @@ subparsers_list.metavar = 'list_type'
 register_subparser(parser_list, categories=())
 
 parser_list_users = subparsers_list.add_parser('users', help='List authorized users for an app',
-                                                   description='List the authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
-                                                   prog='dx list users')
+                                               description='List the authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
+                                               prog='dx list users')
 parser_list_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_list_users.set_defaults(func=list_users)
 register_subparser(parser_list_users, subparsers_action=subparsers_list, categories='exec')
 
 parser_list_developers = subparsers_list.add_parser('developers', help='List developers for an app',
-                                                        description='List the developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
-                                                        prog='dx list developers')
+                                                    description='List the developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
+                                                    prog='dx list developers')
 parser_list_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_list_developers.set_defaults(func=list_developers)
 register_subparser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
 
 parser_remove = subparsers.add_parser('remove', help='Remove one or more items to a list',
-                                   description='Use this command with one of the availabile subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
-                                   prog='dx remove')
+                                      description='Use this command with one of the availabile subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
+                                      prog='dx remove')
 subparsers_remove = parser_remove.add_subparsers(parser_class=DXArgumentParser)
 subparsers_remove.metavar = 'list_type'
 register_subparser(parser_remove, categories=())
@@ -3703,8 +3747,9 @@ parser_remove_users = subparsers_remove.add_parser('users', help='Remove authori
                                                    description='Remove users or orgs from the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
                                                    prog='dx remove users')
 parser_remove_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
-parser_remove_users.add_argument('users', metavar='authorizedUser', help='One or more users or orgs to remove; use "PUBLIC" to remove public access',
-                                            nargs='+')
+parser_remove_users.add_argument('users', metavar='authorizedUser',
+                                 help='One or more users or orgs to remove; use "PUBLIC" to remove public access',
+                                 nargs='+')
 parser_remove_users.set_defaults(func=remove_users)
 register_subparser(parser_remove_users, subparsers_action=subparsers_remove, categories='exec')
 
@@ -3738,10 +3783,12 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
                                    parents=[stdout_args, env_args, extra_args])
-run_executable_action = parser_run.add_argument('executable', help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24), nargs="?", default="")
+run_executable_action = parser_run.add_argument('executable',
+                                                help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
+                                                nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
-                                       DXPathCompleter(classes=['applet']),
-                                       DXPathCompleter(classes=['record'], typespec='pipeline')])
+                                                  DXPathCompleter(classes=['applet']),
+                                                  DXPathCompleter(classes=['record'], typespec='pipeline')])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
@@ -3749,12 +3796,18 @@ parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--project', metavar='PROJECT', help=fill('Project name or ID in which to run the executable. This can also be specified together with the output folder in --destination.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
-parser_run.add_argument('--delay-workspace-destruction', help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24), action='store_true')
+parser_run.add_argument('--delay-workspace-destruction',
+                        help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
+                        action='store_true')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it", action='store_true')
-parser_run.add_argument('--input-help', help=fill('Print help and examples for how to specify inputs', width_adjustment=-24), action=runInputHelp, nargs=0)
-parser_run.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24), action='append')
+parser_run.add_argument('--input-help',
+                        help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
+                        action=runInputHelp, nargs=0)
+parser_run.add_argument('-i', '--input',
+                        help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24),
+                        action='append')
 parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
 parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 instance_type_action = parser_run.add_argument('--instance-type',
@@ -3770,15 +3823,19 @@ parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its 
                                      parents=[env_args, no_color_arg])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 # .completer = TODO
-parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get', type=int, default=1024*256)
+parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get',
+                          type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
-parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+parser_watch.add_argument('-l', '--levels', nargs='*', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
+                                                                "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
-parser_watch.add_argument('--no-timestamps', help='Omit timestamps from messages', action='store_false', dest='timestamps')
+parser_watch.add_argument('--no-timestamps', help='Omit timestamps from messages', action='store_false',
+                          dest='timestamps')
 parser_watch.add_argument('--job-ids', help='Print job ID in each message', action='store_true')
-parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false', dest='job_info')
+parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false',
+                          dest='job_info')
 parser_watch.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.set_defaults(func=watch)
@@ -3798,14 +3855,16 @@ parser_rmproject = subparsers.add_parser('rmproject', help='Delete a project',
                                          description='Delete projects and all their associated data',
                                          prog='dx rmproject',
                                          parents=[env_args])
-parser_rmproject.add_argument('projects', help='Projects to remove', metavar='project', nargs='+').completer = DXPathCompleter(expected='project', include_current_proj=True)
+projects_action = parser_rmproject.add_argument('projects', help='Projects to remove', metavar='project', nargs='+')
+projects_action.completer = DXPathCompleter(expected='project', include_current_proj=True)
 parser_rmproject.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_rmproject.add_argument('-q', '--quiet', help='Do not print purely informational messages', action='store_true')
 parser_rmproject.set_defaults(func=rmproject)
 register_subparser(parser_rmproject, categories='fs')
 
 parser_new = subparsers.add_parser('new', help='Create a new project or data object',
-                                   description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files, \'dx build\' for applets, and \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.', prog="dx new")
+                                   description='Use this command with one of the available subcommands (classes) to create a new project or data object from scratch.  Not all data types are supported.  See \'dx upload\' for files, \'dx build\' for applets, and \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
+                                   prog="dx new")
 subparsers_new = parser_new.add_subparsers(parser_class=DXArgumentParser)
 subparsers_new.metavar = 'class'
 register_subparser(parser_new, categories='data')
@@ -3815,53 +3874,65 @@ parser_new_project = subparsers_new.add_parser('project', help='Create a new pro
                                                parents=[stdout_args, env_args],
                                                prog='dx new project')
 parser_new_project.add_argument('name', help='Name of the new project', nargs='?')
-parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating', action='store_true')
+parser_new_project.add_argument('-s', '--select', help='Select the new project as current after creating',
+                                action='store_true')
 parser_new_project.set_defaults(func=new_project)
 register_subparser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
 parser_new_record = subparsers_new.add_parser('record', help='Create a new record',
                                               description='Create a new record',
-                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args, stdout_args, env_args],
+                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args,
+                                                       stdout_args, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new record')
-parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata').completer = DXPathCompleter(classes=['record'])
+init_action = parser_new_record.add_argument('--init', help='Path to record from which to initialize all metadata')
+init_action.completer = DXPathCompleter(classes=['record'])
 parser_new_record.set_defaults(func=new_record)
 register_subparser(parser_new_record, subparsers_action=subparsers_new, categories='fs')
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
-                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args, stdout_args, env_args],
+                                              parents=[parser_dataobject_args, parser_single_dataobject_output_args,
+                                                       stdout_args, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx new gtable')
-parser_new_gtable.add_argument('--columns', help=fill('Comma-separated list of column names to use, e.g. "col1,col2,col3"; columns with non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.', width_adjustment=-24), required=True)
+parser_new_gtable.add_argument('--columns',
+                               help=fill('Comma-separated list of column names to use, e.g. "col1,col2,col3"; columns with non-string types can be specified using "name:type" syntax, e.g. "col1:int,col2:boolean".  If not given, the first line of the file will be used to infer column names.', width_adjustment=-24),
+                               required=True)
 new_gtable_indices_args = parser_new_gtable.add_mutually_exclusive_group()
-new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'), help=fill('Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"', width_adjustment=-24))
+new_gtable_indices_args.add_argument('--gri', nargs=3, metavar=('CHR', 'LO', 'HI'),
+                                     help=fill('Specify column names to be used as chromosome, lo, and hi columns for a genomic range index (name will be set to "gri"); will also add the type "gri"', width_adjustment=-24))
 new_gtable_indices_args.add_argument('--indices', help='JSON for specifying any other indices')
 parser_new_gtable.set_defaults(func=new_gtable)
 #parser_new_gtable.completer = DXPathCompleter(classes=['gtable'])
 register_subparser(parser_new_gtable, subparsers_action=subparsers_new, categories='fs')
 
-parser_get_details = subparsers.add_parser('get_details', help='Get details of a data object', description='Get the JSON details of a data object.', prog="dx get_details",
+parser_get_details = subparsers.add_parser('get_details', help='Get details of a data object',
+                                           description='Get the JSON details of a data object.', prog="dx get_details",
                                            parents=[env_args])
 parser_get_details.add_argument('path', help='ID or path to data object to get details for').completer = DXPathCompleter()
 parser_get_details.set_defaults(func=get_details)
 register_subparser(parser_get_details, categories='metadata')
 
-parser_set_details = subparsers.add_parser('set_details', help='Set details on a data object', description='Set the JSON details of a data object.', prog="dx set_details",
+parser_set_details = subparsers.add_parser('set_details', help='Set details on a data object',
+                                           description='Set the JSON details of a data object.', prog="dx set_details",
                                            parents=[env_args, all_arg])
 parser_set_details.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
 parser_set_details.add_argument('details', help='JSON to store as details')
 parser_set_details.set_defaults(func=set_details)
 register_subparser(parser_set_details, categories='metadata')
 
-parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on a data object', description='Set visibility on a data object.', prog='dx set_visibility',
+parser_set_visibility = subparsers.add_parser('set_visibility', help='Set visibility on a data object',
+                                              description='Set visibility on a data object.', prog='dx set_visibility',
                                               parents=[env_args, all_arg])
 parser_set_visibility.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
-parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'], help='Visibility that the object should have')
+parser_set_visibility.add_argument('visibility', choices=['hidden', 'visible'],
+                                   help='Visibility that the object should have')
 parser_set_visibility.set_defaults(func=set_visibility)
 register_subparser(parser_set_visibility, categories='metadata')
 
-parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object', description='Add types to a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+parser_add_types = subparsers.add_parser('add_types', help='Add types to a data object',
+                                         description='Add types to a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
                                          prog='dx add_types',
                                          parents=[env_args, all_arg])
 parser_add_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
@@ -3869,21 +3940,25 @@ parser_add_types.add_argument('types', nargs='+', metavar='type', help='Types to
 parser_add_types.set_defaults(func=add_types)
 register_subparser(parser_add_types, categories='metadata')
 
-parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object', description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.', prog='dx remove_types',
+parser_remove_types = subparsers.add_parser('remove_types', help='Remove types from a data object',
+                                            description='Remove types from a data object.  See https://wiki.dnanexus.com/pages/Types/ for a list of DNAnexus types.',
+                                            prog='dx remove_types',
                                             parents=[env_args, all_arg])
 parser_remove_types.add_argument('path', help='ID or path to data object to modify').completer = DXPathCompleter()
 parser_remove_types.add_argument('types', nargs='+', metavar='type', help='Types to remove')
 parser_remove_types.set_defaults(func=remove_types)
 register_subparser(parser_remove_types, categories='metadata')
 
-parser_tag = subparsers.add_parser('tag', help='Tag a project or data object', description='Tag a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx tag',
+parser_tag = subparsers.add_parser('tag', help='Tag a project or data object', prog='dx tag',
+                                   description='Tag a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.',
                                    parents=[env_args, all_arg])
 parser_tag.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
 register_subparser(parser_tag, categories='metadata')
 
-parser_untag = subparsers.add_parser('untag', help='Untag a project or data object', description='Untag a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx untag',
+parser_untag = subparsers.add_parser('untag', help='Untag a project or data object', prog='dx untag',
+                                     description='Untag a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.',
                                      parents=[env_args, all_arg])
 parser_untag.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
@@ -3895,7 +3970,8 @@ parser_rename = subparsers.add_parser('rename',
                                       description='Rename a project or data object.  To rename folders, use \'dx mv\' instead.  Note that a project context must be either set or specified to rename a data object.  To specify a project or a project context, append a colon character ":" after the project ID or name.',
                                       prog='dx rename',
                                       parents=[env_args, all_arg])
-parser_rename.add_argument('path', help='Path to project or data object to rename').completer = DXPathCompleter(include_current_proj=True)
+path_action = parser_rename.add_argument('path', help='Path to project or data object to rename')
+path_action.completer = DXPathCompleter(include_current_proj=True)
 parser_rename.add_argument('name', help='New name')
 parser_rename.set_defaults(func=rename)
 register_subparser(parser_rename, categories='metadata')
@@ -3904,7 +3980,8 @@ parser_set_properties = subparsers.add_parser('set_properties', help='Set proper
                                               description='Set properties of a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx set_properties',
                                               parents=[env_args, all_arg])
 parser_set_properties.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
-parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value', help='Key-value pairs of property names and their new values')
+parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value',
+                                   help='Key-value pairs of property names and their new values')
 parser_set_properties.set_defaults(func=set_properties)
 register_subparser(parser_set_properties, categories='metadata')
 
@@ -3912,22 +3989,27 @@ parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset 
                                                 description='Unset properties of a project or data object.  Note that a project context must be either set or specified for data object IDs or paths.',
                                                 prog='dx unset_properties',
                                                 parents=[env_args, all_arg])
-parser_unset_properties.add_argument('path', help='ID or path to project or data object to modify').completer = DXPathCompleter()
+path_action = parser_unset_properties.add_argument('path', help='ID or path to project or data object to modify')
+path_action.completer = DXPathCompleter()
 parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')
 parser_unset_properties.set_defaults(func=unset_properties)
 register_subparser(parser_unset_properties, categories='metadata')
 
-parser_close = subparsers.add_parser('close', help='Close data object(s)', description='Close a remote data object or set of objects.', prog='dx close',
+parser_close = subparsers.add_parser('close', help='Close data object(s)',
+                                     description='Close a remote data object or set of objects.',
+                                     prog='dx close',
                                      parents=[env_args, all_arg])
 parser_close.add_argument('path', help='Path to a data object to close', nargs='+').completer = DXPathCompleter()
 parser_close.add_argument('--wait', help='Wait for the object(s) to close', action='store_true')
 parser_close.set_defaults(func=close)
 register_subparser(parser_close, categories=('data', 'metadata'))
 
-parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish', description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
+parser_wait = subparsers.add_parser('wait', help='Wait for data object(s) to close or job(s) to finish',
+                                    description='Polls the state of specified data object(s) or job(s) until they are all in the desired state.  Waits until the "closed" state for a data object, and for any terminal state for a job ("terminated", "failed", or "done").  Exits with a non-zero code if a job reaches a terminal state that is not "done".',
                                     prog='dx wait',
                                     parents=[env_args])
-parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+').completer = DXPathCompleter()
+path_action = parser_wait.add_argument('path', help='Path to a data object or job ID to wait for', nargs='+')
+path_action.completer = DXPathCompleter()
 parser_wait.set_defaults(func=wait)
 register_subparser(parser_wait, categories=('data', 'metadata', 'exec'))
 
@@ -4030,8 +4112,11 @@ parser_find_projects = subparsers_find.add_parser('projects', help='Find project
                                                   parents=[stdout_args, json_arg, delim_arg, env_args, find_by_properties_and_tags_args],
                                                   prog='dx find projects')
 parser_find_projects.add_argument('--name', help='Name of the project')
-parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'], help='Minimum level of permissions expected')
-parser_find_projects.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)', action='store_true')
+parser_find_projects.add_argument('--level', choices=['LIST', 'VIEW', 'CONTRIBUTE', 'ADMINISTER'],
+                                  help='Minimum level of permissions expected')
+parser_find_projects.add_argument('--public',
+                                  help='Include ONLY public projects (will automatically set --level to VIEW)',
+                                  action='store_true')
 parser_find_projects.set_defaults(func=find_projects)
 register_subparser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
@@ -4061,7 +4146,8 @@ parser_api.set_defaults(func=api)
 # parser_api.completer = TODO
 register_subparser(parser_api)
 
-parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)', description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.')
+parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)',
+                                       description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.')
 parser_upgrade.add_argument('args', nargs='*')
 parser_upgrade.set_defaults(func=upgrade)
 register_subparser(parser_upgrade)
@@ -4096,7 +4182,9 @@ def main():
     # Bash argument completer hook
     if '_ARGCOMPLETE' in os.environ:
         import argcomplete
-        argcomplete.autocomplete(parser, always_complete_options=False, output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
+        argcomplete.autocomplete(parser,
+                                 always_complete_options=False,
+                                 output_stream=sys.stdout if '_DX_ARC_DEBUG' in os.environ else None)
 
     if len(args_list) > 0:
         args = parser.parse_args(args_list)
