@@ -155,7 +155,7 @@ from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, al
                               parser_dataobject_args, parser_single_dataobject_output_args,
                               process_output_args, process_properties_args,
                               find_by_properties_and_tags_args, process_find_by_property_args,
-                              process_dataobject_args, process_single_dataobject_output_args,
+                              process_dataobject_args, process_single_dataobject_output_args, find_executions_args,
                               set_env_from_args,
                               extra_args, process_extra_args, DXParserError)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
@@ -171,7 +171,7 @@ else:
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
-    subcommands = {'find': ['jobs ', 'data ', 'projects ', 'apps '],
+    subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses '],
                    'new': ['record ', 'gtable ', 'project ']}
 
     def __init__(self):
@@ -2112,7 +2112,7 @@ def export(args):
         parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help export"') + '\n')
     exporters[args.format.lower()](args)
 
-def find_jobs(args):
+def find_executions(args):
     process_output_args(args)
     if not (args.origin_jobs or args.all_jobs):
         args.trees = True
@@ -2146,7 +2146,8 @@ def find_jobs(args):
         if args.all_projects:
             project = None
     print_launched_by = (args.user is None) or args.verbose
-    query = {'launched_by': args.user,
+    query = {'classname': args.classname,
+             'launched_by': args.user,
              'executable': args.executable,
              'project': project,
              'state': args.state,
@@ -2158,6 +2159,8 @@ def find_jobs(args):
              'name': args.name,
              'name_mode': 'glob',
              'format': 'trees' if args.trees else None,
+             'list_subjobs': False if args.no_subjobs else True,
+             'root_execution': args.root_execution,
              'limit': args.num_results + 1}
     json_output = []                        # for args.json
 
@@ -2184,7 +2187,7 @@ def find_jobs(args):
 
     try:
         num_processed_results = 0
-        for job_result in dxpy.find_jobs(**query):
+        for job_result in dxpy.find_executions(**query):
             num_processed_results += 1
             if (num_processed_results > args.num_results):
                 more_results = True
@@ -3957,7 +3960,8 @@ parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or in
 parser_find_apps.set_defaults(func=find_apps)
 register_subparser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='List jobs in your project', description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
+parser_find_jobs = subparsers_find.add_parser('jobs', help='List jobs in your project',
+                                              description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
 
 EXAMPLES
 
@@ -3969,30 +3973,33 @@ EXAMPLES
 
   $ dx find jobs --name bwa*
 ''',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args],
+                                              parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
+                                                       delim_arg, env_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx find jobs')
-parser_find_jobs.add_argument('--id', help=fill('Show only the job tree or job containing this job ID', width_adjustment=-24))
-parser_find_jobs.add_argument('--name', help=fill('Restrict the search by job name (accepts wildcards "*" and "?")', width_adjustment=-24))
-parser_find_jobs.add_argument('--user', help=fill('Username who launched the job (use "self" to ask for your own jobs)', width_adjustment=-24))
-parser_find_jobs.add_argument('--project', help=fill('Project context (output project), default is current project if set', width_adjustment=-24))
-parser_find_jobs.add_argument('--all-projects', '--allprojects', help=fill('Extend search to all projects', width_adjustment=-24), action='store_true')
-parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help=fill('Applet or App ID that job is running', width_adjustment=-24))
-parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
-parser_find_jobs.add_argument('--origin', help=fill('Job ID of the top-level (user-initiated) job', width_adjustment=-24)) # Redundant but might as well
-parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
-parser_find_jobs.add_argument('--created-after', help=fill('Date (e.g. 2012-01-01) or integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
-parser_find_jobs.add_argument('--created-before', help=fill('Date (e.g. 2012-01-01) or integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
-parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
-parser_find_jobs.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
-parser_find_jobs_search_gp = parser_find_jobs.add_argument_group('Search mode')
-parser_find_jobs_search = parser_find_jobs_search_gp.add_mutually_exclusive_group()
-parser_find_jobs_search.add_argument('--trees', help=fill('Show entire job trees for all matching results (default)', width_adjustment=-24), action='store_true')
-parser_find_jobs_search.add_argument('--origin-jobs', help=fill('Search and display only top-level origin jobs', width_adjustment=-24), action='store_true')
-parser_find_jobs_search.add_argument('--all-jobs', help=fill('Search for jobs at all depths matching the query (no tree structure shown)', width_adjustment=-24), action='store_true')
-parser_find_jobs.set_defaults(func=find_jobs)
+parser_find_jobs.set_defaults(func=find_executions, classname='job')
 parser_find_jobs.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
+
+parser_find_analyses = subparsers_find.add_parser('analyses', help='List analyses in your project',
+                                                  description=fill('Finds analyses with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
+                                                  parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
+                                                           delim_arg, env_args],
+                                                  formatter_class=argparse.RawTextHelpFormatter,
+                                                  prog='dx find analyses')
+parser_find_analyses.set_defaults(func=find_executions, classname='analysis')
+parser_find_analyses.completer = DXPathCompleter(expected='project')
+register_subparser(parser_find_analyses, subparsers_action=subparsers_find, categories='exec')
+
+parser_find_executions = subparsers_find.add_parser('executions', help='List executions (jobs and analyses) in your project',
+                                                    description=fill('Finds executions (jobs and analyses) with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
+                                                    parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
+                                                             delim_arg, env_args],
+                                                    formatter_class=argparse.RawTextHelpFormatter,
+                                                    prog='dx find executions')
+parser_find_executions.set_defaults(func=find_executions, classname=None)
+parser_find_executions.completer = DXPathCompleter(expected='project')
+register_subparser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_data = subparsers_find.add_parser('data', help='Find data objects',
                                               description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --all-projects (overrides --project, --folder, --norecurse).',

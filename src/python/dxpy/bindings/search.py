@@ -203,30 +203,32 @@ def find_data_objects(classname=None, state=None, visibility=None,
     return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, **kwargs)
 
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
-                    state=None, origin_job=None, parent_job=None,
+                    state=None, origin_job=None, parent_job=None, root_execution=None,
                     created_after=None, created_before=None, describe=False,
-                    name=None, name_mode="exact", limit=None, return_handler=False, format=None,
+                    name=None, name_mode="exact", limit=None, return_handler=False, format=None, list_subjobs=True,
                     **kwargs):
     '''
-    :param launched_by: User ID of the user who launched the job's origin job
+    :param launched_by: User ID of the user who launched the execution's origin execution
     :type launched_by: string
-    :param executable: ID of the applet or app that spawned this job, or a corresponding remote object handler
-    :type executable: string or a DXApp/DXApplet instance
-    :param project: ID of the project context for the job
+    :param executable: ID of the applet or app that spawned this execution, or a corresponding remote object handler
+    :type executable: string or a DXApp/DXApplet/DXWorkflow instance
+    :param project: ID of the project context for the execution
     :type project: string
-    :param state: State of the job (e.g. "failed", "done")
+    :param state: State of the execution (e.g. "failed", "done")
     :type state: string
-    :param origin_job: ID of the original job (initiated by a user running an applet/app) that eventually transitively spawned this job
+    :param origin_job: ID of the original job that eventually spawned this execution (possibly by way of other executions)
     :type origin_job: string
     :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent
     :type parent_job: string
+    :param root_execution: ID of the top-level (user-initiated) execution (job or analysis) that eventually spawned this execution (possibly by way of other executions)
+    :type root_execution: string
     :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_after: int or string
     :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the job. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the job's inputs and outputs.
+    :param describe: Whether to also return the output of calling describe() on the execution. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the execution's inputs and outputs.
     :type describe: boolean or dict
-    :param name: Name of the job to search by (also see *name_mode*)
+    :param name: Name of the job or analysis to search by (also see *name_mode*)
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
@@ -234,19 +236,21 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type limit: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
-    :param format: If set, must be set to "trees". When set to "trees", each result is a tuple (result, jobs_by_parent, job_descriptions).
+    :param format: If set, must be set to "trees". When set to "trees", each result is a tuple (result, executions_by_parent, job_descriptions).
     :type format: string
+    :param list_subjobs: If False, no subjobs will be returned by the API
+    :type list_subjobs: boolean
     :rtype: generator
 
     Returns a generator that yields all executions (jobs or analyses) that match the query. It transparently handles
     paging through the result set if necessary. For all parameters that are omitted, the search is not restricted by
     the corresponding field.
 
-    The following example iterates through all finished jobs in a
+    The following example iterates through all finished jobs and analyses in a
     particular project that were launched in the last two days::
 
       for result in find_executions(state="done", project=proj_id, created_after="-2d"):
-          print "Found job with object id " + result["id"]
+          print "Found job or analysis with object id " + result["id"]
 
     '''
 
@@ -273,6 +277,8 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             query["parentJob"] = None
         else:
             query["parentJob"] = parent_job
+    if root_execution is not None:
+        query["rootExecution"] = root_execution
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
@@ -291,10 +297,12 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
     if format is not None:
         query["format"] = format
+    if list_subjobs is not True:
+        query["listSubjobs"] = list_subjobs
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_jobs, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_executions, query, limit, return_handler, **kwargs)
 
 def find_jobs(*args, **kwargs):
     """
