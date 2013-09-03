@@ -1,12 +1,23 @@
 #!/usr/bin/env python
 
-import os, sys, stat, errno, argparse, json
-import logging
+from __future__ import print_function
 
-from collections import defaultdict
+import os, sys
+
+# Try to reset encoding to utf-8
+# Note: This is incompatible with pypy
+# Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
+import platform, locale
+sys_encoding = locale.getdefaultlocale()[1]
+if platform.python_implementation() != "PyPy":
+    try:
+        reload(sys).setdefaultencoding(sys_encoding)
+    except:
+        pass
+
+import logging, stat, argparse, json
+
 from errno import ENOENT, ENOTDIR
-from stat import S_IFDIR, S_IFLNK, S_IFREG
-from sys import argv, exit
 from time import time
 
 from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
@@ -22,7 +33,7 @@ class DXInode(object):
     LINK = 'link'
 
     def __init__(self, type, name, mode, uid, gid, ctime=None, mtime=None, size=0, dxid=None):
-        print "New inode!", type, name, mode, uid, gid
+        debug("New inode!", type, name, mode, uid, gid)
         self.type = type
         self.name = name     # file name
         self.dev  = 0        # device ID (if special file)
@@ -66,7 +77,7 @@ class DXInode(object):
         self.ctime = self.atime    # time of last status change
 
     def stat(self):
-        print "Constructing stat for", self.name
+        debug("Constructing stat for", self.name)
         try:
             stat = dict(
                 st_mode  = self.mode,       # protection bits
@@ -81,12 +92,12 @@ class DXInode(object):
                 st_ctime = self.ctime,      # platform dependent; time of most recent metadata change on Unix, or the time of creation on Windows
             )
         except Exception as e:
-            print "EXCEPTION", e
-        print "returning stat for", self.name
+            debug("EXCEPTION", e)
+        debug("returning stat for", self.name)
         return stat
 
     def child(self, path):
-        print self.name, 'asked for child', path
+        debug(self.name, 'asked for child', path)
         match = None
         if self.type == DXInode.DIR:
             nodes = path.split('/')
@@ -97,11 +108,11 @@ class DXInode(object):
                     else:
                         match = child
         if match is not None:
-            print "Found child", match.name, match.__dict__
+            debug("Found child", match.name, match.__dict__)
         return match
 
     def read(self, offset, length):
-        print "Reading from", self.name, offset, length
+        debug("Reading from", self.name, offset, length)
         #stat.st_atime = time.now()
         if self.dxid and self.dxid.startswith('file'):
             if self.handler.state != 'closed':
@@ -135,7 +146,7 @@ class DXInode(object):
         return len(data)
 
     def truncate(self, length):
-        print "Truncating", self.name
+        debug("Truncating", self.name)
         self.data = self.data[0:length]
         self.now()
 
@@ -154,22 +165,19 @@ class DXFS(LoggingMixIn, Operations):
         elif self.project_id.startswith('container-'):
             self.project = dxpy.DXContainer(self.project_id)
 
-        print "Populating folders..."
+        debug("Populating folders...")
         folders = self.project.describe(input_params={"folders": True})['folders']
         folders.sort(key=lambda item: (len(item), item))
-        print "Found", len(folders), "folders"
+        debug("Found", len(folders), "folders")
         for path in folders:
             if path == '/':
                 continue
             self.mkdir(str(path), 0755 | stat.S_IFDIR, make_remote=False)
 
-        print "Populated", len(folders), "folders"
-        print "Populating data objects..."
+        debug("Populated", len(folders), "folders")
+        debug("Populating data objects...")
         def _get_size(obj):
-            if obj["class"] == "record":
-                # HACK to get records to sort of work for now. We need to know size in advance but the system doesn't report size of records. TODO: FIXME
-                return 1024*64
-            elif obj["class"] == "gtable":
+            if obj["class"] == "gtable":
                 # HACK to get gtables to sort of work for now. TODO: Add enough bytes to account for all the tabs and newlines in the tsv output.
                 return obj.get('size', 0) * 2
             else:
@@ -179,7 +187,6 @@ class DXFS(LoggingMixIn, Operations):
             dataobject = i["describe"]
             dataobject["folder"] = str(dataobject["folder"])
             dataobject["name"] = str(dataobject["name"])
-            print dataobject
 
             if dataobject["class"] == "applet" or (dataobject["class"] == "record" and "pipeline" in dataobject["types"]):
                 mode = 0755
@@ -194,7 +201,7 @@ class DXFS(LoggingMixIn, Operations):
                         dxid=dataobject['id'])
 
     def chmod(self, path, mode):
-        print 'chmod path:%s mode:%s' % (path, mode)
+        debug('chmod path:%s mode:%s' % (path, mode))
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
@@ -202,7 +209,7 @@ class DXFS(LoggingMixIn, Operations):
         return 0
 
     def chown(self, path, uid, gid):
-        print 'chown path:%s uid:%s gid:%s' % (path, uid, gid)
+        debug('chown path:%s uid:%s gid:%s' % (path, uid, gid))
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
@@ -210,7 +217,7 @@ class DXFS(LoggingMixIn, Operations):
         node.gid = gid
 
     def create(self, path, mode, ctime=None, mtime=None, size=0, dxid=None):
-        print 'create path:%s mode:%s' % (path, mode)
+        debug('create path:%s mode:%s' % (path, mode))
         if ctime is None:
             ctime = time()
         if mtime is None:
@@ -220,11 +227,9 @@ class DXFS(LoggingMixIn, Operations):
         parent = self._parent(path)
 
         if not parent:
-            print "No parent!"
             raise FuseOSError(ENOENT)
 
         if not parent.type == DXInode.DIR:
-            print "Parent is not a dir!"
             raise FuseOSError(ENOTDIR)
 
         if dxid is None:
@@ -234,9 +239,9 @@ class DXFS(LoggingMixIn, Operations):
                        self.uid, self.gid,
                        ctime=ctime, mtime=mtime, size=size, dxid=dxid)
 
-        print "Adding file", node.name, "to", parent.name
+        debug("Adding file", node.name, "to", parent.name)
         parent.data.add(node)
-        #print "Parent contents:", parent.data
+        #debug("Parent contents:", parent.data)
 
         # self.files[path] = dict(st_mode=(S_IFREG | mode), st_nlink=1,
         #                         st_size=0, st_ctime=time(), st_mtime=time(),
@@ -246,16 +251,16 @@ class DXFS(LoggingMixIn, Operations):
         return self.fd
 
     def getattr(self, path, fh=None):
-        print 'getattr path:%s' % path
+        debug('getattr path:%s' % path)
         node = self._node(path)
         if not node:
-            print "getattr: path", path, "not found"
+            debug("getattr: path", path, "not found")
             raise FuseOSError(ENOENT)
         else:
             return node.stat()
 
     def getxattr(self, path, name, position=0):
-        print 'getxattr path:%s name:%s' % (path, name)
+        debug('getxattr path:%s name:%s' % (path, name))
 
         node = self._node(path)
         if not node:
@@ -269,18 +274,18 @@ class DXFS(LoggingMixIn, Operations):
         return value
 
     def listxattr(self, path):
-        print 'listxattr path:%s' % path
+        debug('listxattr path:%s' % path)
 
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
 
         attrs = [str(attr) for attr in node.handler.describe().keys()]
-        print attrs
+        debug(attrs)
         return attrs
 
     def mkdir(self, path, mode, make_remote=True):
-        print 'mkdir path:%s mode:%s' % (path, mode)
+        debug('mkdir path:%s mode:%s' % (path, mode))
 
         dirname, filename = os.path.split(path)
         parent = self._parent(path)
@@ -295,9 +300,9 @@ class DXFS(LoggingMixIn, Operations):
             self.project.new_folder(path)
 
         node = DXInode(DXInode.DIR, filename, mode | stat.S_IFDIR, self.uid, self.gid)
-        print "Adding dir", node.name, "to", parent.name
+        debug("Adding dir", node.name, "to", parent.name)
         parent.data.add(node)
-        print "Parent contents:", parent.data
+        debug("Parent contents:", parent.data)
 
         # self.files[path] = dict(st_mode=(S_IFDIR | mode), st_nlink=2,
         #                         st_size=0, st_ctime=time(), st_mtime=time(),
@@ -309,7 +314,7 @@ class DXFS(LoggingMixIn, Operations):
     #     return self.fd
 
     def read(self, path, size, offset, fh):
-        print 'read path:%s size:%s offset:%s' % (path, size, offset)
+        debug('read path:%s size:%s offset:%s' % (path, size, offset))
 
         node = self._node(path)
 
@@ -319,22 +324,22 @@ class DXFS(LoggingMixIn, Operations):
         return node.read(offset, size)
 
     def readdir(self, path, fh):
-        print 'readdir path:%s' % path
+        debug('readdir path:%s' % path)
 
         node = self._node(path)
-        print "reading dir", node.name, len(node.data), "entries"
+        debug("reading dir", node.name, len(node.data), "entries")
 
         for meta in ['.', '..']:
-            print "yielding", meta
+            debug("yielding", meta)
             yield meta
             #yield fuse.Direntry(meta)
         for child in node.data:
-            print "yielding", child.name
+            debug("yielding", child.name)
             yield child.name
             #yield fuse.Direntry(child.name)
 
     def readlink(self, path):
-        print 'readlink path:%s' % path
+        debug('readlink path:%s' % path)
 
         node = self._node(path)
         if not node:
@@ -343,7 +348,7 @@ class DXFS(LoggingMixIn, Operations):
         return node.data
 
     def removexattr(self, path, name):
-        print 'removexattr path:%s name:%s' % (path, name)
+        debug('removexattr path:%s name:%s' % (path, name))
 
         node = self._node(path)
         if not node:
@@ -354,7 +359,7 @@ class DXFS(LoggingMixIn, Operations):
         # See also ENOATTR
 
     def rename(self, oldpath, newpath):
-        print 'rename oldpath:%s newpath:%s' % (oldpath, newpath)
+        debug('rename oldpath:%s newpath:%s' % (oldpath, newpath))
 
         old_dirname, old_filename = os.path.split(oldpath)
         new_dirname, new_filename = os.path.split(newpath)
@@ -380,7 +385,7 @@ class DXFS(LoggingMixIn, Operations):
         new_parent.data.add(node)
 
     def rmdir(self, path):
-        print 'rmdir path:%s' % path
+        debug('rmdir path:%s' % path)
 
         parent      = self._parent(path)
         node        = self._node(path)
@@ -395,7 +400,7 @@ class DXFS(LoggingMixIn, Operations):
         parent.data.remove(node)
 
     def setxattr(self, path, name, value, flags, position=0):
-        print 'setxattr path:%s name:%s value:%s flags:%s' % (path, name, value, flags)
+        debug('setxattr path:%s name:%s value:%s flags:%s' % (path, name, value, flags))
 
         node = self._node(path)
         if not node:
@@ -407,18 +412,18 @@ class DXFS(LoggingMixIn, Operations):
             prop_name, prop_value = value.split(":")
             node.handler.add_properties({prop_name: prop_value})
         elif name == 'state' and value == 'closed':
-            print "closing", node
+            debug("closing", node)
             node.handler.close(block=True)
             node.handler = dxpy.get_handler(node.handler.get_id())
             node.size = node.handler.size
-            print "closed", node
+            debug("closed", node)
         node.xattr[name] = value
 
     def statfs(self, path):
         return dict(f_bsize=512, f_blocks=4096, f_bavail=2048)
 
     def symlink(self, target, source):
-        print 'symlink path:%s newpath:%s' % (target, source)
+        debug('symlink path:%s newpath:%s' % (target, source))
 
         source_node = self._node(target)
         filename    = os.path.basename(source)
@@ -436,7 +441,7 @@ class DXFS(LoggingMixIn, Operations):
         parent.data.add(node)
 
     def truncate(self, path, length, fh=None):
-        print 'truncate path:%s len:%s' % (path, length)
+        debug('truncate path:%s len:%s' % (path, length))
 
         node = self._node(path)
 
@@ -446,7 +451,7 @@ class DXFS(LoggingMixIn, Operations):
         node.truncate(length)
 
     def unlink(self, path):
-        print 'unlink path:%s' % path
+        debug('unlink path:%s' % path)
 
         parent = self._parent(path)
         child  = self._node(path)
@@ -454,19 +459,19 @@ class DXFS(LoggingMixIn, Operations):
         if not (parent or child):
             raise FuseOSError(ENOENT)
 
-        print "Removing", child.handler
+        debug("Removing", child.handler)
         child.handler.remove()
         parent.data.remove(child)
 
     def utimens(self, path, times=None):
-        print 'utime path:%s times:%s' % (path, times)
+        debug('utime path:%s times:%s' % (path, times))
         node = self._node(path)
         if not node:
             raise FuseOSError(ENOENT)
         node.ctime = node.mtime = times[0]
 
     def write(self, path, data, offset, fh):
-        print 'write path:%s buflen:%s offset:%s' % (path, len(data), offset)
+        debug('write path:%s buflen:%s offset:%s' % (path, len(data), offset))
 
         node = self._node(path)
 
@@ -492,6 +497,10 @@ parser.add_argument("--project-id", help="DNAnexus project ID to mount", default
 parser.add_argument("--debug", action='store_true')
 parser.add_argument("--foreground", action='store_true')
 args = parser.parse_args()
+
+def debug(*args_to_print):
+    if args.debug:
+        print(*args_to_print)
 
 if not args.project_id.startswith('project-') and not args.project_id.startswith('container-'):
     parser.exit(3, "Error: A valid project or container ID was not provided for --project-id\n")
