@@ -138,7 +138,6 @@ def download_dxfile(dxid, filename, chunksize=DEFAULT_BUFFER_SIZE, append=False,
 
             fd.write(file_content)
 
-
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False, **kwargs):
     '''

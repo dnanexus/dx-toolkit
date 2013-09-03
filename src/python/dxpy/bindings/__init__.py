@@ -24,7 +24,8 @@ import time, re, sys, json, copy
 
 from dxpy import *
 import dxpy.api
-from dxpy.exceptions import *
+from ..exceptions import (DXError, DXAPIError, DXFileError, DXGTableError, DXSearchError, DXAppletError,
+                          DXJobFailureError, AppError, AppInternalError, DXCLIError)
 
 
 class DXObject(object):
@@ -500,17 +501,18 @@ class DXDataObject(DXObject):
             time.sleep(2)
             elapsed += 2
 
-from .dxdataobject_functions import *
+from .dxdataobject_functions import dxlink, is_dxlink, get_dxlink_ids, get_handler, describe, get_details, remove
 
-from .dxfile import *
-from .dxfile_functions import *
-from .dxgtable import *
-from .dxgtable_functions import *
-from .dxrecord import *
-from .dxworkflow import *
-from .dxproject import *
-from .dxjob import *
-from .dxapplet import *
-from .dxapp import *
+from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
+from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string
+from .dxgtable import DXGTable, NULL, DXGTABLE_HTTP_THREADS
+from .dxgtable_functions import open_dxgtable, new_dxgtable
+from .dxrecord import DXRecord, new_dxrecord
+from .dxworkflow import DXWorkflow
+from .dxproject import DXContainer, DXProject
+from .dxjob import DXJob, new_dxjob
+from .dxapplet import DXExecutable, DXApplet
+from .dxapp import DXApp
 from .auth import user_info
-from .search import *
+from .search import (find_data_objects, find_jobs, find_projects, find_apps, find_one_data_object, find_one_project,
+                     find_one_app)
