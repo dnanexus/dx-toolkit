@@ -134,7 +134,7 @@ environment variables:
 # except:
 #     pass
 
-import os, json, time, logging, httplib, platform, collections
+import os, sys, json, time, logging, httplib, platform, collections
 from .packages import requests
 from .packages.requests.exceptions import ConnectionError, HTTPError, Timeout
 from .packages.requests.auth import AuthBase
@@ -142,8 +142,8 @@ from .packages.requests.auth import AuthBase
 logger = logging.getLogger(__name__)
 logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
-from dxpy.exceptions import DXError, DXAPIError
-from dxpy.toolkit_version import version as TOOLKIT_VERSION
+from .exceptions import DXError, DXAPIError
+from .toolkit_version import version as TOOLKIT_VERSION
 
 snappy_available = True
 try:
@@ -166,6 +166,7 @@ APISERVER_PORT = DEFAULT_APISERVER_PORT
 SESSION_HANDLERS = collections.defaultdict(requests.session)
 
 DEFAULT_RETRIES = 5
+_DEBUG, _UPGRADE_NOTIFY = False, True
 
 USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
@@ -180,7 +181,7 @@ class ContentLengthError(HTTPError):
     '''Will be raised when actual content length received from server does not match the "Content-Length" header'''
     pass
 
-def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=600,
+def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeout=600,
                   use_compression=None, jsonify_data=True, want_full_response=False,
                   prepend_srv=True, session_handler=None,
                   max_retries=DEFAULT_RETRIES, always_retry=False, **kwargs):
@@ -233,6 +234,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     '''
     if session_handler is None:
         session_handler = SESSION_HANDLERS[os.getpid()]
+    if headers is None:
+        headers = {}
 
     global _UPGRADE_NOTIFY
 
@@ -252,8 +255,6 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
     # just encode them with the Python default (ascii) and fail for any non-ascii content.
     headers = {k.encode(): v.encode() for k, v in headers.iteritems()}
 
-    # This will make the total number of retries MAX_RETRIES^2 for some errors. TODO: check how to better integrate with requests retry logic.
-    # config.setdefault('max_retries', MAX_RETRIES)
     if jsonify_data:
         data = json.dumps(data)
         if 'Content-Type' not in headers and method == 'POST':
@@ -356,7 +357,8 @@ def DXHTTPRequest(resource, data, method='POST', headers={}, auth=True, timeout=
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
                     delay = 2 ** (retry+1)
-                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay, retry+1, max_retries))
+                    logger.warn("%s %s: %s. Waiting %d seconds before retry %d of %d..." % (method, url, str(e), delay,
+                                                                                            retry+1, max_retries))
                     time.sleep(delay)
                     continue
             break
@@ -463,7 +465,7 @@ def set_project_context(dxid):
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
 
-from dxpy.utils.env import get_env
+from .utils.env import get_env
 
 def get_auth_server_name(host_override=None, port_override=None):
     """
@@ -481,7 +483,8 @@ def get_auth_server_name(host_override=None, port_override=None):
     elif dxpy.APISERVER_HOST == 'api.dnanexus.com':
         return 'https://auth.dnanexus.com'
     else:
-        raise DXError("Could not determine which auth server is associated with {apiserver}.".format(apiserver=dxpy.APISERVER_HOST))
+        err_msg = "Could not determine which auth server is associated with {apiserver}."
+        raise DXError(err_msg.format(apiserver=dxpy.APISERVER_HOST))
 
 def _initialize(suppress_warning=False):
     '''
@@ -519,9 +522,9 @@ def _initialize(suppress_warning=False):
 
 _initialize()
 
-from dxpy.bindings import *
-from dxpy.dxlog import *
-from dxpy.utils.exec_utils import run, entry_point
+from .bindings import *
+from .dxlog import DXLogHandler
+from .utils.exec_utils import run, entry_point
 
 # This should be in exec_utils but fails because of circular imports
 # TODO: fix the imports
@@ -532,7 +535,8 @@ if JOB_ID is not None:
         job_desc = current_job.describe()
     except DXAPIError as e:
         if e.name == 'ResourceNotFound':
-            print "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job." % (JOB_ID,)
+            err_msg = "Job ID %r was not found. Unset the DX_JOB_ID environment variable OR set it to be the ID of a valid job."
+            print >>sys.stderr, err_msg % (JOB_ID,)
             sys.exit(1)
         else:
             raise
