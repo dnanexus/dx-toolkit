@@ -27,7 +27,7 @@ from ..packages import requests
 # Note: This is incompatible with pypy
 # Note: In addition to PYTHONIOENCODING=UTF-8, this also enables command-line arguments to be decoded properly.
 import platform, locale
-sys_encoding = locale.getdefaultlocale()[1]
+sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 if platform.python_implementation() != "PyPy":
     try:
         reload(sys).setdefaultencoding(sys_encoding)
