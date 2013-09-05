@@ -1,3 +1,9 @@
+dx-toolkit (0.66.2) precise; urgency=low
+
+  * Fix bug with encoding selection in dxclient initialization.
+
+ -- Andrey Kislyuk <akislyuk@localhost>  Thu, 05 Sep 2013 18:58:43 +0000
+
 dx-toolkit (0.66.0) precise; urgency=low
 
   * Build and test infrastructure improvements.
