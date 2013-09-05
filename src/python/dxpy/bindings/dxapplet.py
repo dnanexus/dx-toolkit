@@ -107,6 +107,8 @@ class DXExecutable:
 
         if isinstance(self, DXApplet):
             return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
+        elif isinstance(self, dxpy.bindings.DXAnalysisWorkflow):
+            return DXAnalysis(dxpy.api.workflow_run(self._dxid, run_input, **kwargs)["id"])
         elif self._dxid is not None:
             return DXJob(dxpy.api.app_run(self._dxid, input_params=run_input, **kwargs)["id"])
         else:

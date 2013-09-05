@@ -977,6 +977,39 @@ def main():
         self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
         dxjob.terminate()
 
+@unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                     'skipping test that would run a job')
+class TestDXAnalysisWorkflow(unittest.TestCase):
+    def setUp(self):
+        setUpTempProjects(self)
+
+    def tearDown(self):
+        tearDownTempProjects(self)
+
+    def test_run_workflow(self):
+        dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.04",
+                     inputSpec=[{"name": "number", "class": "int"}],
+                     outputSpec=[{"name": "number", "class": "int"}],
+                     runSpec={"code": '''
+@dxpy.entry_point('main')
+def main(number):
+    raise # Ensure that the applet fails
+''',
+                               "interpreter": "python2.7"})
+        stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
+                                               {"editVersion": 0, "executable": dxapplet.get_id()})['stage']
+        dxanalysis = dxworkflow.run({"0.number": 32})
+        dxanalysis.terminate()
+        with self.assertRaises(DXJobFailureError):
+            dxanalysis.wait_on_done(timeout=20)
+        analysis_desc = dxanalysis.describe()
+        self.assertEqual(analysis_desc['input'].get(stage_id + '.number'), 32)
+        dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
+        self.assertEqual(dxjob.describe()['input'].get("number"), 32)
+
 @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                      'skipping test that would create an app')
 class TestDXApp(unittest.TestCase):
@@ -989,14 +1022,14 @@ class TestDXApp(unittest.TestCase):
     def test_create_app(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
-                      dxapi="1.04",
-                      inputSpec=[{"name": "chromosomes", "class": "record"},
-                                 {"name": "rowFetchChunk", "class": "int"}
-                                 ],
-                      outputSpec=[{"name": "mappings", "class": "record"}],
-                      runSpec={"code": "def main(): pass",
-                               "interpreter": "python2.7",
-                               "execDepends": [{"name": "python-numpy"}]})
+                     dxapi="1.04",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                            ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         dxapp.new(applet=dxapplet.get_id(), version="0.0.1",
                   bill_to="user-000000000000000000000000", name="app_name")
@@ -1180,7 +1213,8 @@ if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')
     if 'DXTEST_FULL' not in os.environ:
-        sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps will not be run\n')
+        if 'DXTEST_CREATE_APPS' not in os.environ:
+            sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_CREATE_APPS are set; tests that create apps will not be run\n')
         if 'DXTEST_RUN_JOBS' not in os.environ:
             sys.stderr.write('WARNING: neither env var DXTEST_FULL nor DXTEST_RUN_JOBS are set; tests that run jobs will not be run\n')
     unittest.main()

@@ -1137,7 +1137,7 @@ def tree(args):
                 item_desc = get_ls_l_desc(item['describe'])
             else:
                 item_desc = item['describe']['name']
-                if item['describe']['class'] == 'applet' or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
+                if item['describe']['class'] in ['applet', 'workflow'] or (item['describe']['class'] == 'record' and 'pipeline' in item['describe']['types']):
                     item_desc = BOLD() + GREEN() + item_desc + ENDC()
             subtree[item_desc] = None
 
@@ -2585,8 +2585,16 @@ def uninstall(args):
         except:
             err_exit()
 
-def get_exec_or_workflow_handler(path, alias):
+def get_exec_handler(path, alias):
     handler = None
+    def get_handler_from_desc(desc):
+        if desc['class'] == 'applet':
+            return dxpy.DXApplet(desc['id'], project=desc['project'])
+        elif desc['class'] == 'app':
+            return dxpy.DXApp(dxid=desc['id'])
+        else:
+            return dxpy.DXWorkflow(desc['id'], project=desc['project'])
+
     if alias is None:
         app_desc = get_app_from_path(path)
         try:
@@ -2594,25 +2602,25 @@ def get_exec_or_workflow_handler(path, alias):
             project, folderpath, entity_results = resolve_existing_path(path,
                                                                         expected='entity',
                                                                         ask_to_resolve=False,
-                                                                        expected_classes=['applet', 'record'])
-            def is_applet(i):
-                return (i['describe']['class'] == 'applet')
-            def is_workflow(i):
+                                                                        expected_classes=['applet', 'record', 'workflow'])
+            def is_applet_or_workflow(i):
+                return (i['describe']['class'] in ['applet', 'workflow'])
+            def is_record_workflow(i):
                 return ('pipeline' in i['describe']['types'])
             if entity_results is not None:
-                entity_results = [i for i in entity_results if is_applet(i) or is_workflow(i)]
+                entity_results = [i for i in entity_results if is_applet_or_workflow(i) or is_record_workflow(i)]
                 if len(entity_results) == 0:
                     entity_results = None
-        except:
+        except ResolutionError:
             if app_desc is None:
                 err_exit()
             else:
                 project, folderpath, entity_results = None, None, None
 
         if entity_results is not None and len(entity_results) == 1 and app_desc is None:
-            handler = dxpy.get_handler(entity_results[0]['id'], project=entity_results[0]['describe']['project'])
+            handler = get_handler_from_desc(entity_results[0]['describe'])
         elif entity_results is None and app_desc is not None:
-            handler = dxpy.DXApp(dxid=app_desc['id'])
+            handler = get_handler_from_desc(app_desc)
         elif entity_results is not None:
             if not sys.stdout.isatty():
                 parser.exit(1, 'Found multiple executables with the path ' + path + '\n')
@@ -2622,11 +2630,11 @@ def get_exec_or_workflow_handler(path, alias):
                 choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
             choice = try_call(pick, choice_descriptions)
             if choice < len(entity_results):
-                handler = dxpy.get_handler(entity_results[choice]['id'],
-                                           project=entity_results[choice]['describe']['project'])
+                # all applet/workflow choices show up before the app,
+                # of which there is always at most one possible choice
+                handler = get_handler_from_desc(entity_results[choice]['describe'])
             else:
-                handler = dxpy.DXApp(dxid=app_desc['id'])
-                desc = app_desc
+                handler = get_handler_from_desc(app_desc)
         else:
             parser.exit(1, "No matches found for " + path + '\n')
     else:
@@ -2658,7 +2666,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     # single JSON.
     if args.confirm and sys.stdout.isatty():
         try:
-            value = raw_input('Confirm running the applet/app with this input [Y/n]: ')
+            value = raw_input('Confirm running the executable with this input [Y/n]: ')
         except KeyboardInterrupt:
             value = 'n'
         if value != '' and not value.lower().startswith('y'):
@@ -2668,24 +2676,24 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
                    subsequent_indent='  ') + '\n'
     try:
-        dxjob = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
-                               details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
-                               instance_type=args.instance_type, extra_args=args.extra_args)
+        dxexecution = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
+                                     details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
+                                     instance_type=args.instance_type, extra_args=args.extra_args)
         if not args.brief:
-            print "Job ID: " + dxjob.get_id()
+            print dxexecution._class.capitalize() + " ID: " + dxexecution.get_id()
         else:
-            print dxjob.get_id()
+            print dxexecution.get_id()
         sys.stdout.flush()
 
         if args.wait and is_the_only_job:
-            dxjob.wait_on_done()
-        elif args.confirm and sys.stdin.isatty() and not args.watch:
+            dxexecution.wait_on_done()
+        elif args.confirm and sys.stdin.isatty() and not args.watch and isinstance(dxexecution, dxpy.DXJob):
             answer = raw_input("Watch launched job now? [Y/n] ")
             if len(answer) == 0 or answer.lower()[0] == 'y':
                 args.watch = True
 
-        if args.watch and is_the_only_job:
-            watch_args = parser.parse_args(['watch', dxjob.get_id()])
+        if args.watch and is_the_only_job and isinstance(dxexecution, dxpy.DXJob):
+            watch_args = parser.parse_args(['watch', dxexecution.get_id()])
             print ''
             print 'Job Log'
             print '-------'
@@ -2693,14 +2701,14 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
     except Exception:
         err_exit()
 
-    return dxjob
+    return dxexecution
 
 def print_run_help(executable="", alias=None):
     if executable == "":
         parser_map['run'].print_help()
     else:
         exec_help = 'usage: dx run ' + executable + ('' if alias is None else ' --alias ' + alias)
-        handler = get_exec_or_workflow_handler(executable, alias)
+        handler = get_exec_handler(executable, alias)
         try:
             exec_desc = handler.describe()
         except:
@@ -2820,7 +2828,7 @@ def print_run_help(executable="", alias=None):
                 exec_help += BOLD("App: ")
                 exec_details = exec_desc['details']
             else:
-                exec_help += BOLD("Applet: ")
+                exec_help += BOLD(exec_desc['class'].capitalize() + ": ")
                 exec_details = handler.get_details()
             advanced_inputs = exec_details.get("advancedInputs", [])
             exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
@@ -3012,7 +3020,7 @@ def run(args):
                         }
 
     get_output_flag(args)
-    handler = get_exec_or_workflow_handler(args.executable, args.alias)
+    handler = get_exec_handler(args.executable, args.alias)
 
     if args.project is not None:
         if args.folder is not None and not args.clone:
@@ -3036,11 +3044,15 @@ def run(args):
             err_exit("Error while parsing JSON value for --instance-type",
                      expected_exceptions=default_expected_exceptions + (ValueError,))
 
-    if isinstance(handler, dxpy.bindings.DXRecord): # Identified as a workflow in get_exec_or_workflow_handler()
+    if not isinstance(handler, dxpy.DXApplet) and \
+            not isinstance(handler, dxpy.DXApp) : # Identified as a workflow in get_exec_handler()
         if clone_desc is not None:
             parser.exit(1, fill("Cannot run a workflow and clone a job; only apps or applets can be run with cloned options") + "\n")
         if not args.brief:
             print "Executing workflow", handler
+
+    if isinstance(handler, dxpy.DXRecordWorkflow):
+        # Record-based workflow requires each job to be run individually
         workflow = handler.get_details()
         workflow_details = copy.deepcopy(workflow)
         if workflow.get('version') not in range(2, 6):
@@ -3785,7 +3797,7 @@ run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
 run_executable_action.completer = MultiCompleter([DXAppCompleter(),
-                                                  DXPathCompleter(classes=['applet']),
+                                                  DXPathCompleter(classes=['applet', 'workflow']),
                                                   DXPathCompleter(classes=['record'], typespec='pipeline')])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
