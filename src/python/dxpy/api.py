@@ -7,6 +7,42 @@ import sys
 
 from dxpy import DXHTTPRequest
 
+def analysisDescribe(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`analysis_describe()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.analysisDescribe is deprecated; please use analysis_describe instead."
+    return analysis_describe(*args, **kwargs)
+
+def analysis_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /analysis-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def analysisTerminate(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`analysis_terminate()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.analysisTerminate is deprecated; please use analysis_terminate instead."
+    return analysis_terminate(*args, **kwargs)
+
+def analysis_terminate(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /analysis-xxxx/terminate API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate
+    """
+    return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def appAddAuthorizedUsers(*args, **kwargs):
     """
 
@@ -2119,4 +2155,328 @@ def user_update(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowAddStage(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_add_stage()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowAddStage is deprecated; please use workflow_add_stage instead."
+    return workflow_add_stage(*args, **kwargs)
+
+def workflow_add_stage(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/addStage API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage
+    """
+    return DXHTTPRequest('/%s/addStage' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowAddTags(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_add_tags()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowAddTags is deprecated; please use workflow_add_tags instead."
+    return workflow_add_tags(*args, **kwargs)
+
+def workflow_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/addTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags
+    """
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowAddTypes(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_add_types()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowAddTypes is deprecated; please use workflow_add_types instead."
+    return workflow_add_types(*args, **kwargs)
+
+def workflow_add_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/addTypes API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes
+    """
+    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowClose(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_close()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowClose is deprecated; please use workflow_close instead."
+    return workflow_close(*args, **kwargs)
+
+def workflow_close(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/close API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose
+    """
+    return DXHTTPRequest('/%s/close' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowDescribe(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_describe()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowDescribe is deprecated; please use workflow_describe instead."
+    return workflow_describe(*args, **kwargs)
+
+def workflow_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/describe API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowGetDetails(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_get_details()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowGetDetails is deprecated; please use workflow_get_details instead."
+    return workflow_get_details(*args, **kwargs)
+
+def workflow_get_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/getDetails API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails
+    """
+    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowListProjects(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_list_projects()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowListProjects is deprecated; please use workflow_list_projects instead."
+    return workflow_list_projects(*args, **kwargs)
+
+def workflow_list_projects(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/listProjects API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
+    """
+    return DXHTTPRequest('/%s/listProjects' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowMoveStage(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_move_stage()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowMoveStage is deprecated; please use workflow_move_stage instead."
+    return workflow_move_stage(*args, **kwargs)
+
+def workflow_move_stage(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/moveStage API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage
+    """
+    return DXHTTPRequest('/%s/moveStage' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowRemoveStage(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_remove_stage()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowRemoveStage is deprecated; please use workflow_remove_stage instead."
+    return workflow_remove_stage(*args, **kwargs)
+
+def workflow_remove_stage(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/removeStage API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    """
+    return DXHTTPRequest('/%s/removeStage' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowRemoveTags(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_remove_tags()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowRemoveTags is deprecated; please use workflow_remove_tags instead."
+    return workflow_remove_tags(*args, **kwargs)
+
+def workflow_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/removeTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags
+    """
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowRemoveTypes(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_remove_types()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowRemoveTypes is deprecated; please use workflow_remove_types instead."
+    return workflow_remove_types(*args, **kwargs)
+
+def workflow_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/removeTypes API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes
+    """
+    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowRename(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_rename()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowRename is deprecated; please use workflow_rename instead."
+    return workflow_rename(*args, **kwargs)
+
+def workflow_rename(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/rename API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename
+    """
+    return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowRun(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_run()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowRun is deprecated; please use workflow_run instead."
+    return workflow_run(*args, **kwargs)
+
+def workflow_run(object_id, input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /workflow-xxxx/run API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage
+    """
+    return DXHTTPRequest('/%s/run' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowSetDetails(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_set_details()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowSetDetails is deprecated; please use workflow_set_details instead."
+    return workflow_set_details(*args, **kwargs)
+
+def workflow_set_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/setDetails API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails
+    """
+    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowSetProperties(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_set_properties()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowSetProperties is deprecated; please use workflow_set_properties instead."
+    return workflow_set_properties(*args, **kwargs)
+
+def workflow_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/setProperties API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties
+    """
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowSetStageInputs(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_set_stage_inputs()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowSetStageInputs is deprecated; please use workflow_set_stage_inputs instead."
+    return workflow_set_stage_inputs(*args, **kwargs)
+
+def workflow_set_stage_inputs(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/setStageInputs API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs
+    """
+    return DXHTTPRequest('/%s/setStageInputs' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowSetVisibility(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_set_visibility()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowSetVisibility is deprecated; please use workflow_set_visibility instead."
+    return workflow_set_visibility(*args, **kwargs)
+
+def workflow_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/setVisibility API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
+    """
+    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowNew(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_new()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowNew is deprecated; please use workflow_new instead."
+    return workflow_new(*args, **kwargs)
+
+def workflow_new(input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /workflow/new API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew
+    """
+    return DXHTTPRequest('/workflow/new', input_params, always_retry=always_retry, **kwargs)
 

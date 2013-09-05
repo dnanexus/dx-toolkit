@@ -511,8 +511,10 @@ from .dxrecord import DXRecord, new_dxrecord
 from .dxworkflow import DXWorkflow
 from .dxproject import DXContainer, DXProject
 from .dxjob import DXJob, new_dxjob
+from .dxanalysis import DXAnalysis
 from .dxapplet import DXExecutable, DXApplet
 from .dxapp import DXApp
+from .dxworkflow import DXRecordWorkflow, DXAnalysisWorkflow, DXWorkflow
 from .auth import user_info
 from .search import (find_data_objects, find_jobs, find_projects, find_apps, find_one_data_object, find_one_project,
                      find_one_app)

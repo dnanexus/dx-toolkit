@@ -647,6 +647,27 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_dx_run_workflow(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 1"}
+                                         })['id']
+        workflow_id = dxpy.api.workflow_new({"project": self.project})['id']
+        stage_id = dxpy.api.workflow_add_stage(workflow_id,
+                                               {"editVersion": 0, "executable": applet_id})['stage']
+        analysis_id = run("dx run " + workflow_id + " -i0.number=32 -y --brief").strip()
+        self.assertTrue(analysis_id.startswith('analysis-'))
+        analysis_desc = run("dx describe " + analysis_id)
+        self.assertIn(stage_id + '.number = 32', analysis_desc)
+        analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
+        time.sleep(2) # May need to wait for job to be created in the system
+        job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
+        self.assertIn(' number = 32', job_desc)
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')
