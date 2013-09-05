@@ -447,7 +447,7 @@ class ExecutableInputs(object):
             input_class = None
 
         if self.input_spec is not None:
-            if input_name not in self.input_spec and self._desc['class'] != 'workflow':
+            if input_name not in self.input_spec and self._desc.get('class') != 'workflow':
                 raise Exception('Input field called ' + input_name + ' was not found in the input spec')
             elif input_name in self.input_spec:
                 input_class = self.input_spec[input_name]['class']
@@ -604,7 +604,7 @@ class ExecutableInputs(object):
                 except:
                     raise Exception('An input was found that did not conform to the syntax: -i<input name>=<input value>')
                 self.add(self.executable._get_input_name(name) if \
-                         self._desc['class'] == 'workflow' else name, value)
+                         self._desc.get('class') == 'workflow' else name, value)
 
         if self.input_spec is None:
             for i in self.inputs:
@@ -613,9 +613,9 @@ class ExecutableInputs(object):
 
         # For now, we do not handle prompting for workflow inputs nor
         # recognizing when not all inputs haven't been bound
-        if sys.stdout.isatty() and self._desc['class'] != 'workflow':
+        if sys.stdout.isatty() and self._desc.get('class') != 'workflow':
             self.prompt_for_missing()
-        elif self._desc['class'] != 'workflow':
+        elif self._desc.get('class') != 'workflow':
             missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
             if missing_required_inputs:
                 raise Exception('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
