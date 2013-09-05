@@ -3228,7 +3228,8 @@ def watch(args):
     from dxpy.utils.job_log_client import DXJobLogStreamClient
 
     input_params = {"numRecentMessages": args.num_recent_messages,
-                    "recurseJobs": args.tree}
+                    "recurseJobs": args.tree,
+                    "tail": args.tail}
 
     if args.levels:
         input_params['levels'] = args.levels
@@ -3848,6 +3849,8 @@ parser_watch.add_argument('--no-job-info', help='Omit job info and status update
                           dest='job_info')
 parser_watch.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
+parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
+                          help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.set_defaults(func=watch)
 register_subparser(parser_watch, categories='exec')
 
