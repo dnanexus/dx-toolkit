@@ -171,7 +171,7 @@ def find_delimiter(bed_file):
         else: 
             space_split = line.split()
             if len(space_split) < 3: 
-                raise dxpy.AppError("File is not a valid bed file (neither space delimited nor tab delimited")
+                raise dxpy.AppError("File is not a valid bed file (neither space delimited nor tab delimited)")
             print >> sys.stderr, "Bed file is space delimited"
             return " "
             
