@@ -44,3 +44,8 @@ For **DXApp.run()**, see :meth:`~dxpy.bindings.dxapplet.DXExecutable.run`.
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: dxpy.bindings.dxanalysis
+   :members:
+   :undoc-members:
+   :show-inheritance:

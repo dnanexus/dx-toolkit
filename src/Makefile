@@ -21,6 +21,10 @@ ifndef MAKEOPTS
 endif
 MAKE:=$(MAKE) $(MAKEOPTS)
 
+ifndef CCACHE_DISABLE
+	export PATH := /usr/lib/ccache:$(PATH)
+endif
+
 # If installing into the system directories you probably want to set
 #   DESTDIR=/ PREFIX=/usr
 ifndef DESTDIR

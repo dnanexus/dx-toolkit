@@ -19,6 +19,50 @@ public class DXAPI {
 
 
     /**
+     * Invokes the analysisDescribe method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode analysisDescribe(String objectId) throws Exception {
+        return analysisDescribe(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the analysisDescribe method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode analysisDescribe(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+    }
+
+    /**
+     * Invokes the analysisTerminate method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode analysisTerminate(String objectId) throws Exception {
+        return analysisTerminate(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the analysisTerminate method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode analysisTerminate(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams);
+    }
+
+    /**
      * Invokes the appAddAuthorizedUsers method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
@@ -2512,6 +2556,399 @@ public class DXAPI {
      */
     public static JsonNode userUpdate(String objectId, JsonNode inputParams) throws Exception {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
+    }
+
+    /**
+     * Invokes the workflowAddStage method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowAddStage(String objectId) throws Exception {
+        return workflowAddStage(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowAddStage method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowAddStage(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addStage", inputParams);
+    }
+
+    /**
+     * Invokes the workflowAddTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowAddTags(String objectId) throws Exception {
+        return workflowAddTags(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowAddTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowAddTags(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+    }
+
+    /**
+     * Invokes the workflowAddTypes method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowAddTypes(String objectId) throws Exception {
+        return workflowAddTypes(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowAddTypes method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
+    }
+
+    /**
+     * Invokes the workflowClose method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowClose(String objectId) throws Exception {
+        return workflowClose(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowClose method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowClose(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
+    }
+
+    /**
+     * Invokes the workflowDescribe method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowDescribe(String objectId) throws Exception {
+        return workflowDescribe(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowDescribe method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowDescribe(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
+    }
+
+    /**
+     * Invokes the workflowGetDetails method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowGetDetails(String objectId) throws Exception {
+        return workflowGetDetails(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowGetDetails method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
+    }
+
+    /**
+     * Invokes the workflowListProjects method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowListProjects(String objectId) throws Exception {
+        return workflowListProjects(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowListProjects method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowListProjects(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
+    }
+
+    /**
+     * Invokes the workflowMoveStage method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowMoveStage(String objectId) throws Exception {
+        return workflowMoveStage(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowMoveStage method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "moveStage", inputParams);
+    }
+
+    /**
+     * Invokes the workflowRemoveStage method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowRemoveStage(String objectId) throws Exception {
+        return workflowRemoveStage(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowRemoveStage method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeStage", inputParams);
+    }
+
+    /**
+     * Invokes the workflowRemoveTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowRemoveTags(String objectId) throws Exception {
+        return workflowRemoveTags(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowRemoveTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+    }
+
+    /**
+     * Invokes the workflowRemoveTypes method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowRemoveTypes(String objectId) throws Exception {
+        return workflowRemoveTypes(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowRemoveTypes method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
+    }
+
+    /**
+     * Invokes the workflowRename method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowRename(String objectId) throws Exception {
+        return workflowRename(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowRename method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowRename(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
+    }
+
+    /**
+     * Invokes the workflowRun method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowRun(String objectId) throws Exception {
+        return workflowRun(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowRun method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowRun(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
+    }
+
+    /**
+     * Invokes the workflowSetDetails method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowSetDetails(String objectId) throws Exception {
+        return workflowSetDetails(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowSetDetails method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
+    }
+
+    /**
+     * Invokes the workflowSetProperties method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowSetProperties(String objectId) throws Exception {
+        return workflowSetProperties(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowSetProperties method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+    }
+
+    /**
+     * Invokes the workflowSetStageInputs method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowSetStageInputs(String objectId) throws Exception {
+        return workflowSetStageInputs(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowSetStageInputs method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setStageInputs", inputParams);
+    }
+
+    /**
+     * Invokes the workflowSetVisibility method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     */
+    public static JsonNode workflowSetVisibility(String objectId) throws Exception {
+        return workflowSetVisibility(objectId, mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowSetVisibility method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
+    }
+
+    /**
+     * Invokes the workflowNew method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew">API specification</a>.
+     */
+    public static JsonNode workflowNew() throws Exception {
+        return workflowNew(mapper.readTree("{}"));
+    }
+    /**
+     * Invokes the workflowNew method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     */
+    public static JsonNode workflowNew(JsonNode inputParams) throws Exception {
+        return new DXHTTPRequest().request("/workflow/new", inputParams);
     }
 }
 

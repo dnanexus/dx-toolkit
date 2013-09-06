@@ -490,7 +490,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
             try:
                 app_describe = dxpy.api.app_describe("app-" + app_spec["name"], alias=original_version, always_retry=False)
             except dxpy.exceptions.DXAPIError as e:
-                if e.name == 'ResourceNotFound':
+                if e.name == 'ResourceNotFound' or (mode == 'applet' and e.name == 'PermissionDenied'):
                     pass
                 else:
                     raise e
