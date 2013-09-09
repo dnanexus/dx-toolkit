@@ -549,5 +549,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 fuse = FUSE(DXFS(project_id=args.project_id),
             args.mountpoint,
             foreground=args.foreground,
+            nothreads=True,
             fsname='dnanexus:'+args.project_id,
             subtype='dxfs')
