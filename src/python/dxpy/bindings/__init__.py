@@ -513,7 +513,7 @@ from .dxjob import DXJob, new_dxjob
 from .dxanalysis import DXAnalysis
 from .dxapplet import DXExecutable, DXApplet
 from .dxapp import DXApp
-from .dxworkflow import DXRecordWorkflow, DXAnalysisWorkflow, DXWorkflow
+from .dxworkflow import DXRecordWorkflow, DXAnalysisWorkflow, DXWorkflow, new_dxworkflow
 from .auth import user_info
 from .search import (find_data_objects, find_jobs, find_projects, find_apps, find_one_data_object, find_one_project,
                      find_one_app)

@@ -1382,6 +1382,40 @@ def new_record(args):
     except:
         err_exit()
 
+def new_workflow(args):
+    try_call(process_dataobject_args, args)
+    try_call(process_single_dataobject_output_args, args)
+    init_from = None
+    if args.init is not None:
+        try:
+            init_project, init_folder, init_result = try_call(resolve_existing_path,
+                                                              args.init,
+                                                              expected='entity')
+            init_from = dxpy.get_handler(init_result['id'], project=init_project)
+        except:
+            init_from = args.init
+    if args.output is None:
+        project = dxpy.WORKSPACE_ID
+        folder = os.environ.get('DX_CLI_WD', '/')
+        name = None
+    else:
+        project, folder, name = resolve_path(args.output)
+    try:
+        dxworkflow = dxpy.new_dxworkflow(title=args.title, summary=args.summary,
+                                         description=args.description,
+                                         project=project, name=name,
+                                         tags=args.tags, types=args.types,
+                                         hidden=args.hidden, properties=args.properties,
+                                         details=args.details,
+                                         folder=folder,
+                                         parents=args.parents, init_from=init_from)
+        if args.brief:
+            print dxworkflow.get_id()
+        else:
+            print_desc(dxworkflow.describe(incl_properties=True, incl_details=True), args.verbose)
+    except:
+        err_exit()
+
 def new_gtable(args):
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
@@ -3901,6 +3935,21 @@ init_action = parser_new_record.add_argument('--init', help='Path to record from
 init_action.completer = DXPathCompleter(classes=['record'])
 parser_new_record.set_defaults(func=new_record)
 register_subparser(parser_new_record, subparsers_action=subparsers_new, categories='fs')
+
+parser_new_workflow = subparsers_new.add_parser('workflow', help='Create a new workflow',
+                                                description='Create a new workflow',
+                                                parents=[parser_dataobject_args, parser_single_dataobject_output_args,
+                                                         stdout_args, env_args],
+                                                formatter_class=argparse.RawTextHelpFormatter,
+                                                prog='dx new workflow')
+parser_new_workflow.add_argument('--title', help='Workflow title')
+parser_new_workflow.add_argument('--summary', help='Workflow summary')
+parser_new_workflow.add_argument('--description', help='Workflow description')
+init_action = parser_new_workflow.add_argument('--init', help='Path to workflow or an analysis ID from which to initialize all metadata')
+init_action.completer = DXPathCompleter(classes=['workflow'])
+parser_new_workflow.set_defaults(func=new_workflow)
+register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='fs')
+
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',

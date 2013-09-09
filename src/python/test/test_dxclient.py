@@ -690,6 +690,17 @@ class TestDXClient(DXTestCase):
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
 
+    def test_dx_new_workflow(self):
+        workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --brief").strip()
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc["id"], workflow_id)
+        self.assertEqual(desc["editVersion"], 0)
+        self.assertEqual(desc["name"], u"wØrkflØwname")
+        self.assertEqual(desc["title"], u"тitle")
+        self.assertEqual(desc["summary"], u"SΨmmary")
+        self.assertEqual(desc["description"], u"DΣsc")
+        self.assertEqual(desc["project"], self.project)
+
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')
 class TestHTTPProxySupport(DXTestCase):

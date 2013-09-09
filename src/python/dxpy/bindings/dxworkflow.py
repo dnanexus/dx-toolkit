@@ -46,7 +46,7 @@ from collections import OrderedDict
 from argparse import Namespace
 
 import dxpy
-from dxpy.bindings import DXDataObject, DXExecutable, get_handler
+from dxpy.bindings import DXDataObject, DXExecutable, DXAnalysis, get_handler
 from dxpy.exceptions import DXError
 from dxpy.cli.exec_io import ExecutableInputs, stage_to_job_refs
 
@@ -152,6 +152,37 @@ class DXRecordWorkflow(DXDataObject, DXExecutable):
 # DXAnalysisWorkflow #
 ######################
 
+def new_dxworkflow(title=None, summary=None, description=None, init_from=None, **kwargs):
+    '''
+    :param title: Workflow title (optional)
+    :type title: string
+    :param summary: Workflow summary (optional)
+    :type summary: string
+    :param description: Workflow description (optional)
+    :type description: string
+    :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
+    :type init_from: :class:`~dxpy.bindings.dxworkflow.DXAnalysisWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
+    :rtype: :class:`DXAnalysisWorkflow`
+
+    Additional optional parameters not listed: all those under
+    :func:`dxpy.bindings.DXDataObject.new`, except `details`.
+
+    Creates a new remote workflow object with project set to *project*
+    and returns the appropriate handler.
+
+    Example:
+
+        r = dxpy.new_dxworkflow(title="My Workflow", description="This workflow contains...")
+
+    Note that this function is shorthand for::
+
+        dxworkflow = DXAnalysisWorkflow()
+        dxworkflow.new(**kwargs)
+    '''
+    dxworkflow = DXAnalysisWorkflow()
+    dxworkflow.new(title=title, summary=summary, description=description, init_from=init_from, **kwargs)
+    return dxworkflow
+
 class DXAnalysisWorkflow(DXDataObject, DXExecutable):
     '''
     Remote workflow object handler.  This class is used for the
@@ -173,11 +204,139 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
     _close = staticmethod(dxpy.api.workflow_close)
     _list_projects = staticmethod(dxpy.api.workflow_list_projects)
 
+    def _new(self, dx_hash, **kwargs):
+        """
+        :param dx_hash: Standard hash populated in :func:`dxpy.bindings.DXDataObject.new()` containing attributes common to all data object classes.
+        :type dx_hash: dict
+        :param title: Workflow title (optional)
+        :type title: string
+        :param summary: Workflow summary (optional)
+        :type summary: string
+        :param description: Workflow description (optional)
+        :type description: string
+        :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
+        :type init_from: :class:`~dxpy.bindings.dxworkflow.DXAnalysisWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
+
+        Create a new remote workflow object.
+        """
+
+        if "init_from" in kwargs:
+            if kwargs["init_from"] is not None:
+                if not isinstance(kwargs["init_from"], DXAnalysisWorkflow) and \
+                   not isinstance(kwargs["init_from"], DXAnalysis) and \
+                   (not isinstance(kwargs["init_from"], basestring) or not kwargs["init_from"].startswith('analysis-')):
+                    raise DXError("Expected init_from to be an instance of DXAnalysisWorkflow or DXAnalysis, or to be a string analysis ID.")
+                if isinstance(kwargs["init_from"], basestring):
+                    dx_hash["initializeFrom"] = {"id": kwargs["init_from"]}
+                else:
+                    dx_hash["initializeFrom"] = {"id": kwargs["init_from"].get_id(),
+                                                 "project": kwargs["init_from"].get_proj_id()}
+            del kwargs["init_from"]
+
+        if "title" in kwargs:
+            if kwargs["title"] is not None:
+                dx_hash["title"] = kwargs["title"]
+            del kwargs["title"]
+
+        if "summary" in kwargs:
+            if kwargs["summary"] is not None:
+                dx_hash["summary"] = kwargs["summary"]
+            del kwargs["summary"]
+
+        if "description" in kwargs:
+            if kwargs["description"] is not None:
+                dx_hash["description"] = kwargs["description"]
+            del kwargs["description"]
+
+        resp = dxpy.api.workflow_new(dx_hash, **kwargs)
+        self.set_ids(resp["id"], dx_hash["project"])
+
+    def _add_edit_version_to_request(self, request_hash, edit_version=None):
+        if edit_version is None:
+            request_hash["editVersion"] = self.editVersion
+        else:
+            request_hash["editVersion"] = edit_version
+
+    def add_stage(self, executable, name=None, folder=None, stage_input=None, edit_version=None, **kwargs):
+        '''
+        :param executable: string or a handler for an app or applet
+        :type executable: string, DXApplet, or DXApp
+        :param name: name for the stage (optional)
+        :type name: string
+        :param stage_input: input fields to bind as default inputs for the executable (optional)
+        :type stage_input: dict
+        :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
+        :type edit_version: int
+        :returns: ID of the added stage
+        :rtype: string
+        :raises: :class:`~dxpy.exceptions.DXError` if *executable* is not an expected type :class:`~dxpy.exceptions.DXAPIError` for errors thrown from the API call
+
+        Adds the specified executable as a new stage in the workflow.
+        '''
+        exec_id = executable if isinstance(executable, basestring) else executable.get_id() if isinstance(executable, DXExecutable) else None
+        if exec_id is None:
+            raise DXError("add_stage: executable must be a string or an instance of DXApplet or DXApp")
+        add_stage_input = {"executable": exec_id}
+        if name is not None:
+            add_stage_input["name"] = name
+        if folder is not None:
+            add_stage_input["folder"] = folder
+        if stage_input is not None:
+            add_stage_input["input"] = stage_input
+        self._add_edit_version_to_request(add_stage_input, edit_version)
+        try:
+            result = dxpy.api.workflow_add_stage(self._dxid, add_stage_input, **kwargs)
+        except:
+            raise
+        finally:
+            self.describe() # update cached describe
+        return result['stage']
+
+    def remove_stage(self, stage, edit_version=None, **kwargs):
+        '''
+        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
+        :type stage: int or string
+        :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
+        :type edit_version: int
+
+        Removes the specified stage from the workflow
+        '''
+        stage_id = stage if isinstance(stage, basestring) else self.stages[int(stage)]["id"]
+        remove_stage_input = {"stage": stage_id}
+        self._add_edit_version_to_request(remove_stage_input, edit_version)
+        try:
+            dxpy.api.workflow_remove_stage(self._dxid, remove_stage_input, **kwargs)
+        except:
+            raise
+        finally:
+            self.describe() # update cached describe
+
+    def move_stage(self, stage, new_index, edit_version=None, **kwargs):
+        '''
+        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
+        :type stage: int or string
+        :param new_index: The new position in the order of stages that the specified stage should have (where 0 indicates the first stage)
+        :type new_index: int
+        :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
+        :type edit_version: int
+
+        Removes the specified stage from the workflow
+        '''
+        stage_id = stage if isinstance(stage, basestring) else self.stages[int(stage)]["id"]
+        move_stage_input = {"stage": stage_id,
+                            "newIndex": new_index}
+        self._add_edit_version_to_request(move_stage_input, edit_version)
+        try:
+            dxpy.api.workflow_move_stage(self._dxid, move_stage_input, **kwargs)
+        except:
+            raise
+        finally:
+            self.describe() # update cached describe
+
     def _get_input_name(self, input_str):
         if '.' in input_str and not input_str.startswith('stage-'):
-            stages = self.stages
             stage_index = int(input_str[:input_str.find('.')])
-            return stages[stage_index]['id'] + input_str[input_str.find('.'):]
+            return self.stages[stage_index]['id'] + input_str[input_str.find('.'):]
         else:
             return input_str
 
