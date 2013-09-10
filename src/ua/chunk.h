@@ -24,9 +24,12 @@
 #include <ctime>
 #include <queue>
 #include <boost/thread.hpp>
+#include "dxcpp/bqueue.h"
 #include "SimpleHttp.h"
 #include "dxcpp/dxlog.h"
 #include "dxjson/dxjson.h"
+
+class Chunk; // forward declaration
 
 /** The variables below are used for computing instanteneous transfer speed: 
   *  1) instantaneousBytesAndTimestampQueue: A queue for keeping track of bytes transferred
@@ -46,8 +49,11 @@ extern boost::mutex instantaneousBytesMutex;
 // Upload Agent string (declaration)
 extern std::string userAgentString;
 
-// Total number of chunks (required for throttling)
+// These variables are "extern"ed to enable throttling
+// (definition present in main.cpp)
 extern unsigned int totalChunks;
+extern dx::BlockingQueue<Chunk*> chunksFinished;
+extern dx::BlockingQueue<Chunk*> chunksFailed;
 
 class Chunk {
 public:
