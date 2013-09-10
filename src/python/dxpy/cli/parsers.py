@@ -53,13 +53,8 @@ json_arg.add_argument('--json', help='Display return value in JSON', action='sto
 stdout_args = argparse.ArgumentParser(add_help=False)
 stdout_args_gp = stdout_args.add_mutually_exclusive_group()
 stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value; for most commands, prints a DNAnexus ID per line', width_adjustment=-24), action='store_true')
-stdout_args_gp.add_argument('--summary', help='Display summary output (default)', action='store_true')
 stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
                             action='store_true')
-
-def get_output_flag(args):
-    if not args.brief and not args.summary and not args.verbose:
-        args.summary = True
 
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
