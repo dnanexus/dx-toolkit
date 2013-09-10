@@ -22,13 +22,13 @@ TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):
-        if 'DX_CLI_WD' in os.environ:
-            del os.environ['DX_CLI_WD']
         proj_name = u"dxclient_test_pröject"
         self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
-        subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
+        subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
         dxpy._initialize(suppress_warning=True)
+        if 'DX_CLI_WD' in os.environ:
+            del os.environ['DX_CLI_WD']
 
     def tearDown(self):
         try:
