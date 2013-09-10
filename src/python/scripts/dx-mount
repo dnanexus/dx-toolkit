@@ -78,6 +78,9 @@ class DXInode(object):
     def handler(self, h):
         self._handler = h
 
+    def reload(self):
+        self._handler = dxpy.get_handler(self.dxid)
+
     def now(self):
         self.atime = time()   # time of last access
         self.mtime = self.atime    # time of last modification
@@ -123,7 +126,7 @@ class DXInode(object):
         #stat.st_atime = time.now()
         if self.dxid and self.dxid.startswith('file'):
             if self.handler.state != 'closed':
-                self.handler = dxpy.get_handler(self.handler.get_id())
+                self.reload()
                 if self.handler.state != 'closed':
                     return ''
             self.handler.seek(offset)
@@ -131,7 +134,7 @@ class DXInode(object):
         elif self.dxid and self.dxid.startswith('gtable'):
             # TODO: make this less naive
             if self.handler.state != 'closed':
-                self.handler = dxpy.get_handler(self.handler.get_id())
+                self.reload()
             rows = ""
             for row in self.handler:
                 rows += ("\t".join(map(unicode, row))+"\n").encode('utf-8')
@@ -450,7 +453,7 @@ class DXFS(LoggingMixIn, Operations):
         elif name == 'state' and value == 'closed':
             debug("closing", node)
             node.handler.close(block=True)
-            node.handler = dxpy.get_handler(node.handler.get_id())
+            node.reload()
             node.size = node.handler.size
             debug("closed", node)
         node.xattr[name] = value
