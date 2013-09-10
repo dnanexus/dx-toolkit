@@ -1,3 +1,13 @@
+dx-toolkit (0.67.0) precise; urgency=low
+
+  * DXFS performance improvements.
+
+  * Basic support for analysis-based workflows.
+
+  * Various bug and test suite fixes and improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 10 Sep 2013 20:35:00 +0000
+
 dx-toolkit (0.66.0) precise; urgency=low
 
   * Build and test infrastructure improvements.
