@@ -16,27 +16,13 @@ class DXTestCase(unittest.TestCase):
         proj_name = u"dxclient_test_pröject"
         self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
-        # TODO: Fix this once process-wise sessions are in place.  For
-        # now, have to save the old current directory and overwrite
-        # the file.
-        if os.path.exists(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD')):
-            with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD')) as fd:
-                self.old_cwd = fd.read()
-            os.remove(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD'))
-        else:
-            self.old_cwd = None
-        if 'DX_CLI_WD' in os.environ:
-            del os.environ['DX_CLI_WD']
         dxpy._initialize(suppress_warning=True)
 
     def tearDown(self):
         try:
             subprocess.check_call(u"dx rmproject --yes --quiet {p}".format(p=self.project), shell=True)
-        except:
-            pass
-        if self.old_cwd is not None:
-            with open(os.path.expanduser('~/.dnanexus_config/DX_CLI_WD'), 'w') as fd:
-                fd.write(self.old_cwd)
+        except Exception as e:
+            print "Failed to remove test project:", str(e)
 
     # Be sure to use the check_output defined in this module if you wish
     # to use stderr_regexp. Python's usual subprocess.check_output
