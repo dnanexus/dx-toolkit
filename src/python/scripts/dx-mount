@@ -169,14 +169,14 @@ class DXFS(LoggingMixIn, Operations):
         self.uid = os.getuid()
         self.gid = os.getgid()
         self.project_id = project_id
-        self.root = None
+        self.root = DXInode(DXInode.DIR, 'root', 0755 | stat.S_IFDIR, self.uid, self.gid)
         self.last_created = 0
         self.project_mtime = 0
         self.refresh_interval = refresh_interval
 
     def init(self, root_path):
-        self.root = DXInode(DXInode.DIR, 'root', 0755 | stat.S_IFDIR, self.uid, self.gid)
-
+        ''' This method is used both for initializing the filesystem and for reloading it upon modification.
+        '''
         if self.project_id.startswith('project-'):
             self.project = dxpy.DXProject(self.project_id)
         elif self.project_id.startswith('container-'):
@@ -190,6 +190,10 @@ class DXFS(LoggingMixIn, Operations):
         folders = proj_desc['folders']
         folders.sort(key=lambda item: (len(item), item))
         debug("Found", len(folders), "folders")
+
+        # This is where the old tree gets blown away (when reloading).
+        self.root = DXInode(DXInode.DIR, 'root', 0755 | stat.S_IFDIR, self.uid, self.gid)
+
         for path in folders:
             if path == '/':
                 continue
