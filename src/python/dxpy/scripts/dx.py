@@ -2454,7 +2454,7 @@ def close(args):
             project, folderpath, entity_results = None, None, None
 
         if entity_results is None:
-            print fill('Could not resolve \"' + args.path + '\" to a name or ID')
+            print fill('Could not resolve \"' + path + '\" to a name or ID')
             had_error = True
         else:
             for result in entity_results:
