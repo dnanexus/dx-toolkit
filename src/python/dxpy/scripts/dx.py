@@ -2508,7 +2508,7 @@ def build(args):
     dx_build_app.main()
 
 def process_list_of_usernames(thing):
-    return ['user-' + name if name != 'PUBLIC' and
+    return ['user-' + name.lower() if name != 'PUBLIC' and
             not name.startswith('org-') and
             not name.startswith('user-')
             else name
