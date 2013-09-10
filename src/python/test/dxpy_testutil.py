@@ -14,8 +14,8 @@ class DXTestCase(unittest.TestCase):
     def setUp(self):
         proj_name = u"dxclient_test_pröject"
         self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
-        subprocess.check_call(u"dx select "+self.project)
-        subprocess.check_call(u"dx cd /")
+        subprocess.check_call(u"dx select "+self.project, shell=True)
+        subprocess.check_call(u"dx cd /", shell=True)
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
         dxpy._initialize(suppress_warning=True)
 
