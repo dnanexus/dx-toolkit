@@ -38,7 +38,7 @@ extern "C" {
 
 #include "dxcpp/dxlog.h"
 
-#include "options.h" // to get value of variable opt.noRoundRobinDNS
+#include "options.h" // to get value of variable opt.noRoundRobinDNS & opt.throttle
 #include "round_robin_dns.h"
 
 using namespace std;
@@ -321,6 +321,14 @@ void Chunk::upload() {
         // Set verify on, and use default path for certificate
         checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1), errorBuffer);
       }
+    }
+
+    if (opt.throttle > 0) {
+      const int totalChunksRemaining = totalChunks - chunksFinished.size() + chunksFailed.size();
+      assert(totalChunksRemaining > 0);
+      curl_off_t tval = static_cast<curl_off_t>(double(opt.throttle)/std::min(opt.uploadThreads, totalChunksRemaining)) + 1;
+      log("Setting CURLOPT_MAX_SEND_SPEED_LARGE = " + boost::lexical_cast<string>(tval), dx::logINFO);
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, tval), errorBuffer);
     }
 
     // Set time out to infinite
