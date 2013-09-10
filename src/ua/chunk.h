@@ -46,6 +46,9 @@ extern boost::mutex instantaneousBytesMutex;
 // Upload Agent string (declaration)
 extern std::string userAgentString;
 
+// Total number of chunks (required for throttling)
+extern unsigned int totalChunks;
+
 class Chunk {
 public:
 

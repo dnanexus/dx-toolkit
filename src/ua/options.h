@@ -30,7 +30,7 @@ namespace po = boost::program_options;
   // Returns path of executable on Mac (not portable)
   std::string getExecutablePathOnMac();
 #endif
- 
+
 class Options {
 public:
 
@@ -70,6 +70,8 @@ public:
   std::string refGenome;
   
   bool noRoundRobinDNS;
+
+  int64_t throttle;
 private:
   // These params (if provided) are used for overriding the relevant dx::config::* values
   std::string apiserverProtocol;

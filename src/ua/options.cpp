@@ -61,6 +61,7 @@ Options::Options() {
     ("compress-threads,c", po::value<int>(&compressThreads)->default_value(defaultCompressThreads), "Number of parallel compression threads")
     ("upload-threads,u", po::value<int>(&uploadThreads)->default_value(DEFAULT_UPLOAD_THREADS), "Number of parallel upload threads")
     ("chunk-size,s", po::value<int>(&chunkSize)->default_value(DEFAULT_CHUNK_SIZE), "Size (in bytes) of chunks in which the file should be uploaded")
+    ("throttle", po::value<int64_t>(&throttle)->default_value(-1), "If a positive value, then denotes maximum upload speed of UA (in bytes/second), else speed is not throttled")
     ("tries,r", po::value<int>(&tries)->default_value(3), "Number of tries to upload each chunk")
     ("do-not-compress", po::bool_switch(&doNotCompress), "Do not compress file(s) before upload")
     ("progress,g", po::bool_switch(&progress), "Report upload progress")

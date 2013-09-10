@@ -323,6 +323,12 @@ void Chunk::upload() {
       }
     }
 
+    if (opt.throttle > 0) {
+      curl_off_t tval = static_cast<curl_off_t>(double(opt.throttle)/std::min(unsigned(opt.uploadThreads), totalChunks)) + 1;
+      log("Setting CURLOPT_MAX_SEND_SPEED_LARGE = " + boost::lexical_cast<string>(tval), dx::logINFO);
+      checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_MAX_SEND_SPEED_LARGE, tval), errorBuffer);
+    }
+
     // Set time out to infinite
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0l), errorBuffer);
 
