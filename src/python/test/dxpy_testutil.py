@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+
+import platform, locale, sys
+sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
+if platform.python_implementation() != "PyPy":
+    try:
+        reload(sys).setdefaultencoding(sys_encoding)
+    except:
+        pass
+
+
 import os, sys, unittest, subprocess, re
 from contextlib import contextmanager
 
@@ -12,10 +22,11 @@ TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):
+        if 'DX_CLI_WD' in os.environ:
+            del os.environ['DX_CLI_WD']
         proj_name = u"dxclient_test_pröject"
         self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
-        subprocess.check_call(u"dx select "+self.project, shell=True)
-        subprocess.check_call(u"dx cd /", shell=True)
+        subprocess.check_call(u"dx cd "+self.project+":/", shell=True)
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
         dxpy._initialize(suppress_warning=True)
 
@@ -24,6 +35,10 @@ class DXTestCase(unittest.TestCase):
             subprocess.check_call(u"dx rmproject --yes --quiet {p}".format(p=self.project), shell=True)
         except Exception as e:
             print "Failed to remove test project:", str(e)
+        if 'DX_PROJECT_CONTEXT_ID' in os.environ:
+            del os.environ['DX_PROJECT_CONTEXT_ID']
+        if 'DX_CLI_WD' in os.environ:
+            del os.environ['DX_CLI_WD']
 
     # Be sure to use the check_output defined in this module if you wish
     # to use stderr_regexp. Python's usual subprocess.check_output
