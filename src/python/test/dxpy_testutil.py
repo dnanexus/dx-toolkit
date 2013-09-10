@@ -12,9 +12,10 @@ TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 
 class DXTestCase(unittest.TestCase):
     def setUp(self):
-        subprocess.check_call("dx clearenv --reset", shell=True)
         proj_name = u"dxclient_test_pröject"
         self.project = subprocess.check_output(u"dx new project '{p}' --brief".format(p=proj_name), shell=True).strip()
+        subprocess.check_call(u"dx select "+self.project)
+        subprocess.check_call(u"dx cd /")
         os.environ["DX_PROJECT_CONTEXT_ID"] = self.project
         dxpy._initialize(suppress_warning=True)
 
