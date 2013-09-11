@@ -628,6 +628,8 @@ class TestDXClient(DXTestCase):
         except:
             print "*** Error in test_dxpy_session_isolation, debug data:"
             print str(shell1)
+            print "*** Error in test_dxpy_session_isolation, begin buffer:"
+            print str(shell1.buffer)
             print "*** Error in test_dxpy_session_isolation, end debug data"
             raise
 
