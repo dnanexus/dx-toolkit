@@ -25,7 +25,7 @@ import os, sys, shutil, textwrap, json, locale
 
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
 
-sys_encoding = locale.getdefaultlocale()[1]
+sys_encoding = locale.getdefaultlocale()[1] or 'UTF-8'
 
 CORE_VAR_NAMES = ['DX_APISERVER_HOST', 'DX_APISERVER_PORT', 'DX_APISERVER_PROTOCOL', 'DX_PROJECT_CONTEXT_ID',
                   'DX_WORKSPACE_ID', 'DX_SECURITY_CONTEXT']
