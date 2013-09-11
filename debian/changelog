@@ -1,3 +1,9 @@
+dx-toolkit (0.66.3) precise; urgency=low
+
+  * Fix bug in dx select when locale is not set.
+
+ -- Andrey Kislyuk <akislyuk@localhost>  Wed, 11 Sep 2013 23:19:43 +0000
+
 dx-toolkit (0.66.2) precise; urgency=low
 
   * Fix bug with encoding selection in dxclient initialization.
