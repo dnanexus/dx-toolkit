@@ -25,7 +25,7 @@ containers, dataobjects, apps, and jobs).
 import datetime, time, json, math, sys, copy
 from collections import defaultdict
 
-from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, BOLD, ENDC, DELIMITER, get_delimiter, fill)
+from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, get_delimiter, fill)
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -715,36 +715,42 @@ def get_ls_l_desc(desc, include_folder=False, include_project=False):
 def print_ls_l_desc(desc, **kwargs):
     print get_ls_l_desc(desc, **kwargs)
 
-def get_find_jobs_string(jobdesc, has_children, single_result=False, show_outputs=True):
+def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True):
     '''
-    :param jobdesc: hash of job describe output
+    :param desc: hash of job describe output
     :param has_children: whether the job has subjobs to be printed
     :param single_result: whether the job is displayed as a single result or as part of a job tree
     '''
-    is_origin_job = jobdesc['parentJob'] is None or single_result
+    is_origin_job = desc['parentJob'] is None or single_result
     result = ("* " if is_origin_job and get_delimiter() is None else "")
-    canonical_job_name = jobdesc['executableName'] + ":" + jobdesc['function']
-    job_name = jobdesc.get('name', '<no name>')
-    result += BOLD() + BLUE() + job_name + ENDC()
-    if job_name != canonical_job_name and job_name+":main" != canonical_job_name:
-        result += ' (' + canonical_job_name + ')'
-    result += DELIMITER(' (') + JOB_STATES(jobdesc['state']) + DELIMITER(') ') + jobdesc['id']
+    canonical_execution_name = desc['executableName']
+    if desc['class'] == 'job':
+        canonical_execution_name += ":" + desc['function']
+    job_name = desc.get('name', '<no name>')
+    if desc['class'] == 'job':
+        result += BOLD() + BLUE() + job_name + ENDC()
+    else:
+        result += BOLD() + WHITE() + job_name + ENDC()
+    if job_name != canonical_execution_name and job_name+":main" != canonical_execution_name:
+        result += ' (' + canonical_execution_name + ')'
+    result += DELIMITER(' (') + JOB_STATES(desc['state']) + DELIMITER(') ') + desc['id']
     result += DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
-    result += jobdesc['launchedBy'][5:] + DELIMITER(' ')
-    result += render_short_timestamp(jobdesc['created'])
-    if jobdesc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
+    result += desc['launchedBy'][5:] + DELIMITER(' ')
+    result += render_short_timestamp(desc['created'])
+    if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
         # TODO: Remove this check once all jobs are migrated to have these values
-        if 'stoppedRunning' in jobdesc and 'startedRunning' in jobdesc:
-            result += " (runtime {r})".format(r=str(datetime.timedelta(seconds=int(jobdesc['stoppedRunning']-jobdesc['startedRunning'])/1000)))
-    elif jobdesc['state'] == 'running':
-        result += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-jobdesc['startedRunning']/1000)))
+        if 'stoppedRunning' in desc and 'startedRunning' in desc:
+            runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])/1000)
+            result += " (runtime " + str(runtime) + ")"
+    elif desc['state'] == 'running':
+        result += " (running for {rt})".format(rt=datetime.timedelta(seconds=int(time.time()-desc['startedRunning']/1000)))
 
     if show_outputs:
         prefix = DELIMITER('\n' + (u'│ ' if is_origin_job and has_children else ("  " if is_origin_job else "")))
-        if jobdesc.get("output") != None:
-            result += job_output_to_str(jobdesc['output'], prefix=prefix)
-        elif jobdesc['state'] == 'failed' and 'failureReason' in jobdesc:
-            result += prefix + BOLD() + jobdesc['failureReason'] + ENDC() + ": " + fill(jobdesc.get('failureMessage', ''),
-                                                                                        subsequent_indent=prefix.lstrip('\n'))
+        if desc.get("output") != None:
+            result += job_output_to_str(desc['output'], prefix=prefix)
+        elif desc['state'] == 'failed' and 'failureReason' in desc:
+            result += prefix + BOLD() + desc['failureReason'] + ENDC() + ": " + fill(desc.get('failureMessage', ''),
+                                                                                     subsequent_indent=prefix.lstrip('\n'))
 
     return result

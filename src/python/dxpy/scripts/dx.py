@@ -150,7 +150,7 @@ from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
-                                 get_io_desc, get_find_jobs_string)
+                                 get_io_desc, get_find_executions_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
                               parser_dataobject_args, parser_single_dataobject_output_args,
                               process_output_args, process_properties_args,
@@ -2171,9 +2171,9 @@ def find_executions(args):
         elif args.brief:
             print root
         else:
-            root_string = get_find_jobs_string(job_descriptions[root],
-                                               has_children=root in jobs_by_parent,
-                                               show_outputs=args.show_outputs)
+            root_string = get_find_executions_string(job_descriptions[root],
+                                                     has_children=root in jobs_by_parent,
+                                                     show_outputs=args.show_outputs)
             tree[root_string] = collections.OrderedDict()
         for child_job in jobs_by_parent.get(root, {}):
             subtree, subtree_root = build_tree(child_job, jobs_by_parent, job_descriptions)
@@ -2200,10 +2200,10 @@ def find_executions(args):
             elif args.brief:
                 print args.id
             else:
-                print format_tree({}, get_find_jobs_string(job_result['describe'],
-                                                           has_children=False,
-                                                           single_result=True,
-                                                           show_outputs=args.show_outputs))
+                print format_tree({}, get_find_executions_string(job_result['describe'],
+                                                                 has_children=False,
+                                                                 single_result=True,
+                                                                 show_outputs=args.show_outputs))
         if args.json:
             print json.dumps(json_output, indent=4)
         elif more_results and get_delimiter() is None and not args.brief:
@@ -2883,9 +2883,9 @@ def run(args):
 
                 result_choice = paginate_and_pick(itertools.chain(*iterators),
                                                   (lambda result:
-                                                       get_find_jobs_string(result["describe"],
-                                                                            has_children=False,
-                                                                            single_result=True)))
+                                                       get_find_executions_string(result["describe"],
+                                                                                  has_children=False,
+                                                                                  single_result=True)))
                 if result_choice == "none found":
                     parser.exit(1, "dx run --clone: No matching job found. Please use a valid job name or ID.\n")
                 elif result_choice == "none picked":
