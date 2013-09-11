@@ -298,10 +298,24 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type stage: int or string
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
         :type edit_version: int
+        :returns: Stage ID that was removed
+        :rtype: string
 
         Removes the specified stage from the workflow
         '''
-        stage_id = stage if isinstance(stage, basestring) else self.stages[int(stage)]["id"]
+        stage_id = None
+        if isinstance(stage, basestring):
+            stage_id = stage
+        else:
+            try:
+                stage_index = int(stage)
+            except:
+                raise DXError('remove_stage: "stage" was neither a string stage ID nor an integer index')
+            if stage_index < 0 or stage_index >= len(self.stages):
+                raise DXError('remove_stage: the workflow contains ' + str(len(self.stages)) + ' stage(s), and the provided value for "stage" is out of range')
+            stage_id = self.stages[stage_index]["id"]
+        if stage_id is None:
+            raise DXError('remove_stage: the provided stage index')
         remove_stage_input = {"stage": stage_id}
         self._add_edit_version_to_request(remove_stage_input, edit_version)
         try:
@@ -310,6 +324,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             raise
         finally:
             self.describe() # update cached describe
+        return stage_id
 
     def move_stage(self, stage, new_index, edit_version=None, **kwargs):
         '''

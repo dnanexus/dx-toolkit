@@ -1057,14 +1057,21 @@ def main(number):
         self.assertEqual(dxworkflow.stages[1]["id"], second_stage)
 
         # Remove stages
-        dxworkflow.remove_stage(0)
+        removed_stage = dxworkflow.remove_stage(0)
+        self.assertEqual(removed_stage, first_stage)
         self.assertEqual(dxworkflow.editVersion, 5)
         self.assertEqual(len(dxworkflow.stages), 1)
         self.assertEqual(dxworkflow.stages[0]["id"], second_stage)
         with self.assertRaises(DXAPIError):
             dxworkflow.remove_stage(first_stage) # should already have been removed
-        dxworkflow.remove_stage(second_stage, edit_version=5)
+        removed_stage = dxworkflow.remove_stage(second_stage, edit_version=5)
+        self.assertEqual(removed_stage, second_stage)
         self.assertEqual(len(dxworkflow.stages), 0)
+        # bad input throws DXError
+        with self.assertRaises(DXError):
+            dxworkflow.remove_stage({})
+        with self.assertRaises(DXError):
+            dxworkflow.remove_stage(5)
 
 @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                      'skipping test that would create an app')
