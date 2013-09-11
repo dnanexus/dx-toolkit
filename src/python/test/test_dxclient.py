@@ -701,6 +701,36 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc["description"], u"DΣsc")
         self.assertEqual(desc["project"], self.project)
 
+    def test_dx_add_stage(self):
+        workflow_id = run(u"dx new workflow --brief").strip()
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 0"}
+                                         })['id']
+        stage_ids = []
+        stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
+        # not-yet-existing folder path should work
+        # also, set input
+        stage_ids.append(run("dx add stage " + workflow_id + " --folder /output " + applet_id + " --brief -inumber=32").strip())
+        # test relative folder path
+        run("dx mkdir -p a/b/c")
+        run("dx cd a/b/c")
+        stage_ids.append(run("dx add stage " + workflow_id + " --folder . " + applet_id + " --brief").strip())
+        with self.assertSubprocessFailure(stderr_regexp='not found in the input spec', exit_code=3):
+            # input spec should be checked
+            run("dx add stage " + workflow_id + " " + applet_id + " -inonexistent=42")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(len(desc['stages']), len(stage_ids))
+        for i, stage_id in enumerate(stage_ids):
+            self.assertEqual(desc['stages'][i]['id'], stage_id)
+        self.assertEqual(desc['stages'][0]['folder'], '/')
+        self.assertEqual(desc['stages'][1]['folder'], '/output')
+        self.assertEqual(desc['stages'][1]['input']['number'], 32)
+        self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
+
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')
 class TestHTTPProxySupport(DXTestCase):

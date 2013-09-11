@@ -68,7 +68,7 @@ state = {"interactive": False,
          "delimiter": None,
          "currentproj": None}
 parser_map = {}
-parser_categories_sorted = ["all", "session", "fs", "data", "metadata", "exec", "other"]
+parser_categories_sorted = ["all", "session", "fs", "data", "metadata", "workflow", "exec", "other"]
 parser_categories = {"all": {"desc": "\t\tAll commands",
                              "cmds": []},
                      "session": {"desc": "\tManage your login session",
@@ -79,6 +79,8 @@ parser_categories = {"all": {"desc": "\t\tAll commands",
                               "cmds": []},
                      "metadata": {"desc": "\tView and modify metadata for projects and data objects",
                                  "cmds": []},
+                     "workflow": {"desc": "\tView and modify workflows",
+                                  "cmds": []},
                      "exec": {"desc": "\t\tManage and run apps, applets, and workflows",
                               "cmds": []},
                      "other": {"desc": "\t\tMiscellaneous advanced utilities",
@@ -1416,6 +1418,31 @@ def new_workflow(args):
             print_desc(dxworkflow.describe(incl_properties=True, incl_details=True), args.verbose)
     except:
         err_exit()
+
+def add_stage(args):
+    # get workflow
+    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
+    if entity_result is None or not entity_result['id'].startswith('workflow-'):
+        parser.exit(3, fill('Could not resolve \"' + args.workflow + '\" to a workflow object'))
+
+    # get executable
+    exec_handler = get_exec_handler(args.executable, args.alias)
+    exec_inputs = ExecutableInputs(exec_handler)
+    try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
+
+    # get folder path
+    if args.folder is not None:
+        ignore, folderpath, none = try_call(resolve_path, args.folder, expected='folder')
+    else:
+        folderpath = None
+
+    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
+    stage_id = dxworkflow.add_stage(exec_handler, name=args.name, folder=folderpath,
+                                    stage_input=exec_inputs.inputs)
+    if args.brief:
+        print stage_id
+    else:
+        print_desc(dxworkflow.describe())
 
 def new_gtable(args):
     try_call(process_dataobject_args, args)
@@ -3760,6 +3787,20 @@ parser_add_developers.add_argument('developers', metavar='developer', help='One 
 parser_add_developers.set_defaults(func=add_developers)
 register_subparser(parser_add_developers, subparsers_action=subparsers_add, categories='exec')
 
+parser_add_stage = subparsers_add.add_parser('stage', help='Add a stage to a workflow',
+                                             description='Add a stage to a workflow.  Default inputs for the stage can also be set at the same time.',
+                                             parents=[exec_input_args, stdout_args, env_args],
+                                             prog='dx add stage')
+parser_add_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
+parser_add_stage.add_argument('executable', help='Name or ID of an executable to add as a stage in the workflow').completer = MultiCompleter([DXAppCompleter(),
+                                                                                                                                              DXPathCompleter(classes=['applet'])])
+parser_add_stage.add_argument('--alias', '--version', '--tag', dest='alias',
+                        help='Tag or version of the app to add if the executable is an app (default: \"default\" if an app)')
+parser_add_stage.add_argument('--name', help='Stage name')
+parser_add_stage.add_argument('--folder', help='Output folder for the stage')
+parser_add_stage.set_defaults(func=add_stage)
+register_subparser(parser_add_stage, subparsers_action=subparsers_add, categories='workflow')
+
 parser_list = subparsers.add_parser('list', help='Print the members of a list',
                                    description='Use this command with one of the availabile subcommands to perform various actions such as printing the list of developers or authorized users of an app.',
                                    prog='dx list')
@@ -3944,8 +3985,7 @@ parser_new_workflow.add_argument('--description', help='Workflow description')
 init_action = parser_new_workflow.add_argument('--init', help='Path to workflow or an analysis ID from which to initialize all metadata')
 init_action.completer = DXPathCompleter(classes=['workflow'])
 parser_new_workflow.set_defaults(func=new_workflow)
-register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='fs')
-
+register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
                                               description='Create a new gtable from scratch.  See \'dx import\' for importing special file formats (e.g. csv, fastq) into GenomicTables.',
