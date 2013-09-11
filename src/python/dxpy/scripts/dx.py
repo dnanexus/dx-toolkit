@@ -1444,6 +1444,23 @@ def add_stage(args):
     else:
         print_desc(dxworkflow.describe())
 
+def remove_stage(args):
+    # get workflow
+    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
+    if entity_result is None or not entity_result['id'].startswith('workflow-'):
+        parser.exit(3, fill('Could not resolve \"' + args.workflow + '\" to a workflow object'))
+
+    try:
+        args.stage = int(args.stage)
+    except:
+        pass
+    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
+    stage_id = try_call(dxworkflow.remove_stage, args.stage)
+    if args.brief:
+        print stage_id
+    else:
+        print "Removed stage " + stage_id
+
 def new_gtable(args):
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
@@ -3847,6 +3864,15 @@ parser_remove_developers.add_argument('developers', metavar='developer', help='O
                                       nargs='+')
 parser_remove_developers.set_defaults(func=remove_developers)
 register_subparser(parser_remove_developers, subparsers_action=subparsers_remove, categories='exec')
+
+parser_remove_stage = subparsers_remove.add_parser('stage', help='Remove a stage from a workflow',
+                                                   description='Remove a stage from a workflow.  The stage should be indicated either by an integer (0-indexed, i.e. "0" for the first stage), or a stage ID.',
+                                                   parents=[stdout_args, env_args],
+                                                   prog='dx remove stage')
+parser_remove_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
+parser_remove_stage.add_argument('stage', help='Stage (index or ID) of the workflow to remove')
+parser_remove_stage.set_defaults(func=remove_stage)
+register_subparser(parser_remove_stage, subparsers_action=subparsers_remove, categories='workflow')
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.', prog='dx install',

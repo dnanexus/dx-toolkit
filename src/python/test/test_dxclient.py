@@ -701,9 +701,11 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc["description"], u"DΣsc")
         self.assertEqual(desc["project"], self.project)
 
-    def test_dx_add_stage(self):
-        workflow_id = run(u"dx new workflow --brief").strip()
-        applet_id = dxpy.api.applet_new({"project": self.project,
+    def test_dx_add_remove_stage(self):
+        workflow_id = run(u"dx new workflow myworkflow --brief").strip()
+        run("dx describe " + workflow_id)
+        applet_id = dxpy.api.applet_new({"name": "myapplet",
+                                         "project": self.project,
                                          "dxapi": "1.0.0",
                                          "inputSpec": [{"name": "number", "class": "int"}],
                                          "outputSpec": [{"name": "number", "class": "int"}],
@@ -714,7 +716,7 @@ class TestDXClient(DXTestCase):
         stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
         # not-yet-existing folder path should work
         # also, set input
-        stage_ids.append(run("dx add stage " + workflow_id + " --folder /output " + applet_id + " --brief -inumber=32").strip())
+        stage_ids.append(run("dx add stage myworkflow --folder /output myapplet --brief -inumber=32").strip())
         # test relative folder path
         run("dx mkdir -p a/b/c")
         run("dx cd a/b/c")
@@ -730,6 +732,27 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['stages'][1]['folder'], '/output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
+
+        run("dx describe " + workflow_id)
+        # remove a stage by index
+        run("dx remove stage /myworkflow 1")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(len(desc['stages']), 2)
+        self.assertEqual(desc['stages'][0]['id'], stage_ids[0])
+        self.assertEqual(desc['stages'][0]['folder'], '/')
+        self.assertEqual(desc['stages'][1]['id'], stage_ids[2])
+        self.assertEqual(desc['stages'][1]['folder'], '/a/b/c')
+
+        # remove a stage by ID
+        run("dx remove stage " + workflow_id + " " + stage_ids[0])
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(len(desc['stages']), 1)
+        self.assertEqual(desc['stages'][0]['id'], stage_ids[2])
+        self.assertEqual(desc['stages'][0]['folder'], '/a/b/c')
+
+        # remove something out of range
+        with self.assertSubprocessFailure(stderr_regexp="out of range", exit_code=3):
+            run("dx remove stage /myworkflow 5")
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')
