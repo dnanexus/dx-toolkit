@@ -22,14 +22,13 @@ import json
 import argparse
 from dxpy.utils.printing import *
 from dxpy.cli.exec_io import *
+from dxpy.cli.parsers import exec_input_args
 
-parser = argparse.ArgumentParser(description='Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job.')
+parser = argparse.ArgumentParser(description='Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job.',
+                                 parents=[exec_input_args])
 parser.add_argument('function', help='Name of the function to run')
 parser.add_argument('--name', help='Name for the new job (default is the current job name, plus ":<function>")')
 parser.add_argument('--depends-on', metavar='JOB_OR_OBJECT_ID', nargs='*', help='Job and/or data object IDs that must finish or close before the new job should be run.  WARNING: For proper parsing, do not use this flag directly before the *function* parameter.')
-parser.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<class>]=<input value>", where class can be any job IO class, e.g. "string", "array:string", or "array".  If class is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string', width_adjustment=-24), action='append')
-parser.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
-parser.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 args = parser.parse_args()
 
 entry_point_inputs = ExecutableInputs()

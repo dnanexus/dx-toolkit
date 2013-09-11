@@ -200,3 +200,8 @@ def process_extra_args(args):
             args.extra_args = json.loads(args.extra_args)
         except:
             raise DXParserError('Value given for --extra-args could not be parsed as JSON')
+
+exec_input_args = argparse.ArgumentParser(add_help=False)
+exec_input_args.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<class>]=<input value>" (provide "class" if there is no input spec; it can be any job IO class, e.g. "string", "array:string", or "array"; if "class" is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string)', width_adjustment=-24), action='append')
+exec_input_args.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
+exec_input_args.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))

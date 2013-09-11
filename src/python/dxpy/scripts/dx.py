@@ -157,7 +157,8 @@ from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, al
                               find_by_properties_and_tags_args, process_find_by_property_args,
                               process_dataobject_args, process_single_dataobject_output_args,
                               set_env_from_args,
-                              extra_args, process_extra_args, DXParserError)
+                              extra_args, process_extra_args, DXParserError,
+                              exec_input_args)
 from dxpy.cli.exec_io import (ExecutableInputs, stage_to_job_refs, format_choices_or_suggestions)
 
 # Loading other variables used for pretty-printing
@@ -3826,7 +3827,7 @@ parser_run = subparsers.add_parser('run', help='Run an applet, app, or workflow'
                                    description=(fill('Run an applet, app, or workflow.  To see a list of executables you can run, hit <TAB> twice after "dx run" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.') + '\n\n' + fill('If any inputs are required but not specified, an interactive mode for selecting inputs will be launched.  Inputs can be set in multiple ways.  Run "dx run --input-help" for more details.')),
                                    prog='dx run',
                                    formatter_class=argparse.RawTextHelpFormatter,
-                                   parents=[stdout_args, env_args, extra_args])
+                                   parents=[exec_input_args, stdout_args, env_args, extra_args])
 run_executable_action = parser_run.add_argument('executable',
                                                 help=fill('Name or ID of an applet, app, or workflow to run; must be provided if --clone is not set', width_adjustment=-24),
                                                 nargs="?", default="")
@@ -3849,11 +3850,6 @@ parser_run.add_argument('--watch', help="Watch the job after launching it", acti
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs', width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-parser_run.add_argument('-i', '--input',
-                        help=fill('An input to be added using "<input name>[:<input class>]=<input value>"', width_adjustment=-24),
-                        action='append')
-parser_run.add_argument('-j', '--input-json', help=fill('Input JSON string (keys=input field names, values=input field values)', width_adjustment=-24))
-parser_run.add_argument('-f', '--input-json-file', dest='filename', help=fill('Load input JSON from FILENAME ("-" to use stdin)'))
 instance_type_action = parser_run.add_argument('--instance-type',
                                                help=fill('Specify instance type for all jobs this executable will run, or a JSON string mapping function names to instance types, e.g. \'{"main": "dx_m1.large", ...}\'. Available instance types:', width_adjustment=-24)
                                                     + '\n' + format_table(InstanceTypesCompleter.instance_types.values(),
