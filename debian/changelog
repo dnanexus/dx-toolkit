@@ -1,3 +1,9 @@
+dx-toolkit (0.67.1) precise; urgency=low
+
+  * Fix bug in dx select when locale is not set.
+
+ -- Andrey Kislyuk <akislyuk@localhost>  Wed, 11 Sep 2013 23:19:06 +0000
+
 dx-toolkit (0.67.0) precise; urgency=low
 
   * DXFS performance improvements.
