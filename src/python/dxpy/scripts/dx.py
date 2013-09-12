@@ -3709,7 +3709,7 @@ register_subparser(parser_add, categories=())
 
 parser_add_users = subparsers_add.add_parser('users', help='Add authorized users for an app',
                                              description='Add users or orgs to the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers.',
-                                             prog='dx add users')
+                                             prog='dx add users', parents=[env_args])
 parser_add_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_add_users.add_argument('users', metavar='authorizedUser',
                               help='One or more users or orgs to add; use "PUBLIC" to allow all access',
@@ -3719,7 +3719,7 @@ register_subparser(parser_add_users, subparsers_action=subparsers_add, categorie
 
 parser_add_developers = subparsers_add.add_parser('developers', help='Add developers for an app',
                                                   description='Add users to the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
-                                                  prog='dx add developers')
+                                                  prog='dx add developers', parents=[env_args])
 parser_add_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_add_developers.add_argument('developers', metavar='developer', help='One or more users to add',
                               nargs='+')
@@ -3735,14 +3735,14 @@ register_subparser(parser_list, categories=())
 
 parser_list_users = subparsers_list.add_parser('users', help='List authorized users for an app',
                                                description='List the authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
-                                               prog='dx list users')
+                                               prog='dx list users', parents=[env_args])
 parser_list_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_list_users.set_defaults(func=list_users)
 register_subparser(parser_list_users, subparsers_action=subparsers_list, categories='exec')
 
 parser_list_developers = subparsers_list.add_parser('developers', help='List developers for an app',
                                                     description='List the developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
-                                                    prog='dx list developers')
+                                                    prog='dx list developers', parents=[env_args])
 parser_list_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_list_developers.set_defaults(func=list_developers)
 register_subparser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
@@ -3756,7 +3756,7 @@ register_subparser(parser_remove, categories=())
 
 parser_remove_users = subparsers_remove.add_parser('users', help='Remove authorized users for an app',
                                                    description='Remove users or orgs from the list of authorized users of an app.  Published versions of the app will only be accessible to users represented by this list and to developers of the app.  Unpublished versions are restricted to the developers',
-                                                   prog='dx remove users')
+                                                   prog='dx remove users', parents=[env_args])
 parser_remove_users.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_remove_users.add_argument('users', metavar='authorizedUser',
                                  help='One or more users or orgs to remove; use "PUBLIC" to remove public access',
@@ -3766,7 +3766,7 @@ register_subparser(parser_remove_users, subparsers_action=subparsers_remove, cat
 
 parser_remove_developers = subparsers_remove.add_parser('developers', help='Remove developers for an app',
                                                         description='Remove users from the list of developers for an app.  Developers are able to build and publish new versions of the app, and add or remove others from the list of developers and authorized users.',
-                                                        prog='dx remove developers')
+                                                        prog='dx remove developers', parents=[env_args])
 parser_remove_developers.add_argument('app', help='Name or ID of an app').completer = DXAppCompleter(installed=True)
 parser_remove_developers.add_argument('developers', metavar='developer', help='One or more users to remove',
                                       nargs='+')
