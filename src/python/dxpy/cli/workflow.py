@@ -22,7 +22,9 @@ command-line client.
 import os
 
 import dxpy
+import dxpy.utils.printing as printing
 from .parsers import (process_dataobject_args, process_single_dataobject_output_args)
+from ..utils.describe import io_val_to_str
 from ..utils.resolver import (resolve_existing_path, resolve_path)
 from ..exceptions import (err_exit, DXError)
 from . import try_call
@@ -88,6 +90,35 @@ def add_stage(args):
         print stage_id
     else:
         dxpy.utils.describe.print_desc(dxworkflow.describe())
+
+def list_stages(args):
+    # get workflow
+    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
+    if entity_result is None or not entity_result['id'].startswith('workflow-'):
+        err_exit(DXError('Could not resolve \"' + args.workflow + '\" to a workflow object'))
+
+    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
+    desc = dxworkflow.describe()
+    print (printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc)
+    print
+    print 'Title: ' + desc['title']
+    if len(desc['stages']) == 0:
+        print
+        print ' No stages; add stages with the command "dx add stage"'
+    for i, stage in enumerate(desc['stages']):
+        stage['i'] = i
+        print
+        if stage['name'] is None:
+            stage['name'] = '<no name>'
+        print (printing.UNDERLINE() + 'Stage {i}' + printing.ENDC() + ': {name} ({id})').format(**stage)
+        print 'Executable      {executable}'.format(**stage)
+        print 'Folder          {folder}'.format(**stage)
+        if "input" in stage and stage["input"]:
+            print 'Bound input     ' + \
+                ('\n' + ' '*16).join([
+                    '{key}={value}'.format(key=key, value=io_val_to_str(stage["input"][key])) for
+                    key in stage['input']
+                ])
 
 def remove_stage(args):
     # get workflow

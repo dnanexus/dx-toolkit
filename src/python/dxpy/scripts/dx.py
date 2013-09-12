@@ -3702,6 +3702,14 @@ parser_list_developers.add_argument('app', help='Name or ID of an app').complete
 parser_list_developers.set_defaults(func=list_developers)
 register_subparser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
 
+parser_list_stages = subparsers_list.add_parser('stages', help='List the stages in a workflow',
+                                               description='List the stages in a workflow.',
+                                               parents=[env_args],
+                                               prog='dx list stages')
+parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
+parser_list_stages.set_defaults(func=workflow_cli.list_stages)
+register_subparser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
+
 parser_remove = subparsers.add_parser('remove', help='Remove one or more items to a list',
                                       description='Use this command with one of the availabile subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
                                       prog='dx remove')

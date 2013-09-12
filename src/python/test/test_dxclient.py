@@ -701,8 +701,8 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc["description"], u"DΣsc")
         self.assertEqual(desc["project"], self.project)
 
-    def test_dx_add_remove_stage(self):
-        workflow_id = run(u"dx new workflow myworkflow --brief").strip()
+    def test_dx_add_remove_list_stages(self):
+        workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
         applet_id = dxpy.api.applet_new({"name": "myapplet",
                                          "project": self.project,
@@ -732,6 +732,15 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['stages'][1]['folder'], '/output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
+
+        # list stages
+        list_output = run("dx list stages " + workflow_id)
+        self.assertIn("myworkflow (" + workflow_id + ")", list_output)
+        self.assertIn("Title: title", list_output)
+        for i in range(0, len(stage_ids)):
+            self.assertIn("Stage " + str(i), list_output)
+        self.assertIn("number=32", list_output)
+        self.assertIn("/a/b/c", list_output)
 
         run("dx describe " + workflow_id)
         # remove a stage by index
