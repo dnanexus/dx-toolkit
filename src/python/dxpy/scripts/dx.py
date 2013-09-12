@@ -2115,7 +2115,12 @@ def export(args):
 def find_executions(args):
     process_output_args(args)
     if not (args.origin_jobs or args.all_jobs):
-        args.trees = True
+        if args.classname == 'analysis':
+            if args.trees:
+                err_exit("dx find analyses is not compatible with the --trees option")
+            args.all_jobs = True
+        else:
+            args.trees = True
     if args.origin_jobs and args.parent is not None and args.parent != 'none':
         return
     project = dxpy.WORKSPACE_ID
