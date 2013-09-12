@@ -669,6 +669,64 @@ def resolve_app(path):
     else:
         return desc
 
+def get_exec_handler(path, alias):
+    handler = None
+    def get_handler_from_desc(desc):
+        if desc['class'] == 'applet':
+            return dxpy.DXApplet(desc['id'], project=desc['project'])
+        elif desc['class'] == 'app':
+            return dxpy.DXApp(dxid=desc['id'])
+        else:
+            return dxpy.DXWorkflow(desc['id'], project=desc['project'])
+
+    if alias is None:
+        app_desc = get_app_from_path(path)
+        try:
+            # Look for applets and workflows
+            project, folderpath, entity_results = resolve_existing_path(path,
+                                                                        expected='entity',
+                                                                        ask_to_resolve=False,
+                                                                        expected_classes=['applet', 'record', 'workflow'])
+            def is_applet_or_workflow(i):
+                return (i['describe']['class'] in ['applet', 'workflow'])
+            def is_record_workflow(i):
+                return ('pipeline' in i['describe']['types'])
+            if entity_results is not None:
+                entity_results = [i for i in entity_results if is_applet_or_workflow(i) or is_record_workflow(i)]
+                if len(entity_results) == 0:
+                    entity_results = None
+        except ResolutionError:
+            if app_desc is None:
+                raise
+            else:
+                project, folderpath, entity_results = None, None, None
+
+        if entity_results is not None and len(entity_results) == 1 and app_desc is None:
+            handler = get_handler_from_desc(entity_results[0]['describe'])
+        elif entity_results is None and app_desc is not None:
+            handler = get_handler_from_desc(app_desc)
+        elif entity_results is not None:
+            if not sys.stdout.isatty():
+                raise ResolutionError('Found multiple executables with the path ' + path)
+            print 'Found multiple executables with the path ' + path
+            choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
+            if app_desc is not None:
+                choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
+            choice = pick(choice_descriptions)
+            if choice < len(entity_results):
+                # all applet/workflow choices show up before the app,
+                # of which there is always at most one possible choice
+                handler = get_handler_from_desc(entity_results[choice]['describe'])
+            else:
+                handler = get_handler_from_desc(app_desc)
+        else:
+            raise ResolutionError("No matches found for " + path)
+    else:
+        if path.startswith('app-'):
+            path = path[4:]
+        handler = dxpy.DXApp(name=path, alias=alias)
+    return handler
+
 def resolve_to_objects_or_project(path, all_matching_results=False):
     '''
     :param path: Path to resolve

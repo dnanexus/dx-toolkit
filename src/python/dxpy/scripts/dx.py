@@ -20,6 +20,8 @@
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, errno, httplib
 import shlex # respects quoted substrings when splitting
 
+from ..cli import try_call
+from ..cli import workflow as workflow_cli
 from ..exceptions import err_exit, default_expected_exceptions, DXError, DXCLIError
 from ..packages import requests
 
@@ -95,12 +97,6 @@ class ResultCounter():
         return ('\n' if self.counter > 1 else '') + UNDERLINE() + 'Result ' + \
             str(self.counter) + ':' + ENDC()
 
-def try_call(func, *args, **kwargs):
-    try:
-        return func(*args, **kwargs)
-    except:
-        err_exit(expected_exceptions=default_expected_exceptions + (DXError,))
-
 def get_json_from_stdin():
     user_json_str = raw_input('Type JSON here> ')
     user_json = None
@@ -147,7 +143,8 @@ from dxpy.utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLIN
 from dxpy.utils.pretty_print import format_tree, format_table
 from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                                  get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
-                                 resolve_existing_path, get_app_from_path, resolve_app, cached_project_names, split_unescaped,
+                                 resolve_existing_path, get_app_from_path, resolve_app, get_exec_handler,
+                                 cached_project_names, split_unescaped,
                                  ResolutionError, get_first_pos_of_char, resolve_to_objects_or_project)
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
@@ -1385,82 +1382,6 @@ def new_record(args):
     except:
         err_exit()
 
-def new_workflow(args):
-    try_call(process_dataobject_args, args)
-    try_call(process_single_dataobject_output_args, args)
-    init_from = None
-    if args.init is not None:
-        try:
-            init_project, init_folder, init_result = try_call(resolve_existing_path,
-                                                              args.init,
-                                                              expected='entity')
-            init_from = dxpy.get_handler(init_result['id'], project=init_project)
-        except:
-            init_from = args.init
-    if args.output is None:
-        project = dxpy.WORKSPACE_ID
-        folder = os.environ.get('DX_CLI_WD', '/')
-        name = None
-    else:
-        project, folder, name = resolve_path(args.output)
-    try:
-        dxworkflow = dxpy.new_dxworkflow(title=args.title, summary=args.summary,
-                                         description=args.description,
-                                         project=project, name=name,
-                                         tags=args.tags, types=args.types,
-                                         hidden=args.hidden, properties=args.properties,
-                                         details=args.details,
-                                         folder=folder,
-                                         parents=args.parents, init_from=init_from)
-        if args.brief:
-            print dxworkflow.get_id()
-        else:
-            print_desc(dxworkflow.describe(incl_properties=True, incl_details=True), args.verbose)
-    except:
-        err_exit()
-
-def add_stage(args):
-    # get workflow
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
-    if entity_result is None or not entity_result['id'].startswith('workflow-'):
-        parser.exit(3, fill('Could not resolve \"' + args.workflow + '\" to a workflow object'))
-
-    # get executable
-    exec_handler = get_exec_handler(args.executable, args.alias)
-    exec_inputs = ExecutableInputs(exec_handler)
-    try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
-
-    # get folder path
-    if args.folder is not None:
-        ignore, folderpath, none = try_call(resolve_path, args.folder, expected='folder')
-    else:
-        folderpath = None
-
-    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
-    stage_id = dxworkflow.add_stage(exec_handler, name=args.name, folder=folderpath,
-                                    stage_input=exec_inputs.inputs)
-    if args.brief:
-        print stage_id
-    else:
-        print_desc(dxworkflow.describe())
-
-def remove_stage(args):
-    # get workflow
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
-    if entity_result is None or not entity_result['id'].startswith('workflow-'):
-        parser.exit(3, fill('Could not resolve \"' + args.workflow + '\" to a workflow object'))
-
-    try:
-        args.stage = int(args.stage)
-    except:
-        pass
-    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
-    stage_id = try_call(dxworkflow.remove_stage, args.stage)
-    if args.brief:
-        print stage_id
-    else:
-        print "Removed stage " + stage_id
-
 def new_gtable(args):
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
@@ -2661,64 +2582,6 @@ def uninstall(args):
         except:
             err_exit()
 
-def get_exec_handler(path, alias):
-    handler = None
-    def get_handler_from_desc(desc):
-        if desc['class'] == 'applet':
-            return dxpy.DXApplet(desc['id'], project=desc['project'])
-        elif desc['class'] == 'app':
-            return dxpy.DXApp(dxid=desc['id'])
-        else:
-            return dxpy.DXWorkflow(desc['id'], project=desc['project'])
-
-    if alias is None:
-        app_desc = get_app_from_path(path)
-        try:
-            # Look for applets and workflows
-            project, folderpath, entity_results = resolve_existing_path(path,
-                                                                        expected='entity',
-                                                                        ask_to_resolve=False,
-                                                                        expected_classes=['applet', 'record', 'workflow'])
-            def is_applet_or_workflow(i):
-                return (i['describe']['class'] in ['applet', 'workflow'])
-            def is_record_workflow(i):
-                return ('pipeline' in i['describe']['types'])
-            if entity_results is not None:
-                entity_results = [i for i in entity_results if is_applet_or_workflow(i) or is_record_workflow(i)]
-                if len(entity_results) == 0:
-                    entity_results = None
-        except ResolutionError:
-            if app_desc is None:
-                err_exit()
-            else:
-                project, folderpath, entity_results = None, None, None
-
-        if entity_results is not None and len(entity_results) == 1 and app_desc is None:
-            handler = get_handler_from_desc(entity_results[0]['describe'])
-        elif entity_results is None and app_desc is not None:
-            handler = get_handler_from_desc(app_desc)
-        elif entity_results is not None:
-            if not sys.stdout.isatty():
-                parser.exit(1, 'Found multiple executables with the path ' + path + '\n')
-            print 'Found multiple executables with the path ' + path
-            choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
-            if app_desc is not None:
-                choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
-            choice = try_call(pick, choice_descriptions)
-            if choice < len(entity_results):
-                # all applet/workflow choices show up before the app,
-                # of which there is always at most one possible choice
-                handler = get_handler_from_desc(entity_results[choice]['describe'])
-            else:
-                handler = get_handler_from_desc(app_desc)
-        else:
-            parser.exit(1, "No matches found for " + path + '\n')
-    else:
-        if path.startswith('app-'):
-            path = path[4:]
-        handler = dxpy.DXApp(name=path, alias=alias)
-    return handler
-
 def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None,
             is_the_only_job=True):
     exec_inputs = ExecutableInputs(executable, input_name_prefix=input_name_prefix)
@@ -2784,7 +2647,7 @@ def print_run_help(executable="", alias=None):
         parser_map['run'].print_help()
     else:
         exec_help = 'usage: dx run ' + executable + ('' if alias is None else ' --alias ' + alias)
-        handler = get_exec_handler(executable, alias)
+        handler = try_call(get_exec_handler, executable, alias)
         try:
             exec_desc = handler.describe()
         except:
@@ -3095,7 +2958,7 @@ def run(args):
                                        }
                         }
 
-    handler = get_exec_handler(args.executable, args.alias)
+    handler = try_call(get_exec_handler, args.executable, args.alias)
 
     if args.project is not None:
         if args.folder is not None and not args.clone:
@@ -3815,7 +3678,7 @@ parser_add_stage.add_argument('--alias', '--version', '--tag', dest='alias',
                         help='Tag or version of the app to add if the executable is an app (default: \"default\" if an app)')
 parser_add_stage.add_argument('--name', help='Stage name')
 parser_add_stage.add_argument('--folder', help='Output folder for the stage')
-parser_add_stage.set_defaults(func=add_stage)
+parser_add_stage.set_defaults(func=workflow_cli.add_stage)
 register_subparser(parser_add_stage, subparsers_action=subparsers_add, categories='workflow')
 
 parser_list = subparsers.add_parser('list', help='Print the members of a list',
@@ -3871,7 +3734,7 @@ parser_remove_stage = subparsers_remove.add_parser('stage', help='Remove a stage
                                                    prog='dx remove stage')
 parser_remove_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_remove_stage.add_argument('stage', help='Stage (index or ID) of the workflow to remove')
-parser_remove_stage.set_defaults(func=remove_stage)
+parser_remove_stage.set_defaults(func=workflow_cli.remove_stage)
 register_subparser(parser_remove_stage, subparsers_action=subparsers_remove, categories='workflow')
 
 parser_install = subparsers.add_parser('install', help='Install an app',
@@ -4010,7 +3873,7 @@ parser_new_workflow.add_argument('--summary', help='Workflow summary')
 parser_new_workflow.add_argument('--description', help='Workflow description')
 init_action = parser_new_workflow.add_argument('--init', help='Path to workflow or an analysis ID from which to initialize all metadata')
 init_action.completer = DXPathCompleter(classes=['workflow'])
-parser_new_workflow.set_defaults(func=new_workflow)
+parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')
 
 parser_new_gtable = subparsers_new.add_parser('gtable', help='Create a new gtable',
