@@ -2163,10 +2163,9 @@ def find_executions(args):
              'created_before': args.created_before,
              'name': args.name,
              'name_mode': 'glob',
-             'format': 'trees' if args.trees else None,
-             'list_subjobs': False if args.no_subjobs else True,
+             'include_subjobs': False if args.no_subjobs else True,
              'root_execution': args.root_execution,
-             'limit': args.num_results + 1}
+             'limit': None if args.trees else args.num_results + 1}
     json_output = []                        # for args.json
 
     def build_tree(root, jobs_by_parent, job_descriptions):
@@ -2182,7 +2181,8 @@ def find_executions(args):
             tree[root_string] = collections.OrderedDict()
         for child_job in jobs_by_parent.get(root, {}):
             subtree, subtree_root = build_tree(child_job, jobs_by_parent, job_descriptions)
-            tree[root_string].update(subtree)
+            if tree:
+                tree[root_string].update(subtree)
         return tree, root_string
 
     def process_tree(result, jobs_by_parent, job_descriptions):
@@ -2192,26 +2192,67 @@ def find_executions(args):
 
     try:
         num_processed_results = 0
+        roots = collections.OrderedDict()
         for job_result in dxpy.find_executions(**query):
-            num_processed_results += 1
+            if args.trees:
+                if args.classname == 'job':
+                    root = job_result['describe']['originJob']
+                else:
+                    root = job_result['describe']['rootExecution']
+                if root not in roots:
+                    num_processed_results += 1
+            else:
+                num_processed_results += 1
+
             if (num_processed_results > args.num_results):
                 more_results = True
                 break
 
-            if args.trees:
-                process_tree(*job_result)
-            elif args.json:
+            if args.json:
                 json_output.append(job_result['describe'])
+            elif args.trees:
+                roots[root] = 1
             elif args.brief:
                 print args.id
-            else:
+            elif not args.trees:
                 print format_tree({}, get_find_executions_string(job_result['describe'],
                                                                  has_children=False,
                                                                  single_result=True,
                                                                  show_outputs=args.show_outputs))
+        if args.trees:
+            jobs_by_parent, descriptions = collections.defaultdict(list), {}
+            root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
+            parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
+            query = {'classname': args.classname,
+                     'describe': {"io": include_io},
+                     'include_subjobs': False if args.no_subjobs else True,
+                     root_field: roots.keys()}
+            def process_job_result(job_result):
+                job_desc = job_result['describe']
+                parent = job_desc.get(parent_field, job_desc.get('parentAnalysis'))
+                descriptions[job_result['id']] = job_desc
+                if parent:
+                    jobs_by_parent[parent].append(job_result['id'])
+            try:
+                for job_result in dxpy.find_executions(**query):
+                    process_job_result(job_result)
+            except dxpy.DXAPIError as e:
+                # Compatibility for API versions that don't accept arrays as originJob/rootExecution inputs.
+                # TODO: remove this
+                if e.name == 'InvalidInput' and re.match('Expected key ".+" of input to be a string', e.msg):
+                    for root in roots:
+                        query[root_field] = root
+                        for job_result in dxpy.find_executions(**query):
+                            process_job_result(job_result)
+                else:
+                    raise
+
+            for root in roots:
+                process_tree(descriptions[root], jobs_by_parent, descriptions)
         if args.json:
             print json.dumps(json_output, indent=4)
-        elif more_results and get_delimiter() is None and not args.brief:
+
+        if more_results and get_delimiter() is None and not (args.brief or args.json):
             print fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  ')
     except:
         err_exit()

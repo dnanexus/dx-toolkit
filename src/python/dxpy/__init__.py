@@ -297,11 +297,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
                     pass
                 _UPGRADE_NOTIFY = False
 
-            if _DEBUG == '2':
-                print >>sys.stderr, method, url, "<=", response.status_code, "\n" + json.dumps(response.content, indent=2)
-            elif _DEBUG:
-                print >>sys.stderr, method, url, "<=", response.status_code, Repr().repr(response.content)
-
             # If HTTP code that is not 200 (OK) is received and the content is
             # JSON, parse it and throw the appropriate error.  Otherwise,
             # raise the usual exception.
@@ -329,6 +324,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
                 if response.headers.get('content-type', '').startswith('application/json'):
                     try:
+                        if _DEBUG == '2':
+                            print >>sys.stderr, method, url, "<=", response.status_code, "\n" + json.dumps(json.loads(response.content), indent=2)
+                        elif _DEBUG:
+                            print >>sys.stderr, method, url, "<=", response.status_code, Repr().repr(response.content)
+
                         return json.loads(decoded_content)
                     except ValueError:
                         # If a streaming API call (no content-length

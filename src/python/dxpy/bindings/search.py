@@ -25,11 +25,14 @@ provides search functionality over all data objects in the system. The
 import dxpy
 from dxpy.bindings import *
 
-def _find(api_method, query, limit, return_handler, **kwargs):
+def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
     ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its
     output. Used by the methods below.
     '''
     num_results = 0
+
+    if "limit" not in query:
+        query["limit"] = first_page_size
 
     while True:
         resp = api_method(query, **kwargs)
@@ -53,6 +56,7 @@ def _find(api_method, query, limit, return_handler, **kwargs):
         # set up next query
         if resp["next"] is not None:
             query["starting"] = resp["next"]
+            query["limit"] = min(query["limit"]*2, 1000)
         else:
             raise StopIteration()
 
@@ -63,7 +67,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
                       describe=None, limit=None, level=None,
-                      return_handler=False,
+                      return_handler=False, first_page_size=100,
                       **kwargs):
     """
     :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet"
@@ -106,6 +110,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type level: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
@@ -200,12 +206,12 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, first_page_size, **kwargs)
 
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
                     state=None, origin_job=None, parent_job=None, root_execution=None,
                     created_after=None, created_before=None, describe=False,
-                    name=None, name_mode="exact", limit=None, return_handler=False, format=None, list_subjobs=True,
+                    name=None, name_mode="exact", limit=None, first_page_size=100, return_handler=False, format=None, include_subjobs=True,
                     **kwargs):
     '''
     :param launched_by: User ID of the user who launched the execution's origin execution
@@ -234,12 +240,14 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type name_mode: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :param format: If set, must be set to "trees". When set to "trees", each result is a tuple (result, executions_by_parent, job_descriptions).
     :type format: string
-    :param list_subjobs: If False, no subjobs will be returned by the API
-    :type list_subjobs: boolean
+    :param include_subjobs: If False, no subjobs will be returned by the API
+    :type include_subjobs: boolean
     :rtype: generator
 
     Returns a generator that yields all executions (jobs or analyses) that match the query. It transparently handles
@@ -297,12 +305,12 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
     if format is not None:
         query["format"] = format
-    if list_subjobs is not True:
-        query["listSubjobs"] = list_subjobs
+    if include_subjobs is not True:
+        query["includeSubjobs"] = include_subjobs
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_executions, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_executions, query, limit, return_handler, first_page_size, **kwargs)
 
 def find_jobs(*args, **kwargs):
     """
@@ -320,7 +328,7 @@ def find_analyses(*args, **kwargs):
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=None, explicit_perms=None,
-                  public=None, limit=None, return_handler=False, **kwargs):
+                  public=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -340,6 +348,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type public: boolean
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
@@ -378,14 +388,14 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_projects, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_projects, query, limit, return_handler, first_page_size, **kwargs)
 
 def find_apps(name=None, name_mode='exact', category=None,
               all_versions=None, published=None,
               billed_to=None, created_by=None, developer=None,
               created_after=None, created_before=None,
               modified_after=None, modified_before=None,
-              describe=None, limit=None, return_handler=False, **kwargs):
+              describe=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the app (also see *name_mode*)
     :type name: string
@@ -415,6 +425,8 @@ def find_apps(name=None, name_mode='exact', category=None,
     :type describe: boolean
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
@@ -465,7 +477,7 @@ def find_apps(name=None, name_mode='exact', category=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_apps, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_apps, query, limit, return_handler, first_page_size, **kwargs)
 
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
     kwargs["limit"] = 1 if more_ok else 2
