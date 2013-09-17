@@ -1,3 +1,11 @@
+dx-toolkit (0.68.0) precise; urgency=low
+
+  * Add env-related flags to dx add/list/remove users/developers.
+
+  * Test infrastructure improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 17 Sep 2013 18:51:23 +0000
+
 dx-toolkit (0.67.0) precise; urgency=low
 
   * DXFS performance improvements.
