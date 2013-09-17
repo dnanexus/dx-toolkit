@@ -1,3 +1,9 @@
+dx-toolkit (0.67.2) precise; urgency=low
+
+  * Test infrastructure improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 17 Sep 2013 18:53:34 +0000
+
 dx-toolkit (0.67.1) precise; urgency=low
 
   * Fix bug in dx select when locale is not set.
