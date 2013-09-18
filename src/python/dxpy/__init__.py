@@ -324,12 +324,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
 
                 if response.headers.get('content-type', '').startswith('application/json'):
                     try:
+                        decoded_content = json.loads(decoded_content)
                         if _DEBUG == '2':
-                            print >>sys.stderr, method, url, "<=", response.status_code, "\n" + json.dumps(json.loads(response.content), indent=2)
+                            t = int(response.elapsed.total_seconds()*1000)
+                            print >>sys.stderr, method, url, "<=", response.status_code, "(%dms)"%t, "\n" + json.dumps(decoded_content, indent=2)
                         elif _DEBUG:
-                            print >>sys.stderr, method, url, "<=", response.status_code, Repr().repr(response.content)
+                            t = int(response.elapsed.total_seconds()*1000)
+                            print >>sys.stderr, method, url, "<=", response.status_code, "(%dms)"%t, Repr().repr(decoded_content)
 
-                        return json.loads(decoded_content)
+                        return decoded_content
                     except ValueError:
                         # If a streaming API call (no content-length
                         # set) encounters an error it may just halt the
