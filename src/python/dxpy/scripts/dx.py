@@ -3234,6 +3234,9 @@ def watch(args):
     if args.levels:
         input_params['levels'] = args.levels
 
+    if not re.match("^job-[0-9a-zA-Z]{24}", args.jobid):
+        err_exit(args.jobid + " does not look like a DNAnexus job ID")
+
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
                                       msg_output_format=args.format, print_job_info=args.job_info)
 
