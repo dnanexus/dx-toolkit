@@ -1117,7 +1117,7 @@ class TestDXSearch(unittest.TestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
-    def test_find_jobs(self):
+    def test_find_executions(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      dxapi="1.0.0",
@@ -1133,24 +1133,41 @@ class TestDXSearch(unittest.TestCase):
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
         dxjob = dxapplet.run(applet_input=prog_input)
+        dxjob2 = dxapplet.run(applet_input=prog_input)
         me = dxpy.user_info()['userId']
-        results = list(dxpy.find_jobs(launched_by=me,
-                                      executable=dxapplet,
-                                      project=dxapplet.get_proj_id(),
-                                      origin_job=dxjob.get_id(),
-                                      parent_job='none',
-                                      created_after='-15s',
-                                      describe=True))
-        self.assertEqual(len(results), 1)
-        result = results[0]
-        self.assertEqual(result["id"], dxjob.get_id())
-        self.assertTrue("describe" in result)
-        self.assertEqual(result["describe"]["id"], dxjob.get_id())
-        self.assertEqual(result["describe"]["class"], "job")
-        self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
-        self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
-        self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
-        self.assertEqual(result["describe"]["parentJob"], None)
+        common_conditions = {'launched_by': me,
+                             'executable': dxapplet,
+                             'project': dxapplet.get_proj_id(),
+                             'created_after': '-150s',
+                             'describe': True}
+        methods = (dxpy.find_executions, dxpy.find_analyses, dxpy.find_jobs)
+        queries = ({'conditions': {'include_subjobs': False}, 'n_results': [2, 0, 2]},
+                   {'conditions': {'origin_job': dxjob.get_id(), 'parent_job': 'none'}, 'n_results': [1, 0, 1]},
+                   {'conditions': {'root_execution': dxjob.get_id()}, 'n_results': [1, 0, 1]},
+                   {'conditions': {'name': 'test_applet'}, 'n_results': [2, 0, 2]},
+                   {'conditions': {'name': '?est_apple*', 'name_mode': 'glob'}, 'n_results': [2, 0, 2]},
+                   {'conditions': {'name': 'test_apples*', 'name_mode': 'glob'}, 'n_results': [0, 0, 0]},
+                   {'conditions': {'name': '[t]+est_apple.+', 'name_mode': 'regexp'}, 'n_results': [2, 0, 2]},
+                   {'conditions': {'name': 'test_apples.+', 'name_mode': 'regexp'}, 'n_results': [0, 0, 0]})
+
+        for query in queries:
+            for i in range(len(methods)):
+                print query, methods[i]
+                conditions = dict(common_conditions, **query['conditions'])
+                results = list(methods[i](**conditions))
+                self.assertEqual(len(results), query['n_results'][i])
+                if len(results) > 0:
+                    result = results[-1]
+                    self.assertEqual(result["id"], dxjob.get_id())
+                    self.assertTrue("describe" in result)
+                    self.assertEqual(result["describe"]["id"], dxjob.get_id())
+                    self.assertEqual(result["describe"]["class"], "job")
+                    self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
+                    self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
+                    self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
+                    self.assertEqual(result["describe"]["parentJob"], None)
+                    self.assertEqual(result["describe"]["name"], 'test_applet')
+
 
 class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):
