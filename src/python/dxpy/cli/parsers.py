@@ -57,10 +57,6 @@ stdout_args_gp.add_argument('--summary', help='Display summary output (default)'
 stdout_args_gp.add_argument('--verbose', help='If available, displays extra verbose output',
                             action='store_true')
 
-def process_output_args(args):
-    if not args.brief and not args.summary and not args.verbose:
-        args.summary = True
-
 parser_dataobject_args = argparse.ArgumentParser(add_help=False)
 parser_dataobject_args_gp = parser_dataobject_args.add_argument_group('metadata arguments')
 parser_dataobject_args_gp.add_argument('--visibility', choices=['hidden', 'visible'], dest='hidden', default='visible', help='Whether the object is hidden or not')

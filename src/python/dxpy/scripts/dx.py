@@ -153,7 +153,7 @@ from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc,
                                  get_io_desc, get_find_executions_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
                               parser_dataobject_args, parser_single_dataobject_output_args,
-                              process_output_args, process_properties_args,
+                              process_properties_args,
                               find_by_properties_and_tags_args, process_find_by_property_args,
                               process_dataobject_args, process_single_dataobject_output_args, find_executions_args,
                               set_env_from_args,
@@ -1338,7 +1338,6 @@ def new_project(args):
             parser_new_project.print_help()
             parser.exit(1, fill("No project name supplied, and input is not interactive") + '\n')
 
-    process_output_args(args)
     try:
         resp = dxpy.DXHTTPRequest('/project/new',
                                   {"name": args.name})
@@ -1353,7 +1352,6 @@ def new_project(args):
         err_exit()
 
 def new_record(args):
-    process_output_args(args)
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
     init_from = None
@@ -1385,7 +1383,6 @@ def new_record(args):
         err_exit()
 
 def new_gtable(args):
-    process_output_args(args)
     try_call(process_dataobject_args, args)
     try_call(process_single_dataobject_output_args, args)
 
@@ -2113,7 +2110,6 @@ def export(args):
     exporters[args.format.lower()](args)
 
 def find_executions(args):
-    process_output_args(args)
     if not (args.origin_jobs or args.all_jobs):
         if args.classname == 'analysis':
             if args.trees:
@@ -2258,7 +2254,6 @@ def find_executions(args):
         err_exit()
 
 def find_data(args):
-    process_output_args(args)
     try_call(process_find_by_property_args, args)
     if args.all_projects:
         args.project = None
@@ -2305,7 +2300,6 @@ def find_data(args):
         err_exit()
 
 def find_projects(args):
-    process_output_args(args)
     try_call(process_find_by_property_args, args)
     try:
         results = list(dxpy.find_projects(name=args.name, name_mode='glob',
@@ -2334,7 +2328,6 @@ def find_apps(args):
     def maybe_x(result):
         return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
 
-    process_output_args(args)
     try:
         results = list(dxpy.find_apps(name=args.name, name_mode='glob', category=args.category,
                                       all_versions=args.all,
@@ -2959,7 +2952,6 @@ def run(args):
                                        }
                         }
 
-    process_output_args(args)
     handler = get_exec_handler(args.executable, args.alias)
 
     if args.project is not None:
