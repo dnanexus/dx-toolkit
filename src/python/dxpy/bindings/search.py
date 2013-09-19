@@ -211,7 +211,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
                     state=None, origin_job=None, parent_job=None, root_execution=None,
                     created_after=None, created_before=None, describe=False,
-                    name=None, name_mode="exact", limit=None, first_page_size=100, return_handler=False, format=None, include_subjobs=True,
+                    name=None, name_mode="exact", limit=None, first_page_size=100, return_handler=False, include_subjobs=True,
                     **kwargs):
     '''
     :param launched_by: User ID of the user who launched the execution's origin execution
@@ -244,8 +244,6 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
-    :param format: If set, must be set to "trees". When set to "trees", each result is a tuple (result, executions_by_parent, job_descriptions).
-    :type format: string
     :param include_subjobs: If False, no subjobs will be returned by the API
     :type include_subjobs: boolean
     :rtype: generator
@@ -303,8 +301,6 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             query['name'] = {'regexp': name}
         else:
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
-    if format is not None:
-        query["format"] = format
     if include_subjobs is not True:
         query["includeSubjobs"] = include_subjobs
     if limit is not None:
