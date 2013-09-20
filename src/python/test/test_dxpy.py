@@ -1132,22 +1132,37 @@ class TestDXSearch(unittest.TestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
+        dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
+        stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200})
+        dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input)
-        dxjob2 = dxapplet.run(applet_input=prog_input)
+
+        # Wait for job to be created
+        t = 0
+        while not all('execution' in stage for stage in dxanalysis.describe()['stages']):
+            t += 1
+            if t > 10:
+                raise Exception("Timeout while waiting for job to be created for an analysis stage")
+            time.sleep(1)
+
         me = dxpy.user_info()['userId']
         common_conditions = {'launched_by': me,
                              'executable': dxapplet,
                              'project': dxapplet.get_proj_id(),
                              'created_after': '-150s',
-                             'describe': True}
+                             'describe': True,
+                             'first_page_size': 1}
         methods = (dxpy.find_executions, dxpy.find_analyses, dxpy.find_jobs)
-        queries = ({'conditions': {'include_subjobs': False}, 'n_results': [2, 0, 2]},
+        queries = ({'conditions': {'include_subjobs': False}, 'n_results': [4, 1, 3]},
                    {'conditions': {'origin_job': dxjob.get_id(), 'parent_job': 'none'}, 'n_results': [1, 0, 1]},
                    {'conditions': {'root_execution': dxjob.get_id()}, 'n_results': [1, 0, 1]},
-                   {'conditions': {'name': 'test_applet'}, 'n_results': [2, 0, 2]},
-                   {'conditions': {'name': '?est_apple*', 'name_mode': 'glob'}, 'n_results': [2, 0, 2]},
+                   {'conditions': {'name': 'test_applet'}, 'n_results': [3, 0, 3]},
+                   {'conditions': {'executable': dxworkflow}, 'n_results': [1, 1, 0]},
+                   {'conditions': {'name': 'find_executions test workflow'}, 'n_results': [1, 1, 0]},
+                   {'conditions': {'name': '?est_apple*', 'name_mode': 'glob'}, 'n_results': [3, 0, 3]},
                    {'conditions': {'name': 'test_apples*', 'name_mode': 'glob'}, 'n_results': [0, 0, 0]},
-                   {'conditions': {'name': '[t]+est_apple.+', 'name_mode': 'regexp'}, 'n_results': [2, 0, 2]},
+                   {'conditions': {'name': '[t]+est_apple.+', 'name_mode': 'regexp'}, 'n_results': [3, 0, 3]},
                    {'conditions': {'name': 'test_apples.+', 'name_mode': 'regexp'}, 'n_results': [0, 0, 0]})
 
         for query in queries:
@@ -1157,16 +1172,19 @@ class TestDXSearch(unittest.TestCase):
                 results = list(methods[i](**conditions))
                 self.assertEqual(len(results), query['n_results'][i])
                 if len(results) > 0:
-                    result = results[-1]
-                    self.assertEqual(result["id"], dxjob.get_id())
+                    result = results[0]
                     self.assertTrue("describe" in result)
-                    self.assertEqual(result["describe"]["id"], dxjob.get_id())
-                    self.assertEqual(result["describe"]["class"], "job")
-                    self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
-                    self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
-                    self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
-                    self.assertEqual(result["describe"]["parentJob"], None)
-                    self.assertEqual(result["describe"]["name"], 'test_applet')
+                    if result['describe']['id'].startswith('analysis'):
+                        self.assertEqual(result["id"], dxanalysis.get_id())
+                    else:
+                        self.assertEqual(result["id"], dxjob.get_id())
+                        self.assertEqual(result["describe"]["id"], dxjob.get_id())
+                        self.assertEqual(result["describe"]["class"], "job")
+                        self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
+                        self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
+                        self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
+                        self.assertEqual(result["describe"]["parentJob"], None)
+                        self.assertEqual(result["describe"]["name"], 'test_applet')
 
 
 class TestPrettyPrint(unittest.TestCase):
