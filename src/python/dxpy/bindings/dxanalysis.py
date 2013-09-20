@@ -25,8 +25,10 @@ analysis ID.
 
 """
 
-from dxpy.bindings import *
-from dxpy.utils.local_exec_utils import queue_entry_point
+import sys, time
+import dxpy
+from dxpy.bindings import (DXObject, )
+from dxpy.exceptions import DXJobFailureError
 
 ##############
 # DXAnalysis #
