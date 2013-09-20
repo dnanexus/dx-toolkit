@@ -1167,7 +1167,6 @@ class TestDXSearch(unittest.TestCase):
 
         for query in queries:
             for i in range(len(methods)):
-                print query, methods[i]
                 conditions = dict(common_conditions, **query['conditions'])
                 results = list(methods[i](**conditions))
                 self.assertEqual(len(results), query['n_results'][i])
