@@ -1836,6 +1836,8 @@ def download(args):
         if not os.path.exists(args.output):
             err_exit(fill("Error: When downloading multiple objects, --output must be an existing directory"))
         destdir, dest_filename = args.output, None
+    elif os.path.isdir(args.output):
+        destdir, dest_filename = args.output, None
     else:
         destdir, dest_filename = os.getcwd(), args.output
 
