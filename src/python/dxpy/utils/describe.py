@@ -265,7 +265,7 @@ def render_execdepends(thing):
     return rendered
 
 def render_stage(title, stage):
-    lines_to_print = [(title, stage['name'] + ' (' + stage['id'] + ')'),
+    lines_to_print = [(title, "{name} ({id})".format(name=stage['name'], id=stage['id']) if stage['name'] is not None else stage['id']),
                       ('  Executable', stage['executable'])]
     if 'execution' in stage:
         if 'state' in stage['execution']:
