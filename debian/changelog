@@ -1,3 +1,9 @@
+dx-toolkit (0.68.1) precise; urgency=low
+
+  * Minor bug fix.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 24 Sep 2013 20:14:07 +0000
+
 dx-toolkit (0.68.0) precise; urgency=low
 
   * Add env-related flags to dx add/list/remove users/developers.
