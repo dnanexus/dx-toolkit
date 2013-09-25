@@ -187,6 +187,8 @@ class TestDXClient(DXTestCase):
 
         # Path resolution is used
         run(u"dx find jobs --project :")
+        run(u"dx find executions --project :")
+        run(u"dx find analyses --project :")
         run(u"dx find data --project :")
 
     def test_dx_object_tagging(self):
@@ -689,6 +691,78 @@ class TestDXClient(DXTestCase):
         time.sleep(2) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run a job')
+    def test_find_executions(self):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.0.0",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                                ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "execDepends": [{"name": "python-numpy"}]})
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
+                      "rowFetchChunk": 100}
+        dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
+        stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200})
+        dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input)
+
+        me = dxpy.user_info()['userId']
+        run("dx cd {project_id}:/".format(project_id=dxapplet.get_proj_id()))
+
+        # Wait for job to be created
+        t = 0
+        while not all('execution' in stage for stage in dxanalysis.describe()['stages']):
+            t += 1
+            if t > 20:
+                raise Exception("Timeout while waiting for job to be created for an analysis stage")
+            time.sleep(1)
+
+        options = "--user=self --project="+dxapplet.get_proj_id()
+        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        options = "--user="+me
+        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        options += " --created-after=-150s --no-subjobs --applet="+dxapplet.get_id()
+        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        options2 = options + " --brief -n 9000"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 4)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 3)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 1)
+        options3 = options2 + " --origin="+dxjob.get_id()
+        self.assertEqual(len(run("dx find executions "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find jobs "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find analyses "+options3).splitlines()), 0)
+        options3 = options2 + " --root="+dxanalysis.get_id()
+        self.assertEqual(len(run("dx find executions "+options3).splitlines()), 2)
+        self.assertEqual(len(run("dx find jobs "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find analyses "+options3).splitlines()), 1)
+        options2 = options + " --origin-jobs"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        options2 = options + " --all-jobs"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        options2 = options + " --state=done"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
+
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')

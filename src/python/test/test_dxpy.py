@@ -1142,7 +1142,7 @@ class TestDXSearch(unittest.TestCase):
         t = 0
         while not all('execution' in stage for stage in dxanalysis.describe()['stages']):
             t += 1
-            if t > 10:
+            if t > 20:
                 raise Exception("Timeout while waiting for job to be created for an analysis stage")
             time.sleep(1)
 
