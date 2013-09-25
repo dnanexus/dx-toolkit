@@ -26,6 +26,7 @@ from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
 import dxpy_testutil as testutil
 from dxpy.packages import requests
+from dxpy.exceptions import DXAPIError
 
 @contextmanager
 def chdir(dirname=None):
@@ -715,22 +716,26 @@ class TestDXClient(DXTestCase):
         dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input)
 
-        me = dxpy.user_info()['userId']
         run("dx cd {project_id}:/".format(project_id=dxapplet.get_proj_id()))
 
         # Wait for job to be created
+        executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
         t = 0
-        while not all('execution' in stage for stage in dxanalysis.describe()['stages']):
-            t += 1
-            if t > 20:
-                raise Exception("Timeout while waiting for job to be created for an analysis stage")
-            time.sleep(1)
+        while len(executions) > 0:
+            try:
+                dxpy.api.job_describe(executions[len(executions) - 1], {})
+                executions.pop()
+            except DXAPIError:
+                t += 1
+                if t > 20:
+                    raise Exception("Timeout while waiting for job to be created for an analysis stage")
+                time.sleep(1)
 
-        options = "--user=self --project="+dxapplet.get_proj_id()
+        options = "--user=self"
         self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
         self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
         self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
-        options = "--user="+me
+        options += " --project="+dxapplet.get_proj_id()
         self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
         self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
         self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)

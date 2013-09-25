@@ -1139,12 +1139,17 @@ class TestDXSearch(unittest.TestCase):
         dxjob = dxapplet.run(applet_input=prog_input)
 
         # Wait for job to be created
+        executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
         t = 0
-        while not all('execution' in stage for stage in dxanalysis.describe()['stages']):
-            t += 1
-            if t > 20:
-                raise Exception("Timeout while waiting for job to be created for an analysis stage")
-            time.sleep(1)
+        while len(executions) > 0:
+            try:
+                dxpy.api.job_describe(executions[len(executions) - 1], {})
+                executions.pop()
+            except DXAPIError:
+                t += 1
+                if t > 20:
+                    raise Exception("Timeout while waiting for job to be created for an analysis stage")
+                time.sleep(1)
 
         me = dxpy.user_info()['userId']
         common_conditions = {'launched_by': me,
