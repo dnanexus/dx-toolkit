@@ -1838,6 +1838,8 @@ def download(args):
         destdir, dest_filename = args.output, None
     elif os.path.isdir(args.output):
         destdir, dest_filename = args.output, None
+    elif args.output.endswith('/'):
+        err_exit(fill("Error: {path} could not be found".format(path=args.output)))
     else:
         destdir, dest_filename = os.getcwd(), args.output
 
