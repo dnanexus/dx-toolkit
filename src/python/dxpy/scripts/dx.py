@@ -1668,7 +1668,6 @@ def unset_properties(args):
     project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
                                                    args.path,
                                                    args.all)
-
     properties = {}
     for prop in args.properties:
         properties[prop] = None
@@ -2220,7 +2219,7 @@ def find_executions(args):
                      root_field: roots.keys()}
             def process_job_result(job_result):
                 job_desc = job_result['describe']
-                parent = job_desc.get(parent_field, job_desc.get('parentAnalysis'))
+                parent = job_desc.get(parent_field) or job_desc.get('parentAnalysis')
                 descriptions[job_result['id']] = job_desc
                 if parent:
                     jobs_by_parent[parent].append(job_result['id'])
