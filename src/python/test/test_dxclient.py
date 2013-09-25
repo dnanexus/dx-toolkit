@@ -567,6 +567,19 @@ class TestDXClient(DXTestCase):
                 tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
                 self.assertEqual(tree1, tree2)
 
+            with chdir(tempfile.mkdtemp()):
+                os.mkdir('t')
+                run(u'dx download -r -o t '+os.path.basename(wd))
+                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))),
+                                                shell=True)
+                self.assertEqual(tree1, tree2)
+
+                os.mkdir('t2')
+                run(u'dx download -o t2 '+os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name)))
+                self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
+                                 len("0123456789ABCDEF"*64))
+
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()
         os.mkdir(os.path.join(testdir, 'a'))
