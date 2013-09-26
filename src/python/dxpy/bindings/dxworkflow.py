@@ -47,7 +47,7 @@ from argparse import Namespace
 
 import dxpy
 from dxpy.bindings import DXDataObject, DXExecutable, DXAnalysis, get_handler
-from dxpy.exceptions import DXError
+from dxpy.exceptions import DXError, DXAPIError
 from dxpy.cli.exec_io import ExecutableInputs, stage_to_job_refs
 
 ####################
@@ -275,7 +275,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         '''
         exec_id = executable if isinstance(executable, basestring) else executable.get_id() if isinstance(executable, DXExecutable) else None
         if exec_id is None:
-            raise DXError("add_stage: executable must be a string or an instance of DXApplet or DXApp")
+            raise DXError("dxpy.DXWorkflow.add_stage: executable must be a string or an instance of DXApplet or DXApp")
         add_stage_input = {"executable": exec_id}
         if name is not None:
             add_stage_input["name"] = name
@@ -347,6 +347,109 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             raise
         finally:
             self.describe() # update cached describe
+
+    def update(self, title=None, unset_title=False, summary=None, description=None, stages=None,
+               edit_version=None, **kwargs):
+        '''
+        :param title: workflow title to set; cannot be provided with *unset_title* set to True
+        :type title: string
+        :param unset_title: whether to unset the title; cannot be provided with string value for *title*
+        :type unset_title: boolean
+        :param summary: workflow summary to set
+        :type summary: string
+        :param description: workflow description to set
+        :type description: string
+        :param stages: updates to the stages to make; see API documentation for /workflow-xxxx/update for syntax of this field; use :meth:`update_stage()` to update a single stage
+        :type stages: dict
+        :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
+        :type edit_version: int
+
+        Make general metadata updates to the workflow
+        '''
+        update_input = {}
+        if title is not None and unset_title:
+            raise DXError('dxpy.DXWorkflow.update: cannot provide both "title" and set "unset_title"')
+        if title is not None:
+            update_input["title"] = title
+        if unset_title:
+            update_input["title"] = None
+        if summary is not None:
+            update_input["summary"] = summary
+        if description is not None:
+            update_input["description"] = description
+        if stages is not None:
+            update_input["stages"] = stages
+
+        # only perform update if there are changes to make
+        if update_input:
+            self._add_edit_version_to_request(update_input, edit_version)
+            try:
+                dxpy.api.workflow_update(self._dxid, update_input, **kwargs)
+            except:
+                raise
+            finally:
+                self.describe() # update cached describe
+
+    def update_stage(self, stage, executable=None, force=False,
+                     name=None, unset_name=False, folder=None, stage_input=None,
+                     edit_version=None, **kwargs):
+        '''
+        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
+        :type stage: int or string
+        :param executable: string or a handler for an app or applet
+        :type executable: string, DXApplet, or DXApp
+        :param force: whether to use *executable* even if it is incompatible with the previous executable's spec
+        :type force: boolean
+        :param name: name for the stage; cannot be provided with *unset_name* set to True
+        :type name: string
+        :param unset_name: whether to unset the stage name; cannot be provided with string value for *name*
+        :type unset_name: boolean
+        :param stage_input: input fields to bind as default inputs for the executable (optional)
+        :type stage_input: dict
+        :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
+        :type edit_version: int
+
+        Removes the specified stage from the workflow
+        '''
+        stage_id = stage if isinstance(stage, basestring) else self.stages[int(stage)]["id"]
+
+        if name is not None and unset_name:
+            raise DXError('dxpy.DXWorkflow.update_stage: cannot provide both "name" and set "unset_name"')
+
+        if executable is not None:
+            exec_id = executable if isinstance(executable, basestring) else executable.get_id() if isinstance(executable, DXExecutable) else None
+            if exec_id is None:
+                raise DXError("dxpy.DXWorkflow.update_stage: executable (if provided) must be a string or an instance of DXApplet or DXApp")
+            update_stage_exec_input = {"stage": stage_id,
+                                       "executable": exec_id,
+                                       "force": force}
+            self._add_edit_version_to_request(update_stage_exec_input, edit_version)
+            try:
+                dxpy.api.workflow_update_stage_executable(self._dxid, update_stage_exec_input, **kwargs)
+            except:
+                raise
+            finally:
+                self.describe() # update cached describe
+
+        # Construct hash and update the workflow's stage if necessary
+        update_stage_input = {}
+        if name is not None:
+            update_stage_input["name"] = name
+        if unset_name:
+            update_stage_input["name"] = None
+        if folder:
+            update_stage_input["folder"] = folder
+        if stage_input:
+            update_stage_input["input"] = stage_input
+        if update_stage_input:
+            update_input = {"stages": {stage_id: update_stage_input}}
+            self._add_edit_version_to_request(update_input, edit_version)
+            try:
+                dxpy.api.workflow_update(self._dxid, update_input, **kwargs)
+            except:
+                raise
+            finally:
+                self.describe() # update cached describe
 
     def _get_input_name(self, input_str):
         if '.' in input_str and not input_str.startswith('stage-'):
