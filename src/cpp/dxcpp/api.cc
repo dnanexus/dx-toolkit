@@ -1158,6 +1158,14 @@ namespace dx {
     return workflowGetDetails(object_id, input_params.toString(), retry);
   }
 
+  JSON workflowIsStageCompatible(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/isStageCompatible"), input_params, retry);
+  }
+
+  JSON workflowIsStageCompatible(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowIsStageCompatible(object_id, input_params.toString(), retry);
+  }
+
   JSON workflowListProjects(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/listProjects"), input_params, retry);
   }
@@ -1172,6 +1180,14 @@ namespace dx {
 
   JSON workflowMoveStage(const std::string &object_id, const JSON &input_params, const bool retry) {
     return workflowMoveStage(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowOverwrite(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/overwrite"), input_params, retry);
+  }
+
+  JSON workflowOverwrite(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowOverwrite(object_id, input_params.toString(), retry);
   }
 
   JSON workflowRemoveStage(const std::string &object_id, const std::string &input_params, const bool retry) {
@@ -1244,6 +1260,22 @@ namespace dx {
 
   JSON workflowSetVisibility(const std::string &object_id, const JSON &input_params, const bool retry) {
     return workflowSetVisibility(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowUpdate(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params, retry);
+  }
+
+  JSON workflowUpdate(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowUpdate(object_id, input_params.toString(), retry);
+  }
+
+  JSON workflowUpdateStageExecutable(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/updateStageExecutable"), input_params, retry);
+  }
+
+  JSON workflowUpdateStageExecutable(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return workflowUpdateStageExecutable(object_id, input_params.toString(), retry);
   }
 
   JSON workflowNew(const std::string &input_params, const bool retry) {

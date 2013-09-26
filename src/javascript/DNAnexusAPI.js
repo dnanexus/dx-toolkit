@@ -707,6 +707,11 @@ exports.workflowGetDetails = function(object_id, input_params) {
 };
 
 
+exports.workflowIsStageCompatible = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/isStageCompatible', input_params);
+};
+
+
 exports.workflowListProjects = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/listProjects', input_params);
 };
@@ -714,6 +719,11 @@ exports.workflowListProjects = function(object_id, input_params) {
 
 exports.workflowMoveStage = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/moveStage', input_params);
+};
+
+
+exports.workflowOverwrite = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/overwrite', input_params);
 };
 
 
@@ -759,6 +769,16 @@ exports.workflowSetStageInputs = function(object_id, input_params) {
 
 exports.workflowSetVisibility = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/setVisibility', input_params);
+};
+
+
+exports.workflowUpdate = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/update', input_params);
+};
+
+
+exports.workflowUpdateStageExecutable = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/updateStageExecutable', input_params);
 };
 
 
