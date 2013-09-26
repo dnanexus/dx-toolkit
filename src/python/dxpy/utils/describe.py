@@ -25,7 +25,8 @@ containers, dataobjects, apps, and jobs).
 import datetime, time, json, math, sys, copy
 from collections import defaultdict
 
-from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, get_delimiter, fill)
+from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter,
+                                 fill)
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -730,7 +731,7 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     if desc['class'] == 'job':
         result += BOLD() + BLUE() + job_name + ENDC()
     else:
-        result += BOLD() + WHITE() + job_name + ENDC()
+        result += BOLD() + BLUE() + UNDERLINE() + job_name + ENDC()
     if job_name != canonical_execution_name and job_name+":main" != canonical_execution_name:
         result += ' (' + canonical_execution_name + ')'
     result += DELIMITER(' (') + JOB_STATES(desc['state']) + DELIMITER(') ') + desc['id']
