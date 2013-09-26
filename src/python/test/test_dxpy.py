@@ -1151,9 +1151,8 @@ class TestDXSearch(unittest.TestCase):
                     raise Exception("Timeout while waiting for job to be created for an analysis stage")
                 time.sleep(1)
 
-        me = dxpy.user_info()['userId']
-        common_conditions = {'launched_by': me,
-                             'executable': dxapplet,
+        me = None
+        common_conditions = {'executable': dxapplet,
                              'project': dxapplet.get_proj_id(),
                              'created_after': '-150s',
                              'describe': True,
@@ -1173,6 +1172,7 @@ class TestDXSearch(unittest.TestCase):
         for query in queries:
             for i in range(len(methods)):
                 conditions = dict(common_conditions, **query['conditions'])
+                conditions['launched_by'] = me
                 results = list(methods[i](**conditions))
                 self.assertEqual(len(results), query['n_results'][i])
                 if len(results) > 0:
@@ -1189,6 +1189,8 @@ class TestDXSearch(unittest.TestCase):
                         self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
                         self.assertEqual(result["describe"]["parentJob"], None)
                         self.assertEqual(result["describe"]["name"], 'test_applet')
+
+                    me = result["describe"]["launchedBy"]
 
 
 class TestPrettyPrint(unittest.TestCase):
