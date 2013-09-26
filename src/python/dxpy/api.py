@@ -2264,6 +2264,24 @@ def workflow_get_details(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def workflowIsStageCompatible(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_is_stage_compatible()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowIsStageCompatible is deprecated; please use workflow_is_stage_compatible instead."
+    return workflow_is_stage_compatible(*args, **kwargs)
+
+def workflow_is_stage_compatible(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/isStageCompatible API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FisStageCompatible
+    """
+    return DXHTTPRequest('/%s/isStageCompatible' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def workflowListProjects(*args, **kwargs):
     """
 
@@ -2299,6 +2317,24 @@ def workflow_move_stage(object_id, input_params={}, always_retry=True, **kwargs)
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage
     """
     return DXHTTPRequest('/%s/moveStage' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowOverwrite(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_overwrite()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowOverwrite is deprecated; please use workflow_overwrite instead."
+    return workflow_overwrite(*args, **kwargs)
+
+def workflow_overwrite(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/overwrite API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Foverwrite
+    """
+    return DXHTTPRequest('/%s/overwrite' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def workflowRemoveStage(*args, **kwargs):
     """
@@ -2461,6 +2497,42 @@ def workflow_set_visibility(object_id, input_params={}, always_retry=True, **kwa
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility
     """
     return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowUpdate(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_update()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowUpdate is deprecated; please use workflow_update instead."
+    return workflow_update(*args, **kwargs)
+
+def workflow_update(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/update API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fupdate
+    """
+    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def workflowUpdateStageExecutable(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`workflow_update_stage_executable()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.workflowUpdateStageExecutable is deprecated; please use workflow_update_stage_executable instead."
+    return workflow_update_stage_executable(*args, **kwargs)
+
+def workflow_update_stage_executable(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /workflow-xxxx/updateStageExecutable API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FupdateStageExecutable
+    """
+    return DXHTTPRequest('/%s/updateStageExecutable' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def workflowNew(*args, **kwargs):
     """

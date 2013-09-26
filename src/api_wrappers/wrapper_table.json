@@ -1125,6 +1125,15 @@
         }
     ],
     [
+        "/workflow-xxxx/isStageCompatible",
+        "workflowIsStageCompatible(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FisStageCompatible"
+        }
+    ],
+    [
         "/workflow-xxxx/listProjects",
         "workflowListProjects(req, objectId)",
         {
@@ -1140,6 +1149,15 @@
             "objectMethod": true,
             "retryable": true,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage"
+        }
+    ],
+    [
+        "/workflow-xxxx/overwrite",
+        "workflowOverwrite(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Foverwrite"
         }
     ],
     [
@@ -1221,6 +1239,24 @@
             "objectMethod": true,
             "retryable": true,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility"
+        }
+    ],
+    [
+        "/workflow-xxxx/update",
+        "workflowUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fupdate"
+        }
+    ],
+    [
+        "/workflow-xxxx/updateStageExecutable",
+        "workflowUpdateStageExecutable(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FupdateStageExecutable"
         }
     ],
     [
