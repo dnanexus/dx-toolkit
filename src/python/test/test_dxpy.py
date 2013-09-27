@@ -1073,6 +1073,38 @@ def main(number):
         with self.assertRaises(DXError):
             dxworkflow.remove_stage(5)
 
+    def test_get_stage(self):
+        dxworkflow = dxpy.new_dxworkflow()
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(dxapi="1.0.0",
+                     inputSpec=[{"name": "my_input", "class": "string"}],
+                     outputSpec=[],
+                     runSpec={"code": "", "interpreter": "bash"})
+        # Add stages
+        first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                           stage_input={"my_input": "hello world"})
+        second_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                            stage_input={"my_input": "hello world"})
+        # Get stages
+        stage_desc = dxworkflow.get_stage(0)
+        self.assertEqual(stage_desc['id'], first_stage)
+        stage_desc = dxworkflow.get_stage(first_stage)
+        self.assertEqual(stage_desc['id'], first_stage)
+        stage_desc = dxworkflow.get_stage(1)
+        self.assertEqual(stage_desc['id'], second_stage)
+        stage_desc = dxworkflow.get_stage(second_stage)
+        self.assertEqual(stage_desc['id'], second_stage)
+
+        # Errors
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage(-1)
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage(3)
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage('foo')
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage('stage-123456789012345678901234')
+
     def test_update(self):
         dxworkflow = dxpy.new_dxworkflow(title='title', summary='summary', description='description')
         self.assertEqual(dxworkflow.editVersion, 0)

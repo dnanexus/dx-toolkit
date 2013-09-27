@@ -44,6 +44,7 @@ import json
 import copy
 from collections import OrderedDict
 from argparse import Namespace
+import re
 
 import dxpy
 from dxpy.bindings import DXDataObject, DXExecutable, DXAnalysis, get_handler
@@ -257,6 +258,30 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         else:
             request_hash["editVersion"] = edit_version
 
+    def _get_stage_id(self, stage):
+        '''
+        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID
+        :type stage: int or string
+        :returns: The stage ID (this is a no-op if it was already a string)
+        :raises: :class:`~dxpy.exceptions.DXError` if *stage* could not be parsed or resolved to a stage ID
+        '''
+        stage_id = None
+        if isinstance(stage, basestring):
+            stage_id = stage
+        else:
+            try:
+                stage_index = int(stage)
+            except:
+                raise DXError('DXAnalysisWorkflow: "stage" was neither a string stage ID nor an integer index')
+            if stage_index < 0 or stage_index >= len(self.stages):
+                raise DXError('DXAnalysisWorkflow: the workflow contains ' + str(len(self.stages)) + ' stage(s), and the provided value for "stage" is out of range')
+            stage_id = self.stages[stage_index].get("id")
+
+        if re.compile('^stage-[0-9A-Za-z]{24}$').match(stage_id) is None:
+            raise DXError('DXAnalysisWorkflow: "stage" did not resolve to a properly formed stage ID')
+
+        return stage_id
+
     def add_stage(self, executable, name=None, folder=None, stage_input=None, edit_version=None, **kwargs):
         '''
         :param executable: string or a handler for an app or applet
@@ -292,6 +317,18 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             self.describe() # update cached describe
         return result['stage']
 
+    def get_stage(self, stage, **kwargs):
+        '''
+        :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to describe
+        :type stage: int or string
+        :returns: Hash of stage descriptor in workflow
+        '''
+        stage_id = self._get_stage_id(stage)
+        try:
+            return next(stage for stage in self.stages if stage['id'] == stage_id)
+        except StopIteration:
+            raise DXError('The stage ID ' + stage_id + ' could not be found')
+
     def remove_stage(self, stage, edit_version=None, **kwargs):
         '''
         :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
@@ -303,19 +340,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         Removes the specified stage from the workflow
         '''
-        stage_id = None
-        if isinstance(stage, basestring):
-            stage_id = stage
-        else:
-            try:
-                stage_index = int(stage)
-            except:
-                raise DXError('remove_stage: "stage" was neither a string stage ID nor an integer index')
-            if stage_index < 0 or stage_index >= len(self.stages):
-                raise DXError('remove_stage: the workflow contains ' + str(len(self.stages)) + ' stage(s), and the provided value for "stage" is out of range')
-            stage_id = self.stages[stage_index]["id"]
-        if stage_id is None:
-            raise DXError('remove_stage: the provided stage index')
+        stage_id = self._get_stage_id(stage)
         remove_stage_input = {"stage": stage_id}
         self._add_edit_version_to_request(remove_stage_input, edit_version)
         try:
@@ -337,7 +362,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         Removes the specified stage from the workflow
         '''
-        stage_id = stage if isinstance(stage, basestring) else self.stages[int(stage)]["id"]
+        stage_id = self._get_stage_id(stage)
         move_stage_input = {"stage": stage_id,
                             "newIndex": new_index}
         self._add_edit_version_to_request(move_stage_input, edit_version)
@@ -411,7 +436,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         Removes the specified stage from the workflow
         '''
-        stage_id = stage if isinstance(stage, basestring) else self.stages[int(stage)]["id"]
+        stage_id = self._get_stage_id(stage)
 
         if name is not None and unset_name:
             raise DXError('dxpy.DXWorkflow.update_stage: cannot provide both "name" and set "unset_name"')
