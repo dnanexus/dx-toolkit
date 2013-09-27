@@ -209,7 +209,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, first_page_size, **kwargs)
 
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
-                    state=None, origin_job=None, parent_job=None, root_execution=None,
+                    state=None, origin_job=None, parent_job=None, parent_analysis=None, root_execution=None,
                     created_after=None, created_before=None, describe=False,
                     name=None, name_mode="exact", limit=None, first_page_size=100, return_handler=False, include_subjobs=True,
                     **kwargs):
@@ -224,8 +224,10 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type state: string
     :param origin_job: ID of the original job that eventually spawned this execution (possibly by way of other executions)
     :type origin_job: string
-    :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent
+    :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent job
     :type parent_job: string
+    :param parent_analysis: ID of the parent analysis, or the string 'none', indicating it should have no parent analysis
+    :type parent_analysis: string
     :param root_execution: ID of the top-level (user-initiated) execution (job or analysis) that eventually spawned this execution (possibly by way of other executions)
     :type root_execution: string
     :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
@@ -281,6 +283,11 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
             query["parentJob"] = None
         else:
             query["parentJob"] = parent_job
+    if parent_analysis is not None:
+        if parent_analysis == "none":
+            query["parentAnalysis"] = None
+        else:
+            query["parentAnalysis"] = parent_analysis
     if root_execution is not None:
         query["rootExecution"] = root_execution
     if created_after is not None or created_before is not None:

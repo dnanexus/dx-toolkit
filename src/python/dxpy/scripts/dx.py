@@ -2223,19 +2223,9 @@ def find_executions(args):
                 descriptions[job_result['id']] = job_desc
                 if parent:
                     jobs_by_parent[parent].append(job_result['id'])
-            try:
-                for job_result in dxpy.find_executions(**query):
-                    process_job_result(job_result)
-            except dxpy.DXAPIError as e:
-                # Compatibility for API versions that don't accept arrays as originJob/rootExecution inputs.
-                # TODO: remove this
-                if e.name == 'InvalidInput' and re.match('Expected key ".+" of input to be a string', e.msg):
-                    for root in roots:
-                        query[root_field] = root
-                        for job_result in dxpy.find_executions(**query):
-                            process_job_result(job_result)
-                else:
-                    raise
+
+            for job_result in dxpy.find_executions(**query):
+                process_job_result(job_result)
 
             for root in roots:
                 process_tree(descriptions[root], jobs_by_parent, descriptions)
