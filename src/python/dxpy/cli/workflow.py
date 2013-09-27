@@ -64,13 +64,23 @@ def new_workflow(args):
     except:
         err_exit()
 
-# Workflow-related functions
+def get_workflow_id_and_project(path):
+    '''
+    :param path: a path or ID to a workflow object
+    :type path: string
+    :returns: tuple of (workflow ID, project ID)
+
+    Returns the workflow and project IDs from the given path if
+    available; otherwise, exits with an appropriate error message.
+    '''
+    project, folderpath, entity_result = try_call(resolve_existing_path, path, expected='entity')
+    if entity_result is None or not entity_result['id'].startswith('workflow-'):
+        err_exit(DXError('Could not resolve \"' + path + '\" to a workflow object'))
+    return entity_result['id'], project
 
 def add_stage(args):
     # get workflow
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
-    if entity_result is None or not entity_result['id'].startswith('workflow-'):
-        err_exit(DXError('Could not resolve \"' + args.workflow + '\" to a workflow object'))
+    workflow_id, project = get_workflow_id_and_project(args.workflow)
 
     # get executable
     exec_handler = dxpy.utils.resolver.get_exec_handler(args.executable, args.alias)
@@ -83,7 +93,7 @@ def add_stage(args):
     else:
         folderpath = None
 
-    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
+    dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     stage_id = dxworkflow.add_stage(exec_handler, name=args.name, folder=folderpath,
                                     stage_input=exec_inputs.inputs)
     if args.brief:
@@ -93,11 +103,9 @@ def add_stage(args):
 
 def list_stages(args):
     # get workflow
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
-    if entity_result is None or not entity_result['id'].startswith('workflow-'):
-        err_exit(DXError('Could not resolve \"' + args.workflow + '\" to a workflow object'))
+    workflow_id, project = get_workflow_id_and_project(args.workflow)
 
-    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
+    dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     desc = dxworkflow.describe()
     print (printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc)
     print
@@ -122,17 +130,68 @@ def list_stages(args):
 
 def remove_stage(args):
     # get workflow
-    project, folderpath, entity_result = try_call(resolve_existing_path, args.workflow, expected='entity')
-    if entity_result is None or not entity_result['id'].startswith('workflow-'):
-        err_exit(DXError('Could not resolve \"' + args.workflow + '\" to a workflow object'))
+    workflow_id, project = get_workflow_id_and_project(args.workflow)
 
     try:
         args.stage = int(args.stage)
     except:
         pass
-    dxworkflow = dxpy.DXWorkflow(entity_result['id'], project=project)
+    dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     stage_id = try_call(dxworkflow.remove_stage, args.stage)
     if args.brief:
         print stage_id
     else:
         print "Removed stage " + stage_id
+
+def update_workflow(args):
+    # get workflow
+    workflow_id, project = get_workflow_id_and_project(args.workflow)
+    dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
+    try_call(dxworkflow.update,
+             title=args.title,
+             unset_title=args.notitle,
+             summary=args.summary,
+             description=args.description)
+
+def update_stage(args):
+    # get workflow
+    workflow_id, project = get_workflow_id_and_project(args.workflow)
+    dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
+
+    initial_edit_version = dxworkflow.editVersion
+
+    try:
+        args.stage = int(args.stage)
+    except:
+        pass
+
+    new_exec_handler = None
+    if args.executable is not None:
+        # get executable
+        new_exec_handler = dxpy.utils.resolver.get_exec_handler(args.executable, args.alias)
+        exec_inputs = dxpy.cli.exec_io.ExecutableInputs(new_exec_handler)
+        try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
+        stage_input = exec_inputs.inputs
+    elif args.input or args.input_json or args.filename:
+        # input is updated, so look up the existing one
+        existing_exec_handler = dxpy.utils.resolver.get_exec_handler(dxworkflow.get_stage(args.stage)['executable'])
+        exec_inputs = dxpy.cli.exec_io.ExecutableInputs(existing_exec_handler)
+        try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
+        stage_input = exec_inputs.inputs
+    else:
+        stage_input = None
+
+    # get folder path
+    if args.folder is not None:
+        ignore, folderpath, none = try_call(resolve_path, args.folder, expected='folder')
+    else:
+        folderpath = None
+
+    try_call(dxworkflow.update_stage, args.stage,
+             executable=new_exec_handler,
+             force=args.force,
+             name=args.name,
+             unset_name=args.noname,
+             folder=folderpath,
+             stage_input=stage_input,
+             edit_version=initial_edit_version)

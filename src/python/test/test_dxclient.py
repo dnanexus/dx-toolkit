@@ -668,6 +668,7 @@ class TestDXClient(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+class TestDXClientWorkflow(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
     def test_dx_run_workflow(self):
@@ -762,6 +763,91 @@ class TestDXClient(DXTestCase):
         # remove something out of range
         with self.assertSubprocessFailure(stderr_regexp="out of range", exit_code=3):
             run("dx remove stage /myworkflow 5")
+
+    def test_dx_update_workflow(self):
+        workflow_id = run(u"dx new workflow myworkflow --brief").strip()
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc['editVersion'], 0)
+        self.assertEqual(desc['title'], "myworkflow")
+
+        # set title, summary description
+        run(u"dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc['editVersion'], 1)
+        self.assertEqual(desc['title'], u"тitle")
+        self.assertEqual(desc['summary'], u"SΨmmary")
+        self.assertEqual(desc['description'], u"DΣsc")
+
+        # unset title
+        run(u"dx update workflow myworkflow --notitle")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc['editVersion'], 2)
+        self.assertEqual(desc['title'], "myworkflow")
+
+        # describe
+        describe_output = run(u"dx describe myworkflow")
+        self.assertNotIn(u"тitle", describe_output)
+        self.assertIn(u"SΨmmary", describe_output)
+        self.assertNotIn("Description", describe_output)
+        self.assertNotIn(u"DΣsc", describe_output)
+        describe_output = run("dx describe myworkflow --verbose")
+        self.assertIn(u"DΣsc", describe_output)
+
+        # no-op
+        run(u"dx update workflow myworkflow")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc['editVersion'], 2)
+        self.assertEqual(desc['title'], "myworkflow")
+
+        with self.assertSubprocessFailure(stderr_regexp="notitle", exit_code=2):
+            run("dx update workflow myworkflow --title foo --notitle")
+
+    def test_dx_update_stage(self):
+        workflow_id = run(u"dx new workflow myworkflow --brief").strip()
+        run("dx describe " + workflow_id)
+        applet_id = dxpy.api.applet_new({"name": "myapplet",
+                                         "project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "inputSpec": [{"name": "number", "class": "int"}],
+                                         "outputSpec": [{"name": "number", "class": "int"}],
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "exit 0"}
+                                         })['id']
+        stage_id = run("dx add stage " + workflow_id + " " + applet_id + " --brief").strip()
+        empty_applet_id = dxpy.api.applet_new({"name": "emptyapplet",
+                                               "project": self.project,
+                                               "dxapi": "1.0.0",
+                                               "inputSpec": [],
+                                               "outputSpec": [],
+                                               "runSpec": {"interpreter": "bash",
+                                                           "code": "exit 0"}
+                                           })['id']
+
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertIsNone(desc["stages"][0]["name"])
+        self.assertEqual(desc["stages"][0]["folder"], "/")
+        self.assertEqual(desc["stages"][0]["input"], {})
+
+        # set the name, folder, and some input
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --folder=/foo")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc["editVersion"], 2)
+        self.assertEqual(desc["stages"][0]["name"], u"тitle")
+        self.assertEqual(desc["stages"][0]["folder"], "/foo")
+        print desc
+        self.assertEqual(desc["stages"][0]["input"]["number"], 32)
+
+        # unset name
+        run("dx update stage myworkflow " + stage_id + " --noname")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc["editVersion"], 3)
+        self.assertIsNone(desc["stages"][0]["name"])
+
+        # some errors
+        with self.assertSubprocessFailure(exit_code=1):
+            run("dx update stage myworkflow 0 -inumber=foo")
+        with self.assertSubprocessFailure(stderr_regexp="noname", exit_code=2):
+            run("dx update stage myworkflow 0 --name foo --noname")
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')

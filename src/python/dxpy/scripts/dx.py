@@ -172,7 +172,10 @@ else:
 # appropriate sub-subcommand.
 class DXCLICompleter():
     subcommands = {'find': ['jobs ', 'data ', 'projects ', 'apps '],
-                   'new': ['record ', 'gtable ', 'project ']}
+                   'new': ['record ', 'gtable ', 'project '],
+                   'add': ['developers ', 'users ', 'stage '],
+                   'remove': ['developers ', 'users ', 'stage '],
+                   'update': ['stage ', 'workflow ']}
 
     def __init__(self):
         global subparsers
@@ -3703,15 +3706,15 @@ parser_list_developers.set_defaults(func=list_developers)
 register_subparser(parser_list_developers, subparsers_action=subparsers_list, categories='exec')
 
 parser_list_stages = subparsers_list.add_parser('stages', help='List the stages in a workflow',
-                                               description='List the stages in a workflow.',
-                                               parents=[env_args],
-                                               prog='dx list stages')
+                                                description='List the stages in a workflow.',
+                                                parents=[env_args],
+                                                prog='dx list stages')
 parser_list_stages.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 parser_list_stages.set_defaults(func=workflow_cli.list_stages)
 register_subparser(parser_list_stages, subparsers_action=subparsers_list, categories='workflow')
 
 parser_remove = subparsers.add_parser('remove', help='Remove one or more items to a list',
-                                      description='Use this command with one of the availabile subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
+                                      description='Use this command with one of the available subcommands to perform various actions such as removing other users from the list of developers or authorized users of an app.',
                                       prog='dx remove')
 subparsers_remove = parser_remove.add_subparsers(parser_class=DXArgumentParser)
 subparsers_remove.metavar = 'list_type'
@@ -3744,6 +3747,49 @@ parser_remove_stage.add_argument('workflow', help='Name or ID of a workflow').co
 parser_remove_stage.add_argument('stage', help='Stage (index or ID) of the workflow to remove')
 parser_remove_stage.set_defaults(func=workflow_cli.remove_stage)
 register_subparser(parser_remove_stage, subparsers_action=subparsers_remove, categories='workflow')
+
+parser_update = subparsers.add_parser('update', help='Update certain types of metadata',
+                                      description='''
+Use this command with one of the available targets listed below to update
+their metadata that are not covered by the other
+subcommands.''',
+                                      prog='dx update')
+subparsers_update = parser_update.add_subparsers(parser_class=DXArgumentParser)
+subparsers_update.metavar = 'target'
+register_subparser(parser_update, categories=())
+
+parser_update_workflow = subparsers_update.add_parser('workflow', help='Update the metadata for a workflow',
+                                                      description='Update the metadata for an existing workflow',
+                                                      parents=[stdout_args, env_args],
+                                                      prog='dx update workflow')
+parser_update_workflow.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
+update_workflow_title_args = parser_update_workflow.add_mutually_exclusive_group()
+update_workflow_title_args.add_argument('--title', help='Workflow title')
+update_workflow_title_args.add_argument('--notitle', help='Unset the workflow title', action='store_true')
+parser_update_workflow.add_argument('--summary', help='Workflow summary')
+parser_update_workflow.add_argument('--description', help='Workflow description')
+parser_update_workflow.set_defaults(func=workflow_cli.update_workflow)
+register_subparser(parser_update_workflow, subparsers_action=subparsers_update, categories='workflow')
+
+parser_update_stage = subparsers_update.add_parser('stage', help='Update the metadata for a stage in a workflow',
+                                                   description='Update the metadata for a stage in a workflow',
+                                                   parents=[exec_input_args, stdout_args, env_args],
+                                                   prog='dx update stage')
+parser_update_stage.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
+parser_update_stage.add_argument('stage', help='Stage (index or ID) of the workflow to update')
+parser_update_stage.add_argument('--executable', help='Name or ID of an executable to replace in the stage').completer = MultiCompleter([DXAppCompleter(),
+                                                                                                                                         DXPathCompleter(classes=['applet'])])
+parser_update_stage.add_argument('--alias', '--version', '--tag', dest='alias',
+                                 help='Tag or version of the app to use if replacing the stage executable with an app (default: \"default\" if an app)')
+parser_update_stage.add_argument('--force',
+                                 help='Whether to replace the executable even if it the new one cannot be verified as compatible with the previous version',
+                                 action='store_true')
+update_stage_name_args = parser_update_stage.add_mutually_exclusive_group()
+update_stage_name_args.add_argument('--name', help='Stage name')
+update_stage_name_args.add_argument('--noname', help='Unset the stage name', action='store_true')
+parser_update_stage.add_argument('--folder', help='Output folder for the stage')
+parser_update_stage.set_defaults(func=workflow_cli.update_stage)
+register_subparser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
 
 parser_install = subparsers.add_parser('install', help='Install an app',
                                        description='Install an app by name.  To see a list of apps you can install, hit <TAB> twice after "dx install" or run "' + BOLD() + 'dx find apps' + ENDC() + '" to see a list of available apps.', prog='dx install',

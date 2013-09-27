@@ -669,7 +669,7 @@ def resolve_app(path):
     else:
         return desc
 
-def get_exec_handler(path, alias):
+def get_exec_handler(path, alias=None):
     handler = None
     def get_handler_from_desc(desc):
         if desc['class'] == 'applet':
