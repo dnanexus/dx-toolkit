@@ -111,7 +111,7 @@ def get_env(suppress_warning=False):
     if sys.stdout.isatty():
         if not suppress_warning and len(env_overrides) > 0:
             sys.stderr.write(textwrap.fill("WARNING: The following environment variables were found to be different than the values last stored by dx: " + ", ".join(env_overrides), width=80) + '\n')
-            sys.stderr.write(textwrap.fill("To use the values stored by dx, unset the environment variables in your shell by running \"source ~/.dnanexus_config/unsetenv\".  To clear the dx-stored values, run \"dx clearenv\".", width=80) + '\n')
+            sys.stderr.write(textwrap.fill('To use the values stored by dx, unset the environment variables in your shell by running "source ~/.dnanexus_config/unsetenv".  To clear the dx-stored values, run "dx clearenv".', width=80) + '\n')
 
     return env_vars
 

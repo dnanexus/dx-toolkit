@@ -1199,6 +1199,7 @@ def main(number):
         # Incompatible executable
         try:
             dxworkflow.update_stage(stage, executable=second_applet)
+            raise Exception("expected an error for updating a stage with an incompatible executable, but it succeeded")
         except DXAPIError as e:
             self.assertIsInstance(e, DXAPIError)
             self.assertEqual(e.name, 'InvalidState')

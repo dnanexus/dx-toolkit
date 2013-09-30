@@ -223,9 +223,9 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         if "init_from" in kwargs:
             if kwargs["init_from"] is not None:
-                if not isinstance(kwargs["init_from"], DXAnalysisWorkflow) and \
-                   not isinstance(kwargs["init_from"], DXAnalysis) and \
-                   (not isinstance(kwargs["init_from"], basestring) or not kwargs["init_from"].startswith('analysis-')):
+                if not (isinstance(kwargs["init_from"], (DXAnalysisWorkflow, DXAnalysis)) or \
+                        (isinstance(kwargs["init_from"], basestring) and \
+                         re.compile('^analysis-[0-9A-Za-z]{24}$').match(kwargs["init_from"]))):
                     raise DXError("Expected init_from to be an instance of DXAnalysisWorkflow or DXAnalysis, or to be a string analysis ID.")
                 if isinstance(kwargs["init_from"], basestring):
                     dx_hash["initializeFrom"] = {"id": kwargs["init_from"]}
@@ -298,8 +298,11 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         Adds the specified executable as a new stage in the workflow.
         '''
-        exec_id = executable if isinstance(executable, basestring) else executable.get_id() if isinstance(executable, DXExecutable) else None
-        if exec_id is None:
+        if isinstance(executable, basestring):
+            exec_id = executable
+        elif isinstance(executable, DXExecutable):
+            exec_id = executable.get_id()
+        else:
             raise DXError("dxpy.DXWorkflow.add_stage: executable must be a string or an instance of DXApplet or DXApp")
         add_stage_input = {"executable": exec_id}
         if name is not None:
@@ -311,8 +314,6 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         self._add_edit_version_to_request(add_stage_input, edit_version)
         try:
             result = dxpy.api.workflow_add_stage(self._dxid, add_stage_input, **kwargs)
-        except:
-            raise
         finally:
             self.describe() # update cached describe
         return result['stage']
@@ -345,8 +346,6 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         self._add_edit_version_to_request(remove_stage_input, edit_version)
         try:
             dxpy.api.workflow_remove_stage(self._dxid, remove_stage_input, **kwargs)
-        except:
-            raise
         finally:
             self.describe() # update cached describe
         return stage_id
@@ -368,8 +367,6 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         self._add_edit_version_to_request(move_stage_input, edit_version)
         try:
             dxpy.api.workflow_move_stage(self._dxid, move_stage_input, **kwargs)
-        except:
-            raise
         finally:
             self.describe() # update cached describe
 
@@ -410,8 +407,6 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             self._add_edit_version_to_request(update_input, edit_version)
             try:
                 dxpy.api.workflow_update(self._dxid, update_input, **kwargs)
-            except:
-                raise
             finally:
                 self.describe() # update cached describe
 
@@ -442,8 +437,11 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             raise DXError('dxpy.DXWorkflow.update_stage: cannot provide both "name" and set "unset_name"')
 
         if executable is not None:
-            exec_id = executable if isinstance(executable, basestring) else executable.get_id() if isinstance(executable, DXExecutable) else None
-            if exec_id is None:
+            if isinstance(executable, basestring):
+                exec_id = executable
+            elif isinstance(executable, DXExecutable):
+                exec_id = executable.get_id()
+            else:
                 raise DXError("dxpy.DXWorkflow.update_stage: executable (if provided) must be a string or an instance of DXApplet or DXApp")
             update_stage_exec_input = {"stage": stage_id,
                                        "executable": exec_id,
@@ -451,8 +449,6 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             self._add_edit_version_to_request(update_stage_exec_input, edit_version)
             try:
                 dxpy.api.workflow_update_stage_executable(self._dxid, update_stage_exec_input, **kwargs)
-            except:
-                raise
             finally:
                 self.describe() # update cached describe
 
@@ -471,8 +467,6 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             self._add_edit_version_to_request(update_input, edit_version)
             try:
                 dxpy.api.workflow_update(self._dxid, update_input, **kwargs)
-            except:
-                raise
             finally:
                 self.describe() # update cached describe
 

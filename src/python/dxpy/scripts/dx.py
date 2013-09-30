@@ -465,14 +465,14 @@ def pick_and_set_project(args):
             except:
                 err_exit('Error while listing available projects')
         if not any_results:
-            parser.exit(0, '\n' + fill('No projects to choose from.  You can create one with the command "dx new project".  To pick from projects for which you only have VIEW permissions, use \"dx select --level VIEW\" or \"dx select --public\".') + '\n')
+            parser.exit(0, '\n' + fill('No projects to choose from.  You can create one with the command "dx new project".  To pick from projects for which you only have VIEW permissions, use "dx select --level VIEW" or "dx select --public".') + '\n')
         elif len(results) == 0:
             parser.exit(1, 'No projects left to choose from.\n')
 
         if first_pass:
             if not args.public and args.level == "CONTRIBUTE":
                 print ''
-                print fill("Note: Use \"dx select --level VIEW\" or \"dx select --public\" to select from projects for which you only have VIEW permissions.")
+                print fill('Note: Use "dx select --level VIEW" or "dx select --public" to select from projects for which you only have VIEW permissions.')
             first_pass = False
 
         project_ids = [result['id'] for result in results]
@@ -575,7 +575,7 @@ def env(args):
         print "API server port\t\t" + dxpy.APISERVER_PORT
         print "Current workspace\t" + str(dxpy.WORKSPACE_ID)
         if "DX_PROJECT_CONTEXT_NAME" in os.environ:
-            print "Current workspace name\t\"{n}\"".format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME"))
+            print 'Current workspace name\t"{n}"'.format(n=os.environ.get("DX_PROJECT_CONTEXT_NAME"))
         print "Current folder\t\t" + str(os.environ.get("DX_CLI_WD"))
         print "Current user\t\t" + str(os.environ.get("DX_USERNAME"))
 
@@ -766,11 +766,11 @@ def mkdir(args):
         try:
             project, folderpath, none = resolve_path(path, expected='folder')
         except ResolutionError as details:
-            print fill('Could not resolve \"' + path + '\": ' + unicode(details))
+            print fill('Could not resolve "' + path + '": ' + unicode(details))
             had_error = True
             continue
         if project is None:
-            print fill('Could not resolve the project of \"' + path + '\"')
+            print fill('Could not resolve the project of "' + path + '"')
         try:
             dxpy.DXHTTPRequest('/' + project + '/newFolder', {"folder": folderpath, "parents": args.parents})
         except BaseException as details:
@@ -786,11 +786,11 @@ def rmdir(args):
         try:
             project, folderpath, none = resolve_path(path, expected='folder')
         except ResolutionError as details:
-            print fill('Could not resolve \"' + path + '\": ' + unicode(details))
+            print fill('Could not resolve "' + path + '": ' + unicode(details))
             had_error = True
             continue
         if project is None:
-            print fill('Could not resolve the project of \"' + path + '\"')
+            print fill('Could not resolve the project of "' + path + '"')
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeFolder', {"folder": folderpath})
         except BaseException as details:
@@ -808,25 +808,25 @@ def rm(args):
         try:
             project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
         except BaseException as details:
-            print fill('Could not resolve \"' + path + '\": ' + unicode(details))
+            print fill('Could not resolve "' + path + '": ' + unicode(details))
             had_error = True
             continue
         if project is None:
             had_error = True
-            print fill('Could not resolve \"' + path + '\" to a project')
+            print fill('Could not resolve "' + path + '" to a project')
             continue
         if project not in projects:
             projects[project] = {"folders": [], "objects": []}
         if entity_results is None:
             if folderpath is not None:
                 if not args.recursive:
-                    print fill(u'Did not find \"' + path + '\" as a data object; if it is a folder, cannot remove it without setting the \"-r\" flag')
+                    print fill(u'Did not find "' + path + '" as a data object; if it is a folder, cannot remove it without setting the "-r" flag')
                     had_error = True
                     continue
                 else:
                     projects[project]['folders'].append(folderpath)
             else:
-                print fill('Path ' + path + ' resolved to a project; cannot remove a project using \"rm\"')
+                print fill('Path ' + path + ' resolved to a project; cannot remove a project using "rm"')
                 had_error = True
                 continue
         else:
@@ -859,26 +859,26 @@ def rmproject(args):
         # Be forgiving if they offer an extraneous colon
         substrings = split_unescaped(':', project)
         if len(substrings) > 1 or (len(substrings) == 1 and project[0] == ':'):
-            print fill('Unable to remove \"' + project + '\": a nonempty string was found to the right of an unescaped colon')
+            print fill('Unable to remove "' + project + '": a nonempty string was found to the right of an unescaped colon')
             had_error = True
             continue
         if len(substrings) == 0:
             if project[0] == ':':
-                print fill('Unable to remove \":\": to remove the current project, use its name or ID')
+                print fill('Unable to remove ":": to remove the current project, use its name or ID')
                 had_error = True
                 continue
         proj_id = try_call(resolve_container_id_or_name, substrings[0])
         if proj_id is None:
-            print fill('Unable to remove \"' + project + '\": could not resolve to a project ID')
+            print fill('Unable to remove "' + project + '": could not resolve to a project ID')
             had_error = True
             continue
         try:
             proj_desc = dxpy.DXHTTPRequest('/' + proj_id + '/describe', {})
             if args.confirm:
-                value = raw_input(fill('About to delete project \"' + proj_desc['name'] + '\" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
+                value = raw_input(fill('About to delete project "' + proj_desc['name'] + '" (' + proj_id + ')') + '\nPlease confirm [y/n]: ')
                 if len(value) == 0 or value.lower()[0] != 'y':
                     had_error = True
-                    print fill('Aborting deletion of project \"' + proj_desc['name'] + '\"')
+                    print fill('Aborting deletion of project "' + proj_desc['name'] + '"')
                     continue
             try:
                 dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": not args.confirm})
@@ -887,13 +887,13 @@ def rmproject(args):
                     value = raw_input(fill('WARNING: there are still unfinished jobs in the project.') + '\nTerminate all jobs and delete the project? [y/n]: ')
                     if len(value) == 0 or value.lower()[0] != 'y':
                         had_error = True
-                        print fill('Aborting deletion of project \"' + proj_desc['name'] + '\"')
+                        print fill('Aborting deletion of project "' + proj_desc['name'] + '"')
                         continue
                     dxpy.DXHTTPRequest('/' + proj_id + '/destroy', {"terminateJobs": True})
                 else:
                     raise apierror
             if not args.quiet:
-                print fill('Successfully deleted project \"' + proj_desc['name'] + '\"')
+                print fill('Successfully deleted project "' + proj_desc['name'] + '"')
         except EOFError:
             print ''
             parser.exit(1)
@@ -939,7 +939,7 @@ def mv(args):
                                                    allow_mult=True, all_mult=args.all)
 
         if src_proj != dest_proj:
-            parser.exit(1, fill('Error: Using \"mv\" for moving something from one project to another is unsupported.') + '\n')
+            parser.exit(1, fill('Error: Using "mv" for moving something from one project to another is unsupported.') + '\n')
 
         if src_results is None:
             if src_path == '/':
@@ -976,7 +976,7 @@ def mv(args):
                                                          source,
                                                          allow_mult=True, all_mult=args.all)
         if src_proj != dest_proj:
-            parser.exit(1, fill('Using \"mv\" for moving something from one project to another is unsupported.  Please use \"cp\" and \"rm\" instead.') + '\n')
+            parser.exit(1, fill('Using "mv" for moving something from one project to another is unsupported.  Please use "cp" and "rm" instead.') + '\n')
 
         if src_results is None:
             src_folders.append(src_folderpath)
@@ -1347,7 +1347,7 @@ def new_project(args):
         if args.brief:
             print resp['id']
         else:
-            print fill('Created new project called \"' + args.name + '\" (' + resp['id'] + ')')
+            print fill('Created new project called "' + args.name + '" (' + resp['id'] + ')')
         if args.select:
             set_project(resp['id'], write=True, name=args.name)
             set_wd('/', write=True)
@@ -1439,7 +1439,7 @@ def set_visibility(args):
                                                    allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
+        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
 
     for result in entity_results:
         try:
@@ -1461,7 +1461,7 @@ def get_details(args):
                                                   args.path, expected='entity')
 
     if entity_result is None:
-        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
+        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
 
     try:
         print json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4)
@@ -1476,7 +1476,7 @@ def set_details(args):
                                                    allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
+        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
 
     try:
         args.details = json.loads(args.details)
@@ -1505,7 +1505,7 @@ def add_types(args):
                                                    allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
+        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
 
     for result in entity_results:
         try:
@@ -1529,7 +1529,7 @@ def remove_types(args):
                                                    allow_mult=True, all_mult=args.all)
 
     if entity_results is None:
-        parser.exit(1, fill('Could not resolve \"' + args.path + '\" to a name or ID') + '\n')
+        parser.exit(1, fill('Could not resolve "' + args.path + '" to a name or ID') + '\n')
 
     for result in entity_results:
         try:
@@ -1878,7 +1878,7 @@ def get(args):
                 elif entity_result['describe']['runSpec']['interpreter'] == 'bash':
                     filename += '.sh'
             if not args.overwrite and os.path.exists(filename):
-                parser.exit(1, fill('Error: path \"' + filename + '\" already exists but -f/--overwrite was not set') + '\n')
+                parser.exit(1, fill('Error: path "' + filename + '" already exists but -f/--overwrite was not set') + '\n')
             try:
                 fd = open(filename, 'w')
             except:
@@ -2071,7 +2071,7 @@ importers = {
 
 def dximport(args):
     if args.format.lower() not in importers:
-        parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help import"') + '\n')
+        parser.exit(1, fill('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help import"') + '\n')
     importers[args.format.lower()](args)
 
 def export_fastq(args):
@@ -2109,7 +2109,7 @@ exporters = {
 
 def export(args):
     if args.format.lower() not in exporters:
-        parser.exit(1, fill('Unsupported format: \"' + args.format + '\".  For a list of supported formats, run "dx help export"') + '\n')
+        parser.exit(1, fill('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help export"') + '\n')
     exporters[args.format.lower()](args)
 
 def find_jobs(args):
@@ -2454,7 +2454,7 @@ def close(args):
             project, folderpath, entity_results = None, None, None
 
         if entity_results is None:
-            print fill('Could not resolve \"' + path + '\" to a name or ID')
+            print fill('Could not resolve "' + path + '" to a name or ID')
             had_error = True
         else:
             for result in entity_results:
@@ -3289,7 +3289,7 @@ def register_subparser(subparser, subparsers_action=None, categories=('other', )
         parser_categories[category]['cmds'].append((name, _help))
 
 
-parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run \"dx help\".'),
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client %s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://wiki.dnanexus.com/Command-Line-Client/Quickstart\n\n' + fill('For a breakdown of dx commands by category, run "dx help".'),
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')
@@ -3450,7 +3450,7 @@ parser_cd = subparsers.add_parser('cd', help='Change the current working directo
                                   description='Change the current working directory', prog='dx cd',
                                   parents=[env_args])
 cd_path_action = parser_cd.add_argument('path', nargs='?', default='/',
-                                        help='Folder (possibly in another project) to which to change the current working directory, default is \"/\" in the current project')
+                                        help='Folder (possibly in another project) to which to change the current working directory, default is "/" in the current project')
 cd_path_action.completer = DXPathCompleter(expected='folder')
 parser_cd.set_defaults(func=cd)
 register_subparser(parser_cd, categories='fs')
@@ -3678,7 +3678,7 @@ parser_add_stage.add_argument('workflow', help='Name or ID of a workflow').compl
 parser_add_stage.add_argument('executable', help='Name or ID of an executable to add as a stage in the workflow').completer = MultiCompleter([DXAppCompleter(),
                                                                                                                                               DXPathCompleter(classes=['applet'])])
 parser_add_stage.add_argument('--alias', '--version', '--tag', dest='alias',
-                        help='Tag or version of the app to add if the executable is an app (default: \"default\" if an app)')
+                        help='Tag or version of the app to add if the executable is an app (default: "default" if an app)')
 parser_add_stage.add_argument('--name', help='Stage name')
 parser_add_stage.add_argument('--folder', help='Output folder for the stage')
 parser_add_stage.set_defaults(func=workflow_cli.add_stage)
@@ -3765,7 +3765,7 @@ parser_update_workflow = subparsers_update.add_parser('workflow', help='Update t
 parser_update_workflow.add_argument('workflow', help='Name or ID of a workflow').completer = DXPathCompleter(classes=['workflow'])
 update_workflow_title_args = parser_update_workflow.add_mutually_exclusive_group()
 update_workflow_title_args.add_argument('--title', help='Workflow title')
-update_workflow_title_args.add_argument('--notitle', help='Unset the workflow title', action='store_true')
+update_workflow_title_args.add_argument('--no-title', help='Unset the workflow title', action='store_true')
 parser_update_workflow.add_argument('--summary', help='Workflow summary')
 parser_update_workflow.add_argument('--description', help='Workflow description')
 parser_update_workflow.set_defaults(func=workflow_cli.update_workflow)
@@ -3780,13 +3780,13 @@ parser_update_stage.add_argument('stage', help='Stage (index or ID) of the workf
 parser_update_stage.add_argument('--executable', help='Name or ID of an executable to replace in the stage').completer = MultiCompleter([DXAppCompleter(),
                                                                                                                                          DXPathCompleter(classes=['applet'])])
 parser_update_stage.add_argument('--alias', '--version', '--tag', dest='alias',
-                                 help='Tag or version of the app to use if replacing the stage executable with an app (default: \"default\" if an app)')
+                                 help='Tag or version of the app to use if replacing the stage executable with an app (default: "default" if an app)')
 parser_update_stage.add_argument('--force',
                                  help='Whether to replace the executable even if it the new one cannot be verified as compatible with the previous version',
                                  action='store_true')
 update_stage_name_args = parser_update_stage.add_mutually_exclusive_group()
 update_stage_name_args.add_argument('--name', help='Stage name')
-update_stage_name_args.add_argument('--noname', help='Unset the stage name', action='store_true')
+update_stage_name_args.add_argument('--no-name', help='Unset the stage name', action='store_true')
 parser_update_stage.add_argument('--folder', help='Output folder for the stage')
 parser_update_stage.set_defaults(func=workflow_cli.update_stage)
 register_subparser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
@@ -3821,7 +3821,7 @@ run_executable_action.completer = MultiCompleter([DXAppCompleter(),
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
-                        help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
+                        help=fill('Tag or version of the app to run (default: "default" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--project', metavar='PROJECT', help=fill('Project name or ID in which to run the executable. This can also be specified together with the output folder in --destination.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
@@ -4111,7 +4111,7 @@ parser_find_jobs.add_argument('--user', help=fill('Username who launched the job
 parser_find_jobs.add_argument('--project', help=fill('Project context (output project), default is current project if set', width_adjustment=-24))
 parser_find_jobs.add_argument('--all-projects', '--allprojects', help=fill('Extend search to all projects', width_adjustment=-24), action='store_true')
 parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help=fill('Applet or App ID that job is running', width_adjustment=-24))
-parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
+parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. "done", "failed"', width_adjustment=-24))
 parser_find_jobs.add_argument('--origin', help=fill('Job ID of the top-level (user-initiated) job', width_adjustment=-24)) # Redundant but might as well
 parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
 parser_find_jobs.add_argument('--created-after', help=fill('Date (e.g. 2012-01-01) or integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
@@ -4178,9 +4178,9 @@ EXAMPLE
 ''',
                                    prog='dx api',
                                    parents=[env_args])
-parser_api.add_argument('resource', help=fill('One of \"system\", a class name (e.g. \"record\"), or an entity ID such as \"record-xxxx\".  Use "app-name/1.0.0" to refer to version "1.0.0" of the app named "name".', width_adjustment=-17))
+parser_api.add_argument('resource', help=fill('One of "system", a class name (e.g. "record"), or an entity ID such as "record-xxxx".  Use "app-name/1.0.0" to refer to version "1.0.0" of the app named "name".', width_adjustment=-17))
 parser_api.add_argument('method', help=fill('Method name for the resource as documented by the API specification', width_adjustment=-17))
-parser_api.add_argument('input_json', nargs='?', default="{}", help='JSON input for the method (if not given, \"{}\" is used)')
+parser_api.add_argument('input_json', nargs='?', default="{}", help='JSON input for the method (if not given, "{}" is used)')
 parser_api.add_argument('--input', help=fill('Load JSON input from FILENAME ("-" to use stdin)', width_adjustment=-17))
 parser_api.set_defaults(func=api)
 # parser_api.completer = TODO

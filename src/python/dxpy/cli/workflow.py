@@ -19,14 +19,14 @@ This submodule contains workflow-based commands for the dx
 command-line client.
 '''
 
-import os
+import os, sys
 
 import dxpy
 import dxpy.utils.printing as printing
 from .parsers import (process_dataobject_args, process_single_dataobject_output_args)
 from ..utils.describe import io_val_to_str
 from ..utils.resolver import (resolve_existing_path, resolve_path)
-from ..exceptions import (err_exit, DXError)
+from ..exceptions import (err_exit, DXCLIError)
 from . import try_call
 
 def new_workflow(args):
@@ -74,8 +74,11 @@ def get_workflow_id_and_project(path):
     available; otherwise, exits with an appropriate error message.
     '''
     project, folderpath, entity_result = try_call(resolve_existing_path, path, expected='entity')
-    if entity_result is None or not entity_result['id'].startswith('workflow-'):
-        err_exit(DXError('Could not resolve \"' + path + '\" to a workflow object'))
+    try:
+        if entity_result is None or not entity_result['id'].startswith('workflow-'):
+            raise DXCLIError('Could not resolve "' + path + '" to a workflow object')
+    except:
+        err_exit()
     return entity_result['id'], project
 
 def add_stage(args):
@@ -146,10 +149,15 @@ def remove_stage(args):
 def update_workflow(args):
     # get workflow
     workflow_id, project = get_workflow_id_and_project(args.workflow)
+
+    if not any([args.title, args.no_title, args.summary, args.description]):
+        print 'No updates requested; none made'
+        return
+
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     try_call(dxworkflow.update,
              title=args.title,
-             unset_title=args.notitle,
+             unset_title=args.no_title,
              summary=args.summary,
              description=args.description)
 
@@ -164,6 +172,11 @@ def update_stage(args):
         args.stage = int(args.stage)
     except:
         pass
+
+    if not any([args.executable, args.name, args.no_name, args.folder,
+                args.input, args.input_json, args.filename]):
+        print 'No updates requested; none made'
+        return
 
     new_exec_handler = None
     if args.executable is not None:
@@ -191,7 +204,7 @@ def update_stage(args):
              executable=new_exec_handler,
              force=args.force,
              name=args.name,
-             unset_name=args.noname,
+             unset_name=args.no_name,
              folder=folderpath,
              stage_input=stage_input,
              edit_version=initial_edit_version)

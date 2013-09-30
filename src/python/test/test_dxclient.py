@@ -702,6 +702,15 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["description"], u"DΣsc")
         self.assertEqual(desc["project"], self.project)
 
+    def test_dx_workflow_resolution(self):
+        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            run("dx update workflow foo")
+
+        record_id = run("dx new record --type pipeline --brief").strip()
+        run("dx describe " + record_id)
+        with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
+            run("dx update workflow " + record_id)
+
     def test_dx_add_remove_list_stages(self):
         workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
@@ -764,6 +773,14 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="out of range", exit_code=3):
             run("dx remove stage /myworkflow 5")
 
+        # remove some bad stage ID
+        with self.assertSubprocessFailure(stderr_regexp="did not resolve to a properly formed stage ID", exit_code=3):
+            run("dx remove stage /myworkflow badstageID")
+
+        # remove nonexistent stage
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx remove stage /myworkflow stage-123456789012345678901234")
+
     def test_dx_update_workflow(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
@@ -779,7 +796,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc['description'], u"DΣsc")
 
         # unset title
-        run(u"dx update workflow myworkflow --notitle")
+        run(u"dx update workflow myworkflow --no-title")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 2)
         self.assertEqual(desc['title'], "myworkflow")
@@ -794,13 +811,14 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn(u"DΣsc", describe_output)
 
         # no-op
-        run(u"dx update workflow myworkflow")
+        output = run(u"dx update workflow myworkflow")
+        self.assertIn("No updates requested", output)
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 2)
         self.assertEqual(desc['title'], "myworkflow")
 
-        with self.assertSubprocessFailure(stderr_regexp="notitle", exit_code=2):
-            run("dx update workflow myworkflow --title foo --notitle")
+        with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
+            run("dx update workflow myworkflow --title foo --no-title")
 
     def test_dx_update_stage(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
@@ -838,7 +856,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["stages"][0]["input"]["number"], 32)
 
         # unset name
-        run("dx update stage myworkflow " + stage_id + " --noname")
+        run("dx update stage myworkflow " + stage_id + " --no-name")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 3)
         self.assertIsNone(desc["stages"][0]["name"])
@@ -846,8 +864,24 @@ class TestDXClientWorkflow(DXTestCase):
         # some errors
         with self.assertSubprocessFailure(exit_code=1):
             run("dx update stage myworkflow 0 -inumber=foo")
-        with self.assertSubprocessFailure(stderr_regexp="noname", exit_code=2):
-            run("dx update stage myworkflow 0 --name foo --noname")
+        with self.assertSubprocessFailure(stderr_regexp="no-name", exit_code=2):
+            run("dx update stage myworkflow 0 --name foo --no-name")
+
+        # no-op
+        output = run(u"dx update stage myworkflow 0 --alias default --force")
+        self.assertIn("No updates requested", output)
+
+        # update something out of range
+        with self.assertSubprocessFailure(stderr_regexp="out of range", exit_code=3):
+            run("dx update stage /myworkflow 5 --name foo")
+
+        # remove some bad stage ID
+        with self.assertSubprocessFailure(stderr_regexp="did not resolve to a properly formed stage ID", exit_code=3):
+            run("dx update stage /myworkflow badstageID --name foo")
+
+        # remove nonexistent stage
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx update stage /myworkflow stage-123456789012345678901234 --name foo")
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')
