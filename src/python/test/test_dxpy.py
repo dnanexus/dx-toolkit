@@ -1117,7 +1117,7 @@ class TestDXSearch(unittest.TestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
-    def test_find_jobs(self):
+    def test_find_executions(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      dxapi="1.0.0",
@@ -1132,25 +1132,66 @@ class TestDXSearch(unittest.TestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
+        dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
+        stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200})
+        dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input)
-        me = dxpy.user_info()['userId']
-        results = list(dxpy.find_jobs(launched_by=me,
-                                      executable=dxapplet,
-                                      project=dxapplet.get_proj_id(),
-                                      origin_job=dxjob.get_id(),
-                                      parent_job='none',
-                                      created_after='-15s',
-                                      describe=True))
-        self.assertEqual(len(results), 1)
-        result = results[0]
-        self.assertEqual(result["id"], dxjob.get_id())
-        self.assertTrue("describe" in result)
-        self.assertEqual(result["describe"]["id"], dxjob.get_id())
-        self.assertEqual(result["describe"]["class"], "job")
-        self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
-        self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
-        self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
-        self.assertEqual(result["describe"]["parentJob"], None)
+
+        # Wait for job to be created
+        executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
+        t = 0
+        while len(executions) > 0:
+            try:
+                dxpy.api.job_describe(executions[len(executions) - 1], {})
+                executions.pop()
+            except DXAPIError:
+                t += 1
+                if t > 20:
+                    raise Exception("Timeout while waiting for job to be created for an analysis stage")
+                time.sleep(1)
+
+        me = None
+        common_conditions = {'executable': dxapplet,
+                             'project': dxapplet.get_proj_id(),
+                             'created_after': '-150s',
+                             'describe': True,
+                             'first_page_size': 1}
+        methods = (dxpy.find_executions, dxpy.find_analyses, dxpy.find_jobs)
+        queries = ({'conditions': {'include_subjobs': False}, 'n_results': [4, 1, 3]},
+                   {'conditions': {'origin_job': dxjob.get_id(), 'parent_job': 'none'}, 'n_results': [1, 0, 1]},
+                   {'conditions': {'root_execution': dxjob.get_id()}, 'n_results': [1, 0, 1]},
+                   {'conditions': {'name': 'test_applet'}, 'n_results': [3, 0, 3]},
+                   {'conditions': {'executable': dxworkflow}, 'n_results': [1, 1, 0]},
+                   {'conditions': {'name': 'find_executions test workflow'}, 'n_results': [1, 1, 0]},
+                   {'conditions': {'name': '?est_apple*', 'name_mode': 'glob'}, 'n_results': [3, 0, 3]},
+                   {'conditions': {'name': 'test_apples*', 'name_mode': 'glob'}, 'n_results': [0, 0, 0]},
+                   {'conditions': {'name': '[t]+est_apple.+', 'name_mode': 'regexp'}, 'n_results': [3, 0, 3]},
+                   {'conditions': {'name': 'test_apples.+', 'name_mode': 'regexp'}, 'n_results': [0, 0, 0]})
+
+        for query in queries:
+            for i in range(len(methods)):
+                conditions = dict(common_conditions, **query['conditions'])
+                conditions['launched_by'] = me
+                results = list(methods[i](**conditions))
+                self.assertEqual(len(results), query['n_results'][i])
+                if len(results) > 0:
+                    result = results[0]
+                    self.assertTrue("describe" in result)
+                    if result['describe']['id'].startswith('analysis'):
+                        self.assertEqual(result["id"], dxanalysis.get_id())
+                    else:
+                        self.assertEqual(result["id"], dxjob.get_id())
+                        self.assertEqual(result["describe"]["id"], dxjob.get_id())
+                        self.assertEqual(result["describe"]["class"], "job")
+                        self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
+                        self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
+                        self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
+                        self.assertEqual(result["describe"]["parentJob"], None)
+                        self.assertEqual(result["describe"]["name"], 'test_applet')
+
+                    me = result["describe"]["launchedBy"]
+
 
 class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):

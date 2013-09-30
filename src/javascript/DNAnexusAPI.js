@@ -637,6 +637,16 @@ exports.systemFindDataObjects = function(input_params) {
 };
 
 
+exports.systemFindExecutions = function(input_params) {
+  return dx.DXHTTPRequest('/system/findExecutions', input_params);
+};
+
+
+exports.systemFindAnalyses = function(input_params) {
+  return dx.DXHTTPRequest('/system/findAnalyses', input_params);
+};
+
+
 exports.systemFindJobs = function(input_params) {
   return dx.DXHTTPRequest('/system/findJobs', input_params);
 };

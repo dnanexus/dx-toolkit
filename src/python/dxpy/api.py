@@ -2016,6 +2016,42 @@ def system_find_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/findDataObjects', input_params, always_retry=always_retry, **kwargs)
 
+def systemFindExecutions(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`system_find_executions()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.systemFindExecutions is deprecated; please use system_find_executions instead."
+    return system_find_executions(*args, **kwargs)
+
+def system_find_executions(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/findExecutions API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions
+    """
+    return DXHTTPRequest('/system/findExecutions', input_params, always_retry=always_retry, **kwargs)
+
+def systemFindAnalyses(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`system_find_analyses()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.systemFindAnalyses is deprecated; please use system_find_analyses instead."
+    return system_find_analyses(*args, **kwargs)
+
+def system_find_analyses(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/findAnalyses API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses
+    """
+    return DXHTTPRequest('/system/findAnalyses', input_params, always_retry=always_retry, **kwargs)
+
 def systemFindJobs(*args, **kwargs):
     """
 
