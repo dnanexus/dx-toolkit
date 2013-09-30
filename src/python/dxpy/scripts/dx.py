@@ -2201,7 +2201,11 @@ def find_executions(args):
             if args.json:
                 json_output.append(job_result['describe'])
             elif args.trees:
-                roots[root] = 1
+                roots[root] = root
+                if args.classname == 'analysis' and root.startswith('job-'):
+                    # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
+                    # and only the last analysis found is displayed.
+                    roots[root] = job_result['describe']['id']
             elif args.brief:
                 print args.id
             elif not args.trees:
@@ -2228,7 +2232,7 @@ def find_executions(args):
                 process_job_result(job_result)
 
             for root in roots:
-                process_tree(descriptions[root], jobs_by_parent, descriptions)
+                process_tree(descriptions[roots[root]], jobs_by_parent, descriptions)
         if args.json:
             print json.dumps(json_output, indent=4)
 
