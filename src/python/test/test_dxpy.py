@@ -1113,6 +1113,16 @@ class TestDXSearch(unittest.TestCase):
                 found_proj = True
                 self.assertTrue('describe' in result)
                 self.assertEqual(result['describe']['name'], 'test project 2')
+                break
+        self.assertTrue(found_proj)
+
+        billed_to = dxproject.billTo
+        results = list(dxpy.find_projects(billed_to=billed_to))
+        found_proj = False
+        for result in results:
+            if result["id"] == dxproject.id:
+                found_proj = True
+                break
         self.assertTrue(found_proj)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,

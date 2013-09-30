@@ -287,7 +287,7 @@ def find_jobs(launched_by=None, executable=None, project=None,
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=None, explicit_perms=None,
-                  public=None, limit=None, return_handler=False, **kwargs):
+                  public=None, billed_to=None, limit=None, return_handler=False, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -305,6 +305,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type explicit_perms: boolean
     :param public: If True, includes public projects in the results (default is False)
     :type public: boolean
+    :param billed_to: Entity ID (user or organization) that pays for the project's storage costs
+    :type billed_to: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
@@ -342,6 +344,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query['explicitPermission'] = explicit_perms
     if public is not None:
         query['public'] = public
+    if billed_to is not None:
+        query['billTo'] = billed_to
     if limit is not None:
         query["limit"] = limit
 
