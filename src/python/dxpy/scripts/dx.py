@@ -2658,6 +2658,10 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
 
     exec_inputs.update(args.input_from_clone, strip_prefix=False)
 
+    if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
+        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.iteritems()},
+                                  **(args.instance_type or {}))
+
     if preset_inputs is not None:
         exec_inputs.update(preset_inputs, strip_prefix=False)
 
@@ -2960,7 +2964,7 @@ def run(args):
         parser_map['run'].print_help()
         parser.exit(2, fill("Error: Either the executable must be specified, or --clone must be used to indicate a job to clone") + "\n")
 
-    args.input_from_clone = {}
+    args.input_from_clone, args.sys_reqs_from_clone = {}, {}
 
     clone_desc = None
     if args.clone is not None:
@@ -3019,6 +3023,7 @@ def run(args):
             else:
                 args.name = clone_desc["name"]
         args.input_from_clone = clone_desc["runInput"]
+        args.sys_reqs_from_clone = clone_desc["systemRequirements"]
         args.details = {"clonedFrom": {"id": clone_desc["id"],
                                        "executable": clone_desc.get("applet", clone_desc.get("app", "")),
                                        "project": clone_desc["project"],
