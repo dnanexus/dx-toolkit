@@ -278,6 +278,7 @@ def login(args):
         args.save = True
 
     default_authserver = 'https://auth.dnanexus.com'
+    using_default = False
 
     # API server should have already been set up if --host or one of
     # the --special-host flags has been set.
@@ -290,6 +291,8 @@ def login(args):
             authserver += ':' + str(args.port)
         else:
             authserver = default_authserver
+
+        using_default = authserver == default_authserver
 
         print 'Acquiring credentials from ' + authserver
 
@@ -322,13 +325,14 @@ def login(args):
 
         sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
 
-        if authserver == default_authserver:
+        if using_default:
             set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
     else:
         sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
         # Ensure correct API server
         if args.host is None:
             set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
+            using_default = True
 
     os.environ['DX_SECURITY_CONTEXT'] = sec_context
     dxpy.set_security_context(json.loads(sec_context))
@@ -347,24 +351,25 @@ def login(args):
             print >> sys.stderr, "Could not obtain username from auth server. Consider setting both --host and --port."
             print >> sys.stderr, fill(unicode(details))
 
-    greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
-    if greeting.get('messages'):
-        print BOLD("New messages from ") + DNANEXUS_LOGO()
-        for message in greeting['messages']:
-            print BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime()
-            print BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9)
-            body = message['body'].splitlines()
-            if len(body) > 0:
-                print BOLD("Message: ") + body[0]
-                for line in body[1:]:
-                    print ' '*9 + line
+    if using_default or args.staging:
+        greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': dxpy.TOOLKIT_VERSION})
+        if greeting.get('messages'):
+            print BOLD("New messages from ") + DNANEXUS_LOGO()
+            for message in greeting['messages']:
+                print BOLD("Date:    ") + datetime.datetime.fromtimestamp(message['date']/1000).ctime()
+                print BOLD("Subject: ") + fill(message['title'], subsequent_indent=' '*9)
+                body = message['body'].splitlines()
+                if len(body) > 0:
+                    print BOLD("Message: ") + body[0]
+                    for line in body[1:]:
+                        print ' '*9 + line
 
     args.current = False
     args.name = None
     args.level = 'CONTRIBUTE'
     args.public = False
 
-    if args.host is not None and not args.staging and not args.prod:
+    if args.host is not None and not args.staging and not using_default:
         setenv(args)
     elif args.projects:
         pick_and_set_project(args)
@@ -3373,7 +3378,7 @@ parser_login.add_argument('--save', help='Save token and other environment varia
                           action='store_true')
 parser_login.add_argument('--timeout', help='Timeout for this login token', default='30d')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
-parser_login.set_defaults(staging=False, prod=False, func=login)
+parser_login.set_defaults(staging=False, func=login)
 register_subparser(parser_login, categories='session')
 
 parser_logout = subparsers.add_parser('logout',
