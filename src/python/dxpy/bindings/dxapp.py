@@ -178,8 +178,10 @@ class DXApp(DXObject, DXExecutable):
         resp = dxpy.api.app_new(dx_hash, **kwargs)
         self.set_id(dxid=resp["id"])
 
-    def describe(self, **kwargs):
+    def describe(self, fields=None, **kwargs):
         '''
+        :param fields: Hash where the keys are field names that should be returned, and values should be set to True (default is that all fields are returned)
+        :type fields: dict
         :returns: Description of the remote app object
         :rtype: dict
 
@@ -190,10 +192,14 @@ class DXApp(DXObject, DXExecutable):
         method.
 
         '''
+        describe_input = {}
+        if fields:
+            describe_input['fields'] = fields
         if self._dxid is not None:
-            self._desc = dxpy.api.app_describe(self._dxid, **kwargs)
+            self._desc = dxpy.api.app_describe(self._dxid, input_params=describe_input, **kwargs)
         else:
-            self._desc = dxpy.api.app_describe('app-' + self._name, alias=self._alias, **kwargs)
+            self._desc = dxpy.api.app_describe('app-' + self._name, alias=self._alias,
+                                               input_params=describe_input, **kwargs)
 
         return self._desc
 

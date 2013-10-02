@@ -975,6 +975,19 @@ def main():
         self.assertTrue("output" in jobdesc)
         self.assertTrue("$dnanexus_link" in jobdesc["details"])
         self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
+
+        # Test with fields parameter
+        smaller_jobdesc = dxjob.describe(fields={"id": True, "state": True, "parentJob": True})
+        self.assertEqual(len(smaller_jobdesc), 3)
+        self.assertEqual(smaller_jobdesc['id'], dxjob.get_id())
+        self.assertIsInstance(smaller_jobdesc['state'], basestring)
+        self.assertIsNone(smaller_jobdesc['parentJob'])
+
+        with self.assertRaises(DXError):
+            dxjob.describe(fields={"id": True}, io=False)
+        with self.assertRaises(DXError):
+            dxjob.describe(fields={"id": True}, io=True)
+
         dxjob.terminate()
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
@@ -1044,6 +1057,24 @@ class TestDXApp(unittest.TestCase):
         dxanothersameapp = dxpy.DXApp(name="app_name", alias="0.0.1")
         anothersameappdesc = dxanothersameapp.describe()
         self.assertEqual(appdesc, anothersameappdesc)
+
+        # test fields parameter for describe (different cases for when
+        # the handler was created different ways and therefore
+        # sometimes doesn't have the _dxid field)
+        smaller_desc = dxapp.describe(fields={"name": True, "version": True})
+        self.assertEqual(len(smaller_desc), 2)
+        self.assertEqual(smaller_desc['name'], 'app_name')
+        self.assertEqual(smaller_desc['version'], '0.0.1')
+
+        smaller_desc = dxsameapp.describe(fields={"name": True, "version": True})
+        self.assertEqual(len(smaller_desc), 2)
+        self.assertEqual(smaller_desc['name'], 'app_name')
+        self.assertEqual(smaller_desc['version'], '0.0.1')
+
+        smaller_desc = dxanothersameapp.describe(fields={"name": True, "version": True})
+        self.assertEqual(len(smaller_desc), 2)
+        self.assertEqual(smaller_desc['name'], 'app_name')
+        self.assertEqual(smaller_desc['version'], '0.0.1')
 
 class TestDXSearch(unittest.TestCase):
     def setUp(self):

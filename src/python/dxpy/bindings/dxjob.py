@@ -175,9 +175,11 @@ class DXJob(DXObject):
 
         return self._dxid
 
-    def describe(self, io=True, **kwargs):
+    def describe(self, fields=None, io=None, **kwargs):
         """
-        :param io: Include input and output fields in description
+        :param fields: Hash where the keys are field names that should be returned, and values should be set to True (default is that all fields are returned)
+        :type fields: dict
+        :param io: Include input and output fields in description; cannot be provided with *fields*; default is True if *fields* is not provided (deprecated)
         :type io: bool
         :returns: Description of the job
         :rtype: dict
@@ -190,7 +192,14 @@ class DXJob(DXObject):
         method.
 
         """
-        self._desc = dxpy.api.job_describe(self._dxid, {"io": io}, **kwargs)
+        if fields is not None and io is not None:
+            raise DXError('DXJob.describe: cannot provide non-None values for both fields and io')
+        describe_input = {}
+        if fields is not None:
+            describe_input['fields'] = fields
+        if io is not None:
+            describe_input['io'] = io
+        self._desc = dxpy.api.job_describe(self._dxid, describe_input, **kwargs)
         return self._desc
 
     def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
