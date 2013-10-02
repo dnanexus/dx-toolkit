@@ -750,9 +750,19 @@ class TestDXRun(DXTestCase):
         self.assertEqual(new_job_desc['folder'], '/')
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['project', 'folder'])
 
+        # override input with -i
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " -inumber=42 --brief -y").strip())
+        self.assertEqual(new_job_desc['input'], {"number": 42})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
+
         # add other input fields with -i
         new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " -inumber2=42 --brief -y").strip())
         self.assertEqual(new_job_desc['input'], {"number": 32, "number2": 42})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
+
+        # override input with --input-json (original input discarded)
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --input-json '{\"number2\": 42}' --brief -y").strip())
+        self.assertEqual(new_job_desc['input'], {"number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
         # override the blanket instance type
