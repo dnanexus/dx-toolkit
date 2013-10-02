@@ -462,6 +462,8 @@ def print_data_obj_desc(desc, verbose=False):
         print_field("Subtitle", desc["subtitle"])
     if 'summary' in desc:
         print_field("Summary", desc['summary'])
+    if 'description' in desc and verbose:
+        print_field("Description", desc["description"])
     if 'access' in desc:
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:

@@ -86,7 +86,10 @@ def _guess_link_target_type(link):
 def get_handler(id_or_link, project=None):
     '''
     :param id_or_link: String containing an object ID or dict containing a DXLink
-    :rtype: :class:`~dxpy.bindings.DXDataObject` or :class:`~dxpy.bindings.DXProject`
+    :type id_or_link: string or dict
+    :param project: String project ID to use as the context if the the object is a data object
+    :type project: string
+    :rtype: :class:`~dxpy.bindings.DXObject`
 
     Parses a string or DXLink dict. Creates and returns an object handler for it.
 
@@ -96,11 +99,12 @@ def get_handler(id_or_link, project=None):
     '''
     try:
         cls = _guess_link_target_type(id_or_link)
-        if project is not None:
-            return cls(id_or_link, project=project)
-        else:
-            # This case is important for the DXProject handler
+        if project is None or cls in [dxpy.DXJob, dxpy.DXAnalysis, dxpy.DXProject, dxpy.DXContainer]:
+            # This case is important for the handlers which do not
+            # take a project field
             return cls(id_or_link)
+        else:
+            return cls(id_or_link, project=project)
     except Exception as e:
         raise DXError("Could not parse link "+str(id_or_link))
 

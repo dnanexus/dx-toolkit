@@ -60,9 +60,9 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
     if prompt is None:
         prompt = 'Pick a numbered choice'
         if allow_mult:
-            prompt += ' or \"*\" for all'
+            prompt += ' or "*" for all'
         elif more_choices:
-            prompt += ' or \"m\" for more options'
+            prompt += ' or "m" for more options'
         if default is not None:
             prompt += ' [' + str(default) + ']'
         prompt += ': '
@@ -345,10 +345,10 @@ def resolve_container_id_or_name(raw_string, is_error=False, unescape=True, mult
         return ([results[0]['id']] if multi else results[0]['id'])
     elif len(results) == 0:
         if is_error:
-            raise ResolutionError('Could not find a project named \"' + string + '\"')
+            raise ResolutionError('Could not find a project named "' + string + '"')
         return ([] if multi else None)
     elif not multi:
-        print 'Found multiple projects with name \"' + string + '\"'
+        print 'Found multiple projects with name "' + string + '"'
         choice = pick(map(lambda result: result['id'] + ' (' + result['level'] + ')', results))
         return results[choice]['id']
     else:
@@ -418,7 +418,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     if last_colon >= 0:
         last_last_colon = get_last_pos_of_char(':', path[:last_colon])
         if last_last_colon >= 0:
-            raise ResolutionError('Cannot parse \"' + path + '\" as a path; at most one unescaped colon can be present')
+            raise ResolutionError('Cannot parse "' + path + '" as a path; at most one unescaped colon can be present')
 
     substrings = split_unescaped(':', path)
 
@@ -440,7 +440,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         wd = '/'
         if path.startswith(':'):
             if dxpy.WORKSPACE_ID is None:
-                raise ResolutionError('Cannot parse \"' + path + '\" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
+                raise ResolutionError('Cannot parse "' + path + '" as a path; expected a project name or ID to the left of a colon or for a current project to be set')
             project = dxpy.WORKSPACE_ID
         else:
             # One nonempty string to the left of a colon
@@ -451,7 +451,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         # project
         project = dxpy.WORKSPACE_ID
         if expected == 'folder' and project is None:
-            raise ResolutionError('a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in \"' + path + '\"')
+            raise ResolutionError('a project context was expected for a path, but a current project is not set, nor was one provided in the path (preceding a colon) in "' + path + '"')
         wd = os.environ.get('DX_CLI_WD', '/')
 
     # Determine folderpath and entity_name if necessary
@@ -480,7 +480,7 @@ def resolve_job_ref(job_id, name, describe={}):
         if isinstance(output_field, list):
             if len(output_field) > 0:
                 if not isinstance(output_field[0], dict) or '$dnanexus_link' not in output_field[0]:
-                    raise ResolutionError('Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an array of non-data objects')
+                    raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id + ', but it is an array of non-data objects')
                 ids = [link['$dnanexus_link'] for link in output_field]
                 try:
                     results = [{"id": out_id,
@@ -488,7 +488,7 @@ def resolve_job_ref(job_id, name, describe={}):
                 except BaseException as details:
                     raise ResolutionError(str(details))
             else:
-                raise ResolutionError('Found \"' + name + '\" as an output field name of ' + job_id + ', but it is an empty array')
+                raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id + ', but it is an empty array')
         elif isinstance(output_field, dict) and '$dnanexus_link' in output_field:
             obj_id = output_field['$dnanexus_link']
             try:
@@ -496,9 +496,9 @@ def resolve_job_ref(job_id, name, describe={}):
             except BaseException as details:
                 raise ResolutionError(str(details))
         else:
-            raise ResolutionError('Found \"' + name + '\" as an output field name of ' + job_id + ', but it is not of a data object class')
+            raise ResolutionError('Found "' + name + '" as an output field name of ' + job_id + ', but it is not of a data object class')
     else:
-        raise ResolutionError('Could not find \"' + name + '\" as an output field name of ' + job_id + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
+        raise ResolutionError('Could not find "' + name + '" as an output field name of ' + job_id + '; available fields are: ' + ', '.join(job_desc['output'].keys()))
 
     return results
 
@@ -571,7 +571,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         else:
             return project, folderpath, [result]
     elif project is None:
-        raise ResolutionError('Could not resolve \"' + path + '\" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
+        raise ResolutionError('Could not resolve "' + path + '" to a project context.  Please either set a default project using dx select or cd, or add a colon (":") after your project ID or name')
     else:
         msg = 'Object of name ' + unicode(entity_name) + ' could not be resolved in folder ' + unicode(folderpath) + ' of project ID ' + str(project)
         # Probably an object
@@ -608,7 +608,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             if allow_mult and (all_mult or is_glob_pattern(entity_name)):
                 return project, None, results
             if sys.stdout.isatty():
-                print 'The given path \"' + path + '\" resolves to the following data objects:'
+                print 'The given path "' + path + '" resolves to the following data objects:'
                 choice = pick(map(lambda result:
                                       get_ls_l_desc(result['describe']),
                                   results),
@@ -618,7 +618,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                 else:
                     return project, None, ([results[choice]] if allow_mult else results[choice])
             else:
-                raise ResolutionError('The given path \"' + path + '\" resolves to ' + str(len(results)) + ' data objects')
+                raise ResolutionError('The given path "' + path + '" resolves to ' + str(len(results)) + ' data objects')
         elif len(results) == 1:
             return project, None, ([results[0]] if allow_mult else results[0])
 
@@ -665,9 +665,67 @@ def resolve_app(path):
     '''
     desc = get_app_from_path(path)
     if desc is None:
-        raise ResolutionError('The given path \"' + path + '\" could not be resolved to an accessible app')
+        raise ResolutionError('The given path "' + path + '" could not be resolved to an accessible app')
     else:
         return desc
+
+def get_exec_handler(path, alias=None):
+    handler = None
+    def get_handler_from_desc(desc):
+        if desc['class'] == 'applet':
+            return dxpy.DXApplet(desc['id'], project=desc['project'])
+        elif desc['class'] == 'app':
+            return dxpy.DXApp(dxid=desc['id'])
+        else:
+            return dxpy.DXWorkflow(desc['id'], project=desc['project'])
+
+    if alias is None:
+        app_desc = get_app_from_path(path)
+        try:
+            # Look for applets and workflows
+            project, folderpath, entity_results = resolve_existing_path(path,
+                                                                        expected='entity',
+                                                                        ask_to_resolve=False,
+                                                                        expected_classes=['applet', 'record', 'workflow'])
+            def is_applet_or_workflow(i):
+                return (i['describe']['class'] in ['applet', 'workflow'])
+            def is_record_workflow(i):
+                return ('pipeline' in i['describe']['types'])
+            if entity_results is not None:
+                entity_results = [i for i in entity_results if is_applet_or_workflow(i) or is_record_workflow(i)]
+                if len(entity_results) == 0:
+                    entity_results = None
+        except ResolutionError:
+            if app_desc is None:
+                raise
+            else:
+                project, folderpath, entity_results = None, None, None
+
+        if entity_results is not None and len(entity_results) == 1 and app_desc is None:
+            handler = get_handler_from_desc(entity_results[0]['describe'])
+        elif entity_results is None and app_desc is not None:
+            handler = get_handler_from_desc(app_desc)
+        elif entity_results is not None:
+            if not sys.stdout.isatty():
+                raise ResolutionError('Found multiple executables with the path ' + path)
+            print 'Found multiple executables with the path ' + path
+            choice_descriptions = [get_ls_l_desc(r['describe']) for r in entity_results]
+            if app_desc is not None:
+                choice_descriptions.append('app-' + app_desc['name'] + ', version ' + app_desc['version'])
+            choice = pick(choice_descriptions)
+            if choice < len(entity_results):
+                # all applet/workflow choices show up before the app,
+                # of which there is always at most one possible choice
+                handler = get_handler_from_desc(entity_results[choice]['describe'])
+            else:
+                handler = get_handler_from_desc(app_desc)
+        else:
+            raise ResolutionError("No matches found for " + path)
+    else:
+        if path.startswith('app-'):
+            path = path[4:]
+        handler = dxpy.DXApp(name=path, alias=alias)
+    return handler
 
 def resolve_to_objects_or_project(path, all_matching_results=False):
     '''

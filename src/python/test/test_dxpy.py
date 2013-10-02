@@ -943,12 +943,12 @@ class TestDXAppletJob(unittest.TestCase):
     def test_run_dxapplet(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
-                      dxapi="1.04",
-                      inputSpec=[{"name": "chromosomes", "class": "record"},
-                                 {"name": "rowFetchChunk", "class": "int"}
-                                 ],
-                      outputSpec=[{"name": "mappings", "class": "record"}],
-                      runSpec={"code": '''
+                     dxapi="1.04",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                            ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": '''
 @dxpy.entry_point('main')
 def main():
     pass
@@ -977,8 +977,6 @@ def main():
         self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
         dxjob.terminate()
 
-@unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                     'skipping test that would run a job')
 class TestDXAnalysisWorkflow(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
@@ -986,6 +984,8 @@ class TestDXAnalysisWorkflow(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run a job')
     def test_run_workflow(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()
@@ -1009,6 +1009,208 @@ def main(number):
         self.assertEqual(analysis_desc['input'].get(stage_id + '.number'), 32)
         dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['input'].get("number"), 32)
+
+    def test_new_dxworkflow(self):
+        dxworkflow = dxpy.new_dxworkflow(title='mytitle', summary='mysummary', description='mydescription')
+        self.assertIsInstance(dxworkflow, dxpy.DXAnalysisWorkflow)
+        desc = dxworkflow.describe()
+        self.assertEqual(desc['title'], 'mytitle')
+        self.assertEqual(desc['summary'], 'mysummary')
+        self.assertEqual(desc['description'], 'mydescription')
+
+        secondworkflow = dxpy.new_dxworkflow(init_from=dxworkflow)
+        self.assertIsInstance(secondworkflow, dxpy.DXAnalysisWorkflow)
+        self.assertNotEqual(dxworkflow.get_id(), secondworkflow.get_id())
+        desc = secondworkflow.describe()
+        self.assertEqual(desc['title'], 'mytitle')
+        self.assertEqual(desc['summary'], 'mysummary')
+        self.assertEqual(desc['description'], 'mydescription')
+
+    def test_add_move_remove_stages(self):
+        dxworkflow = dxpy.new_dxworkflow()
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(dxapi="1.0.0",
+                     inputSpec=[{"name": "my_input", "class": "string"}],
+                     outputSpec=[],
+                     runSpec={"code": "", "interpreter": "bash"})
+        # Add stages
+        first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                           stage_input={"my_input": "hello world"})
+        self.assertEqual(dxworkflow.editVersion, 1)
+        self.assertEqual(dxworkflow.stages[0]["name"], "stagename")
+        self.assertEqual(dxworkflow.stages[0]["folder"], "/outputfolder")
+        self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
+        second_stage = dxworkflow.add_stage(dxapplet, edit_version=1)
+        self.assertEqual(dxworkflow.editVersion, 2)
+        self.assertEqual(len(dxworkflow.stages), 2)
+        with self.assertRaises(DXAPIError):
+            dxworkflow.add_stage(dxapplet, edit_version=1)
+
+        # Move stages
+        dxworkflow.move_stage(0, 1)
+        self.assertEqual(dxworkflow.editVersion, 3)
+        self.assertEqual(dxworkflow.stages[0]["id"], second_stage)
+        self.assertEqual(dxworkflow.stages[1]["id"], first_stage)
+        dxworkflow.move_stage(first_stage, 0, edit_version=3)
+        self.assertEqual(dxworkflow.editVersion, 4)
+        self.assertEqual(dxworkflow.stages[0]["id"], first_stage)
+        self.assertEqual(dxworkflow.stages[1]["id"], second_stage)
+
+        # Remove stages
+        removed_stage = dxworkflow.remove_stage(0)
+        self.assertEqual(removed_stage, first_stage)
+        self.assertEqual(dxworkflow.editVersion, 5)
+        self.assertEqual(len(dxworkflow.stages), 1)
+        self.assertEqual(dxworkflow.stages[0]["id"], second_stage)
+        with self.assertRaises(DXAPIError):
+            dxworkflow.remove_stage(first_stage) # should already have been removed
+        removed_stage = dxworkflow.remove_stage(second_stage, edit_version=5)
+        self.assertEqual(removed_stage, second_stage)
+        self.assertEqual(len(dxworkflow.stages), 0)
+        # bad input throws DXError
+        with self.assertRaises(DXError):
+            dxworkflow.remove_stage({})
+        with self.assertRaises(DXError):
+            dxworkflow.remove_stage(5)
+
+    def test_get_stage(self):
+        dxworkflow = dxpy.new_dxworkflow()
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(dxapi="1.0.0",
+                     inputSpec=[{"name": "my_input", "class": "string"}],
+                     outputSpec=[],
+                     runSpec={"code": "", "interpreter": "bash"})
+        # Add stages
+        first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                           stage_input={"my_input": "hello world"})
+        second_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                            stage_input={"my_input": "hello world"})
+        # Get stages
+        stage_desc = dxworkflow.get_stage(0)
+        self.assertEqual(stage_desc['id'], first_stage)
+        stage_desc = dxworkflow.get_stage(first_stage)
+        self.assertEqual(stage_desc['id'], first_stage)
+        stage_desc = dxworkflow.get_stage(1)
+        self.assertEqual(stage_desc['id'], second_stage)
+        stage_desc = dxworkflow.get_stage(second_stage)
+        self.assertEqual(stage_desc['id'], second_stage)
+
+        # Errors
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage(-1)
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage(3)
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage('foo')
+        with self.assertRaises(DXError):
+            dxworkflow.get_stage('stage-123456789012345678901234')
+
+    def test_update(self):
+        dxworkflow = dxpy.new_dxworkflow(title='title', summary='summary', description='description')
+        self.assertEqual(dxworkflow.editVersion, 0)
+        for metadata in ['title', 'summary', 'description']:
+            self.assertEqual(getattr(dxworkflow, metadata), metadata)
+
+        # update title, summary, description by value
+        dxworkflow.update(title='Title', summary='Summary', description='Description')
+        self.assertEqual(dxworkflow.editVersion, 1)
+        for metadata in ['title', 'summary', 'description']:
+            self.assertEqual(getattr(dxworkflow, metadata), metadata.capitalize())
+
+        # use unset_title
+        dxworkflow.update(unset_title=True, edit_version=1)
+        self.assertEqual(dxworkflow.editVersion, 2)
+        self.assertEqual(dxworkflow.title, dxworkflow.get_id())
+
+        # can't provide both title and unset_title=True
+        with self.assertRaises(DXError):
+            dxworkflow.update(title='newtitle', unset_title=True)
+        self.assertEqual(dxworkflow.editVersion, 2)
+
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(dxapi="1.0.0",
+                     inputSpec=[{"name": "my_input", "class": "string"}],
+                     outputSpec=[],
+                     runSpec={"code": "", "interpreter": "bash"})
+        stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                     stage_input={"my_input": "hello world"})
+        self.assertEqual(dxworkflow.editVersion, 3)
+        self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
+
+        # test stage modifications using update method
+        dxworkflow.update(summary='newsummary',
+                          stages={stage: {"folder": "/newoutputfolder",
+                                          "input": {"my_input": None}}})
+        self.assertEqual(dxworkflow.editVersion, 4)
+        self.assertEqual(dxworkflow.summary, 'newsummary')
+        self.assertEqual(dxworkflow.stages[0]["folder"], "/newoutputfolder")
+        self.assertNotIn("my_input", dxworkflow.stages[0]["input"])
+
+        # no-op update
+        dxworkflow.update()
+        self.assertEqual(dxworkflow.editVersion, 4)
+
+    def test_update_stage(self):
+        dxworkflow = dxpy.new_dxworkflow()
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(dxapi="1.0.0",
+                     inputSpec=[{"name": "my_input", "class": "string"}],
+                     outputSpec=[],
+                     runSpec={"code": "", "interpreter": "bash"})
+        # Add a stage
+        stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
+                                     stage_input={"my_input": "hello world"})
+        self.assertEqual(dxworkflow.editVersion, 1)
+        self.assertEqual(dxworkflow.stages[0]["executable"], dxapplet.get_id())
+        self.assertEqual(dxworkflow.stages[0]["name"], "stagename")
+        self.assertEqual(dxworkflow.stages[0]["folder"], "/outputfolder")
+        self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
+
+        # Update just its metadata
+        dxworkflow.update_stage(stage, unset_name=True, folder="/newoutputfolder",
+                                stage_input={"my_input": None})
+        self.assertEqual(dxworkflow.editVersion, 2)
+        self.assertIsNone(dxworkflow.stages[0]["name"])
+        self.assertEqual(dxworkflow.stages[0]["folder"], "/newoutputfolder")
+        self.assertNotIn("my_input", dxworkflow.stages[0]["input"])
+
+        # Update using stage index
+        dxworkflow.update_stage(0, folder="/", stage_input={"my_input": "foo"}, edit_version=2)
+        self.assertEqual(dxworkflow.editVersion, 3)
+        self.assertEqual(dxworkflow.stages[0]["folder"], "/")
+        self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "foo")
+
+        # no-op update
+        dxworkflow.update_stage(0)
+        self.assertEqual(dxworkflow.editVersion, 3)
+
+        # error when providing name and unset_name
+        with self.assertRaises(DXError):
+            dxworkflow.update_stage(0, name='foo', unset_name=True)
+        self.assertEqual(dxworkflow.editVersion, 3)
+
+        # Update its executable
+        second_applet = dxpy.DXApplet()
+        second_applet.new(dxapi="1.0.0",
+                          inputSpec=[{"name": "my_new_input", "class": "string"}],
+                          outputSpec=[],
+                          runSpec={"code": "", "interpreter": "bash"})
+
+        # Incompatible executable
+        try:
+            dxworkflow.update_stage(stage, executable=second_applet)
+            raise Exception("expected an error for updating a stage with an incompatible executable, but it succeeded")
+        except DXAPIError as e:
+            self.assertIsInstance(e, DXAPIError)
+            self.assertEqual(e.name, 'InvalidState')
+            self.assertEqual(dxworkflow.stages[0]["executable"], dxapplet.get_id())
+            self.assertEqual(dxworkflow.editVersion, 3)
+
+        # Successful update with force
+        dxworkflow.update_stage(stage, executable=second_applet, force=True)
+        self.assertEqual(dxworkflow.editVersion, 4)
+        self.assertEqual(dxworkflow.stages[0]["executable"], second_applet.get_id())
+        self.assertNotIn("my_input", dxworkflow.stages[0]["input"])
 
 @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                      'skipping test that would create an app')

@@ -1014,6 +1014,14 @@ module DX
       return DX::http_request("/#{object_id}/getDetails", input_params, opts)
     end
 
+    # Invokes the /workflow-xxxx/isStageCompatible API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FisStageCompatible
+    def self.workflow_is_stage_compatible(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/isStageCompatible", input_params, opts)
+    end
+
     # Invokes the /workflow-xxxx/listProjects API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects
@@ -1028,6 +1036,14 @@ module DX
     def self.workflow_move_stage(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/moveStage", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/overwrite API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Foverwrite
+    def self.workflow_overwrite(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/overwrite", input_params, opts)
     end
 
     # Invokes the /workflow-xxxx/removeStage API method.
@@ -1100,6 +1116,22 @@ module DX
     def self.workflow_set_visibility(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/update API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fupdate
+    def self.workflow_update(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/update", input_params, opts)
+    end
+
+    # Invokes the /workflow-xxxx/updateStageExecutable API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FupdateStageExecutable
+    def self.workflow_update_stage_executable(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/updateStageExecutable", input_params, opts)
     end
 
     # Invokes the /workflow/new API method.

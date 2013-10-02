@@ -23,6 +23,7 @@ Functions and classes used when launching platform executables from the CLI.
 import os, sys, json, collections, pipes, shlex
 
 import dxpy
+from dxpy.exceptions import DXError, DXCLIError
 from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
 from dxpy.utils.describe import (get_find_jobs_string, get_ls_l_desc, parse_typespec)
 from dxpy.utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
@@ -56,16 +57,16 @@ def parse_bool(string):
             return True
         elif 'false'.startswith(string.lower()) or string == '0':
             return False
-    raise ValueError('Could not resolve \"' + string +  '\" to a boolean')
+    raise DXError('Could not resolve \"' + string +  '\" to a boolean')
 
 def parse_obj(string, klass):
     if string == '':
-        raise ValueError('Error: Nonempty string cannot be resolved')
+        raise DXError('Error: Nonempty string cannot be resolved')
     project, path, entity_result = resolve_existing_path(string)
     if entity_result is None:
-        raise TypeError('Could not resolve \"' + string + '\" to a name or ID')
+        raise DXError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:
-        raise TypeError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
+        raise DXError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
     if is_hashid(string):
         return {'$dnanexus_link': entity_result['id']}
     else:
@@ -448,7 +449,7 @@ class ExecutableInputs(object):
 
         if self.input_spec is not None:
             if input_name not in self.input_spec and self._desc.get('class') != 'workflow':
-                raise Exception('Input field called ' + input_name + ' was not found in the input spec')
+                raise DXError('Input field called "' + input_name + '" was not found in the input spec')
             elif input_name in self.input_spec:
                 input_class = self.input_spec[input_name]['class']
 
@@ -575,7 +576,7 @@ class ExecutableInputs(object):
             except:
                 pass
 
-    def update_from_args(self, args):
+    def update_from_args(self, args, require_all_inputs=True):
         if args.filename is not None:
             try:
                 if args.filename == "-":
@@ -585,13 +586,13 @@ class ExecutableInputs(object):
                         data = fd.read()
                 self.update(json.loads(data, object_pairs_hook=collections.OrderedDict))
             except Exception as e:
-                raise Exception('Error while parsing input JSON file: %s' % unicode(e))
+                raise DXCLIError('Error while parsing input JSON file: %s' % unicode(e))
 
         if args.input_json is not None:
             try:
                 self.update(json.loads(args.input_json, object_pairs_hook=collections.OrderedDict))
             except Exception as e:
-                raise Exception('Error while parsing input JSON: %s' % unicode(e))
+                raise DXCLIError('Error while parsing input JSON: %s' % unicode(e))
 
         if args.input is not None:
             for keyeqval in args.input:
@@ -602,7 +603,7 @@ class ExecutableInputs(object):
                     name = split_unescaped('=', keyeqval)[0]
                     value = keyeqval[first_eq_pos + 1:]
                 except:
-                    raise Exception('An input was found that did not conform to the syntax: -i<input name>=<input value>')
+                    raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')
                 self.add(self.executable._get_input_name(name) if \
                          self._desc.get('class') == 'workflow' else name, value)
 
@@ -613,12 +614,13 @@ class ExecutableInputs(object):
 
         # For now, we do not handle prompting for workflow inputs nor
         # recognizing when not all inputs haven't been bound
-        if sys.stdout.isatty() and self._desc.get('class') != 'workflow':
-            self.prompt_for_missing()
-        elif self._desc.get('class') != 'workflow':
-            missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
-            if missing_required_inputs:
-                raise Exception('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
+        if require_all_inputs:
+            if sys.stdout.isatty() and self._desc.get('class') != 'workflow':
+                self.prompt_for_missing()
+            elif self._desc.get('class') != 'workflow':
+                missing_required_inputs = set(self.required_inputs) - set(self.inputs.keys())
+                if missing_required_inputs:
+                    raise DXCLIError('Some inputs (%s) are missing, and interactive mode is not available' % (', '.join(missing_required_inputs)))
 
         # if self.required_input_specs is not None and (len(self.required_input_specs) > 0 or len(self.optional_input_specs) > 0):
         #     if sys.stdout.isatty():

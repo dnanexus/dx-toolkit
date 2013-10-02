@@ -436,11 +436,17 @@ namespace dx {
   JSON workflowGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
+  JSON workflowIsStageCompatible(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowIsStageCompatible(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
   JSON workflowListProjects(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowListProjects(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON workflowMoveStage(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowMoveStage(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowOverwrite(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowOverwrite(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON workflowRemoveStage(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowRemoveStage(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
@@ -468,6 +474,12 @@ namespace dx {
 
   JSON workflowSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON workflowSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowUpdate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowUpdate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON workflowUpdateStageExecutable(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON workflowUpdateStageExecutable(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON workflowNew(const std::string &input_params="{}", const bool retry=false);
   JSON workflowNew(const dx::JSON &input_params, const bool retry=false);
