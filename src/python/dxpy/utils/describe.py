@@ -636,6 +636,13 @@ def print_execution_desc(desc):
                 if cloned_hash["runInput"][item] != desc["runInput"][item]:
                     different_inputs.append(item)
             print_nofill_field(" input", get_io_field(cloned_hash["runInput"], highlight_fields=different_inputs))
+
+            cloned_sys_reqs = cloned_hash.get("systemRequirements")
+            if isinstance(cloned_sys_reqs, dict):
+                if cloned_sys_reqs == desc.get('systemRequirements'):
+                    print_nofill_field(" sys reqs", json.dumps(cloned_sys_reqs) + ' (same)')
+                else:
+                    print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
