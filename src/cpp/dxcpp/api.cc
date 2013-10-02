@@ -1046,6 +1046,22 @@ namespace dx {
     return systemFindDataObjects(input_params.toString(), retry);
   }
 
+  JSON systemFindExecutions(const std::string &input_params, const bool retry) {
+    return DXHTTPRequest("/system/findExecutions", input_params, retry);
+  }
+
+  JSON systemFindExecutions(const JSON &input_params, const bool retry) {
+    return systemFindExecutions(input_params.toString(), retry);
+  }
+
+  JSON systemFindAnalyses(const std::string &input_params, const bool retry) {
+    return DXHTTPRequest("/system/findAnalyses", input_params, retry);
+  }
+
+  JSON systemFindAnalyses(const JSON &input_params, const bool retry) {
+    return systemFindAnalyses(input_params.toString(), retry);
+  }
+
   JSON systemFindJobs(const std::string &input_params, const bool retry) {
     return DXHTTPRequest("/system/findJobs", input_params, retry);
   }

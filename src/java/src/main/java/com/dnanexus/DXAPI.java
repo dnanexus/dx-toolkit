@@ -8923,6 +8923,158 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the systemFindExecutions method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindExecutions() {
+        return systemFindExecutions(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemFindExecutions method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindExecutions(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/findExecutions", inputParams);
+    }
+    /**
+     * Invokes the systemFindExecutions method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindExecutions(DXEnvironment env) {
+        return systemFindExecutions(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemFindExecutions method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindExecutions(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/findExecutions", inputParams);
+    }
+
+    /**
+     * Invokes the systemFindAnalyses method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindAnalyses() {
+        return systemFindAnalyses(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemFindAnalyses method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindAnalyses(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/findAnalyses", inputParams);
+    }
+    /**
+     * Invokes the systemFindAnalyses method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses">API specification</a>.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindAnalyses(DXEnvironment env) {
+        return systemFindAnalyses(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemFindAnalyses method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode systemFindAnalyses(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/findAnalyses", inputParams);
+    }
+
+    /**
      * Invokes the systemFindJobs method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.

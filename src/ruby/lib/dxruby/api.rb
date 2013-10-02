@@ -906,6 +906,22 @@ module DX
       return DX::http_request("/system/findDataObjects", input_params, opts)
     end
 
+    # Invokes the /system/findExecutions API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions
+    def self.system_find_executions(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/findExecutions", input_params, opts)
+    end
+
+    # Invokes the /system/findAnalyses API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses
+    def self.system_find_analyses(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/findAnalyses", input_params, opts)
+    end
+
     # Invokes the /system/findJobs API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs

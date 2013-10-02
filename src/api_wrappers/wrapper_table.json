@@ -999,6 +999,24 @@
         }
     ],
     [
+        "/system/findExecutions",
+        "systemFindExecutions(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindExecutions"
+        }
+    ],
+    [
+        "/system/findAnalyses",
+        "systemFindAnalyses(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindAnalyses"
+        }
+    ],
+    [
         "/system/findJobs",
         "systemFindJobs(req)",
         {

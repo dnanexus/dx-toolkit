@@ -394,6 +394,12 @@ namespace dx {
   JSON systemFindDataObjects(const std::string &input_params="{}", const bool retry=true);
   JSON systemFindDataObjects(const dx::JSON &input_params, const bool retry=true);
 
+  JSON systemFindExecutions(const std::string &input_params="{}", const bool retry=true);
+  JSON systemFindExecutions(const dx::JSON &input_params, const bool retry=true);
+
+  JSON systemFindAnalyses(const std::string &input_params="{}", const bool retry=true);
+  JSON systemFindAnalyses(const dx::JSON &input_params, const bool retry=true);
+
   JSON systemFindJobs(const std::string &input_params="{}", const bool retry=true);
   JSON systemFindJobs(const dx::JSON &input_params, const bool retry=true);
 
