@@ -646,8 +646,17 @@ class TestDXClient(DXTestCase):
             print str(shell1.buffer)
             print "*** End test_dxpy_session_isolation debug data"
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run jobs')
+@unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                     'skipping tests that would run jobs')
+class TestDXRun(DXTestCase):
+    def setUp(self):
+        self.other_proj_id = run("dx new project other --brief").strip()
+        super(TestDXRun, self).setUp()
+
+    def tearDown(self):
+        dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
+        super(TestDXRun, self).tearDown()
+
     def test_dx_run_extra_args(self):
         # success
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -667,6 +676,123 @@ class TestDXClient(DXTestCase):
         # parsing error
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
+
+    def test_dx_run_clone(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+        other_applet_id = dxpy.api.applet_new({"project": self.project,
+                                               "dxapi": "1.0.0",
+                                               "runSpec": {"interpreter": "bash",
+                                                           "code": "echo 'hello'"}
+                                           })['id']
+
+        def check_new_job_metadata(new_job_desc, cloned_job_desc, overridden_fields=[]):
+            '''
+            :param new_job_desc: the describe hash in the new job
+            :param cloned_job_desc: the description of the job that was cloned
+            :param overridden_fields: the metadata fields in describe that were overridden (and should not be checked)
+            '''
+            # check clonedFrom hash in new job's details
+            self.assertIn('clonedFrom', new_job_desc['details'])
+            self.assertEqual(new_job_desc['details']['clonedFrom']['executable'],
+                             cloned_job_desc.get('applet') or cloned_job_desc.get('app'))
+            for metadata in ['project', 'folder', 'name', 'runInput', 'systemRequirements']:
+                self.assertEqual(new_job_desc['details']['clonedFrom'][metadata],
+                                 cloned_job_desc[metadata])
+            # check not_overridden_fields match/have the correct transformation
+            all_fields = set(['name', 'project', 'folder', 'input', 'systemRequirements',
+                              'applet'])
+            fields_to_check = all_fields.difference(overridden_fields)
+            for metadata in fields_to_check:
+                if metadata == 'name':
+                    self.assertEqual(new_job_desc[metadata], cloned_job_desc[metadata] + ' (re-run)')
+                else:
+                    self.assertEqual(new_job_desc[metadata], cloned_job_desc[metadata])
+
+        # originally, set everything and have an instance type for all
+        # entry points
+        orig_job_id = run("dx run " + applet_id + ' -inumber=32 --name jobname --folder /output --instance-type dx_m1.large --brief -y').strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        # control
+        self.assertEqual(orig_job_desc['name'], 'jobname')
+        self.assertEqual(orig_job_desc['project'], self.project)
+        self.assertEqual(orig_job_desc['folder'], '/output')
+        self.assertEqual(orig_job_desc['input'], {'number': 32})
+        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'dx_m1.large'}})
+
+        # clone the job
+
+        # nothing different
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --brief -y").strip())
+        check_new_job_metadata(new_job_desc, orig_job_desc)
+
+        # override applet
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " " + other_applet_id + " --brief -y").strip())
+        self.assertEqual(new_job_desc['applet'], other_applet_id)
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet'])
+
+        # override name
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --name newname --brief -y").strip())
+        self.assertEqual(new_job_desc['name'], 'newname')
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['name'])
+
+        # override folder
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --folder /otherfolder --brief -y").strip())
+        self.assertEqual(new_job_desc['folder'], '/otherfolder')
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['folder'])
+
+        # override project
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --project " + self.other_proj_id + " --brief -y").strip())
+        self.assertEqual(new_job_desc['project'], self.other_proj_id)
+        self.assertEqual(new_job_desc['folder'], '/')
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['project', 'folder'])
+
+        # add other input fields with -i
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " -inumber2=42 --brief -y").strip())
+        self.assertEqual(new_job_desc['input'], {"number": 32, "number2": 42})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
+
+        # override the blanket instance type
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type dx_m1.medium --brief -y").strip())
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'*': {'instanceType': 'dx_m1.medium'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override instance type for specific entry point(s)
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"dx_m1.medium\", \"some_other_ep\": \"dx_m1.xlarge\"}' --brief -y").strip())
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'*': {'instanceType': 'dx_m1.large'},
+                          'some_ep': {'instanceType': 'dx_m1.medium'},
+                          'some_other_ep': {'instanceType': 'dx_m1.xlarge'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # new original job with entry point-specific systemRequirements
+        orig_job_id = run("dx run " + applet_id + " --instance-type '{\"some_ep\": \"dx_m1.medium\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        self.assertEqual(orig_job_desc['systemRequirements'], {'some_ep': {'instanceType': 'dx_m1.medium'}})
+
+        # override all entry points
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type dx_m1.large --brief -y").strip())
+        self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'dx_m1.large'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # override a different entry point; original untouched
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_other_ep\": \"dx_m1.large\"}' --brief -y").strip())
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'dx_m1.medium'},
+                          'some_other_ep': {'instanceType': 'dx_m1.large'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # override the same entry point
+        new_job_desc = dxpy.api.job_describe(run("dx run --clone " + orig_job_id + " --instance-type '{\"some_ep\": \"dx_m1.large\"}' --brief -y").strip())
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'dx_m1.large'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
