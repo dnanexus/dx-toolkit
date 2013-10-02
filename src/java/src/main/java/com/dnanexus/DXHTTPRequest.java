@@ -36,9 +36,19 @@ public class DXHTTPRequest {
 
     private static int NUM_RETRIES = 5;
 
-    private static DXEnvironment env = DXEnvironment.create();
+    private static DXEnvironment defaultEnv = DXEnvironment.create();
 
-    public DXHTTPRequest() throws Exception {
+    /**
+    * Construct the DXHTTPRequest using the default DXEnvironment.
+    */
+    public DXHTTPRequest() {
+        this(defaultEnv);
+    }
+
+    /**
+    * Construct the DXHTTPRequest using the given DXEnvironment.
+    */
+    public DXHTTPRequest(DXEnvironment env) {
         this.securityContext = env.getSecurityContext();
         this.apiserver = env.getApiserverPath();
         this.httpclient = new DefaultHttpClient();

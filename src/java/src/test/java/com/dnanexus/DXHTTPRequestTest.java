@@ -19,6 +19,7 @@ package com.dnanexus;
 import org.junit.*;
 import com.fasterxml.jackson.databind.*;
 import com.dnanexus.DXHTTPRequest;
+import com.dnanexus.DXEnvironment;
 
 public class DXHTTPRequestTest {
     @BeforeClass public static void setUpClass() throws Exception {
@@ -38,6 +39,28 @@ public class DXHTTPRequestTest {
 
         String responseText = c.request("/system/findDataObjects", "{}");
         org.junit.Assert.assertEquals(responseText.substring(0, 1), "{");
+    }
+
+    @Test public void testDXAPICustomEnvironment() throws Exception {
+        DXEnvironment env = DXEnvironment.create();
+        DXHTTPRequest c = new DXHTTPRequest(env);
+        JsonNode responseJson = c.request("/system/findDataObjects",
+                                          (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
+        org.junit.Assert.assertEquals(responseJson.isObject(), true);
+        // System.out.println(responseJson);
+
+        String responseText = c.request("/system/findDataObjects", "{}");
+        org.junit.Assert.assertEquals(responseText.substring(0, 1), "{");
+
+        JsonNode bogusSecCtx = (new MappingJsonFactory().createJsonParser("{\"auth_token_type\":\"Bearer\",\"auth_token\":\"BOGUS\"}").readValueAsTree());
+        env = new DXEnvironment.Builder().setSecurityContext(bogusSecCtx).build();
+        DXHTTPRequest c2 = new DXHTTPRequest(env);
+        try {
+            c2.request("/system/findDataObjects",
+                       (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
+        } catch (Exception exn) {
+            org.junit.Assert.assertTrue(exn.toString().contains("InvalidAuthentication"));
+        }
     }
 
     @After public void tearDown() throws Exception {

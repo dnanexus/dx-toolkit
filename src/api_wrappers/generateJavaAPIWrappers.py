@@ -27,6 +27,7 @@ preamble = '''/* Do not modify this file by hand.
 package com.dnanexus;
 
 import com.dnanexus.DXHTTPRequest;
+import com.dnanexus.DXEnvironment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -55,6 +56,23 @@ class_method_template = '''
      */
     public static JsonNode {method_name}(JsonNode inputParams) throws Exception {{
         return new DXHTTPRequest().request("{route}", inputParams);
+    }}
+    /**
+     * Invokes the {method_name} method with the specified environment.{wiki_link}
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     */
+    public static JsonNode {method_name}(DXEnvironment env) throws Exception {{
+        return {method_name}(mapper.readTree("{{}}"), env);
+    }}
+    /**
+     * Invokes the {method_name} method with the specified environment and input parameters.{wiki_link}
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     */
+    public static JsonNode {method_name}(JsonNode inputParams, DXEnvironment env) throws Exception {{
+        return new DXHTTPRequest(env).request("{route}", inputParams);
     }}'''
 
 object_method_template = '''
@@ -74,6 +92,25 @@ object_method_template = '''
      */
     public static JsonNode {method_name}(String objectId, JsonNode inputParams) throws Exception {{
         return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams);
+    }}
+    /**
+     * Invokes the {method_name} method with the specified environment.{wiki_link}
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     */
+    public static JsonNode {method_name}(String objectId, DXEnvironment env) throws Exception {{
+        return {method_name}(objectId, mapper.readTree("{{}}"), env);
+    }}
+    /**
+     * Invokes the {method_name} method with the specified environment and parameters.{wiki_link}
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     */
+    public static JsonNode {method_name}(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {{
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}", inputParams);
     }}'''
 
 #app_object_method_template = '''
