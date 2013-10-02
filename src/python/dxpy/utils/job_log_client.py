@@ -25,7 +25,7 @@ import json, logging
 from ws4py.client import WebSocketBaseClient
 
 import dxpy
-from .describe import get_find_jobs_string
+from .describe import get_find_executions_string
 from ..exceptions import err_exit
 
 logging.getLogger('ws4py').setLevel(logging.ERROR)
@@ -75,7 +75,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
                 self.seen_jobs[self.job_id] = {}
             for job_id in self.seen_jobs.keys():
                 self.seen_jobs[job_id] = dxpy.describe(job_id)
-                print get_find_jobs_string(self.seen_jobs[job_id], has_children=False, show_outputs=True)
+                print get_find_executions_string(self.seen_jobs[job_id], has_children=False, show_outputs=True)
         else:
             self.seen_jobs[self.job_id] = dxpy.describe(self.job_id)
 
@@ -87,7 +87,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
 
         if self.print_job_info and 'job' in message and message['job'] not in self.seen_jobs:
             self.seen_jobs[message['job']] = dxpy.describe(message['job'])
-            print get_find_jobs_string(self.seen_jobs[message['job']], has_children=False, show_outputs=False)
+            print get_find_executions_string(self.seen_jobs[message['job']], has_children=False, show_outputs=False)
 
         if message.get('source') == 'SYSTEM' and message.get('msg') == 'END_LOG':
             self.close()

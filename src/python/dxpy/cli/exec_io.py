@@ -25,7 +25,7 @@ import os, sys, json, collections, pipes, shlex
 import dxpy
 from dxpy.exceptions import DXError, DXCLIError
 from dxpy.utils.printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC, DELIMITER, UNDERLINE, get_delimiter, fill)
-from dxpy.utils.describe import (get_find_jobs_string, get_ls_l_desc, parse_typespec)
+from dxpy.utils.describe import (get_find_executions_string, get_ls_l_desc, parse_typespec)
 from dxpy.utils.resolver import (get_first_pos_of_char, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                                  resolve_existing_path, split_unescaped)
 from dxpy.utils import OrderedDefaultdict
@@ -160,9 +160,9 @@ def interactive_help(in_class, param_desc, prompt):
                 print
                 print 'Previously-run jobs to choose from:'
                 result_choice = paginate_and_pick(result_generator,
-                                                  (lambda result: get_find_jobs_string(result['describe'],
-                                                                                       has_children=False,
-                                                                                       single_result=True)),
+                                                  (lambda result: get_find_executions_string(result['describe'],
+                                                                                             has_children=False,
+                                                                                             single_result=True)),
                                                   filter_fn=(lambda result: result['describe']['state'] not in ['unresponsive', 'terminating', 'terminated', 'failed']))
                 if result_choice == 'none found':
                     print 'No jobs found'

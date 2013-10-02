@@ -25,28 +25,38 @@ provides search functionality over all data objects in the system. The
 import dxpy
 from dxpy.bindings import *
 
-def _find(api_method, query, limit, return_handler, **kwargs):
+def _find(api_method, query, limit, return_handler, first_page_size, **kwargs):
     ''' Takes an API method handler (dxpy.api.find...) and calls it with *query*, then wraps a generator around its
     output. Used by the methods below.
     '''
     num_results = 0
 
+    if "limit" not in query:
+        query["limit"] = first_page_size
+
     while True:
         resp = api_method(query, **kwargs)
+
+        by_parent = resp.get('byParent')
+        descriptions = resp.get('describe')
+        def format_result(result):
+            if return_handler:
+                result = dxpy.get_handler(result['id'], project=result.get('project'))
+            if by_parent is not None:
+                return result, by_parent, descriptions
+            else:
+                return result
 
         for i in resp["results"]:
             if num_results == limit:
                 raise StopIteration()
             num_results += 1
-            if return_handler:
-                handler = dxpy.get_handler(i['id'], project=i.get('project'))
-                yield handler
-            else:
-                yield i
+            yield format_result(i)
 
         # set up next query
         if resp["next"] is not None:
             query["starting"] = resp["next"]
+            query["limit"] = min(query["limit"]*2, 1000)
         else:
             raise StopIteration()
 
@@ -57,7 +67,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
                       describe=None, limit=None, level=None,
-                      return_handler=False,
+                      return_handler=False, first_page_size=100,
                       **kwargs):
     """
     :param classname: Class with which to restrict the search, i.e. one of "record", "file", "gtable", "table", "applet"
@@ -100,6 +110,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type level: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
@@ -194,33 +206,37 @@ def find_data_objects(classname=None, state=None, visibility=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, first_page_size, **kwargs)
 
-def find_jobs(launched_by=None, executable=None, project=None,
-              state=None, origin_job=None, parent_job=None,
-              created_after=None, created_before=None, describe=False,
-              name=None, name_mode="exact", tags=None, properties=None, limit=None, return_handler=False,
-              **kwargs):
+def find_executions(classname=None, launched_by=None, executable=None, project=None,
+                    state=None, origin_job=None, parent_job=None, parent_analysis=None, root_execution=None,
+                    created_after=None, created_before=None, describe=False,
+                    name=None, name_mode="exact", tags=None, properties=None, limit=None, first_page_size=100, return_handler=False, include_subjobs=True,
+                    **kwargs):
     '''
-    :param launched_by: User ID of the user who launched the job's origin job
+    :param launched_by: User ID of the user who launched the execution's origin execution
     :type launched_by: string
-    :param executable: ID of the applet or app that spawned this job, or a corresponding remote object handler
-    :type executable: string or a DXApp/DXApplet instance
-    :param project: ID of the project context for the job
+    :param executable: ID of the applet or app that spawned this execution, or a corresponding remote object handler
+    :type executable: string or a DXApp/DXApplet/DXWorkflow instance
+    :param project: ID of the project context for the execution
     :type project: string
-    :param state: State of the job (e.g. "failed", "done")
+    :param state: State of the execution (e.g. "failed", "done")
     :type state: string
-    :param origin_job: ID of the original job (initiated by a user running an applet/app) that eventually transitively spawned this job
+    :param origin_job: ID of the original job that eventually spawned this execution (possibly by way of other executions)
     :type origin_job: string
-    :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent
+    :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent job
     :type parent_job: string
+    :param parent_analysis: ID of the parent analysis, or the string 'none', indicating it should have no parent analysis
+    :type parent_analysis: string
+    :param root_execution: ID of the top-level (user-initiated) execution (job or analysis) that eventually spawned this execution (possibly by way of other executions)
+    :type root_execution: string
     :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_after: int or string
     :param created_before: Timestamp before which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
     :type created_before: int or string
-    :param describe: Whether to also return the output of calling describe() on the job. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the job's inputs and outputs.
+    :param describe: Whether to also return the output of calling describe() on the execution. Besides supplying True (full description) or False (no details), you can also supply the dict {"io": False} to suppress detailed information about the execution's inputs and outputs.
     :type describe: boolean or dict
-    :param name: Name of the job to search by (also see *name_mode*)
+    :param name: Name of the job or analysis to search by (also see *name_mode*)
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
@@ -230,31 +246,34 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type properties: dict
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
+    :param include_subjobs: If False, no subjobs will be returned by the API
+    :type include_subjobs: boolean
     :rtype: generator
 
-    Returns a generator that yields all jobs that match the query. It
-    transparently handles paging through the result set if necessary.
-    For all parameters that are omitted, the search is not restricted by
+    Returns a generator that yields all executions (jobs or analyses) that match the query. It transparently handles
+    paging through the result set if necessary. For all parameters that are omitted, the search is not restricted by
     the corresponding field.
 
-    The following example iterates through all finished jobs in a
+    The following example iterates through all finished jobs and analyses in a
     particular project that were launched in the last two days::
 
-      for result in find_jobs(state="done", project=proj_id, created_after="-2d"):
-          print "Found job with object id " + result["id"]
+      for result in find_executions(state="done", project=proj_id, created_after="-2d"):
+          print "Found job or analysis with object id " + result["id"]
 
     '''
 
     query = {}
+    if classname is not None:
+        query["class"] = classname
     if launched_by is not None:
         query["launchedBy"] = launched_by
     if executable is not None:
-        if isinstance(executable, DXApplet):
+        if isinstance(executable, (DXApplet, DXApp, DXAnalysisWorkflow)):
             query["executable"] = executable.get_id()
-        elif isinstance(executable, DXApp):
-            query['executable'] = executable.get_id()
         else:
             query["executable"] = executable
     if project is not None:
@@ -268,6 +287,13 @@ def find_jobs(launched_by=None, executable=None, project=None,
             query["parentJob"] = None
         else:
             query["parentJob"] = parent_job
+    if parent_analysis is not None:
+        if parent_analysis == "none":
+            query["parentAnalysis"] = None
+        else:
+            query["parentAnalysis"] = parent_analysis
+    if root_execution is not None:
+        query["rootExecution"] = root_execution
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
@@ -288,14 +314,30 @@ def find_jobs(launched_by=None, executable=None, project=None,
         query['tags'] = {'$and': tags}
     if properties is not None:
         query['properties'] = properties
+    if include_subjobs is not True:
+        query["includeSubjobs"] = include_subjobs
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_jobs, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_executions, query, limit, return_handler, first_page_size, **kwargs)
+
+def find_jobs(*args, **kwargs):
+    """
+    This method is identical to :meth:`find_executions()` with the class constraint set to "job".
+    """
+    kwargs['classname'] = 'job'
+    return find_executions(*args, **kwargs)
+
+def find_analyses(*args, **kwargs):
+    """
+    This method is identical to :meth:`find_executions()` with the class constraint set to "analysis".
+    """
+    kwargs['classname'] = 'analysis'
+    return find_executions(*args, **kwargs)
 
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=None, explicit_perms=None,
-                  public=None, billed_to=None, limit=None, return_handler=False, **kwargs):
+                  public=None, billed_to=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -317,6 +359,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type billed_to: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
@@ -357,14 +401,14 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_projects, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_projects, query, limit, return_handler, first_page_size, **kwargs)
 
 def find_apps(name=None, name_mode='exact', category=None,
               all_versions=None, published=None,
               billed_to=None, created_by=None, developer=None,
               created_after=None, created_before=None,
               modified_after=None, modified_before=None,
-              describe=None, limit=None, return_handler=False, **kwargs):
+              describe=None, limit=None, return_handler=False, first_page_size=100, **kwargs):
     """
     :param name: Name of the app (also see *name_mode*)
     :type name: string
@@ -394,6 +438,8 @@ def find_apps(name=None, name_mode='exact', category=None,
     :type describe: boolean
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
+    :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
+    :type first_page_size: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
     :type return_handler: boolean
     :rtype: generator
@@ -444,7 +490,7 @@ def find_apps(name=None, name_mode='exact', category=None,
     if limit is not None:
         query["limit"] = limit
 
-    return _find(dxpy.api.system_find_apps, query, limit, return_handler, **kwargs)
+    return _find(dxpy.api.system_find_apps, query, limit, return_handler, first_page_size, **kwargs)
 
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
     kwargs["limit"] = 1 if more_ok else 2

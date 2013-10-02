@@ -78,6 +78,28 @@ find_by_properties_and_tags_args.add_argument('--tag',
                                               help=fill('Tag to match; repeat as necessary, e.g. "--tag tag1 --tag tag2" will require both tags', width_adjustment=-24),
                                               action='append')
 
+find_executions_args = argparse.ArgumentParser(add_help=False)
+find_executions_args.add_argument('--id', help=fill('Show only the job tree or job containing this job ID', width_adjustment=-24))
+find_executions_args.add_argument('--name', help=fill('Restrict the search by job name (accepts wildcards "*" and "?")', width_adjustment=-24))
+find_executions_args.add_argument('--user', help=fill('Username who launched the job (use "self" to ask for your own jobs)', width_adjustment=-24))
+find_executions_args.add_argument('--project', help=fill('Project context (output project), default is current project if set', width_adjustment=-24))
+find_executions_args.add_argument('--all-projects', '--allprojects', help=fill('Extend search to all projects', width_adjustment=-24), action='store_true')
+find_executions_args.add_argument('--app', '--applet', '--executable', dest='executable', help=fill('Applet or App ID that job is running', width_adjustment=-24))
+find_executions_args.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
+find_executions_args.add_argument('--origin', help=fill('Job ID of the top-level job', width_adjustment=-24)) # Redundant but might as well
+find_executions_args.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
+find_executions_args.add_argument('--created-after', help=fill('Date (e.g. 2012-01-01) or integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+find_executions_args.add_argument('--created-before', help=fill('Date (e.g. 2012-01-01) or integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+find_executions_args.add_argument('--no-subjobs', help=fill('Do not show any subjobs', width_adjustment=-24), action='store_true')
+find_executions_args.add_argument('--root-execution', '--root', help=fill('Execution ID of the top-level (user-initiated) job or analysis', width_adjustment=-24))
+find_executions_args.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
+find_executions_args.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
+find_executions_search_gp = find_executions_args.add_argument_group('Search mode')
+find_executions_search = find_executions_search_gp.add_mutually_exclusive_group()
+find_executions_search.add_argument('--trees', help=fill('Show entire job trees for all matching results (default)', width_adjustment=-24), action='store_true')
+find_executions_search.add_argument('--origin-jobs', help=fill('Search and display only top-level origin jobs', width_adjustment=-24), action='store_true')
+find_executions_search.add_argument('--all-jobs', help=fill('Search for jobs at all depths matching the query (no tree structure shown)', width_adjustment=-24), action='store_true')
+
 def process_properties_args(args):
     # Properties
     properties = None

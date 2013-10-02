@@ -26,6 +26,7 @@ from dxpy.scripts import dx_build_app
 from dxpy_testutil import DXTestCase
 import dxpy_testutil as testutil
 from dxpy.packages import requests
+from dxpy.exceptions import DXAPIError
 
 @contextmanager
 def chdir(dirname=None):
@@ -187,6 +188,8 @@ class TestDXClient(DXTestCase):
 
         # Path resolution is used
         run(u"dx find jobs --project :")
+        run(u"dx find executions --project :")
+        run(u"dx find analyses --project :")
         run(u"dx find data --project :")
 
     def test_dx_object_tagging(self):
@@ -1096,6 +1099,206 @@ class TestDXClientWorkflow(DXTestCase):
         # remove nonexistent stage
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
             run("dx update stage /myworkflow stage-123456789012345678901234 --name foo")
+
+class TestDXClientFind(DXTestCase):
+    def test_dx_find_data_by_tag(self):
+        record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
+                      run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
+
+        found_records = run(u"dx find data --tag baz --brief").strip()
+        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
+
+        found_records = run(u"dx find data --tag Ψ --tag foo --tag foobar --brief").strip()
+        self.assertEqual(found_records, '')
+
+        found_records = run(u"dx find data --tag foo --tag Ψ --brief").strip().split("\n")
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+    def test_dx_find_data_by_property(self):
+        record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar --property bar=").strip(),
+                      run("dx new record --brief --property Ψ=notworld --property foo=bar").strip()]
+
+        found_records = run(u"dx find data --property Ψ=world --property foo=bar --brief").strip()
+        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
+
+        # presence
+        found_records = run(u"dx find data --property Ψ --brief").strip().split("\n")
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+        found_records = run(u"dx find data --property Ψ --property foo=baz --brief").strip()
+        self.assertEqual(found_records, '')
+
+        found_records = run("dx find data --property Ψ --property foo=bar --brief").strip().split("\n")
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
+        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
+
+        # Empty string values should be okay
+        found_records = run("dx find data --property bar= --brief").strip()
+        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
+
+        # Errors parsing --property value
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find data --property ''")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find data --property foo=bar=baz")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find data --property =foo=bar=")
+        # Property keys must be nonempty
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find data --property =bar")
+
+    def test_dx_find_projects_by_tag(self):
+        other_project_id = run("dx new project other --brief").strip()
+        try:
+            run(u"dx tag : Ψ world")
+            proj_desc = dxpy.describe(dxpy.WORKSPACE_ID)
+            self.assertEqual(len(proj_desc["tags"]), 2)
+            self.assertIn(u"Ψ", proj_desc["tags"])
+            self.assertIn("world", proj_desc["tags"])
+
+            found_projects = run(u"dx find projects --tag Ψ --tag world --brief").strip().split('\n')
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
+
+            found_projects = run(u"dx find projects --tag Ψ --tag world --tag foobar --brief").strip().split('\n')
+            self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
+
+            run(u"dx tag " + other_project_id + u" Ψ world foobar")
+            found_projects = run("dx find projects --tag world --tag Ψ --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertIn(other_project_id, found_projects)
+        except:
+            raise
+        finally:
+            run("dx rmproject -y " + other_project_id)
+
+    def test_dx_find_projects_by_property(self):
+        other_project_id = run("dx new project other --brief").strip()
+        try:
+            run(u"dx set_properties : Ψ=world foo=bar bar=")
+            proj_desc = dxpy.api.project_describe(dxpy.WORKSPACE_ID, {"properties": True})
+            self.assertEqual(len(proj_desc["properties"]), 3)
+            self.assertEqual(proj_desc["properties"][u"Ψ"], "world")
+            self.assertEqual(proj_desc["properties"]["foo"], "bar")
+            self.assertEqual(proj_desc["properties"]["bar"], "")
+
+            run(u"dx set_properties " + other_project_id + u" Ψ=notworld foo=bar")
+
+            found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
+
+            found_projects = run(u"dx find projects --property bar= --brief").strip().split('\n')
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
+
+            # presence
+            found_projects = run(u"dx find projects --property Ψ --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertIn(other_project_id, found_projects)
+
+            found_projects = run(u"dx find projects --property Ψ --property foo=baz --brief").strip().split("\n")
+            self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertNotIn(other_project_id, found_projects)
+
+            found_projects = run("dx find projects --property Ψ --property foo=bar --brief").strip().split("\n")
+            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
+            self.assertIn(other_project_id, found_projects)
+        except:
+            raise
+        finally:
+            run("dx rmproject -y " + other_project_id)
+
+        # Errors parsing --property value
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find projects --property ''")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find projects --property foo=bar=baz")
+        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
+            run("dx find projects --property =foo=bar=")
+        # Property keys must be nonempty
+        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
+            run("dx find projects --property =bar")
+        # Empty string values should be okay
+        run("dx find projects --property bar=")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run a job')
+    def test_find_executions(self):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.0.0",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                                ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "execDepends": [{"name": "python-numpy"}]})
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
+                      "rowFetchChunk": 100}
+        dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
+        stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200})
+        dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input)
+
+        run("dx cd {project_id}:/".format(project_id=dxapplet.get_proj_id()))
+
+        # Wait for job to be created
+        executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
+        t = 0
+        while len(executions) > 0:
+            try:
+                dxpy.api.job_describe(executions[len(executions) - 1], {})
+                executions.pop()
+            except DXAPIError:
+                t += 1
+                if t > 20:
+                    raise Exception("Timeout while waiting for job to be created for an analysis stage")
+                time.sleep(1)
+
+        options = "--user=self"
+        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        options += " --project="+dxapplet.get_proj_id()
+        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        options += " --created-after=-150s --no-subjobs --applet="+dxapplet.get_id()
+        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        options2 = options + " --brief -n 9000"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 4)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 3)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 1)
+        options3 = options2 + " --origin="+dxjob.get_id()
+        self.assertEqual(len(run("dx find executions "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find jobs "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find analyses "+options3).splitlines()), 0)
+        options3 = options2 + " --root="+dxanalysis.get_id()
+        self.assertEqual(len(run("dx find executions "+options3).splitlines()), 2)
+        self.assertEqual(len(run("dx find jobs "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find analyses "+options3).splitlines()), 1)
+        options2 = options + " --origin-jobs"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        options2 = options + " --all-jobs"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        options2 = options + " --state=done"
+        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')

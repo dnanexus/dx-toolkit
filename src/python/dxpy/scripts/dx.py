@@ -149,12 +149,12 @@ from dxpy.utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj
 from dxpy.utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, LocalCompleter, NoneCompleter,
                                   InstanceTypesCompleter, ListCompleter, MultiCompleter)
 from dxpy.utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_desc,
-                                 get_io_desc, get_find_jobs_string)
+                                 get_io_desc, get_find_executions_string)
 from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg,
                               parser_dataobject_args, parser_single_dataobject_output_args,
                               process_properties_args,
                               find_by_properties_and_tags_args, process_find_by_property_args,
-                              process_dataobject_args, process_single_dataobject_output_args,
+                              process_dataobject_args, process_single_dataobject_output_args, find_executions_args,
                               set_env_from_args,
                               extra_args, process_extra_args, DXParserError,
                               exec_input_args)
@@ -171,7 +171,7 @@ else:
 # subcommand with further subcommands, then the second word must be an
 # appropriate sub-subcommand.
 class DXCLICompleter():
-    subcommands = {'find': ['jobs ', 'data ', 'projects ', 'apps '],
+    subcommands = {'find': ['data ', 'projects ', 'apps ', 'jobs ', 'executions ', 'analyses '],
                    'new': ['record ', 'gtable ', 'project '],
                    'add': ['developers ', 'users ', 'stage '],
                    'remove': ['developers ', 'users ', 'stage '],
@@ -1676,7 +1676,6 @@ def unset_properties(args):
     project, folderpath, entity_results = try_call(resolve_to_objects_or_project,
                                                    args.path,
                                                    args.all)
-
     properties = {}
     for prop in args.properties:
         properties[prop] = None
@@ -2117,9 +2116,9 @@ def export(args):
         parser.exit(1, fill('Unsupported format: "' + args.format + '".  For a list of supported formats, run "dx help export"') + '\n')
     exporters[args.format.lower()](args)
 
-def find_jobs(args):
+def find_executions(args):
     try_call(process_find_by_property_args, args)
-    if not args.origin_jobs and not args.all_jobs:
+    if not (args.origin_jobs or args.all_jobs):
         args.trees = True
     if args.origin_jobs and args.parent is not None and args.parent != 'none':
         return
@@ -2128,12 +2127,6 @@ def find_jobs(args):
     more_results = False
     include_io = (args.verbose and args.json) or args.show_outputs
     id_desc = None
-    need_to_requery = args.trees and any(arg is not None for arg in (args.state,
-                                                                     args.name,
-                                                                     args.tag,
-                                                                     args.properties,
-                                                                     args.created_after,
-                                                                     args.created_before))
 
     # Now start parsing flags
     if args.id is not None:
@@ -2157,174 +2150,104 @@ def find_jobs(args):
         if args.all_projects:
             project = None
     print_launched_by = (args.user is None) or args.verbose
-    query = {'launched_by': args.user,
+    query = {'classname': args.classname,
+             'launched_by': args.user,
              'executable': args.executable,
              'project': project,
              'state': args.state,
              'origin_job': origin,
              'parent_job': "none" if args.origin_jobs else args.parent,
-             'describe': {"io": include_io and not need_to_requery},
+             'describe': {"io": include_io},
              'created_after': args.created_after,
              'created_before': args.created_before,
              'name': args.name,
              'name_mode': 'glob',
              'tags': args.tag,
-             'properties': args.properties}
+             'properties': args.properties,
+             'include_subjobs': False if args.no_subjobs else True,
+             'root_execution': args.root_execution,
+             'limit': None if args.trees else args.num_results + 1}
     json_output = []                        # for args.json
-    output_ids = []                         # for args.brief
+
+    def build_tree(root, jobs_by_parent, job_descriptions):
+        tree, root_string = {}, ''
+        if args.json:
+            json_output.append(job_descriptions[root])
+        elif args.brief:
+            print root
+        else:
+            root_string = get_find_executions_string(job_descriptions[root],
+                                                     has_children=root in jobs_by_parent,
+                                                     show_outputs=args.show_outputs)
+            tree[root_string] = collections.OrderedDict()
+        for child_job in jobs_by_parent.get(root, {}):
+            subtree, subtree_root = build_tree(child_job, jobs_by_parent, job_descriptions)
+            if tree:
+                tree[root_string].update(subtree)
+        return tree, root_string
+
+    def process_tree(result, jobs_by_parent, job_descriptions):
+        tree, root = build_tree(result['id'], jobs_by_parent, job_descriptions)
+        if tree:
+            print format_tree(tree[root], root)
 
     try:
-        if args.all_jobs:
-            if args.id:
-                if args.json:
-                    json_output.append(id_desc)
-                elif args.brief:
-                    output_ids.append(args.id)
+        num_processed_results = 0
+        roots = collections.OrderedDict()
+        for job_result in dxpy.find_executions(**query):
+            if args.trees:
+                if args.classname == 'job':
+                    root = job_result['describe']['originJob']
                 else:
-                    print format_tree({}, get_find_jobs_string(id_desc, has_children=False, single_result=True,
-                                                               show_outputs=args.show_outputs))
+                    root = job_result['describe']['rootExecution']
+                if root not in roots:
+                    num_processed_results += 1
             else:
-                i = 0
-                for job_result in dxpy.find_jobs(**query):
-                    i += 1
-                    if (i > args.num_results):
-                        more_results = True
-                        break
-                    if args.json:
-                        json_output.append(job_result['describe'])
-                    elif args.brief:
-                        output_ids.append(job_result['id'])
-                    else:
-                        print format_tree({}, get_find_jobs_string(job_result['describe'], has_children=False,
-                                                                   single_result=True, show_outputs=args.show_outputs))
-        else:
-            origin_jobs = []  # List of origin job IDs (ordered by search results)
-            job_descs = {}    # job ID -> job desc
-            job_children = collections.OrderedDict() # job ID -> list of child job IDs
+                num_processed_results += 1
 
-            for job_result in dxpy.find_jobs(**query):
-                if args.origin_jobs:
-                    # Guaranteed that all results are origin jobs already
-                    if len(origin_jobs) == args.num_results:
-                        more_results = True
-                        break
-                    job_descs[job_result['id']] = job_result['describe']
-                    origin_jobs.append(job_result['id'])
+            if (num_processed_results > args.num_results):
+                more_results = True
+                break
 
-                if args.trees:
-                    if not need_to_requery:
-                        parent = job_result['describe']['parentJob']
-                        if parent is None and len(origin_jobs) == args.num_results:
-                            # Found N + 1 origin jobs
-                            more_results = True
-                            break
-                        elif parent is None:
-                            # Found <=N origin jobs
-                            origin_jobs.append(job_result['id'])
+            if args.json:
+                json_output.append(job_result['describe'])
+            elif args.trees:
+                roots[root] = root
+                if args.classname == 'analysis' and root.startswith('job-'):
+                    # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
+                    # and only the last analysis found is displayed.
+                    roots[root] = job_result['describe']['id']
+            elif args.brief:
+                print args.id
+            elif not args.trees:
+                print format_tree({}, get_find_executions_string(job_result['describe'],
+                                                                 has_children=False,
+                                                                 single_result=True,
+                                                                 show_outputs=args.show_outputs))
+        if args.trees:
+            jobs_by_parent, descriptions = collections.defaultdict(list), {}
+            root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
+            parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
+            query = {'classname': args.classname,
+                     'describe': {"io": include_io},
+                     'include_subjobs': False if args.no_subjobs else True,
+                     root_field: roots.keys()}
+            def process_job_result(job_result):
+                job_desc = job_result['describe']
+                parent = job_desc.get(parent_field) or job_desc.get('parentAnalysis')
+                descriptions[job_result['id']] = job_desc
+                if parent:
+                    jobs_by_parent[parent].append(job_result['id'])
 
-                        if len(origin_jobs) != args.num_results or job_result['describe']['originJob'] in origin_jobs:
-                            # Cache it if we might need it (in one of
-                            # the N trees, or haven't found all N
-                            # origin jobs yet)
-                            job_descs[job_result['id']] = job_result['describe']
+            for job_result in dxpy.find_executions(**query):
+                process_job_result(job_result)
 
-                            if parent is not None:
-                                if parent in job_children:
-                                    job_children[parent].append(job_result['id'])
-                                else:
-                                    job_children[parent] = [job_result['id']]
-                    else:
-                        # Will need to requery to get the whole tree,
-                        # so don't bother caching anything.
-
-                        # NOTE: these MIGHT NOT be ordered in order of
-                        # creation of origin jobs
-                        origin_job = job_result['describe']['originJob']
-                        if origin_job not in origin_jobs:
-                            if len(origin_jobs) == args.num_results:
-                                more_results = True
-                                break
-                            origin_jobs.append(origin_job)
-
-            if args.origin_jobs:
-                output_ids = origin_jobs # for args.brief output
-                for origin_job in origin_jobs:
-                    if args.json:
-                        json_output.append(job_descs[origin_job])
-                    elif not args.brief:
-                        print format_tree({}, get_find_jobs_string(job_descs[origin_job], has_children=False,
-                                                                   show_outputs=args.show_outputs))
-            else: # args.trees
-
-                def process_children(parent_job, parent_hash=None):
-                    has_children = parent_job in job_children
-                    if args.json:
-                        json_output.append(job_descs[parent_job])
-                    elif args.brief:
-                        output_ids.append(parent_job)
-                    else:
-                        parent_string = get_find_jobs_string(job_descs[parent_job],
-                                                             has_children=has_children,
-                                                             show_outputs=args.show_outputs)
-                        parent_hash[parent_string] = collections.OrderedDict()
-                    if has_children:
-                        for child_job in job_children[parent_job]:
-                            process_children(child_job,
-                                             parent_hash[parent_string] if parent_hash is not None else None)
-
-                def print_keys(hash_of_keys):
-                    for key in hash_of_keys:
-                        print key
-                        print_keys(hash_of_keys[key])
-
-                if need_to_requery:
-                    # TODO: Following bit attempts to use a threadpool
-                    # to parallelize the find jobs requests, but it
-                    # does not seem to be any faster.
-                    #
-                    # def iterate_sub_find_jobs_requests(origin_jobs):
-                    #     for origin_job in origin_jobs:
-                    #         yield dxpy.find_jobs, [], {'origin_job': origin_job, 'describe': {'io': include_io}}
-                    #
-                    # sub_find_jobs_responses = dxpy.utils.response_iterator(
-                    #     request_iterator=iterate_sub_find_jobs_requests(origin_jobs),
-                    #     worker_pool=dxpy.utils.get_futures_threadpool(max_workers=8),
-                    #     max_active_tasks=12)
-                    #
-                    # for find_jobs_response in sub_find_jobs_responses:
-                    #     for subjob in find_jobs_response:
-
-                    # Get all the descs
-
-                    for origin_job in origin_jobs:
-                        for subjob in dxpy.find_jobs(origin_job=origin_job, describe={'io': include_io}):
-                            job_descs[subjob['id']] = subjob['describe']
-
-                            parent = subjob['describe']['parentJob']
-                            if parent is not None:
-                                if parent in job_children:
-                                    job_children[parent].append(subjob['id'])
-                                else:
-                                    job_children[parent] = [subjob['id']]
-                    # Re-sort origin_jobs by their created time
-                    origin_jobs.sort(key=lambda jobid: -job_descs[jobid]['created'])
-
-                for origin_job in origin_jobs:
-                    job_strings = collections.OrderedDict() # for summary or verbose
-                    process_children(origin_job, job_strings if not args.json and not args.brief else None)
-
-                    if not args.json and not args.brief:
-                        if get_delimiter() is None:
-                            for origin_job in job_strings:
-                                print format_tree(job_strings[origin_job], root=origin_job)
-                        else:
-                            print_keys(job_strings)
-
+            for root in roots:
+                process_tree(descriptions[roots[root]], jobs_by_parent, descriptions)
         if args.json:
             print json.dumps(json_output, indent=4)
-        elif args.brief:
-            print "\n".join(output_ids)
-        elif more_results and get_delimiter() is None:
+
+        if more_results and get_delimiter() is None and not (args.brief or args.json):
             print fill("* More results not shown; use -n to increase number of results or --created-before to show older results", subsequent_indent='  ')
     except:
         err_exit()
@@ -2951,9 +2874,9 @@ def run(args):
 
                 result_choice = paginate_and_pick(itertools.chain(*iterators),
                                                   (lambda result:
-                                                       get_find_jobs_string(result["describe"],
-                                                                            has_children=False,
-                                                                            single_result=True)))
+                                                       get_find_executions_string(result["describe"],
+                                                                                  has_children=False,
+                                                                                  single_result=True)))
                 if result_choice == "none found":
                     parser.exit(1, "dx run --clone: No matching job found. Please use a valid job name or ID.\n")
                 elif result_choice == "none picked":
@@ -4114,7 +4037,8 @@ parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or in
 parser_find_apps.set_defaults(func=find_apps)
 register_subparser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
 
-parser_find_jobs = subparsers_find.add_parser('jobs', help='List jobs in your project', description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
+parser_find_jobs = subparsers_find.add_parser('jobs', help='List jobs in your project',
+                                              description=fill('Finds jobs with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.') + '''
 
 EXAMPLES
 
@@ -4126,30 +4050,33 @@ EXAMPLES
 
   $ dx find jobs --name bwa*
 ''',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
+                                              parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
+                                                       delim_arg, env_args, find_by_properties_and_tags_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx find jobs')
-parser_find_jobs.add_argument('--id', help=fill('Show only the job tree or job containing this job ID', width_adjustment=-24))
-parser_find_jobs.add_argument('--name', help=fill('Restrict the search by job name (accepts wildcards "*" and "?")', width_adjustment=-24))
-parser_find_jobs.add_argument('--user', help=fill('Username who launched the job (use "self" to ask for your own jobs)', width_adjustment=-24))
-parser_find_jobs.add_argument('--project', help=fill('Project context (output project), default is current project if set', width_adjustment=-24))
-parser_find_jobs.add_argument('--all-projects', '--allprojects', help=fill('Extend search to all projects', width_adjustment=-24), action='store_true')
-parser_find_jobs.add_argument('--app', '--applet', '--executable', dest='executable', help=fill('Applet or App ID that job is running', width_adjustment=-24))
-parser_find_jobs.add_argument('--state', help=fill('State of the job, e.g. "done", "failed"', width_adjustment=-24))
-parser_find_jobs.add_argument('--origin', help=fill('Job ID of the top-level (user-initiated) job', width_adjustment=-24)) # Redundant but might as well
-parser_find_jobs.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
-parser_find_jobs.add_argument('--created-after', help=fill('Date (e.g. 2012-01-01) or integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
-parser_find_jobs.add_argument('--created-before', help=fill('Date (e.g. 2012-01-01) or integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
-parser_find_jobs.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
-parser_find_jobs.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
-parser_find_jobs_search_gp = parser_find_jobs.add_argument_group('Search mode')
-parser_find_jobs_search = parser_find_jobs_search_gp.add_mutually_exclusive_group()
-parser_find_jobs_search.add_argument('--trees', help=fill('Show entire job trees for all matching results (default)', width_adjustment=-24), action='store_true')
-parser_find_jobs_search.add_argument('--origin-jobs', help=fill('Search and display only top-level origin jobs', width_adjustment=-24), action='store_true')
-parser_find_jobs_search.add_argument('--all-jobs', help=fill('Search for jobs at all depths matching the query (no tree structure shown)', width_adjustment=-24), action='store_true')
-parser_find_jobs.set_defaults(func=find_jobs)
+parser_find_jobs.set_defaults(func=find_executions, classname='job')
 parser_find_jobs.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
+
+parser_find_analyses = subparsers_find.add_parser('analyses', help='List analyses in your project',
+                                                  description=fill('Finds analyses with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
+                                                  parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
+                                                           delim_arg, env_args],
+                                                  formatter_class=argparse.RawTextHelpFormatter,
+                                                  prog='dx find analyses')
+parser_find_analyses.set_defaults(func=find_executions, classname='analysis')
+parser_find_analyses.completer = DXPathCompleter(expected='project')
+register_subparser(parser_find_analyses, subparsers_action=subparsers_find, categories='exec')
+
+parser_find_executions = subparsers_find.add_parser('executions', help='List executions (jobs and analyses) in your project',
+                                                    description=fill('Finds executions (jobs and analyses) with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
+                                                    parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
+                                                             delim_arg, env_args],
+                                                    formatter_class=argparse.RawTextHelpFormatter,
+                                                    prog='dx find executions')
+parser_find_executions.set_defaults(func=find_executions, classname=None)
+parser_find_executions.completer = DXPathCompleter(expected='project')
+register_subparser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')
 
 parser_find_data = subparsers_find.add_parser('data', help='Find data objects',
                                               description='Finds data objects with the given search parameters.  By default, restricts the search to the current project if set.  To search over all projects (excludes public projects), use --all-projects (overrides --project, --folder, --norecurse).',
