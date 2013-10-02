@@ -429,6 +429,21 @@ class DXFile(DXDataObject):
             report_progress_fn(self, len(data))
 
     def get_download_url(self, duration=24*3600, preauthenticated=False, filename=None, project=None, **kwargs):
+        """
+        :param duration: number of seconds for which the generated URL will be valid
+        :type duration: int
+        :param preauthenticated: if True, generates a 'preauthenticated' download URL, which embeds authentication info in the URL and does not require additional headers
+        :type preauthenticated: bool
+        :param filename: desired filename of the downloaded file
+        :type filename: str
+        :param project: ID of a project containing the file (the download URL should be associated with this project)
+        :type project: str
+        :returns: download URL and dict containing HTTP headers to be supplied with the request
+        :rtype: tuple (str, dict)
+
+        Obtains a URL that can be used to directly download the
+        associated file.
+        """
         args = {"duration": duration, "preauthenticated": preauthenticated}
         if filename is not None:
             args["filename"] = filename
