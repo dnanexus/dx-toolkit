@@ -483,7 +483,11 @@ class ExecutableInputs(object):
                         else:
                             input_value = {"$dnanexus_link": {"project": entity_result['describe']['project'],
                                                               "id": entity_result['id']}}
-            self.inputs[input_name].append(input_value)
+            if isinstance(self.inputs[input_name], list) and \
+               not isinstance(self.inputs[input_name], basestring):
+                self.inputs[input_name].append(input_value)
+            else:
+                self.inputs[input_name] = input_value
         else:
             # Input class is known.  Respect the "array" class.
 

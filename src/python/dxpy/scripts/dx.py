@@ -2651,7 +2651,10 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
             is_the_only_job=True):
     exec_inputs = ExecutableInputs(executable, input_name_prefix=input_name_prefix)
 
-    exec_inputs.update(args.input_from_clone, strip_prefix=False)
+    if args.input_json is None and args.filename is None:
+        # --input-json and --input-json-file completely override input
+        # from the cloned job
+        exec_inputs.update(args.input_from_clone, strip_prefix=False)
 
     if args.sys_reqs_from_clone and not isinstance(args.instance_type, basestring):
         args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in args.sys_reqs_from_clone.iteritems()},
@@ -2926,7 +2929,10 @@ def print_run_input_help():
   2) inputs listed individually with the -i/--input command line argument
   3) JSON given in --input-json
   4) JSON given in --input-json-file
-  5) any inputs set in a workflow (if running a workflow).
+  5) if cloning a job with --clone, the input that the job was run with
+     (this will get overridden completely if -j/--input-json or
+      -f/--input-json-file are provided)
+  6) default values set in a workflow or an executable's input spec
 '''
     print 'SPECIFYING INPUTS BY NAME\n\n' + fill('Use the -i/--input flag to specify each input field by ' + BOLD() + 'name' + ENDC() + ' and ' + BOLD() + 'value' + ENDC() + '.', initial_indent='  ', subsequent_indent='  ')
     print '''
