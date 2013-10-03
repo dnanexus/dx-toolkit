@@ -31,26 +31,29 @@
 
 class Chunk; // forward declaration
 
-/** The variables below are used for computing instanteneous transfer speed: 
-  *  1) instantaneousBytesAndTimestampQueue: A queue for keeping track of bytes transferred
-  *     (and the timestamp for the same).
-  *     (This queue is size limited to a fixed value (see chunk.cpp), so older
-  *      values are constantly flushed out, giving an "instanteous" speed).
-  *  2) sumOfInstantaneousBytes: maintains the sum of all bytes uploaded in current queue
-  *     This allow us to computer average quickly (without traversing the queue and computing
-  *     sum every time in uploadProgress function).
-  *  3) instantBytesMutex: Mutex for above 2 variables.
-  * Note: They are all intialized in chunk.cpp
+/*
+ * The variables below are used for computing instanteneous transfer speed: 
+ *  1) instantaneousBytesAndTimestampQueue: A queue for keeping track of bytes transferred
+ *     (and the timestamp for the same).
+ *     (This queue is size limited to a fixed value (see chunk.cpp), so older
+ *      values are constantly flushed out, giving an "instanteous" speed).
+ *  2) sumOfInstantaneousBytes: maintains the sum of all bytes uploaded in current queue
+ *     This allow us to computer average quickly (without traversing the queue and computing
+ *     sum every time in uploadProgress function).
+ *  3) instantBytesMutex: Mutex for above 2 variables.
+ * Note: They are all intialized in chunk.cpp
  */
 extern std::queue<std::pair<std::time_t, int64_t> > instantaneousBytesAndTimestampQueue;
 extern int64_t sumOfInstantaneousBytes;
 extern boost::mutex instantaneousBytesMutex;
 
-// Upload Agent string (declaration)
+/* Upload Agent string (declaration) */
 extern std::string userAgentString;
 
-// These variables are "extern"ed to enable throttling
-// (definition present in main.cpp)
+/*
+ * These variables are "extern"ed to enable throttling (definition present
+ * in main.cpp).
+ */
 extern unsigned int totalChunks;
 extern dx::BlockingQueue<Chunk*> chunksFinished;
 extern dx::BlockingQueue<Chunk*> chunksFailed;
@@ -106,13 +109,16 @@ public:
   /* This stores the md5 sum of chunk (computed by UA) */
   std::string expectedMD5;
   
-  ////// The variables below are to facilitate DNS round robin scheme in UA
-  // Host name, extracted from the URL returned by /file-xxxx/upload call
+  /*
+   * These variables (hostName and resolvedIP) facilitate DNS round robin
+   * scheme in UA.
+   */
+
+  /* Host name, extracted from URL returned by /file-xxxx/upload call */
   std::string hostName;
   
-  // Resolved IP for the hostName (using a random ip selector function)
+  /* Resolved IP for the hostName (using a random IP selector function) */
   std::string resolvedIP;
-  /////////////////////////////////////////////////////////////////////////
 
   void read();
   void compress();

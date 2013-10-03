@@ -33,7 +33,8 @@ string findRefGenomeProjID() {
     params["billTo"] = "org-dnanexus";
     JSON findResult = systemFindProjects(params);
     if (findResult["results"].size() != 1)
-      throw runtime_error("Expected name = 'Reference Genomes', and, billTo = 'org-dnanexus', to return exactly one public project, but instead recieved " + boost::lexical_cast<string>(findResult["results"].size()) + " projects instead. Unable to resolve --ref-genome parameter.");
+      throw runtime_error("Expected name = 'Reference Genomes', and, billTo = 'org-dnanexus', to return exactly one public project, but instead received " +
+                          boost::lexical_cast<string>(findResult["results"].size()) + " projects instead. Unable to resolve --ref-genome parameter.");
     return findResult["results"][0]["id"].get<string>();
   } catch (DXAPIError &e) {
     DXLOG(logINFO) << "Call to findProjects failed." << endl;

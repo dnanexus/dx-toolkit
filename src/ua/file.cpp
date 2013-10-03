@@ -78,9 +78,13 @@ double percentageComplete(const dx::JSON &parts, const int64_t size, const int64
   return (double(totalBytesUploaded) / size) * 100.0;
 }
 
-File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_, const bool toCompress_, const bool tryResuming, const string &mimeType_, const int64_t chunkSize_, const unsigned fileIndex_)
-  : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_), failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_), chunkSize(chunkSize_), 
-  bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID() {
+File::File(const string &localFile_, const string &projectSpec_, const string &folder_, const string &name_,
+           const bool toCompress_, const bool tryResuming, const string &mimeType_,
+           const int64_t chunkSize_, const unsigned fileIndex_)
+  : localFile(localFile_), projectSpec(projectSpec_), folder(folder_), name(name_),
+    failed(false), waitOnClose(false), closed(false), toCompress(toCompress_), mimeType(mimeType_),
+    chunkSize(chunkSize_), bytesUploaded(0), fileIndex(fileIndex_), atleastOnePartDone(false), jobID() {
+
   init(tryResuming);
 }
 

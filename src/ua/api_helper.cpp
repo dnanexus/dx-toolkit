@@ -47,7 +47,7 @@ void checkForUpdates() {
 #if WINDOWS_BUILD
   platform = "windows";
 #elif LINUX_BUILD
-#if OLD_KERNEL_SUPPORT 
+#if OLD_KERNEL_SUPPORT
   platform = "linux-old-kernel";
 #else
   platform = "linux";
@@ -68,7 +68,7 @@ void checkForUpdates() {
     DXLOG(logINFO) << " failure (call failed), reason: '" << aerr.what() << "'";
     return;
   }
-  
+
   if (res["update"]["available"] == false) {
     DXLOG(logINFO) << " Hurray! Your copy of Upload Agent is up to date.";
     return;
@@ -128,7 +128,7 @@ string urlEscape(const string &str) {
 boost::mutex resolveProjectMutex;
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
- * Important: Only projects with >=CONTRIBUTE access are considered 
+ * Important: Only projects with >=CONTRIBUTE access are considered
  *            for resolution. Thus, this function is guranteed to do
  *            exactly one of the following:
  *            1) Throw an error if no such project exist.
@@ -169,12 +169,12 @@ string resolveProject(const string &projectSpec) {
   } catch (DXAPIError &e) {
     // Ignore the error (we will check for matching project name)
   }
-  
+
   try {
     JSON params(JSON_OBJECT);
     params["name"] = projectSpec;
     params["level"] = "CONTRIBUTE";
-    
+
     JSON findResult = systemFindProjects(params);
     JSON projects = findResult["results"];
     for (unsigned i = 0; i < projects.size(); ++i) {
@@ -182,7 +182,7 @@ string resolveProject(const string &projectSpec) {
     }
   } catch (DXAPIError &e) {
     DXLOG(logINFO) << "Call to findProjects failed.";
-    throw;  
+    throw;
   }
 
   if (matchingProjectIdToName.size() == 0) {
@@ -198,7 +198,7 @@ string resolveProject(const string &projectSpec) {
     }
     throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project (multiple matches found)");
   }
-  
+
   DXLOG(logINFO) << " found project: \"" << matchingProjectIdToName.begin()->second << "\" (ID = \"" << matchingProjectIdToName.begin()->first << "\") corresponding to project identifier \"" << projectSpec << "\"";
   return (cache[projectSpec] = matchingProjectIdToName.begin()->first);
 }
@@ -267,7 +267,7 @@ string createFileObject(const string &project, const string &folder, const strin
   return result["id"].get<string>();
 }
 
-/* 
+/*
  * Returns output["results"] array from /findDataObjects call, to search for
  * all files in "project" with the given file signature. Describe output
  * is also returned.

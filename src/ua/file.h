@@ -92,22 +92,22 @@ public:
    * As the name suggests, any succesful part upload will set it to true */
   bool atleastOnePartDone;
   
-  /* - Job ID of the import app called for this file, OR.
-     - String "failed", if the import app could not be invoked for some reason (e.g., file upload couldn't finish, no ref genome found, etc)
-     - Empty string, if no import app was asked by user to be called */
+  /*
+   * Job ID of the import app called for this file, OR:
+   * - the string "failed" if the import app could not be invoked for some reason (e.g., file upload couldn't finish, no ref genome found, etc)
+   * - the empty string if no import app was asked by user to be called
+   */
   std::string jobID;
 
   friend std::ostream &operator<<(std::ostream &out, const File &file);
   
-  /* Returns a string with all the input parameteres serialized in order 
-   * (with space as delimiter). This string is used for identifying whether 
-   * an upload can be resumed or not 
+  /* 
+   * Returns a string with all the input parameters serialized in order
+   * (with space as delimiter). This string is used for identifying whether
+   * an upload can be resumed or not.
    */
   static std::string createResumeInfoString(const int64_t fileSize, const int64_t modifiedTimestamp, const bool toCompress, const int64_t chunkSize, const std::string &path);
 
-/*  ~File() {
-    delete bytesUploadedMutex;
-  }*/
 };
 
 #endif
