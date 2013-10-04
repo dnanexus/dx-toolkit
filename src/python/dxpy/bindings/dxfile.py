@@ -39,7 +39,8 @@ if dxpy.JOB_ID:
     DEFAULT_BUFFER_SIZE = 1024*1024*96
 
 class DXFile(DXDataObject):
-    '''
+    '''Remote file object handler.
+
     :param dxid: Object ID
     :type dxid: string
     :param project: Project ID
@@ -47,7 +48,16 @@ class DXFile(DXDataObject):
     :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively
     :type mode: string
 
-    Remote file object handler.
+    .. note:: The attribute values below are current as of the last time
+              :meth:`~dxpy.bindings.DXDataObject.describe` was run.
+              (Access to any of the below attributes causes
+              :meth:`~dxpy.bindings.DXDataObject.describe` to be called
+              if it has never been called before.)
+
+    .. py:attribute:: media
+
+       String containing the Internet Media Type (also known as MIME type
+       or Content-type) of the file.
 
     .. automethod:: _new
 
