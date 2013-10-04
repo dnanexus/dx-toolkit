@@ -123,6 +123,13 @@ class TestDXTabCompletion(unittest.TestCase):
     def test_option_completion(self):
         self.assert_completions("dx -", ["-h", "--help", "--env-help"])
 
+    def test_folder_completion(self):
+        dxproj = dxpy.DXProject()
+        dxproj.new_folder('/foo/bar', parents=True)
+        self.assert_completions("dx ls ", ["foo/"])
+        self.assert_completions("dx ls fo", ["foo/"])
+        self.assert_completions("dx ls foo/", ["foo/bar/"])
+
     def test_applet_completion(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(runSpec={"code": "placeholder", "interpreter": "bash"},

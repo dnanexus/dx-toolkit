@@ -105,8 +105,8 @@ def get_folder_matches(text, delim_pos, dxproj, folderpath):
                                               only='folders')['folders'])
         if text != '' and delim_pos != len(text) - 1:
             folder_names += ['.', '..']
-        prefix = text[:delim_pos+1]
-        return [prefix+f+'/' for f in folder_names if f.startswith(text)]
+        prefix = text[:delim_pos + 1]
+        return [prefix + f + '/' for f in folder_names if (prefix + f + '/').startswith(text)]
     except:
         return []
 
