@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
+import py_compile
 import re
 import shutil
 import tempfile
@@ -144,6 +145,12 @@ parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", d
 
 parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
 parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+")", nargs=argparse.REMAINDER)
+
+class DXSyntaxError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
 
 def _get_timestamp_version_suffix(version):
     if "+" in version:
@@ -270,8 +277,7 @@ def _check_syntax(code, lang, enforce=True):
     """
     Checks that the code whose text is in CODE parses as LANG.
 
-    Raises subprocess.CalledProcessError if there is a problem, and
-    "enforce" is True.
+    Raises DXSyntaxError if there is a problem and "enforce" is True.
     """
     # This function needs the language to be explicitly set, so we can
     # generate an appropriate temp filename.
@@ -297,11 +303,10 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
 
     Raises IOError if the file cannot be read.
 
-    Raises subprocess.CalledProcessError if there is a problem, and
-    "enforce" is True.
+    Raises DXSyntaxError if there is a problem and "enforce" is True.
     """
     def check_python(filename):
-        subprocess.check_output([sys.executable, "-m", "py_compile", filename], stderr=subprocess.STDOUT)
+        py_compile.compile(filename, cfile="/dev/null", doraise=True)
     def check_bash(filename):
         subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
 
@@ -328,7 +333,12 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
         for line in e.output.strip("\n").split("\n"):
             print >> sys.stderr, "  " + line.rstrip("\n")
         if enforce:
-            raise
+            raise DXSyntaxError(filename + " has a syntax error")
+    except py_compile.PyCompileError as e:
+        print >> sys.stderr, filename + " has a syntax error! Interpreter output:"
+        print >> sys.stderr, "  " + e.msg.strip()
+        if enforce:
+            raise DXSyntaxError(e.msg.strip())
 
 def _verify_app_source_dir(src_dir, enforce=True):
     """Performs syntax and lint checks on the app source.
@@ -352,12 +362,12 @@ def _verify_app_source_dir(src_dir, enforce=True):
                 except IOError as e:
                     raise dxpy.app_builder.AppBuilderException(
                         'Could not open runSpec.file=%r. The problem was: %s' % (entry_point_file, e))
-                except subprocess.CalledProcessError as e:
+                except DXSyntaxError:
                     raise dxpy.app_builder.AppBuilderException('Entry point file %s has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.' % (entry_point_file,))
             elif "code" in manifest['runSpec']:
                 try:
                     _check_syntax(manifest['runSpec']['code'], lang=manifest['runSpec']['interpreter'], enforce=enforce)
-                except subprocess.CalledProcessError:
+                except DXSyntaxError:
                     raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.')
 
         if 'execDepends' in manifest['runSpec']:
@@ -402,7 +412,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
                         'Could not open file in resources directory %r. The problem was: %s' %
                         (os.path.join(dirpath, filename), e)
                     )
-                except subprocess.CalledProcessError:
+                except DXSyntaxError:
                     # Suppresses errors from _check_file_syntax so we
                     # only print a nice error message
                     files_with_problems.append(os.path.join(dirpath, filename))

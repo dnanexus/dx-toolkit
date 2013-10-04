@@ -978,6 +978,8 @@ class TestDXBuildApp(DXTestCase):
         self.assertEqual(app_describe["version"], "1.0.0")
         self.assertEqual(app_describe["name"], "minimal_app")
         self.assertFalse("published" in app_describe)
+        self.assertTrue(os.path.exists(os.path.join(app_dir, 'code.py')))
+        self.assertFalse(os.path.exists(os.path.join(app_dir, 'code.pyc')))
 
     @unittest.skipUnless(testutil.TEST_CREATE_APPS,
                          'skipping test that would create apps')
