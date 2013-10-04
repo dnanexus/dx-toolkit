@@ -76,7 +76,70 @@ class DXObject(object):
             raise AttributeError()
 
 class DXDataObject(DXObject):
-    """Abstract base class for all remote data object handlers."""
+    """Abstract base class for all remote data object handlers.
+
+    .. note:: The attribute values below are current as of the last time
+              :meth:`~dxpy.bindings.DXDataObject.describe` was run.
+              (Access to any of the below attributes causes
+              :meth:`~dxpy.bindings.DXDataObject.describe` to be called
+              if it has never been called before.)
+
+    .. py:attribute:: name
+
+       String giving the name of the object
+
+    .. py:attribute:: folder
+
+       String giving the full path to the folder containing the object
+
+    .. py:attribute:: types
+
+       List of strings indicating the types associated with the object
+
+    .. py:attribute:: state
+
+       A string containing one of the values "open", "closing", or "closed"
+
+    .. py:attribute:: hidden
+
+       Boolean indicating whether the object is hidden or not
+
+    .. py:attribute:: links
+
+       List of strings indicating object IDs that are pointed to by the
+       object
+
+    .. py:attribute:: sponsored
+
+       Boolean indicating whether the object is sponsored by DNAnexus
+
+    .. py:attribute:: tags
+
+       List of strings indicating the tags that are assocated with the
+       object
+
+    .. py:attribute:: created
+
+       Timestamp at which the object was created, in milliseconds since
+       January 1, 1970 at midnight (UTC).
+
+    .. py:attribute:: modified
+
+       Timestamp at which the object was last modified, in milliseconds
+       since January 1, 1970 at midnight (UTC).
+
+    .. py:attribute:: createdBy
+
+       dict containing the following keys and values:
+
+       * user: the string ID of the user who created the object or
+         launched the job that created it
+       * job (optional): the string ID of the job that created the
+         object, if a job created the object
+       * executable (optional): the string ID of the app or applet that
+         the job was running, if a job created the object
+
+    """
 
     def __init__(self, dxid=None, project=None):
         if not hasattr(self, '_class'):
