@@ -1439,13 +1439,11 @@ def main(in1):
             u"dx new project '{p}' --brief".format(p="Temporary working project"), shell=True).strip()
         try:
             subprocess.check_output("dx select {p}".format(p=temp_project_id), shell=True)
-            subprocess.check_output(
-                "dx build -d {p}: {app_dir}".format(p=temp_project_id, app_dir=app_dir), shell=True)
-            subprocess.check_output(
-                "dx build --archive -d {p}: {app_dir}".format(p=temp_project_id, app_dir=app_dir), shell=True)
+            run("dx build -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
+            run("dx build --archive -d {p}: {app_dir}".format(p=self.proj_id, app_dir=app_dir))
         finally:
             subprocess.check_output("dx select {p}".format(p=self.proj_id), shell=True)
-            subprocess.check_output("dx rmproject {p}".format(p=temp_project_id), shell=True)
+            subprocess.check_output("dx rmproject --yes {p}".format(p=temp_project_id), shell=True)
 
 
 class TestDXBuildReportHtml(unittest.TestCase):
