@@ -1198,7 +1198,7 @@ def describe(args):
             json_input["permissions"] = True
             json_input['appCaches'] = True
         if entity_results is None:
-            if args.path[-1] == ':':
+            if args.path[-1] == ':' and project is not None:
                 # It is the project.
                 try:
                     desc = dxpy.DXHTTPRequest('/' + project + '/describe',

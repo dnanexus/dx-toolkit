@@ -646,6 +646,24 @@ class TestDXClient(DXTestCase):
             print str(shell1.buffer)
             print "*** End test_dxpy_session_isolation debug data"
 
+class TestDXDescribe(DXTestCase):
+    def test_projects(self):
+        run("dx describe :")
+        run("dx describe " + self.project)
+        run("dx describe " + self.project + ":")
+
+        # need colon to recognize as project name
+        with self.assertSubprocessFailure(exit_code=3):
+            run(u"dx describe dxclient_test_pröject")
+
+        # bad project name
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe dne:")
+
+        # nonexistent project ID
+        with self.assertSubprocessFailure(exit_code=3):
+            run("dx describe project-123456789012345678901234")
+
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping tests that would run jobs')
 class TestDXRun(DXTestCase):
