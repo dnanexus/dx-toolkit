@@ -579,13 +579,16 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
             # The following will raise if no results could be found
             results = resolve_job_ref(project, entity_name, describe=describe)
         else:
-            results = list(dxpy.find_data_objects(project=project,
-                                                  folder=folderpath,
-                                                  name=entity_name,
-                                                  name_mode='glob',
-                                                  recurse=False,
-                                                  describe=describe,
-                                                  visibility='either'))
+            try:
+                results = list(dxpy.find_data_objects(project=project,
+                                                      folder=folderpath,
+                                                      name=entity_name,
+                                                      name_mode='glob',
+                                                      recurse=False,
+                                                      describe=describe,
+                                                      visibility='either'))
+            except BaseException as details:
+                raise ResolutionError(str(details))
         if len(results) == 0:
             # Could not find it as a data object.  If anything, it's a
             # folder.

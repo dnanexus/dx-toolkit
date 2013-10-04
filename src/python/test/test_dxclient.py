@@ -664,6 +664,12 @@ class TestDXDescribe(DXTestCase):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe project-123456789012345678901234")
 
+    def test_bad_current_project(self):
+        with self.assertSubprocessFailure(stderr_regexp='No matches found', exit_code=3):
+            run("dx describe nonexistent --project-context-id foo")
+
+        run("dx describe " + self.project + " --project-context-id foo")
+
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping tests that would run jobs')
 class TestDXRun(DXTestCase):
