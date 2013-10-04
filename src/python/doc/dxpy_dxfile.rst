@@ -86,7 +86,7 @@ that is, you may use the object without a "with" block (and omit the
    file to finish closing. If the file you are writing is one of the
    outputs of your app or applet, you can use `job-based object
    references
-   <https://wiki.dnanexus.com/API-Specification-v1.0.0/Jobs#Job-based-Object-References>`_,
+   <https://wiki.dnanexus.com/API-Specification-v1.0.0/Job-Input-and-Output#Job-based-Object-References>`_,
    which will make downstream jobs wait for closing to finish before
    they can begin. However, if you intend to subsequently read from the
    file in the same process, you will need to call
