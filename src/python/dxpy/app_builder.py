@@ -244,7 +244,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                     proj.new_folder(archive_folder)
 
                 proj.move(objects=[result['id']], destination=archive_folder)
-                archived_applet = dxpy.DXApplet(result['id'])
+                archived_applet = dxpy.DXApplet(result['id'], project=dest_project)
                 now = datetime.datetime.fromtimestamp(archived_applet.created/1000).ctime()
                 new_name = archived_applet.name + " ({d})".format(d=now)
                 archived_applet.rename(new_name)

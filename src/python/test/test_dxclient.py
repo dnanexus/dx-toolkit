@@ -1425,6 +1425,28 @@ def main(in1):
         # Verify that the bundled depends appear in the same folder.
         self.assertEqual(resources_file_describe['folder'], '/subfolder')
 
+    def test_archive_in_another_project(self):
+        app_spec = {
+            "name": "archive_in_another_project",
+            "dxapi": "1.0.0",
+            "runSpec": {"file": "code.py", "interpreter": "python2.7"},
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+            }
+        app_dir = self.write_app_directory("archive_in_another_project", json.dumps(app_spec), "code.py")
+        temp_project_id = subprocess.check_output(
+            u"dx new project '{p}' --brief".format(p="Temporary working project"), shell=True).strip()
+        try:
+            subprocess.check_output("dx select {p}".format(p=temp_project_id), shell=True)
+            subprocess.check_output(
+                "dx build -d {p}: {app_dir}".format(p=temp_project_id, app_dir=app_dir), shell=True)
+            subprocess.check_output(
+                "dx build --archive -d {p}: {app_dir}".format(p=temp_project_id, app_dir=app_dir), shell=True)
+        finally:
+            subprocess.check_output("dx select {p}".format(p=self.proj_id), shell=True)
+            subprocess.check_output("dx rmproject {p}".format(p=temp_project_id), shell=True)
+
 
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
