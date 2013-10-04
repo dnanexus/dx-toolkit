@@ -235,7 +235,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 # TODO: test me
                 dxpy.DXProject(dest_project).remove_objects([result['id']])
             elif archive:
-                logger.info("Archiving applet %s" % (result['id']))
+                logger.debug("Archiving applet %s" % (result['id']))
                 proj = dxpy.DXProject(dest_project)
                 archive_folder = '/.Applet_archive'
                 try:
@@ -248,6 +248,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 now = datetime.datetime.fromtimestamp(archived_applet.created/1000).ctime()
                 new_name = archived_applet.name + " ({d})".format(d=now)
                 archived_applet.rename(new_name)
+                logger.info("Archived applet %s to %s:\"%s/%s\"" % (result['id'], dest_project, archive_folder, new_name))
             else:
                 raise AppBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) or --archive (-a) options were not given" % (destination_path, result['id']))
 
