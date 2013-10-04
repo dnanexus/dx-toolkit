@@ -94,7 +94,7 @@ namespace dx {
 
     /**
      * Creates a new remote applet with the input hash, as specified in the <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew">/applet/new</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet/new">/applet/new</a>
      * API method.
      *
      * If <code>inp["project"]</code> is missing, then <code>config::CURRENT_PROJECT()</code> will be used as
@@ -108,7 +108,7 @@ namespace dx {
      * Runs this applet with the specified input and returns a handler for the resulting job.
      *
      * See the <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Frun">/applet-xxxx/run</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet-xxxx/run">/applet-xxxx/run</a>
      * API method for more info.
      *
      * @param applet_input A hash of name/value pairs specifying the input that the app is to be launched with.
@@ -141,7 +141,7 @@ namespace dx {
 
     /**
      * Returns the full specification of the applet, as specified in the <a
-     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget">/applet-xxxx/get</a>
+     * href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet-xxxx/get">/applet-xxxx/get</a>
      * API method.
      *
      * @return JSON hash containing the full specification of the applet

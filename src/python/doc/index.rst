@@ -12,7 +12,7 @@ available to Python apps running within the DNAnexus Execution
 Environment, and can also be used in scripts you run that access the API
 from the outside. Before you start digging in, you may want to take a
 look at the `Introduction to the DNAnexus Platform
-<https://wiki.dnanexus.com/Introduction-to-the-DNAnexus-Platform>`_. The
+<https://wiki.dnanexus.com/Home>`_. The
 following references may also be useful to you as you develop your own
 scripts and apps.
 
