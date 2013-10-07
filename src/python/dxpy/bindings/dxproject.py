@@ -65,11 +65,11 @@ class DXContainer(DXObject):
         if isinstance(self, DXProject):
             if re.match("project-[0-9a-zA-Z]{24}", dxid) is None or \
                     len(dxid) != len('project') + 25:
-                raise DXError("Given project ID does not match expected format")
+                raise DXError("Given project ID %r does not match expected format" % (dxid,))
         else:
             if re.match("container-[0-9a-zA-Z]{24}", dxid) is None or \
                     len(dxid) != len('container') + 25:
-                raise DXError("Given container ID does not match expected format")
+                raise DXError("Given container ID %r does not match expected format" % (dxid,))
 
         self._dxid = dxid
 
