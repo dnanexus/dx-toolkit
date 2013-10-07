@@ -151,7 +151,7 @@ def upload_resources(src_dir, project=None, folder='/'):
             subprocess.check_call(['tar', '-C', resources_dir, '-czf', tar_fh.name, '.'])
             if 'folder' in applet_spec:
                 try:
-                    dxpy.DXProject(dest_project).new_folder(applet_spec['folder'], parents=True)
+                    dxpy.get_handler(dest_project).new_folder(applet_spec['folder'], parents=True)
                 except dxpy.exceptions.DXAPIError:
                     pass # TODO: make this better
             target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
