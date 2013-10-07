@@ -87,8 +87,7 @@ class DXApp(DXObject, DXExecutable):
         if dxid is not None:
             if name is not None or alias is not None:
                 raise DXError("Did not expect name or alias to be given if dxid is given")
-            if re.match("app-[0-9a-zA-Z]{24}", dxid) is None or \
-                    len(dxid) != len('app') + 25:
+            if not re.match("^app-[0-9a-zA-Z]{24}$", dxid):
                 raise DXError("Given app ID does not match expected format")
             self._dxid = dxid
         elif name is not None:
