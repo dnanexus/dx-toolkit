@@ -2884,7 +2884,7 @@ def print_run_help(executable="", alias=None):
                                 stanzas.append(format_choices_or_suggestions('Suggestions:',
                                                                              param['suggestions'],
                                                                              param['class']))
-                            param_string += "\n\n".join(stanzas) + "\n"
+                            param_string += "\n\n".join(stanzas) + ("\n" if stanzas else "")
 
                             if param['name'] in advanced_inputs:
                                 advanced_inputs_help += param_string
