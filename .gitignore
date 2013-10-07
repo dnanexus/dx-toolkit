@@ -16,6 +16,7 @@
 /src/python/coverage-reports/
 /src/python/coverage-*.egg/
 /src/python/nose-*.egg/
+/src/python/pexpect_*/
 /src/ruby/lib/dxruby/version.rb
 /src/dx-wig-to-wiggle/build
 /src/R/install_dxR_deps.Rout
