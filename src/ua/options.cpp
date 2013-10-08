@@ -243,13 +243,20 @@ void Options::validate() {
   if (!files.empty()) {
     // - Check that all file actually exist
     // - Resolve all symlinks
+    // - Ensure that the inputs are regular files (not directories, etc.)
     for (unsigned i = 0; i < files.size(); ++i) {
-      fs::path p (files[i]);
+      fs::path p(files[i]);
       if (!fs::exists(p)) {
         throw runtime_error("File \"" + files[i] + "\" does not exist");
       }
       if (fs::is_symlink(p)) {
-        files[i] = fs::read_symlink(p).string(); 
+        p = fs::read_symlink(p);
+        files[i] = p.string();
+      }
+      if (fs::is_directory(p)) {
+        throw runtime_error("Argument " + files[i] + " is a directory; recursive directory upload is not currently supported.");
+      } else if (!fs::is_regular_file(p)) {
+        throw runtime_error("Argument " + files[i] + " is not a regular file.");
       }
     }
   } else {
