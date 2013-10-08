@@ -858,6 +858,8 @@ def main(**kwargs):
             parser.error('--remote cannot be combined with --dry-run')
         if args.overwrite:
             parser.error('--remote cannot be combined with --overwrite/-f')
+        if args.archive:
+            parser.error('--remote cannot be combined with --archive/-a')
 
         # The following flags are probably not useful in conjunction
         # with --remote.
