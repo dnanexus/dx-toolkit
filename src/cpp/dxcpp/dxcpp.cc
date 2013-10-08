@@ -196,7 +196,7 @@ namespace dx {
           // We are here => The request went thru, we got 200 and a response
           string clHeader; // content-length header
           contentLengthMissing = !req.respHeader.getHeaderString("Content-Length", clHeader);
-          contentLengthMismatch = !contentLengthMissing && (boost::lexical_cast<int>(clHeader) != req.respData.size());
+          contentLengthMismatch = !contentLengthMissing && (boost::lexical_cast<size_t>(clHeader) != req.respData.size());
           if (contentLengthMismatch) {
             // This is an error situation for us, retry only if explicitly asked
             toRetry = alwaysRetry;
