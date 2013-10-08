@@ -17,17 +17,15 @@
 #ifndef UA_CHUNK_H
 #define UA_CHUNK_H
 
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <ctime>
 #include <queue>
+#include <ctime>
+
 #include <boost/thread.hpp>
+
+#include "dxjson/dxjson.h"
+#include "dxcpp/dxlog.h"
 #include "dxcpp/bqueue.h"
 #include "SimpleHttp.h"
-#include "dxcpp/dxlog.h"
-#include "dxjson/dxjson.h"
 
 class Chunk; // forward declaration
 
