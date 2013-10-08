@@ -192,7 +192,7 @@ void uploadChunks(vector<File> &files) {
 
       bool uploaded = false;
       try {
-        c->upload();
+        c->upload(opt);
         uploaded = true;
       } catch (runtime_error &e) {
         ostringstream msg;
@@ -217,7 +217,7 @@ void uploadChunks(vector<File> &files) {
         c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds", logWARNING);
         if (!opt.noRoundRobinDNS) {
           boost::mutex::scoped_lock forceRefreshLock(forceRefreshDNSMutex);
-          c->log("Setting forceRefreshDNS = true in main.cpp::upload()");
+          c->log("Setting forceRefreshDNS = true in main.cpp:uploadChunks()");
           forceRefreshDNS = true; // refresh the DNS list in next call to getRandomIP() 
         }
         --(c->triesLeft);

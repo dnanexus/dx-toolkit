@@ -130,10 +130,7 @@ void File::init(const bool tryResuming) {
       }
       DXLOG(logINFO) << "A resume target is found .. " << endl;
       cerr << "Signature of file " << localFile << " matches remote file: " << findResult[0]["describe"]["name"].get<string>() 
-           << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it";
-      if (opt.verbose) {
-        cerr << endl;
-      }
+           << " (" << fileID << "), which is " << completePercentage << "% complete ... will resume uploading to it" << endl;
       DXLOG(logINFO) << "Remote resume target is in state: \"" << state << "\"";
     }
     if (findResult.size() > 1) {

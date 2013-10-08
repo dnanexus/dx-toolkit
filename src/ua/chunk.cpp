@@ -27,7 +27,6 @@ extern "C" {
 #include "compress.h"
 }
 
-#include "options.h" // to get value of variable opt.noRoundRobinDNS & opt.throttle
 #include "round_robin_dns.h"
 
 using namespace std;
@@ -266,14 +265,14 @@ void upload_cleanup(CURL **curl, curl_slist **l1, curl_slist **l2) {
   }
 }
 
-void Chunk::upload() {
+void Chunk::upload(Options &opt) {
   CURL *curl = NULL;
   struct curl_slist *slist_resolved_ip = NULL;
   struct curl_slist *slist_headers = NULL;
   long responseCode;
   try {
     uploadOffset = 0;
-    pair<string, dx::JSON> uploadResp = uploadURL();
+    pair<string, dx::JSON> uploadResp = uploadURL(opt);
     const string &url = uploadResp.first;
     const dx::JSON &headersToSend = uploadResp.second;
 
@@ -468,7 +467,7 @@ static bool attemptExplicitDNSResolve(const string &host) {
   return !boost::regex_search(host.begin(), host.end(), what, expression, boost::match_default);
 }
 
-pair<string, dx::JSON> Chunk::uploadURL() {
+pair<string, dx::JSON> Chunk::uploadURL(Options &opt) {
   dx::JSON params(dx::JSON_OBJECT);
   params["index"] = index + 1;  // minimum part index is 1
   log("Generating Upload URL for index = " + boost::lexical_cast<string>(params["index"].get<int>()));

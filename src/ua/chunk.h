@@ -26,6 +26,8 @@
 #include "dxcpp/dxlog.h"
 #include "dxcpp/bqueue.h"
 
+#include "options.h"
+
 class Chunk; // forward declaration
 
 /*
@@ -119,7 +121,7 @@ public:
 
   void read();
   void compress();
-  void upload();
+  void upload(Options &opt);
   void clear();
 
   void log(const std::string &message, const dx::LogLevel level = dx::logINFO) const;
@@ -127,7 +129,7 @@ public:
 
 private:
 
-  std::pair<std::string, dx::JSON> uploadURL();
+  std::pair<std::string, dx::JSON> uploadURL(Options &opt);
 };
 
 #endif

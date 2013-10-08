@@ -89,5 +89,4 @@ private:
   po::variables_map vm;
 };
 
-extern Options opt;
 #endif
