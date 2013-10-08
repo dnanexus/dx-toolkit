@@ -24,8 +24,6 @@ void testServerConnection(void);
 
 std::string resolveProject(const std::string &projectSpec);
 
-//void testProjectPermissions(const std::string &projectID);
-
 void createFolder(const std::string &projectID, const std::string &folder);
 
 std::string createFileObject(const std::string &project, const std::string &folder, const std::string &name, const std::string &mimeType, const dx::JSON &properties);

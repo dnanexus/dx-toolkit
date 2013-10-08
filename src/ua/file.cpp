@@ -89,9 +89,7 @@ File::File(const string &localFile_, const string &projectSpec_, const string &f
 }
 
 void File::init(const bool tryResuming) {
-//  bytesUploadedMutex = new boost::mutex();
   projectID = resolveProject(projectSpec);
-//  testProjectPermissions(projectID);
   createFolder(projectID, folder);
 
   testLocalFileExists(localFile);

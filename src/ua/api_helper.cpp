@@ -204,30 +204,6 @@ string resolveProject(const string &projectSpec) {
 }
 
 /*
- * Ensure that we have at least CONTRIBUTE access to the project.
- */
-/*
-void testProjectPermissions(const string &projectID) {
-  DXLOG(logINFO) << "Testing permissions on project " << projectID << "...";
-  try {
-    JSON desc = projectDescribe(projectID);
-    string level = desc["level"].get<string>();
-
-    if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
-      DXLOG(logINFO) << " success.";
-      return;
-    } else {
-      DXLOG(logINFO) << " failure.";
-      throw runtime_error("Permission level " + level + " is not sufficient to create files in project " + projectID);
-    }
-  } catch (DXAPIError &e) {
-    DXLOG(logINFO) << " call to projectDescribe failed.";
-    throw;
-  }
-}
-*/
-
-/*
  * Create the folder in which the file object(s) will be created, including
  * any parent folders.
  */
