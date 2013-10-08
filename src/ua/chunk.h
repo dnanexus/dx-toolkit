@@ -25,7 +25,6 @@
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxlog.h"
 #include "dxcpp/bqueue.h"
-#include "SimpleHttp.h"
 
 class Chunk; // forward declaration
 
@@ -129,7 +128,6 @@ public:
 private:
 
   std::pair<std::string, dx::JSON> uploadURL();
-  void upload_cleanup(CURL**, curl_slist**, curl_slist**) const;
 };
 
 #endif

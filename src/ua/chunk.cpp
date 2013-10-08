@@ -16,27 +16,16 @@
 
 #include "chunk.h"
 
-#include <stdexcept>
 #include <fstream>
-#include <sstream>
 
-#include <curl/curl.h>
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-#include <iostream>
-#include <stdio.h>
-
-#include "options.h"
-#include "dxcpp/dxcpp.h"
 #include "dxcpp/utils.h"
+#include "dxcpp/dxcpp.h"
 
 extern "C" {
 #include "compress.h"
 }
-
-#include "dxcpp/dxlog.h"
 
 #include "options.h" // to get value of variable opt.noRoundRobinDNS & opt.throttle
 #include "round_robin_dns.h"
@@ -262,8 +251,7 @@ static size_t write_callback(void *buffer, size_t size, size_t nmemb, void *user
   return result;
 }
 
-void Chunk::upload_cleanup(CURL **curl, curl_slist **l1, curl_slist **l2) const {
-  log ("Performing curl cleanup");
+void upload_cleanup(CURL **curl, curl_slist **l1, curl_slist **l2) {
   if (*curl != NULL) {
     curl_easy_cleanup(*curl);
     *curl = NULL;
