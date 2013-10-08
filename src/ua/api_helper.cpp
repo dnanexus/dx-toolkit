@@ -128,25 +128,25 @@ string urlEscape(const string &str) {
 boost::mutex resolveProjectMutex;
 /*
  * Given a project specifier (name or ID), resolves it to a project ID.
- * Important: Only projects with >=CONTRIBUTE access are considered
+ * Important: Only projects with >=UPLOAD access are considered
  *            for resolution. Thus, this function is guranteed to do
  *            exactly one of the following:
  *            1) Throw an error if no such project exist.
  *            2) Throw an error, if multiple projects match the criteria.
- *            3) Return a project ID with >=CONTRIBUTE access.
+ *            3) Return a project ID with >=UPLOAD access.
  *
  * We use following procedure to revolve project specifier to a project ID:
  *
  * Start with an empty project list (matchingProjectIdToName), then
- * 1) If project specifier represent ID of a project with >=CONTRIBUTE
+ * 1) If project specifier represent ID of a project with >=UPLOAD
  *    access, add it to project list.
  * 2) Add all project whose name matches project specifier, and
- *    >= CONTRIBUTE access is available, to project list.
+ *    >=UPLOAD access is available, to project list.
  * Now,
  * - If project list's size > 2, then project specifier does not uniquely
  *   identify the project. (error is thrown)
  * - If project list's size == 0, then project specifier does not represent
- *   a project's ID or name (with >=CONTRIBUTE access). (error is thrown)
+ *   a project's ID or name (with >=UPLOAD access). (error is thrown)
  * - If project list's size == 1, then we return the project ID.
  */
 string resolveProject(const string &projectSpec) {
@@ -163,7 +163,7 @@ string resolveProject(const string &projectSpec) {
   try {
     JSON desc = projectDescribe(urlEscape(projectSpec));
     string level = desc["level"].get<string>();
-    if ((level == "CONTRIBUTE") || (level == "ADMINISTER")) {
+    if ((level == "UPLOAD") || (level == "CONTRIBUTE") || (level == "ADMINISTER")) {
       matchingProjectIdToName[projectSpec] = desc["name"].get<string>();
     }
   } catch (DXAPIError &e) {
@@ -173,7 +173,7 @@ string resolveProject(const string &projectSpec) {
   try {
     JSON params(JSON_OBJECT);
     params["name"] = projectSpec;
-    params["level"] = "CONTRIBUTE";
+    params["level"] = "UPLOAD";
 
     JSON findResult = systemFindProjects(params);
     JSON projects = findResult["results"];
@@ -187,11 +187,11 @@ string resolveProject(const string &projectSpec) {
 
   if (matchingProjectIdToName.size() == 0) {
     DXLOG(logINFO) << " failure.";
-    throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=CONTRIBUTE access)");
+    throw runtime_error("\"" + projectSpec + "\" does not represent a valid project name or ID (with >=UPLOAD access)");
   }
 
   if (matchingProjectIdToName.size() > 1) {
-    DXLOG(logINFO) << "failure. " << matchingProjectIdToName.size() << " projects (with >=CONTRIBUTE access) match the identifier: \"" + projectSpec + "\":";
+    DXLOG(logINFO) << "failure. " << matchingProjectIdToName.size() << " projects (with >=UPLOAD access) match the identifier: \"" + projectSpec + "\":";
     int i =  1;
     for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
       DXLOG(logINFO) << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")";
