@@ -1,18 +1,20 @@
-// Copyright (C) 2013 DNAnexus, Inc.
-//
-// This file is part of dx-toolkit (DNAnexus platform client libraries).
-//
-//   Licensed under the Apache License, Version 2.0 (the "License"); you may
-//   not use this file except in compliance with the License. You may obtain a
-//   copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-//   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-//   License for the specific language governing permissions and limitations
-//   under the License.
+/*
+ * Copyright (C) 2013 DNAnexus, Inc.
+ *
+ * This file is part of dx-toolkit (DNAnexus platform client libraries).
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *   not use this file except in compliance with the License. You may obtain a
+ *   copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *   License for the specific language governing permissions and limitations
+ *   under the License.
+ */
 
 /*
  * This is a modified version of the compress2 function provided by zlib.
@@ -58,11 +60,11 @@ int gzCompress(Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourc
   /* err = deflateInit(&stream, level); */
   /* This is the major change. */
   err = deflateInit2(&stream,
-                     level,  // compression level (0, ..., 9; default is 6 or Z_DEFAULT_COMPRESSION)
-                     Z_DEFLATED,  // the default (and only) compression method
-                     31,  // windowBits is 15, plus 16 to write gzip header and trailer
-                     8,  // how much memory for internal compression state (1, ..., 9; 8 is default)
-                     Z_DEFAULT_STRATEGY);  // default compression algorithm
+                     level,  /* compression level (0, ..., 9; default is 6 or Z_DEFAULT_COMPRESSION) */
+                     Z_DEFLATED,  /* the default (and only) compression method */
+                     31,  /* windowBits is 15, plus 16 to write gzip header and trailer */
+                     8,  /* how much memory for internal compression state (1, ..., 9; 8 is default) */
+                     Z_DEFAULT_STRATEGY);  /* default compression algorithm */
   if (err != Z_OK) return err;
 
   err = deflate(&stream, Z_FINISH);
