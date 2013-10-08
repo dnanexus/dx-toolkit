@@ -1,3 +1,15 @@
+dx-toolkit (0.71.0) precise; urgency=low
+
+  * Various bug fixes and improvements to "dx build".
+
+  * "dx run --clone" now clones instance type requests as well.
+
+  * Bug fix for dx tab completion of folders.
+
+  * Various dxpy documentation fixups and improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 08 Oct 2013 20:12:26 +0000
+
 dx-toolkit (0.70.0) precise; urgency=low
 
   * "dx download" supports a directory as destination now too (-o).
