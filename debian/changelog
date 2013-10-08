@@ -1,3 +1,9 @@
+dx-toolkit (0.70.1) precise; urgency=low
+
+  * Various dxpy documentation fixups and improvements.
+
+ -- Katherine Lai <klai@dnanexus.com>  Tue, 08 Oct 2013 20:22:49 +0000
+
 dx-toolkit (0.70.0) precise; urgency=low
 
   * "dx download" supports a directory as destination now too (-o).
