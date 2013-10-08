@@ -1,9 +1,11 @@
+#include "round_robin_dns.h"
+
 #include <vector>
 #include <boost/lexical_cast.hpp>
-#include "round_robin_dns.h"
 #include "dxcpp/dxlog.h"
 
 using namespace std;
+
 // The function getRandomIP() below (both version: Windows & non-windows) memorizes
 // their first successful call, and cache ipList are cached after that, and all
 // subsequent calls just return a random value from that list.

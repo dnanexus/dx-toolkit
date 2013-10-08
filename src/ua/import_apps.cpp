@@ -14,11 +14,13 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
-#include "api_helper.h"
+#include "import_apps.h"
+
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
+#include "dxcpp/dxlog.h"
 
-#include "import_apps.h"
+#include "api_helper.h"
 
 using namespace std;
 using namespace dx;

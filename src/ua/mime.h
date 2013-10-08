@@ -14,6 +14,9 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
+#ifndef UA_MIME_H
+#define UA_MIME_H
+
 #include <string>
 
 // See the comments in mime.cpp for details about what
@@ -22,3 +25,5 @@
 std::string getMimeType(const std::string &filePath);
 
 bool isCompressed(const std::string &mimeType);
+
+#endif

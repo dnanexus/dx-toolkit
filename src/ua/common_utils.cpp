@@ -1,12 +1,10 @@
-#ifndef UA_COMMON_UTILS_H
-
-#define UA_COMMON_UTILS_H
-#include <string>
 #include "common_utils.h"
+
+#include <string>
 #include "dxcpp/dxlog.h"
 
-
 #if LINUX_BUILD && OLD_KERNEL_SUPPORT
+
 namespace LC_ALL_Hack {
   boost::mutex LC_ALL_Mutex;
   
@@ -40,6 +38,5 @@ namespace LC_ALL_Hack {
     }
   }
 }
-#endif
 
 #endif

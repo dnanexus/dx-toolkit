@@ -1,3 +1,6 @@
+#ifndef UA_ROUND_ROBIN_DNS_H
+#define UA_ROUND_ROBIN_DNS_H
+
 #include <string>
 #include <boost/thread.hpp>
 
@@ -10,3 +13,5 @@ extern boost::mutex forceRefreshDNSMutex;
 // 
 // This function is defined differently for both WINDOWS_BUILD and !WINDOWS_BUILD case using #if guards
 std::string getRandomIP(const std::string &host_name);
+
+#endif

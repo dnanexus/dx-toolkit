@@ -14,6 +14,8 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
+#include "mime.h"
+
 #include <cstdio>
 #include <iostream>
 #include <exception>
@@ -28,7 +30,6 @@
 
 #include "common_utils.h"
 
-#include "mime.h"
 #include "dxcpp/dxlog.h"
 
 using namespace std;

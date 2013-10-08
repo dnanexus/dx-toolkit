@@ -39,4 +39,5 @@ void removeFromProject(const std::string &projID, const std::string &objID);
 void checkForUpdates();
 
 #define FILE_SIGNATURE_PROPERTY ".system-fileSignature"
+
 #endif

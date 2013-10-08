@@ -1,3 +1,6 @@
+#ifndef UA_COMMON_UTILS_H
+#define UA_COMMON_UTILS_H
+
 #include <boost/thread.hpp>
 
 #if LINUX_BUILD && OLD_KERNEL_SUPPORT
@@ -9,4 +12,6 @@ namespace LC_ALL_Hack {
   void set_LC_ALL_C();
   void reset_LC_ALL();
 }
+#endif
+
 #endif
