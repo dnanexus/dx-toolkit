@@ -21,11 +21,11 @@ import com.dnanexus.DXHTTPRequest;
 
 public class DXHTTPRequestTest {
     @BeforeClass public static void setUpClass() throws Exception {
-        // Code executed before the first test method       
+        // Code executed before the first test method
     }
-    
+
     @Before public void setUp() throws Exception {
-        // Code executed before each test    
+        // Code executed before each test
     }
 
     @Test public void testDXAPI() throws Exception {
@@ -40,10 +40,10 @@ public class DXHTTPRequestTest {
     }
 
     @After public void tearDown() throws Exception {
-        // Code executed after each test   
+        // Code executed after each test
     }
- 
+
     @AfterClass public static void tearDownClass() throws Exception {
-        // Code executed after the last test method 
+        // Code executed after the last test method
     }
 }
