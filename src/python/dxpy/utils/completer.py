@@ -196,18 +196,22 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
         # Not tab-completing a project, and the project is unambiguous
         # (use dxpy.WORKSPACE_ID)
         if dxpy.WORKSPACE_ID is not None:
-            dxproj = dxpy.get_handler(dxpy.WORKSPACE_ID)
-            folderpath, entity_name = clean_folder_path(text)
-            matches += get_folder_matches(text, slash_pos, dxproj, folderpath)
-            if expected != 'folder':
-                if classes is not None:
-                    for classname in classes:
+            # try-catch block in case dxpy.WORKSPACE_ID is garbage
+            try:
+                dxproj = dxpy.get_handler(dxpy.WORKSPACE_ID)
+                folderpath, entity_name = clean_folder_path(text)
+                matches += get_folder_matches(text, slash_pos, dxproj, folderpath)
+                if expected != 'folder':
+                    if classes is not None:
+                        for classname in classes:
+                            matches += get_data_matches(text, slash_pos, dxproj,
+                                                        folderpath, classname,
+                                                        typespec)
+                    else:
                         matches += get_data_matches(text, slash_pos, dxproj,
-                                                    folderpath, classname,
-                                                    typespec)
-                else:
-                    matches += get_data_matches(text, slash_pos, dxproj,
-                                                folderpath, typespec=typespec)
+                                                    folderpath, typespec=typespec)
+            except:
+                pass
     else:
         # project is given by a path, but attempt to resolve to an
         # object or folder anyway
@@ -217,18 +221,21 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
             sys.stderr.write("\n" + fill(unicode(details)))
             return matches
         for proj in proj_ids:
-            dxproj = dxpy.get_handler(proj)
-            matches += get_folder_matches(text, delim_pos, dxproj, folderpath)
-            if expected != 'folder':
-                if classes is not None:
-                    for classname in classes:
+            # protects against dxpy.WORKSPACE_ID being garbage
+            try:
+                dxproj = dxpy.get_handler(proj)
+                matches += get_folder_matches(text, delim_pos, dxproj, folderpath)
+                if expected != 'folder':
+                    if classes is not None:
+                        for classname in classes:
+                            matches += get_data_matches(text, delim_pos, dxproj,
+                                                        folderpath, classname,
+                                                        typespec)
+                    else:
                         matches += get_data_matches(text, delim_pos, dxproj,
-                                                    folderpath, classname,
-                                                    typespec)
-                else:
-                    matches += get_data_matches(text, delim_pos, dxproj,
-                                                folderpath, typespec=typespec)
-
+                                                    folderpath, typespec=typespec)
+            except:
+                pass
     return matches
 
 class DXPathCompleter():

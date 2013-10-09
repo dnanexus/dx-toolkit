@@ -408,7 +408,9 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
     elif is_hashid(path):
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path
 
-    project = None
+    # using a numerical sentinel value to indicate that it hasn't been
+    # set in case dxpy.WORKSPACE_ID is actually None
+    project = 0
     folderpath = None
     entity_name = None
     wd = None
@@ -460,7 +462,7 @@ def resolve_path(path, expected=None, expected_classes=None, multi_projects=Fals
         folderpath, entity_name = clean_folder_path(('' if len(folderpath) > 0 and folderpath[0] == '/' else wd + '/') + folderpath, expected)
 
     if multi_projects:
-        return (project_ids if project is None else [project]), folderpath, entity_name
+        return (project_ids if project == 0 else [project]), folderpath, entity_name
     else:
         return project, folderpath, entity_name
 

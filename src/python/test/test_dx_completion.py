@@ -4,6 +4,7 @@ import os, sys, unittest, json, subprocess, re
 from tempfile import TemporaryFile, NamedTemporaryFile
 
 import dxpy
+import dxpy_testutil as testutil
 from dxpy.utils.completer import *
 
 IFS = '\013'
@@ -64,12 +65,10 @@ class TestDXTabCompletion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.project_id = dxpy.api.project_new({"name": "tab-completion project"})['id']
-        os.environ['DX_PROJECT_CONTEXT_ID'] = cls.project_id
-        dxpy.set_workspace_id(cls.project_id)
 
     @classmethod
     def tearDownClass(cls):
-        dxpy.api.project_destroy(dxpy.WORKSPACE_ID)
+        dxpy.api.project_destroy(cls.project_id)
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
 
@@ -78,10 +77,12 @@ class TestDXTabCompletion(unittest.TestCase):
         os.environ['_ARGCOMPLETE'] = '1'
         os.environ['_DX_ARC_DEBUG'] = '1'
         os.environ['COMP_WORDBREAKS'] = '"\'@><=;|&(:'
+        os.environ['DX_PROJECT_CONTEXT_ID'] = self.project_id
+        dxpy.set_workspace_id(self.project_id)
 
     def tearDown(self):
-        dxpy.api.project_remove_folder(dxpy.WORKSPACE_ID,
-                                     {"folder": "/", "recurse": True})
+        dxpy.api.project_remove_folder(self.project_id,
+                                       {"folder": "/", "recurse": True})
         for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS':
             if var in os.environ:
                 del os.environ[var]
@@ -150,6 +151,22 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assert_completion("dx select to", "to select\\:")
         self.assert_completion("dx select \"to", "\"to select:")
         self.assert_completion("dx select to\ select:", " ")
+
+    def test_completion_with_bad_current_project(self):
+        os.environ['DX_PROJECT_CONTEXT_ID'] = ''
+        dxpy.set_workspace_id('')
+        self.assert_completion("dx select ", "tab-completion project\\:")
+        self.assert_completion("dx cd ta", "tab-completion project\\:")
+
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    def test_completion_with_no_current_project(self):
+        from dxpy.utils.env import write_env_var
+        write_env_var('DX_PROJECT_CONTEXT_ID', None)
+        del os.environ['DX_PROJECT_CONTEXT_ID']
+
+        self.assert_completion("dx select ", "tab-completion project\\:")
+        self.assert_completion("dx cd ta", "tab-completion project\\:")
 
     def test_local_file_completion(self):
         with NamedTemporaryFile(dir=os.getcwd()) as local_file:

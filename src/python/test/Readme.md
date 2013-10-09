@@ -29,3 +29,4 @@ Environment Variable | Tests included
 `DXTEST_FUSE`        | Run tests against FUSE filesystems
 `DXTEST_RUN_JOBS`    | Run tests that run jobs
 `DXTEST_HTTP_PROXY`  | Run tests that use squid3 to launch an HTTP proxy
+`DXTEST_ENV`         | Run tests which may clobber your local environment
