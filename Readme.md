@@ -170,15 +170,11 @@ Install the following packages from source or via [Homebrew](http://mxcl.github.
 Java bindings
 -------------
 
-The Java bindings are not built by default.
+The Java bindings are not built by default. See the [Java build
+documentation](src/java/Readme.md) for more info.
 
-### Build dependencies
-
-* Maven (`apt-get install maven`)
-
-### Building
-
-    make && make java
+[Javadocs](http://autodoc.dnanexus.com/bindings/java/current/) are available on
+autodoc.dnanexus.com.
 
 R bindings
 ----------
