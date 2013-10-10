@@ -20,8 +20,8 @@ DXAnalysis Handler
 
 Analyses are DNAnexus entities that capture an instantiation of a
 running workflow. They can be created from
-:func:`dxpy.bindings.dxworkflow.DXWorkflow.run` or from an existing
-analysis ID.
+:func:`dxpy.bindings.dxworkflow.DXAnalysisWorkflow.run` or from an
+existing analysis ID.
 
 """
 

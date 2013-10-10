@@ -29,7 +29,9 @@ from dxpy.bindings import *
 from dxpy.utils import merge
 
 class DXExecutable:
-    ''' Methods in DXExecutable are used by both DXApp and DXApplet.
+    '''Methods in :class:`!DXExecutable` are used by both
+    :class:`~dxpy.bindings.dxapp.DXApp` and
+    :class:`~dxpy.bindings.dxapplet.DXApplet`.
     '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
