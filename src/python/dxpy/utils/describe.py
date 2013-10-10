@@ -358,9 +358,12 @@ def print_app_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes',
                          'authorizedUsers']
 
-    advanced_inputs = [] if verbose else desc["details"].get("advancedInputs")
-    if "advancedInputs" in desc["details"]:
-        del desc["details"]["advancedInputs"]
+    advanced_inputs = []
+    details = desc["details"]
+    if isinstance(details, dict) and "advancedInputs" in details:
+        if not verbose:
+            advanced_inputs = details["advancedInputs"]
+        del details["advancedInputs"]
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -422,7 +425,11 @@ def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
                          'stages', 'latestAnalysis', 'editVersion']
 
-    advanced_inputs = [] if verbose else desc["details"].get("advancedInputs") if "details" in desc else []
+    def get_advanced_inputs():
+        details = desc.get("details")
+        if not verbose and isinstance(details, dict):
+            return details.get("advancedInputs", [])
+        return []
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -467,7 +474,7 @@ def print_data_obj_desc(desc, verbose=False):
     if 'dxapi' in desc:
         print_field("API version", desc["dxapi"])
     if "inputSpec" in desc:
-        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=advanced_inputs))
+        print_nofill_field("Input Spec", get_io_spec(desc['inputSpec'], skip_fields=get_advanced_inputs()))
     if "outputSpec" in desc:
         print_nofill_field("Output Spec", get_io_spec(desc['outputSpec']))
     if 'runSpec' in desc:

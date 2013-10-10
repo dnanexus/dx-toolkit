@@ -2846,7 +2846,7 @@ def print_run_help(executable="", alias=None):
             else:
                 exec_help += BOLD(exec_desc['class'].capitalize() + ": ")
                 exec_details = handler.get_details()
-            advanced_inputs = exec_details.get("advancedInputs", [])
+            advanced_inputs = exec_details.get("advancedInputs", []) if isinstance(exec_details, dict) else []
             exec_help += exec_desc.get('title', exec_desc['name']) + '\n\n'
             summary = exec_desc.get('summary', '')
             if summary != '':
