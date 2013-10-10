@@ -96,7 +96,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type created_before: int or string
     :param describe: Whether to also return the output of calling describe() on the object
     :type describe: boolean
-    :param level: The minimum permissions level for which results should be returned (one of "VIEW", "CONTRIBUTE", or "ADMINISTER")
+    :param level: The minimum permissions level for which results should be returned (one of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
     :type level: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
@@ -297,7 +297,7 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type properties: dict
     :param tags: Tags that each result must have
     :type tags: list of strings
-    :param level: One of "VIEW", "CONTRIBUTE", or "ADMINSTER". If specified, only returns projects where the current user has at least the specified permission level.
+    :param level: One of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINSTER". If specified, only returns projects where the current user has at least the specified permission level.
     :type level: string
     :param describe: Either false or the input to the describe call for the project
     :type describe: boolean or dict

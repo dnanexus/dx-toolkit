@@ -334,7 +334,7 @@ class DXProject(DXContainer):
         """
         :param invitee: Username (of the form "user-USERNAME") or email address of person to be invited to the project; use "PUBLIC" to make the project publicly available (in which case level must be set to "VIEW").
         :type invitee: string
-        :param level: Permissions level that the invitee would get ("VIEW", "CONTRIBUTE", or "ADMINISTER")
+        :param level: Permissions level that the invitee would get ("VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
         :type level: string
 
         Invites the specified user to have access to the project.
@@ -349,7 +349,7 @@ class DXProject(DXContainer):
         """
         :param member: Username (of the form "user-USERNAME") of the project member whose permissions will be decreased.
         :type member: string
-        :param level: Permissions level that the member will have after this operation (None, "VIEW", or "CONTRIBUTE")
+        :param level: Permissions level that the member will have after this operation (None, "VIEW", "UPLOAD", or "CONTRIBUTE")
         :type level: string or None
 
         Decreases the permissions that the specified user has in the project.
