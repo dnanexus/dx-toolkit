@@ -301,10 +301,10 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type level: string
     :param describe: Either false or the input to the describe call for the project
     :type describe: boolean or dict
-    :param explicit_perms: If True, includes projects for which the current user has some explicit permissions on that project (default is True)
-    :type explicit_perms: boolean
-    :param public: If True, includes public projects in the results (default is False)
-    :type public: boolean
+    :param explicit_perms: Filter on presence of an explicit permision. If True, matching projects must have an explicit permission (any permission granted directly to the user or an organization to which the user belongs). If False, matching projects must not have any explicit permissions for the user. (default is None, for no filter)
+    :type explicit_perms: boolean or None
+    :param public: Filter on the project being public. If True, matching projects must be public. If False, matching projects must not be public. (default is None, for no filter)
+    :type public: boolean or None
     :param billed_to: Entity ID (user or organization) that pays for the project's storage costs
     :type billed_to: string
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
