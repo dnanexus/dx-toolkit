@@ -244,12 +244,12 @@ class DXApp(DXObject, DXExecutable):
 
         """
         if self._dxid is not None:
-            return dxpy.api.app_add_tags(self._dxid, input_params=tags, **kwargs)
+            return dxpy.api.app_add_tags(self._dxid, input_params={"tags": tags}, **kwargs)
         else:
             return dxpy.api.app_add_tags('app-' + self._name, alias=self._alias,
-                                         input_params=tags, **kwargs)
+                                         input_params={"tags": tags}, **kwargs)
 
-    def removeTags(self, **kwargs):
+    def removeTags(self, tags, **kwargs):
         """
         :param tags: Tags to remove from the app
         :type tags: array
@@ -261,9 +261,10 @@ class DXApp(DXObject, DXExecutable):
 
         """
         if self._dxid is not None:
-            return dxpy.api.app_remove_tags(self._dxid, **kwargs)
+            return dxpy.api.app_remove_tags(self._dxid, input_params={"tags": tags}, **kwargs)
         else:
-            return dxpy.api.app_remove_tags('app-' + self._name, alias=self._alias, **kwargs)
+            return dxpy.api.app_remove_tags('app-' + self._name, alias=self._alias,
+                                            input_params={"tags": tags}, **kwargs)
 
     def install(self, **kwargs):
         """

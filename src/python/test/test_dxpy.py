@@ -1076,6 +1076,49 @@ class TestDXApp(unittest.TestCase):
         self.assertEqual(smaller_desc['name'], 'app_name')
         self.assertEqual(smaller_desc['version'], '0.0.1')
 
+    def test_add_and_remove_tags(self):
+        """Test addition and removal of tags."""
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_add_and_remove_tags_applet",
+                     dxapi="1.04",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                            ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "execDepends": [{"name": "python-numpy"}]})
+        dxapp = dxpy.DXApp()
+        dxapp.new(applet=dxapplet.get_id(), version="0.0.1",
+                  bill_to="user-000000000000000000000000", name="test_add_and_remove_tags_app")
+        appdesc = dxapp.describe()
+
+        self.assertEqual(appdesc.get("tags", []), [])
+
+        with self.assertRaises(AttributeError):
+            dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
+        with self.assertRaises(AttributeError):
+            dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet
+
+        dxapp.addTags(["moo", "oink"])
+
+        self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet)
+        self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet)
+
+        dxapp.removeTags(["moo"])
+
+        with self.assertRaises(AttributeError):
+            dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
+        self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet)
+
+        dxapp.removeTags(["oink"])
+
+        with self.assertRaises(AttributeError):
+            dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
+        with self.assertRaises(AttributeError):
+            dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet
+
+
 class TestDXSearch(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
