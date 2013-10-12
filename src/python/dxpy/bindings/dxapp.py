@@ -233,7 +233,7 @@ class DXApp(DXObject, DXExecutable):
             resp = dxpy.api.app_update('app-' + self._name, alias=self._alias,
                                        input_params=updates, **kwargs)
 
-    def addTags(self, tags, **kwargs):
+    def add_tags(self, tags, **kwargs):
         """
         :param tags: Tags to add to the app
         :type tags: array
@@ -249,7 +249,14 @@ class DXApp(DXObject, DXExecutable):
             return dxpy.api.app_add_tags('app-' + self._name, alias=self._alias,
                                          input_params={"tags": tags}, **kwargs)
 
-    def removeTags(self, tags, **kwargs):
+    def addTags(self, tags, **kwargs):
+        """
+        .. deprecated:: 0.72.0
+           Use :meth:`add_tags()` instead.
+        """
+        return self.add_tags(tags, **kwargs)
+
+    def remove_tags(self, tags, **kwargs):
         """
         :param tags: Tags to remove from the app
         :type tags: array
@@ -265,6 +272,13 @@ class DXApp(DXObject, DXExecutable):
         else:
             return dxpy.api.app_remove_tags('app-' + self._name, alias=self._alias,
                                             input_params={"tags": tags}, **kwargs)
+
+    def removeTags(self, tags, **kwargs):
+        """
+        .. deprecated:: 0.72.0
+           Use :meth:`remove_tags()` instead.
+        """
+        return self.remove_tags(tags, **kwargs)
 
     def install(self, **kwargs):
         """

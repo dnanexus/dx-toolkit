@@ -1100,18 +1100,18 @@ class TestDXApp(unittest.TestCase):
         with self.assertRaises(AttributeError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet
 
-        dxapp.addTags(["moo", "oink"])
+        dxapp.add_tags(["moo", "oink"])
 
         self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet)
         self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet)
 
-        dxapp.removeTags(["moo"])
+        dxapp.remove_tags(["moo"])
 
         with self.assertRaises(AttributeError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
         self.assertEqual(dxapplet.get_id(), dxpy.DXApp(name="test_add_and_remove_tags_app", alias="oink").applet)
 
-        dxapp.removeTags(["oink"])
+        dxapp.remove_tags(["oink"])
 
         with self.assertRaises(AttributeError):
             dxpy.DXApp(name="test_add_and_remove_tags_app", alias="moo").applet
