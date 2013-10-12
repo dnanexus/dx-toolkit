@@ -132,6 +132,45 @@ class DXApplet(DXDataObject, DXExecutable):
     '''
     Remote applet object handler.
 
+    .. py:attribute:: runSpec
+
+       The applet's run specification (a dict indicating, among other things, how the code of the
+       applet is to be interpreted). See `the API docs for Run Specification
+       <https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Run-Specification>`_
+       for more information.
+
+    .. py:attribute:: dxapi
+
+       String containing the version of the DNAnexus API that the applet should run against.
+
+    .. py:attribute:: access
+
+       The applet's access requirements hash (a dict indicating any nonstandard permissions, such
+       as requiring access to the internet, that are needed by the applet). See `the API docs for
+       Access Requirements
+       <https://wiki.dnanexus.com/API-Specification-v1.0.0/IO-and-Run-Specifications#Access-Requirements>`_
+       for more information.
+
+    .. py:attribute:: title
+
+       String containing the (human-readable) title of the app
+
+    .. py:attribute:: summary
+
+       String containing a short, one-line summary of the applet's purpose
+
+    .. py:attribute:: description
+
+       String of free-form text (`Markdown <http://daringfireball.net/projects/markdown/>`_ syntax
+       is supported) containing a description of the applet. The description is presented to users
+       to help them understand the purpose of the app and how to invoke it.
+
+    .. py:attribute:: developerNotes
+
+       String of free-form text (`Markdown <http://daringfireball.net/projects/markdown/>`_ syntax
+       is supported) containing information about the internals or implementation details of the
+       applet, suitable for developers or advanced users.
+
     .. automethod:: _new
     '''
 

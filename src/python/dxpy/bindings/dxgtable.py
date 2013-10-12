@@ -51,6 +51,22 @@ class DXGTable(DXDataObject):
     '''
     Remote GTable object handler.
 
+    .. py:attribute:: size
+
+       The size, in bytes of the data stored in the GTable.
+
+    .. py:attribute:: columns
+
+       List of dicts representing the columns of the GTable. Each dict has entries "name" and
+       "type" indicating the name and data type of the the column, respectively.
+
+    .. py:attribute:: indices
+
+       List of dicts representing the indices of the GTable (available only if one or more indices
+       exist). See `the API docs for GenomicTables
+       <https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#Indexing>`_ for more
+       information about the format of these dicts.
+
     .. automethod:: _new
     '''
 
