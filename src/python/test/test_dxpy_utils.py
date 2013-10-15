@@ -17,11 +17,9 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, json, tempfile, subprocess, csv, shutil, re
+import os, unittest, json, tempfile, subprocess, csv, shutil, re, time
 from dxpy import AppError
-from dxpy.utils import describe
-from dxpy.utils import exec_utils
-from dxpy.utils import genomic_utils
+from dxpy.utils import (describe, exec_utils, genomic_utils, response_iterator, get_futures_threadpool)
 
 class TestDescribe(unittest.TestCase):
     def test_is_job_ref(self):
@@ -79,6 +77,34 @@ class TestGenomicUtils(unittest.TestCase):
         self.assertEqual("NNNNNTTTTAAACCG", genomic_utils.reverse_complement("CGGTTTAAAANNNNN"))
         with self.assertRaises(ValueError):
             genomic_utils.reverse_complement("oops")
+
+class TestResponseIterator(unittest.TestCase):
+    def test_basic_iteration(self):
+        def task(i, sleep_for=1):
+            print "Task", i, "sleeping for", sleep_for
+            time.sleep(sleep_for)
+            return i
+
+        def tasks():
+            for i in range(8):
+                yield task, [i], {"sleep_for": i/8.0}
+
+        for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(3))):
+            self.assertEqual(i, res)
+        for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(5))):
+            self.assertEqual(i, res)
+        for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(5), max_active_tasks=2)):
+            self.assertEqual(i, res)
+        for i, res in enumerate(response_iterator(tasks(), get_futures_threadpool(5), max_active_tasks=6)):
+            self.assertEqual(i, res)
+
+        def tasks2():
+            for i in range(8):
+                yield task, [i], {"sleep_for": (8-i)/8.0}
+
+        for i, res in enumerate(response_iterator(tasks2(), get_futures_threadpool(5), num_retries=2, retry_after=0.1)):
+            self.assertEqual(i, res)
+
 
 if __name__ == '__main__':
     unittest.main()

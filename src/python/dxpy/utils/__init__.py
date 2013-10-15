@@ -21,7 +21,7 @@ Utilities shared by dxpy modules.
 import os, sys, json, collections, concurrent.futures, signal, traceback, time, gc
 import dateutil.parser
 from exec_utils import *
-
+from .. import logger
 
 # Monkeypatch ThreadPoolExecutor with relevant logic from the patch for
 # Python issue 16284. See:
@@ -114,16 +114,23 @@ def wait_for_all_futures(futures, print_traceback=False):
             print ''
         os._exit(os.EX_IOERR)
 
-def response_iterator(request_iterator, worker_pool, max_active_tasks=4):
+def response_iterator(request_iterator, worker_pool, max_active_tasks=4, num_retries=0, retry_after=90):
     '''
     :param request_iterator: This is expected to be an iterator producing inputs for consumption by the worker pool.
     :param worker_pool: Assumed to be a concurrent.futures.Executor instance.
-    :max_active_tasks: The maximum number of tasks that may be either running or waiting for consumption of their result.
+    :param max_active_tasks: The maximum number of tasks that may be either running or waiting for consumption of their result.
+    :param num_retries: The number of times to retry the request.
+    :param retry_after: The number of seconds to wait before retrying the request.
 
     Rate-limited asynchronous multithreaded task runner.
     Consumes tasks from *request_iterator*. Yields their results in order, while allowing up to *max_active_tasks* to run
     simultaneously. Unlike concurrent.futures.Executor.map, prevents new tasks from starting while there are
     *max_active_tasks* or more unconsumed results.
+
+    **Retry behavior**: If *num_retries* is positive, the task runner uses a simple heuristic to retry slow requests.
+    If there are 4 or more tasks in the queue, and all but the first one are done, the first task will be discarded
+    after *retry_after* seconds and resubmitted with the same parameters. This will be done up to *num_retries* times.
+    If retries are used, tasks should be idempotent.
     '''
 
     # Debug fallback
@@ -131,33 +138,56 @@ def response_iterator(request_iterator, worker_pool, max_active_tasks=4):
     #    yield _callable(*args, **kwargs)
     #return
 
+    def submit(pool, _callable, args, kwargs, retries=num_retries):
+        # print "Submitting", _callable, args, kwargs
+        future = pool.submit(_callable, *args, **kwargs)
+        future.args = (_callable, args, kwargs)
+        future.retries = retries
+        return future
+
+    def resubmit(pool, future):
+        _callable, args, kwargs = future.args
+        logger.warn("{}: Retrying {} after timeout".format(__name__, _callable))
+        return submit(pool, _callable, args, kwargs, future.retries-1)
+
     future_deque = collections.deque()
     for i in range(max_active_tasks):
         try:
             _callable, args, kwargs = request_iterator.next()
             # print "Submitting (initial batch):", _callable, args, kwargs
-            f = worker_pool.submit(_callable, *args, **kwargs)
+            f = submit(worker_pool, _callable, args, kwargs)
             future_deque.append(f)
         except StopIteration:
             break
 
     while len(future_deque) > 0:
-        f = future_deque.popleft()
-        if not f.done():
-            wait_for_all_futures([f])
-        if f.exception() is not None:
-            raise f.exception()
         try:
-            _callable, args, kwargs = request_iterator.next()
-            # print "Submitting", _callable, args, kwargs
-            next_future = worker_pool.submit(_callable, *args, **kwargs)
-            future_deque.append(next_future)
-        except StopIteration:
-            pass
-        yield f.result()
+            f = future_deque.popleft()
+            result = f.result(timeout=retry_after)
+        except concurrent.futures.TimeoutError:
+            # print "Timeout while waiting for", f, "which has", f.retries, "retries left"
+            if f.retries > 0 and len(future_deque) > 2 and all(f.done() for f in future_deque):
+                # The stale future will continue to run and will reduce the effective size of the pool by 1. If too many
+                # futures are retried, the pool will block until one of the stale futures quits.
+                # f.cancel() doesn't work because there's no way to interrupt a thread.
+                f = resubmit(worker_pool, f)
+            future_deque.appendleft(f)
+            continue
+        except KeyboardInterrupt:
+            print ''
+            os._exit(os.EX_IOERR)
+
         del f # Free the future we just consumed now, instead of next
               # time around the loop
         gc.collect()
+
+        try:
+            _callable, args, kwargs = request_iterator.next()
+            next_future = submit(worker_pool, _callable, args, kwargs)
+            future_deque.append(next_future)
+        except StopIteration:
+            pass
+        yield result
 
 def string_buffer_length(buf):
     orig_pos = buf.tell()

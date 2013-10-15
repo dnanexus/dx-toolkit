@@ -505,7 +505,8 @@ class DXFile(DXDataObject):
 
         if self._response_iterator is None:
             self._response_iterator = dxpy.utils.response_iterator(self._request_iterator, self._http_threadpool,
-                                                                   max_active_tasks=self._http_threadpool_size)
+                                                                   max_active_tasks=self._http_threadpool_size,
+                                                                   num_retries=1)
         return self._response_iterator.next()
 
     def read(self, length=None, use_compression=None, **kwargs):
