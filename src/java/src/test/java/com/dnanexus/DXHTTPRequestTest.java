@@ -14,8 +14,9 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
+package com.dnanexus;
+
 import org.junit.*;
-import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.dnanexus.DXHTTPRequest;
 

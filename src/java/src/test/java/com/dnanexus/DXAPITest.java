@@ -14,8 +14,9 @@
 //   License for the specific language governing permissions and limitations
 //   under the License.
 
+package com.dnanexus;
+
 import org.junit.*;
-import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.dnanexus.DXAPI;
 
@@ -29,9 +30,8 @@ public class DXAPITest {
     }
 
     @Test public void testDXAPI() throws Exception {
-        DXAPI dx = new DXAPI();
         JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
-        JsonNode responseJson = dx.systemFindDataObjects(input);
+        JsonNode responseJson = DXAPI.systemFindDataObjects(input);
         org.junit.Assert.assertEquals(responseJson.isObject(), true);
         // System.out.println(responseJson);
     }

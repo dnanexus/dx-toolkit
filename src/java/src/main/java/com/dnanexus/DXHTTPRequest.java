@@ -19,14 +19,12 @@ package com.dnanexus;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import org.apache.http.*;
-import org.apache.http.client.*;
 import org.apache.http.util.*;
 import org.apache.http.entity.*;
 import org.apache.http.client.methods.*;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.client.ClientProtocolException;
 import java.io.*;
-import org.apache.commons.io.IOUtils;
 
 /**
  * Class for making a raw DNAnexus API call via HTTP.
