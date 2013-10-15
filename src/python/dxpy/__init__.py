@@ -318,8 +318,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True, timeou
             else:
                 if 'content-length' in response.headers:
                     if int(response.headers['content-length']) != len(response.content):
-                        raise ContentLengthError("Received response with content-length header set to %s but content length is %d"
-                            % (response.headers['content-length'], len(response.content)))
+                        range_str = (' (%s)' % (headers['Range'],)) if 'Range' in headers else ''
+                        raise ContentLengthError(
+                            "Received response with content-length header set to %s but content length is %d%s" %
+                            (response.headers['content-length'], len(response.content), range_str)
+                        )
 
                 if use_compression and response.headers.get('content-encoding', '') == 'snappy':
                     # TODO: check if snappy raises any exceptions on truncated response content
