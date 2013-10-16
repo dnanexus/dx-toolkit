@@ -24,13 +24,6 @@ import com.dnanexus.DXAPI;
 import com.dnanexus.DXEnvironment;
 
 public class DXAPITest {
-    @BeforeClass public static void setUpClass() throws Exception {
-        // Code executed before the first test method
-    }
-
-    @Before public void setUp() throws Exception {
-        // Code executed before each test
-    }
 
     @Test public void testDXAPI() throws IOException {
         JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
@@ -52,13 +45,5 @@ public class DXAPITest {
         } catch (Exception exn) {
             org.junit.Assert.assertTrue(exn.toString().contains("InvalidAuthentication"));
         }
-    }
-
-    @After public void tearDown() throws Exception {
-        // Code executed after each test
-    }
-
-    @AfterClass public static void tearDownClass() throws Exception {
-        // Code executed after the last test method
     }
 }
