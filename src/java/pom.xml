@@ -9,6 +9,10 @@
   <name>dnanexus-api</name>
   <url>https://wiki.dnanexus.com/</url>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
