@@ -20,13 +20,18 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.collect.Lists;
+
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Utility class for working with JSON objects.
@@ -34,7 +39,7 @@ import java.io.IOException;
 public class DXJSON {
 
     private static final JsonFactory dxJsonFactory = new MappingJsonFactory();
-    private static ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     // Utility class should not be instantiated
     private DXJSON() {
@@ -47,7 +52,105 @@ public class DXJSON {
         return dxJsonFactory.createJsonParser(stringified).readValueAsTree();
     }
 
-    // TODO: helpers for making arrays
+    /**
+     * Builder class that generates a JSON array.
+     *
+     * Example:
+     *
+     * <pre>
+     * {@code
+     * ArrayNode a = DXJSON.getArrayBuilder()
+     *                     .add("Foo")
+     *                     .addAllStrings(ImmutableList.of("Bar", "Baz"))
+     *                     .build()}</pre>
+     *
+     * when serialized, produces the JSON array <tt>["Foo", "Bar", "Baz"]</tt>.
+     */
+    public static class ArrayBuilder {
+        private final boolean isEmpty;
+        private final ArrayBuilder next;
+        // If non-null, a new node to add to the array
+        private final JsonNode value;
+        // If non-null, a list of nodes to addAll to the array
+        private final List<JsonNode> listValue;
+
+        private ArrayBuilder(boolean isEmpty, ArrayBuilder next, JsonNode value, List<JsonNode> listValue) {
+            this.isEmpty = isEmpty;
+            this.next = next;
+            this.value = value;
+            this.listValue = listValue;
+        }
+
+        /**
+         * Initializes an ArrayBuilder which will generate an empty array.
+         */
+        public ArrayBuilder() {
+            this(true, null, null, null);
+        }
+
+        /**
+         * Adds the specified JsonNode to the end of the array.
+         */
+        public ArrayBuilder add(JsonNode value) {
+            return new ArrayBuilder(false, this, value, null);
+        }
+
+        /**
+         * Adds the specified String to the end of the array.
+         */
+        public ArrayBuilder add(String value) {
+            return add(new TextNode(value));
+        }
+
+        /**
+         * Adds the specified JsonNode objects, in order, to the end of the
+         * array.
+         */
+        public ArrayBuilder addAll(List<JsonNode> values) {
+            return new ArrayBuilder(false, this, null, values);
+        }
+
+        // Unfortunately addAll(List<String>) has the same erasure as
+        // addAll(List<JsonNode>), so only one of these methods can be named
+        // addAll.
+        /**
+         * Adds the specified String objects, in order, to the end of the array.
+         */
+        public ArrayBuilder addAllStrings(List<String> values) {
+            List<JsonNode> jsonNodeValues = Lists.newArrayList();
+            for (String value : values) {
+                jsonNodeValues.add(new TextNode(value));
+            }
+            return new ArrayBuilder(false, this, null, jsonNodeValues);
+        }
+
+        /**
+         * Generates a JSON array.
+         */
+        public ArrayNode build() {
+            ArrayNode output = mapper.createArrayNode();
+            ArrayBuilder nextBuilder = this;
+            List<ArrayBuilder> builders = Lists.newArrayList();
+            // We'll need to process this linked list in the reverse order, so
+            // that the first items to be added (which are at the "tail") go
+            // into the result list first.
+            while (!nextBuilder.isEmpty) {
+                builders.add(nextBuilder);
+                nextBuilder = nextBuilder.next;
+            }
+            Collections.reverse(builders);
+
+            for (ArrayBuilder builder : builders) {
+                if (builder.value != null) {
+                    output.add(builder.value);
+                }
+                if (builder.listValue != null) {
+                    output.addAll(builder.listValue);
+                }
+            }
+            return output;
+        }
+    }
 
     /**
      * Builder class that generates a JSON object (hash).
@@ -146,6 +249,16 @@ public class DXJSON {
         }
     }
 
+    /**
+     * Creates a new ArrayBuilder, initialized to produce an empty array.
+     */
+    public static ArrayBuilder getArrayBuilder() {
+        return new ArrayBuilder();
+    }
+
+    /**
+     * Creates a new ObjectBuilder, initialized to produce an empty object.
+     */
     public static ObjectBuilder getObjectBuilder() {
         return new ObjectBuilder();
     }

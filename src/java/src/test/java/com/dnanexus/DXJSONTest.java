@@ -16,43 +16,48 @@
 
 package com.dnanexus;
 
-import org.junit.*;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.dnanexus.DXJSON;
 
 public class DXJSONTest {
-    @BeforeClass public static void setUpClass() throws Exception {
-        // Code executed before the first test method
-    }
 
-    @Before public void setUp() throws Exception {
-        // Code executed before each test
-    }
-
-    @Test public void testDXJSON() throws Exception {
+    @Test
+    public void testJsonObjects() throws Exception {
         ObjectNode actual1 = DXJSON.getObjectBuilder().build();
         ObjectNode expected1 = new MappingJsonFactory().createJsonParser("{}").readValueAsTree();
 
-        org.junit.Assert.assertEquals(expected1, actual1);
-        org.junit.Assert.assertEquals(expected1.toString(), "{}");
+        Assert.assertEquals(expected1, actual1);
+        Assert.assertEquals(expected1.toString(), "{}");
 
-        ObjectNode actual2 = DXJSON.getObjectBuilder()
-            .put("key1", "a-string")
-            .put("key2", 12321)
-            .build();
-        ObjectNode expected2 = new MappingJsonFactory()
-            .createJsonParser("{\"key1\": \"a-string\", \"key2\": 12321}")
-            .readValueAsTree();
+        ObjectNode actual2 = DXJSON.getObjectBuilder().put("key1", "a-string").put("key2", 12321).build();
+        ObjectNode expected2 = new MappingJsonFactory().createJsonParser("{\"key1\": \"a-string\", \"key2\": 12321}")
+                .readValueAsTree();
 
-        org.junit.Assert.assertEquals(expected2, actual2);
+        Assert.assertEquals(expected2, actual2);
     }
 
-    @After public void tearDown() throws Exception {
-        // Code executed after each test
+    @Test
+    public void testJsonArrays() throws Exception {
+        ArrayNode actual1 = DXJSON.getArrayBuilder().add("Foo").addAllStrings(ImmutableList.of("Bar", "Baz")).build();
+        List<JsonNode> jsonNodeList1 = Lists.newArrayList(actual1);
+        Assert.assertEquals(3, jsonNodeList1.size());
+        Assert.assertEquals("\"Foo\"", jsonNodeList1.get(0).toString());
+        Assert.assertEquals("\"Bar\"", jsonNodeList1.get(1).toString());
+        Assert.assertEquals("\"Baz\"", jsonNodeList1.get(2).toString());
+
+        ArrayNode actual2 = DXJSON.getArrayBuilder().build();
+        List<JsonNode> jsonNodeList2 = Lists.newArrayList(actual2);
+        Assert.assertEquals(0, jsonNodeList2.size());
     }
 
-    @AfterClass public static void tearDownClass() throws Exception {
-        // Code executed after the last test method
-    }
 }
