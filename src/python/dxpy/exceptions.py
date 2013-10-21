@@ -18,7 +18,7 @@
 Exceptions for the :mod:`dxpy` package.
 '''
 
-import os, sys, json, traceback, httplib
+import os, sys, json, traceback, errno, httplib
 from .packages import requests
 
 class DXError(Exception):
@@ -133,7 +133,8 @@ default_expected_exceptions = (DXAPIError,
                                DXCLIError,
                                KeyboardInterrupt)
 
-def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None):
+def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None,
+             ignore_sigpipe=True):
     '''
     Exits the program, printing information about the last exception (if any) and an optional error message. Uses **expected_exceptions** to set the error code decide whether to suppress the error traceback.
     :param message: Message to be printed after the exception information.
@@ -143,12 +144,16 @@ def err_exit(message='', code=None, expected_exceptions=default_expected_excepti
     :param expected_exceptions: Exceptions for which to exit with error code 3 (expected error condition) and suppress the stack trace (unless the _DX_DEBUG environment variable is set).
     :type expected_exceptions: iterable
     :param arg_parser: argparse.ArgumentParser object used in the program (optional)
+    :param ignore_sigpipe: Whether to exit silently with code 3 when IOError with code EPIPE is raised. Default true.
+    :type ignore_sigpipe: boolean
     '''
     if arg_parser is not None:
         message = arg_parser.prog + ": " + message
     exc = sys.exc_info()[1]
     if isinstance(exc, expected_exceptions):
         exit_with_exc_info(3, message, print_tb=True if '_DX_DEBUG' in os.environ else False)
+    elif ignore_sigpipe and isinstance(exc, IOError) and getattr(exc, 'errno', None) == errno.EPIPE:
+        sys.exit(3)
     else:
         if code is None:
             code = 1
