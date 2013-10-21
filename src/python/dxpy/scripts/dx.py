@@ -4229,9 +4229,9 @@ def main():
         set_cli_colors(args)
         set_delim(args)
         set_env_from_args(args)
-        args.func(args)
-        # Flush buffered data in stdout before interpreter shutdown to ignore broken pipes
         try:
+            args.func(args)
+            # Flush buffered data in stdout before interpreter shutdown to ignore broken pipes
             sys.stdout.flush()
         except IOError as e:
             if e.errno == errno.EPIPE:
