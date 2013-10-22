@@ -1,3 +1,9 @@
+dx-toolkit (0.73.2) precise; urgency=low
+
+  * Fix Java dependencies.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 22 Oct 2013 20:26:41 +0000
+
 dx-toolkit (0.73.0) precise; urgency=low
 
   * Improved handling of SIGPIPE.
