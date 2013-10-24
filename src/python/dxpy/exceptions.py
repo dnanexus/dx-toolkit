@@ -103,8 +103,9 @@ class DXCLIError(DXError):
     pass
 
 def exit_with_exc_info(code=1, message='', print_tb=False):
-    '''
-    Exits the program, printing information about the last exception (if any) and an optional error message.
+    '''Exits the program, printing information about the last exception (if
+    any) and an optional error message.
+
     :param code: Exit code.
     :type code: integer (valid exit code, 0-255)
     :param message: Message to be printed after the exception information.
@@ -135,8 +136,12 @@ default_expected_exceptions = (DXAPIError,
 
 def err_exit(message='', code=None, expected_exceptions=default_expected_exceptions, arg_parser=None,
              ignore_sigpipe=True):
-    '''
-    Exits the program, printing information about the last exception (if any) and an optional error message. Uses **expected_exceptions** to set the error code decide whether to suppress the error traceback.
+    '''Exits the program, printing information about the last exception (if
+    any) and an optional error message.
+
+    Uses **expected_exceptions** to set the error code decide whether to
+    suppress the error traceback.
+
     :param message: Message to be printed after the exception information.
     :type message: string
     :param code: Exit code.
