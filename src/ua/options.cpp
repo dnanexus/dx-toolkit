@@ -21,6 +21,8 @@ using namespace std;
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <cmath>
+#include <limits>
 #include "dxcpp/dxlog.h"
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
@@ -98,6 +100,10 @@ void Options::parse(int argc, char * argv[]) {
   po::store(po::command_line_parser(argc, argv).options(*command_line_opts).positional(*pos_opts).run(), vm);
   po::notify(vm);
   dx::Log::ReportingLevel() = (verbose) ? dx::logDEBUG4 : dx::DISABLE_LOGGING;
+  if (throttle > 0) {
+    uploadThreads = min(uploadThreads, static_cast<int>(ceil(throttle/(1024.0*1024.0) + numeric_limits<double>::epsilon())));
+    DXLOG(logINFO) << "Throttling is on ... setting number of upload threads = " << uploadThreads;
+  }
 }
 
 // This function is responsible for:
