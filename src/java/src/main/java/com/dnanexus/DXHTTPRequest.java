@@ -19,6 +19,7 @@ package com.dnanexus;
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import org.apache.http.*;
+import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.util.*;
 import org.apache.http.entity.*;
 import org.apache.http.client.methods.*;
@@ -38,6 +39,8 @@ public class DXHTTPRequest {
 
     private static DXEnvironment defaultEnv = DXEnvironment.create();
 
+    private static final String USER_AGENT = DXUserAgent.getUserAgent();
+
     /**
     * Construct the DXHTTPRequest using the default DXEnvironment.
     */
@@ -52,6 +55,7 @@ public class DXHTTPRequest {
         this.securityContext = env.getSecurityContext();
         this.apiserver = env.getApiserverPath();
         this.httpclient = new DefaultHttpClient();
+        httpclient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
     }
 
     private String errorMessage(String method, String resource, String errorString,
