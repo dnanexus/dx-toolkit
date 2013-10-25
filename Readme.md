@@ -173,6 +173,12 @@ Install the following packages from source or via [Homebrew](http://mxcl.github.
   * On Homebrew: `brew install bison autoconf automake`
   * On MacPorts: `sudo port install bison autoconf automake`
 
+### Windows
+Warning: Not all parts of the SDK are compatible with Windows. Install the following dependencies to build the Upload Agent:
+
+* [MinGW](http://www.mingw.org/), including `mingw32-libz-dev`, `mingw-zip`, and [`mingw-regex`](http://sourceforge.net/projects/mingw/files/Other/UserContributed/regex/mingw-regex-2.5.1/).
+* [NSIS](http://nsis.sourceforge.net/)
+
 Java bindings
 -------------
 
@@ -265,6 +271,10 @@ Ubuntu 12.04 | `apt-get install libfuse2`
 OS X         | [FUSE for OS X](http://osxfuse.github.io/)
 
 See https://wiki.dnanexus.com/Virtual-Filesystem for more information.
+
+Upload Agent
+------------
+See the [Upload Agent Readme](https://github.com/dnanexus/dx-toolkit/blob/master/src/ua/Readme.md) for Upload Agent build documentation.
 
 Reporting Bugs
 --------------
