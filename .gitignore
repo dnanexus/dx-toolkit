@@ -11,6 +11,7 @@
 /share/
 /src/.setup_doc_virtualenv
 /src/java/target/
+/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java
 /src/perl/DNAnexus-*
 /src/python/dxpy/toolkit_version.py
 /src/python/coverage-reports/
