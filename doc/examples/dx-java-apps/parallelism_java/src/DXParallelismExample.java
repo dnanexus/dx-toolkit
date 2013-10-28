@@ -21,7 +21,7 @@ public class DXParallelismExample {
         return DXJSON.getObjectBuilder().put("job", jobId).put("field", fieldName).build();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         System.out.println("This is the DNAnexus Java Parallelism Example App.");
         ObjectMapper mapper = new ObjectMapper();
 

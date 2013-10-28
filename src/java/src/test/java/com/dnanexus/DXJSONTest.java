@@ -16,6 +16,7 @@
 
 package com.dnanexus;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.junit.Assert;
@@ -32,7 +33,7 @@ import com.dnanexus.DXJSON;
 public class DXJSONTest {
 
     @Test
-    public void testJsonObjects() throws Exception {
+    public void testJsonObjects() throws IOException {
         ObjectNode actual1 = DXJSON.getObjectBuilder().build();
         ObjectNode expected1 = new MappingJsonFactory().createJsonParser("{}").readValueAsTree();
 
@@ -47,7 +48,7 @@ public class DXJSONTest {
     }
 
     @Test
-    public void testJsonArrays() throws Exception {
+    public void testJsonArrays() throws IOException {
         ArrayNode actual1 = DXJSON.getArrayBuilder().add("Foo").addAllStrings(ImmutableList.of("Bar", "Baz")).build();
         List<JsonNode> jsonNodeList1 = Lists.newArrayList(actual1);
         Assert.assertEquals(3, jsonNodeList1.size());
