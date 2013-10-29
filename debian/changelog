@@ -1,3 +1,9 @@
+dx-toolkit (0.73.3) precise; urgency=low
+
+  * Windows compatibility fix for "dx build".
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 29 Oct 2013 18:55:25 +0000
+
 dx-toolkit (0.73.2) precise; urgency=low
 
   * Fix Java dependencies.
