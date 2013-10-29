@@ -306,7 +306,7 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
     Raises DXSyntaxError if there is a problem and "enforce" is True.
     """
     def check_python(filename):
-        py_compile.compile(filename, cfile="/dev/null", doraise=True)
+        py_compile.compile(filename, cfile=os.devnull, doraise=True)
     def check_bash(filename):
         subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
 
