@@ -1,3 +1,12 @@
+dx-toolkit (0.74.0) precise; urgency=low
+
+  * Java bindings improvements: distinct user-agent and exception handling
+    changes.
+
+  * UA: if --throttle is specified, reduce number of upload threads
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 29 Oct 2013 18:52:46 +0000
+
 dx-toolkit (0.73.0) precise; urgency=low
 
   * Improved handling of SIGPIPE.
