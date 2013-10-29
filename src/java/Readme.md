@@ -20,7 +20,7 @@ System.out.println(root);
 
 ### Build dependencies
 
-* Maven (`apt-get install maven`)
+* Maven (`apt-get install maven2`)
 
 ### Building
 
