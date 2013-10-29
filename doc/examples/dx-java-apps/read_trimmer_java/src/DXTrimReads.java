@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.node.*;
 import com.dnanexus.*;
 
 public class DXTrimReads {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         System.out.println("This is the DNAnexus Java Read Trimmer Example App");
         ObjectMapper mapper = new ObjectMapper();
 

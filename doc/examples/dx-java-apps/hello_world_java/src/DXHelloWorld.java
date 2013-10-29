@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.*;
 import com.dnanexus.*;
 
 public class DXHelloWorld {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         System.out.println("This is the DNAnexus Java Demo App");
 
         String JobInput = IOUtils.toString(new FileInputStream("job_input.json"));

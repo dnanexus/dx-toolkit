@@ -26,8 +26,8 @@ preamble = '''/* Do not modify this file by hand.
 
 package com.dnanexus;
 
-import com.dnanexus.DXHTTPRequest;
-import com.dnanexus.DXEnvironment;
+import com.dnanexus.exceptions.DXAPIException;
+import com.dnanexus.exceptions.DXHTTPException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,33 +45,69 @@ postscript = '''}
 class_method_template = '''
     /**
      * Invokes the {method_name} method.{wiki_link}
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}() throws Exception {{
-        return {method_name}(mapper.readTree("{{}}"));
+    public static JsonNode {method_name}() {{
+        return {method_name}(mapper.createObjectNode());
     }}
     /**
      * Invokes the {method_name} method with the specified input parameters.{wiki_link}
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(JsonNode inputParams) throws Exception {{
+    public static JsonNode {method_name}(JsonNode inputParams) {{
         return new DXHTTPRequest().request("{route}", inputParams);
     }}
     /**
      * Invokes the {method_name} method with the specified environment.{wiki_link}
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(DXEnvironment env) throws Exception {{
-        return {method_name}(mapper.readTree("{{}}"), env);
+    public static JsonNode {method_name}(DXEnvironment env) {{
+        return {method_name}(mapper.createObjectNode(), env);
     }}
     /**
      * Invokes the {method_name} method with the specified environment and input parameters.{wiki_link}
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(JsonNode inputParams, DXEnvironment env) throws Exception {{
+    public static JsonNode {method_name}(JsonNode inputParams, DXEnvironment env) {{
         return new DXHTTPRequest(env).request("{route}", inputParams);
     }}'''
 
@@ -80,17 +116,35 @@ object_method_template = '''
      * Invokes the {method_name} method.{wiki_link}
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(String objectId) throws Exception {{
-        return {method_name}(objectId, mapper.readTree("{{}}"));
+    public static JsonNode {method_name}(String objectId) {{
+        return {method_name}(objectId, mapper.createObjectNode());
     }}
     /**
      * Invokes the {method_name} method with the specified parameters.{wiki_link}
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(String objectId, JsonNode inputParams) throws Exception {{
+    public static JsonNode {method_name}(String objectId, JsonNode inputParams) {{
         return new DXHTTPRequest().request("/" + objectId + "/" + "{method_route}", inputParams);
     }}
     /**
@@ -98,9 +152,18 @@ object_method_template = '''
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(String objectId, DXEnvironment env) throws Exception {{
-        return {method_name}(objectId, mapper.readTree("{{}}"), env);
+    public static JsonNode {method_name}(String objectId, DXEnvironment env) {{
+        return {method_name}(objectId, mapper.createObjectNode(), env);
     }}
     /**
      * Invokes the {method_name} method with the specified environment and parameters.{wiki_link}
@@ -108,8 +171,17 @@ object_method_template = '''
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode {method_name}(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {{
+    public static JsonNode {method_name}(String objectId, JsonNode inputParams, DXEnvironment env) {{
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "{method_route}", inputParams);
     }}'''
 

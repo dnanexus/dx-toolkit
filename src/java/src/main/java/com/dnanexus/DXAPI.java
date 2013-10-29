@@ -6,8 +6,8 @@
 
 package com.dnanexus;
 
-import com.dnanexus.DXHTTPRequest;
-import com.dnanexus.DXEnvironment;
+import com.dnanexus.exceptions.DXAPIException;
+import com.dnanexus.exceptions.DXHTTPException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,9 +25,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisDescribe(String objectId) throws Exception {
-        return analysisDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode analysisDescribe(String objectId) {
+        return analysisDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the analysisDescribe method with the specified parameters.
@@ -36,8 +45,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode analysisDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -47,9 +65,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisDescribe(String objectId, DXEnvironment env) throws Exception {
-        return analysisDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode analysisDescribe(String objectId, DXEnvironment env) {
+        return analysisDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the analysisDescribe method with the specified environment and parameters.
@@ -59,8 +86,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode analysisDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -70,9 +106,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fterminate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisTerminate(String objectId) throws Exception {
-        return analysisTerminate(objectId, mapper.readTree("{}"));
+    public static JsonNode analysisTerminate(String objectId) {
+        return analysisTerminate(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the analysisTerminate method with the specified parameters.
@@ -81,8 +126,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisTerminate(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode analysisTerminate(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams);
     }
     /**
@@ -92,9 +146,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisTerminate(String objectId, DXEnvironment env) throws Exception {
-        return analysisTerminate(objectId, mapper.readTree("{}"), env);
+    public static JsonNode analysisTerminate(String objectId, DXEnvironment env) {
+        return analysisTerminate(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the analysisTerminate method with the specified environment and parameters.
@@ -104,8 +167,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode analysisTerminate(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode analysisTerminate(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams);
     }
 
@@ -115,9 +187,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddAuthorizedUsers(String objectId) throws Exception {
-        return appAddAuthorizedUsers(objectId, mapper.readTree("{}"));
+    public static JsonNode appAddAuthorizedUsers(String objectId) {
+        return appAddAuthorizedUsers(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appAddAuthorizedUsers method with the specified parameters.
@@ -126,8 +207,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addAuthorizedUsers", inputParams);
     }
     /**
@@ -137,9 +227,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddAuthorizedUsers(String objectId, DXEnvironment env) throws Exception {
-        return appAddAuthorizedUsers(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appAddAuthorizedUsers(String objectId, DXEnvironment env) {
+        return appAddAuthorizedUsers(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appAddAuthorizedUsers method with the specified environment and parameters.
@@ -149,8 +248,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appAddAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addAuthorizedUsers", inputParams);
     }
 
@@ -160,9 +268,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddCategories(String objectId) throws Exception {
-        return appAddCategories(objectId, mapper.readTree("{}"));
+    public static JsonNode appAddCategories(String objectId) {
+        return appAddCategories(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appAddCategories method with the specified parameters.
@@ -171,8 +288,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddCategories(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appAddCategories(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addCategories", inputParams);
     }
     /**
@@ -182,9 +308,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddCategories(String objectId, DXEnvironment env) throws Exception {
-        return appAddCategories(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appAddCategories(String objectId, DXEnvironment env) {
+        return appAddCategories(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appAddCategories method with the specified environment and parameters.
@@ -194,8 +329,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddCategories(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appAddCategories(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addCategories", inputParams);
     }
 
@@ -205,9 +349,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddDevelopers(String objectId) throws Exception {
-        return appAddDevelopers(objectId, mapper.readTree("{}"));
+    public static JsonNode appAddDevelopers(String objectId) {
+        return appAddDevelopers(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appAddDevelopers method with the specified parameters.
@@ -216,8 +369,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addDevelopers", inputParams);
     }
     /**
@@ -227,9 +389,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddDevelopers(String objectId, DXEnvironment env) throws Exception {
-        return appAddDevelopers(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appAddDevelopers(String objectId, DXEnvironment env) {
+        return appAddDevelopers(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appAddDevelopers method with the specified environment and parameters.
@@ -239,8 +410,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appAddDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addDevelopers", inputParams);
     }
 
@@ -250,9 +430,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/addTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddTags(String objectId) throws Exception {
-        return appAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode appAddTags(String objectId) {
+        return appAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appAddTags method with the specified parameters.
@@ -261,8 +450,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -272,9 +470,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddTags(String objectId, DXEnvironment env) throws Exception {
-        return appAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appAddTags(String objectId, DXEnvironment env) {
+        return appAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appAddTags method with the specified environment and parameters.
@@ -284,8 +491,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -295,9 +511,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/delete">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDelete(String objectId) throws Exception {
-        return appDelete(objectId, mapper.readTree("{}"));
+    public static JsonNode appDelete(String objectId) {
+        return appDelete(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appDelete method with the specified parameters.
@@ -306,8 +531,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDelete(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appDelete(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "delete", inputParams);
     }
     /**
@@ -317,9 +551,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDelete(String objectId, DXEnvironment env) throws Exception {
-        return appDelete(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appDelete(String objectId, DXEnvironment env) {
+        return appDelete(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appDelete method with the specified environment and parameters.
@@ -329,8 +572,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDelete(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appDelete(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "delete", inputParams);
     }
 
@@ -340,9 +592,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/describe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDescribe(String objectId) throws Exception {
-        return appDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode appDescribe(String objectId) {
+        return appDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appDescribe method with the specified parameters.
@@ -351,8 +612,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -362,9 +632,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDescribe(String objectId, DXEnvironment env) throws Exception {
-        return appDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appDescribe(String objectId, DXEnvironment env) {
+        return appDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appDescribe method with the specified environment and parameters.
@@ -374,8 +653,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -385,9 +673,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/get">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appGet(String objectId) throws Exception {
-        return appGet(objectId, mapper.readTree("{}"));
+    public static JsonNode appGet(String objectId) {
+        return appGet(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appGet method with the specified parameters.
@@ -396,8 +693,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appGet(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appGet(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
     /**
@@ -407,9 +713,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appGet(String objectId, DXEnvironment env) throws Exception {
-        return appGet(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appGet(String objectId, DXEnvironment env) {
+        return appGet(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appGet method with the specified environment and parameters.
@@ -419,8 +734,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appGet(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appGet(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams);
     }
 
@@ -430,9 +754,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/install">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appInstall(String objectId) throws Exception {
-        return appInstall(objectId, mapper.readTree("{}"));
+    public static JsonNode appInstall(String objectId) {
+        return appInstall(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appInstall method with the specified parameters.
@@ -441,8 +774,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appInstall(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appInstall(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "install", inputParams);
     }
     /**
@@ -452,9 +794,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appInstall(String objectId, DXEnvironment env) throws Exception {
-        return appInstall(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appInstall(String objectId, DXEnvironment env) {
+        return appInstall(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appInstall method with the specified environment and parameters.
@@ -464,8 +815,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appInstall(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appInstall(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "install", inputParams);
     }
 
@@ -475,9 +835,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListAuthorizedUsers(String objectId) throws Exception {
-        return appListAuthorizedUsers(objectId, mapper.readTree("{}"));
+    public static JsonNode appListAuthorizedUsers(String objectId) {
+        return appListAuthorizedUsers(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appListAuthorizedUsers method with the specified parameters.
@@ -486,8 +855,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listAuthorizedUsers", inputParams);
     }
     /**
@@ -497,9 +875,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListAuthorizedUsers(String objectId, DXEnvironment env) throws Exception {
-        return appListAuthorizedUsers(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appListAuthorizedUsers(String objectId, DXEnvironment env) {
+        return appListAuthorizedUsers(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appListAuthorizedUsers method with the specified environment and parameters.
@@ -509,8 +896,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appListAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listAuthorizedUsers", inputParams);
     }
 
@@ -520,9 +916,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListCategories(String objectId) throws Exception {
-        return appListCategories(objectId, mapper.readTree("{}"));
+    public static JsonNode appListCategories(String objectId) {
+        return appListCategories(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appListCategories method with the specified parameters.
@@ -531,8 +936,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListCategories(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appListCategories(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listCategories", inputParams);
     }
     /**
@@ -542,9 +956,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListCategories(String objectId, DXEnvironment env) throws Exception {
-        return appListCategories(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appListCategories(String objectId, DXEnvironment env) {
+        return appListCategories(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appListCategories method with the specified environment and parameters.
@@ -554,8 +977,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListCategories(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appListCategories(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listCategories", inputParams);
     }
 
@@ -565,9 +997,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/listDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListDevelopers(String objectId) throws Exception {
-        return appListDevelopers(objectId, mapper.readTree("{}"));
+    public static JsonNode appListDevelopers(String objectId) {
+        return appListDevelopers(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appListDevelopers method with the specified parameters.
@@ -576,8 +1017,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListDevelopers(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appListDevelopers(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listDevelopers", inputParams);
     }
     /**
@@ -587,9 +1037,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListDevelopers(String objectId, DXEnvironment env) throws Exception {
-        return appListDevelopers(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appListDevelopers(String objectId, DXEnvironment env) {
+        return appListDevelopers(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appListDevelopers method with the specified environment and parameters.
@@ -599,8 +1058,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appListDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appListDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listDevelopers", inputParams);
     }
 
@@ -610,9 +1078,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/publish">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appPublish(String objectId) throws Exception {
-        return appPublish(objectId, mapper.readTree("{}"));
+    public static JsonNode appPublish(String objectId) {
+        return appPublish(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appPublish method with the specified parameters.
@@ -621,8 +1098,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appPublish(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appPublish(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "publish", inputParams);
     }
     /**
@@ -632,9 +1118,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appPublish(String objectId, DXEnvironment env) throws Exception {
-        return appPublish(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appPublish(String objectId, DXEnvironment env) {
+        return appPublish(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appPublish method with the specified environment and parameters.
@@ -644,8 +1139,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appPublish(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appPublish(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "publish", inputParams);
     }
 
@@ -655,9 +1159,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeAuthorizedUsers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveAuthorizedUsers(String objectId) throws Exception {
-        return appRemoveAuthorizedUsers(objectId, mapper.readTree("{}"));
+    public static JsonNode appRemoveAuthorizedUsers(String objectId) {
+        return appRemoveAuthorizedUsers(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appRemoveAuthorizedUsers method with the specified parameters.
@@ -666,8 +1179,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams);
     }
     /**
@@ -677,9 +1199,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveAuthorizedUsers(String objectId, DXEnvironment env) throws Exception {
-        return appRemoveAuthorizedUsers(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appRemoveAuthorizedUsers(String objectId, DXEnvironment env) {
+        return appRemoveAuthorizedUsers(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appRemoveAuthorizedUsers method with the specified environment and parameters.
@@ -689,8 +1220,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appRemoveAuthorizedUsers(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeAuthorizedUsers", inputParams);
     }
 
@@ -700,9 +1240,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeCategories">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveCategories(String objectId) throws Exception {
-        return appRemoveCategories(objectId, mapper.readTree("{}"));
+    public static JsonNode appRemoveCategories(String objectId) {
+        return appRemoveCategories(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appRemoveCategories method with the specified parameters.
@@ -711,8 +1260,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeCategories", inputParams);
     }
     /**
@@ -722,9 +1280,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveCategories(String objectId, DXEnvironment env) throws Exception {
-        return appRemoveCategories(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appRemoveCategories(String objectId, DXEnvironment env) {
+        return appRemoveCategories(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appRemoveCategories method with the specified environment and parameters.
@@ -734,8 +1301,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appRemoveCategories(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeCategories", inputParams);
     }
 
@@ -745,9 +1321,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeDevelopers">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveDevelopers(String objectId) throws Exception {
-        return appRemoveDevelopers(objectId, mapper.readTree("{}"));
+    public static JsonNode appRemoveDevelopers(String objectId) {
+        return appRemoveDevelopers(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appRemoveDevelopers method with the specified parameters.
@@ -756,8 +1341,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeDevelopers", inputParams);
     }
     /**
@@ -767,9 +1361,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveDevelopers(String objectId, DXEnvironment env) throws Exception {
-        return appRemoveDevelopers(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appRemoveDevelopers(String objectId, DXEnvironment env) {
+        return appRemoveDevelopers(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appRemoveDevelopers method with the specified environment and parameters.
@@ -779,8 +1382,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appRemoveDevelopers(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeDevelopers", inputParams);
     }
 
@@ -790,9 +1402,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/removeTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveTags(String objectId) throws Exception {
-        return appRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode appRemoveTags(String objectId) {
+        return appRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appRemoveTags method with the specified parameters.
@@ -801,8 +1422,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -812,9 +1442,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return appRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appRemoveTags(String objectId, DXEnvironment env) {
+        return appRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appRemoveTags method with the specified environment and parameters.
@@ -824,8 +1463,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -835,9 +1483,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/run">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRun(String objectId) throws Exception {
-        return appRun(objectId, mapper.readTree("{}"));
+    public static JsonNode appRun(String objectId) {
+        return appRun(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appRun method with the specified parameters.
@@ -846,8 +1503,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRun(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appRun(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
     }
     /**
@@ -857,9 +1523,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRun(String objectId, DXEnvironment env) throws Exception {
-        return appRun(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appRun(String objectId, DXEnvironment env) {
+        return appRun(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appRun method with the specified environment and parameters.
@@ -869,8 +1544,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appRun(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appRun(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams);
     }
 
@@ -880,9 +1564,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/uninstall">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUninstall(String objectId) throws Exception {
-        return appUninstall(objectId, mapper.readTree("{}"));
+    public static JsonNode appUninstall(String objectId) {
+        return appUninstall(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appUninstall method with the specified parameters.
@@ -891,8 +1584,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUninstall(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appUninstall(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "uninstall", inputParams);
     }
     /**
@@ -902,9 +1604,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUninstall(String objectId, DXEnvironment env) throws Exception {
-        return appUninstall(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appUninstall(String objectId, DXEnvironment env) {
+        return appUninstall(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appUninstall method with the specified environment and parameters.
@@ -914,8 +1625,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUninstall(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appUninstall(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "uninstall", inputParams);
     }
 
@@ -925,9 +1645,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app-xxxx%5B/yyyy%5D/update">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUpdate(String objectId) throws Exception {
-        return appUpdate(objectId, mapper.readTree("{}"));
+    public static JsonNode appUpdate(String objectId) {
+        return appUpdate(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appUpdate method with the specified parameters.
@@ -936,8 +1665,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUpdate(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appUpdate(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
     }
     /**
@@ -947,9 +1685,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUpdate(String objectId, DXEnvironment env) throws Exception {
-        return appUpdate(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appUpdate(String objectId, DXEnvironment env) {
+        return appUpdate(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appUpdate method with the specified environment and parameters.
@@ -959,8 +1706,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appUpdate(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
     }
 
@@ -968,9 +1724,18 @@ public class DXAPI {
      * Invokes the appNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appNew() throws Exception {
-        return appNew(mapper.readTree("{}"));
+    public static JsonNode appNew() {
+        return appNew(mapper.createObjectNode());
     }
     /**
      * Invokes the appNew method with the specified input parameters.
@@ -978,8 +1743,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appNew(JsonNode inputParams) throws Exception {
+    public static JsonNode appNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/app/new", inputParams);
     }
     /**
@@ -988,9 +1762,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Apps#API-method:-/app/new">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appNew(DXEnvironment env) throws Exception {
-        return appNew(mapper.readTree("{}"), env);
+    public static JsonNode appNew(DXEnvironment env) {
+        return appNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appNew method with the specified environment and input parameters.
@@ -999,8 +1782,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/app/new", inputParams);
     }
 
@@ -1010,9 +1802,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletAddTags(String objectId) throws Exception {
-        return appletAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode appletAddTags(String objectId) {
+        return appletAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletAddTags method with the specified parameters.
@@ -1021,8 +1822,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -1032,9 +1842,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletAddTags(String objectId, DXEnvironment env) throws Exception {
-        return appletAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletAddTags(String objectId, DXEnvironment env) {
+        return appletAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletAddTags method with the specified environment and parameters.
@@ -1044,8 +1863,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -1055,9 +1883,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletDescribe(String objectId) throws Exception {
-        return appletDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode appletDescribe(String objectId) {
+        return appletDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletDescribe method with the specified parameters.
@@ -1066,8 +1903,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -1077,9 +1923,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletDescribe(String objectId, DXEnvironment env) throws Exception {
-        return appletDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletDescribe(String objectId, DXEnvironment env) {
+        return appletDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletDescribe method with the specified environment and parameters.
@@ -1089,8 +1944,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -1100,9 +1964,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Fget">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGet(String objectId) throws Exception {
-        return appletGet(objectId, mapper.readTree("{}"));
+    public static JsonNode appletGet(String objectId) {
+        return appletGet(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletGet method with the specified parameters.
@@ -1111,8 +1984,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGet(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletGet(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
     /**
@@ -1122,9 +2004,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGet(String objectId, DXEnvironment env) throws Exception {
-        return appletGet(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletGet(String objectId, DXEnvironment env) {
+        return appletGet(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletGet method with the specified environment and parameters.
@@ -1134,8 +2025,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGet(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletGet(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams);
     }
 
@@ -1145,9 +2045,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGetDetails(String objectId) throws Exception {
-        return appletGetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode appletGetDetails(String objectId) {
+        return appletGetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletGetDetails method with the specified parameters.
@@ -1156,8 +2065,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletGetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
     /**
@@ -1167,9 +2085,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGetDetails(String objectId, DXEnvironment env) throws Exception {
-        return appletGetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletGetDetails(String objectId, DXEnvironment env) {
+        return appletGetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletGetDetails method with the specified environment and parameters.
@@ -1179,8 +2106,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
@@ -1190,9 +2126,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletListProjects(String objectId) throws Exception {
-        return appletListProjects(objectId, mapper.readTree("{}"));
+    public static JsonNode appletListProjects(String objectId) {
+        return appletListProjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletListProjects method with the specified parameters.
@@ -1201,8 +2146,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletListProjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletListProjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
     /**
@@ -1212,9 +2166,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletListProjects(String objectId, DXEnvironment env) throws Exception {
-        return appletListProjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletListProjects(String objectId, DXEnvironment env) {
+        return appletListProjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletListProjects method with the specified environment and parameters.
@@ -1224,8 +2187,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletListProjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
@@ -1235,9 +2207,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRemoveTags(String objectId) throws Exception {
-        return appletRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode appletRemoveTags(String objectId) {
+        return appletRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletRemoveTags method with the specified parameters.
@@ -1246,8 +2227,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -1257,9 +2247,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return appletRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletRemoveTags(String objectId, DXEnvironment env) {
+        return appletRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletRemoveTags method with the specified environment and parameters.
@@ -1269,8 +2268,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -1280,9 +2288,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRename(String objectId) throws Exception {
-        return appletRename(objectId, mapper.readTree("{}"));
+    public static JsonNode appletRename(String objectId) {
+        return appletRename(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletRename method with the specified parameters.
@@ -1291,8 +2308,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRename(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletRename(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
     /**
@@ -1302,9 +2328,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRename(String objectId, DXEnvironment env) throws Exception {
-        return appletRename(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletRename(String objectId, DXEnvironment env) {
+        return appletRename(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletRename method with the specified environment and parameters.
@@ -1314,8 +2349,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRename(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletRename(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
     }
 
@@ -1325,9 +2369,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet-xxxx%2Frun">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRun(String objectId) throws Exception {
-        return appletRun(objectId, mapper.readTree("{}"));
+    public static JsonNode appletRun(String objectId) {
+        return appletRun(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletRun method with the specified parameters.
@@ -1336,8 +2389,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRun(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletRun(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
     }
     /**
@@ -1347,9 +2409,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRun(String objectId, DXEnvironment env) throws Exception {
-        return appletRun(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletRun(String objectId, DXEnvironment env) {
+        return appletRun(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletRun method with the specified environment and parameters.
@@ -1359,8 +2430,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletRun(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletRun(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams);
     }
 
@@ -1370,9 +2450,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletSetProperties(String objectId) throws Exception {
-        return appletSetProperties(objectId, mapper.readTree("{}"));
+    public static JsonNode appletSetProperties(String objectId) {
+        return appletSetProperties(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the appletSetProperties method with the specified parameters.
@@ -1381,8 +2470,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletSetProperties(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode appletSetProperties(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
     /**
@@ -1392,9 +2490,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletSetProperties(String objectId, DXEnvironment env) throws Exception {
-        return appletSetProperties(objectId, mapper.readTree("{}"), env);
+    public static JsonNode appletSetProperties(String objectId, DXEnvironment env) {
+        return appletSetProperties(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletSetProperties method with the specified environment and parameters.
@@ -1404,8 +2511,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
@@ -1413,9 +2529,18 @@ public class DXAPI {
      * Invokes the appletNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletNew() throws Exception {
-        return appletNew(mapper.readTree("{}"));
+    public static JsonNode appletNew() {
+        return appletNew(mapper.createObjectNode());
     }
     /**
      * Invokes the appletNew method with the specified input parameters.
@@ -1423,8 +2548,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletNew(JsonNode inputParams) throws Exception {
+    public static JsonNode appletNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/applet/new", inputParams);
     }
     /**
@@ -1433,9 +2567,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fapplet%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletNew(DXEnvironment env) throws Exception {
-        return appletNew(mapper.readTree("{}"), env);
+    public static JsonNode appletNew(DXEnvironment env) {
+        return appletNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the appletNew method with the specified environment and input parameters.
@@ -1444,8 +2587,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode appletNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode appletNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/applet/new", inputParams);
     }
 
@@ -1455,9 +2607,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerClone(String objectId) throws Exception {
-        return containerClone(objectId, mapper.readTree("{}"));
+    public static JsonNode containerClone(String objectId) {
+        return containerClone(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerClone method with the specified parameters.
@@ -1466,8 +2627,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerClone(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerClone(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams);
     }
     /**
@@ -1477,9 +2647,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerClone(String objectId, DXEnvironment env) throws Exception {
-        return containerClone(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerClone(String objectId, DXEnvironment env) {
+        return containerClone(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerClone method with the specified environment and parameters.
@@ -1489,8 +2668,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerClone(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerClone(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "clone", inputParams);
     }
 
@@ -1500,9 +2688,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Containers-for-Execution#API-method%3A-%2Fcontainer-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDescribe(String objectId) throws Exception {
-        return containerDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode containerDescribe(String objectId) {
+        return containerDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerDescribe method with the specified parameters.
@@ -1511,8 +2708,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -1522,9 +2728,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDescribe(String objectId, DXEnvironment env) throws Exception {
-        return containerDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerDescribe(String objectId, DXEnvironment env) {
+        return containerDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerDescribe method with the specified environment and parameters.
@@ -1534,8 +2749,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -1543,17 +2767,35 @@ public class DXAPI {
      * Invokes the containerDestroy method.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDestroy(String objectId) throws Exception {
-        return containerDestroy(objectId, mapper.readTree("{}"));
+    public static JsonNode containerDestroy(String objectId) {
+        return containerDestroy(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerDestroy method with the specified parameters.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDestroy(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerDestroy(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
     }
     /**
@@ -1561,9 +2803,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDestroy(String objectId, DXEnvironment env) throws Exception {
-        return containerDestroy(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerDestroy(String objectId, DXEnvironment env) {
+        return containerDestroy(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerDestroy method with the specified environment and parameters.
@@ -1571,8 +2822,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerDestroy(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerDestroy(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy", inputParams);
     }
 
@@ -1582,9 +2842,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerListFolder(String objectId) throws Exception {
-        return containerListFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode containerListFolder(String objectId) {
+        return containerListFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerListFolder method with the specified parameters.
@@ -1593,8 +2862,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerListFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerListFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams);
     }
     /**
@@ -1604,9 +2882,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerListFolder(String objectId, DXEnvironment env) throws Exception {
-        return containerListFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerListFolder(String objectId, DXEnvironment env) {
+        return containerListFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerListFolder method with the specified environment and parameters.
@@ -1616,8 +2903,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerListFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerListFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams);
     }
 
@@ -1627,9 +2923,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerMove(String objectId) throws Exception {
-        return containerMove(objectId, mapper.readTree("{}"));
+    public static JsonNode containerMove(String objectId) {
+        return containerMove(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerMove method with the specified parameters.
@@ -1638,8 +2943,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerMove(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerMove(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams);
     }
     /**
@@ -1649,9 +2963,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerMove(String objectId, DXEnvironment env) throws Exception {
-        return containerMove(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerMove(String objectId, DXEnvironment env) {
+        return containerMove(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerMove method with the specified environment and parameters.
@@ -1661,8 +2984,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerMove(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerMove(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "move", inputParams);
     }
 
@@ -1672,9 +3004,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerNewFolder(String objectId) throws Exception {
-        return containerNewFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode containerNewFolder(String objectId) {
+        return containerNewFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerNewFolder method with the specified parameters.
@@ -1683,8 +3024,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerNewFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerNewFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams);
     }
     /**
@@ -1694,9 +3044,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerNewFolder(String objectId, DXEnvironment env) throws Exception {
-        return containerNewFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerNewFolder(String objectId, DXEnvironment env) {
+        return containerNewFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerNewFolder method with the specified environment and parameters.
@@ -1706,8 +3065,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerNewFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerNewFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder", inputParams);
     }
 
@@ -1717,9 +3085,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveFolder(String objectId) throws Exception {
-        return containerRemoveFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode containerRemoveFolder(String objectId) {
+        return containerRemoveFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerRemoveFolder method with the specified parameters.
@@ -1728,8 +3105,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams);
     }
     /**
@@ -1739,9 +3125,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveFolder(String objectId, DXEnvironment env) throws Exception {
-        return containerRemoveFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerRemoveFolder(String objectId, DXEnvironment env) {
+        return containerRemoveFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerRemoveFolder method with the specified environment and parameters.
@@ -1751,8 +3146,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams);
     }
 
@@ -1762,9 +3166,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveObjects(String objectId) throws Exception {
-        return containerRemoveObjects(objectId, mapper.readTree("{}"));
+    public static JsonNode containerRemoveObjects(String objectId) {
+        return containerRemoveObjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerRemoveObjects method with the specified parameters.
@@ -1773,8 +3186,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams);
     }
     /**
@@ -1784,9 +3206,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveObjects(String objectId, DXEnvironment env) throws Exception {
-        return containerRemoveObjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerRemoveObjects(String objectId, DXEnvironment env) {
+        return containerRemoveObjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerRemoveObjects method with the specified environment and parameters.
@@ -1796,8 +3227,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams);
     }
 
@@ -1807,9 +3247,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRenameFolder(String objectId) throws Exception {
-        return containerRenameFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode containerRenameFolder(String objectId) {
+        return containerRenameFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the containerRenameFolder method with the specified parameters.
@@ -1818,8 +3267,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams);
     }
     /**
@@ -1829,9 +3287,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRenameFolder(String objectId, DXEnvironment env) throws Exception {
-        return containerRenameFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode containerRenameFolder(String objectId, DXEnvironment env) {
+        return containerRenameFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the containerRenameFolder method with the specified environment and parameters.
@@ -1841,8 +3308,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode containerRenameFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder", inputParams);
     }
 
@@ -1852,9 +3328,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTags(String objectId) throws Exception {
-        return fileAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode fileAddTags(String objectId) {
+        return fileAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileAddTags method with the specified parameters.
@@ -1863,8 +3348,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -1874,9 +3368,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTags(String objectId, DXEnvironment env) throws Exception {
-        return fileAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileAddTags(String objectId, DXEnvironment env) {
+        return fileAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileAddTags method with the specified environment and parameters.
@@ -1886,8 +3389,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -1897,9 +3409,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTypes(String objectId) throws Exception {
-        return fileAddTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode fileAddTypes(String objectId) {
+        return fileAddTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileAddTypes method with the specified parameters.
@@ -1908,8 +3429,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileAddTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
     /**
@@ -1919,9 +3449,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTypes(String objectId, DXEnvironment env) throws Exception {
-        return fileAddTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileAddTypes(String objectId, DXEnvironment env) {
+        return fileAddTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileAddTypes method with the specified environment and parameters.
@@ -1931,8 +3470,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
@@ -1942,9 +3490,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileClose(String objectId) throws Exception {
-        return fileClose(objectId, mapper.readTree("{}"));
+    public static JsonNode fileClose(String objectId) {
+        return fileClose(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileClose method with the specified parameters.
@@ -1953,8 +3510,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileClose(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileClose(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
     /**
@@ -1964,9 +3530,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileClose(String objectId, DXEnvironment env) throws Exception {
-        return fileClose(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileClose(String objectId, DXEnvironment env) {
+        return fileClose(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileClose method with the specified environment and parameters.
@@ -1976,8 +3551,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileClose(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileClose(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
     }
 
@@ -1987,9 +3571,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDescribe(String objectId) throws Exception {
-        return fileDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode fileDescribe(String objectId) {
+        return fileDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileDescribe method with the specified parameters.
@@ -1998,8 +3591,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -2009,9 +3611,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDescribe(String objectId, DXEnvironment env) throws Exception {
-        return fileDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileDescribe(String objectId, DXEnvironment env) {
+        return fileDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileDescribe method with the specified environment and parameters.
@@ -2021,8 +3632,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -2032,9 +3652,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fdownload">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDownload(String objectId) throws Exception {
-        return fileDownload(objectId, mapper.readTree("{}"));
+    public static JsonNode fileDownload(String objectId) {
+        return fileDownload(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileDownload method with the specified parameters.
@@ -2043,8 +3672,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDownload(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileDownload(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "download", inputParams);
     }
     /**
@@ -2054,9 +3692,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDownload(String objectId, DXEnvironment env) throws Exception {
-        return fileDownload(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileDownload(String objectId, DXEnvironment env) {
+        return fileDownload(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileDownload method with the specified environment and parameters.
@@ -2066,8 +3713,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileDownload(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileDownload(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "download", inputParams);
     }
 
@@ -2077,9 +3733,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileGetDetails(String objectId) throws Exception {
-        return fileGetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode fileGetDetails(String objectId) {
+        return fileGetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileGetDetails method with the specified parameters.
@@ -2088,8 +3753,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileGetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileGetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
     /**
@@ -2099,9 +3773,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileGetDetails(String objectId, DXEnvironment env) throws Exception {
-        return fileGetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileGetDetails(String objectId, DXEnvironment env) {
+        return fileGetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileGetDetails method with the specified environment and parameters.
@@ -2111,8 +3794,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
@@ -2122,9 +3814,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileListProjects(String objectId) throws Exception {
-        return fileListProjects(objectId, mapper.readTree("{}"));
+    public static JsonNode fileListProjects(String objectId) {
+        return fileListProjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileListProjects method with the specified parameters.
@@ -2133,8 +3834,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileListProjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileListProjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
     /**
@@ -2144,9 +3854,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileListProjects(String objectId, DXEnvironment env) throws Exception {
-        return fileListProjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileListProjects(String objectId, DXEnvironment env) {
+        return fileListProjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileListProjects method with the specified environment and parameters.
@@ -2156,8 +3875,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileListProjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
@@ -2167,9 +3895,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTags(String objectId) throws Exception {
-        return fileRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode fileRemoveTags(String objectId) {
+        return fileRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileRemoveTags method with the specified parameters.
@@ -2178,8 +3915,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -2189,9 +3935,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return fileRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileRemoveTags(String objectId, DXEnvironment env) {
+        return fileRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileRemoveTags method with the specified environment and parameters.
@@ -2201,8 +3956,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -2212,9 +3976,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTypes(String objectId) throws Exception {
-        return fileRemoveTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode fileRemoveTypes(String objectId) {
+        return fileRemoveTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileRemoveTypes method with the specified parameters.
@@ -2223,8 +3996,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
     /**
@@ -2234,9 +4016,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTypes(String objectId, DXEnvironment env) throws Exception {
-        return fileRemoveTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileRemoveTypes(String objectId, DXEnvironment env) {
+        return fileRemoveTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileRemoveTypes method with the specified environment and parameters.
@@ -2246,8 +4037,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
@@ -2257,9 +4057,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRename(String objectId) throws Exception {
-        return fileRename(objectId, mapper.readTree("{}"));
+    public static JsonNode fileRename(String objectId) {
+        return fileRename(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileRename method with the specified parameters.
@@ -2268,8 +4077,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRename(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileRename(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
     /**
@@ -2279,9 +4097,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRename(String objectId, DXEnvironment env) throws Exception {
-        return fileRename(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileRename(String objectId, DXEnvironment env) {
+        return fileRename(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileRename method with the specified environment and parameters.
@@ -2291,8 +4118,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileRename(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileRename(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
     }
 
@@ -2302,9 +4138,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetDetails(String objectId) throws Exception {
-        return fileSetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode fileSetDetails(String objectId) {
+        return fileSetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileSetDetails method with the specified parameters.
@@ -2313,8 +4158,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileSetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
     /**
@@ -2324,9 +4178,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetDetails(String objectId, DXEnvironment env) throws Exception {
-        return fileSetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileSetDetails(String objectId, DXEnvironment env) {
+        return fileSetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileSetDetails method with the specified environment and parameters.
@@ -2336,8 +4199,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
@@ -2347,9 +4219,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetProperties(String objectId) throws Exception {
-        return fileSetProperties(objectId, mapper.readTree("{}"));
+    public static JsonNode fileSetProperties(String objectId) {
+        return fileSetProperties(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileSetProperties method with the specified parameters.
@@ -2358,8 +4239,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetProperties(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileSetProperties(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
     /**
@@ -2369,9 +4259,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetProperties(String objectId, DXEnvironment env) throws Exception {
-        return fileSetProperties(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileSetProperties(String objectId, DXEnvironment env) {
+        return fileSetProperties(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileSetProperties method with the specified environment and parameters.
@@ -2381,8 +4280,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
@@ -2392,9 +4300,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetVisibility(String objectId) throws Exception {
-        return fileSetVisibility(objectId, mapper.readTree("{}"));
+    public static JsonNode fileSetVisibility(String objectId) {
+        return fileSetVisibility(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileSetVisibility method with the specified parameters.
@@ -2403,8 +4320,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
     /**
@@ -2414,9 +4340,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetVisibility(String objectId, DXEnvironment env) throws Exception {
-        return fileSetVisibility(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileSetVisibility(String objectId, DXEnvironment env) {
+        return fileSetVisibility(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileSetVisibility method with the specified environment and parameters.
@@ -2426,8 +4361,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
@@ -2437,9 +4381,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile-xxxx%2Fupload">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileUpload(String objectId) throws Exception {
-        return fileUpload(objectId, mapper.readTree("{}"));
+    public static JsonNode fileUpload(String objectId) {
+        return fileUpload(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the fileUpload method with the specified parameters.
@@ -2448,8 +4401,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileUpload(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode fileUpload(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "upload", inputParams);
     }
     /**
@@ -2459,9 +4421,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileUpload(String objectId, DXEnvironment env) throws Exception {
-        return fileUpload(objectId, mapper.readTree("{}"), env);
+    public static JsonNode fileUpload(String objectId, DXEnvironment env) {
+        return fileUpload(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileUpload method with the specified environment and parameters.
@@ -2471,8 +4442,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileUpload(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileUpload(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "upload", inputParams);
     }
 
@@ -2480,9 +4460,18 @@ public class DXAPI {
      * Invokes the fileNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileNew() throws Exception {
-        return fileNew(mapper.readTree("{}"));
+    public static JsonNode fileNew() {
+        return fileNew(mapper.createObjectNode());
     }
     /**
      * Invokes the fileNew method with the specified input parameters.
@@ -2490,8 +4479,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileNew(JsonNode inputParams) throws Exception {
+    public static JsonNode fileNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/file/new", inputParams);
     }
     /**
@@ -2500,9 +4498,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Files#API-method%3A-%2Ffile%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileNew(DXEnvironment env) throws Exception {
-        return fileNew(mapper.readTree("{}"), env);
+    public static JsonNode fileNew(DXEnvironment env) {
+        return fileNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the fileNew method with the specified environment and input parameters.
@@ -2511,8 +4518,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode fileNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode fileNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/file/new", inputParams);
     }
 
@@ -2522,9 +4538,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FaddRows">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddRows(String objectId) throws Exception {
-        return gtableAddRows(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableAddRows(String objectId) {
+        return gtableAddRows(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableAddRows method with the specified parameters.
@@ -2533,8 +4558,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddRows(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableAddRows(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addRows", inputParams);
     }
     /**
@@ -2544,9 +4578,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddRows(String objectId, DXEnvironment env) throws Exception {
-        return gtableAddRows(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableAddRows(String objectId, DXEnvironment env) {
+        return gtableAddRows(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableAddRows method with the specified environment and parameters.
@@ -2556,8 +4599,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddRows(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableAddRows(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addRows", inputParams);
     }
 
@@ -2567,9 +4619,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTags(String objectId) throws Exception {
-        return gtableAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableAddTags(String objectId) {
+        return gtableAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableAddTags method with the specified parameters.
@@ -2578,8 +4639,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -2589,9 +4659,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTags(String objectId, DXEnvironment env) throws Exception {
-        return gtableAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableAddTags(String objectId, DXEnvironment env) {
+        return gtableAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableAddTags method with the specified environment and parameters.
@@ -2601,8 +4680,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -2612,9 +4700,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTypes(String objectId) throws Exception {
-        return gtableAddTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableAddTypes(String objectId) {
+        return gtableAddTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableAddTypes method with the specified parameters.
@@ -2623,8 +4720,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
     /**
@@ -2634,9 +4740,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTypes(String objectId, DXEnvironment env) throws Exception {
-        return gtableAddTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableAddTypes(String objectId, DXEnvironment env) {
+        return gtableAddTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableAddTypes method with the specified environment and parameters.
@@ -2646,8 +4761,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
@@ -2657,9 +4781,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableClose(String objectId) throws Exception {
-        return gtableClose(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableClose(String objectId) {
+        return gtableClose(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableClose method with the specified parameters.
@@ -2668,8 +4801,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableClose(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableClose(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
     /**
@@ -2679,9 +4821,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableClose(String objectId, DXEnvironment env) throws Exception {
-        return gtableClose(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableClose(String objectId, DXEnvironment env) {
+        return gtableClose(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableClose method with the specified environment and parameters.
@@ -2691,8 +4842,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableClose(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableClose(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
     }
 
@@ -2702,9 +4862,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableDescribe(String objectId) throws Exception {
-        return gtableDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableDescribe(String objectId) {
+        return gtableDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableDescribe method with the specified parameters.
@@ -2713,8 +4882,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -2724,9 +4902,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableDescribe(String objectId, DXEnvironment env) throws Exception {
-        return gtableDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableDescribe(String objectId, DXEnvironment env) {
+        return gtableDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableDescribe method with the specified environment and parameters.
@@ -2736,8 +4923,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -2747,9 +4943,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2Fget">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGet(String objectId) throws Exception {
-        return gtableGet(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableGet(String objectId) {
+        return gtableGet(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableGet method with the specified parameters.
@@ -2758,8 +4963,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGet(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableGet(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "get", inputParams);
     }
     /**
@@ -2769,9 +4983,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGet(String objectId, DXEnvironment env) throws Exception {
-        return gtableGet(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableGet(String objectId, DXEnvironment env) {
+        return gtableGet(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableGet method with the specified environment and parameters.
@@ -2781,8 +5004,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGet(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableGet(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "get", inputParams);
     }
 
@@ -2792,9 +5024,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGetDetails(String objectId) throws Exception {
-        return gtableGetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableGetDetails(String objectId) {
+        return gtableGetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableGetDetails method with the specified parameters.
@@ -2803,8 +5044,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
     /**
@@ -2814,9 +5064,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGetDetails(String objectId, DXEnvironment env) throws Exception {
-        return gtableGetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableGetDetails(String objectId, DXEnvironment env) {
+        return gtableGetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableGetDetails method with the specified environment and parameters.
@@ -2826,8 +5085,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
@@ -2837,9 +5105,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableListProjects(String objectId) throws Exception {
-        return gtableListProjects(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableListProjects(String objectId) {
+        return gtableListProjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableListProjects method with the specified parameters.
@@ -2848,8 +5125,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableListProjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableListProjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
     /**
@@ -2859,9 +5145,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableListProjects(String objectId, DXEnvironment env) throws Exception {
-        return gtableListProjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableListProjects(String objectId, DXEnvironment env) {
+        return gtableListProjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableListProjects method with the specified environment and parameters.
@@ -2871,8 +5166,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableListProjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
@@ -2882,9 +5186,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable-xxxx%2FnextPart">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNextPart(String objectId) throws Exception {
-        return gtableNextPart(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableNextPart(String objectId) {
+        return gtableNextPart(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableNextPart method with the specified parameters.
@@ -2893,8 +5206,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNextPart(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableNextPart(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "nextPart", inputParams);
     }
     /**
@@ -2904,9 +5226,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNextPart(String objectId, DXEnvironment env) throws Exception {
-        return gtableNextPart(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableNextPart(String objectId, DXEnvironment env) {
+        return gtableNextPart(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableNextPart method with the specified environment and parameters.
@@ -2916,8 +5247,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNextPart(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableNextPart(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "nextPart", inputParams);
     }
 
@@ -2927,9 +5267,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTags(String objectId) throws Exception {
-        return gtableRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableRemoveTags(String objectId) {
+        return gtableRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableRemoveTags method with the specified parameters.
@@ -2938,8 +5287,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -2949,9 +5307,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return gtableRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableRemoveTags(String objectId, DXEnvironment env) {
+        return gtableRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableRemoveTags method with the specified environment and parameters.
@@ -2961,8 +5328,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -2972,9 +5348,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTypes(String objectId) throws Exception {
-        return gtableRemoveTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableRemoveTypes(String objectId) {
+        return gtableRemoveTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableRemoveTypes method with the specified parameters.
@@ -2983,8 +5368,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
     /**
@@ -2994,9 +5388,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTypes(String objectId, DXEnvironment env) throws Exception {
-        return gtableRemoveTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableRemoveTypes(String objectId, DXEnvironment env) {
+        return gtableRemoveTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableRemoveTypes method with the specified environment and parameters.
@@ -3006,8 +5409,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
@@ -3017,9 +5429,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRename(String objectId) throws Exception {
-        return gtableRename(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableRename(String objectId) {
+        return gtableRename(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableRename method with the specified parameters.
@@ -3028,8 +5449,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRename(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableRename(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
     /**
@@ -3039,9 +5469,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRename(String objectId, DXEnvironment env) throws Exception {
-        return gtableRename(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableRename(String objectId, DXEnvironment env) {
+        return gtableRename(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableRename method with the specified environment and parameters.
@@ -3051,8 +5490,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableRename(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableRename(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
     }
 
@@ -3062,9 +5510,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetDetails(String objectId) throws Exception {
-        return gtableSetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableSetDetails(String objectId) {
+        return gtableSetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableSetDetails method with the specified parameters.
@@ -3073,8 +5530,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
     /**
@@ -3084,9 +5550,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetDetails(String objectId, DXEnvironment env) throws Exception {
-        return gtableSetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableSetDetails(String objectId, DXEnvironment env) {
+        return gtableSetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableSetDetails method with the specified environment and parameters.
@@ -3096,8 +5571,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
@@ -3107,9 +5591,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetProperties(String objectId) throws Exception {
-        return gtableSetProperties(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableSetProperties(String objectId) {
+        return gtableSetProperties(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableSetProperties method with the specified parameters.
@@ -3118,8 +5611,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
     /**
@@ -3129,9 +5631,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetProperties(String objectId, DXEnvironment env) throws Exception {
-        return gtableSetProperties(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableSetProperties(String objectId, DXEnvironment env) {
+        return gtableSetProperties(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableSetProperties method with the specified environment and parameters.
@@ -3141,8 +5652,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
@@ -3152,9 +5672,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetVisibility(String objectId) throws Exception {
-        return gtableSetVisibility(objectId, mapper.readTree("{}"));
+    public static JsonNode gtableSetVisibility(String objectId) {
+        return gtableSetVisibility(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the gtableSetVisibility method with the specified parameters.
@@ -3163,8 +5692,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
     /**
@@ -3174,9 +5712,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetVisibility(String objectId, DXEnvironment env) throws Exception {
-        return gtableSetVisibility(objectId, mapper.readTree("{}"), env);
+    public static JsonNode gtableSetVisibility(String objectId, DXEnvironment env) {
+        return gtableSetVisibility(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableSetVisibility method with the specified environment and parameters.
@@ -3186,8 +5733,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
@@ -3195,9 +5751,18 @@ public class DXAPI {
      * Invokes the gtableNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNew() throws Exception {
-        return gtableNew(mapper.readTree("{}"));
+    public static JsonNode gtableNew() {
+        return gtableNew(mapper.createObjectNode());
     }
     /**
      * Invokes the gtableNew method with the specified input parameters.
@@ -3205,8 +5770,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNew(JsonNode inputParams) throws Exception {
+    public static JsonNode gtableNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/gtable/new", inputParams);
     }
     /**
@@ -3215,9 +5789,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/GenomicTables#API-method%3A-%2Fgtable%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNew(DXEnvironment env) throws Exception {
-        return gtableNew(mapper.readTree("{}"), env);
+    public static JsonNode gtableNew(DXEnvironment env) {
+        return gtableNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the gtableNew method with the specified environment and input parameters.
@@ -3226,8 +5809,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode gtableNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode gtableNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/gtable/new", inputParams);
     }
 
@@ -3237,9 +5829,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobDescribe(String objectId) throws Exception {
-        return jobDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode jobDescribe(String objectId) {
+        return jobDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the jobDescribe method with the specified parameters.
@@ -3248,8 +5849,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode jobDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -3259,9 +5869,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobDescribe(String objectId, DXEnvironment env) throws Exception {
-        return jobDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode jobDescribe(String objectId, DXEnvironment env) {
+        return jobDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the jobDescribe method with the specified environment and parameters.
@@ -3271,8 +5890,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode jobDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -3282,9 +5910,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId) throws Exception {
-        return jobStreamLog(objectId, mapper.readTree("{}"));
+    public static JsonNode jobStreamLog(String objectId) {
+        return jobStreamLog(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the jobStreamLog method with the specified parameters.
@@ -3293,8 +5930,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode jobStreamLog(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "streamLog", inputParams);
     }
     /**
@@ -3304,9 +5950,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId, DXEnvironment env) throws Exception {
-        return jobStreamLog(objectId, mapper.readTree("{}"), env);
+    public static JsonNode jobStreamLog(String objectId, DXEnvironment env) {
+        return jobStreamLog(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the jobStreamLog method with the specified environment and parameters.
@@ -3316,8 +5971,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode jobStreamLog(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "streamLog", inputParams);
     }
 
@@ -3327,9 +5991,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fterminate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobTerminate(String objectId) throws Exception {
-        return jobTerminate(objectId, mapper.readTree("{}"));
+    public static JsonNode jobTerminate(String objectId) {
+        return jobTerminate(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the jobTerminate method with the specified parameters.
@@ -3338,8 +6011,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobTerminate(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode jobTerminate(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams);
     }
     /**
@@ -3349,9 +6031,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobTerminate(String objectId, DXEnvironment env) throws Exception {
-        return jobTerminate(objectId, mapper.readTree("{}"), env);
+    public static JsonNode jobTerminate(String objectId, DXEnvironment env) {
+        return jobTerminate(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the jobTerminate method with the specified environment and parameters.
@@ -3361,8 +6052,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobTerminate(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode jobTerminate(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams);
     }
 
@@ -3370,9 +6070,18 @@ public class DXAPI {
      * Invokes the jobNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobNew() throws Exception {
-        return jobNew(mapper.readTree("{}"));
+    public static JsonNode jobNew() {
+        return jobNew(mapper.createObjectNode());
     }
     /**
      * Invokes the jobNew method with the specified input parameters.
@@ -3380,8 +6089,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobNew(JsonNode inputParams) throws Exception {
+    public static JsonNode jobNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/job/new", inputParams);
     }
     /**
@@ -3390,9 +6108,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobNew(DXEnvironment env) throws Exception {
-        return jobNew(mapper.readTree("{}"), env);
+    public static JsonNode jobNew(DXEnvironment env) {
+        return jobNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the jobNew method with the specified environment and input parameters.
@@ -3401,72 +6128,153 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode jobNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/job/new", inputParams);
     }
 
     /**
      * Invokes the notificationsGet method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsGet() throws Exception {
-        return notificationsGet(mapper.readTree("{}"));
+    public static JsonNode notificationsGet() {
+        return notificationsGet(mapper.createObjectNode());
     }
     /**
      * Invokes the notificationsGet method with the specified input parameters.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsGet(JsonNode inputParams) throws Exception {
+    public static JsonNode notificationsGet(JsonNode inputParams) {
         return new DXHTTPRequest().request("/notifications/get", inputParams);
     }
     /**
      * Invokes the notificationsGet method with the specified environment.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsGet(DXEnvironment env) throws Exception {
-        return notificationsGet(mapper.readTree("{}"), env);
+    public static JsonNode notificationsGet(DXEnvironment env) {
+        return notificationsGet(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the notificationsGet method with the specified environment and input parameters.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsGet(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode notificationsGet(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/notifications/get", inputParams);
     }
 
     /**
      * Invokes the notificationsMarkRead method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsMarkRead() throws Exception {
-        return notificationsMarkRead(mapper.readTree("{}"));
+    public static JsonNode notificationsMarkRead() {
+        return notificationsMarkRead(mapper.createObjectNode());
     }
     /**
      * Invokes the notificationsMarkRead method with the specified input parameters.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsMarkRead(JsonNode inputParams) throws Exception {
+    public static JsonNode notificationsMarkRead(JsonNode inputParams) {
         return new DXHTTPRequest().request("/notifications/markRead", inputParams);
     }
     /**
      * Invokes the notificationsMarkRead method with the specified environment.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsMarkRead(DXEnvironment env) throws Exception {
-        return notificationsMarkRead(mapper.readTree("{}"), env);
+    public static JsonNode notificationsMarkRead(DXEnvironment env) {
+        return notificationsMarkRead(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the notificationsMarkRead method with the specified environment and input parameters.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode notificationsMarkRead(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode notificationsMarkRead(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/notifications/markRead", inputParams);
     }
 
@@ -3476,9 +6284,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectAddTags(String objectId) throws Exception {
-        return projectAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode projectAddTags(String objectId) {
+        return projectAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectAddTags method with the specified parameters.
@@ -3487,8 +6304,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -3498,9 +6324,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectAddTags(String objectId, DXEnvironment env) throws Exception {
-        return projectAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectAddTags(String objectId, DXEnvironment env) {
+        return projectAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectAddTags method with the specified environment and parameters.
@@ -3510,8 +6345,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -3521,9 +6365,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2Fclone">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectClone(String objectId) throws Exception {
-        return projectClone(objectId, mapper.readTree("{}"));
+    public static JsonNode projectClone(String objectId) {
+        return projectClone(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectClone method with the specified parameters.
@@ -3532,8 +6385,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectClone(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectClone(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "clone", inputParams);
     }
     /**
@@ -3543,9 +6405,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectClone(String objectId, DXEnvironment env) throws Exception {
-        return projectClone(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectClone(String objectId, DXEnvironment env) {
+        return projectClone(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectClone method with the specified environment and parameters.
@@ -3555,8 +6426,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectClone(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectClone(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "clone", inputParams);
     }
 
@@ -3566,9 +6446,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FdecreasePermissions">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDecreasePermissions(String objectId) throws Exception {
-        return projectDecreasePermissions(objectId, mapper.readTree("{}"));
+    public static JsonNode projectDecreasePermissions(String objectId) {
+        return projectDecreasePermissions(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectDecreasePermissions method with the specified parameters.
@@ -3577,8 +6466,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "decreasePermissions", inputParams);
     }
     /**
@@ -3588,9 +6486,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDecreasePermissions(String objectId, DXEnvironment env) throws Exception {
-        return projectDecreasePermissions(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectDecreasePermissions(String objectId, DXEnvironment env) {
+        return projectDecreasePermissions(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectDecreasePermissions method with the specified environment and parameters.
@@ -3600,8 +6507,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectDecreasePermissions(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "decreasePermissions", inputParams);
     }
 
@@ -3611,9 +6527,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDescribe(String objectId) throws Exception {
-        return projectDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode projectDescribe(String objectId) {
+        return projectDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectDescribe method with the specified parameters.
@@ -3622,8 +6547,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -3633,9 +6567,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDescribe(String objectId, DXEnvironment env) throws Exception {
-        return projectDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectDescribe(String objectId, DXEnvironment env) {
+        return projectDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectDescribe method with the specified environment and parameters.
@@ -3645,8 +6588,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -3656,9 +6608,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fdestroy">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDestroy(String objectId) throws Exception {
-        return projectDestroy(objectId, mapper.readTree("{}"));
+    public static JsonNode projectDestroy(String objectId) {
+        return projectDestroy(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectDestroy method with the specified parameters.
@@ -3667,8 +6628,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDestroy(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectDestroy(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "destroy", inputParams);
     }
     /**
@@ -3678,9 +6648,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDestroy(String objectId, DXEnvironment env) throws Exception {
-        return projectDestroy(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectDestroy(String objectId, DXEnvironment env) {
+        return projectDestroy(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectDestroy method with the specified environment and parameters.
@@ -3690,8 +6669,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectDestroy(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectDestroy(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "destroy", inputParams);
     }
 
@@ -3701,9 +6689,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Invitations and Join Requests#API-method%3A-%2Fproject-xxxx%2Finvite">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectInvite(String objectId) throws Exception {
-        return projectInvite(objectId, mapper.readTree("{}"));
+    public static JsonNode projectInvite(String objectId) {
+        return projectInvite(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectInvite method with the specified parameters.
@@ -3712,8 +6709,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectInvite(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectInvite(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "invite", inputParams);
     }
     /**
@@ -3723,9 +6729,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectInvite(String objectId, DXEnvironment env) throws Exception {
-        return projectInvite(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectInvite(String objectId, DXEnvironment env) {
+        return projectInvite(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectInvite method with the specified environment and parameters.
@@ -3735,8 +6750,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectInvite(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectInvite(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "invite", inputParams);
     }
 
@@ -3746,9 +6770,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fleave">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectLeave(String objectId) throws Exception {
-        return projectLeave(objectId, mapper.readTree("{}"));
+    public static JsonNode projectLeave(String objectId) {
+        return projectLeave(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectLeave method with the specified parameters.
@@ -3757,8 +6790,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectLeave(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectLeave(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "leave", inputParams);
     }
     /**
@@ -3768,9 +6810,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectLeave(String objectId, DXEnvironment env) throws Exception {
-        return projectLeave(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectLeave(String objectId, DXEnvironment env) {
+        return projectLeave(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectLeave method with the specified environment and parameters.
@@ -3780,8 +6831,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectLeave(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectLeave(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "leave", inputParams);
     }
 
@@ -3791,9 +6851,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FlistFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectListFolder(String objectId) throws Exception {
-        return projectListFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode projectListFolder(String objectId) {
+        return projectListFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectListFolder method with the specified parameters.
@@ -3802,8 +6871,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectListFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectListFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listFolder", inputParams);
     }
     /**
@@ -3813,9 +6891,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectListFolder(String objectId, DXEnvironment env) throws Exception {
-        return projectListFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectListFolder(String objectId, DXEnvironment env) {
+        return projectListFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectListFolder method with the specified environment and parameters.
@@ -3825,8 +6912,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectListFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectListFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listFolder", inputParams);
     }
 
@@ -3836,9 +6932,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2Fmove">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectMove(String objectId) throws Exception {
-        return projectMove(objectId, mapper.readTree("{}"));
+    public static JsonNode projectMove(String objectId) {
+        return projectMove(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectMove method with the specified parameters.
@@ -3847,8 +6952,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectMove(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectMove(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "move", inputParams);
     }
     /**
@@ -3858,9 +6972,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectMove(String objectId, DXEnvironment env) throws Exception {
-        return projectMove(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectMove(String objectId, DXEnvironment env) {
+        return projectMove(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectMove method with the specified environment and parameters.
@@ -3870,8 +6993,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectMove(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectMove(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "move", inputParams);
     }
 
@@ -3881,9 +7013,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FnewFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNewFolder(String objectId) throws Exception {
-        return projectNewFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode projectNewFolder(String objectId) {
+        return projectNewFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectNewFolder method with the specified parameters.
@@ -3892,8 +7033,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNewFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectNewFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "newFolder", inputParams);
     }
     /**
@@ -3903,9 +7053,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNewFolder(String objectId, DXEnvironment env) throws Exception {
-        return projectNewFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectNewFolder(String objectId, DXEnvironment env) {
+        return projectNewFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectNewFolder method with the specified environment and parameters.
@@ -3915,8 +7074,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNewFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectNewFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "newFolder", inputParams);
     }
 
@@ -3926,9 +7094,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveFolder(String objectId) throws Exception {
-        return projectRemoveFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode projectRemoveFolder(String objectId) {
+        return projectRemoveFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectRemoveFolder method with the specified parameters.
@@ -3937,8 +7114,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeFolder", inputParams);
     }
     /**
@@ -3948,9 +7134,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveFolder(String objectId, DXEnvironment env) throws Exception {
-        return projectRemoveFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectRemoveFolder(String objectId, DXEnvironment env) {
+        return projectRemoveFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectRemoveFolder method with the specified environment and parameters.
@@ -3960,8 +7155,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectRemoveFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeFolder", inputParams);
     }
 
@@ -3971,9 +7175,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FremoveObjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveObjects(String objectId) throws Exception {
-        return projectRemoveObjects(objectId, mapper.readTree("{}"));
+    public static JsonNode projectRemoveObjects(String objectId) {
+        return projectRemoveObjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectRemoveObjects method with the specified parameters.
@@ -3982,8 +7195,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeObjects", inputParams);
     }
     /**
@@ -3993,9 +7215,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveObjects(String objectId, DXEnvironment env) throws Exception {
-        return projectRemoveObjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectRemoveObjects(String objectId, DXEnvironment env) {
+        return projectRemoveObjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectRemoveObjects method with the specified environment and parameters.
@@ -4005,8 +7236,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectRemoveObjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeObjects", inputParams);
     }
 
@@ -4016,9 +7256,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveTags(String objectId) throws Exception {
-        return projectRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode projectRemoveTags(String objectId) {
+        return projectRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectRemoveTags method with the specified parameters.
@@ -4027,8 +7276,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -4038,9 +7296,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return projectRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectRemoveTags(String objectId, DXEnvironment env) {
+        return projectRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectRemoveTags method with the specified environment and parameters.
@@ -4050,8 +7317,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -4061,9 +7337,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Folders-and-Deletion#API-method%3A-%2Fclass-xxxx%2FrenameFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRenameFolder(String objectId) throws Exception {
-        return projectRenameFolder(objectId, mapper.readTree("{}"));
+    public static JsonNode projectRenameFolder(String objectId) {
+        return projectRenameFolder(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectRenameFolder method with the specified parameters.
@@ -4072,8 +7357,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "renameFolder", inputParams);
     }
     /**
@@ -4083,9 +7377,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRenameFolder(String objectId, DXEnvironment env) throws Exception {
-        return projectRenameFolder(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectRenameFolder(String objectId, DXEnvironment env) {
+        return projectRenameFolder(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectRenameFolder method with the specified environment and parameters.
@@ -4095,8 +7398,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectRenameFolder(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "renameFolder", inputParams);
     }
 
@@ -4106,9 +7418,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectSetProperties(String objectId) throws Exception {
-        return projectSetProperties(objectId, mapper.readTree("{}"));
+    public static JsonNode projectSetProperties(String objectId) {
+        return projectSetProperties(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectSetProperties method with the specified parameters.
@@ -4117,8 +7438,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectSetProperties(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectSetProperties(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
     /**
@@ -4128,9 +7458,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectSetProperties(String objectId, DXEnvironment env) throws Exception {
-        return projectSetProperties(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectSetProperties(String objectId, DXEnvironment env) {
+        return projectSetProperties(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectSetProperties method with the specified environment and parameters.
@@ -4140,8 +7479,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
@@ -4151,9 +7499,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject-xxxx%2Fupdate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectUpdate(String objectId) throws Exception {
-        return projectUpdate(objectId, mapper.readTree("{}"));
+    public static JsonNode projectUpdate(String objectId) {
+        return projectUpdate(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the projectUpdate method with the specified parameters.
@@ -4162,8 +7519,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectUpdate(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode projectUpdate(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
     }
     /**
@@ -4173,9 +7539,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectUpdate(String objectId, DXEnvironment env) throws Exception {
-        return projectUpdate(objectId, mapper.readTree("{}"), env);
+    public static JsonNode projectUpdate(String objectId, DXEnvironment env) {
+        return projectUpdate(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectUpdate method with the specified environment and parameters.
@@ -4185,8 +7560,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectUpdate(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
     }
 
@@ -4194,9 +7578,18 @@ public class DXAPI {
      * Invokes the projectNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNew() throws Exception {
-        return projectNew(mapper.readTree("{}"));
+    public static JsonNode projectNew() {
+        return projectNew(mapper.createObjectNode());
     }
     /**
      * Invokes the projectNew method with the specified input parameters.
@@ -4204,8 +7597,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNew(JsonNode inputParams) throws Exception {
+    public static JsonNode projectNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/project/new", inputParams);
     }
     /**
@@ -4214,9 +7616,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Projects#API-method%3A-%2Fproject%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNew(DXEnvironment env) throws Exception {
-        return projectNew(mapper.readTree("{}"), env);
+    public static JsonNode projectNew(DXEnvironment env) {
+        return projectNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the projectNew method with the specified environment and input parameters.
@@ -4225,8 +7636,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode projectNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode projectNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/project/new", inputParams);
     }
 
@@ -4236,9 +7656,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTags(String objectId) throws Exception {
-        return recordAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode recordAddTags(String objectId) {
+        return recordAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordAddTags method with the specified parameters.
@@ -4247,8 +7676,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -4258,9 +7696,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTags(String objectId, DXEnvironment env) throws Exception {
-        return recordAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordAddTags(String objectId, DXEnvironment env) {
+        return recordAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordAddTags method with the specified environment and parameters.
@@ -4270,8 +7717,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -4281,9 +7737,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTypes(String objectId) throws Exception {
-        return recordAddTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode recordAddTypes(String objectId) {
+        return recordAddTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordAddTypes method with the specified parameters.
@@ -4292,8 +7757,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordAddTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
     /**
@@ -4303,9 +7777,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTypes(String objectId, DXEnvironment env) throws Exception {
-        return recordAddTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordAddTypes(String objectId, DXEnvironment env) {
+        return recordAddTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordAddTypes method with the specified environment and parameters.
@@ -4315,8 +7798,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
@@ -4326,9 +7818,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordClose(String objectId) throws Exception {
-        return recordClose(objectId, mapper.readTree("{}"));
+    public static JsonNode recordClose(String objectId) {
+        return recordClose(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordClose method with the specified parameters.
@@ -4337,8 +7838,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordClose(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordClose(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
     /**
@@ -4348,9 +7858,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordClose(String objectId, DXEnvironment env) throws Exception {
-        return recordClose(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordClose(String objectId, DXEnvironment env) {
+        return recordClose(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordClose method with the specified environment and parameters.
@@ -4360,8 +7879,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordClose(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordClose(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
     }
 
@@ -4371,9 +7899,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordDescribe(String objectId) throws Exception {
-        return recordDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode recordDescribe(String objectId) {
+        return recordDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordDescribe method with the specified parameters.
@@ -4382,8 +7919,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -4393,9 +7939,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordDescribe(String objectId, DXEnvironment env) throws Exception {
-        return recordDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordDescribe(String objectId, DXEnvironment env) {
+        return recordDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordDescribe method with the specified environment and parameters.
@@ -4405,8 +7960,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -4416,9 +7980,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordGetDetails(String objectId) throws Exception {
-        return recordGetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode recordGetDetails(String objectId) {
+        return recordGetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordGetDetails method with the specified parameters.
@@ -4427,8 +8000,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordGetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordGetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
     /**
@@ -4438,9 +8020,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordGetDetails(String objectId, DXEnvironment env) throws Exception {
-        return recordGetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordGetDetails(String objectId, DXEnvironment env) {
+        return recordGetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordGetDetails method with the specified environment and parameters.
@@ -4450,8 +8041,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
@@ -4461,9 +8061,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordListProjects(String objectId) throws Exception {
-        return recordListProjects(objectId, mapper.readTree("{}"));
+    public static JsonNode recordListProjects(String objectId) {
+        return recordListProjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordListProjects method with the specified parameters.
@@ -4472,8 +8081,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordListProjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordListProjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
     /**
@@ -4483,9 +8101,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordListProjects(String objectId, DXEnvironment env) throws Exception {
-        return recordListProjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordListProjects(String objectId, DXEnvironment env) {
+        return recordListProjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordListProjects method with the specified environment and parameters.
@@ -4495,8 +8122,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordListProjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
@@ -4506,9 +8142,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTags(String objectId) throws Exception {
-        return recordRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode recordRemoveTags(String objectId) {
+        return recordRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordRemoveTags method with the specified parameters.
@@ -4517,8 +8162,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -4528,9 +8182,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return recordRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordRemoveTags(String objectId, DXEnvironment env) {
+        return recordRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordRemoveTags method with the specified environment and parameters.
@@ -4540,8 +8203,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -4551,9 +8223,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTypes(String objectId) throws Exception {
-        return recordRemoveTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode recordRemoveTypes(String objectId) {
+        return recordRemoveTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordRemoveTypes method with the specified parameters.
@@ -4562,8 +8243,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
     /**
@@ -4573,9 +8263,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTypes(String objectId, DXEnvironment env) throws Exception {
-        return recordRemoveTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordRemoveTypes(String objectId, DXEnvironment env) {
+        return recordRemoveTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordRemoveTypes method with the specified environment and parameters.
@@ -4585,8 +8284,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
@@ -4596,9 +8304,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRename(String objectId) throws Exception {
-        return recordRename(objectId, mapper.readTree("{}"));
+    public static JsonNode recordRename(String objectId) {
+        return recordRename(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordRename method with the specified parameters.
@@ -4607,8 +8324,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRename(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordRename(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
     /**
@@ -4618,9 +8344,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRename(String objectId, DXEnvironment env) throws Exception {
-        return recordRename(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordRename(String objectId, DXEnvironment env) {
+        return recordRename(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordRename method with the specified environment and parameters.
@@ -4630,8 +8365,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordRename(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordRename(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
     }
 
@@ -4641,9 +8385,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetDetails(String objectId) throws Exception {
-        return recordSetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode recordSetDetails(String objectId) {
+        return recordSetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordSetDetails method with the specified parameters.
@@ -4652,8 +8405,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordSetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
     /**
@@ -4663,9 +8425,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetDetails(String objectId, DXEnvironment env) throws Exception {
-        return recordSetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordSetDetails(String objectId, DXEnvironment env) {
+        return recordSetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordSetDetails method with the specified environment and parameters.
@@ -4675,8 +8446,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
@@ -4686,9 +8466,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetProperties(String objectId) throws Exception {
-        return recordSetProperties(objectId, mapper.readTree("{}"));
+    public static JsonNode recordSetProperties(String objectId) {
+        return recordSetProperties(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordSetProperties method with the specified parameters.
@@ -4697,8 +8486,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetProperties(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordSetProperties(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
     /**
@@ -4708,9 +8506,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetProperties(String objectId, DXEnvironment env) throws Exception {
-        return recordSetProperties(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordSetProperties(String objectId, DXEnvironment env) {
+        return recordSetProperties(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordSetProperties method with the specified environment and parameters.
@@ -4720,8 +8527,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
@@ -4731,9 +8547,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetVisibility(String objectId) throws Exception {
-        return recordSetVisibility(objectId, mapper.readTree("{}"));
+    public static JsonNode recordSetVisibility(String objectId) {
+        return recordSetVisibility(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the recordSetVisibility method with the specified parameters.
@@ -4742,8 +8567,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
     /**
@@ -4753,9 +8587,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetVisibility(String objectId, DXEnvironment env) throws Exception {
-        return recordSetVisibility(objectId, mapper.readTree("{}"), env);
+    public static JsonNode recordSetVisibility(String objectId, DXEnvironment env) {
+        return recordSetVisibility(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordSetVisibility method with the specified environment and parameters.
@@ -4765,8 +8608,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
@@ -4774,9 +8626,18 @@ public class DXAPI {
      * Invokes the recordNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordNew() throws Exception {
-        return recordNew(mapper.readTree("{}"));
+    public static JsonNode recordNew() {
+        return recordNew(mapper.createObjectNode());
     }
     /**
      * Invokes the recordNew method with the specified input parameters.
@@ -4784,8 +8645,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordNew(JsonNode inputParams) throws Exception {
+    public static JsonNode recordNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/record/new", inputParams);
     }
     /**
@@ -4794,9 +8664,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Records#API-method%3A-%2Frecord%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordNew(DXEnvironment env) throws Exception {
-        return recordNew(mapper.readTree("{}"), env);
+    public static JsonNode recordNew(DXEnvironment env) {
+        return recordNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the recordNew method with the specified environment and input parameters.
@@ -4805,40 +8684,85 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode recordNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode recordNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/record/new", inputParams);
     }
 
     /**
      * Invokes the systemFindAffiliates method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindAffiliates() throws Exception {
-        return systemFindAffiliates(mapper.readTree("{}"));
+    public static JsonNode systemFindAffiliates() {
+        return systemFindAffiliates(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindAffiliates method with the specified input parameters.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindAffiliates(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindAffiliates(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findAffiliates", inputParams);
     }
     /**
      * Invokes the systemFindAffiliates method with the specified environment.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindAffiliates(DXEnvironment env) throws Exception {
-        return systemFindAffiliates(mapper.readTree("{}"), env);
+    public static JsonNode systemFindAffiliates(DXEnvironment env) {
+        return systemFindAffiliates(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindAffiliates method with the specified environment and input parameters.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindAffiliates(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindAffiliates(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findAffiliates", inputParams);
     }
 
@@ -4846,9 +8770,18 @@ public class DXAPI {
      * Invokes the systemFindApps method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindApps() throws Exception {
-        return systemFindApps(mapper.readTree("{}"));
+    public static JsonNode systemFindApps() {
+        return systemFindApps(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindApps method with the specified input parameters.
@@ -4856,8 +8789,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindApps(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindApps(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findApps", inputParams);
     }
     /**
@@ -4866,9 +8808,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindApps">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindApps(DXEnvironment env) throws Exception {
-        return systemFindApps(mapper.readTree("{}"), env);
+    public static JsonNode systemFindApps(DXEnvironment env) {
+        return systemFindApps(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindApps method with the specified environment and input parameters.
@@ -4877,8 +8828,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindApps(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindApps(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findApps", inputParams);
     }
 
@@ -4886,9 +8846,18 @@ public class DXAPI {
      * Invokes the systemFindDataObjects method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindDataObjects() throws Exception {
-        return systemFindDataObjects(mapper.readTree("{}"));
+    public static JsonNode systemFindDataObjects() {
+        return systemFindDataObjects(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindDataObjects method with the specified input parameters.
@@ -4896,8 +8865,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindDataObjects(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindDataObjects(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findDataObjects", inputParams);
     }
     /**
@@ -4906,9 +8884,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindDataObjects">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindDataObjects(DXEnvironment env) throws Exception {
-        return systemFindDataObjects(mapper.readTree("{}"), env);
+    public static JsonNode systemFindDataObjects(DXEnvironment env) {
+        return systemFindDataObjects(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindDataObjects method with the specified environment and input parameters.
@@ -4917,8 +8904,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindDataObjects(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindDataObjects(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findDataObjects", inputParams);
     }
 
@@ -4926,9 +8922,18 @@ public class DXAPI {
      * Invokes the systemFindJobs method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindJobs() throws Exception {
-        return systemFindJobs(mapper.readTree("{}"));
+    public static JsonNode systemFindJobs() {
+        return systemFindJobs(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindJobs method with the specified input parameters.
@@ -4936,8 +8941,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindJobs(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindJobs(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findJobs", inputParams);
     }
     /**
@@ -4946,9 +8960,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindJobs">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindJobs(DXEnvironment env) throws Exception {
-        return systemFindJobs(mapper.readTree("{}"), env);
+    public static JsonNode systemFindJobs(DXEnvironment env) {
+        return systemFindJobs(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindJobs method with the specified environment and input parameters.
@@ -4957,8 +8980,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindJobs(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindJobs(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findJobs", inputParams);
     }
 
@@ -4966,9 +8998,18 @@ public class DXAPI {
      * Invokes the systemFindProjects method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjects() throws Exception {
-        return systemFindProjects(mapper.readTree("{}"));
+    public static JsonNode systemFindProjects() {
+        return systemFindProjects(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindProjects method with the specified input parameters.
@@ -4976,8 +9017,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjects(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindProjects(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findProjects", inputParams);
     }
     /**
@@ -4986,9 +9036,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindProjects">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjects(DXEnvironment env) throws Exception {
-        return systemFindProjects(mapper.readTree("{}"), env);
+    public static JsonNode systemFindProjects(DXEnvironment env) {
+        return systemFindProjects(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindProjects method with the specified environment and input parameters.
@@ -4997,8 +9056,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjects(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindProjects(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findProjects", inputParams);
     }
 
@@ -5006,9 +9074,18 @@ public class DXAPI {
      * Invokes the systemFindUsers method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindUsers() throws Exception {
-        return systemFindUsers(mapper.readTree("{}"));
+    public static JsonNode systemFindUsers() {
+        return systemFindUsers(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindUsers method with the specified input parameters.
@@ -5016,8 +9093,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindUsers(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindUsers(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findUsers", inputParams);
     }
     /**
@@ -5026,9 +9112,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method%3A-%2Fsystem%2FfindUsers">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindUsers(DXEnvironment env) throws Exception {
-        return systemFindUsers(mapper.readTree("{}"), env);
+    public static JsonNode systemFindUsers(DXEnvironment env) {
+        return systemFindUsers(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindUsers method with the specified environment and input parameters.
@@ -5037,8 +9132,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindUsers(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindUsers(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findUsers", inputParams);
     }
 
@@ -5046,9 +9150,18 @@ public class DXAPI {
      * Invokes the systemFindProjectMembers method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjectMembers() throws Exception {
-        return systemFindProjectMembers(mapper.readTree("{}"));
+    public static JsonNode systemFindProjectMembers() {
+        return systemFindProjectMembers(mapper.createObjectNode());
     }
     /**
      * Invokes the systemFindProjectMembers method with the specified input parameters.
@@ -5056,8 +9169,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjectMembers(JsonNode inputParams) throws Exception {
+    public static JsonNode systemFindProjectMembers(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/findProjectMembers", inputParams);
     }
     /**
@@ -5066,9 +9188,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Search#API-method:-/system/findProjectMembers">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjectMembers(DXEnvironment env) throws Exception {
-        return systemFindProjectMembers(mapper.readTree("{}"), env);
+    public static JsonNode systemFindProjectMembers(DXEnvironment env) {
+        return systemFindProjectMembers(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemFindProjectMembers method with the specified environment and input parameters.
@@ -5077,72 +9208,153 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemFindProjectMembers(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemFindProjectMembers(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/findProjectMembers", inputParams);
     }
 
     /**
      * Invokes the systemGreet method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemGreet() throws Exception {
-        return systemGreet(mapper.readTree("{}"));
+    public static JsonNode systemGreet() {
+        return systemGreet(mapper.createObjectNode());
     }
     /**
      * Invokes the systemGreet method with the specified input parameters.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemGreet(JsonNode inputParams) throws Exception {
+    public static JsonNode systemGreet(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/greet", inputParams);
     }
     /**
      * Invokes the systemGreet method with the specified environment.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemGreet(DXEnvironment env) throws Exception {
-        return systemGreet(mapper.readTree("{}"), env);
+    public static JsonNode systemGreet(DXEnvironment env) {
+        return systemGreet(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemGreet method with the specified environment and input parameters.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemGreet(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemGreet(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/greet", inputParams);
     }
 
     /**
      * Invokes the systemShortenURL method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemShortenURL() throws Exception {
-        return systemShortenURL(mapper.readTree("{}"));
+    public static JsonNode systemShortenURL() {
+        return systemShortenURL(mapper.createObjectNode());
     }
     /**
      * Invokes the systemShortenURL method with the specified input parameters.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemShortenURL(JsonNode inputParams) throws Exception {
+    public static JsonNode systemShortenURL(JsonNode inputParams) {
         return new DXHTTPRequest().request("/system/shortenURL", inputParams);
     }
     /**
      * Invokes the systemShortenURL method with the specified environment.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemShortenURL(DXEnvironment env) throws Exception {
-        return systemShortenURL(mapper.readTree("{}"), env);
+    public static JsonNode systemShortenURL(DXEnvironment env) {
+        return systemShortenURL(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the systemShortenURL method with the specified environment and input parameters.
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode systemShortenURL(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode systemShortenURL(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/system/shortenURL", inputParams);
     }
 
@@ -5152,9 +9364,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userDescribe(String objectId) throws Exception {
-        return userDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode userDescribe(String objectId) {
+        return userDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the userDescribe method with the specified parameters.
@@ -5163,8 +9384,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode userDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -5174,9 +9404,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userDescribe(String objectId, DXEnvironment env) throws Exception {
-        return userDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode userDescribe(String objectId, DXEnvironment env) {
+        return userDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the userDescribe method with the specified environment and parameters.
@@ -5186,8 +9425,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode userDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -5197,9 +9445,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Users#API-method%3A-%2Fuser-xxxx%2Fupdate">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userUpdate(String objectId) throws Exception {
-        return userUpdate(objectId, mapper.readTree("{}"));
+    public static JsonNode userUpdate(String objectId) {
+        return userUpdate(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the userUpdate method with the specified parameters.
@@ -5208,8 +9465,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userUpdate(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode userUpdate(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "update", inputParams);
     }
     /**
@@ -5219,9 +9485,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userUpdate(String objectId, DXEnvironment env) throws Exception {
-        return userUpdate(objectId, mapper.readTree("{}"), env);
+    public static JsonNode userUpdate(String objectId, DXEnvironment env) {
+        return userUpdate(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the userUpdate method with the specified environment and parameters.
@@ -5231,8 +9506,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode userUpdate(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode userUpdate(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "update", inputParams);
     }
 
@@ -5242,9 +9526,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FaddStage">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddStage(String objectId) throws Exception {
-        return workflowAddStage(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowAddStage(String objectId) {
+        return workflowAddStage(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowAddStage method with the specified parameters.
@@ -5253,8 +9546,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddStage(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowAddStage(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addStage", inputParams);
     }
     /**
@@ -5264,9 +9566,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddStage(String objectId, DXEnvironment env) throws Exception {
-        return workflowAddStage(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowAddStage(String objectId, DXEnvironment env) {
+        return workflowAddStage(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowAddStage method with the specified environment and parameters.
@@ -5276,8 +9587,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddStage(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowAddStage(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addStage", inputParams);
     }
 
@@ -5287,9 +9607,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FaddTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTags(String objectId) throws Exception {
-        return workflowAddTags(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowAddTags(String objectId) {
+        return workflowAddTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowAddTags method with the specified parameters.
@@ -5298,8 +9627,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowAddTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
     }
     /**
@@ -5309,9 +9647,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTags(String objectId, DXEnvironment env) throws Exception {
-        return workflowAddTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowAddTags(String objectId, DXEnvironment env) {
+        return workflowAddTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowAddTags method with the specified environment and parameters.
@@ -5321,8 +9668,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
     }
 
@@ -5332,9 +9688,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FaddTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTypes(String objectId) throws Exception {
-        return workflowAddTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowAddTypes(String objectId) {
+        return workflowAddTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowAddTypes method with the specified parameters.
@@ -5343,8 +9708,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "addTypes", inputParams);
     }
     /**
@@ -5354,9 +9728,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTypes(String objectId, DXEnvironment env) throws Exception {
-        return workflowAddTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowAddTypes(String objectId, DXEnvironment env) {
+        return workflowAddTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowAddTypes method with the specified environment and parameters.
@@ -5366,8 +9749,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowAddTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTypes", inputParams);
     }
 
@@ -5377,9 +9769,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Data Object-Lifecycle#API-method%3A-%2Fclass-xxxx%2Fclose">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowClose(String objectId) throws Exception {
-        return workflowClose(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowClose(String objectId) {
+        return workflowClose(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowClose method with the specified parameters.
@@ -5388,8 +9789,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowClose(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowClose(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "close", inputParams);
     }
     /**
@@ -5399,9 +9809,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowClose(String objectId, DXEnvironment env) throws Exception {
-        return workflowClose(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowClose(String objectId, DXEnvironment env) {
+        return workflowClose(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowClose method with the specified environment and parameters.
@@ -5411,8 +9830,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowClose(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowClose(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "close", inputParams);
     }
 
@@ -5422,9 +9850,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2Fdescribe">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowDescribe(String objectId) throws Exception {
-        return workflowDescribe(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowDescribe(String objectId) {
+        return workflowDescribe(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowDescribe method with the specified parameters.
@@ -5433,8 +9870,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowDescribe(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowDescribe(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams);
     }
     /**
@@ -5444,9 +9890,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowDescribe(String objectId, DXEnvironment env) throws Exception {
-        return workflowDescribe(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowDescribe(String objectId, DXEnvironment env) {
+        return workflowDescribe(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowDescribe method with the specified environment and parameters.
@@ -5456,8 +9911,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowDescribe(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
     }
 
@@ -5467,9 +9931,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FgetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowGetDetails(String objectId) throws Exception {
-        return workflowGetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowGetDetails(String objectId) {
+        return workflowGetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowGetDetails method with the specified parameters.
@@ -5478,8 +9951,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "getDetails", inputParams);
     }
     /**
@@ -5489,9 +9971,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowGetDetails(String objectId, DXEnvironment env) throws Exception {
-        return workflowGetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowGetDetails(String objectId, DXEnvironment env) {
+        return workflowGetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowGetDetails method with the specified environment and parameters.
@@ -5501,8 +9992,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowGetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "getDetails", inputParams);
     }
 
@@ -5512,9 +10012,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Cloning#API-method%3A-%2Fclass-xxxx%2FlistProjects">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowListProjects(String objectId) throws Exception {
-        return workflowListProjects(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowListProjects(String objectId) {
+        return workflowListProjects(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowListProjects method with the specified parameters.
@@ -5523,8 +10032,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowListProjects(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowListProjects(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "listProjects", inputParams);
     }
     /**
@@ -5534,9 +10052,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowListProjects(String objectId, DXEnvironment env) throws Exception {
-        return workflowListProjects(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowListProjects(String objectId, DXEnvironment env) {
+        return workflowListProjects(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowListProjects method with the specified environment and parameters.
@@ -5546,8 +10073,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowListProjects(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowListProjects(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "listProjects", inputParams);
     }
 
@@ -5557,9 +10093,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FmoveStage">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowMoveStage(String objectId) throws Exception {
-        return workflowMoveStage(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowMoveStage(String objectId) {
+        return workflowMoveStage(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowMoveStage method with the specified parameters.
@@ -5568,8 +10113,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "moveStage", inputParams);
     }
     /**
@@ -5579,9 +10133,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowMoveStage(String objectId, DXEnvironment env) throws Exception {
-        return workflowMoveStage(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowMoveStage(String objectId, DXEnvironment env) {
+        return workflowMoveStage(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowMoveStage method with the specified environment and parameters.
@@ -5591,8 +10154,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowMoveStage(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "moveStage", inputParams);
     }
 
@@ -5602,9 +10174,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveStage(String objectId) throws Exception {
-        return workflowRemoveStage(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowRemoveStage(String objectId) {
+        return workflowRemoveStage(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowRemoveStage method with the specified parameters.
@@ -5613,8 +10194,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeStage", inputParams);
     }
     /**
@@ -5624,9 +10214,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveStage(String objectId, DXEnvironment env) throws Exception {
-        return workflowRemoveStage(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowRemoveStage(String objectId, DXEnvironment env) {
+        return workflowRemoveStage(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowRemoveStage method with the specified environment and parameters.
@@ -5636,8 +10235,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowRemoveStage(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeStage", inputParams);
     }
 
@@ -5647,9 +10255,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Tags#API-method%3A-%2Fclass-xxxx%2FremoveTags">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTags(String objectId) throws Exception {
-        return workflowRemoveTags(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowRemoveTags(String objectId) {
+        return workflowRemoveTags(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowRemoveTags method with the specified parameters.
@@ -5658,8 +10275,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
     }
     /**
@@ -5669,9 +10295,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTags(String objectId, DXEnvironment env) throws Exception {
-        return workflowRemoveTags(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowRemoveTags(String objectId, DXEnvironment env) {
+        return workflowRemoveTags(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowRemoveTags method with the specified environment and parameters.
@@ -5681,8 +10316,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
     }
 
@@ -5692,9 +10336,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Types#API-method%3A-%2Fclass-xxxx%2FremoveTypes">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTypes(String objectId) throws Exception {
-        return workflowRemoveTypes(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowRemoveTypes(String objectId) {
+        return workflowRemoveTypes(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowRemoveTypes method with the specified parameters.
@@ -5703,8 +10356,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "removeTypes", inputParams);
     }
     /**
@@ -5714,9 +10376,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTypes(String objectId, DXEnvironment env) throws Exception {
-        return workflowRemoveTypes(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowRemoveTypes(String objectId, DXEnvironment env) {
+        return workflowRemoveTypes(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowRemoveTypes method with the specified environment and parameters.
@@ -5726,8 +10397,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowRemoveTypes(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTypes", inputParams);
     }
 
@@ -5737,9 +10417,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Name#API-method%3A-%2Fclass-xxxx%2Frename">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRename(String objectId) throws Exception {
-        return workflowRename(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowRename(String objectId) {
+        return workflowRename(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowRename method with the specified parameters.
@@ -5748,8 +10437,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRename(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowRename(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "rename", inputParams);
     }
     /**
@@ -5759,9 +10457,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRename(String objectId, DXEnvironment env) throws Exception {
-        return workflowRename(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowRename(String objectId, DXEnvironment env) {
+        return workflowRename(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowRename method with the specified environment and parameters.
@@ -5771,8 +10478,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRename(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowRename(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "rename", inputParams);
     }
 
@@ -5782,9 +10498,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FremoveStage">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRun(String objectId) throws Exception {
-        return workflowRun(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowRun(String objectId) {
+        return workflowRun(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowRun method with the specified parameters.
@@ -5793,8 +10518,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRun(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowRun(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "run", inputParams);
     }
     /**
@@ -5804,9 +10538,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRun(String objectId, DXEnvironment env) throws Exception {
-        return workflowRun(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowRun(String objectId, DXEnvironment env) {
+        return workflowRun(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowRun method with the specified environment and parameters.
@@ -5816,8 +10559,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowRun(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowRun(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "run", inputParams);
     }
 
@@ -5827,9 +10579,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Details-and-Links#API-method%3A-%2Fclass-xxxx%2FsetDetails">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetDetails(String objectId) throws Exception {
-        return workflowSetDetails(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowSetDetails(String objectId) {
+        return workflowSetDetails(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowSetDetails method with the specified parameters.
@@ -5838,8 +10599,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setDetails", inputParams);
     }
     /**
@@ -5849,9 +10619,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetDetails(String objectId, DXEnvironment env) throws Exception {
-        return workflowSetDetails(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowSetDetails(String objectId, DXEnvironment env) {
+        return workflowSetDetails(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowSetDetails method with the specified environment and parameters.
@@ -5861,8 +10640,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowSetDetails(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setDetails", inputParams);
     }
 
@@ -5872,9 +10660,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Properties#API-method%3A-%2Fclass-xxxx%2FsetProperties">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetProperties(String objectId) throws Exception {
-        return workflowSetProperties(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowSetProperties(String objectId) {
+        return workflowSetProperties(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowSetProperties method with the specified parameters.
@@ -5883,8 +10680,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
     }
     /**
@@ -5894,9 +10700,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetProperties(String objectId, DXEnvironment env) throws Exception {
-        return workflowSetProperties(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowSetProperties(String objectId, DXEnvironment env) {
+        return workflowSetProperties(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowSetProperties method with the specified environment and parameters.
@@ -5906,8 +10721,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
@@ -5917,9 +10741,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow-xxxx%2FsetStageInputs">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetStageInputs(String objectId) throws Exception {
-        return workflowSetStageInputs(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowSetStageInputs(String objectId) {
+        return workflowSetStageInputs(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowSetStageInputs method with the specified parameters.
@@ -5928,8 +10761,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setStageInputs", inputParams);
     }
     /**
@@ -5939,9 +10781,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetStageInputs(String objectId, DXEnvironment env) throws Exception {
-        return workflowSetStageInputs(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowSetStageInputs(String objectId, DXEnvironment env) {
+        return workflowSetStageInputs(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowSetStageInputs method with the specified environment and parameters.
@@ -5951,8 +10802,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowSetStageInputs(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setStageInputs", inputParams);
     }
 
@@ -5962,9 +10822,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Visibility#API-method%3A-%2Fclass-xxxx%2FsetVisibility">API specification</a>.
      *
      * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetVisibility(String objectId) throws Exception {
-        return workflowSetVisibility(objectId, mapper.readTree("{}"));
+    public static JsonNode workflowSetVisibility(String objectId) {
+        return workflowSetVisibility(objectId, mapper.createObjectNode());
     }
     /**
      * Invokes the workflowSetVisibility method with the specified parameters.
@@ -5973,8 +10842,17 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams) throws Exception {
+    public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams) {
         return new DXHTTPRequest().request("/" + objectId + "/" + "setVisibility", inputParams);
     }
     /**
@@ -5984,9 +10862,18 @@ public class DXAPI {
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetVisibility(String objectId, DXEnvironment env) throws Exception {
-        return workflowSetVisibility(objectId, mapper.readTree("{}"), env);
+    public static JsonNode workflowSetVisibility(String objectId, DXEnvironment env) {
+        return workflowSetVisibility(objectId, mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowSetVisibility method with the specified environment and parameters.
@@ -5996,8 +10883,17 @@ public class DXAPI {
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowSetVisibility(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "setVisibility", inputParams);
     }
 
@@ -6005,9 +10901,18 @@ public class DXAPI {
      * Invokes the workflowNew method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowNew() throws Exception {
-        return workflowNew(mapper.readTree("{}"));
+    public static JsonNode workflowNew() {
+        return workflowNew(mapper.createObjectNode());
     }
     /**
      * Invokes the workflowNew method with the specified input parameters.
@@ -6015,8 +10920,17 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew">API specification</a>.
      *
      * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowNew(JsonNode inputParams) throws Exception {
+    public static JsonNode workflowNew(JsonNode inputParams) {
         return new DXHTTPRequest().request("/workflow/new", inputParams);
     }
     /**
@@ -6025,9 +10939,18 @@ public class DXAPI {
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fworkflow%2Fnew">API specification</a>.
      *
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowNew(DXEnvironment env) throws Exception {
-        return workflowNew(mapper.readTree("{}"), env);
+    public static JsonNode workflowNew(DXEnvironment env) {
+        return workflowNew(mapper.createObjectNode(), env);
     }
     /**
      * Invokes the workflowNew method with the specified environment and input parameters.
@@ -6036,8 +10959,17 @@ public class DXAPI {
      *
      * @param inputParams input parameters to the API call
      * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode workflowNew(JsonNode inputParams, DXEnvironment env) throws Exception {
+    public static JsonNode workflowNew(JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/workflow/new", inputParams);
     }
 }

@@ -16,58 +16,67 @@
 
 package com.dnanexus;
 
-import org.junit.*;
+import java.io.IOException;
+
+import org.junit.Assert;
+import org.junit.Test;
 import com.fasterxml.jackson.databind.*;
 import com.dnanexus.DXHTTPRequest;
 import com.dnanexus.DXEnvironment;
+import com.dnanexus.exceptions.InvalidAuthenticationException;
+import com.dnanexus.exceptions.InvalidInputException;
 
 public class DXHTTPRequestTest {
-    @BeforeClass public static void setUpClass() throws Exception {
-        // Code executed before the first test method
-    }
 
-    @Before public void setUp() throws Exception {
-        // Code executed before each test
-    }
-
-    @Test public void testDXAPI() throws Exception {
+    @Test
+    public void testDXAPI() throws IOException {
         DXHTTPRequest c = new DXHTTPRequest();
-        JsonNode responseJson = c.request("/system/findDataObjects",
-                                          (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
-        org.junit.Assert.assertEquals(responseJson.isObject(), true);
+        JsonNode responseJson = c.request("/system/findDataObjects", DXJSON.parseJson("{}"));
+        Assert.assertEquals(responseJson.isObject(), true);
+
         // System.out.println(responseJson);
 
         String responseText = c.request("/system/findDataObjects", "{}");
-        org.junit.Assert.assertEquals(responseText.substring(0, 1), "{");
-    }
+        Assert.assertEquals(responseText.substring(0, 1), "{");
 
-    @Test public void testDXAPICustomEnvironment() throws Exception {
-        DXEnvironment env = DXEnvironment.create();
-        DXHTTPRequest c = new DXHTTPRequest(env);
-        JsonNode responseJson = c.request("/system/findDataObjects",
-                                          (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
-        org.junit.Assert.assertEquals(responseJson.isObject(), true);
-        // System.out.println(responseJson);
-
-        String responseText = c.request("/system/findDataObjects", "{}");
-        org.junit.Assert.assertEquals(responseText.substring(0, 1), "{");
-
-        JsonNode bogusSecCtx = (new MappingJsonFactory().createJsonParser("{\"auth_token_type\":\"Bearer\",\"auth_token\":\"BOGUS\"}").readValueAsTree());
-        env = new DXEnvironment.Builder().setSecurityContext(bogusSecCtx).build();
-        DXHTTPRequest c2 = new DXHTTPRequest(env);
+        // Tests deserialization of InvalidInput
+        DXHTTPRequest c2 = new DXHTTPRequest();
         try {
-            c2.request("/system/findDataObjects",
-                       (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree()));
-        } catch (Exception exn) {
-            org.junit.Assert.assertTrue(exn.toString().contains("InvalidAuthentication"));
+            c2.request("/system/findDataObjects", DXJSON.parseJson("{\"state\": {\"invalid\": \"oops\"}}"));
+            Assert.fail("Expected findDataObjects to fail with InvalidInput");
+        } catch (InvalidInputException e) {
+            // Error message should be something like
+            // "expected key \"state\" of input to be a string"
+            Assert.assertTrue(e.toString().contains("key \"state\""));
+            Assert.assertEquals(422, e.getStatusCode());
         }
     }
 
-    @After public void tearDown() throws Exception {
-        // Code executed after each test
+    @Test
+    public void testDXAPICustomEnvironment() throws IOException {
+        DXEnvironment env = DXEnvironment.create();
+        DXHTTPRequest c = new DXHTTPRequest(env);
+        JsonNode responseJson = c.request("/system/findDataObjects", DXJSON.parseJson("{}"));
+        Assert.assertEquals(responseJson.isObject(), true);
+
+        // System.out.println(responseJson);
+
+        String responseText = c.request("/system/findDataObjects", "{}");
+        Assert.assertEquals(responseText.substring(0, 1), "{");
+
+        // Tests deserialization of InvalidAuthentication
+        JsonNode bogusSecCtx = DXJSON.parseJson("{\"auth_token_type\":\"Bearer\",\"auth_token\":\"BOGUS\"}");
+        env = new DXEnvironment.Builder().setSecurityContext(bogusSecCtx).build();
+        DXHTTPRequest c2 = new DXHTTPRequest(env);
+        try {
+            c2.request("/system/findDataObjects", DXJSON.parseJson("{}"));
+            Assert.fail("Expected findDataObjects to fail with InvalidAuthentication");
+        } catch (InvalidAuthenticationException e) {
+            // Error message should be something like
+            // "the token could not be found"
+            Assert.assertTrue(e.toString().contains("token"));
+            Assert.assertEquals(401, e.getStatusCode());
+        }
     }
 
-    @AfterClass public static void tearDownClass() throws Exception {
-        // Code executed after the last test method
-    }
 }

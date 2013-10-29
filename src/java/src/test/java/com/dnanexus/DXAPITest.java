@@ -16,6 +16,8 @@
 
 package com.dnanexus;
 
+import java.io.IOException;
+
 import org.junit.*;
 import com.fasterxml.jackson.databind.*;
 import com.dnanexus.DXAPI;
@@ -30,14 +32,14 @@ public class DXAPITest {
         // Code executed before each test
     }
 
-    @Test public void testDXAPI() throws Exception {
+    @Test public void testDXAPI() throws IOException {
         JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
         JsonNode responseJson = DXAPI.systemFindDataObjects(input);
         org.junit.Assert.assertEquals(responseJson.isObject(), true);
         // System.out.println(responseJson);
     }
 
-    @Test public void testDXAPICustomEnvironment() throws Exception {
+    @Test public void testDXAPICustomEnvironment() throws IOException {
         DXEnvironment env = new DXEnvironment.Builder().build();
         JsonNode input = (JsonNode)(new MappingJsonFactory().createJsonParser("{}").readValueAsTree());
         JsonNode responseJson = DXAPI.systemFindDataObjects(input, env);

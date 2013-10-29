@@ -16,16 +16,22 @@
 
 package com.dnanexus;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.*;
-import org.apache.http.*;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.util.*;
-import org.apache.http.entity.*;
-import org.apache.http.client.methods.*;
+import java.io.IOException;
+import java.nio.charset.Charset;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.client.ClientProtocolException;
-import java.io.*;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.util.EntityUtils;
+
+import com.dnanexus.exceptions.DXAPIException;
+import com.dnanexus.exceptions.DXHTTPException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Class for making a raw DNAnexus API call via HTTP.
@@ -35,9 +41,9 @@ public class DXHTTPRequest {
     private final String apiserver;
     private final DefaultHttpClient httpclient;
 
-    private static int NUM_RETRIES = 5;
+    private static final int NUM_RETRIES = 5;
 
-    private static DXEnvironment defaultEnv = DXEnvironment.create();
+    private static final DXEnvironment defaultEnv = DXEnvironment.create();
 
     private static final String USER_AGENT = DXUserAgent.getUserAgent();
 
@@ -58,8 +64,8 @@ public class DXHTTPRequest {
         httpclient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
     }
 
-    private String errorMessage(String method, String resource, String errorString,
-                                int retryWait, int nextRetryNum, int maxRetries) {
+    private static String errorMessage(String method, String resource, String errorString, int retryWait,
+            int nextRetryNum, int maxRetries) {
         String baseError = method + " " + resource + ": " + errorString + ".";
         if (nextRetryNum <= maxRetries) {
             return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
@@ -86,106 +92,159 @@ public class DXHTTPRequest {
      * Issues a request against the specified resource and returns either the
      * text of the response or the parsed JSON of the response (depending on
      * whether parseResponse is set).
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    private ParsedResponse requestImpl(String resource, String data, boolean parseResponse) throws Exception {
+    private ParsedResponse requestImpl(String resource, String data, boolean parseResponse) {
         HttpPost request = new HttpPost(apiserver + resource);
 
         request.setHeader("Content-Type", "application/json");
         request.setHeader("Authorization", securityContext.get("auth_token_type").textValue()
                           + " " + securityContext.get("auth_token").textValue());
-        request.setEntity(new StringEntity(data));
+        request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));
 
         // Retry with exponential backoff
         int timeout = 1;
 
         for (int i = 0; i <= NUM_RETRIES; i++) {
-            HttpResponse response = null;
-            boolean okToRetry = false;
-
             try {
-                response = httpclient.execute(request);
-            } catch (ClientProtocolException e) {
-                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1,
-                                                NUM_RETRIES));
-            } catch (IOException e) {
-                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1,
-                                                NUM_RETRIES));
-            }
+                // In this block, any IOException will cause the request to be
+                // retried (up to a total of 5 retries). RuntimeException
+                // (including DXAPIException) are not caught and will
+                // immediately return control to the caller.
 
-            if (response != null) {
+                HttpResponse response = httpclient.execute(request);
+
                 int statusCode = response.getStatusLine().getStatusCode();
-
                 HttpEntity entity = response.getEntity();
 
                 if (statusCode == HttpStatus.SC_OK) {
                     // 200 OK
-
                     byte[] value = EntityUtils.toByteArray(entity);
                     int realLength = value.length;
                     if (entity.getContentLength() >= 0 && realLength != entity.getContentLength()) {
-                        String errorStr = "Received response of " + realLength
-                            + " bytes but Content-Length was " + entity.getContentLength();
-                        System.err.println(errorMessage("POST", resource, errorStr, timeout, i + 1,
-                                                        NUM_RETRIES));
-                    } else {
-                        if (parseResponse) {
-                            JsonNode responseJson = null;
-                            try {
-                                responseJson = DXJSON.parseJson(new String(value, "UTF-8"));
-                            } catch (JsonProcessingException e) {
-                                if (entity.getContentLength() < 0) {
-                                    // content-length was not provided, and the
-                                    // JSON could not be parsed. Retry since
-                                    // this is a streaming request from the
-                                    // server that probably just encountered a
-                                    // transient error.
-                                } else {
-                                    throw e;
-                                }
+                        // Content length mismatch.
+                        throw new IOException("Received response of " + realLength + " bytes but Content-Length was "
+                                + entity.getContentLength());
+                    } else if (parseResponse) {
+                        JsonNode responseJson = null;
+                        try {
+                            responseJson = DXJSON.parseJson(new String(value, "UTF-8"));
+                        } catch (JsonProcessingException e) {
+                            if (entity.getContentLength() < 0) {
+                                // content-length was not provided, and the
+                                // JSON could not be parsed. Retry since this
+                                // is a streaming request from the server that
+                                // probably just encountered a transient error.
+                                // Retry the request (unless we've exceeded the
+                                // maximum number of retries)
+                                throw new IOException(
+                                        "Content-length was not provided and the response JSON could not be parsed.");
+                            } else {
+                                // This is probably a real problem (the request
+                                // is complete but doesn't parse), so avoid
+                                // masking it as an IOException (which is
+                                // rethrown as DXHTTPException below). If it
+                                // comes up frequently we can revisit how these
+                                // should be handled.
+                                throw new RuntimeException("Request is of the correct length but is unparseable", e);
                             }
-                            if (responseJson != null) {
-                                return new ParsedResponse(null, responseJson);
-                            }
-                        } else {
-                            return new ParsedResponse(new String(value, "UTF-8"), null);
+                        } catch (IOException e) {
+                            // TODO: characterize what kinds of errors
+                            // DXJSON.parseJson can emit, determine how we can
+                            // get here and what to do about it.
+                            throw new RuntimeException(e);
                         }
-                    }
-                } else {
-                    // Non-200 status codes.
-
-                    // 500 InternalError should get retried. 4xx errors should
-                    // be considered not recoverable.
-                    if (statusCode < 500) {
-                        throw new Exception(EntityUtils.toString(entity));
+                        return new ParsedResponse(null, responseJson);
                     } else {
-                        System.err.println(errorMessage("POST", resource, EntityUtils.toString(entity),
-                                                        timeout, i + 1, NUM_RETRIES));
+                        return new ParsedResponse(new String(value, Charset.forName("UTF-8")), null);
                     }
+                } else if (statusCode < 500) {
+                    // 4xx errors should be considered not recoverable.
+                    String responseStr = EntityUtils.toString(entity);
+                    String errorType = null;
+                    String errorMessage = responseStr;
+                    try {
+                        JsonNode responseJson = DXJSON.parseJson(responseStr);
+                        JsonNode errorField = responseJson.get("error");
+                        if (errorField != null) {
+                            JsonNode typeField = errorField.get("type");
+                            if (typeField != null) {
+                                errorType = typeField.asText();
+                            }
+                            JsonNode messageField = errorField.get("message");
+                            if (messageField != null) {
+                                errorMessage = messageField.asText();
+                            }
+                        }
+                    } catch (IOException e) {
+                        // Just fall back to reproducing the entire response
+                        // body.
+                    }
+
+                    throw DXAPIException.getInstance(errorType, errorMessage, statusCode);
+                } else {
+                    // 500 InternalError should get retried
+                    throw new IOException(EntityUtils.toString(entity));
+                }
+
+                // We should never fall through to here: the request should
+                // have succeeded (and returned) or thrown an exception (caught
+                // below) by now.
+
+            } catch (IOException e) {
+                System.err.println(errorMessage("POST", resource, e.toString(), timeout, i + 1, NUM_RETRIES));
+                if (i == NUM_RETRIES) {
+                    throw new DXHTTPException(e);
                 }
             }
 
             if (i < NUM_RETRIES) {
-                Thread.sleep(timeout * 1000);
+                try {
+                    Thread.sleep(timeout * 1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 timeout *= 2;
             }
         }
 
-        throw new Exception("POST " + resource + " failed");
+        // We should never get here.
+        throw new AssertionError("Exceeded max number of retries without throwing an error");
     }
 
     /**
-     * Issues a request against the specified resource and returns the result
-     * as a String.
+     * Issues a request against the specified resource and returns the result as
+     * a String.
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public String request(String resource, String data) throws Exception {
+    public String request(String resource, String data) {
         return requestImpl(resource, data, false).responseText;
     }
 
     /**
-     * Issues a request against the specified resource and returns the result
-     * as a JSON object.
+     * Issues a request against the specified resource and returns the result as
+     * a JSON object.
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
      */
-    public JsonNode request(String resource, JsonNode data) throws Exception {
+    public JsonNode request(String resource, JsonNode data) {
         String dataAsString = data.toString();
         return requestImpl(resource, dataAsString, true).responseJson;
     }
