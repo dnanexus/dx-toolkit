@@ -41,7 +41,7 @@ VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 CFLAGS = -O3 -Wall -Wextra -Werror=return-type -Wno-switch -pedantic
 CXXFLAGS = $(CFLAGS)
 CXXFLAGS += -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\"
-CXXFLAGS += -I$(curl_dir)/include -I$(boost_dir) -I$(cares_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir) -I$(libmagic_dir)/include -I$(openssl_dir)/include
+CXXFLAGS += -I$(libmagic_dir)/include -I$(openssl_dir)/include -I$(curl_dir)/include -I$(cares_dir)/include -I$(boost_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
 
 LDFLAGS = -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L$(cares_dir)/lib -L$(libmagic_dir)/lib -L$(openssl_dir)
 
@@ -71,13 +71,12 @@ dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
 dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o dxlog.o
 ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o round_robin_dns.o common_utils.o
 
+ua: dxjson dxhttp dxcpp $(ua_objs)
+	$(CXX) *.o $(LDFLAGS) -o ua
+
 dxjson: $(dxjson_objs)
 dxhttp: $(dxhttp_objs)
 dxcpp: $(dxcpp_objs)
-ua: $(ua_objs)
-
-all: dxjson dxhttp dxcpp ua
-	$(CXX) *.o $(LDFLAGS) -o ua
 
 D = dnanexus-upload-agent-$(VERSION)
 dist: all
@@ -88,11 +87,11 @@ ifeq ($(OS), Windows_NT)
 	for lib in zlib1 libgcc_s_dw2-1 libstdc++-6 libgnurx-0; do \
 	    install "$$(which $$lib.dll)" dist/; \
 	done
-	install ua.exe dist/
+	install --strip ua.exe dist/
 	cp -a dist $(D)-windows
 	zip -r $(D)-windows.zip $(D)-windows
 else ifeq ($(UNAME), Linux)
-	install ua dist/
+	install --strip ua dist/
 	cp -a dist $(D)-linux
 	tar -czf $(D)-linux.tar.gz $(D)-linux
 else ifeq ($(UNAME), Darwin)
@@ -100,7 +99,7 @@ else ifeq ($(UNAME), Darwin)
 	mkdir -p dist/resources && install ca-certificates.crt dist/resources/
 	install $$(dyldinfo -dylibs ua|grep libstdc++) dist/
 	install $$(dyldinfo -dylibs ua|grep libgcc) dist/
-	install ua dist/
+	install --strip ua dist/
 	for bin in dist/ua dist/*.dylib; do \
 	    for lib in $$(dyldinfo -dylibs $$bin|egrep -v '(for arch|attributes|/usr/lib)'); do \
 	        install_name_tool -change $$lib "@loader_path/$$(basename $$lib)" $$bin; \
@@ -121,6 +120,6 @@ install: all
 	install -v ua $(DESTDIR)/$(PREFIX)/bin
 
 clean:
-	rm -rf *.o ua ua.exe dist
+	rm -rf *.o ua ua.exe dist $(D)*
 
 .PHONY: all clean dist install installer dxjson dxhttp dxcpp ua

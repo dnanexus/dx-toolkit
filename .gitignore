@@ -24,6 +24,13 @@
 /src/R/dxR*.tar.gz
 /src/ruby/*.gem
 /src/ruby/.yardoc
+
+/src/openssl
+/src/boost
+/src/file
+/src/curl
+/src/c-ares
+
 dxR.Rcheck
 *~
 *.log
