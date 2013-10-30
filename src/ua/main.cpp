@@ -583,12 +583,6 @@ int main(int argc, char * argv[]) {
 
   const bool anyImportAppToBeCalled = (opt.reads || opt.pairedReads || opt.mappings || opt.variants);
  
-/*// JM can now accept files which are not in "closed" state as inputs. So we no longer need to wait for them to close first.
-  if (anyImportAppToBeCalled) {
-    DXLOG(logINFO) << "User requested an import app to be called at the end of upload. Will explicitly turn on --wait-on-close flag (if not present already)";
-    opt.waitOnClose = true;
-  }
-*/
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
   int exitCode = 0; 
