@@ -20,8 +20,6 @@
 #include <string>
 #include "dxjson/dxjson.h"
 
-void testServerConnection(void);
-
 std::string resolveProject(const std::string &projectSpec);
 
 void createFolder(const std::string &projectID, const std::string &folder);

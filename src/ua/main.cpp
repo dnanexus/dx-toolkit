@@ -71,7 +71,7 @@ int64_t bytesUploadedSinceStart = 0;
 std::time_t startTime;
 
 /* This variable is used as an additional mechanism for terminating
- * uploadProgressThread.*/ 
+ * uploadProgressThread.*/
 bool keepShowingUploadProgress = true;
 
 /*
@@ -128,9 +128,9 @@ void handle_bad_alloc(const std::bad_alloc &e) {
 }
 
 // General note:
-// Assuming that actual upload stage is the bottleneck (which is mostly the case), memory 
+// Assuming that actual upload stage is the bottleneck (which is mostly the case), memory
 // consumption of UA will roughly be the following:
-// 
+//
 // Memory footprint = [#read-threads + 2 * (#compress-threads + #upload-threads)] * chunk-size
 
 void readChunks() {
@@ -218,7 +218,7 @@ void uploadChunks(vector<File> &files) {
         if (!opt.noRoundRobinDNS) {
           boost::mutex::scoped_lock forceRefreshLock(forceRefreshDNSMutex);
           c->log("Setting forceRefreshDNS = true in main.cpp:uploadChunks()");
-          forceRefreshDNS = true; // refresh the DNS list in next call to getRandomIP() 
+          forceRefreshDNS = true; // refresh the DNS list in next call to getRandomIP()
         }
         --(c->triesLeft);
         c->clear(); // we will read & compress data again
@@ -320,16 +320,16 @@ void uploadProgressHelper(vector<File> &files) {
   double mbps = (timediff > 0) ? (double(bytesUploadedSinceStart) / (1024.0 * 1024.0)) / timediff : 0.0;
   boLock.unlock();
   cerr << " ... Average transfer speed = " << setw(6) << setprecision(2) << std::fixed << mbps << " MB/sec";
-  
+
   // Print instantaneous transfer rate
   boost::mutex::scoped_lock queueLock(instantaneousBytesMutex);
   double mbps2 = 0.0;
   if (!instantaneousBytesAndTimestampQueue.empty()) {
 
     int64_t oldestElemTime = instantaneousBytesAndTimestampQueue.front().first;
-    int64_t timediff2 = std::time(0) - oldestElemTime;  
+    int64_t timediff2 = std::time(0) - oldestElemTime;
     if (timediff2 >= 90) {
-      // If lastupdated time was older than 90seconds, we are lagging too behind to call it 
+      // If lastupdated time was older than 90seconds, we are lagging too behind to call it
       // "instantaneous", so clear the previous data and start fresh again.
       // Note: If this happens to often on a system, then we need to decrease MAX_QUEUE_SIZE in chunk.cpp
       queue<pair<time_t, int64_t> > empty;
@@ -444,7 +444,7 @@ void markFileAsFailed(vector<File> &files, const string &fileID) {
   }
 }
 
-/* This function throws a runtime_error if two or more file 
+/* This function throws a runtime_error if two or more file
  * have same "signature", and are being uploaded to same project.
  * Note: - Signature is: <project, size, last_write_time, filename> tuple
  *         Same as what we use for resuming.
@@ -455,9 +455,9 @@ void disallowDuplicateFiles(const vector<string> &files, const vector<string> &p
     //TODO: This results in calling "resolveProject" twice for each file -- not a big deal,
     //      but ideally we should reuse the value retrieved in first call
     string hash = resolveProject(prjs[i]) + " ";
-    
+
     boost::filesystem::path p(files[i]);
-    
+
     hash += boost::lexical_cast<string>(boost::filesystem::file_size(p)) + " ";
     hash += boost::lexical_cast<string>(boost::filesystem::last_write_time(p)) + " ";
     hash += p.filename().string();
@@ -480,7 +480,7 @@ void setUserAgentString() {
   stringstream iHash;
   iHash << std::hex << r1 << "-" << std::hex << r2;
   userAgentString = string("DNAnexus-Upload-Agent/") + UAVERSION + "/" + string(DXTOOLKIT_GITVERSION);
-  
+
   string platform = "unknown";
 #if WINDOWS_BUILD
   platform = "windows";
@@ -527,7 +527,7 @@ int main(int argc, char * argv[]) {
     opt.printHelp(argv[0]);
     return 1;
   }
- 
+
   if (opt.env()) {
     printEnvironmentInfo();
     return 0;
@@ -546,33 +546,28 @@ int main(int argc, char * argv[]) {
     opt.printHelp(argv[0]);
     return (opt.help()) ? 0 : 1;
   }
-  
+
   setUserAgentString(); // also sets dx::config::USER_AGENT_STRING()
   DXLOG(logINFO) << "DNAnexus Upload Agent " << UAVERSION << " (git version: " << DXTOOLKIT_GITVERSION << ")";
   DXLOG(logINFO) << "Upload agent's User Agent string: '" << userAgentString << "'";
   DXLOG(logINFO) << "dxcpp's User Agent string: '" << dx::config::USER_AGENT_STRING() << "'";
   DXLOG(logINFO) << opt;
+
   try {
     opt.setApiserverDxConfig();
     opt.validate();
-    
-    // Check for updates, and terminate execution if necessary
-    // Note: - It's important to call this function before testServerConnection()
-    //         because, if the client is too old, testServerConnection() would fail with "ClientTooOld" error (since it calls /system/findUsers).
-    //       - If server is unreachable, checkForUpdates() will just print a warning on DXLOG
-    //         the actual unreachability of server (and subsequent action) will still be determined by testServerConnection()
-    // TODO: Once production has /system/greet route, we can subsume testServerConnection() into checkForUpdates()
-    //       , i.e., we can use /system/greet route to test apiserver connection as well (instead of findUsers).
-    //       But one important point to be noted: /findUsers route check the fact that auth token is not from public,
-    //       whereas /system/greet does not (so we must find another way to test that fact for auth token).
-    //       (for example: later calls, like creating file, polling project, etc will fail)
+
+    /*
+     * Check for updates, and terminate execution if necessary. This also
+     * has the side effect of verifying that we can connect to the API
+     * server, and that the authentication token is valid.
+     */
     try {
       checkForUpdates();
     } catch (runtime_error &e) {
       cerr << endl << e.what() << endl;
       return 3;
     }
-    testServerConnection();
     if (!opt.doNotResume) {
       disallowDuplicateFiles(opt.files, opt.projects);
     }
@@ -582,10 +577,10 @@ int main(int argc, char * argv[]) {
   }
 
   const bool anyImportAppToBeCalled = (opt.reads || opt.pairedReads || opt.mappings || opt.variants);
- 
+
   chunksToCompress.setCapacity(opt.compressThreads);
   chunksToUpload.setCapacity(opt.uploadThreads);
-  int exitCode = 0; 
+  int exitCode = 0;
   try {
     curlInit(); // for curl requests to be made by upload chunk request
 
@@ -621,18 +616,18 @@ int main(int argc, char * argv[]) {
         files[i].waitOnClose = true;
       }
     }
-    
+
     // Take this point as the starting time for program operation
     // (to calculate average transfer speed)
     startTime = std::time(0);
 
     DXLOG(logINFO) << "Created " << totalChunks << " chunks.";
-    
+
     createWorkerThreads(files);
 
     DXLOG(logINFO) << "Creating monitor thread..";
     boost::thread monitorThread(monitor);
-    
+
     boost::thread uploadProgressThread;
     if (opt.progress) {
       DXLOG(logINFO) << "Creating Upload Progress thread..";
@@ -674,7 +669,7 @@ int main(int argc, char * argv[]) {
       }
       if (files[i].failed)
         files[i].fileID = "failed";
-    } 
+    }
 
     DXLOG(logINFO) << "Waiting for files to be closed...";
     boost::thread waitOnCloseThread(waitOnClose, boost::ref(files));
@@ -682,7 +677,7 @@ int main(int argc, char * argv[]) {
     waitOnCloseThread.join();
     DXLOG(logINFO) << "Wait-on-close thread finished.";
     if (anyImportAppToBeCalled) {
-      runImportApps(opt, files);  
+      runImportApps(opt, files);
     }
     for (unsigned i = 0; i < files.size(); ++i) {
       cout << files[i].fileID;

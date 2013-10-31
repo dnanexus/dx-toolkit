@@ -34,11 +34,17 @@ JSON securityContext(const string &authToken) {
   return ctx;
 }
 
-// Runs /system/greet route to get update info
-//  - If the API call fails, do nothing (except log the failure (if verbose mode is on))
-//  - If UA is up to date, we just log this fact (if verbose mode is on)
-//  - If a "required" update is available, we throw runtime_error()
-//  - If a "recommended" update is available, we print the info on stderr (irresepctive of verbose mode status)
+/*
+ * Calls the /system/greet route to get update info. This also serves to
+ * verify that we can connect to the API server, and that the
+ * authentication token is valid.
+ *
+ * - If the API call fails with a known error, we report it and exit.
+ * - If the API call fails with an unknown error, we proceed (after logging the failure if verbose mode is on)
+ * - If UA is up to date, we log this fact if verbose mode is on
+ * - If a required update is available, we throw runtime_error()
+ * - If a recommended update is available, we print the info on stderr (irresepctive of verbose mode status)
+ */
 void checkForUpdates() {
   JSON inp(JSON_HASH);
   inp["client"] = "dnanexus-upload-agent";
@@ -58,10 +64,32 @@ void checkForUpdates() {
   if (!platform.empty()) {
     inp["platform"] = platform;
   }
+
   JSON res;
   DXLOG(logINFO) << "Checking for updates (calling /system/greet), inp = '" << inp.toString() << "' ...";
   try {
     res = systemGreet(inp, false); // don't retry this requests, not that essential
+  } catch (DXAPIError &aerr) {
+    DXLOG(logINFO) << " failure.";
+    if (aerr.resp_code == 401) {
+      throw runtime_error("Invalid authentication token. Please provide a correct token by running 'dx login' or using the '--auth-token' option). (" + string(aerr.what()) + ")");
+    } else {
+      throw runtime_error("Unable to connect to API server: an unexpected error occurred. (" + string(aerr.what()) + ")");
+    }
+  } catch (DXConnectionError &cerr) {
+    DXLOG(logINFO) << " failure.";
+    #if WINDOWS_BUILD
+    if (cerr.curl_code = 35 && string(cerr.what()).find("schannel") != string::npos) {
+      throw runtime_error("This is a known issue on Microsoft Windows. Please download this hotfix from Microsoft to fix this problem: http://support.microsoft.com/kb/975858/en-us"
+                          "\nTechnical details (for advanced users): \n'" + string(cerr.what()) + "'\nIf you still encounter the problem after installing the hotfix, please contact DNAnexus support.");
+    }
+    #endif
+    throw runtime_error("Unable to connect to API server. Please list your environment variables (--env flag) to see the current configuration.\n\n"
+                        "Detailed message (for advanced users only):\n" + string(cerr.what()));
+  } catch (DXError &e) {
+    DXLOG(logINFO) << " failure.";
+    throw runtime_error("Unable to connect to API server. Please list your environment variables (--env flag) to see the current configuration.\n\n"
+                        "Detailed message (for advanced users only):\n" + string(e.what()));
   } catch (exception &aerr) {
     // If an error is thrown while calling /system/greet, we don't treat it as fatal
     // but instead just log it to stderr (if verbose mode was on).
@@ -86,34 +114,6 @@ void checkForUpdates() {
        << "It's highly recommended that you download the latest version from here " << url << endl
        << "****************************************" << endl;
   return;
-}
-
-void testServerConnection() {
-  DXLOG(logINFO) << "Testing connection to API server...";
-  try {
-    JSON result = systemFindUsers(JSON::parse("{\"limit\": 1}"), true);
-    DXLOG(logINFO) << " success.";
-  } catch (DXAPIError &aerr) {
-    DXLOG(logINFO) << " failure.";
-    if (aerr.resp_code == 401) {
-      throw runtime_error("Invalid Authentication token, please provide a correct auth token (you may use --auth-token option). (" + string(aerr.what()) + ")");
-    }
-    throw runtime_error("Unable to connect to apiserver -- an unexpected error occurred. (" + string(aerr.what()) + ")");
-  } catch (DXConnectionError &cerr) {
-    DXLOG(logINFO) << " failure.";
-    #if WINDOWS_BUILD
-    if (cerr.curl_code = 35 && string(cerr.what()).find("schannel") != string::npos) {
-      throw runtime_error("This is a known issue on Microsoft Windows. Please download this hotfix from Microsoft to fix this problem: http://support.microsoft.com/kb/975858/en-us"
-                          "\nTechnical details (for advanced users): \n'" + string(cerr.what()) + "'\nIf you still face the problem (after installing hotfix), please contact DNAnexus support.");
-    }
-    #endif
-    throw runtime_error("Unable to connect to DNAnexus apiserver. Please list your environment variables (--env flag) to see the current apiserver configuration.\n\n"
-                         "Detailed message (for advanced users only):\n" + string(cerr.what()));
-  } catch (DXError &e) {
-    DXLOG(logINFO) << " failure.";
-    throw runtime_error("Unable to connect to DNAnexus apiserver. Please list your environment variables (--env flag) to see the current apiserver configuration.\n\n"
-                         "Detailed message (for advanced users only):\n" + string(e.what()));
-  }
 }
 
 string urlEscape(const string &str) {
