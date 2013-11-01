@@ -87,19 +87,19 @@ ifeq ($(OS), Windows_NT)
 	for lib in zlib1 libgcc_s_dw2-1 libstdc++-6 libgnurx-0; do \
 	    install "$$(which $$lib.dll)" dist/; \
 	done
-	install --strip ua.exe dist/
+	install -s ua.exe dist/
 	cp -a dist $(D)-windows
 	zip -r $(D)-windows.zip $(D)-windows
 else ifeq ($(UNAME), Linux)
-	install --strip ua dist/
+	install -s ua dist/
 	cp -a dist $(D)-linux
 	tar -czf $(D)-linux.tar.gz $(D)-linux
 else ifeq ($(UNAME), Darwin)
-	install {$(curl_dir),$(cares_dir),$(libmagic_dir),$(boost_dir)/stage}/lib/*.dylib dist/
+	cp -af {$(curl_dir),$(cares_dir),$(libmagic_dir),$(boost_dir)/stage}/lib/*.dylib dist/
 	mkdir -p dist/resources && install ca-certificates.crt dist/resources/
 	install $$(dyldinfo -dylibs ua|grep libstdc++) dist/
 	install $$(dyldinfo -dylibs ua|grep libgcc) dist/
-	install --strip ua dist/
+	install -s ua dist/
 	for bin in dist/ua dist/*.dylib; do \
 	    for lib in $$(dyldinfo -dylibs $$bin|egrep -v '(for arch|attributes|/usr/lib)'); do \
 	        install_name_tool -change $$lib "@loader_path/$$(basename $$lib)" $$bin; \
