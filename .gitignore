@@ -38,6 +38,7 @@ dxR.Rcheck
 *.pid
 *.pyc
 *.a
+*.o
 .DS_Store
 /bin/dx
 /bin/dx-app-wizard
@@ -74,3 +75,4 @@ dxR.Rcheck
 /bin/python-argcomplete-check-easy-install-script
 /bin/register-python-argcomplete
 /bin/jq
+/bin/ua
