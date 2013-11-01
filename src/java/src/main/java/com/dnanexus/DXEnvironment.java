@@ -81,6 +81,21 @@ public class DXEnvironment {
         return this.securityContext;
     }
 
+    /**
+     * Returns the temporary workspace of the currently running job, or the
+     * current project if this method is called outside the Execution
+     * Environment.
+     *
+     * @return {@code DXContainer} for the container, or {@code null} if the
+     *         container cannot be determined
+     */
+    public DXContainer getWorkspace() {
+        if (this.workspaceId == null) {
+            return null;
+        }
+        return DXContainer.getInstance(this.workspaceId);
+    }
+
     public static class Builder {
         private static final String DEFAULT_APISERVER_HOST = "api.dnanexus.com";
         private static final String DEFAULT_APISERVER_PORT = "443";
