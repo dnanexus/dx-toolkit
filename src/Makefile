@@ -284,14 +284,14 @@ doc_ruby: ruby
 
 # Upload Agent dependencies
 # =========================
-ua_deps: shasum git openssl boost curl libmagic
+ua_deps: openssl boost curl libmagic
 
 UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu
 
 shasum:
 	if ! hash shasum; then cd "${DNANEXUS_HOME}/build/bin"; ln -s "$$(command -v sha1sum)" shasum; fi
 
-git:
+git: shasum
 	if ! hash git; then $(MAKE) build_git; fi
 
 GIT_PV=1.8.4
@@ -306,7 +306,7 @@ build_git:
 
 OPENSSL_PV=1.0.1e
 OPENSSL_SHA=3f1b1223c9e8189bfe4e186d86449775bd903460
-openssl:
+openssl: shasum
 	if [[ "$(OS)" == Windows_NT || $(UNAME) == Darwin ]] || grep -q 'CentOS release 5' /etc/issue; then \
 	    $(MAKE) build_openssl; \
 	fi
@@ -331,7 +331,7 @@ BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_tim
 boost: boost/stage
 
 # See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
-boost/stage:
+boost/stage: shasum
 	mkdir -p boost
 	curl ${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2 > boost-$(BOOST_PV).tar.bz2
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
@@ -355,7 +355,7 @@ CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_WINSSL=--with-winssl
 endif
-curl/stage/lib/libcurl.la:
+curl/stage/lib/libcurl.la: shasum
 	mkdir -p curl
 	curl ${UBUNTU_MIRROR}/pool/main/c/curl/curl_${CURL_PV}.orig.tar.gz > curl-${CURL_PV}.tar.gz
 	[[ $$(shasum curl-${CURL_PV}.tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
@@ -373,7 +373,7 @@ c-ares: c-ares/stage/lib/libcares.la
 
 CARES_PV=1.10.0
 CARES_SHA=e44e6575d5af99cb3a38461486e1ee8b49810eb5
-c-ares/stage/lib/libcares.la:
+c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
 	curl ${UBUNTU_MIRROR}/pool/main/c/c-ares/c-ares_${CARES_PV}.orig.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
@@ -381,11 +381,11 @@ c-ares/stage/lib/libcares.la:
 	cd c-ares; ./configure --prefix=/
 	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
 
-libmagic: git_submodules file/stage/lib/libmagic.la
+libmagic: file/stage/lib/libmagic.la
 
 FILE_PV=5.09
 FILE_SHA=9d905f9e50033c3f5be3728473cbb709a41550fb
-file/stage/lib/libmagic.la:
+file/stage/lib/libmagic.la: shasum
 	mkdir -p file
 	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.gz > file-${FILE_PV}.tar.gz
 	[[ $$(shasum file-${FILE_PV}.tar.gz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
