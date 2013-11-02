@@ -71,12 +71,10 @@ dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
 dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o dxlog.o
 ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o round_robin_dns.o common_utils.o
 
-ua: dxjson dxhttp dxcpp $(ua_objs)
-	$(CXX) *.o $(LDFLAGS) -o ua
+all: ua
 
-dxjson: $(dxjson_objs)
-dxhttp: $(dxhttp_objs)
-dxcpp: $(dxcpp_objs)
+ua: $(dxjson_objs) $(dxhttp_objs) $(dxcpp_objs) $(ua_objs)
+	$(CXX) *.o $(LDFLAGS) -o ua
 
 D = dnanexus-upload-agent-$(VERSION)
 dist: all
@@ -122,4 +120,4 @@ install: all
 clean:
 	rm -rf *.o ua ua.exe dist $(D)*
 
-.PHONY: all clean dist install installer dxjson dxhttp dxcpp ua
+.PHONY: all clean dist install installer
