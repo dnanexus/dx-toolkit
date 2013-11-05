@@ -114,7 +114,7 @@ ifeq ($(OS), Windows_NT)
 	cd installers/NSIS; "$${PROGRAMFILES}/NSIS/makensis" ua.nsi
 endif
 
-install: all
+install: dist
 	install -v dist/* $(DESTDIR)/$(PREFIX)/bin/
 
 clean:
