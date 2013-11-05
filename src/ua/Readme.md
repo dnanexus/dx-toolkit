@@ -1,30 +1,33 @@
 # DNAnexus Upload Agent
 
-This directory contains the source code for the DNAnexus Upload Agent (UA).
-The UA is a command-line program for performing fast, robust file uploads
-to the platform. The UA is written in C++ and runs on Linux, Mac OS X, and
+This directory contains the source code for the DNAnexus Upload Agent (UA). The UA is a command-line program for
+performing fast, robust file uploads to the platform. The UA is written in C++ and runs on Linux, Mac OS X, and
 Windows.
+
+## Build dependencies
+Before building the Upload Agent, follow the instructions in the SDK Readme for installing system build dependencies.
 
 ## Building
 
-To build the UA, simply run `make` in this directory. This will produce a
-subdirectory called `build/`, containing the `ua` executable.
+To build the UA, simply run `make` in this directory. This will build the `ua` executable in this directory. The
+following methods can be used to deploy the Upload Agent:
 
-On Linux, the resulting executable is statically linked. On Mac OS X, the
-executable is statically linked with the exception of two libraries: libgcc
-and libstdc++. As a result, the `libstdc++.6.dylib` and `libgcc_s.1.dylib`
-files in the `build/` directory must be distributed along with the Mac
-executable.
+* `make install` will deposit `ua` in the `$DNANEXUS_HOME/bin` directory
+* `make dist` will build a complete UA distribution for the current platform and place it in the `dist` subdirectory. On
+  Linux, the distribution is a .tar.gz file; on Windows and OS X, there are two products: a .zip file and an installer.
+
+The `ua` executable is statically linked on Linux. On Mac OS X and Windows, the executable is dynamically linked, and
+the necessary libraries are copied along with it.
 
 ## Dependencies
 
-The UA depends on the following libraries:
+The UA depends on the following libraries. They are automatically downloaded and installed when running `make`:
 
 * [libcurl](http://curl.haxx.se/libcurl/) for HTTP requests. In particular,
   a custom statically-linked libcurl must be built, and this relies on:
   * c-ares, an asynchronous DNS library (Ubuntu package libc-ares-dev; Mac
     port c-ares);
-  * OpenSSL for HTTPS;
+  * OpenSSL or the native Windows SSL library for HTTPS;
 * various [Boost](http://www.boost.org/) libraries, including Thread,
   Lexical Cast, Program Options, Filesystem, System, and Regex;
 * [zlib](http://zlib.net/) for compression;

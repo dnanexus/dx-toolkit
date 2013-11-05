@@ -24,6 +24,18 @@
 /src/R/dxR*.tar.gz
 /src/ruby/*.gem
 /src/ruby/.yardoc
+
+/src/openssl*.tar.gz
+/src/openssl
+/src/boost*.tar.bz2
+/src/boost
+/src/file*.tar.gz
+/src/file
+/src/curl*.tar.gz
+/src/curl
+/src/c-ares*.tar.gz
+/src/c-ares
+
 dxR.Rcheck
 *~
 *.log
@@ -31,6 +43,7 @@ dxR.Rcheck
 *.pid
 *.pyc
 *.a
+*.o
 .DS_Store
 /bin/dx
 /bin/dx-app-wizard
@@ -67,3 +80,4 @@ dxR.Rcheck
 /bin/python-argcomplete-check-easy-install-script
 /bin/register-python-argcomplete
 /bin/jq
+/bin/ua

@@ -17,9 +17,13 @@
 SHELL=/bin/bash -e
 
 ifndef MAKEOPTS
-	MAKEOPTS=-j -l 2.0
+	ifneq ($(OS), Windows_NT)
+		MAKEOPTS=-j -l 2.0
+	endif
 endif
 MAKE:=$(MAKE) $(MAKEOPTS)
+
+UNAME := $(shell uname)
 
 ifndef CCACHE_DISABLE
 	export PATH := /usr/lib/ccache:$(PATH)
@@ -35,7 +39,17 @@ ifndef PREFIX
 endif
 
 export DNANEXUS_HOME=$(CURDIR)/..
+export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
 export DNANEXUS_PY27_ENV=$(DNANEXUS_HOME)/build/py27_env
+
+# Short-circuit sudo when running as root. In a chrooted environment we are
+# likely to be running as root already, and sudo may not be present on minimal
+# installations.
+ifeq (${USER}, root)
+	MAYBE_SUDO=
+else
+	MAYBE_SUDO='sudo'
+endif
 
 all: api_wrappers cpp src_libs python dx-contigset-to-fasta dx-verify-file dx-wig-to-wiggle jq
 
@@ -156,8 +170,8 @@ dx-verify-file: api_wrappers
 dx-wig-to-wiggle: api_wrappers
 	$(MAKE) -C dx-wig-to-wiggle install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
-ua:
-	$(MAKE) -C ua install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+ua: ua_deps
+	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 # Tests
 # =====
@@ -268,6 +282,117 @@ doc_ruby: ruby
 	-rm -rf ../doc/ruby
 	(cd ruby; yard --output-dir "$(DNANEXUS_HOME)/doc/ruby")
 
+# Upload Agent dependencies
+# =========================
+ua_deps: openssl boost curl libmagic
+
+UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu
+
+shasum:
+	if ! hash shasum; then cd "${DNANEXUS_HOME}/build/bin"; ln -s "$$(command -v sha1sum)" shasum; fi
+
+git: shasum
+	if ! hash git; then $(MAKE) build_git; fi
+
+GIT_PV=1.8.4
+GIT_SHA=6b3924a5e7a05893670ca9744b7f5166cf03193b
+build_git:
+	mkdir -p git
+	curl -L "https://github.com/git/git/archive/v$(GIT_PV).tar.gz" > git-$(GIT_PV).tar.gz
+	[[ $$(shasum git-$(GIT_PV).tar.gz|cut -f 1 -d ' ') == $(GIT_SHA) ]]
+	tar -xzf git-$(GIT_PV).tar.gz -C git --strip-components=1
+	(cd git && autoreconf --install && ./configure && $(MAKE) && $(MAKE) install)
+	(cd ../build/bin && ln -s ../../src/git/git)
+
+OPENSSL_PV=1.0.1e
+OPENSSL_SHA=3f1b1223c9e8189bfe4e186d86449775bd903460
+openssl: shasum
+	if [[ "$(OS)" == Windows_NT || $(UNAME) == Darwin ]] || grep -q 'CentOS release 5' /etc/issue; then \
+	    $(MAKE) build_openssl; \
+	fi
+
+build_openssl: openssl/libssl.a
+
+openssl/libssl.a:
+	mkdir -p openssl
+	curl ${UBUNTU_MIRROR}/pool/main/o/openssl/openssl_${OPENSSL_PV}.orig.tar.gz > openssl-${OPENSSL_PV}.tar.gz
+	[[ $$(shasum openssl-${OPENSSL_PV}.tar.gz|cut -f 1 -d ' ') == $(OPENSSL_SHA) ]]
+	tar -xzf openssl-${OPENSSL_PV}.tar.gz -C openssl --strip-components=1
+ifeq ($(UNAME), Darwin)
+	cd openssl; ./Configure darwin64-x86_64-cc
+else
+	cd openssl; ./config
+endif
+	$(MAKE) -C openssl -j1
+
+BOOST_PV=1.53
+BOOST_SHA=e6dd1b62ceed0a51add3dda6f3fc3ce0f636a7f3
+BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
+boost: boost/stage
+
+# See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
+boost/stage: shasum
+	mkdir -p boost
+	curl ${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2 > boost-$(BOOST_PV).tar.bz2
+	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
+	tar -xjf boost-$(BOOST_PV).tar.bz2 -C boost --strip-components=1
+ifeq ($(OS), Windows_NT)
+	cd boost; ./bootstrap.sh --with-toolset=mingw --with-libraries=${BOOST_LIBS}
+	sed -i -e s/mingw/gcc/ boost/project-config.jam
+	cd boost; ./b2 --build-type=complete --layout=tagged -j8 stage
+else
+	if grep -q 'CentOS release 5' /etc/issue; then \
+	    echo 'using gcc : 4.4 : g++44 ;' >> boost/tools/build/v2/user-config.jam; \
+	fi
+	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
+	cd boost; ./b2 --layout=tagged -j8 stage
+endif
+
+curl: c-ares curl/stage/lib/libcurl.la
+
+CURL_PV=7.32.0
+CURL_SHA=cadc5648e4cd4ea750a8c580311722ed1fb1573a
+ifeq ($(OS), Windows_NT)
+	CURL_WITH_WINSSL=--with-winssl
+endif
+curl/stage/lib/libcurl.la: shasum
+	mkdir -p curl
+	curl ${UBUNTU_MIRROR}/pool/main/c/curl/curl_${CURL_PV}.orig.tar.gz > curl-${CURL_PV}.tar.gz
+	[[ $$(shasum curl-${CURL_PV}.tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
+	tar -xzf curl-${CURL_PV}.tar.gz -C curl --strip-components=1
+	cd curl; ./configure --disable-ldap --disable-ldaps \
+	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
+	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
+	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
+	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
+	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
+	    --enable-static=yes $(CURL_WITH_WINSSL) --prefix=/
+	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
+
+c-ares: c-ares/stage/lib/libcares.la
+
+CARES_PV=1.10.0
+CARES_SHA=e44e6575d5af99cb3a38461486e1ee8b49810eb5
+c-ares/stage/lib/libcares.la: shasum
+	mkdir -p c-ares
+	curl ${UBUNTU_MIRROR}/pool/main/c/c-ares/c-ares_${CARES_PV}.orig.tar.gz > c-ares-${CARES_PV}.tar.gz
+	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
+	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
+	cd c-ares; ./configure --prefix=/
+	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
+
+libmagic: file/stage/lib/libmagic.la
+
+FILE_PV=5.09
+FILE_SHA=9d905f9e50033c3f5be3728473cbb709a41550fb
+file/stage/lib/libmagic.la: shasum
+	mkdir -p file
+	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.gz > file-${FILE_PV}.tar.gz
+	[[ $$(shasum file-${FILE_PV}.tar.gz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
+	tar -xzf file-${FILE_PV}.tar.gz -C file --strip-components=1
+	cd file; ./configure --prefix=/
+	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
+
 # Bundled utilities
 # =================
 
@@ -279,6 +404,18 @@ jq: git_submodules ../bin/jq
 	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
 	cp -f jq/jq ../bin/
 
+# System dependencies
+# ===================
+
+install_sysdeps:
+	if grep -q "CentOS release 5" /etc/issue; then \
+	    ${MAYBE_SUDO} yum groupinstall -y "Development tools"; \
+	    ${MAYBE_SUDO} yum install -y cmake gcc44-c++ zlib-devel bzip2-devel curl-devel; \
+	elif grep -q "Ubuntu 12.04" /etc/issue; then \
+	    ${MAYBE_SUDO} apt-get install make python-setuptools python-pip python-virtualenv python-dev \
+	        g++ cmake libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison autoconf; \
+	fi
+
 # Clean
 # =====
 
@@ -289,6 +426,7 @@ clean:
 	$(MAKE) -C dx-contigset-to-fasta clean
 	$(MAKE) -C dx-wig-to-wiggle clean
 	$(MAKE) -C dx-verify-file clean
+	$(MAKE) -C ua clean
 	-find ../bin -type f \( -name jq -or -name dx -or -name '*argcomplete*' -or -name 'dx-*' \) -not -name 'dx-unpack*' -delete
 	-rm -rf python/{build,*.{egg,egg-info}}
 	-rm -rf java/target
@@ -296,5 +434,6 @@ clean:
 	-rm -rf ../share
 	-rm ../build/info/version
 	-rm -rf "$(DNANEXUS_PY27_ENV)"
+	-rm -rf boost c-ares curl file openssl
 
-.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby
+.PHONY: all toolkit_version api_wrappers src_libs python_deps python perl java ruby dx-contigset-to-fasta ua test test_ruby test_python test_perl install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R doc_ruby boost

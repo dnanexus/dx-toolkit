@@ -14,34 +14,110 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-ifndef DESTDIR
-	export DESTDIR=/opt/dnanexus
-endif
-ifndef PREFIX
-	export PREFIX=/
-endif
-UNAME := $(shell uname)
-
 VERSION = 1.4.6
 
-all:
-	mkdir -pv build
-ifeq ($(UNAME), MINGW32_NT-6.1)
-	make -C build -f ../Makefile.mw all VERSION=$(VERSION)
-else
-	make -C build -f ../Makefile.static all VERSION=$(VERSION)
-endif
-clean:
-	rm -rvf build
+SHELL=/bin/bash -e
 
-dist: all
-ifeq ($(UNAME), MINGW32_NT-6.1)
-	make -C build -f ../Makefile.mw dist VERSION=$(VERSION)
+DXTOOLKIT_GITVERSION := $(shell git describe|sed 's/-/+/')
+
+DNANEXUS_HOME = $(CURDIR)/../..
+
+curl_dir = $(DNANEXUS_HOME)/src/curl/stage
+cares_dir = $(DNANEXUS_HOME)/src/c-ares/stage
+libmagic_dir = $(DNANEXUS_HOME)/src/file/stage
+boost_dir = $(DNANEXUS_HOME)/src/boost
+openssl_dir = $(DNANEXUS_HOME)/src/openssl
+
+cpp_dir = $(DNANEXUS_HOME)/src/cpp
+dxjson_dir = $(cpp_dir)/dxjson
+dxhttp_dir = $(cpp_dir)/SimpleHttpLib
+dxcpp_dir = $(cpp_dir)/dxcpp
+ua_dir = $(DNANEXUS_HOME)/src/ua
+
+VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
+
+# TODO: -DBOOST_THREAD_USE_LIB -DOLD_KERNEL_SUPPORT=1
+
+CFLAGS = -O3 -Wall -Wextra -Werror=return-type -Wno-switch -pedantic
+CXXFLAGS = $(CFLAGS)
+CXXFLAGS += -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\"
+CXXFLAGS += -I$(libmagic_dir)/include -I$(openssl_dir)/include -I$(curl_dir)/include -I$(cares_dir)/include -I$(boost_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
+
+LDFLAGS = -L$(boost_dir)/stage/lib -L$(curl_dir)/lib -L$(cares_dir)/lib -L$(libmagic_dir)/lib -L$(openssl_dir)
+
+UNAME := $(shell uname)
+
+# We use the -std=gnu++0x flag instead of c++0x for Windows compilation, because
+# c++0x mode turns on the __STRICT_ANSI__ flag, which forbids functions such as fseeko64() (which we use)
+ifeq ($(OS), Windows_NT)
+	CXXFLAGS += -DWINDOWS_BUILD=1 -std=gnu++0x
+	LDFLAGS += -lws2_32 -lregex -lgnurx.dll -lshlwapi
+	LDFLAGS += -lcurl.dll -lcares.dll -lboost_program_options-mt.dll -lboost_filesystem-mt.dll -lboost_system-mt.dll -lboost_thread-mt.dll -lboost_regex-mt.dll
 else
-	make -C build -f ../Makefile.static dist VERSION=$(VERSION)
+	LDFLAGS += -pthread -lcurl -lcares -lboost_program_options-mt -lboost_filesystem-mt -lboost_system-mt -lboost_thread-mt -lboost_regex-mt
+	ifeq ($(UNAME), Darwin)
+		CXXFLAGS += -DMAC_BUILD=1 -std=c++0x
+		LDFLAGS += -Wl,-headerpad,100
+	else
+		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
+		LDFLAGS += -lrt -lidn -static
+	endif
+endif
+
+LDFLAGS += -lssl -lcrypto -lz -ldl -lmagic -lstdc++ -lm
+
+dxjson_objs = dxjson.o
+dxhttp_objs = SimpleHttp.o SimpleHttpHeaders.o Utility.o
+dxcpp_objs = api.o dxcpp.o SSLThreads.o utils.o dxlog.o
+ua_objs = compress.o options.o chunk.o main.o file.o api_helper.o import_apps.o mime.o round_robin_dns.o common_utils.o
+
+all: ua
+
+ua: $(dxjson_objs) $(dxhttp_objs) $(dxcpp_objs) $(ua_objs)
+	$(CXX) *.o $(LDFLAGS) -o ua
+
+D = dnanexus-upload-agent-$(VERSION)
+dist: all
+	rm -rf dist $(D)-*
+	mkdir -p dist
+ifeq ($(OS), Windows_NT)
+	install {$(curl_dir),$(cares_dir),$(libmagic_dir)}/bin/*.dll $(boost_dir)/stage/lib/*-mt.dll dist/
+	for lib in zlib1 libgcc_s_dw2-1 libstdc++-6 libgnurx-0; do \
+	    install "$$(which $$lib.dll)" dist/; \
+	done
+	install -s ua.exe dist/
+	cp -a dist $(D)-windows
+	zip -r $(D)-windows.zip $(D)-windows
+else ifeq ($(UNAME), Linux)
+	install -s ua dist/
+	cp -a dist $(D)-linux
+	tar -czf $(D)-linux.tar.gz $(D)-linux
+else ifeq ($(UNAME), Darwin)
+	cp -af {$(curl_dir),$(cares_dir),$(libmagic_dir),$(boost_dir)/stage}/lib/*.dylib dist/
+	mkdir -p dist/resources && install ca-certificates.crt dist/resources/
+	install $$(dyldinfo -dylibs ua|grep libstdc++) dist/
+	install $$(dyldinfo -dylibs ua|grep libgcc) dist/
+	install -s ua dist/
+	for bin in dist/ua dist/*.dylib; do \
+	    for lib in $$(dyldinfo -dylibs $$bin|egrep -v '(for arch|attributes|/usr/lib)'); do \
+	        install_name_tool -change $$lib "@loader_path/$$(basename $$lib)" $$bin; \
+	    done; \
+	done
+	cp -a dist $(D)-osx
+	zip -r $(D)-osx.zip $(D)-osx
+else
+	$(error No dist recipe for system $(UNAME))
+endif
+
+installer: dist
+ifeq ($(OS), Windows_NT)
+	cd installers/NSIS; "$${PROGRAMFILES}/NSIS/makensis" ua.nsi
 endif
 
 install: all
-	install -v build/ua $(DESTDIR)/$(PREFIX)/bin
+	install -v ua $(DESTDIR)/$(PREFIX)/bin
 
-.PHONY: all clean dist install
+clean:
+	rm -rf *.o ua ua.exe dist $(D)*
+
+.PHONY: all clean dist install installer
