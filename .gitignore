@@ -25,10 +25,15 @@
 /src/ruby/*.gem
 /src/ruby/.yardoc
 
+/src/openssl*.tar.gz
 /src/openssl
+/src/boost*.tar.bz2
 /src/boost
+/src/file*.tar.gz
 /src/file
+/src/curl*.tar.gz
 /src/curl
+/src/c-ares*.tar.gz
 /src/c-ares
 
 dxR.Rcheck
