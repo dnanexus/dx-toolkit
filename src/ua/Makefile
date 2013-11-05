@@ -115,7 +115,7 @@ ifeq ($(OS), Windows_NT)
 endif
 
 install: all
-	install -v ua $(DESTDIR)/$(PREFIX)/bin
+	install -v dist/* $(DESTDIR)/$(PREFIX)/bin/
 
 clean:
 	rm -rf *.o ua ua.exe dist $(D)*
