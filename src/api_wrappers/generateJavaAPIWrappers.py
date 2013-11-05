@@ -32,9 +32,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Low-level wrappers for invoking DNAnexus API methods.
+ * Utility class containing low-level wrappers for invoking DNAnexus API methods.
  */
-public class DXAPI {
+public final class DXAPI {
+
+    // Utility class should not be instantiated
+    private DXAPI() {
+    }
 
     private static ObjectMapper mapper = new ObjectMapper();
 '''

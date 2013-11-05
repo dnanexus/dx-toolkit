@@ -1,5 +1,11 @@
 # Java API Bindings Changelog
 
+## 0.75.0
+
+* BREAKING: The DXAPI class may no longer be instantiated. You must use its
+  methods statically.
+* New classes: DXObject, DXProject, and DXContainer
+
 ## 0.74.0
 
 * `DXHTTPRequest` (and by extension, all the `DXAPI` wrapper methods) have been
