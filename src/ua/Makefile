@@ -58,6 +58,7 @@ else
 	ifeq ($(UNAME), Darwin)
 		CXXFLAGS += -DMAC_BUILD=1 -std=c++0x
 		LDFLAGS += -Wl,-headerpad,100
+		LDFLAGS += $(openssl_dir)/libssl.a $(openssl_dir)/libcrypto.a
 	else
 		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -lidn -static
