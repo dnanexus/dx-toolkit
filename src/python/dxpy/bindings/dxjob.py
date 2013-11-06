@@ -245,7 +245,14 @@ class DXJob(DXObject):
         :type field: string
 
         Returns a dict containing a valid job-based object reference
-        to refer to an output of this job.
+        to refer to an output of this job.  This can be used directly
+        in place of a DNAnexus link when used as a job output value.
+        For example, after creating a subjob, the following app
+        snippet uses a reference to the new job's output as part of
+        its own output::
+
+            mysubjob = dxpy.new_dxjob({}, "my_function")
+            return {"myfileoutput": mysubjob.get_output_ref("output_field_name")}
         '''
 
         return {"$dnanexus_link": {"job": self._dxid, "field": field}}
