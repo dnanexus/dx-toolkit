@@ -1,3 +1,11 @@
+dx-toolkit (0.75.0) precise; urgency=low
+
+  * Java bindings improvements: new high-level bindings.
+
+  * Upload agent build improvements.
+
+ -- Phil Sung <psung@dnanexus.com>  Wed, 06 Nov 2013 00:23:34 +0000
+
 dx-toolkit (0.74.0) precise; urgency=low
 
   * Java bindings improvements: distinct user-agent and exception handling
