@@ -221,16 +221,16 @@ def get_pattern(template_dir):
     use_completer()
     return pattern
 
-def get_parallelized_io(file_input_names, gtable_input_names, gtable_output_names):
+def get_parallelized_io(required_file_input_names, gtable_input_names, gtable_output_names):
     input_field = ''
     output_field = ''
 
-    if len(file_input_names) > 0 or len(gtable_input_names) > 0:
+    if required_file_input_names or gtable_input_names:
         print ''
         print fill('Your app template can be initialized to split and process a ' + BOLD() + 'GTable' + ENDC() + ' input.  The following of your input fields are eligible for this template pattern:')
         print '  ' + '\n  '.join(gtable_input_names)
         use_completer(Completer(gtable_input_names))
-        input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', choices=file_input_names + gtable_input_names)
+        input_field = prompt_for_var('Input field to process (press ENTER to skip)', '', choices=required_file_input_names + gtable_input_names)
         use_completer()
 
     if input_field != '' and len(gtable_output_names) > 0:
@@ -258,10 +258,11 @@ def format_io_spec_to_markdown(io_spec):
     return '* **{label}** ``{name}``: ``{class}``{help}'.format(**io_spec)
 
 def create_files_from_templates(template_dir, app_json, language,
-                                file_input_names, file_array_input_names, file_output_names,
+                                required_file_input_names, file_array_input_names, file_output_names,
                                 pattern, pattern_suffix='',
                                 parallelized_input='', parallelized_output='', description='',
-                                entry_points=()):
+                                entry_points=(), optional_file_input_names=[],
+                                optional_file_array_input_names=[]):
     manifest = []
     name = app_json['name']
     title = app_json.get('title', name)
@@ -313,10 +314,12 @@ def create_files_from_templates(template_dir, app_json, language,
 
                     input_sig_str, init_inputs_str, dl_files_str, ul_files_str, outputs_str = \
                         language_options[language].get_strings(app_json,
-                                                               file_input_names,
+                                                               required_file_input_names,
                                                                file_array_input_names,
                                                                file_output_names,
-                                                               dummy_output_hash)
+                                                               dummy_output_hash,
+                                                               optional_file_input_names=optional_file_input_names,
+                                                               optional_file_array_input_names=optional_file_array_input_names)
 
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT_SIGNATURE', input_sig_str)
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_INITIALIZE_INPUT', init_inputs_str)

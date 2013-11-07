@@ -41,58 +41,81 @@ def get_output_fmt(output_param):
         output_fmt = "dxpy.dxlink(" + output_param["name"] + ")"
     return output_fmt
 
-def get_strings(app_json, file_input_names, file_array_input_names, file_output_names, dummy_output_hash):
+def add_init_input_lines(init_inputs, input_param, may_be_missing):
+    if input_param["class"] in class_to_dxclass:
+        init_str = "{name} = {dxclass}({name})".format(name=input_param["name"],
+                                                      dxclass=class_to_dxclass[input_param["class"]])
+    elif input_param["class"].startswith("array:") and input_param["class"][6:] in class_to_dxclass:
+        init_str = "{name} = [{dxclass}(item) for item in {name}]".format(name=input_param["name"],
+                                                                                           dxclass=class_to_dxclass[input_param["class"][6:]])
+    else:
+        init_str = None
+
+    if init_str is not None:
+        if may_be_missing:
+            init_inputs.append("if {name} is not None:".format(name=input_param['name']))
+            indent = '    '
+        else:
+            indent = ''
+        init_inputs.append(indent + init_str)
+
+def get_strings(app_json,
+                file_input_names, file_array_input_names, file_output_names, dummy_output_hash,
+                optional_file_input_names=[], optional_file_array_input_names=[]):
     input_sig_str = ''
     init_inputs_str = ''
     dl_files_str = ''
     ul_files_str = ''
     outputs_str = ''
-    inputs = []
+    args_list = []
+    kwargs_list = []
     init_inputs = []
     if "inputSpec" in app_json:
-        # First, add all non-keyword args
+        # Iterate through input parameters and add them to the
+        # signature and make their initialization lines
         for input_param in app_json["inputSpec"]:
-            if ("optional" in input_param and input_param['optional']) or "default" in input_param:
-                continue
-            inputs.append(input_param["name"])
-            if input_param["class"] in class_to_dxclass:
-                init_inputs.append("{name} = {dxclass}({name})".format(name=input_param["name"],
-                                                                       dxclass=class_to_dxclass[input_param["class"]]))
-            elif input_param["class"].startswith("array:") and input_param["class"][6:] in class_to_dxclass:
-                init_inputs.append("{name} = [{dxclass}(item) for item in {name}]".format(name=input_param["name"],
-                                                                                          dxclass=class_to_dxclass[input_param["class"][6:]]))
-
-        # Then, add keyword args
-        for input_param in app_json["inputSpec"]:
-            if ("optional" not in input_param or not input_param['optional']) and "default" not in input_param:
-                continue
-            if "default" in input_param:
-                inputs.append("{name}={default}".format(name=input_param["name"], default=(input_param["default"] if input_param['class'] != 'string' else '"' + input_param['default'] + '"')))
+            may_be_missing = input_param.get("optional") and "default" not in input_param
+            if may_be_missing:
+                # add as kwarg
+                kwargs_list.append(input_param['name'])
             else:
-                inputs.append("{name}=None".format(name=input_param["name"]))
-        input_sig_str = ", ".join(inputs)
+                # argument that will always be present
+                args_list.append(input_param["name"])
+
+            # And no matter what, add line(s) for initializing it if present
+            add_init_input_lines(init_inputs, input_param, may_be_missing)
+        input_sig_str = ", ".join(args_list + [name + '=None' for name in kwargs_list])
     else:
         input_sig_str = "**kwargs"
 
-    if len(init_inputs) > 0:
+    if init_inputs:
         init_inputs_str = '\n' + fill('The following line(s) initialize your data object inputs on the platform into dxpy.DXDataObject instances that you can start using immediately.', initial_indent='    # ', subsequent_indent='    # ', width=80)
         init_inputs_str += "\n\n    "
         init_inputs_str += "\n    ".join(init_inputs)
         init_inputs_str += "\n"
 
-    if len(file_input_names) > 0 or len(file_array_input_names) > 0:
+    if file_input_names or optional_file_input_names or file_array_input_names:
         dl_files_str = '\n' + fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
-        if len(file_input_names) > 0:
-            dl_files_str += "\n".join(['    dxpy.download_dxfile(' + name + '.get_id(), "' + name + '")' for name in file_input_names]) + "\n"
-        if len(file_array_input_names) > 0:
+        if file_input_names:
+            dl_files_str += "\n".join(['    dxpy.download_dxfile({name}.get_id(), "{name}")\n'.format(name=name) for name in file_input_names])
+        if optional_file_input_names:
+            dl_files_str += "\n".join(['''    if {name} is not None:
+        dxpy.download_dxfile({name}.get_id(), "{name}")
+'''.format(name=name) for name in optional_file_input_names])
+        if file_array_input_names:
             dl_files_str += "\n".join(['    for i in range(len({name})):\n        dxpy.download_dxfile({name}[i].get_id(), "{name}-" + str(i))'.format(name=name) for name in file_array_input_names]) + "\n"
+        if optional_file_array_input_names:
+            dl_files_str += "\n".join(['''    if {name} is not None:
+        for i in range(len({name})):
+            dxpy.download_dxfile({name}[i].get_id(), "{name}-" + str(i))
+'''.format(name=name) for name in optional_file_array_input_names])
 
-    if len(file_output_names) > 0:
+    if file_output_names:
         ul_files_str = "\n" + fill('''The following line(s) use the Python bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="    # ", subsequent_indent="    # ", width=80)
         ul_files_str +='\n\n    '
         ul_files_str += "\n    ".join(['{name} = dxpy.upload_local_file("{name}")'.format(name=name) for name in file_output_names]) + '\n'
 
-    if 'outputSpec' in app_json and len(app_json['outputSpec']) > 0:
+    if 'outputSpec' in app_json and app_json['outputSpec']:
         outputs_str = "    " + "\n    ".join(['output["{name}"] = {value}'.format(name=param["name"], value=get_output_fmt(param)) for param in app_json['outputSpec']]) + '\n'
 
     return input_sig_str, init_inputs_str, dl_files_str, ul_files_str, outputs_str
