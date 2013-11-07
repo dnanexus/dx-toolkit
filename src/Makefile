@@ -319,7 +319,7 @@ openssl/libssl.a:
 	[[ $$(shasum openssl-${OPENSSL_PV}.tar.gz|cut -f 1 -d ' ') == $(OPENSSL_SHA) ]]
 	tar -xzf openssl-${OPENSSL_PV}.tar.gz -C openssl --strip-components=1
 ifeq ($(UNAME), Darwin)
-	cd openssl; ./Configure darwin64-x86_64-cc
+	cd openssl; ./Configure darwin64-x86_64-cc -shared
 else
 	cd openssl; ./config
 endif

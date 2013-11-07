@@ -58,7 +58,6 @@ else
 	ifeq ($(UNAME), Darwin)
 		CXXFLAGS += -DMAC_BUILD=1 -std=c++0x
 		LDFLAGS += -Wl,-headerpad,100
-		LDFLAGS += $(openssl_dir)/libssl.a $(openssl_dir)/libcrypto.a
 	else
 		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -lidn -static
@@ -94,7 +93,7 @@ else ifeq ($(UNAME), Linux)
 	cp -a dist $(D)-linux
 	tar -czf $(D)-linux.tar.gz $(D)-linux
 else ifeq ($(UNAME), Darwin)
-	cp -af {$(curl_dir),$(cares_dir),$(libmagic_dir),$(boost_dir)/stage}/lib/*.dylib dist/
+	cp -af {$(curl_dir)/lib,$(cares_dir)/lib,$(libmagic_dir)/lib,$(boost_dir)/stage/lib,$(openssl_dir)}/*.dylib dist/
 	mkdir -p dist/resources && install ca-certificates.crt dist/resources/
 	install $$(dyldinfo -dylibs ua|grep libstdc++) dist/
 	install $$(dyldinfo -dylibs ua|grep libgcc) dist/
