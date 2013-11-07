@@ -32,7 +32,8 @@ cpp_classes = {
     "string": "string",
     "gtable": "DXGTable",
     "record": "DXRecord",
-    "file": "DXFile"
+    "file": "DXFile",
+    "applet": "DXApplet"
     }
 
 def format_input_var_class(var, classname, cpp_class):
@@ -40,7 +41,7 @@ def format_input_var_class(var, classname, cpp_class):
         return var + ".get<{cpp_class}>()".format(cpp_class=cpp_class)
     elif classname == "hash":
         return var
-    elif classname in ["gtable", "record", "file"]:
+    elif classname in ["gtable", "record", "file", "applet"]:
         return "{cpp_class}({var})".format(var=var, cpp_class=cpp_class)
 
 def get_input_fmt(input_param):
@@ -60,7 +61,7 @@ def get_input_fmt(input_param):
             indent = '  '
         init_str += indent + 'for (int i = 0; i < input["{name}"].size(); i++) {{\n'.format(name=name)
         init_str += indent + '  {name}.push_back({value});\n'.format(name=name,
-                                                                   value=format_input_var_class('input["{name}"][i]'.format(name=name), classname, cpp_class))
+                                                                     value=format_input_var_class('input["{name}"][i]'.format(name=name), classname, cpp_class))
         init_str += indent + '}'
         if may_be_missing:
             init_str += '\n  }'
@@ -128,7 +129,8 @@ def get_strings(app_json,
     if file_output_names:
         ul_files_str = "\n" + fill('''The following line(s) use the C++ bindings to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.''', initial_indent="  // ", subsequent_indent="  // ")
         ul_files_str +='\n\n  '
-        ul_files_str += "\n  ".join(['DXFile {name} = DXFile::uploadLocalFile("{name}");'.format(name=name) for name in file_output_names]) + '\n'
+        ul_files_str += "\n  ".join([('DXFile ' if name not in file_input_names + optional_file_input_names else '') + \
+                                     '{name} = DXFile::uploadLocalFile("{name}");'.format(name=name) for name in file_output_names]) + '\n'
 
     if "outputSpec" in app_json and app_json['outputSpec']:
         outputs_str = "  " + "\n  ".join(["output[\"" + param["name"] + "\"] = " + get_output_fmt(param) + ";" for param in app_json["outputSpec"]]) + '\n'
