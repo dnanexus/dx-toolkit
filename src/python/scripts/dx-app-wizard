@@ -258,15 +258,28 @@ array:file     array:record   float          record
 
             app_json['outputSpec'].append(parameter_json)
 
-file_input_names = []
-file_array_input_names = []
+required_file_input_names = []
+optional_file_input_names = []
+required_file_array_input_names = []
+optional_file_array_input_names = []
 file_output_names = []
 gtable_input_names = []
 gtable_output_names = []
+
 if 'inputSpec' in app_json:
-    file_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'file']
-    file_array_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'array:file']
-    gtable_input_names = [param['name'] for param in app_json['inputSpec'] if param['class'] == 'gtable']
+    for param in app_json['inputSpec']:
+        may_be_missing = param['optional'] and "default" not in param
+        if param['class'] == 'file':
+            param_list = optional_file_input_names if may_be_missing else required_file_input_names
+        elif param['class'] == 'array:file':
+            param_list = optional_file_array_input_names if may_be_missing else required_file_array_input_names
+        elif param['class'] == 'gtable':
+            param_list = gtable_input_names
+        else:
+            param_list = None
+        if param_list is not None:
+            param_list.append(param['name'])
+
 if 'outputSpec' in app_json:
     file_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'file']
     gtable_output_names = [param['name'] for param in app_json['outputSpec'] if param['class'] == 'gtable']
@@ -295,7 +308,7 @@ pattern_suffix = ''
 parallelized_input_field = ''
 parallelized_output_field = ''
 if pattern == 'parallelized' and len([filename for filename in os.listdir(os.path.join(template_dir, 'src')) if filename.startswith('code-')]) > 0:
-    parallelized_input_field, parallelized_output_field = get_parallelized_io(file_input_names,
+    parallelized_input_field, parallelized_output_field = get_parallelized_io(required_file_input_names,
                                                                               gtable_input_names,
                                                                               gtable_output_names)
     pattern_suffix = ''
@@ -378,7 +391,9 @@ elif pattern == 'scatter-process-gather':
     entry_points = ['main', 'scatter', 'map', 'process', 'postprocess']
 
 manifest += create_files_from_templates(template_dir, app_json, language,
-                                        file_input_names, file_array_input_names, file_output_names,
+                                        required_file_input_names, optional_file_input_names,
+                                        required_file_array_input_names, optional_file_array_input_names,
+                                        file_output_names,
                                         pattern, pattern_suffix,
                                         parallelized_input_field, parallelized_output_field,
                                         entry_points=entry_points, description=description)

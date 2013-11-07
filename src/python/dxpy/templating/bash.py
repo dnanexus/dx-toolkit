@@ -24,32 +24,46 @@ def get_interpreter():
 def get_path():
     return 'bash'
 
-def get_strings(app_json, file_input_names, file_array_input_names, file_output_names, dummy_output_hash):
+def get_strings(app_json,
+                required_file_input_names, optional_file_input_names,
+                required_file_array_input_names, optional_file_array_input_names,
+                file_output_names, dummy_output_hash):
     init_inputs_str = ''
     dl_files_str = ''
     ul_files_str = ''
     outputs_str = ''
 
-    if 'inputSpec' in app_json and len(app_json['inputSpec']) > 0:
+    if 'inputSpec' in app_json and app_json['inputSpec']:
         init_inputs_str = "\n" + "\n".join(["    echo \"Value of {name}: '${var}'\"".format(name=input_param['name'], var=(("{" + input_param['name'] + "[@]}") if input_param['class'].startswith('array:') else input_param['name'])) for input_param in app_json['inputSpec']]) + "\n"
 
-    if len(file_input_names) > 0 or len(file_array_input_names) > 0:
+    if required_file_input_names or optional_file_input_names or \
+       required_file_array_input_names or optional_file_array_input_names:
         dl_files_str = "\n" + fill('''The following line(s) use the dx command-line tool to download
 your file inputs to the local file system using variable names for the filenames.
 To recover the original filenames, you can use the output of "dx describe "$variable" --name".''',
                                     initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
-        if len(file_input_names) > 0:
-            dl_files_str += "\n".join(['    dx download "$' + name + '" -o ' + name for name in file_input_names]) + '\n'
-        if len(file_array_input_names) > 0:
-            dl_files_str += "\n".join(['    for i in ${!' + name + '[@]}\n    do\n        dx download "${' + name + '[$i]}" -o ' + name + '-$i\n    done' for name in file_array_input_names]) + '\n'
+        if required_file_input_names:
+            dl_files_str += "\n".join(['''    dx download "${name}" -o {name}
+'''.format(name=name) for name in required_file_input_names])
+        if optional_file_input_names:
+            dl_files_str += "\n".join(['''    if [ -n "${name}" ]
+    then
+        dx download "${name}" -o {name}
+    fi'''.format(name=name) for name in optional_file_input_names]) + '\n'
+        if required_file_array_input_names or optional_file_array_input_names:
+            dl_files_str += "\n".join(['''    for i in ${{!{name}[@]}}
+    do
+        dx download "${{{name}[$i]}}" -o {name}-$i
+    done
+'''.format(name=name) for name in required_file_array_input_names + optional_file_array_input_names])
 
-    if len(file_output_names) > 0:
+    if file_output_names:
         ul_files_str = "\n" if init_inputs_str != '' else ""
         ul_files_str += fill('''The following line(s) use the dx command-line tool to upload your file outputs after you have created them on the local file system.  It assumes that you have used the output field name for the filename for each output, but you can change that behavior to suit your needs.  Run "dx upload -h" to see more options to set metadata.''',
                              initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
         ul_files_str += "\n".join(['    {name}=$(dx upload {name} --brief)'.format(name=name) for name in file_output_names]) + "\n"
 
-    if 'outputSpec' in app_json and len(app_json['outputSpec']) > 0:
+    if 'outputSpec' in app_json and app_json['outputSpec']:
         outputs_str = "\n" + fill('''The following line(s) use the utility dx-jobutil-add-output to format
 and add output variables to your job's output as appropriate for the output class.  Run
 \"dx-jobutil-add-output -h\" for more information on what it does.''',
