@@ -103,11 +103,11 @@ def get_strings(app_json,
         dxpy.download_dxfile({name}.get_id(), "{name}")
 '''.format(name=name) for name in optional_file_input_names])
         if file_array_input_names:
-            dl_files_str += "\n".join(['    for i in range(len({name})):\n        dxpy.download_dxfile({name}[i].get_id(), "{name}-" + str(i))'.format(name=name) for name in file_array_input_names]) + "\n"
+            dl_files_str += "\n".join(['    for i, f in enumerate({name}):\n        dxpy.download_dxfile(f.get_id(), "{name}-" + str(i))'.format(name=name) for name in file_array_input_names]) + "\n"
         if optional_file_array_input_names:
             dl_files_str += "\n".join(['''    if {name} is not None:
-        for i in range(len({name})):
-            dxpy.download_dxfile({name}[i].get_id(), "{name}-" + str(i))
+        for i, f in enumerate({name}):
+            dxpy.download_dxfile(f.get_id(), "{name}-" + str(i))
 '''.format(name=name) for name in optional_file_array_input_names])
 
     if file_output_names:
