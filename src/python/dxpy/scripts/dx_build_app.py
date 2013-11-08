@@ -273,7 +273,7 @@ def _lint(dxapp_json_filename):
             if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", output_field['name']):
                 logger.error('output %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, output_field['name']))
 
-def _check_syntax(code, lang, enforce=True):
+def _check_syntax(code, lang, temp_dir, enforce=True):
     """
     Checks that the code whose text is in CODE parses as LANG.
 
@@ -288,15 +288,11 @@ def _check_syntax(code, lang, enforce=True):
     else:
         raise ValueError('lang must be one of "python2.7" or "bash"')
     # Dump the contents out to a temporary file, then call _check_file_syntax.
-    dirname = tempfile.mkdtemp()
-    try:
-        with open(os.path.join(dirname, temp_basename), 'w') as ofile:
-            ofile.write(code.encode('utf-8'))
-        _check_file_syntax(os.path.join(dirname, temp_basename), override_lang=lang, enforce=enforce)
-    finally:
-        shutil.rmtree(dirname)
+    with open(os.path.join(temp_dir, temp_basename), 'w') as ofile:
+        ofile.write(code.encode('utf-8'))
+    _check_file_syntax(os.path.join(temp_dir, temp_basename), temp_dir, override_lang=lang, enforce=enforce)
 
-def _check_file_syntax(filename, override_lang=None, enforce=True):
+def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
     """
     Checks that the code in FILENAME parses, attempting to autodetect
     the language if necessary.
@@ -306,7 +302,19 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
     Raises DXSyntaxError if there is a problem and "enforce" is True.
     """
     def check_python(filename):
-        py_compile.compile(filename, cfile=os.devnull, doraise=True)
+        # Generate a semi-recognizable name to write the pyc to. Of
+        # course it's possible that different files being scanned could
+        # have the same basename, so this path won't be unique, but the
+        # checks don't run concurrently so this shouldn't cause any
+        # problems.
+        pyc_path = os.path.join(temp_dir, os.path.basename(filename) + ".pyc")
+        try:
+            py_compile.compile(filename, cfile=pyc_path, doraise=True)
+        finally:
+            try:
+                os.unlink(pyc_path)
+            except IOError:
+                pass
     def check_bash(filename):
         subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
 
@@ -340,7 +348,7 @@ def _check_file_syntax(filename, override_lang=None, enforce=True):
         if enforce:
             raise DXSyntaxError(e.msg.strip())
 
-def _verify_app_source_dir(src_dir, enforce=True):
+def _verify_app_source_dir_impl(src_dir, temp_dir, enforce=True):
     """Performs syntax and lint checks on the app source.
 
     Precondition: the dxapp.json file exists and can be parsed.
@@ -358,7 +366,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
             if "file" in manifest['runSpec']:
                 entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
                 try:
-                    _check_file_syntax(entry_point_file, override_lang=manifest['runSpec']['interpreter'], enforce=enforce)
+                    _check_file_syntax(entry_point_file, temp_dir, override_lang=manifest['runSpec']['interpreter'], enforce=enforce)
                 except IOError as e:
                     raise dxpy.app_builder.AppBuilderException(
                         'Could not open runSpec.file=%r. The problem was: %s' % (entry_point_file, e))
@@ -366,7 +374,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
                     raise dxpy.app_builder.AppBuilderException('Entry point file %s has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.' % (entry_point_file,))
             elif "code" in manifest['runSpec']:
                 try:
-                    _check_syntax(manifest['runSpec']['code'], lang=manifest['runSpec']['interpreter'], enforce=enforce)
+                    _check_syntax(manifest['runSpec']['code'], manifest['runSpec']['interpreter'], temp_dir, enforce=enforce)
                 except DXSyntaxError:
                     raise dxpy.app_builder.AppBuilderException('Code in runSpec.code has syntax errors, see above for details. Rerun with --no-check-syntax to proceed anyway.')
 
@@ -406,7 +414,7 @@ def _verify_app_source_dir(src_dir, enforce=True):
             # to not parse as whatever language they appear to be.
             if not filename.startswith("._"):
                 try:
-                    _check_file_syntax(os.path.join(dirpath, filename), enforce=True)
+                    _check_file_syntax(os.path.join(dirpath, filename), temp_dir, enforce=True)
                 except IOError as e:
                     raise dxpy.app_builder.AppBuilderException(
                         'Could not open file in resources directory %r. The problem was: %s' %
@@ -423,6 +431,17 @@ def _verify_app_source_dir(src_dir, enforce=True):
         # OR "/path/to/my/app.py and 3 other files"
         files_str = files_with_problems[0] if len(files_with_problems) == 1 else (files_with_problems[0] + " and " + str(len(files_with_problems) - 1) + " other file" + ("s" if len(files_with_problems) > 2 else ""))
         logging.warn('%s contained syntax errors, see above for details' % (files_str,))
+
+def _verify_app_source_dir(src_dir, enforce=True):
+    """Performs syntax and lint checks on the app source.
+
+    Precondition: the dxapp.json file exists and can be parsed.
+    """
+    temp_dir = tempfile.mkdtemp(prefix='dx-build_tmp')
+    try:
+        _verify_app_source_dir_impl(src_dir, temp_dir, enforce=enforce)
+    finally:
+        shutil.rmtree(temp_dir)
 
 def _verify_app_writable(app_name):
     app_name_already_exists = True
