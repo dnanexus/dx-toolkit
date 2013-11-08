@@ -313,7 +313,7 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         finally:
             try:
                 os.unlink(pyc_path)
-            except IOError:
+            except OSError:
                 pass
     def check_bash(filename):
         subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
