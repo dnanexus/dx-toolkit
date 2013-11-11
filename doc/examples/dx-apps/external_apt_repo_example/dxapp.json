@@ -1,0 +1,19 @@
+{
+  "name": "external_apt_repo_example",
+  "title": "External APT Repo Example App",
+  "outputSpec": [],
+  "runSpec": {
+    "interpreter": "bash",
+    "file": "src/external_apt_repo_example.sh"
+  },
+  "summary": "Demonstrates how to load dependencies from an external APT repo",
+  "access": {
+    "network": [
+      "*"
+    ]
+  },
+  "version": "0.0.1",
+  "inputSpec": [],
+  "dxapi": "1.0.0",
+  "categories": []
+}
