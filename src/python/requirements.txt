@@ -2,7 +2,7 @@ futures==2.1.2
 ctypes-snappy==1.02
 ws4py==0.3.2
 python-dateutil==2.2
-python-magic==0.4.3
+python-magic==0.4.6
 beautifulsoup4==4.3.2
 argcomplete==0.5.7
 psutil==0.7.1
