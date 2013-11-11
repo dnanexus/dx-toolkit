@@ -19,7 +19,7 @@ Utilities for client-side usage of the streaming log API
 (https://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FstreamLog).
 '''
 
-import json
+import json, logging
 
 #from ws4py.client.threadedclient import WebSocketClient
 from ws4py.client import WebSocketBaseClient
@@ -27,6 +27,8 @@ from ws4py.client import WebSocketBaseClient
 import dxpy
 from .describe import get_find_jobs_string
 from ..exceptions import err_exit
+
+logging.getLogger('ws4py').setLevel(logging.ERROR)
 
 class DXJobLogStreamingException(Exception):
     pass
@@ -60,7 +62,7 @@ class DXJobLogStreamClient(WebSocketBaseClient):
     def closed(self, code, reason):
         self.closed_code, self.closed_reason = code, reason
 
-        if self.closed_code != 1000:
+        if not (self.closed_code == 1000 or getattr(self.stream.closing, 'code', None) == 1000):
             try:
                 error = json.loads(self.closed_reason)
                 raise DXJobLogStreamingException("Error while streaming job logs: {type}: {message}\n".format(**error))
