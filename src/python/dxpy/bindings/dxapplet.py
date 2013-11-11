@@ -217,7 +217,7 @@ class DXApplet(DXDataObject, DXExecutable):
 
         Creates an applet with the given parameters. See the API
         documentation for the `/applet/new
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet%2Fnew>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet/new>`_
         method for more info. The applet is not run until :meth:`run()`
         is called.
 
@@ -243,7 +243,7 @@ class DXApplet(DXDataObject, DXExecutable):
         Returns the contents of the applet. The result includes the
         key-value pairs as specified in the API documentation for the
         `/applet-xxxx/get
-        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets#API-method%3A-%2Fapplet-xxxx%2Fget>`_
+        <https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets-and-Entry-Points#API-method:-/applet-xxxx/get>`_
         method.
         """
         return dxpy.api.applet_get(self._dxid, **kwargs)
