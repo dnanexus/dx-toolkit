@@ -28,4 +28,4 @@ cd "$root/.."
 # Build dx-toolkit (stable)
 git reset --hard
 git clean -dxf
-debuild --no-tgz-check -us -uc
+debuild --no-lintian --no-tgz-check -us -uc
