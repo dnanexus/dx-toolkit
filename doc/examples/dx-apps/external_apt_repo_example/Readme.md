@@ -1,12 +1,4 @@
-<!-- dx-header -->
-# External APT Repo Example App
-
-Demonstrates how to load dependencies from an external APT repo
-
-This is the source code for an app that runs on the DNAnexus Platform.
-For more information about how to run or modify it, see
-https://wiki.dnanexus.com/.
-<!-- /dx-header -->
+# External APT Repo Example
 
 This app demonstrates how to load dependencies from an external APT
 repository. You might need to do something like this if your app depends
