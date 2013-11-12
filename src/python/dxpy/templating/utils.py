@@ -258,11 +258,12 @@ def format_io_spec_to_markdown(io_spec):
     return '* **{label}** ``{name}``: ``{class}``{help}'.format(**io_spec)
 
 def create_files_from_templates(template_dir, app_json, language,
-                                required_file_input_names, file_array_input_names, file_output_names,
+                                required_file_input_names, optional_file_input_names,
+                                required_file_array_input_names, optional_file_array_input_names,
+                                file_output_names,
                                 pattern, pattern_suffix='',
                                 parallelized_input='', parallelized_output='', description='',
-                                entry_points=(), optional_file_input_names=[],
-                                optional_file_array_input_names=[]):
+                                entry_points=()):
     manifest = []
     name = app_json['name']
     title = app_json.get('title', name)
@@ -315,11 +316,11 @@ def create_files_from_templates(template_dir, app_json, language,
                     input_sig_str, init_inputs_str, dl_files_str, ul_files_str, outputs_str = \
                         language_options[language].get_strings(app_json,
                                                                required_file_input_names,
-                                                               file_array_input_names,
+                                                               optional_file_input_names,
+                                                               required_file_array_input_names,
+                                                               optional_file_array_input_names,
                                                                file_output_names,
-                                                               dummy_output_hash,
-                                                               optional_file_input_names=optional_file_input_names,
-                                                               optional_file_array_input_names=optional_file_array_input_names)
+                                                               dummy_output_hash)
 
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_INPUT_SIGNATURE', input_sig_str)
                     code_file_text = code_file_text.replace('DX_APP_WIZARD_INITIALIZE_INPUT', init_inputs_str)

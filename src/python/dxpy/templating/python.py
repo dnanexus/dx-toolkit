@@ -28,26 +28,31 @@ class_to_dxclass = {
     "file": "dxpy.DXFile",
     "gtable": "dxpy.DXGTable",
     "record": "dxpy.DXRecord",
+    "applet": "dxpy.DXApplet"
     }
 
 def get_output_fmt(output_param):
     output_class = output_param["class"]
     output_fmt = ''
     if output_class.startswith('array'):
-        output_fmt = '[]'
-    elif output_class in ['int', 'float', 'string', 'boolean', 'hash']:
-        output_fmt = output_param["name"]
-    else:
+        item_class = output_class[6:]
+        if item_class in class_to_dxclass:
+            output_fmt = "[dxpy.dxlink(item) for item in " + output_param["name"] + "]"
+        else:
+            output_fmt = output_param["name"]
+    elif output_class in class_to_dxclass:
         output_fmt = "dxpy.dxlink(" + output_param["name"] + ")"
+    else:
+        output_fmt = output_param["name"]
     return output_fmt
 
 def add_init_input_lines(init_inputs, input_param, may_be_missing):
     if input_param["class"] in class_to_dxclass:
         init_str = "{name} = {dxclass}({name})".format(name=input_param["name"],
-                                                      dxclass=class_to_dxclass[input_param["class"]])
+                                                       dxclass=class_to_dxclass[input_param["class"]])
     elif input_param["class"].startswith("array:") and input_param["class"][6:] in class_to_dxclass:
         init_str = "{name} = [{dxclass}(item) for item in {name}]".format(name=input_param["name"],
-                                                                                           dxclass=class_to_dxclass[input_param["class"][6:]])
+                                                                          dxclass=class_to_dxclass[input_param["class"][6:]])
     else:
         init_str = None
 
@@ -60,8 +65,9 @@ def add_init_input_lines(init_inputs, input_param, may_be_missing):
         init_inputs.append(indent + init_str)
 
 def get_strings(app_json,
-                file_input_names, file_array_input_names, file_output_names, dummy_output_hash,
-                optional_file_input_names=[], optional_file_array_input_names=[]):
+                file_input_names, optional_file_input_names,
+                file_array_input_names, optional_file_array_input_names,
+                file_output_names, dummy_output_hash):
     input_sig_str = ''
     init_inputs_str = ''
     dl_files_str = ''

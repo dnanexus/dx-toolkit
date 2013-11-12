@@ -25,8 +25,9 @@ def get_path():
     return 'bash'
 
 def get_strings(app_json,
-                file_input_names, file_array_input_names, file_output_names, dummy_output_hash,
-                optional_file_input_names=[], optional_file_array_input_names=[]):
+                required_file_input_names, optional_file_input_names,
+                required_file_array_input_names, optional_file_array_input_names,
+                file_output_names, dummy_output_hash):
     init_inputs_str = ''
     dl_files_str = ''
     ul_files_str = ''
@@ -35,20 +36,25 @@ def get_strings(app_json,
     if 'inputSpec' in app_json and app_json['inputSpec']:
         init_inputs_str = "\n" + "\n".join(["    echo \"Value of {name}: '${var}'\"".format(name=input_param['name'], var=(("{" + input_param['name'] + "[@]}") if input_param['class'].startswith('array:') else input_param['name'])) for input_param in app_json['inputSpec']]) + "\n"
 
-    if file_input_names or file_array_input_names or optional_file_input_names:
+    if required_file_input_names or required_file_array_input_names or optional_file_input_names:
         dl_files_str = "\n" + fill('''The following line(s) use the dx command-line tool to download
 your file inputs to the local file system using variable names for the filenames.
 To recover the original filenames, you can use the output of "dx describe "$variable" --name".''',
                                     initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
-        if file_input_names:
-            dl_files_str += "\n".join(['    dx download "$' + name + '" -o ' + name for name in file_input_names]) + '\n'
+        if required_file_input_names:
+            dl_files_str += "\n".join(['''    dx download "${name}" -o {name}
+'''.format(name=name) for name in required_file_input_names])
         if optional_file_input_names:
             dl_files_str += "\n".join(['''    if [ -n "${name}" ]
     then
         dx download "${name}" -o {name}
     fi'''.format(name=name) for name in optional_file_input_names]) + '\n'
-        if file_array_input_names or optional_file_array_input_names:
-            dl_files_str += "\n".join(['    for i in ${!' + name + '[@]}\n    do\n        dx download "${' + name + '[$i]}" -o ' + name + '-$i\n    done' for name in file_array_input_names + optional_file_array_input_names]) + '\n'
+        if required_file_array_input_names or optional_file_array_input_names:
+            dl_files_str += "\n".join(['''    for i in ${{!{name}[@]}}
+    do
+        dx download "${{{name}[$i]}}" -o {name}-$i
+    done
+'''.format(name=name) for name in required_file_array_input_names + optional_file_array_input_names])
 
     if file_output_names:
         ul_files_str = "\n" if init_inputs_str != '' else ""

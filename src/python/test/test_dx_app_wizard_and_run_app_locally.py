@@ -293,37 +293,44 @@ class TestDXAppWizardAndRunAppLocally(DXTestCase):
             dxapp_json['inputSpec'].append({"name": "required_" + classname.replace(":", "_"),
                                             "class": classname,
                                             "optional": False})
+            # Note: marking outputs as optional so that empty arrays
+            # will be acceptable; keeping names the same (as required)
+            # in order to allow pass-through from input variables
             dxapp_json['outputSpec'].append({"name": "required_" + classname.replace(":", "_"),
                                              "class": classname,
-                                             "optional": False})
+                                             "optional": True})
             dxapp_json['inputSpec'].append({"name": "optional_" + classname.replace(":", "_"),
                                             "class": classname,
                                             "optional": True})
 
+        cmdline_args = ['-irequired_applet=anapplet',
+                        '-irequired_array_applet=anapplet',
+                        '-irequired_record=arecord',
+                        '-irequired_array_record=arecord',
+                        '-irequired_file=afile',
+                        '-irequired_array_file=afile',
+                        '-irequired_gtable=agtable',
+                        '-irequired_array_gtable=agtable',
+                        '-irequired_boolean=true',
+                        '-irequired_array_boolean=true',
+                        '-irequired_int=32',
+                        '-irequired_array_int=42',
+                        '-irequired_float=3.4',
+                        '-irequired_array_float=.42',
+                        '-irequired_string=foo',
+                        '-irequired_array_string=bar',
+                        '-irequired_hash={"foo":"bar"}']
         for lang in supported_languages:
             appdir = create_app_dir_with_dxapp_json(dxapp_json, lang)
             # Test with bare-minimum of inputs
-            output = subprocess.check_output(['dx-run-app-locally', appdir,
-                                              '-irequired_applet=anapplet',
-                                              '-irequired_array_applet=anapplet',
-                                              '-irequired_record=arecord',
-                                              '-irequired_array_record=arecord',
-                                              '-irequired_file=afile',
-                                              '-irequired_array_file=afile',
-                                              '-irequired_gtable=agtable',
-                                              '-irequired_array_gtable=agtable',
-                                              '-irequired_boolean=true',
-                                              '-irequired_array_boolean=true',
-                                              '-irequired_int=32',
-                                              '-irequired_array_int=42',
-                                              '-irequired_float=3.4',
-                                              '-irequired_array_float=.42',
-                                              '-irequired_string=foo',
-                                              '-irequired_array_string=bar',
-                                              '-irequired_hash={"foo":"bar"}'
-                                          ])
+            output = subprocess.check_output(['dx-run-app-locally', appdir] + cmdline_args)
             print output
             self.assertIn("App finished successfully", output)
+
+            if testutil.TEST_RUN_JOBS:
+                # Now actually make it an applet and run it
+                subprocess.check_output(['dx-build-applet', appdir, '--destination', dxapp_json['name'] + '-' + lang])
+                subprocess.check_output(['dx', 'run', dxapp_json['name'] + '-' + lang, '-y', '--wait'] + cmdline_args)
 
 if __name__ == '__main__':
     unittest.main()
