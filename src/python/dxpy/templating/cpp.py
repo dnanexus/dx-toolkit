@@ -105,7 +105,8 @@ def get_strings(app_json,
         init_inputs_str += "\n  ".join(inputs)
         init_inputs_str += "\n"
 
-    if required_file_input_names or optional_file_input_names or required_file_array_input_names:
+    if required_file_input_names or optional_file_input_names or \
+       required_file_array_input_names or optional_file_array_input_names:
         dl_files_str = "\n" + fill('''The following line(s) use the C++ bindings to download your file inputs to the local file system using variable names for the filenames.  To recover the original filenames, you can use the output of "variable.describe()["name"].get<string>()".''', initial_indent="  // ", subsequent_indent="  // ") + "\n\n"
         if required_file_input_names:
             dl_files_str += "\n".join(['  DXFile::downloadDXFile({name}.getID(), "{name}");'.format(name=fname) for fname in required_file_input_names]) + "\n"

@@ -36,7 +36,8 @@ def get_strings(app_json,
     if 'inputSpec' in app_json and app_json['inputSpec']:
         init_inputs_str = "\n" + "\n".join(["    echo \"Value of {name}: '${var}'\"".format(name=input_param['name'], var=(("{" + input_param['name'] + "[@]}") if input_param['class'].startswith('array:') else input_param['name'])) for input_param in app_json['inputSpec']]) + "\n"
 
-    if required_file_input_names or required_file_array_input_names or optional_file_input_names:
+    if required_file_input_names or optional_file_input_names or \
+       required_file_array_input_names or optional_file_array_input_names:
         dl_files_str = "\n" + fill('''The following line(s) use the dx command-line tool to download
 your file inputs to the local file system using variable names for the filenames.
 To recover the original filenames, you can use the output of "dx describe "$variable" --name".''',

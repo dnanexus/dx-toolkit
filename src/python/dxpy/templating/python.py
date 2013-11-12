@@ -65,8 +65,8 @@ def add_init_input_lines(init_inputs, input_param, may_be_missing):
         init_inputs.append(indent + init_str)
 
 def get_strings(app_json,
-                file_input_names, optional_file_input_names,
-                file_array_input_names, optional_file_array_input_names,
+                required_file_input_names, optional_file_input_names,
+                required_file_array_input_names, optional_file_array_input_names,
                 file_output_names, dummy_output_hash):
     input_sig_str = ''
     init_inputs_str = ''
@@ -100,16 +100,19 @@ def get_strings(app_json,
         init_inputs_str += "\n    ".join(init_inputs)
         init_inputs_str += "\n"
 
-    if file_input_names or optional_file_input_names or file_array_input_names:
+    if required_file_input_names or optional_file_input_names or \
+       required_file_array_input_names or optional_file_array_input_names:
         dl_files_str = '\n' + fill('The following line(s) download your file inputs to the local file system using variable names for the filenames.', initial_indent='    # ', subsequent_indent='    # ', width=80) + '\n\n'
-        if file_input_names:
-            dl_files_str += "\n".join(['    dxpy.download_dxfile({name}.get_id(), "{name}")\n'.format(name=name) for name in file_input_names])
+        if required_file_input_names:
+            dl_files_str += "\n".join(['    dxpy.download_dxfile({name}.get_id(), "{name}")\n'.format(name=name) for name in required_file_input_names])
         if optional_file_input_names:
             dl_files_str += "\n".join(['''    if {name} is not None:
         dxpy.download_dxfile({name}.get_id(), "{name}")
 '''.format(name=name) for name in optional_file_input_names])
-        if file_array_input_names:
-            dl_files_str += "\n".join(['    for i, f in enumerate({name}):\n        dxpy.download_dxfile(f.get_id(), "{name}-" + str(i))'.format(name=name) for name in file_array_input_names]) + "\n"
+        if required_file_array_input_names:
+            dl_files_str += "\n".join(['''    for i, f in enumerate({name}):
+        dxpy.download_dxfile(f.get_id(), "{name}-" + str(i))
+'''.format(name=name) for name in required_file_array_input_names])
         if optional_file_array_input_names:
             dl_files_str += "\n".join(['''    if {name} is not None:
         for i, f in enumerate({name}):
