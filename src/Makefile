@@ -307,7 +307,7 @@ build_git:
 OPENSSL_PV=1.0.1e
 OPENSSL_SHA=3f1b1223c9e8189bfe4e186d86449775bd903460
 openssl: shasum
-	if [[ "$(OS)" == Windows_NT || $(UNAME) == Darwin ]] || grep -q 'CentOS release 5' /etc/issue; then \
+	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin ]] || grep -q 'CentOS release 5' /etc/issue; then \
 	    $(MAKE) build_openssl; \
 	fi
 
