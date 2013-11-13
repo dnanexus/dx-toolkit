@@ -16,7 +16,7 @@
 
 '''
 Utilities for client-side usage of the streaming log API
-(https://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FstreamLog).
+(https://wiki.dnanexus.com/API-Specification-v1.0.0/Logging#API-method%3A-%2Fjob-xxxx%2FgetLog).
 '''
 
 import json, logging
@@ -44,10 +44,10 @@ class DXJobLogStreamClient(WebSocketBaseClient):
         self.print_job_info = print_job_info
         self.closed_code, self.closed_reason = None, None
         ws_proto = 'wss' if dxpy.APISERVER_PROTOCOL == 'https' else 'ws'
-        url = "{protocol}://{host}:{port}/{job_id}/streamLog/websocket".format(protocol=ws_proto,
-                                                                        host=dxpy.APISERVER_HOST,
-                                                                        port=dxpy.APISERVER_PORT,
-                                                                        job_id=job_id)
+        url = "{protocol}://{host}:{port}/{job_id}/getLog/websocket".format(protocol=ws_proto,
+                                                                            host=dxpy.APISERVER_HOST,
+                                                                            port=dxpy.APISERVER_PORT,
+                                                                            job_id=job_id)
         WebSocketBaseClient.__init__(self, url, protocols=None, extensions=None)
 
     def handshake_ok(self):

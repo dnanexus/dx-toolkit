@@ -657,12 +657,12 @@
         }
     ],
     [
-        "/job-xxxx/streamLog",
-        "jobStreamLog(req, objectId)",
+        "/job-xxxx/getLog",
+        "jobGetLog(req, objectId)",
         {
             "objectMethod": true,
             "retryable": false,
-            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog"
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog"
         }
     ],
     [
