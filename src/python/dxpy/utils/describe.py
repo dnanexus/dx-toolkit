@@ -532,7 +532,7 @@ def print_execution_desc(desc):
                          'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
-                         'dependsOn', 'resources', 'projectCache', 'details',
+                         'dependsOn', 'resources', 'projectCache', 'details', 'tags', 'properties',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages']
@@ -620,6 +620,10 @@ def print_execution_desc(desc):
         print_field("Failure is from", desc['failureFrom']['id'])
     if 'systemRequirements' in desc:
         print_json_field("Sys Requirements", desc['systemRequirements'])
+    if "tags" in desc:
+        print_list_field("Tags", desc["tags"])
+    if "properties" in desc:
+        print_list_field("Properties", [key + '=' + value for key, value in desc["properties"].items()])
     if "details" in desc and "clonedFrom" in desc["details"]:
         cloned_hash = desc["details"]["clonedFrom"]
         if "id" in cloned_hash:

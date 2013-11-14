@@ -34,7 +34,8 @@ from dxpy.utils.local_exec_utils import queue_entry_point
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None, details=None,
+def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None,
+              instance_type=None, depends_on=None,
               **kwargs):
     '''
     :param fn_input: Function input
@@ -43,12 +44,16 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None,
     :type fn_name: string
     :param name: Name for the new job (default is "<parent job name>:<fn_name>")
     :type name: string
+    :param tags: Tags to associate with the job
+    :type tags: list of strings
+    :param properties: Properties to associate with the job
+    :type properties: dict with string values
+    :param details: Details to set for the job
+    :type details: dict or list
     :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
     :type instance_type: string or dict
     :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
     :type depends_on: list
-    :param details: Details to set for the job
-    :type details: dict or list
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -59,7 +64,7 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None,
     Note that this function is shorthand for::
 
         dxjob = DXJob()
-        dxjob.new(fn_input, fn_name, name, instance_type)
+        dxjob.new(fn_input, fn_name, **kwargs)
 
     .. note:: This method is intended for calls made from within
        already-executing jobs or apps. If it is called from outside of
@@ -72,7 +77,8 @@ def new_dxjob(fn_input, fn_name, name=None, instance_type=None, depends_on=None,
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name, name, instance_type, depends_on, details, **kwargs)
+    dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties,
+              details=details, instance_type=instance_type, depends_on=depends_on, **kwargs)
     return dxjob
 
 class DXJob(DXObject):
@@ -86,7 +92,8 @@ class DXJob(DXObject):
         self._test_harness_result = None
         DXObject.__init__(self, dxid=dxid)
 
-    def new(self, fn_input, fn_name, name=None, instance_type=None, depends_on=None, details=None,
+    def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
+            instance_type=None, depends_on=None,
             **kwargs):
         '''
         :param fn_input: Function input
@@ -95,12 +102,16 @@ class DXJob(DXObject):
         :type fn_name: string
         :param name: Name for the new job (default is "<parent job name>:<fn_name>")
         :type name: string
+        :param tags: Tags to associate with the job
+        :type tags: list of strings
+        :param properties: Properties to associate with the job
+        :type properties: dict with string values
+        :param details: Details to set for the job
+        :type details: dict or list
         :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
-        :param details: Details to set for the job
-        :type details: dict or list
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job
@@ -135,6 +146,10 @@ class DXJob(DXObject):
             req_input["function"] = fn_name
             if name is not None:
                 req_input["name"] = name
+            if tags is not None:
+                req_input["tags"] = tags
+            if properties is not None:
+                req_input["properties"] = properties
             if instance_type is not None:
                 if isinstance(instance_type, basestring):
                     req_input["systemRequirements"] = {fn_name: {"instanceType": instance_type}}

@@ -77,10 +77,10 @@ parser_single_dataobject_output_args.add_argument('path', help=fill('DNAnexus pa
 find_by_properties_and_tags_args = argparse.ArgumentParser(add_help=False)
 find_by_properties_and_tags_args.add_argument('--property', dest='properties',
                                               metavar='KEY[=VALUE]',
-                                              help='Key-value pair of a property or simply a property key; if only a key is provided, matches a result that has the key with any value; repeat as necessary, e.g. "--property key1=val1 --property key2"',
+                                              help=fill('Key-value pair of a property or simply a property key; if only a key is provided, matches a result that has the key with any value; repeat as necessary, e.g. "--property key1=val1 --property key2"', width_adjustment=-24),
                                               action='append')
 find_by_properties_and_tags_args.add_argument('--tag',
-                                              help='Tag to match; repeat as necessary, e.g. "--tag tag1 --tag tag2" will require both tags',
+                                              help=fill('Tag to match; repeat as necessary, e.g. "--tag tag1 --tag tag2" will require both tags', width_adjustment=-24),
                                               action='append')
 
 def process_properties_args(args):

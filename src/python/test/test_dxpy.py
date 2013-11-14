@@ -943,12 +943,12 @@ class TestDXAppletJob(unittest.TestCase):
     def test_run_dxapplet(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
-                      dxapi="1.04",
-                      inputSpec=[{"name": "chromosomes", "class": "record"},
-                                 {"name": "rowFetchChunk", "class": "int"}
-                                 ],
-                      outputSpec=[{"name": "mappings", "class": "record"}],
-                      runSpec={"code": '''
+                     dxapi="1.04",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                            ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": '''
 @dxpy.entry_point('main')
 def main():
     pass
@@ -959,7 +959,8 @@ def main():
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxjob = dxapplet.run(applet_input=prog_input, details={"$dnanexus_link": "hello world"})
+        dxjob = dxapplet.run(applet_input=prog_input, details={"$dnanexus_link": "hello world"},
+                             tags=['foo', '$foo.bar'], properties={'$dnanexus_link.foo': 'barbaz'})
         jobdesc = dxjob.describe()
         self.assertEqual(jobdesc["class"], "job")
         self.assertEqual(jobdesc["function"], "main")
@@ -975,6 +976,9 @@ def main():
         self.assertTrue("output" in jobdesc)
         self.assertTrue("$dnanexus_link" in jobdesc["details"])
         self.assertEqual(jobdesc["details"]["$dnanexus_link"], "hello world")
+        self.assertEqual(jobdesc["tags"].sort(), ['foo', '$foo.bar'].sort())
+        self.assertEqual(len(jobdesc["properties"]), 1)
+        self.assertEqual(jobdesc["properties"]["$dnanexus_link.foo"], "barbaz")
 
         # Test with fields parameter
         smaller_jobdesc = dxjob.describe(fields={"id": True, "state": True, "parentJob": True})
@@ -1216,13 +1220,13 @@ class TestDXSearch(unittest.TestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxjob = dxapplet.run(applet_input=prog_input)
-        me = dxpy.user_info()['userId']
-        results = list(dxpy.find_jobs(launched_by=me,
-                                      executable=dxapplet,
+        dxjob = dxapplet.run(applet_input=prog_input, tags=["foo"], properties={"foo": "bar"})
+        results = list(dxpy.find_jobs(executable=dxapplet,
                                       project=dxapplet.get_proj_id(),
                                       origin_job=dxjob.get_id(),
                                       parent_job='none',
+                                      tags=["foo"],
+                                      properties={"foo": True},
                                       created_after='-15s',
                                       describe=True))
         self.assertEqual(len(results), 1)
@@ -1235,6 +1239,13 @@ class TestDXSearch(unittest.TestCase):
         self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
         self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
         self.assertEqual(result["describe"]["parentJob"], None)
+        self.assertEqual(result["describe"]["tags"], ["foo"])
+        self.assertEqual(result["describe"]["properties"], {"foo": "bar"})
+
+        results = list(dxpy.find_jobs(tags=["bar"]))
+        self.assertEqual(len(results), 0)
+        results = list(dxpy.find_jobs(properties={"foo": "baz"}))
+        self.assertEqual(len(results), 0)
 
 class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):
