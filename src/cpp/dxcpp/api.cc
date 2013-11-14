@@ -742,12 +742,12 @@ namespace dx {
     return jobDescribe(object_id, input_params.toString(), retry);
   }
 
-  JSON jobStreamLog(const std::string &object_id, const std::string &input_params, const bool retry) {
-    return DXHTTPRequest(std::string("/") + object_id + std::string("/streamLog"), input_params, retry);
+  JSON jobGetLog(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/getLog"), input_params, retry);
   }
 
-  JSON jobStreamLog(const std::string &object_id, const JSON &input_params, const bool retry) {
-    return jobStreamLog(object_id, input_params.toString(), retry);
+  JSON jobGetLog(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return jobGetLog(object_id, input_params.toString(), retry);
   }
 
   JSON jobTerminate(const std::string &object_id, const std::string &input_params, const bool retry) {

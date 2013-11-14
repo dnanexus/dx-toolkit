@@ -447,8 +447,8 @@ exports.jobDescribe = function(object_id, input_params) {
 };
 
 
-exports.jobStreamLog = function(object_id, input_params) {
-  return dx.DXHTTPRequest('/' + object_id + '/streamLog', input_params);
+exports.jobGetLog = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/getLog', input_params);
 };
 
 

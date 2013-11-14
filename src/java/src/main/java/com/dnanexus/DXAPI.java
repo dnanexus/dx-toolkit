@@ -5909,9 +5909,9 @@ public final class DXAPI {
     }
 
     /**
-     * Invokes the jobStreamLog method.
+     * Invokes the jobGetLog method.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      *
@@ -5924,13 +5924,13 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId) {
-        return jobStreamLog(objectId, mapper.createObjectNode());
+    public static JsonNode jobGetLog(String objectId) {
+        return jobGetLog(objectId, mapper.createObjectNode());
     }
     /**
-     * Invokes the jobStreamLog method with the specified parameters.
+     * Invokes the jobGetLog method with the specified parameters.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -5944,13 +5944,13 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId, JsonNode inputParams) {
-        return new DXHTTPRequest().request("/" + objectId + "/" + "streamLog", inputParams);
+    public static JsonNode jobGetLog(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getLog", inputParams);
     }
     /**
-     * Invokes the jobStreamLog method with the specified environment.
+     * Invokes the jobGetLog method with the specified environment.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
@@ -5964,13 +5964,13 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId, DXEnvironment env) {
-        return jobStreamLog(objectId, mapper.createObjectNode(), env);
+    public static JsonNode jobGetLog(String objectId, DXEnvironment env) {
+        return jobGetLog(objectId, mapper.createObjectNode(), env);
     }
     /**
-     * Invokes the jobStreamLog method with the specified environment and parameters.
+     * Invokes the jobGetLog method with the specified environment and parameters.
      *
-     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog">API specification</a>.
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -5985,8 +5985,8 @@ public final class DXAPI {
      *             If an error occurs while making the HTTP request or obtaining
      *             the response (includes HTTP protocol errors).
      */
-    public static JsonNode jobStreamLog(String objectId, JsonNode inputParams, DXEnvironment env) {
-        return new DXHTTPRequest(env).request("/" + objectId + "/" + "streamLog", inputParams);
+    public static JsonNode jobGetLog(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getLog", inputParams);
     }
 
     /**

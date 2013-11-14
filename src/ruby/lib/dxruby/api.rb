@@ -608,12 +608,12 @@ module DX
       return DX::http_request("/#{object_id}/describe", input_params, opts)
     end
 
-    # Invokes the /job-xxxx/streamLog API method.
+    # Invokes the /job-xxxx/getLog API method.
     #
-    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog
-    def self.job_stream_log(object_id, input_params={}, opts={})
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog
+    def self.job_get_log(object_id, input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
-      return DX::http_request("/#{object_id}/streamLog", input_params, opts)
+      return DX::http_request("/#{object_id}/getLog", input_params, opts)
     end
 
     # Invokes the /job-xxxx/terminate API method.

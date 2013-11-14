@@ -1338,23 +1338,23 @@ def job_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def jobStreamLog(*args, **kwargs):
+def jobGetLog(*args, **kwargs):
     """
 
     .. deprecated:: 0.42.0
-       Use :func:`job_stream_log()` instead.
+       Use :func:`job_get_log()` instead.
 
     """
-    print >> sys.stderr, "dxpy.jobStreamLog is deprecated; please use job_stream_log instead."
-    return job_stream_log(*args, **kwargs)
+    print >> sys.stderr, "dxpy.jobGetLog is deprecated; please use job_get_log instead."
+    return job_get_log(*args, **kwargs)
 
-def job_stream_log(object_id, input_params={}, always_retry=False, **kwargs):
+def job_get_log(object_id, input_params={}, always_retry=False, **kwargs):
     """
-    Invokes the /job-xxxx/streamLog API method.
+    Invokes the /job-xxxx/getLog API method.
 
-    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FstreamLog
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog
     """
-    return DXHTTPRequest('/%s/streamLog' % object_id, input_params, always_retry=always_retry, **kwargs)
+    return DXHTTPRequest('/%s/getLog' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def jobTerminate(*args, **kwargs):
     """

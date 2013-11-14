@@ -280,8 +280,8 @@ namespace dx {
   JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
-  JSON jobStreamLog(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
-  JSON jobStreamLog(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
+  JSON jobGetLog(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
+  JSON jobGetLog(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
 
   JSON jobTerminate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON jobTerminate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);

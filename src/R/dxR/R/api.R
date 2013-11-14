@@ -2539,9 +2539,9 @@ jobDescribe <- function(objectID,
                 alwaysRetry=alwaysRetry)
 }
 
-##' jobStreamLog API wrapper
+##' jobGetLog API wrapper
 ##'
-##' This function makes an API call to the \code{/job-xxxx/streamLog} API
+##' This function makes an API call to the \code{/job-xxxx/getLog} API
 ##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
 ##' function which makes POST HTTP requests to the API server.
 ##'
@@ -2560,12 +2560,12 @@ jobDescribe <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2FstreamLog}
-jobStreamLog <- function(objectID,
-                         inputParams=emptyNamedList,
-                         jsonifyData=TRUE,
-                         alwaysRetry=FALSE) {
-  resource <- paste('/', objectID, '/', 'streamLog', sep='')
+##' @references API spec documentation: \url{https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets\%20and\%20Entry\%20Points#API-method\%3A-\%2Fjob-xxxx\%2FgetLog}
+jobGetLog <- function(objectID,
+                      inputParams=emptyNamedList,
+                      jsonifyData=TRUE,
+                      alwaysRetry=FALSE) {
+  resource <- paste('/', objectID, '/', 'getLog', sep='')
   dxHTTPRequest(resource,
                 inputParams,
                 jsonifyData=jsonifyData,
