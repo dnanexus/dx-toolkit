@@ -18,10 +18,17 @@ package com.dnanexus;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 /**
  * Base class for all objects in the DNAnexus Platform.
+ *
+ * <p>
+ * Two {@link DXObject}s are considered to be equal if they have the same
+ * DNAnexus object ID. The environment is not considered when testing for
+ * equality.
+ * </p>
  */
 public abstract class DXObject {
 
@@ -87,4 +94,49 @@ public abstract class DXObject {
     protected JsonNode apiCallOnObject(String method) {
         return apiCallOnObject(method, MAPPER.createObjectNode());
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof DXObject)) {
+            return false;
+        }
+        DXObject other = (DXObject) obj;
+        if (dxId == null) {
+            if (other.dxId != null) {
+                return false;
+            }
+        } else if (!dxId.equals(other.dxId)) {
+            return false;
+        }
+        return true;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((dxId == null) ? 0 : dxId.hashCode());
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this).add("id", this.dxId).toString();
+    }
+
 }

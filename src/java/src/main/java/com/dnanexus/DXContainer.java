@@ -85,6 +85,68 @@ public class DXContainer extends DXObject {
     }
 
     /**
+     * A request to the /container-xxxx/move route.
+     */
+    @JsonInclude(Include.NON_NULL)
+    private static class ContainerMoveRequest {
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private final List<String> objects;
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private final List<String> folders;
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private final String destination;
+
+        private ContainerMoveRequest(List<String> objects, List<String> folders, String destination) {
+            this.objects = ImmutableList.copyOf(objects);
+            this.folders = ImmutableList.copyOf(folders);
+            this.destination = destination;
+        }
+    }
+
+    /**
+     * Moves the specified data objects and folders to a destination folder in the same container.
+     *
+     * @param objects data objects to be moved
+     * @param folders full paths to the folders to be moved (Strings starting with {@code "/"})
+     * @param destinationFolder full path to the destination folder (a String starting with
+     *        {@code "/"})
+     */
+    public void move(List<? extends DXDataObject> objects, List<String> folders,
+            String destinationFolder) {
+        ImmutableList.Builder<String> objectIds = ImmutableList.builder();
+        for (DXDataObject dataObj : objects) {
+            objectIds.add(dataObj.getId());
+        }
+        DXAPI.containerMove(this.getId(), MAPPER.valueToTree(new ContainerMoveRequest(objectIds
+                .build(), folders, destinationFolder)));
+    }
+
+    /**
+     * Moves the specified folders to a destination folder in the same container.
+     *
+     * @param folders full paths to the folders to be moved (Strings starting with {@code "/"})
+     * @param destinationFolder full path to the destination folder (a String starting with
+     *        {@code "/"})
+     */
+    public void moveFolders(List<String> folders, String destinationFolder) {
+        move(ImmutableList.<DXDataObject>of(), folders, destinationFolder);
+    }
+
+    /**
+     * Moves the specified data objects to a destination folder in the same container.
+     *
+     * @param objects data objects to be moved
+     * @param destinationFolder full path to the destination folder (A String starting with
+     *        {@code "/"})
+     */
+    public void moveObjects(List<? extends DXDataObject> objects, String destinationFolder) {
+        move(objects, ImmutableList.<String>of(), destinationFolder);
+    }
+
+    /**
      * A request to the /container-xxxx/newFolder route.
      */
     @JsonInclude(Include.NON_NULL)
@@ -187,6 +249,24 @@ public class DXContainer extends DXObject {
     }
 
     /**
+     * A request to the /container-xxxx/removeObjects route.
+     */
+    @JsonInclude(Include.NON_NULL)
+    private static class ContainerRemoveObjectsRequest {
+        @SuppressWarnings("unused")
+        @JsonProperty
+        private final List<String> objects;
+
+        private ContainerRemoveObjectsRequest(List<? extends DXDataObject> objects) {
+            ImmutableList.Builder<String> objectIds = ImmutableList.builder();
+            for (DXDataObject object : objects) {
+                objectIds.add(object.getId());
+            }
+            this.objects = objectIds.build();
+        }
+    }
+
+    /**
      * Removes the specified folder.
      *
      * @param folderPath path to the folder to be removed (String starting with {@code "/"})
@@ -207,6 +287,21 @@ public class DXContainer extends DXObject {
                 MAPPER.valueToTree(new ContainerRemoveFolderRequest(folderPath, recurse)));
     }
 
+    /**
+     * Removes the specified objects from the container.
+     *
+     * <p>
+     * Removal propagates to hidden linked objects in the same container that are no longer
+     * reachable from any visible object.
+     * </p>
+     *
+     * @param objects List of objects to be removed
+     */
+    public void removeObjects(List<? extends DXDataObject> objects) {
+        DXAPI.containerRemoveObjects(this.getId(),
+                MAPPER.valueToTree(new ContainerRemoveObjectsRequest(objects)));
+    }
+
     @JsonInclude(Include.NON_NULL)
     private static class ContainerListFolderRequest {
         @SuppressWarnings("unused")
@@ -220,17 +315,14 @@ public class DXContainer extends DXObject {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class ContainerListFolderResponse {
-        // TODO: returning objects is not implemented yet, only folders!
         @JsonIgnoreProperties(ignoreUnknown = true)
         private static class ObjectHash {
-            @SuppressWarnings("unused")
             @JsonProperty
             private String id;
         }
 
         @JsonProperty
         private List<String> folders;
-        @SuppressWarnings("unused")
         @JsonProperty
         private List<ObjectHash> objects;
     }
@@ -244,10 +336,16 @@ public class DXContainer extends DXObject {
      */
     public static class FolderContents {
 
+        private final List<DXDataObject> dataObjects;
         private final List<String> subfolders;
 
-        // TODO: nail down DXDataObjects interfaces and then return objects too
-        private FolderContents(Collection<String> subfolders) {
+        private FolderContents(Collection<ContainerListFolderResponse.ObjectHash> dataObjectIds,
+                Collection<String> subfolders, DXContainer container, DXEnvironment env) {
+            ImmutableList.Builder<DXDataObject> dataObjects = ImmutableList.builder();
+            for (ContainerListFolderResponse.ObjectHash object : dataObjectIds) {
+                dataObjects.add(DXDataObject.getInstanceWithEnvironment(object.id, container, env));
+            }
+            this.dataObjects = dataObjects.build();
             this.subfolders = ImmutableList.copyOf(subfolders);
         }
 
@@ -259,6 +357,15 @@ public class DXContainer extends DXObject {
          */
         public List<String> getSubfolders() {
             return this.subfolders;
+        }
+
+        /**
+         * Lists all data objects in the specified folder.
+         *
+         * @return List containing a {@code DXDataObject} for each data object
+         */
+        public List<DXDataObject> getObjects() {
+            return this.dataObjects;
         }
 
     }
@@ -280,14 +387,9 @@ public class DXContainer extends DXObject {
                         DXAPI.containerListFolder(this.getId(),
                                 MAPPER.valueToTree(new ContainerListFolderRequest(folderPath))),
                         ContainerListFolderResponse.class);
-        return new FolderContents(r.folders);
+        return new FolderContents(r.objects, r.folders, this, this.env);
     }
 
-    // The following are probably only useful when we have DXDataObjects more
-    // fleshed out
-
-    // TODO: /container-xxxx/move
-    // TODO: /container-xxxx/removeObjects
     // TODO: /container-xxxx/clone
 
 }

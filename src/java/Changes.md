@@ -1,5 +1,9 @@
 # Java API Bindings Changelog
 
+## 0.77.0
+
+* New classes: DXJob, DXDataObject, DXRecord, DXSearch
+
 ## 0.75.0
 
 * BREAKING: The DXAPI class may no longer be instantiated. You must use its

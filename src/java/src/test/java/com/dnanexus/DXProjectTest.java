@@ -34,8 +34,7 @@ import com.google.common.collect.ImmutableList;
 public class DXProjectTest {
 
     /**
-     * Tests may set this field to have the project automatically destroyed at
-     * the end of the test.
+     * Tests may set this field to have the project automatically destroyed at the end of the test.
      */
     private DXProject testProject;
 
@@ -121,6 +120,30 @@ public class DXProjectTest {
         c.removeFolder("/a/b/c/e");
         c.removeFolder("/a/b", true);
         Assert.assertEquals(ImmutableList.of(), c.listFolder("/a").getSubfolders());
+
+        // move objects
+        c.newFolder("/destination");
+        DXRecord record = DXRecord.newRecord().setProject(c).build();
+        try {
+            c.moveObjects(ImmutableList.of(record), "/nonexistent");
+            Assert.fail("Expected moving object into a nonexistent folder to fail");
+        } catch (ResourceNotFoundException e) {
+            // Expected
+        }
+        c.moveObjects(ImmutableList.of(record), "/destination");
+        Assert.assertEquals("/destination", record.describe().getFolder());
+        Assert.assertEquals(record, c.listFolder("/destination").getObjects().get(0));
+
+        // move folders
+        c.newFolder("/sample");
+        c.moveFolders(ImmutableList.of("/sample"), "/destination");
+        Assert.assertEquals("/destination/sample", c.listFolder("/destination").getSubfolders()
+                .get(0));
+
+        // remove objects
+        Assert.assertEquals(1, c.listFolder("/destination").getObjects().size());
+        c.removeObjects(ImmutableList.of(record));
+        Assert.assertEquals(0, c.listFolder("/destination").getObjects().size());
     }
 
     @Test
@@ -157,8 +180,8 @@ public class DXProjectTest {
 
     @Test
     public void testCreatProjectSerialization() throws IOException {
-        Assert.assertEquals(DXJSON.parseJson("{\"name\": \"projectname\"}"),
-                DXProject.newProject().setName("projectname").buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"name\": \"projectname\"}"), DXProject.newProject()
+                .setName("projectname").buildRequestHash());
     }
 
 }
