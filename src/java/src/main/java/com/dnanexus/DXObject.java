@@ -61,6 +61,8 @@ public abstract class DXObject {
 
     /**
      * Returns the ID of the object.
+     *
+     * @return the DNAnexus object ID
      */
     public String getId() {
         return this.dxId;

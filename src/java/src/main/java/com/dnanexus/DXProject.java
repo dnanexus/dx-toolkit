@@ -25,8 +25,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 /**
- * A project (a container providing features for data sharing and
- * collaboration).
+ * A project (a container providing features for data sharing and collaboration).
  */
 public class DXProject extends DXContainer {
 
@@ -36,8 +35,8 @@ public class DXProject extends DXContainer {
     }
 
     /**
-     * Contains metadata for a project. All accessors reflect the state of the
-     * project at the time that this object was created.
+     * Contains metadata for a project. All accessors reflect the state of the project at the time
+     * that this object was created.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Describe {
@@ -50,13 +49,14 @@ public class DXProject extends DXContainer {
         /**
          * Creates a {@code Describe} object with all empty metadata.
          */
-        private Describe() {
-        }
+        private Describe() {}
 
         // TODO: other project metadata fields
 
         /**
          * Returns the name of the project.
+         *
+         * @return the name of the project
          */
         public String getName() {
             return this.name;
@@ -65,22 +65,26 @@ public class DXProject extends DXContainer {
     }
 
     /**
-     * Builder class for creating a new {@code DXProject} object. To obtain an
-     * instance, call {@link DXProject#newProject()}.
+     * Builder class for creating a new {@code DXProject} object. To obtain an instance, call
+     * {@link DXProject#newProject()}.
      */
     public static class Builder {
 
         private String name = null;
 
-        private Builder() {
-        }
+        private Builder() {}
 
         /**
          * Sets the name of the new project.
+         *
+         * @param name String containing the new name of the project
+         *
+         * @return the same {@code Builder} object
          */
         public Builder setName(String name) {
             Preconditions.checkNotNull(name, "Name must be specified");
-            Preconditions.checkArgument(this.name == null, "Name may not be specified more than once");
+            Preconditions.checkArgument(this.name == null,
+                    "Name may not be specified more than once");
             Preconditions.checkArgument(name.length() > 0, "Name must be non-empty");
             this.name = name;
             return this;
@@ -95,8 +99,9 @@ public class DXProject extends DXContainer {
         }
 
         /**
-         * Creates the project and returns a {@code DXProject} corresponding to
-         * the newly created project.
+         * Creates the project.
+         *
+         * @return a {@code DXProject} corresponding to the newly created project
          */
         public DXProject build() {
             return new DXProject(DXJSON.safeTreeToValue(
@@ -134,19 +139,17 @@ public class DXProject extends DXContainer {
     /**
      * Returns a {@code DXProject} associated with an existing project.
      *
-     * @throws NullPointerException
-     *             If {@code projectId} is null
+     * @throws NullPointerException if {@code projectId} is null
      */
     public static DXProject getInstance(String projectId) {
         return new DXProject(projectId);
     }
 
     /**
-     * Returns a {@code DXProject} associated with an existing project using the
-     * specified environment.
+     * Returns a {@code DXProject} associated with an existing project using the specified
+     * environment.
      *
-     * @throws NullPointerException
-     *             If {@code projectId} or {@code env} is null
+     * @throws NullPointerException if {@code projectId} or {@code env} is null
      */
     public static DXProject getInstanceWithEnvironment(String projectId, DXEnvironment env) {
         Preconditions.checkNotNull(env);
@@ -163,6 +166,8 @@ public class DXProject extends DXContainer {
      * <pre>
      * DXProject r = DXProject.newProject().setName(&quot;foo&quot;).build();
      * </pre>
+     *
+     * @return a newly initialized {@code Builder}
      */
     public static Builder newProject() {
         return new Builder();
@@ -170,6 +175,8 @@ public class DXProject extends DXContainer {
 
     /**
      * Returns metadata about the project.
+     *
+     * @return a {@code Describe} object containing metadata
      */
     public Describe describe() {
         return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
@@ -183,9 +190,19 @@ public class DXProject extends DXContainer {
         this.apiCallOnObject("destroy");
     }
 
+    // The following unimplemented methods are sorted in approximately
+    // decreasing order of usefulness to Java clients.
+
     // TODO: /project-xxxx/describe
     // TODO: /project-xxxx/addTags
     // TODO: /project-xxxx/removeTags
     // TODO: /project-xxxx/setProperties
     // TODO: /project-xxxx/update
+
+    // TODO: /project-xxxx/invite
+    // TODO: /project-xxxx/decreasePermissions
+    // TODO: /project-xxxx/leave
+
+    // TODO: /project-xxxx/transfer
+    // TODO: /project-xxxx/acceptTransfer
 }

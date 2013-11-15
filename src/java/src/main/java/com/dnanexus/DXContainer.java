@@ -32,9 +32,9 @@ import com.google.common.collect.ImmutableList;
 public class DXContainer extends DXObject {
 
     private static void checkContainerId(String projectOrContainerId) {
-        Preconditions.checkArgument(
-                projectOrContainerId.startsWith("project-") || projectOrContainerId.startsWith("container-"),
-                "Container ID " + projectOrContainerId + " must start with project- or container-");
+        Preconditions.checkArgument(projectOrContainerId.startsWith("project-")
+                || projectOrContainerId.startsWith("container-"), "Container ID "
+                + projectOrContainerId + " must start with project- or container-");
     }
 
     DXContainer(String containerId) {
@@ -48,17 +48,14 @@ public class DXContainer extends DXObject {
     }
 
     /**
-     * Returns a {@code DXContainer} or {@code DXProject} associated with an
-     * existing container or project.
+     * Returns a {@code DXProject} or {@code DXContainer} associated with an existing project or
+     * container.
      *
-     * @param projectOrContainerId
-     *            String starting with {@code "container-"} or
-     *            {@code "project-"}
+     * @param projectOrContainerId String starting with {@code "container-"} or {@code "project-"}
      *
-     * @return {@code DXContainer} or {@code DXProject}
+     * @return {@code DXProject} or {@code DXContainer}
      *
-     * @throws NullPointerException
-     *             If {@code projectOrContainerId} is null
+     * @throws NullPointerException if {@code projectOrContainerId} is null
      */
     public static DXContainer getInstance(String projectOrContainerId) {
         if (projectOrContainerId.startsWith("project-")) {
@@ -68,21 +65,18 @@ public class DXContainer extends DXObject {
     }
 
     /**
-     * Returns a {@code DXContainer} or {@code DXProject} associated with an
-     * existing container or project, using the specified environment.
+     * Returns a {@code DXProject} or {@code DXContainer} associated with an existing project or
+     * container, using the specified environment.
      *
-     * @param projectOrContainerId
-     *            String starting with {@code "container-"} or
-     *            {@code "project-"}
-     * @param env
-     *            Environment
+     * @param projectOrContainerId String starting with {@code "container-"} or {@code "project-"}
+     * @param env environment to use to make subsequent API requests
      *
-     * @return {@code DXContainer} or {@code DXProject}
+     * @return {@code DXProject} or {@code DXContainer}
      *
-     * @throws NullPointerException
-     *             If {@code projectOrContainerId} or {@code env} is null
+     * @throws NullPointerException if {@code projectOrContainerId} or {@code env} is null
      */
-    public static DXContainer getInstanceWithEnvironment(String projectOrContainerId, DXEnvironment env) {
+    public static DXContainer getInstanceWithEnvironment(String projectOrContainerId,
+            DXEnvironment env) {
         Preconditions.checkNotNull(env);
         if (projectOrContainerId.startsWith("project-")) {
             return DXProject.getInstanceWithEnvironment(projectOrContainerId, env);
@@ -116,24 +110,22 @@ public class DXContainer extends DXObject {
     /**
      * Creates the specified folder.
      *
-     * @param folderPath
-     *            A string beginning with {@code "/"}
+     * @param folderPath full path to the folder to be created (a String starting with {@code "/"})
      */
     public void newFolder(String folderPath) {
-        DXAPI.containerNewFolder(this.getId(), MAPPER.valueToTree(new ContainerNewFolderRequest(folderPath)));
+        DXAPI.containerNewFolder(this.getId(),
+                MAPPER.valueToTree(new ContainerNewFolderRequest(folderPath)));
     }
 
     /**
-     * Creates the specified folder, optionally creating parent folders as
-     * well.
+     * Creates the specified folder, optionally creating parent folders as well.
      *
-     * @param folderPath
-     *            A string beginning with {@code "/"}
-     * @param parents
-     *            If true, create all parent folders of the requested path
+     * @param folderPath full path to the folder to be created (a String starting with {@code "/"})
+     * @param parents if true, create all parent folders of the requested path
      */
     public void newFolder(String folderPath, boolean parents) {
-        DXAPI.containerNewFolder(this.getId(), MAPPER.valueToTree(new ContainerNewFolderRequest(folderPath, parents)));
+        DXAPI.containerNewFolder(this.getId(),
+                MAPPER.valueToTree(new ContainerNewFolderRequest(folderPath, parents)));
     }
 
     /**
@@ -158,15 +150,11 @@ public class DXContainer extends DXObject {
      * Renames the specified folder.
      *
      * <p>
-     * This method renames a folder in the same parent folder (i.e. only changes
-     * its basename).
+     * This method renames a folder in the same parent folder (i.e. only changes its basename).
      * </p>
      *
-     * @param folderPath
-     *            Path to the folder being renamed (String starting with
-     *            {@code "/"})
-     * @param name
-     *            New basename for the folder
+     * @param folderPath full path to the folder being renamed (a String starting with {@code "/"})
+     * @param name new basename for the folder
      */
     public void renameFolder(String folderPath, String name) {
         // TODO: document "move" method for moving to other folders, when it's
@@ -176,7 +164,7 @@ public class DXContainer extends DXObject {
     }
 
     /**
-     * A request to the /container-xxxx/renameFolder route.
+     * A request to the /container-xxxx/removeFolder route.
      */
     @JsonInclude(Include.NON_NULL)
     private static class ContainerRemoveFolderRequest {
@@ -201,24 +189,18 @@ public class DXContainer extends DXObject {
     /**
      * Removes the specified folder.
      *
-     * @param folderPath
-     *            Path to the folder to be removed (String starting with
-     *            {@code "/"})
+     * @param folderPath path to the folder to be removed (String starting with {@code "/"})
      */
     public void removeFolder(String folderPath) {
-        DXAPI.containerRemoveFolder(this.getId(), MAPPER.valueToTree(new ContainerRemoveFolderRequest(folderPath)));
+        DXAPI.containerRemoveFolder(this.getId(),
+                MAPPER.valueToTree(new ContainerRemoveFolderRequest(folderPath)));
     }
 
     /**
-     * Removes the specified folder, optionally removing all subfolders as
-     * well.
+     * Removes the specified folder, optionally removing all subfolders as well.
      *
-     * @param folderPath
-     *            Path to the folder to be removed (String starting with
-     *            {@code "/"})
-     * @param recurse
-     *            If true, deletes all objects and subfolders in the folder as
-     *            well
+     * @param folderPath full path to the folder to be removed (a String starting with {@code "/"})
+     * @param recurse if true, deletes all objects and subfolders in the folder as well
      */
     public void removeFolder(String folderPath, boolean recurse) {
         DXAPI.containerRemoveFolder(this.getId(),
@@ -256,7 +238,9 @@ public class DXContainer extends DXObject {
     /**
      * Represents the contents of a folder.
      *
-     * <p>The contents are as of the time this object was created.</p>
+     * <p>
+     * The contents are as of the time this object was created.
+     * </p>
      */
     public static class FolderContents {
 
@@ -268,9 +252,10 @@ public class DXContainer extends DXObject {
         }
 
         /**
-         * Returns the full paths to all subfolders of the specified folder.
+         * Lists all subfolders of the specified folder.
          *
-         * @return List containing one String for each subfolder
+         * @return List containing the full path of each subfolder (Strings starting with
+         *         {@code "/"})
          */
         public List<String> getSubfolders() {
             return this.subfolders;
@@ -279,14 +264,17 @@ public class DXContainer extends DXObject {
     }
 
     /**
-     * Returns the contents of the specified folder.
+     * Lists the data objects and subfolders inside the specified folder.
      *
-     * @param folderPath
-     *            Folder to list the contents of (String starting with
-     *            {@code "/"})
+     * @param folderPath full path to a folder (a String starting with {@code "/"})
+     *
+     * @return a {@code FolderContents} giving the contents of the specified folder
      */
     public FolderContents listFolder(String folderPath) {
-        // TODO: parameters describe, only, and includeHidden
+        // TODO: provide variants to obtain only subfolders or only objects
+        // without retrieving both
+
+        // TODO: parameters describe and includeHidden
         ContainerListFolderResponse r =
                 DXJSON.safeTreeToValue(
                         DXAPI.containerListFolder(this.getId(),
