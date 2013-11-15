@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -286,10 +285,10 @@ public class DXContainer extends DXObject {
      *            Folder to list the contents of (String starting with
      *            {@code "/"})
      */
-    public FolderContents listFolder(String folderPath) throws JsonProcessingException {
+    public FolderContents listFolder(String folderPath) {
         // TODO: parameters describe, only, and includeHidden
-        ContainerListFolderResponse r = MAPPER
-                .treeToValue(
+        ContainerListFolderResponse r =
+                DXJSON.safeTreeToValue(
                         DXAPI.containerListFolder(this.getId(),
                                 MAPPER.valueToTree(new ContainerListFolderRequest(folderPath))),
                         ContainerListFolderResponse.class);

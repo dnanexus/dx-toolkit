@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -99,8 +98,9 @@ public class DXProject extends DXContainer {
          * Creates the project and returns a {@code DXProject} corresponding to
          * the newly created project.
          */
-        public DXProject build() throws JsonProcessingException {
-            return new DXProject(MAPPER.treeToValue(DXAPI.projectNew(this.buildRequestHash()), ProjectNewResponse.class).id);
+        public DXProject build() {
+            return new DXProject(DXJSON.safeTreeToValue(
+                    (DXAPI.projectNew(this.buildRequestHash())), ProjectNewResponse.class).id);
         }
     }
 
@@ -171,8 +171,8 @@ public class DXProject extends DXContainer {
     /**
      * Returns metadata about the project.
      */
-    public Describe describe() throws JsonProcessingException {
-        return MAPPER.treeToValue(apiCallOnObject("describe"), Describe.class);
+    public Describe describe() {
+        return DXJSON.safeTreeToValue(apiCallOnObject("describe"), Describe.class);
     }
 
     /**

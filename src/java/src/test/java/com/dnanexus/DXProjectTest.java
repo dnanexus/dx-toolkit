@@ -26,7 +26,6 @@ import org.junit.Test;
 
 import com.dnanexus.exceptions.InvalidStateException;
 import com.dnanexus.exceptions.ResourceNotFoundException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -55,7 +54,7 @@ public class DXProjectTest {
     // External tests
 
     @Test
-    public void testContainer() throws JsonProcessingException {
+    public void testContainer() {
         try {
             DXContainer.getInstance(null);
             Assert.fail("Expected DXContainer creation to fail with a null ID");
@@ -125,7 +124,7 @@ public class DXProjectTest {
     }
 
     @Test
-    public void testCreateProject() throws JsonProcessingException {
+    public void testCreateProject() {
         try {
             DXProject.newProject().setName("").build();
             Assert.fail("Expected project creation to fail due to empty name");

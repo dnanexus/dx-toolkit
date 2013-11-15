@@ -16,7 +16,12 @@
 
 package com.dnanexus;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,10 +33,6 @@ import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Lists;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Utility class for working with JSON objects.
@@ -261,6 +262,26 @@ public class DXJSON {
      */
     public static ObjectBuilder getObjectBuilder() {
         return new ObjectBuilder();
+    }
+
+    /**
+     * Translates the given JSON object to an instance of the specified class.
+     *
+     * <p>
+     * This is a wrapper around Jackson's {@code treeToValue} that suppresses
+     * {@code JsonProcessingException} and rethrows it as an unchecked exception.
+     * </p>
+     *
+     * @param json JSON object
+     * @param valueType A Jackson-deserializable class
+     * @return An instance of the class given by {@code klass}
+     */
+    public static <T> T safeTreeToValue(JsonNode json, Class<T> valueType) {
+        try {
+            return mapper.treeToValue(json, valueType);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
