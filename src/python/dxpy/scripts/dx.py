@@ -2129,13 +2129,12 @@ def find_jobs(args):
     more_results = False
     include_io = (args.verbose and args.json) or args.show_outputs
     id_desc = None
-    need_to_requery = args.trees and (
-        args.state is not None or
-        args.name is not None or
-        args.tag is not None or
-        args.properties is not None or
-        args.created_after is not None or
-        args.created_before is not None)
+    need_to_requery = args.trees and any(arg is not None for arg in (args.state,
+                                                                     args.name,
+                                                                     args.tag,
+                                                                     args.properties,
+                                                                     args.created_after,
+                                                                     args.created_before))
 
     # Now start parsing flags
     if args.id is not None:
