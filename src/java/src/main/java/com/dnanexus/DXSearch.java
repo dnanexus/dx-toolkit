@@ -37,6 +37,9 @@ import com.google.common.collect.Lists;
  */
 public final class DXSearch {
 
+    /**
+     * A request to the /system/findDataObjects route.
+     */
     @JsonInclude(Include.NON_NULL)
     private static class FindDataObjectsRequest {
 
@@ -129,13 +132,10 @@ public final class DXSearch {
             }
         }
 
-        @SuppressWarnings("unused")
         @JsonProperty
         private final NameQuery name;
-        @SuppressWarnings("unused")
         @JsonProperty
         private final ScopeQuery scope;
-        @SuppressWarnings("unused")
         @JsonProperty("class")
         private final String classConstraint;
 
@@ -430,7 +430,6 @@ public final class DXSearch {
         @JsonProperty
         private List<Entry> results;
 
-        @SuppressWarnings("unused")
         @JsonProperty
         private Entry next;
 
@@ -531,13 +530,13 @@ public final class DXSearch {
         }
     }
 
+    /**
+     * A request to the /system/findJobs route.
+     */
     @JsonInclude(Include.NON_NULL)
     private static class FindJobsRequest {
-        // Fields of the input hash to the /system/findJobs API call
-        @SuppressWarnings("unused")
         @JsonProperty
         private final String launchedBy;
-        @SuppressWarnings("unused")
         @JsonProperty("project")
         private final String inProject;
         private final Date createdBefore;
@@ -738,7 +737,6 @@ public final class DXSearch {
         @JsonProperty
         private List<Entry> results;
 
-        @SuppressWarnings("unused")
         @JsonProperty
         private String next;
 
