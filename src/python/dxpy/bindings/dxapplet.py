@@ -36,8 +36,8 @@ class DXExecutable:
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
 
-    def run(self, executable_input, project=None, folder="/", name=None, instance_type=None,
-            depends_on=None, details=None, delay_workspace_destruction=None,
+    def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
+            instance_type=None, depends_on=None, delay_workspace_destruction=None,
             extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -48,12 +48,16 @@ class DXExecutable:
         :type folder: string
         :param name: Name for the new job (default is "<name of the executable>")
         :type name: string
+        :param tags: Tags to associate with the job
+        :type tags: list of strings
+        :param properties: Properties to associate with the job
+        :type properties: dict with string values
+        :param details: Details to set for the job
+        :type details: dict or list
         :param instance_type: Instance type on which the jobs will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
-        :param details: Details to set for the job
-        :type details: dict or list
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
         :type delay_workspace_destruction: boolean
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
@@ -72,6 +76,10 @@ class DXExecutable:
                      "folder": folder}
         if name is not None:
             run_input["name"] = name
+        if tags is not None:
+            run_input["tags"] = tags
+        if properties is not None:
+            run_input["properties"] = properties
         if instance_type is not None:
             if isinstance(instance_type, basestring):
                 run_input["systemRequirements"] = {"*": {"instanceType": instance_type}}

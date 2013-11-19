@@ -2119,6 +2119,7 @@ def export(args):
 
 def find_jobs(args):
     get_output_flag(args)
+    try_call(process_find_by_property_args, args)
     if not args.origin_jobs and not args.all_jobs:
         args.trees = True
     if args.origin_jobs and args.parent is not None and args.parent != 'none':
@@ -2128,11 +2129,12 @@ def find_jobs(args):
     more_results = False
     include_io = (args.verbose and args.json) or args.show_outputs
     id_desc = None
-    need_to_requery = args.trees and (
-        args.state is not None or
-        args.name is not None or
-        args.created_after is not None or
-        args.created_before is not None)
+    need_to_requery = args.trees and any(arg is not None for arg in (args.state,
+                                                                     args.name,
+                                                                     args.tag,
+                                                                     args.properties,
+                                                                     args.created_after,
+                                                                     args.created_before))
 
     # Now start parsing flags
     if args.id is not None:
@@ -2166,7 +2168,9 @@ def find_jobs(args):
              'created_after': args.created_after,
              'created_before': args.created_before,
              'name': args.name,
-             'name_mode': 'glob'}
+             'name_mode': 'glob',
+             'tags': args.tag,
+             'properties': args.properties}
     json_output = []                        # for args.json
     output_ids = []                         # for args.brief
 
@@ -2692,7 +2696,7 @@ def run_one(args, executable, dest_proj, dest_path, preset_inputs=None, input_na
         print fill("Calling " + executable.get_id() + " with output destination " + dest_proj + ":" + dest_path,
                    subsequent_indent='  ') + '\n'
     try:
-        dxexecution = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name,
+        dxexecution = executable.run(input_json, project=dest_proj, folder=dest_path, name=args.name, tags=args.tags, properties=args.properties,
                                      details=args.details, delay_workspace_destruction=args.delay_workspace_destruction,
                                      instance_type=args.instance_type, extra_args=args.extra_args)
         if not args.brief:
@@ -2965,6 +2969,7 @@ def run(args):
         print_run_help(args.executable, args.alias)
 
     try_call(process_extra_args, args)
+    try_call(process_properties_args, args)
 
     if args.clone is None and args.executable == "":
         parser_map['run'].print_help()
@@ -3826,11 +3831,13 @@ run_executable_action.completer = MultiCompleter([DXAppCompleter(),
                                                   DXPathCompleter(classes=['record'], typespec='pipeline')])
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
 parser_run.add_argument('--clone', help=fill('Job ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
-parser_run.add_argument('--alias', '--version', '--tag', dest='alias',
-                        help=fill('Tag or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
+parser_run.add_argument('--alias', '--version', dest='alias',
+                        help=fill('Alias (tag) or version of the app to run (default: \"default\" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--project', metavar='PROJECT', help=fill('Project name or ID in which to run the executable. This can also be specified together with the output folder in --destination.', width_adjustment=-24))
 parser_run.add_argument('--name', help=fill('Name for the job (default is the app or applet name)', width_adjustment=-24))
+parser_run.add_argument('--property', dest='properties', metavar='KEY=VALUE', help=fill('Key-value pair to add as a property; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--property key1=val1 --property key2=val2"', width_adjustment=-24, initial_indent=' ', subsequent_indent=' ', break_on_hyphens=False), action='append')
+parser_run.add_argument('--tag', metavar='TAG', dest='tags', help=fill('Tag for the resulting execution; repeat as necessary,', width_adjustment=-24) + '\n' + fill('e.g. "--tag tag1 --tag tag2"', width_adjustment=-24, break_on_hyphens=False, initial_indent=' ', subsequent_indent=' '), action='append')
 parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
                         action='store_true')
@@ -4099,7 +4106,7 @@ EXAMPLES
 
   $ dx find jobs --name bwa*
 ''',
-                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args],
+                                              parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
                                               prog='dx find jobs')
 parser_find_jobs.add_argument('--id', help=fill('Show only the job tree or job containing this job ID', width_adjustment=-24))

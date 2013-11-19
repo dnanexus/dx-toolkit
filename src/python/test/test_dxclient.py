@@ -479,6 +479,40 @@ class TestDXClient(DXTestCase):
         # Empty string values should be okay
         run("dx find projects --property bar=")
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_find_jobs_by_tags_and_properties(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
+        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
+        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
+        job_id = run(u"dx run " + applet_id + ' -inumber=32 --brief -y ' + \
+                     u" ".join([u"--property '" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]) + \
+                     u"".join([u" --tag " + tag for tag in the_tags])).strip()
+
+        # matches
+        self.assertEqual(run(u"dx find jobs --brief --tag " + the_tags[0]).strip(), job_id)
+        self.assertEqual(run(u"dx find jobs --brief" + u"".join([u" --tag " + tag for tag in the_tags])).strip(),
+                         job_id)
+        self.assertEqual(run(u"dx find jobs --brief --property " + property_names[1]).strip(), job_id)
+        self.assertEqual(run(u"dx find jobs --brief --property '" + \
+                             property_names[1] + u"'='" + property_values[1] + "'").strip(),
+                         job_id)
+        self.assertEqual(run(u"dx find jobs --brief" + \
+                             u"".join([u" --property '" + key + u"'='" + value + u"'" for
+                                       key, value in zip(property_names, property_values)])).strip(),
+                         job_id)
+
+        # no matches
+        self.assertEqual(run(u"dx find jobs --brief --tag foo").strip(), "")
+        self.assertEqual(run(u"dx find jobs --brief --property foo").strip(), "")
+        self.assertEqual(run(u"dx find jobs --brief --property '" + \
+                             property_names[1] + u"'=badvalue").strip(), "")
+
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
@@ -680,6 +714,26 @@ class TestDXRun(DXTestCase):
     def tearDown(self):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXRun, self).tearDown()
+
+    def test_dx_run_tags_and_properties(self):
+        # success
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
+        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
+        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
+        job_id = run(u"dx run " + applet_id + ' -inumber=32 --brief -y ' + \
+                     u" ".join([u"--property '" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]) + \
+                     u"".join([u" --tag " + tag for tag in the_tags])).strip()
+
+        job_desc = dxpy.api.job_describe(job_id)
+        self.assertEqual(job_desc['tags'].sort(), the_tags.sort())
+        self.assertEqual(len(job_desc['properties']), 3)
+        for name, value in zip(property_names, property_values):
+            self.assertEqual(job_desc['properties'][name], value)
 
     def test_dx_run_extra_args(self):
         # success

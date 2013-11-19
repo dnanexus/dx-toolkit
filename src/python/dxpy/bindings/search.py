@@ -70,7 +70,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
-    :param properties: Properties (key-value pairs) that each result must have
+    :param properties: Properties (key-value pairs) that each result must have (use value True to require the property key and allow any value)
     :type properties: dict
     :param typename: Type constraint that each result must conform to
     :type typename: string or dict
@@ -199,7 +199,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
 def find_jobs(launched_by=None, executable=None, project=None,
               state=None, origin_job=None, parent_job=None,
               created_after=None, created_before=None, describe=False,
-              name=None, name_mode="exact", limit=None, return_handler=False,
+              name=None, name_mode="exact", tags=None, properties=None, limit=None, return_handler=False,
               **kwargs):
     '''
     :param launched_by: User ID of the user who launched the job's origin job
@@ -224,6 +224,10 @@ def find_jobs(launched_by=None, executable=None, project=None,
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
+    :param tags: List of tags that each result must have ALL of
+    :type tags: list of strings
+    :param properties: Properties (key-value pairs) that each result must have (use value True to require the property key and allow any value)
+    :type properties: dict
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
     :param return_handler: If True, yields results as dxpy object handlers (otherwise, yields each result as a dict with keys "id" and "project")
@@ -280,6 +284,10 @@ def find_jobs(launched_by=None, executable=None, project=None,
             query['name'] = {'regexp': name}
         else:
             raise DXError('find_jobs: Unexpected value found for argument name_mode')
+    if tags is not None:
+        query['tags'] = {'$and': tags}
+    if properties is not None:
+        query['properties'] = properties
     if limit is not None:
         query["limit"] = limit
 
@@ -293,7 +301,7 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :type name: string
     :param name_mode: Method by which to interpret the *name* field ("exact": exact match, "glob": use "*" and "?" as wildcards, "regexp": interpret as a regular expression)
     :type name_mode: string
-    :param properties: Properties (key-value pairs) that each result must have
+    :param properties: Properties (key-value pairs) that each result must have (use value True to require the property key and allow any value)
     :type properties: dict
     :param tags: Tags that each result must have
     :type tags: list of strings
