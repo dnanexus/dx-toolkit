@@ -1,3 +1,11 @@
+dx-toolkit (0.77.0) precise; urgency=low
+
+  * Support for job tags and properties.
+
+  * New Java bindings.
+
+ -- Phil Sung <psung@dnanexus.com>  Tue, 19 Nov 2013 23:20:26 +0000
+
 dx-toolkit (0.76.0) precise; urgency=low
 
   * Upload Agent build improvements.
