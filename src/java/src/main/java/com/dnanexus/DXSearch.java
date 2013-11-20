@@ -251,7 +251,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> inFolder(DXContainer project, String folder) {
-            Preconditions.checkArgument(this.scopeQuery == null,
+            Preconditions.checkState(this.scopeQuery == null,
                     "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
             Preconditions.checkNotNull(project);
             Preconditions.checkNotNull(folder);
@@ -276,7 +276,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> inFolderOrSubfolders(DXContainer project,
                 String folder) {
-            Preconditions.checkArgument(this.scopeQuery == null,
+            Preconditions.checkState(this.scopeQuery == null,
                     "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
             Preconditions.checkNotNull(project);
             Preconditions.checkNotNull(folder);
@@ -298,7 +298,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> inProject(DXContainer project) {
-            Preconditions.checkArgument(this.scopeQuery == null,
+            Preconditions.checkState(this.scopeQuery == null,
                     "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
             Preconditions.checkNotNull(project);
             this.scopeQuery = new FindDataObjectsRequest.ScopeQuery(project.getId());
@@ -319,7 +319,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> nameMatchesExactly(String name) {
-            Preconditions.checkArgument(this.nameQuery == null,
+            Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             Preconditions.checkNotNull(name);
             this.nameQuery = new FindDataObjectsRequest.ExactNameQuery(name);
@@ -340,7 +340,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> nameMatchesGlob(String glob) {
-            Preconditions.checkArgument(this.nameQuery == null,
+            Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             Preconditions.checkNotNull(glob);
             this.nameQuery = new FindDataObjectsRequest.GlobNameQuery(glob);
@@ -361,7 +361,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindDataObjectsRequestBuilder<T> nameMatchesRegexp(String regexp) {
-            Preconditions.checkArgument(this.nameQuery == null,
+            Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             Preconditions.checkNotNull(regexp);
             this.nameQuery = new FindDataObjectsRequest.RegexpNameQuery(regexp);
@@ -385,7 +385,7 @@ public final class DXSearch {
          */
         public FindDataObjectsRequestBuilder<T> nameMatchesRegexp(String regexp,
                 boolean caseInsensitive) {
-            Preconditions.checkArgument(this.nameQuery == null,
+            Preconditions.checkState(this.nameQuery == null,
                     "Cannot specify nameMatches* methods more than once");
             Preconditions.checkNotNull(regexp);
             this.nameQuery =
@@ -404,7 +404,7 @@ public final class DXSearch {
          */
         @SuppressWarnings("unchecked")
         public FindDataObjectsRequestBuilder<DXRecord> ofClassRecord() {
-            Preconditions.checkArgument(this.classConstraint == null,
+            Preconditions.checkState(this.classConstraint == null,
                     "Cannot specify class constraints more than once");
             this.classConstraint = "record";
             // This cast should be safe, since we hold no references of type T
@@ -645,7 +645,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindJobsRequestBuilder createdAfter(Date date) {
-            Preconditions.checkArgument(this.createdAfter == null,
+            Preconditions.checkState(this.createdAfter == null,
                     "Cannot specify createdAfter more than once");
             Preconditions.checkNotNull(date);
             this.createdAfter = date;
@@ -660,7 +660,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindJobsRequestBuilder createdBefore(Date date) {
-            Preconditions.checkArgument(this.createdBefore == null,
+            Preconditions.checkState(this.createdBefore == null,
                     "Cannot specify createdBefore more than once");
             Preconditions.checkNotNull(date);
             this.createdBefore = date;
@@ -695,7 +695,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         public FindJobsRequestBuilder inProject(DXContainer project) {
-            Preconditions.checkArgument(this.inProject == null,
+            Preconditions.checkState(this.inProject == null,
                     "Cannot specify inProject more than once");
             Preconditions.checkNotNull(project);
             this.inProject = project.getId();
@@ -714,7 +714,7 @@ public final class DXSearch {
             // setters so that later calls overwrite earlier calls. Then
             // remove the restriction that the field may only be specified
             // once.
-            Preconditions.checkArgument(this.launchedBy == null,
+            Preconditions.checkState(this.launchedBy == null,
                     "Cannot specify launchedBy more than once");
             Preconditions.checkNotNull(user);
             this.launchedBy = user;

@@ -111,7 +111,7 @@ public abstract class DXDataObject extends DXObject {
         public T addTags(List<String> tags) {
             // TODO: support calling addTags more than once, this seems
             // reasonable from the name.
-            Preconditions.checkArgument(this.tags == null, "Cannot call addTags more than once");
+            Preconditions.checkState(this.tags == null, "Cannot call addTags more than once");
             Preconditions.checkNotNull(tags);
             this.tags = ImmutableList.copyOf(tags);
             return getThisInstance();
@@ -127,7 +127,7 @@ public abstract class DXDataObject extends DXObject {
         public T addTypes(List<String> types) {
             // TODO: support calling addTypes more than once, this seems
             // reasonable from the name.
-            Preconditions.checkArgument(this.types == null, "Cannot call addTypes more than once");
+            Preconditions.checkState(this.types == null, "Cannot call addTypes more than once");
             Preconditions.checkNotNull(types);
             this.types = ImmutableList.copyOf(types);
             return getThisInstance();
@@ -149,7 +149,7 @@ public abstract class DXDataObject extends DXObject {
                 this.project = this.env.getWorkspace();
             }
             Preconditions
-                    .checkArgument(this.project != null,
+                    .checkState(this.project != null,
                             "setProject must be specified if the environment does not have a workspace set");
         }
 
@@ -214,8 +214,7 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T setDetails(Object details) {
-            Preconditions.checkArgument(this.details == null,
-                    "Cannot call setDetails more than once");
+            Preconditions.checkState(this.details == null, "Cannot call setDetails more than once");
             Preconditions.checkNotNull(details);
             this.details = MAPPER.valueToTree(details);
             return getThisInstance();
@@ -229,8 +228,7 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T setFolder(String folder) {
-            Preconditions
-                    .checkArgument(this.folder == null, "Cannot call setFolder more than once");
+            Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
             Preconditions.checkNotNull(folder);
             this.folder = folder;
             return getThisInstance();
@@ -246,8 +244,7 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T setFolder(String folder, boolean createParents) {
-            Preconditions
-                    .checkArgument(this.folder == null, "Cannot call setFolder more than once");
+            Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
             Preconditions.checkNotNull(folder);
             this.folder = folder;
             this.createParents = createParents;
@@ -262,7 +259,7 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T setName(String name) {
-            Preconditions.checkArgument(this.name == null, "Cannot call setName more than once");
+            Preconditions.checkState(this.name == null, "Cannot call setName more than once");
             Preconditions.checkNotNull(name);
             this.name = name;
             return getThisInstance();
@@ -276,8 +273,7 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T setProject(DXContainer project) {
-            Preconditions.checkArgument(this.project == null,
-                    "Cannot call setProject more than once");
+            Preconditions.checkState(this.project == null, "Cannot call setProject more than once");
             Preconditions.checkNotNull(project);
             this.project = project;
             return getThisInstance();
@@ -291,7 +287,7 @@ public abstract class DXDataObject extends DXObject {
          * @return the same {@code Builder} object
          */
         public T setVisibility(boolean visible) {
-            Preconditions.checkArgument(this.hidden == null,
+            Preconditions.checkState(this.hidden == null,
                     "Cannot call setVisibility more than once");
             this.hidden = !visible;
             return getThisInstance();

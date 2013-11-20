@@ -149,21 +149,21 @@ public class DXProjectTest {
     @Test
     public void testCreateProject() {
         try {
-            DXProject.newProject().setName("").build();
+            DXProject.newProject().setName("");
             Assert.fail("Expected project creation to fail due to empty name");
         } catch (IllegalArgumentException e) {
             // Expected
         }
 
         try {
-            DXProject.newProject().setName("foo").setName("bar").build();
-            Assert.fail("Expected project creation to fail due to empty name");
-        } catch (IllegalArgumentException e) {
+            DXProject.newProject().setName("foo").setName("bar");
+            Assert.fail("Expected project creation to fail due to duplicate name setting");
+        } catch (IllegalStateException e) {
             // Expected
         }
 
         try {
-            DXProject.newProject().setName(null).build();
+            DXProject.newProject().setName(null);
             Assert.fail("Expected project creation to fail due to null name");
         } catch (NullPointerException e) {
             // Expected
