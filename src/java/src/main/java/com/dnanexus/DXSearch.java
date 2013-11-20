@@ -403,7 +403,7 @@ public final class DXSearch {
          * @return the same builder object
          */
         @SuppressWarnings("unchecked")
-        public FindDataObjectsRequestBuilder<DXRecord> ofClassRecord() {
+        public FindDataObjectsRequestBuilder<DXRecord> withClassRecord() {
             Preconditions.checkState(this.classConstraint == null,
                     "Cannot specify class constraints more than once");
             this.classConstraint = "record";

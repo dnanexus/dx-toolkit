@@ -68,12 +68,12 @@ public class DXSearchTest {
         }
         List<DXRecord> outputRecords =
                 DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                        .ofClassRecord().execute().asList();
+                        .withClassRecord().execute().asList();
         Assert.assertEquals(8, outputRecords.size());
 
         List<DXRecord> outputRecordsWithPaging =
                 DXSearch.findDataObjects().inProject(testProject).nameMatchesGlob("foo*")
-                        .ofClassRecord().execute(3).asList();
+                        .withClassRecord().execute(3).asList();
         Assert.assertEquals(outputRecords, outputRecordsWithPaging);
         Set<String> outputRecordIds = Sets.newHashSet();
         for (DXRecord record : outputRecordsWithPaging) {
