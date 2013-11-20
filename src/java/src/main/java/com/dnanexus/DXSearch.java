@@ -16,9 +16,11 @@
 
 package com.dnanexus;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,11 +33,43 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 /**
  * Utility class containing methods for searching for platform objects by various criteria.
  */
 public final class DXSearch {
+
+    /**
+     * Specifies in a query whether to return visible items, hidden items, or both.
+     */
+    public enum VisibilityQuery {
+        /**
+         * Search for only visible items.
+         */
+        VISIBLE("visible"),
+        /**
+         * Search for only hidden items.
+         */
+        HIDDEN("hidden"),
+        /**
+         * Search for both hidden and visible items.
+         */
+        EITHER("either");
+
+        private String value;
+
+        private VisibilityQuery(String value) {
+            this.value = value;
+        }
+
+        @SuppressWarnings("unused")
+        @JsonValue
+        private String getValue() {
+            return this.value;
+        }
+    }
 
     /**
      * A request to the /system/findDataObjects route.
@@ -71,12 +105,12 @@ public final class DXSearch {
             }
         }
 
-        // The following polymorphic classes, and this interface, are for
+        // This interface, and the classes that implement it, are for
         // generating the values that can appear in the "name" field of the
         // query.
         @JsonInclude(Include.NON_NULL)
         private static interface NameQuery {
-            // Subclasses below choose what fields to put in their JSON representations.
+            // Subclasses choose what fields to put in their JSON representations.
         }
 
         private static class RegexpNameQuery implements NameQuery {
@@ -122,7 +156,7 @@ public final class DXSearch {
             }
 
             private ScopeQuery(String projectId, String folder) {
-                this(projectId, folder, null);
+                this(projectId, folder, false);
             }
 
             private ScopeQuery(String projectId, String folder, Boolean recurse) {
@@ -132,12 +166,63 @@ public final class DXSearch {
             }
         }
 
-        @JsonProperty
-        private final NameQuery name;
-        @JsonProperty
-        private final ScopeQuery scope;
+        @JsonInclude(Include.NON_NULL)
+        private static class TimeIntervalQuery {
+            private final Date before;
+            private final Date after;
+
+            private TimeIntervalQuery(Date before, Date after) {
+                this.before = before;
+                this.after = after;
+            }
+
+            @SuppressWarnings("unused")
+            @JsonProperty("after")
+            private Long getAfter() {
+                if (after == null) {
+                    return null;
+                }
+                return after.getTime();
+            }
+
+            @SuppressWarnings("unused")
+            @JsonProperty("before")
+            private Long getBefore() {
+                if (before == null) {
+                    return null;
+                }
+                return before.getTime();
+            }
+        }
+
         @JsonProperty("class")
         private final String classConstraint;
+        @JsonProperty
+        private final DataObjectState state;
+        @JsonProperty
+        private final VisibilityQuery visibility;
+        @JsonProperty
+        private final NameQuery name;
+        // TODO: support $and and $or queries on type, not just a single type
+        @JsonProperty
+        private final String type;
+        // TODO: support $and and $or queries on tags, not just a single tag
+        @JsonProperty
+        private final String tags;
+        @JsonProperty
+        private final Map<String, Object> properties;
+        @JsonProperty
+        private final String link;
+        @JsonProperty
+        private final ScopeQuery scope;
+        @JsonProperty
+        private final AccessLevel level;
+        @JsonProperty
+        private final TimeIntervalQuery modified;
+        @JsonProperty
+        private final TimeIntervalQuery created;
+
+        // TODO: describe
 
         @SuppressWarnings("unused")
         @JsonProperty
@@ -157,9 +242,18 @@ public final class DXSearch {
          */
         private FindDataObjectsRequest(FindDataObjectsRequest previousQuery,
                 FindDataObjectsResponse.Entry next, Integer limit) {
-            this.name = previousQuery.name;
-            this.scope = previousQuery.scope;
             this.classConstraint = previousQuery.classConstraint;
+            this.state = previousQuery.state;
+            this.visibility = previousQuery.visibility;
+            this.name = previousQuery.name;
+            this.type = previousQuery.type;
+            this.tags = previousQuery.tags;
+            this.properties = previousQuery.properties;
+            this.link = previousQuery.link;
+            this.scope = previousQuery.scope;
+            this.level = previousQuery.level;
+            this.modified = previousQuery.modified;
+            this.created = previousQuery.created;
 
             this.starting = next;
             this.limit = limit;
@@ -172,9 +266,38 @@ public final class DXSearch {
          * @param builder builder object to initialize this query with
          */
         private FindDataObjectsRequest(FindDataObjectsRequestBuilder<?> builder) {
-            this.name = builder.nameQuery;
-            this.scope = builder.scopeQuery;
             this.classConstraint = builder.classConstraint;
+            this.state = builder.state;
+            this.visibility = builder.visibilityQuery;
+            this.name = builder.nameQuery;
+            this.type = builder.type;
+            this.tags = builder.tag;
+
+            Map<String, Object> properties =
+                    Maps.<String, Object>newHashMap(builder.propertyKeysAndValues);
+            for (String requiredKey : builder.propertiesThatMustBePresent) {
+                properties.put(requiredKey, true);
+            }
+            if (!properties.isEmpty()) {
+                this.properties = Collections.unmodifiableMap(properties);
+            } else {
+                this.properties = null;
+            }
+
+            this.link = builder.link;
+            this.scope = builder.scopeQuery;
+            this.level = builder.level;
+            if (builder.modifiedBefore != null || builder.modifiedAfter != null) {
+                this.modified =
+                        new TimeIntervalQuery(builder.modifiedBefore, builder.modifiedAfter);
+            } else {
+                this.modified = null;
+            }
+            if (builder.createdBefore != null || builder.createdAfter != null) {
+                this.created = new TimeIntervalQuery(builder.createdBefore, builder.createdAfter);
+            } else {
+                this.created = null;
+            }
 
             this.starting = null;
             this.limit = null;
@@ -193,8 +316,20 @@ public final class DXSearch {
      */
     public static class FindDataObjectsRequestBuilder<T extends DXDataObject> {
         private String classConstraint;
+        private DataObjectState state;
+        private VisibilityQuery visibilityQuery;
         private FindDataObjectsRequest.NameQuery nameQuery;
+        private String type;
+        private String tag;
+        private Map<String, String> propertyKeysAndValues = Maps.newHashMap();
+        private Set<String> propertiesThatMustBePresent = Sets.newHashSet();
+        private String link;
         private FindDataObjectsRequest.ScopeQuery scopeQuery;
+        private AccessLevel level;
+        private Date modifiedBefore;
+        private Date modifiedAfter;
+        private Date createdBefore;
+        private Date createdAfter;
 
         private final DXEnvironment env;
 
@@ -211,6 +346,36 @@ public final class DXSearch {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
             return new FindDataObjectsRequest(this);
+        }
+
+        /**
+         * Only returns data objects that were created after the specified time.
+         *
+         * @param createdAfter creation date
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> createdAfter(Date createdAfter) {
+            Preconditions.checkState(this.createdAfter == null,
+                    "Cannot call createdAfter more than once");
+            Preconditions.checkNotNull(createdAfter);
+            this.createdAfter = createdAfter;
+            return this;
+        }
+
+        /**
+         * Only returns data objects that were created before the specified time.
+         *
+         * @param createdBefore creation date
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> createdBefore(Date createdBefore) {
+            Preconditions.checkState(this.createdBefore == null,
+                    "Cannot call createdBefore more than once");
+            Preconditions.checkNotNull(createdBefore);
+            this.createdBefore = createdBefore;
+            return this;
         }
 
         /**
@@ -302,6 +467,36 @@ public final class DXSearch {
                     "Cannot specify inProject, inFolder, or inFolderOrSubfolders more than once");
             Preconditions.checkNotNull(project);
             this.scopeQuery = new FindDataObjectsRequest.ScopeQuery(project.getId());
+            return this;
+        }
+
+        /**
+         * Only returns data objects that were last modified after the specified time.
+         *
+         * @param modifiedAfter last modified date
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> modifiedAfter(Date modifiedAfter) {
+            Preconditions.checkState(this.modifiedAfter == null,
+                    "Cannot call modifiedAfter more than once");
+            Preconditions.checkNotNull(modifiedAfter);
+            this.modifiedAfter = modifiedAfter;
+            return this;
+        }
+
+        /**
+         * Only returns data objects that were last modified before the specified time.
+         *
+         * @param modifiedBefore last modified date
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> modifiedBefore(Date modifiedBefore) {
+            Preconditions.checkState(this.modifiedBefore == null,
+                    "Cannot call modifiedBefore more than once");
+            Preconditions.checkNotNull(modifiedBefore);
+            this.modifiedBefore = modifiedBefore;
             return this;
         }
 
@@ -411,6 +606,124 @@ public final class DXSearch {
             return (FindDataObjectsRequestBuilder<DXRecord>) this;
         }
 
+        /**
+         * Only returns data objects that link to the specified data object.
+         *
+         * @param dataObject data object that must be the target of a DNAnexus link on matching data
+         *        objects
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withLinkTo(DXDataObject dataObject) {
+            Preconditions.checkState(this.link == null, "Cannot call withLinkTo more than once");
+            Preconditions.checkNotNull(dataObject);
+            this.link = dataObject.getId();
+            return this;
+        }
+
+        /**
+         * Only returns data objects to which the requesting user has at least the specified level
+         * of permission in some project.
+         *
+         * @param level project access level (must be greater than NONE)
+         *
+         * @return the same data object
+         */
+        public FindDataObjectsRequestBuilder<T> withMinimumAccessLevel(AccessLevel level) {
+            Preconditions.checkState(this.level == null,
+                    "Cannot call withMinimumAccessLevel more than once");
+            Preconditions.checkNotNull(level);
+            Preconditions.checkArgument(!level.equals(AccessLevel.NONE),
+                    "Minimum access level may not be NONE");
+            this.level = level;
+            return this;
+        }
+
+        /**
+         * Only returns data objects where the specified property is present.
+         *
+         * @param propertyKey property key that must be present
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey) {
+            Preconditions.checkNotNull(propertyKey);
+            propertiesThatMustBePresent.add(propertyKey);
+            return this;
+        }
+
+        /**
+         * Only returns data objects where the specified property has the specified value.
+         *
+         * @param propertyKey property key
+         * @param propertyValue property value
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withProperty(String propertyKey,
+                String propertyValue) {
+            Preconditions.checkNotNull(propertyKey);
+            Preconditions.checkNotNull(propertyValue);
+            propertyKeysAndValues.put(propertyKey, propertyValue);
+            return this;
+        }
+
+        /**
+         * Only returns data objects with the specified state.
+         *
+         * @param state data object state
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withState(DataObjectState state) {
+            Preconditions.checkState(this.state == null, "Cannot call withState more than once");
+            Preconditions.checkNotNull(state);
+            this.state = state;
+            return this;
+        }
+
+        /**
+         * Only returns data objects with the specified tag.
+         *
+         * @param tag String containing a tag
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withTag(String tag) {
+            Preconditions.checkState(this.tag == null, "Cannot call withTag more than once");
+            Preconditions.checkNotNull(tag);
+            this.tag = tag;
+            return this;
+        }
+
+        /**
+         * Only returns data objects with the specified type.
+         *
+         * @param type String containing a type
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withType(String type) {
+            Preconditions.checkState(this.type == null, "Cannot call withType more than once");
+            Preconditions.checkNotNull(type);
+            this.type = type;
+            return this;
+        }
+
+        /**
+         * Only returns data objects with the specified visibility (visible or hidden). If not
+         * specified, the default is to return only visible objects.
+         *
+         * @param visibilityQuery enum value specifying what visibility/ies can be returned.
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withVisibility(VisibilityQuery visibilityQuery) {
+            Preconditions.checkState(this.visibilityQuery == null,
+                    "Cannot call withVisibility more than once");
+            this.visibilityQuery = visibilityQuery;
+            return this;
+        }
     }
 
     /**

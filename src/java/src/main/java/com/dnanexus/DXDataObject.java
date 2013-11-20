@@ -18,6 +18,7 @@ package com.dnanexus;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -384,13 +385,26 @@ public abstract class DXDataObject extends DXObject {
         private JsonNode details;
         @JsonProperty
         private Map<String, String> properties;
+        @JsonProperty
+        private long created;
+        @JsonProperty
+        private long modified;
 
         /**
          * Creates a {@code Describe} object with all empty metadata.
          */
         protected Describe() {}
 
-        // TODO: created, state, links, sponsored, modified, createdBy
+        // TODO: links, sponsored, createdBy
+
+        /**
+         * Returns the creation date of the object.
+         *
+         * @return creation date
+         */
+        public Date getCreationDate() {
+            return new Date(this.created);
+        }
 
         /**
          * Returns the details of the object. This field may not be available unless
@@ -412,6 +426,15 @@ public abstract class DXDataObject extends DXObject {
          */
         public String getFolder() {
             return this.folder;
+        }
+
+        /**
+         * Returns the last modification date of the object.
+         *
+         * @return modification date
+         */
+        public Date getModificationDate() {
+            return new Date(this.modified);
         }
 
         /**

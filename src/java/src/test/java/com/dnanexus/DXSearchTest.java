@@ -17,6 +17,7 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Set;
@@ -28,9 +29,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+/**
+ * Tests DXSearch methods.
+ */
 public class DXSearchTest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -39,7 +44,7 @@ public class DXSearchTest {
 
     @Before
     public void setUp() {
-        testProject = DXProject.newProject().setName("DXRecordTest").build();
+        testProject = DXProject.newProject().setName("DXSearchTest").build();
     }
 
     @After
@@ -49,14 +54,34 @@ public class DXSearchTest {
         }
     }
 
+    /**
+     * Asserts that the contents of the Iterable are the given values (in some order).
+     *
+     * @param actualIterable Iterable of actual results
+     * @param expected Expected results
+     */
+    public static <T> void assertEqualsAnyOrder(Iterable<T> actualIterable, T... expected) {
+        Set<T> expectedSet = Sets.newHashSet(Arrays.asList(expected));
+        Set<T> actualSet = Sets.newHashSet(actualIterable);
+        Assert.assertEquals(expectedSet, actualSet);
+    }
+
     // External tests
 
+    /**
+     * findDataObjects smoke test.
+     */
     @Test
-    public void testFindDataObjects() {
-        Assert.assertEquals(0, DXSearch.findDataObjects().nameMatchesExactly("foobarbaz").execute()
-                .asList().size());
+    public void testFindDataObjectsSimple() {
+        Assert.assertEquals(0, DXSearch.findDataObjects().inProject(testProject)
+                .nameMatchesExactly("foobarbaz").execute().asList().size());
+    }
 
-        // Test paging through results
+    /**
+     * Tests paging through results.
+     */
+    @Test
+    public void testFindDataObjectsWithPaging() {
         List<DXRecord> records = Lists.newArrayList();
         Set<String> recordIds = Sets.newHashSet();
         for (int i = 0; i < 8; ++i) {
@@ -83,6 +108,114 @@ public class DXSearchTest {
         Assert.assertEquals(recordIds, outputRecordIds);
     }
 
+    /**
+     * Tests a variety of findDataObjects features.
+     */
+    @Test
+    public void testFindDataObjects() {
+        DXRecord moo =
+                DXRecord.newRecord().setProject(testProject).setName("Moo")
+                        .putProperty("sampleId", "1").addTypes(ImmutableList.of("genome")).build()
+                        .close();
+        DXRecord foo =
+                DXRecord.newRecord().setProject(testProject).setName("foo")
+                        .putProperty("sampleId", "2").addTags(ImmutableList.of("mytag")).build()
+                        .close();
+        DXRecord food =
+                DXRecord.newRecord().setProject(testProject).setName("food")
+                        .setFolder("/subfolder", true).build().close();
+        DXRecord open = DXRecord.newRecord().setProject(testProject).setName("open").build();
+        DXRecord invisible =
+                DXRecord.newRecord().setProject(testProject).setName("invisible")
+                        .setVisibility(false).build().close();
+
+        // nameMatches*
+
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().nameMatchesExactly("foo").inProject(testProject)
+                        .execute().asList(), foo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().nameMatchesGlob("foo*").inProject(testProject).execute()
+                        .asList(), foo, food);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().nameMatchesRegexp("[a-m]oo[^x]?")
+                .inProject(testProject).execute().asList(), foo, food);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().nameMatchesRegexp("[a-m]oo[^x]?", true)
+                .inProject(testProject).execute().asList(), moo, foo, food);
+
+        // {created,modified}{Before,After}
+
+        // We rely on the fact that moo.created < foo.created < food.created
+
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .createdBefore(moo.describe().getCreationDate()).execute().asList(), moo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .createdAfter(foo.describe().getCreationDate()).execute().asList(), foo,
+                food, open);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .modifiedBefore(foo.describe().getModificationDate()).execute().asList(),
+                moo, foo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .modifiedAfter(foo.describe().getModificationDate()).execute().asList(),
+                foo, food, open);
+
+        // inFolder and friends
+
+        assertEqualsAnyOrder(DXSearch.findDataObjects().inFolder(testProject, "/").execute()
+                .asList(), moo, foo, open);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().inFolderOrSubfolders(testProject, "/")
+                .execute().asList(), moo, foo, food, open);
+
+        // withProperty
+
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject).withProperty("sampleId")
+                        .execute().asList(), moo, foo);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject).withProperty("sampleId", "2")
+                        .execute().asList(), foo);
+
+        // withState
+
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject).withState(DataObjectState.CLOSED)
+                        .execute().asList(), moo, foo, food);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject).withState(DataObjectState.OPEN)
+                        .execute().asList(), open);
+
+        // withTags
+
+        assertEqualsAnyOrder(DXSearch.findDataObjects().inProject(testProject).withTag("mytag")
+                .execute().asList(), foo);
+
+        // withTypes
+
+        assertEqualsAnyOrder(DXSearch.findDataObjects().inProject(testProject).withType("genome")
+                .execute().asList(), moo);
+
+        // withVisibility
+
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withVisibility(DXSearch.VisibilityQuery.HIDDEN).execute().asList(),
+                invisible);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withVisibility(DXSearch.VisibilityQuery.VISIBLE).execute().asList(), moo,
+                foo, food, open);
+        assertEqualsAnyOrder(
+                DXSearch.findDataObjects().inProject(testProject)
+                        .withVisibility(DXSearch.VisibilityQuery.EITHER).execute().asList(), moo,
+                foo, food, open, invisible);
+
+        // TODO: withLinkTo, withMinimumAccessLevel
+
+    }
+
     @Test
     public void testFindJobs() {
         @SuppressWarnings("unused")
@@ -91,6 +224,9 @@ public class DXSearchTest {
 
     // Internal tests
 
+    /**
+     * Tests formulating findDataObjects queries without actually issuing them.
+     */
     @Test
     public void testFindDataObjectsQuerySerialization() throws IOException {
         Assert.assertEquals(
@@ -99,7 +235,7 @@ public class DXSearchTest {
                         .inProject(DXProject.getInstance("project-000000000000000000000000"))
                         .buildRequestHash()));
         Assert.assertEquals(
-                DXJSON.parseJson("{\"scope\": {\"project\":\"project-000000000000000000000000\", \"folder\": \"/my/subfolder\"}}"),
+                DXJSON.parseJson("{\"scope\": {\"project\":\"project-000000000000000000000000\", \"folder\": \"/my/subfolder\", \"recurse\": false}}"),
                 mapper.valueToTree(DXSearch
                         .findDataObjects()
                         .inFolder(DXProject.getInstance("project-000000000000000000000000"),
@@ -129,6 +265,14 @@ public class DXSearchTest {
                 DXJSON.parseJson("{\"name\": {\"glob\": \"*nexus\"}}"),
                 mapper.valueToTree(DXSearch.findDataObjects().nameMatchesGlob("*nexus")
                         .buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"visibility\": \"hidden\"}"),
+                mapper.valueToTree(DXSearch.findDataObjects()
+                        .withVisibility(DXSearch.VisibilityQuery.HIDDEN).buildRequestHash()));
+        Assert.assertEquals(
+                DXJSON.parseJson("{\"level\": \"ADMINISTER\"}"),
+                mapper.valueToTree(DXSearch.findDataObjects()
+                        .withMinimumAccessLevel(AccessLevel.ADMINISTER).buildRequestHash()));
 
         try {
             DXSearch.findDataObjects().inProject(DXProject.getInstance("project-0000"))
@@ -148,6 +292,13 @@ public class DXSearchTest {
             DXSearch.findDataObjects().nameMatchesExactly("ab").nameMatchesGlob("*b");
             Assert.fail("Expected double setting of name parameters to fail");
         } catch (IllegalStateException e) {
+            // Expected
+        }
+
+        try {
+            DXSearch.findDataObjects().withMinimumAccessLevel(AccessLevel.NONE);
+            Assert.fail("Expected minimumAccessLevel=NONE to fail");
+        } catch (IllegalArgumentException e) {
             // Expected
         }
     }
