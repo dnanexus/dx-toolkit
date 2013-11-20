@@ -132,23 +132,22 @@ public class DXSearchTest {
 
         try {
             DXSearch.findDataObjects().inProject(DXProject.getInstance("project-0000"))
-                    .inProject(DXProject.getInstance("project-1111")).buildRequestHash();
+                    .inProject(DXProject.getInstance("project-1111"));
             Assert.fail("Expected double setting of inProject to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
         try {
             DXSearch.findDataObjects().inFolder(DXProject.getInstance("project-0000"), "/1")
-                    .inFolder(DXProject.getInstance("project-0000"), "/2").buildRequestHash();
+                    .inFolder(DXProject.getInstance("project-0000"), "/2");
             Assert.fail("Expected double setting of inFolder to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
         try {
-            DXSearch.findDataObjects().nameMatchesExactly("ab").nameMatchesGlob("*b")
-                    .buildRequestHash();
+            DXSearch.findDataObjects().nameMatchesExactly("ab").nameMatchesGlob("*b");
             Assert.fail("Expected double setting of name parameters to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
     }
@@ -197,17 +196,16 @@ public class DXSearchTest {
 
         // Setting the same field more than once is disallowed
         try {
-            DXSearch.findJobs().launchedBy("user-user1").launchedBy("user-user2")
-                    .buildRequestHash();
+            DXSearch.findJobs().launchedBy("user-user1").launchedBy("user-user2");
             Assert.fail("Expected double setting of launchedBy to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
         try {
             DXSearch.findJobs().inProject(DXProject.getInstance("project-0"))
-                    .inProject(DXProject.getInstance("project-1")).buildRequestHash();
+                    .inProject(DXProject.getInstance("project-1"));
             Assert.fail("Expected double setting of inProject to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
     }

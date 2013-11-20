@@ -79,7 +79,7 @@ public class DXRecordTest {
         try {
             DXRecord.newRecord().setName("foo").buildRequestHash();
             Assert.fail("Expected creation without setting project to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
 
@@ -88,10 +88,9 @@ public class DXRecordTest {
         // Setting the same field more than once is disallowed
         try {
             DXRecord.newRecord().setProject(p)
-                    .setProject(DXProject.getInstance("project-000000000000000000000000"))
-                    .buildRequestHash();
+                    .setProject(DXProject.getInstance("project-000000000000000000000000"));
             Assert.fail("Expected double setting of setProject to fail");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException e) {
             // Expected
         }
 

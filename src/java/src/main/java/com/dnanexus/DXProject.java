@@ -82,9 +82,8 @@ public class DXProject extends DXContainer {
          * @return the same {@code Builder} object
          */
         public Builder setName(String name) {
+            Preconditions.checkState(this.name == null, "Name may not be specified more than once");
             Preconditions.checkNotNull(name, "Name must be specified");
-            Preconditions.checkArgument(this.name == null,
-                    "Name may not be specified more than once");
             Preconditions.checkArgument(name.length() > 0, "Name must be non-empty");
             this.name = name;
             return this;
@@ -94,7 +93,7 @@ public class DXProject extends DXContainer {
         JsonNode buildRequestHash() {
             // Use this method to test the JSON hash created by a particular
             // builder call without actually executing the request.
-            Preconditions.checkArgument(this.name != null, "name must be specified");
+            Preconditions.checkState(this.name != null, "name must be specified");
             return MAPPER.valueToTree(new ProjectNewRequest(this));
         }
 
