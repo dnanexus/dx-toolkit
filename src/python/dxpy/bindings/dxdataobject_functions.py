@@ -99,14 +99,15 @@ def get_handler(id_or_link, project=None):
     '''
     try:
         cls = _guess_link_target_type(id_or_link)
-        if project is None or cls in [dxpy.DXJob, dxpy.DXAnalysis, dxpy.DXProject, dxpy.DXContainer]:
-            # This case is important for the handlers which do not
-            # take a project field
-            return cls(id_or_link)
-        else:
-            return cls(id_or_link, project=project)
     except Exception as e:
-        raise DXError("Could not parse link "+str(id_or_link))
+        raise DXError("Could not parse link {}: {}".format(id_or_link, e))
+
+    if project is None or cls in [dxpy.DXJob, dxpy.DXAnalysis, dxpy.DXProject, dxpy.DXContainer]:
+        # This case is important for the handlers which do not
+        # take a project field
+        return cls(id_or_link)
+    else:
+        return cls(id_or_link, project=project)
 
 def describe(id_or_link, **kwargs):
     '''
