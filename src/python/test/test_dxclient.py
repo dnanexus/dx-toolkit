@@ -580,6 +580,31 @@ class TestDXRun(DXTestCase):
         for name, value in zip(property_names, property_values):
             self.assertEqual(job_desc['properties'][name], value)
 
+        # Test setting tags and properties afterwards
+        run("dx tag " + job_id + " foo bar foo")
+        run(u"dx set_properties " + job_id + u" foo=bar Σ_1^n=n")
+        job_desc_lines = run("dx describe " + job_id + " --delim ' '").splitlines()
+        found_tags = False
+        found_properties = False
+        for line in job_desc_lines:
+            if line.startswith('Tags'):
+                self.assertIn("foo", line)
+                self.assertIn("bar", line)
+                found_tags = True
+            if line.startswith('Properties'):
+                self.assertIn("foo=bar", line)
+                self.assertIn(u"Σ_1^n=n", line)
+                found_properties = True
+        self.assertTrue(found_tags)
+        self.assertTrue(found_properties)
+        run("dx untag " + job_id + " foo")
+        run(u"dx unset_properties " + job_id + u" Σ_1^n")
+        job_desc = json.loads(run("dx describe " + job_id + " --json"))
+        self.assertIn("bar", job_desc['tags'])
+        self.assertNotIn("foo", job_desc['tags'])
+        self.assertEqual(job_desc["properties"]["foo"], "bar")
+        self.assertNotIn(u"Σ_1^n", job_desc["properties"])
+
     def test_dx_run_extra_args(self):
         # success
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -749,6 +774,29 @@ class TestDXClientWorkflow(DXTestCase):
         time.sleep(2) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
+
+        # Test setting tags and properties on analysis
+        run("dx tag " + analysis_id + " foo bar foo")
+        run(u"dx set_properties " + analysis_id + u" foo=bar Σ_1^n=n")
+        analysis_desc_lines = run("dx describe " + analysis_id).splitlines()
+        found_tags = False
+        found_properties = False
+        for line in analysis_desc_lines:
+            if line.startswith('Tags'):
+                self.assertIn("foo", line)
+                self.assertIn("bar", line)
+                found_tags = True
+            if line.startswith('Properties'):
+                self.assertIn("foo=bar", line)
+                self.assertIn(u"Σ_1^n=n", line)
+                found_properties = True
+        self.assertTrue(found_tags)
+        self.assertTrue(found_properties)
+        run("dx untag " + analysis_id + " foo")
+        run(u"dx unset_properties " + analysis_id + u" Σ_1^n")
+        analysis_desc = run("dx describe " + analysis_id + " --delim ' '")
+        self.assertIn("Tags bar\n", analysis_desc)
+        self.assertIn("Properties foo=bar\n", analysis_desc)
 
     def test_dx_new_workflow(self):
         workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --brief").strip()

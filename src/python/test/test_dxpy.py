@@ -940,7 +940,7 @@ class TestDXAppletJob(unittest.TestCase):
     def tearDown(self):
         tearDownTempProjects(self)
 
-    def test_run_dxapplet(self):
+    def test_run_dxapplet_and_job_metadata(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
                      dxapi="1.04",
@@ -980,6 +980,20 @@ def main():
         self.assertEqual(len(jobdesc["properties"]), 1)
         self.assertEqual(jobdesc["properties"]["$dnanexus_link.foo"], "barbaz")
 
+        # Test setting tags and properties on job
+        dxjob.add_tags(["foo", "bar", "foo"])
+        dxjob.set_properties({"foo": "bar", "$dnanexus.link": "thing"})
+        jobdesc = dxjob.describe()
+        self.assertEqual(sorted(jobdesc["tags"]), sorted(["foo", "bar", "$foo.bar"]))
+        self.assertEqual(jobdesc["properties"], {"foo": "bar",
+                                                 "$dnanexus.link": "thing",
+                                                 "$dnanexus_link.foo": "barbaz"})
+        dxjob.remove_tags(["bar", "baz"])
+        dxjob.set_properties({"$dnanexus.link": None})
+        jobdesc = dxjob.describe()
+        self.assertEqual(sorted(jobdesc["tags"]), sorted(["foo", "$foo.bar"]))
+        self.assertEqual(jobdesc["properties"], {"foo": "bar", "$dnanexus_link.foo": "barbaz"})
+
         # Test with fields parameter
         smaller_jobdesc = dxjob.describe(fields={"id": True, "state": True, "parentJob": True})
         self.assertEqual(len(smaller_jobdesc), 3)
@@ -1003,7 +1017,7 @@ class TestDXAnalysisWorkflow(unittest.TestCase):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
-    def test_run_workflow(self):
+    def test_run_workflow_and_analysis_metadata(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
@@ -1026,6 +1040,18 @@ def main(number):
         self.assertEqual(analysis_desc['input'].get(stage_id + '.number'), 32)
         dxjob = dxpy.DXJob(analysis_desc['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['input'].get("number"), 32)
+
+        # Test setting tags and properties on analysis
+        dxanalysis.add_tags(["foo", "bar", "foo"])
+        dxanalysis.set_properties({"foo": "bar", "$dnanexus.link": "thing"})
+        analysis_desc = dxanalysis.describe()
+        self.assertEqual(sorted(analysis_desc["tags"]), sorted(["foo", "bar"]))
+        self.assertEqual(analysis_desc["properties"], {"foo": "bar", "$dnanexus.link": "thing"})
+        dxanalysis.remove_tags(["bar", "baz"])
+        dxanalysis.set_properties({"$dnanexus.link": None})
+        analysis_desc = dxanalysis.describe()
+        self.assertEqual(analysis_desc["tags"], ["foo"])
+        self.assertEqual(analysis_desc["properties"], {"foo": "bar"})
 
     def test_new_dxworkflow(self):
         dxworkflow = dxpy.new_dxworkflow(title='mytitle', summary='mysummary', description='mydescription')

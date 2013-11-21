@@ -79,6 +79,48 @@ class DXAnalysis(DXObject):
         self._desc = dxpy.api.analysis_describe(self._dxid, {}, **kwargs)
         return self._desc
 
+
+    def add_tags(self, tags, **kwargs):
+        """
+        :param tags: Tags to add to the analysis
+        :type tags: list of strings
+
+        Adds each of the specified tags to the analysis. Takes no
+        action for tags that are already listed for the analysis.
+
+        """
+
+        dxpy.api.analysis_add_tags(self._dxid, {"tags": tags}, **kwargs)
+
+    def remove_tags(self, tags, **kwargs):
+        """
+        :param tags: Tags to remove from the analysis
+        :type tags: list of strings
+
+        Removes each of the specified tags from the analysis. Takes
+        no action for tags that the analysis does not currently have.
+
+        """
+
+        dxpy.api.analysis_remove_tags(self._dxid, {"tags": tags}, **kwargs)
+
+    def set_properties(self, properties, **kwargs):
+        """
+        :param properties: Property names and values given as key-value pairs of strings
+        :type properties: dict
+
+        Given key-value pairs in *properties* for property names and
+        values, the properties are set on the analysis for the given
+        property names. Any property with a value of :const:`None`
+        indicates the property will be deleted.
+
+        .. note:: Any existing properties not mentioned in *properties*
+           are not modified by this method.
+
+        """
+
+        dxpy.api.analysis_set_properties(self._dxid, {"properties": properties}, **kwargs)
+
     def wait_on_done(self, interval=2, timeout=sys.maxint, **kwargs):
         '''
         :param interval: Number of seconds between queries to the analysis's state
@@ -97,12 +139,12 @@ class DXAnalysis(DXObject):
                 break
             if state in ["failed", "partially_failed"]:
                 desc = self.describe(**kwargs)
-                err_msg = "Job has failed because of {failureReason}: {failureMessage}".format(**desc)
+                err_msg = "Analysis has failed because of {failureReason}: {failureMessage}".format(**desc)
                 if desc.get("failureFrom") != None and desc["failureFrom"]["id"] != desc["id"]:
                     err_msg += " (failure from {id})".format(id=desc['failureFrom']['id'])
                 raise DXJobFailureError(err_msg)
             if state == "terminated":
-                raise DXJobFailureError("Job was terminated.")
+                raise DXJobFailureError("Analysis was terminated.")
 
             if elapsed >= timeout or elapsed < 0:
                 raise DXJobFailureError("Reached timeout while waiting for the analysis to finish")
