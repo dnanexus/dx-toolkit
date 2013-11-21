@@ -641,6 +641,10 @@ def invite(args):
     print 'Invited ' + args.invitee + ' to ' + project + ' (' + resp['state'] + ')'
 
 def uninvite(args):
+    # If --project is a valid project (ID or name), then appending ":"
+    # should not hurt the path resolution.
+    if ':' not in args.project:
+        args.project += ':'
     project, none, none = try_call(resolve_existing_path,
                                    args.project, 'project')
     if args.entity != 'PUBLIC' and not '-' in args.entity:
