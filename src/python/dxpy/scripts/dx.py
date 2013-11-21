@@ -1824,12 +1824,15 @@ def download(args):
         elif not isinstance(matching_files, list):
             matching_files = [matching_files]
 
-        abs_path, strip_prefix = rel2abs(path, project)
+        matching_folders = []
+        if project is not None:
+            # project may be none if path is an ID and there is no project context
+            abs_path, strip_prefix = rel2abs(path, project)
 
-        parent_folder = os.path.dirname(abs_path)
-        #folder_listing = dxpy.get_handler(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
-        folder_listing = list_subfolders(project, parent_folder, recurse=False)
-        matching_folders = pathmatch.filter(folder_listing, abs_path)
+            parent_folder = os.path.dirname(abs_path)
+            #folder_listing = dxpy.get_handler(project).list_folder(folder=parent_folder, only='folders')['folders'] # includeHidden=
+            folder_listing = list_subfolders(project, parent_folder, recurse=False)
+            matching_folders = pathmatch.filter(folder_listing, abs_path)
 
         if len(matching_files) == 0 and len(matching_folders) == 0:
             err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))

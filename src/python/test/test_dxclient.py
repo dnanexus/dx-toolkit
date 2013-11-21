@@ -422,61 +422,6 @@ class TestDXClient(DXTestCase):
         self.assertEqual(desc['size'], second_desc['size'])
         self.assertEqual(desc['length'], second_desc['length'])
 
-    def test_dx_upload_download(self):
-        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=3):
-            run('dx download ""')
-        wd = tempfile.mkdtemp()
-        os.mkdir(os.path.join(wd, "a"))
-        os.mkdir(os.path.join(wd, "a", u"б"))
-        os.mkdir(os.path.join(wd, "a", u"б", "c"))
-        with tempfile.NamedTemporaryFile(dir=os.path.join(wd, "a", u"б")) as fd:
-            fd.write("0123456789ABCDEF"*64)
-            fd.flush()
-            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
-                run(u'dx upload '+wd)
-            run(u'dx upload -r '+wd)
-            run(u'dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name))))
-            with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
-                run(u'dx download '+os.path.basename(wd))
-            old_dir = os.getcwd()
-            with chdir(tempfile.mkdtemp()):
-                run(u'dx download -r '+os.path.basename(wd))
-
-                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
-                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
-                self.assertEqual(tree1, tree2)
-
-            with chdir(tempfile.mkdtemp()):
-                os.mkdir('t')
-                run(u'dx download -r -o t '+os.path.basename(wd))
-                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
-                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))),
-                                                shell=True)
-                self.assertEqual(tree1, tree2)
-
-                os.mkdir('t2')
-                run(u'dx download -o t2 '+os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name)))
-                self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
-                                 len("0123456789ABCDEF"*64))
-
-    def test_dx_upload_mult_paths(self):
-        testdir = tempfile.mkdtemp()
-        os.mkdir(os.path.join(testdir, 'a'))
-        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
-            fd.write("root-file")
-            fd.flush()
-            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
-                fd2.write("a-file")
-                fd2.flush()
-
-                run(u'dx upload -r {testdir}/{rootfile} {testdir}/a --wait'.format(testdir=testdir,
-                                                                                   rootfile=os.path.basename(fd.name)))
-                listing = run(u'dx ls').split('\n')
-                self.assertIn("a/", listing)
-                self.assertIn(os.path.basename(fd.name), listing)
-                listing = run(u'dx ls a').split('\n')
-                self.assertIn(os.path.basename(fd2.name), listing)
-
     def test_dx_mkdir(self):
         with self.assertRaises(subprocess.CalledProcessError):
             run(u'dx mkdir mkdirtest/b/c')
@@ -525,7 +470,84 @@ class TestDXClient(DXTestCase):
             print str(shell1.buffer)
             print "*** End test_dxpy_session_isolation debug data"
 
-class TestDXDescribe(DXTestCase):
+class TestDXClientUploadDownload(DXTestCase):
+    def test_dx_upload_download(self):
+        with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string', exit_code=3):
+            run('dx download ""')
+        wd = tempfile.mkdtemp()
+        os.mkdir(os.path.join(wd, "a"))
+        os.mkdir(os.path.join(wd, "a", u"б"))
+        os.mkdir(os.path.join(wd, "a", u"б", "c"))
+        with tempfile.NamedTemporaryFile(dir=os.path.join(wd, "a", u"б")) as fd:
+            fd.write("0123456789ABCDEF"*64)
+            fd.flush()
+            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=1):
+                run(u'dx upload '+wd)
+            run(u'dx upload -r '+wd)
+            run(u'dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name))))
+            with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
+                run(u'dx download '+os.path.basename(wd))
+            old_dir = os.getcwd()
+            with chdir(tempfile.mkdtemp()):
+                run(u'dx download -r '+os.path.basename(wd))
+
+                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
+                self.assertEqual(tree1, tree2)
+
+            with chdir(tempfile.mkdtemp()):
+                os.mkdir('t')
+                run(u'dx download -r -o t '+os.path.basename(wd))
+                tree1 = subprocess.check_output("cd {wd}; find .".format(wd=wd), shell=True)
+                tree2 = subprocess.check_output("cd {wd}; find .".format(wd=os.path.join("t", os.path.basename(wd))),
+                                                shell=True)
+                self.assertEqual(tree1, tree2)
+
+                os.mkdir('t2')
+                run(u'dx download -o t2 '+os.path.join(os.path.basename(wd), "a", u"б", os.path.basename(fd.name)))
+                self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
+                                 len("0123456789ABCDEF"*64))
+
+    @unittest.skipUnless(testutil.TEST_ENV,
+                         'skipping test that would clobber your local environment')
+    def test_dx_download_no_env(self):
+        testdir = tempfile.mkdtemp()
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("foo")
+            fd.flush()
+            file_id = run(u'dx upload ' + fd.name + ' --brief').strip()
+            self.assertTrue(file_id.startswith('file-'))
+
+            # unset environment
+            from dxpy.utils.env import write_env_var
+            write_env_var('DX_PROJECT_CONTEXT_ID', None)
+            del os.environ['DX_PROJECT_CONTEXT_ID']
+            self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
+
+            # download file
+            output_path = os.path.join(testdir, 'output')
+            run('dx download ' + file_id + ' -o ' + output_path)
+            run('cmp ' + output_path + ' ' + fd.name)
+
+    def test_dx_upload_mult_paths(self):
+        testdir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(testdir, 'a'))
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("root-file")
+            fd.flush()
+            with tempfile.NamedTemporaryFile(dir=os.path.join(testdir, "a")) as fd2:
+                fd2.write("a-file")
+                fd2.flush()
+
+                run(u'dx upload -r {testdir}/{rootfile} {testdir}/a --wait'.format(testdir=testdir,
+                                                                                   rootfile=os.path.basename(fd.name)))
+                listing = run(u'dx ls').split('\n')
+                self.assertIn("a/", listing)
+                self.assertIn(os.path.basename(fd.name), listing)
+                listing = run(u'dx ls a').split('\n')
+                self.assertIn(os.path.basename(fd2.name), listing)
+
+class TestDXClientDescribe(DXTestCase):
     def test_projects(self):
         run("dx describe :")
         run("dx describe " + self.project)
@@ -551,7 +573,7 @@ class TestDXDescribe(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping tests that would run jobs')
-class TestDXRun(DXTestCase):
+class TestDXClientRun(DXTestCase):
     def setUp(self):
         self.other_proj_id = run("dx new project other --brief").strip()
         super(TestDXRun, self).setUp()
