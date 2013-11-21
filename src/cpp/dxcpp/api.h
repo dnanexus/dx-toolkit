@@ -23,8 +23,17 @@
 
 namespace dx {
 
+  JSON analysisAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON analysisAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
   JSON analysisDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON analysisDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON analysisRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON analysisRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON analysisSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON analysisSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON analysisTerminate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON analysisTerminate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
@@ -277,11 +286,20 @@ namespace dx {
   JSON gtableNew(const std::string &input_params="{}", const bool retry=false);
   JSON gtableNew(const dx::JSON &input_params, const bool retry=false);
 
+  JSON jobAddTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON jobAddTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
   JSON jobDescribe(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON jobDescribe(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON jobGetLog(const std::string &object_id, const std::string &input_params="{}", const bool retry=false);
   JSON jobGetLog(const std::string &object_id, const dx::JSON &input_params, const bool retry=false);
+
+  JSON jobRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON jobRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
+
+  JSON jobSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
+  JSON jobSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);
 
   JSON jobTerminate(const std::string &object_id, const std::string &input_params="{}", const bool retry=true);
   JSON jobTerminate(const std::string &object_id, const dx::JSON &input_params, const bool retry=true);

@@ -24,6 +24,87 @@ public final class DXAPI {
 
 
     /**
+     * Invokes the analysisAddTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisAddTags(String objectId) {
+        return analysisAddTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the analysisAddTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisAddTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+    }
+    /**
+     * Invokes the analysisAddTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisAddTags(String objectId, DXEnvironment env) {
+        return analysisAddTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the analysisAddTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+    }
+
+    /**
      * Invokes the analysisDescribe method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe">API specification</a>.
@@ -102,6 +183,168 @@ public final class DXAPI {
      */
     public static JsonNode analysisDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams);
+    }
+
+    /**
+     * Invokes the analysisRemoveTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisRemoveTags(String objectId) {
+        return analysisRemoveTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the analysisRemoveTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisRemoveTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+    }
+    /**
+     * Invokes the analysisRemoveTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisRemoveTags(String objectId, DXEnvironment env) {
+        return analysisRemoveTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the analysisRemoveTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+    }
+
+    /**
+     * Invokes the analysisSetProperties method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisSetProperties(String objectId) {
+        return analysisSetProperties(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the analysisSetProperties method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisSetProperties(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+    }
+    /**
+     * Invokes the analysisSetProperties method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisSetProperties(String objectId, DXEnvironment env) {
+        return analysisSetProperties(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the analysisSetProperties method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode analysisSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
     /**
@@ -5828,6 +6071,87 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the jobAddTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobAddTags(String objectId) {
+        return jobAddTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the jobAddTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobAddTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "addTags", inputParams);
+    }
+    /**
+     * Invokes the jobAddTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobAddTags(String objectId, DXEnvironment env) {
+        return jobAddTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the jobAddTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobAddTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "addTags", inputParams);
+    }
+
+    /**
      * Invokes the jobDescribe method.
      *
      * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe">API specification</a>.
@@ -5987,6 +6311,168 @@ public final class DXAPI {
      */
     public static JsonNode jobGetLog(String objectId, JsonNode inputParams, DXEnvironment env) {
         return new DXHTTPRequest(env).request("/" + objectId + "/" + "getLog", inputParams);
+    }
+
+    /**
+     * Invokes the jobRemoveTags method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobRemoveTags(String objectId) {
+        return jobRemoveTags(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the jobRemoveTags method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobRemoveTags(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "removeTags", inputParams);
+    }
+    /**
+     * Invokes the jobRemoveTags method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobRemoveTags(String objectId, DXEnvironment env) {
+        return jobRemoveTags(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the jobRemoveTags method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobRemoveTags(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "removeTags", inputParams);
+    }
+
+    /**
+     * Invokes the jobSetProperties method.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobSetProperties(String objectId) {
+        return jobSetProperties(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the jobSetProperties method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobSetProperties(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "setProperties", inputParams);
+    }
+    /**
+     * Invokes the jobSetProperties method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobSetProperties(String objectId, DXEnvironment env) {
+        return jobSetProperties(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the jobSetProperties method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static JsonNode jobSetProperties(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "setProperties", inputParams);
     }
 
     /**

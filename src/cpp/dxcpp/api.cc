@@ -6,12 +6,36 @@
 #include "api.h"
 namespace dx {
 
+  JSON analysisAddTags(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, retry);
+  }
+
+  JSON analysisAddTags(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return analysisAddTags(object_id, input_params.toString(), retry);
+  }
+
   JSON analysisDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
   }
 
   JSON analysisDescribe(const std::string &object_id, const JSON &input_params, const bool retry) {
     return analysisDescribe(object_id, input_params.toString(), retry);
+  }
+
+  JSON analysisRemoveTags(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params, retry);
+  }
+
+  JSON analysisRemoveTags(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return analysisRemoveTags(object_id, input_params.toString(), retry);
+  }
+
+  JSON analysisSetProperties(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params, retry);
+  }
+
+  JSON analysisSetProperties(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return analysisSetProperties(object_id, input_params.toString(), retry);
   }
 
   JSON analysisTerminate(const std::string &object_id, const std::string &input_params, const bool retry) {
@@ -734,6 +758,14 @@ namespace dx {
     return gtableNew(input_params.toString(), retry);
   }
 
+  JSON jobAddTags(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, retry);
+  }
+
+  JSON jobAddTags(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return jobAddTags(object_id, input_params.toString(), retry);
+  }
+
   JSON jobDescribe(const std::string &object_id, const std::string &input_params, const bool retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, retry);
   }
@@ -748,6 +780,22 @@ namespace dx {
 
   JSON jobGetLog(const std::string &object_id, const JSON &input_params, const bool retry) {
     return jobGetLog(object_id, input_params.toString(), retry);
+  }
+
+  JSON jobRemoveTags(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params, retry);
+  }
+
+  JSON jobRemoveTags(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return jobRemoveTags(object_id, input_params.toString(), retry);
+  }
+
+  JSON jobSetProperties(const std::string &object_id, const std::string &input_params, const bool retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params, retry);
+  }
+
+  JSON jobSetProperties(const std::string &object_id, const JSON &input_params, const bool retry) {
+    return jobSetProperties(object_id, input_params.toString(), retry);
   }
 
   JSON jobTerminate(const std::string &object_id, const std::string &input_params, const bool retry) {

@@ -7,6 +7,24 @@ import sys
 
 from dxpy import DXHTTPRequest
 
+def analysisAddTags(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`analysis_add_tags()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.analysisAddTags is deprecated; please use analysis_add_tags instead."
+    return analysis_add_tags(*args, **kwargs)
+
+def analysis_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /analysis-xxxx/addTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags
+    """
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def analysisDescribe(*args, **kwargs):
     """
 
@@ -24,6 +42,42 @@ def analysis_describe(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def analysisRemoveTags(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`analysis_remove_tags()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.analysisRemoveTags is deprecated; please use analysis_remove_tags instead."
+    return analysis_remove_tags(*args, **kwargs)
+
+def analysis_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /analysis-xxxx/removeTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags
+    """
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def analysisSetProperties(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`analysis_set_properties()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.analysisSetProperties is deprecated; please use analysis_set_properties instead."
+    return analysis_set_properties(*args, **kwargs)
+
+def analysis_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /analysis-xxxx/setProperties API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties
+    """
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def analysisTerminate(*args, **kwargs):
     """
@@ -1320,6 +1374,24 @@ def gtable_new(input_params={}, always_retry=False, **kwargs):
     """
     return DXHTTPRequest('/gtable/new', input_params, always_retry=always_retry, **kwargs)
 
+def jobAddTags(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`job_add_tags()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.jobAddTags is deprecated; please use job_add_tags instead."
+    return job_add_tags(*args, **kwargs)
+
+def job_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /job-xxxx/addTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags
+    """
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def jobDescribe(*args, **kwargs):
     """
 
@@ -1355,6 +1427,42 @@ def job_get_log(object_id, input_params={}, always_retry=False, **kwargs):
     For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog
     """
     return DXHTTPRequest('/%s/getLog' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def jobRemoveTags(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`job_remove_tags()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.jobRemoveTags is deprecated; please use job_remove_tags instead."
+    return job_remove_tags(*args, **kwargs)
+
+def job_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /job-xxxx/removeTags API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags
+    """
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def jobSetProperties(*args, **kwargs):
+    """
+
+    .. deprecated:: 0.42.0
+       Use :func:`job_set_properties()` instead.
+
+    """
+    print >> sys.stderr, "dxpy.jobSetProperties is deprecated; please use job_set_properties instead."
+    return job_set_properties(*args, **kwargs)
+
+def job_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /job-xxxx/setProperties API method.
+
+    For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties
+    """
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def jobTerminate(*args, **kwargs):
     """

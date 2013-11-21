@@ -1,11 +1,38 @@
 [
     [
+        "/analysis-xxxx/addTags",
+        "analysisAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags"
+        }
+    ],
+    [
         "/analysis-xxxx/describe",
         "analysisDescribe(req, objectId)",
         {
             "objectMethod": true,
             "retryable": true,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe"
+        }
+    ],
+    [
+        "/analysis-xxxx/removeTags",
+        "analysisRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags"
+        }
+    ],
+    [
+        "/analysis-xxxx/setProperties",
+        "analysisSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties"
         }
     ],
     [
@@ -648,6 +675,15 @@
         }
     ],
     [
+        "/job-xxxx/addTags",
+        "jobAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags"
+        }
+    ],
+    [
         "/job-xxxx/describe",
         "jobDescribe(req, objectId)",
         {
@@ -663,6 +699,24 @@
             "objectMethod": true,
             "retryable": false,
             "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FgetLog"
+        }
+    ],
+    [
+        "/job-xxxx/removeTags",
+        "jobRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags"
+        }
+    ],
+    [
+        "/job-xxxx/setProperties",
+        "jobSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties"
         }
     ],
     [

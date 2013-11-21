@@ -7,12 +7,36 @@ require 'dxruby'
 
 module DX
   module API
+    # Invokes the /analysis-xxxx/addTags API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FaddTags
+    def self.analysis_add_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addTags", input_params, opts)
+    end
+
     # Invokes the /analysis-xxxx/describe API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2Fdescribe
     def self.analysis_describe(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/describe", input_params, opts)
+    end
+
+    # Invokes the /analysis-xxxx/removeTags API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FremoveTags
+    def self.analysis_remove_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeTags", input_params, opts)
+    end
+
+    # Invokes the /analysis-xxxx/setProperties API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Workflows-and-Analyses#API-method%3A-%2Fanalysis-xxxx%2FsetProperties
+    def self.analysis_set_properties(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setProperties", input_params, opts)
     end
 
     # Invokes the /analysis-xxxx/terminate API method.
@@ -600,6 +624,14 @@ module DX
       return DX::http_request("/gtable/new", input_params, opts)
     end
 
+    # Invokes the /job-xxxx/addTags API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FaddTags
+    def self.job_add_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addTags", input_params, opts)
+    end
+
     # Invokes the /job-xxxx/describe API method.
     #
     # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2Fdescribe
@@ -614,6 +646,22 @@ module DX
     def self.job_get_log(object_id, input_params={}, opts={})
       opts = { "always_retry" => false }.merge(opts)
       return DX::http_request("/#{object_id}/getLog", input_params, opts)
+    end
+
+    # Invokes the /job-xxxx/removeTags API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FremoveTags
+    def self.job_remove_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeTags", input_params, opts)
+    end
+
+    # Invokes the /job-xxxx/setProperties API method.
+    #
+    # For more info, see: https://wiki.dnanexus.com/API-Specification-v1.0.0/Applets and Entry Points#API-method%3A-%2Fjob-xxxx%2FsetProperties
+    def self.job_set_properties(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setProperties", input_params, opts)
     end
 
     # Invokes the /job-xxxx/terminate API method.

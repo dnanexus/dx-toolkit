@@ -10,10 +10,31 @@ use Exporter;
 use DNAnexus qw(DXHTTPRequest);
 
 
+sub analysisAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
 sub analysisDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub analysisRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub analysisSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
 }
 
 
@@ -628,6 +649,13 @@ sub gtableNew(;$%) {
 }
 
 
+sub jobAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
 sub jobDescribe($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -639,6 +667,20 @@ sub jobGetLog($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/getLog', $input_params, %kwargs);
+}
+
+
+sub jobRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub jobSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
 }
 
 
@@ -1126,5 +1168,5 @@ sub workflowNew(;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(analysisDescribe analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobDescribe jobGetLog jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindExecutions systemFindAnalyses systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
+our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew gtableAddRows gtableAddTags gtableAddTypes gtableClose gtableDescribe gtableGet gtableGetDetails gtableListProjects gtableNextPart gtableRemoveTags gtableRemoveTypes gtableRename gtableSetDetails gtableSetProperties gtableSetVisibility gtableNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobNew notificationsGet notificationsMarkRead projectAddTags projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectUpdate projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemFindAffiliates systemFindApps systemFindDataObjects systemFindExecutions systemFindAnalyses systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemGreet systemShortenURL userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowSetDetails workflowSetProperties workflowSetStageInputs workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
 

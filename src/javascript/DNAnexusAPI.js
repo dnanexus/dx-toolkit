@@ -6,8 +6,23 @@
 var dx = require('DNAnexus');
 
 
+exports.analysisAddTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
+};
+
+
 exports.analysisDescribe = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
+};
+
+
+exports.analysisRemoveTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeTags', input_params);
+};
+
+
+exports.analysisSetProperties = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
 };
 
 
@@ -442,6 +457,11 @@ exports.gtableNew = function(input_params) {
 };
 
 
+exports.jobAddTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/addTags', input_params);
+};
+
+
 exports.jobDescribe = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/describe', input_params);
 };
@@ -449,6 +469,16 @@ exports.jobDescribe = function(object_id, input_params) {
 
 exports.jobGetLog = function(object_id, input_params) {
   return dx.DXHTTPRequest('/' + object_id + '/getLog', input_params);
+};
+
+
+exports.jobRemoveTags = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/removeTags', input_params);
+};
+
+
+exports.jobSetProperties = function(object_id, input_params) {
+  return dx.DXHTTPRequest('/' + object_id + '/setProperties', input_params);
 };
 
 
