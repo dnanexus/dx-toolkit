@@ -358,164 +358,6 @@ class TestDXClient(DXTestCase):
                                   describe_output))
         self.assertIn('Properties', describe_output)
 
-    def test_dx_find_data_by_tag(self):
-        record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
-                      run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
-
-        found_records = run(u"dx find data --tag baz --brief").strip()
-        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
-
-        found_records = run(u"dx find data --tag Ψ --tag foo --tag foobar --brief").strip()
-        self.assertEqual(found_records, '')
-
-        found_records = run(u"dx find data --tag foo --tag Ψ --brief").strip().split("\n")
-        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
-        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
-
-    def test_dx_find_data_by_property(self):
-        record_ids = [run("dx new record --brief --property Ψ=world --property foo=bar --property bar=").strip(),
-                      run("dx new record --brief --property Ψ=notworld --property foo=bar").strip()]
-
-        found_records = run(u"dx find data --property Ψ=world --property foo=bar --brief").strip()
-        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
-
-        # presence
-        found_records = run(u"dx find data --property Ψ --brief").strip().split("\n")
-        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
-        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
-
-        found_records = run(u"dx find data --property Ψ --property foo=baz --brief").strip()
-        self.assertEqual(found_records, '')
-
-        found_records = run("dx find data --property Ψ --property foo=bar --brief").strip().split("\n")
-        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[0], found_records)
-        self.assertIn(dxpy.WORKSPACE_ID + ':' + record_ids[1], found_records)
-
-        # Empty string values should be okay
-        found_records = run("dx find data --property bar= --brief").strip()
-        self.assertEqual(found_records, dxpy.WORKSPACE_ID + ':' + record_ids[0])
-
-        # Errors parsing --property value
-        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
-            run("dx find data --property ''")
-        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
-            run("dx find data --property foo=bar=baz")
-        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
-            run("dx find data --property =foo=bar=")
-        # Property keys must be nonempty
-        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
-            run("dx find data --property =bar")
-
-    def test_dx_find_projects_by_tag(self):
-        other_project_id = run("dx new project other --brief").strip()
-        try:
-            run(u"dx tag : Ψ world")
-            proj_desc = dxpy.describe(dxpy.WORKSPACE_ID)
-            self.assertEqual(len(proj_desc["tags"]), 2)
-            self.assertIn(u"Ψ", proj_desc["tags"])
-            self.assertIn("world", proj_desc["tags"])
-
-            found_projects = run(u"dx find projects --tag Ψ --tag world --brief").strip().split('\n')
-            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertNotIn(other_project_id, found_projects)
-
-            found_projects = run(u"dx find projects --tag Ψ --tag world --tag foobar --brief").strip().split('\n')
-            self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertNotIn(other_project_id, found_projects)
-
-            run(u"dx tag " + other_project_id + u" Ψ world foobar")
-            found_projects = run("dx find projects --tag world --tag Ψ --brief").strip().split("\n")
-            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertIn(other_project_id, found_projects)
-        except:
-            raise
-        finally:
-            run("dx rmproject -y " + other_project_id)
-
-    def test_dx_find_projects_by_property(self):
-        other_project_id = run("dx new project other --brief").strip()
-        try:
-            run(u"dx set_properties : Ψ=world foo=bar bar=")
-            proj_desc = dxpy.api.project_describe(dxpy.WORKSPACE_ID, {"properties": True})
-            self.assertEqual(len(proj_desc["properties"]), 3)
-            self.assertEqual(proj_desc["properties"][u"Ψ"], "world")
-            self.assertEqual(proj_desc["properties"]["foo"], "bar")
-            self.assertEqual(proj_desc["properties"]["bar"], "")
-
-            run(u"dx set_properties " + other_project_id + u" Ψ=notworld foo=bar")
-
-            found_projects = run(u"dx find projects --property Ψ=world --property foo=bar --brief").strip().split("\n")
-            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertNotIn(other_project_id, found_projects)
-
-            found_projects = run(u"dx find projects --property bar= --brief").strip().split('\n')
-            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertNotIn(other_project_id, found_projects)
-
-            # presence
-            found_projects = run(u"dx find projects --property Ψ --brief").strip().split("\n")
-            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertIn(other_project_id, found_projects)
-
-            found_projects = run(u"dx find projects --property Ψ --property foo=baz --brief").strip().split("\n")
-            self.assertNotIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertNotIn(other_project_id, found_projects)
-
-            found_projects = run("dx find projects --property Ψ --property foo=bar --brief").strip().split("\n")
-            self.assertIn(dxpy.WORKSPACE_ID, found_projects)
-            self.assertIn(other_project_id, found_projects)
-        except:
-            raise
-        finally:
-            run("dx rmproject -y " + other_project_id)
-
-        # Errors parsing --property value
-        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
-            run("dx find projects --property ''")
-        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
-            run("dx find projects --property foo=bar=baz")
-        with self.assertSubprocessFailure(stderr_regexp='property_key', exit_code=3):
-            run("dx find projects --property =foo=bar=")
-        # Property keys must be nonempty
-        with self.assertSubprocessFailure(stderr_regexp='nonempty strings', exit_code=3):
-            run("dx find projects --property =bar")
-        # Empty string values should be okay
-        run("dx find projects --property bar=")
-
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
-    def test_dx_find_jobs_by_tags_and_properties(self):
-        applet_id = dxpy.api.applet_new({"project": self.project,
-                                         "dxapi": "1.0.0",
-                                         "runSpec": {"interpreter": "bash",
-                                                     "code": "echo 'hello'"}
-                                         })['id']
-        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
-        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
-        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
-        job_id = run(u"dx run " + applet_id + ' -inumber=32 --brief -y ' + \
-                     u" ".join([u"--property '" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]) + \
-                     u"".join([u" --tag " + tag for tag in the_tags])).strip()
-
-        # matches
-        self.assertEqual(run(u"dx find jobs --brief --tag " + the_tags[0]).strip(), job_id)
-        self.assertEqual(run(u"dx find jobs --brief" + u"".join([u" --tag " + tag for tag in the_tags])).strip(),
-                         job_id)
-        self.assertEqual(run(u"dx find jobs --brief --property " + property_names[1]).strip(), job_id)
-        self.assertEqual(run(u"dx find jobs --brief --property '" + \
-                             property_names[1] + u"'='" + property_values[1] + "'").strip(),
-                         job_id)
-        self.assertEqual(run(u"dx find jobs --brief" + \
-                             u"".join([u" --property '" + key + u"'='" + value + u"'" for
-                                       key, value in zip(property_names, property_values)])).strip(),
-                         job_id)
-
-        # no matches
-        self.assertEqual(run(u"dx find jobs --brief --tag foo").strip(), "")
-        self.assertEqual(run(u"dx find jobs --brief --property foo").strip(), "")
-        self.assertEqual(run(u"dx find jobs --brief --property '" + \
-                             property_names[1] + u"'=badvalue").strip(), "")
-
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
@@ -955,7 +797,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(len(desc['stages']), len(stage_ids))
         for i, stage_id in enumerate(stage_ids):
             self.assertEqual(desc['stages'][i]['id'], stage_id)
-        self.assertEqual(desc['stages'][0]['folder'], '/')
+        self.assertEqual(desc['stages'][0]['folder'], None)
         self.assertEqual(desc['stages'][1]['folder'], '/output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
@@ -975,7 +817,7 @@ class TestDXClientWorkflow(DXTestCase):
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(len(desc['stages']), 2)
         self.assertEqual(desc['stages'][0]['id'], stage_ids[0])
-        self.assertEqual(desc['stages'][0]['folder'], '/')
+        self.assertEqual(desc['stages'][0]['folder'], None)
         self.assertEqual(desc['stages'][1]['id'], stage_ids[2])
         self.assertEqual(desc['stages'][1]['folder'], '/a/b/c')
 
@@ -1060,7 +902,7 @@ class TestDXClientWorkflow(DXTestCase):
 
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertIsNone(desc["stages"][0]["name"])
-        self.assertEqual(desc["stages"][0]["folder"], "/")
+        self.assertEqual(desc["stages"][0]["folder"], None)
         self.assertEqual(desc["stages"][0]["input"], {})
 
         # set the name, folder, and some input
@@ -1101,6 +943,7 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage /myworkflow stage-123456789012345678901234 --name foo")
 
 class TestDXClientFind(DXTestCase):
+
     def test_dx_find_data_by_tag(self):
         record_ids = [run("dx new record --brief --tag Ψ --tag foo --tag baz").strip(),
                       run("dx new record --brief --tag Ψ --tag foo --tag bar").strip()]
@@ -1226,6 +1069,40 @@ class TestDXClientFind(DXTestCase):
         run("dx find projects --property bar=")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_find_jobs_by_tags_and_properties(self):
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+        property_names = [u"$my.prop", u"secoиdprop", u"тhird prop"]
+        property_values = [u"$hello.world", u"Σ2,n", u"stuff"]
+        the_tags = [u"Σ1=n", u"helloo0", u"ωω"]
+        job_id = run(u"dx run " + applet_id + ' -inumber=32 --brief -y ' + \
+                     u" ".join([u"--property '" + prop[0] + u"'='" + prop[1] + u"'" for prop in zip(property_names, property_values)]) + \
+                     u"".join([u" --tag " + tag for tag in the_tags])).strip()
+
+        # matches
+        self.assertEqual(run(u"dx find jobs --brief --tag " + the_tags[0]).strip(), job_id)
+        self.assertEqual(run(u"dx find jobs --brief" + u"".join([u" --tag " + tag for tag in the_tags])).strip(),
+                         job_id)
+        self.assertEqual(run(u"dx find jobs --brief --property " + property_names[1]).strip(), job_id)
+        self.assertEqual(run(u"dx find jobs --brief --property '" + \
+                             property_names[1] + u"'='" + property_values[1] + "'").strip(),
+                         job_id)
+        self.assertEqual(run(u"dx find jobs --brief" + \
+                             u"".join([u" --property '" + key + u"'='" + value + u"'" for
+                                       key, value in zip(property_names, property_values)])).strip(),
+                         job_id)
+
+        # no matches
+        self.assertEqual(run(u"dx find jobs --brief --tag foo").strip(), "")
+        self.assertEqual(run(u"dx find jobs --brief --property foo").strip(), "")
+        self.assertEqual(run(u"dx find jobs --brief --property '" + \
+                             property_names[1] + u"'=badvalue").strip(), "")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
     def test_find_executions(self):
         dxapplet = dxpy.DXApplet()
@@ -1244,9 +1121,13 @@ class TestDXClientFind(DXTestCase):
                       "rowFetchChunk": 100}
         dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
         stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
-        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200})
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200},
+                                    tags=["foo"],
+                                    properties={"foo": "bar"})
         dxapplet.run(applet_input=prog_input)
-        dxjob = dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input,
+                             tags=["foo", "bar"],
+                             properties={"foo": "baz"})
 
         run("dx cd {project_id}:/".format(project_id=dxapplet.get_proj_id()))
 
@@ -1299,6 +1180,33 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(len(run("dx find executions "+options2).splitlines()), 0)
         self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 0)
         self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
+
+        def assert_cmd_gives_ids(cmd, ids):
+            self.assertEqual(sorted(execid.strip() for execid in run(cmd).splitlines()),
+                             sorted(ids))
+
+        # Search by tag
+        options2 = options + " --all-jobs --brief"
+        options3 = options2 + " --tag foo"
+        analysis_id = dxanalysis.get_id()
+        job_id = dxjob.get_id()
+        assert_cmd_gives_ids("dx find executions "+options3, [analysis_id, job_id])
+        assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
+        assert_cmd_gives_ids("dx find analyses "+options3, [analysis_id])
+        options3 = options2 + " --tag foo --tag bar"
+        assert_cmd_gives_ids("dx find executions "+options3, [job_id])
+        assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
+        assert_cmd_gives_ids("dx find analyses "+options3, [])
+
+        # Search by property (presence and by value)
+        options3 = options2 + " --property foo"
+        assert_cmd_gives_ids("dx find executions "+options3, [analysis_id, job_id])
+        assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
+        assert_cmd_gives_ids("dx find analyses "+options3, [analysis_id])
+        options3 = options2 + " --property foo=baz"
+        assert_cmd_gives_ids("dx find executions "+options3, [job_id])
+        assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
+        assert_cmd_gives_ids("dx find analyses "+options3, [])
 
 @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                      'skipping HTTP Proxy support test that needs squid3')

@@ -154,7 +154,7 @@ from dxpy.cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, al
                               parser_dataobject_args, parser_single_dataobject_output_args,
                               process_properties_args,
                               find_by_properties_and_tags_args, process_find_by_property_args,
-                              process_dataobject_args, process_single_dataobject_output_args, find_executions_args,
+                              process_dataobject_args, process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                               set_env_from_args,
                               extra_args, process_extra_args, DXParserError,
                               exec_input_args)
@@ -2218,7 +2218,7 @@ def find_executions(args):
                     # and only the last analysis found is displayed.
                     roots[root] = job_result['describe']['id']
             elif args.brief:
-                print args.id
+                print job_result['id']
             elif not args.trees:
                 print format_tree({}, get_find_executions_string(job_result['describe'],
                                                                  has_children=False,
@@ -3623,7 +3623,7 @@ parser_add_stage.add_argument('workflow', help='Name or ID of a workflow').compl
 parser_add_stage.add_argument('executable', help='Name or ID of an executable to add as a stage in the workflow').completer = MultiCompleter([DXAppCompleter(),
                                                                                                                                               DXPathCompleter(classes=['applet'])])
 parser_add_stage.add_argument('--alias', '--version', '--tag', dest='alias',
-                        help='Tag or version of the app to add if the executable is an app (default: "default" if an app)')
+                              help='Tag or version of the app to add if the executable is an app (default: "default" if an app)')
 parser_add_stage.add_argument('--name', help='Stage name')
 parser_add_stage.add_argument('--folder', help='Output folder for the stage')
 parser_add_stage.set_defaults(func=workflow_cli.add_stage)
@@ -4053,7 +4053,9 @@ EXAMPLES
                                               parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
                                                        delim_arg, env_args, find_by_properties_and_tags_args],
                                               formatter_class=argparse.RawTextHelpFormatter,
+                                              conflict_handler='resolve',
                                               prog='dx find jobs')
+add_find_executions_search_gp(parser_find_jobs)
 parser_find_jobs.set_defaults(func=find_executions, classname='job')
 parser_find_jobs.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categories='exec')
@@ -4061,9 +4063,11 @@ register_subparser(parser_find_jobs, subparsers_action=subparsers_find, categori
 parser_find_analyses = subparsers_find.add_parser('analyses', help='List analyses in your project',
                                                   description=fill('Finds analyses with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
                                                   parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
-                                                           delim_arg, env_args],
+                                                           delim_arg, env_args, find_by_properties_and_tags_args],
                                                   formatter_class=argparse.RawTextHelpFormatter,
+                                                  conflict_handler='resolve',
                                                   prog='dx find analyses')
+add_find_executions_search_gp(parser_find_analyses)
 parser_find_analyses.set_defaults(func=find_executions, classname='analysis')
 parser_find_analyses.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_analyses, subparsers_action=subparsers_find, categories='exec')
@@ -4071,9 +4075,11 @@ register_subparser(parser_find_analyses, subparsers_action=subparsers_find, cate
 parser_find_executions = subparsers_find.add_parser('executions', help='List executions (jobs and analyses) in your project',
                                                     description=fill('Finds executions (jobs and analyses) with the given search parameters.  By default, output is formatted to show the last several job trees that you\'ve run in the current project.'),
                                                     parents=[find_executions_args, stdout_args, json_arg, no_color_arg,
-                                                             delim_arg, env_args],
+                                                             delim_arg, env_args, find_by_properties_and_tags_args],
                                                     formatter_class=argparse.RawTextHelpFormatter,
+                                                    conflict_handler='resolve',
                                                     prog='dx find executions')
+add_find_executions_search_gp(parser_find_executions)
 parser_find_executions.set_defaults(func=find_executions, classname=None)
 parser_find_executions.completer = DXPathCompleter(expected='project')
 register_subparser(parser_find_executions, subparsers_action=subparsers_find, categories='exec')

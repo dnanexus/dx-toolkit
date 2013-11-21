@@ -211,7 +211,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
                     state=None, origin_job=None, parent_job=None, parent_analysis=None, root_execution=None,
                     created_after=None, created_before=None, describe=False,
-                    name=None, name_mode="exact", tags=None, properties=None, limit=None, first_page_size=100, return_handler=False, include_subjobs=True,
+                    name=None, name_mode="exact", tags=None, properties=None, limit=None,
+                    first_page_size=100, return_handler=False, include_subjobs=True,
                     **kwargs):
     '''
     :param launched_by: User ID of the user who launched the execution's origin execution

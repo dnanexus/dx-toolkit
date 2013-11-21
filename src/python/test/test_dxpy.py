@@ -1422,55 +1422,13 @@ class TestDXSearch(unittest.TestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxjob = dxapplet.run(applet_input=prog_input, tags=["foo"], properties={"foo": "bar"})
-        results = list(dxpy.find_jobs(executable=dxapplet,
-                                      project=dxapplet.get_proj_id(),
-                                      origin_job=dxjob.get_id(),
-                                      parent_job='none',
-                                      tags=["foo"],
-                                      properties={"foo": True},
-                                      created_after='-15s',
-                                      describe=True))
-        self.assertEqual(len(results), 1)
-        result = results[0]
-        self.assertEqual(result["id"], dxjob.get_id())
-        self.assertTrue("describe" in result)
-        self.assertEqual(result["describe"]["id"], dxjob.get_id())
-        self.assertEqual(result["describe"]["class"], "job")
-        self.assertEqual(result["describe"]["applet"], dxapplet.get_id())
-        self.assertEqual(result["describe"]["project"], dxapplet.get_proj_id())
-        self.assertEqual(result["describe"]["originJob"], dxjob.get_id())
-        self.assertEqual(result["describe"]["parentJob"], None)
-        self.assertEqual(result["describe"]["tags"], ["foo"])
-        self.assertEqual(result["describe"]["properties"], {"foo": "bar"})
-
-        results = list(dxpy.find_jobs(tags=["bar"]))
-        self.assertEqual(len(results), 0)
-        results = list(dxpy.find_jobs(properties={"foo": "baz"}))
-        self.assertEqual(len(results), 0)
-
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run a job')
-    def test_find_executions(self):
-        dxapplet = dxpy.DXApplet()
-        dxapplet.new(name="test_applet",
-                     dxapi="1.0.0",
-                     inputSpec=[{"name": "chromosomes", "class": "record"},
-                                {"name": "rowFetchChunk", "class": "int"}
-                                ],
-                     outputSpec=[{"name": "mappings", "class": "record"}],
-                     runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "execDepends": [{"name": "python-numpy"}]})
-        dxrecord = dxpy.new_dxrecord()
-        dxrecord.close()
-        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
-                      "rowFetchChunk": 100}
         dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
         stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
-        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200})
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200},
+                                    tags=["foo"],
+                                    properties={"foo": "bar"})
         dxapplet.run(applet_input=prog_input)
-        dxjob = dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input, tags=["foo", "bar"], properties={"foo": "baz"})
 
         # Wait for job to be created
         executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
@@ -1501,14 +1459,20 @@ class TestDXSearch(unittest.TestCase):
                    {'conditions': {'name': '?est_apple*', 'name_mode': 'glob'}, 'n_results': [3, 0, 3]},
                    {'conditions': {'name': 'test_apples*', 'name_mode': 'glob'}, 'n_results': [0, 0, 0]},
                    {'conditions': {'name': '[t]+est_apple.+', 'name_mode': 'regexp'}, 'n_results': [3, 0, 3]},
-                   {'conditions': {'name': 'test_apples.+', 'name_mode': 'regexp'}, 'n_results': [0, 0, 0]})
+                   {'conditions': {'name': 'test_apples.+', 'name_mode': 'regexp'}, 'n_results': [0, 0, 0]},
+                   {'conditions': {'tags': ['foo']}, 'n_results': [2, 1, 1]},
+                   {'conditions': {'tags': ['bar']}, 'n_results': [1, 1, 0]},
+                   {'conditions': {'properties': {'foo': True}}, 'n_results': [2, 1, 1]},
+                   {'conditions': {'properties': {'foo': 'baz'}}, 'n_results': [1, 0, 1]})
+
+        queries = ({'conditions': {'tags': ['foo']}, 'n_results': [2, 1, 1]},
+                   {'conditions': {'tags': ['bar']}, 'n_results': [1, 1, 0]})
 
         for query in queries:
             for i in range(len(methods)):
                 conditions = dict(common_conditions, **query['conditions'])
                 conditions['launched_by'] = me
                 results = list(methods[i](**conditions))
-                self.assertEqual(len(results), query['n_results'][i])
                 if len(results) > 0:
                     result = results[0]
                     self.assertTrue("describe" in result)
