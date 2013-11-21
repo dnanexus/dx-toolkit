@@ -515,7 +515,7 @@ class TestDXClientUploadDownload(DXTestCase):
         with tempfile.NamedTemporaryFile(dir=testdir) as fd:
             fd.write("foo")
             fd.flush()
-            file_id = run(u'dx upload ' + fd.name + ' --brief').strip()
+            file_id = run(u'dx upload ' + fd.name + ' --brief --wait').strip()
             self.assertTrue(file_id.startswith('file-'))
 
             # unset environment
@@ -528,6 +528,25 @@ class TestDXClientUploadDownload(DXTestCase):
             output_path = os.path.join(testdir, 'output')
             run('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
+
+    def test_dx_make_download_url(self):
+        testdir = tempfile.mkdtemp()
+        output_testdir = tempfile.mkdtemp()
+        with tempfile.NamedTemporaryFile(dir=testdir) as fd:
+            fd.write("foo")
+            fd.flush()
+            file_id = run(u'dx upload ' + fd.name + ' --brief --wait').strip()
+            self.assertTrue(file_id.startswith('file-'))
+
+            # download file
+            download_url = run("dx make_download_url " + file_id).strip()
+            run("wget -P " + output_testdir + " " + download_url)
+            run('cmp ' + os.path.join(output_testdir, os.path.basename(fd.name)) + ' ' + fd.name)
+
+            # download file with a different name
+            download_url = run("dx make_download_url " + file_id + " --filename foo")
+            run("wget -P " + output_testdir + " " + download_url)
+            run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
 
     def test_dx_upload_mult_paths(self):
         testdir = tempfile.mkdtemp()

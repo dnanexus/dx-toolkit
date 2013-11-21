@@ -1714,6 +1714,9 @@ def make_download_url(args):
     if entity_result['describe']['class'] != 'file':
         parser.exit(1, fill('Error: dx download is only for downloading file objects') + '\n')
 
+    if args.filename is None:
+        args.filename = entity_result['describe']['name']
+
     try:
         dxfile = dxpy.DXFile(entity_result['id'], project=project)
         url, headers = dxfile.get_download_url(preauthenticated=True,
@@ -3523,7 +3526,7 @@ parser_make_download_url = subparsers.add_parser('make_download_url', help='Crea
 path_action = parser_make_download_url.add_argument('path', help='Data object ID or name to access')
 path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
-parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as')
+parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as (default is the filename)')
 parser_make_download_url.set_defaults(func=make_download_url)
 register_subparser(parser_make_download_url, categories='data')
 
