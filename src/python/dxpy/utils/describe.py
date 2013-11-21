@@ -424,7 +424,7 @@ def get_col_str(col_desc):
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
-                         'stages', 'latestAnalysis', 'editVersion']
+                         'stages', 'latestAnalysis', 'editVersion', 'outputFolder']
 
     def get_advanced_inputs():
         details = desc.get("details")
@@ -472,6 +472,8 @@ def print_data_obj_desc(desc, verbose=False):
         print_field("Summary", desc['summary'])
     if 'description' in desc and verbose:
         print_field("Description", desc["description"])
+    if 'outputFolder' in desc:
+        print_field("Output Folder", desc["outputFolder"] if desc["outputFolder"] is not None else "-")
     if 'access' in desc:
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:

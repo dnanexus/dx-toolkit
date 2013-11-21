@@ -840,7 +840,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Properties foo=bar\n", analysis_desc)
 
     def test_dx_new_workflow(self):
-        workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --brief").strip()
+        workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["id"], workflow_id)
         self.assertEqual(desc["editVersion"], 0)
@@ -848,6 +848,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["title"], u"тitle")
         self.assertEqual(desc["summary"], u"SΨmmary")
         self.assertEqual(desc["description"], u"DΣsc")
+        self.assertEqual(desc["outputFolder"], u"/wØrkflØwØutput")
         self.assertEqual(desc["project"], self.project)
 
     def test_dx_workflow_resolution(self):
@@ -874,11 +875,11 @@ class TestDXClientWorkflow(DXTestCase):
         stage_ids.append(run("dx add stage " + workflow_id + " --name first " + applet_id + " --brief").strip())
         # not-yet-existing folder path should work
         # also, set input
-        stage_ids.append(run("dx add stage myworkflow --folder /output myapplet --brief -inumber=32").strip())
+        stage_ids.append(run("dx add stage myworkflow --relative-output-folder output myapplet --brief -inumber=32").strip())
         # test relative folder path
         run("dx mkdir -p a/b/c")
         run("dx cd a/b/c")
-        stage_ids.append(run("dx add stage " + workflow_id + " --folder . " + applet_id + " --brief").strip())
+        stage_ids.append(run("dx add stage " + workflow_id + " --output-folder . " + applet_id + " --brief").strip())
         with self.assertSubprocessFailure(stderr_regexp='not found in the input spec', exit_code=3):
             # input spec should be checked
             run("dx add stage " + workflow_id + " " + applet_id + " -inonexistent=42")
@@ -887,16 +888,22 @@ class TestDXClientWorkflow(DXTestCase):
         for i, stage_id in enumerate(stage_ids):
             self.assertEqual(desc['stages'][i]['id'], stage_id)
         self.assertEqual(desc['stages'][0]['folder'], None)
-        self.assertEqual(desc['stages'][1]['folder'], '/output')
+        self.assertEqual(desc['stages'][1]['folder'], 'output')
         self.assertEqual(desc['stages'][1]['input']['number'], 32)
         self.assertEqual(desc['stages'][2]['folder'], '/a/b/c')
+
+        # error when adding a stage with both absolute and relative output folders
+        with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
+            run("dx add stage " + workflow_id + " " + applet_id + " --output-folder /foo --relative-output-folder foo")
 
         # list stages
         list_output = run("dx list stages " + workflow_id)
         self.assertIn("myworkflow (" + workflow_id + ")", list_output)
         self.assertIn("Title: title", list_output)
+        self.assertIn("Output Folder: -", list_output)
         for i in range(0, len(stage_ids)):
             self.assertIn("Stage " + str(i), list_output)
+        self.assertIn("<workflow output folder>/output", list_output)
         self.assertIn("number=32", list_output)
         self.assertIn("/a/b/c", list_output)
 
@@ -934,29 +941,37 @@ class TestDXClientWorkflow(DXTestCase):
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 0)
         self.assertEqual(desc['title'], "myworkflow")
+        self.assertIsNone(desc["outputFolder"])
 
-        # set title, summary description
-        run(u"dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc")
+        # set title, summary, description, outputFolder
+        run(u"dx update workflow myworkflow --title тitle --summary SΨmmary --description=DΣsc --output-folder .")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 1)
         self.assertEqual(desc['title'], u"тitle")
         self.assertEqual(desc['summary'], u"SΨmmary")
         self.assertEqual(desc['description'], u"DΣsc")
+        self.assertEqual(desc['outputFolder'], u"/")
 
-        # unset title
-        run(u"dx update workflow myworkflow --no-title")
+        # describe
+        describe_output = run(u"dx describe myworkflow --delim ' '")
+        self.assertIn(u"Output Folder /", describe_output)
+
+        # unset title, outputFolder
+        run(u"dx update workflow myworkflow --no-title --no-output-folder")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc['editVersion'], 2)
         self.assertEqual(desc['title'], "myworkflow")
+        self.assertIsNone(desc['outputFolder'])
 
         # describe
-        describe_output = run(u"dx describe myworkflow")
-        self.assertNotIn(u"тitle", describe_output)
-        self.assertIn(u"SΨmmary", describe_output)
+        describe_output = run(u"dx describe myworkflow --delim ' '")
+        self.assertNotIn(u"Title тitle", describe_output)
+        self.assertIn(u"Summary SΨmmary", describe_output)
         self.assertNotIn("Description", describe_output)
         self.assertNotIn(u"DΣsc", describe_output)
-        describe_output = run("dx describe myworkflow --verbose")
-        self.assertIn(u"DΣsc", describe_output)
+        self.assertIn("Output Folder -", describe_output)
+        describe_output = run("dx describe myworkflow --verbose --delim ' '")
+        self.assertIn(u"Description DΣsc", describe_output)
 
         # no-op
         output = run(u"dx update workflow myworkflow")
@@ -967,6 +982,8 @@ class TestDXClientWorkflow(DXTestCase):
 
         with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
             run("dx update workflow myworkflow --title foo --no-title")
+        with self.assertSubprocessFailure(stderr_regexp="no-title", exit_code=2):
+            run("dx update workflow myworkflow --output-folder /foo --no-output-folder")
 
     def test_dx_update_stage(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
@@ -995,18 +1012,24 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertEqual(desc["stages"][0]["input"], {})
 
         # set the name, folder, and some input
-        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --folder=/foo")
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --relative-output-folder=foo")
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertEqual(desc["editVersion"], 2)
         self.assertEqual(desc["stages"][0]["name"], u"тitle")
-        self.assertEqual(desc["stages"][0]["folder"], "/foo")
+        self.assertEqual(desc["stages"][0]["folder"], "foo")
         print desc
         self.assertEqual(desc["stages"][0]["input"]["number"], 32)
+
+        # use a relative folder path
+        run(u"dx update stage myworkflow 0 --name тitle -inumber=32 --output-folder=.")
+        desc = dxpy.api.workflow_describe(workflow_id)
+        self.assertEqual(desc["editVersion"], 3)
+        self.assertEqual(desc["stages"][0]["folder"], u"/")
 
         # unset name
         run("dx update stage myworkflow " + stage_id + " --no-name")
         desc = dxpy.api.workflow_describe(workflow_id)
-        self.assertEqual(desc["editVersion"], 3)
+        self.assertEqual(desc["editVersion"], 4)
         self.assertIsNone(desc["stages"][0]["name"])
 
         # some errors
@@ -1014,6 +1037,8 @@ class TestDXClientWorkflow(DXTestCase):
             run("dx update stage myworkflow 0 -inumber=foo")
         with self.assertSubprocessFailure(stderr_regexp="no-name", exit_code=2):
             run("dx update stage myworkflow 0 --name foo --no-name")
+        with self.assertSubprocessFailure(stderr_regexp="output-folder", exit_code=2):
+            run("dx update stage myworkflow 0 --output-folder /foo --relative-output-folder foo")
 
         # no-op
         output = run(u"dx update stage myworkflow 0 --alias default --force")

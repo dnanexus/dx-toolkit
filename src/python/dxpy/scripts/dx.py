@@ -1767,7 +1767,7 @@ def download(args):
         assert(folder.startswith(strip_prefix))
         if not args.recursive:
             err_exit('Error: "' + folder + '" is a folder but the -r/--recursive option was not given')
-        
+
         for subfolder in list_subfolders(project, folder, recurse=True):
             ensure_local_dir(os.path.join(destdir, subfolder[len(strip_prefix):].lstrip('/')))
 
@@ -3635,7 +3635,9 @@ parser_add_stage.add_argument('executable', help='Name or ID of an executable to
 parser_add_stage.add_argument('--alias', '--version', '--tag', dest='alias',
                               help='Tag or version of the app to add if the executable is an app (default: "default" if an app)')
 parser_add_stage.add_argument('--name', help='Stage name')
-parser_add_stage.add_argument('--folder', help='Output folder for the stage')
+add_stage_folder_args = parser_add_stage.add_mutually_exclusive_group()
+add_stage_folder_args.add_argument('--output-folder', help='Path to the output folder for the stage (interpreted as an absolute path)')
+add_stage_folder_args.add_argument('--relative-output-folder', help='A relative folder path for the stage (interpreted as relative to the workflow\'s output folder)')
 parser_add_stage.set_defaults(func=workflow_cli.add_stage)
 register_subparser(parser_add_stage, subparsers_action=subparsers_add, categories='workflow')
 
@@ -3723,6 +3725,9 @@ update_workflow_title_args.add_argument('--title', help='Workflow title')
 update_workflow_title_args.add_argument('--no-title', help='Unset the workflow title', action='store_true')
 parser_update_workflow.add_argument('--summary', help='Workflow summary')
 parser_update_workflow.add_argument('--description', help='Workflow description')
+update_workflow_output_folder_args = parser_update_workflow.add_mutually_exclusive_group()
+update_workflow_output_folder_args.add_argument('--output-folder', help='Default output folder for the workflow')
+update_workflow_output_folder_args.add_argument('--no-output-folder', help='Unset the default output folder for the workflow', action='store_true')
 parser_update_workflow.set_defaults(func=workflow_cli.update_workflow)
 register_subparser(parser_update_workflow, subparsers_action=subparsers_update, categories='workflow')
 
@@ -3742,7 +3747,9 @@ parser_update_stage.add_argument('--force',
 update_stage_name_args = parser_update_stage.add_mutually_exclusive_group()
 update_stage_name_args.add_argument('--name', help='Stage name')
 update_stage_name_args.add_argument('--no-name', help='Unset the stage name', action='store_true')
-parser_update_stage.add_argument('--folder', help='Output folder for the stage')
+update_stage_folder_args = parser_update_stage.add_mutually_exclusive_group()
+update_stage_folder_args.add_argument('--output-folder', help='Path to the output folder for the stage (interpreted as an absolute path)')
+update_stage_folder_args.add_argument('--relative-output-folder', help='A relative folder path for the stage (interpreted as relative to the workflow\'s output folder)')
 parser_update_stage.set_defaults(func=workflow_cli.update_stage)
 register_subparser(parser_update_stage, subparsers_action=subparsers_update, categories='workflow')
 
@@ -3882,7 +3889,8 @@ parser_new_workflow = subparsers_new.add_parser('workflow', help='Create a new w
 parser_new_workflow.add_argument('--title', help='Workflow title')
 parser_new_workflow.add_argument('--summary', help='Workflow summary')
 parser_new_workflow.add_argument('--description', help='Workflow description')
-init_action = parser_new_workflow.add_argument('--init', help='Path to workflow or an analysis ID from which to initialize all metadata')
+parser_new_workflow.add_argument('--output-folder', help='Default output folder for the workflow')
+init_action = parser_new_workflow.add_argument('--init', help=fill('Path to workflow or an analysis ID from which to initialize all metadata', width_adjustment=-24))
 init_action.completer = DXPathCompleter(classes=['workflow'])
 parser_new_workflow.set_defaults(func=workflow_cli.new_workflow)
 register_subparser(parser_new_workflow, subparsers_action=subparsers_new, categories='workflow')

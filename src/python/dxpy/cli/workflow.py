@@ -47,9 +47,17 @@ def new_workflow(args):
         name = None
     else:
         project, folder, name = dxpy.utils.resolver.resolve_path(args.output)
+    if args.output_folder is not None:
+        try:
+            # Try to resolve to a path in the project
+            ignore, args.output_folder, ignore2 = resolve_path(args.output_folder, expected='folder')
+        except:
+            # But if not, just use the value directly
+            pass
     try:
         dxworkflow = dxpy.new_dxworkflow(title=args.title, summary=args.summary,
                                          description=args.description,
+                                         output_folder=args.output_folder,
                                          project=project, name=name,
                                          tags=args.tags, types=args.types,
                                          hidden=args.hidden, properties=args.properties,
@@ -91,10 +99,14 @@ def add_stage(args):
     try_call(exec_inputs.update_from_args, args, require_all_inputs=False)
 
     # get folder path
-    if args.folder is not None:
-        ignore, folderpath, none = try_call(resolve_path, args.folder, expected='folder')
-    else:
-        folderpath = None
+    folderpath = None
+    if args.output_folder is not None:
+        try:
+            ignore, folderpath, none = resolve_path(args.output_folder, expected='folder')
+        except:
+            folderpath = args.output_folder
+    elif args.relative_output_folder is not None:
+        folderpath = args.relative_output_folder
 
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     stage_id = dxworkflow.add_stage(exec_handler, name=args.name, folder=folderpath,
@@ -113,6 +125,7 @@ def list_stages(args):
     print (printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc)
     print
     print 'Title: ' + desc['title']
+    print 'Output Folder: ' + (desc['outputFolder'] if desc['outputFolder'] is not None else '-')
     if len(desc['stages']) == 0:
         print
         print ' No stages; add stages with the command "dx add stage"'
@@ -123,7 +136,11 @@ def list_stages(args):
             stage['name'] = '<no name>'
         print (printing.UNDERLINE() + 'Stage {i}' + printing.ENDC() + ': {name} ({id})').format(**stage)
         print 'Executable      {executable}'.format(**stage)
-        print 'Folder          {folder}'.format(**stage)
+        if stage['folder'] is not None and stage['folder'].startswith('/'):
+            stage_output_folder = stage['folder']
+        else:
+            stage_output_folder = '<workflow output folder>/' + (stage['folder'] if stage['folder'] is not None else "")
+        print 'Output Folder   {folder}'.format(folder=stage_output_folder)
         if "input" in stage and stage["input"]:
             print 'Bound input     ' + \
                 ('\n' + ' '*16).join([
@@ -150,16 +167,27 @@ def update_workflow(args):
     # get workflow
     workflow_id, project = get_workflow_id_and_project(args.workflow)
 
-    if not any([args.title, args.no_title, args.summary, args.description]):
+    if not any([args.title, args.no_title, args.summary, args.description, args.output_folder,
+                args.no_output_folder]):
         print 'No updates requested; none made'
         return
+
+    if args.output_folder is not None:
+        try:
+            # Try to resolve to an existing path in the project
+            ignore, args.output_folder, ignore2 = resolve_path(args.output_folder, expected='folder')
+        except:
+            # But if not, just use the value directly
+            pass
 
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
     try_call(dxworkflow.update,
              title=args.title,
              unset_title=args.no_title,
              summary=args.summary,
-             description=args.description)
+             description=args.description,
+             output_folder=args.output_folder,
+             unset_output_folder=args.no_output_folder)
 
 def update_stage(args):
     # get workflow
@@ -173,8 +201,8 @@ def update_stage(args):
     except:
         pass
 
-    if not any([args.executable, args.name, args.no_name, args.folder,
-                args.input, args.input_json, args.filename]):
+    if not any([args.executable, args.name, args.no_name, args.output_folder,
+                args.relative_output_folder, args.input, args.input_json, args.filename]):
         print 'No updates requested; none made'
         return
 
@@ -195,10 +223,14 @@ def update_stage(args):
         stage_input = None
 
     # get folder path
-    if args.folder is not None:
-        ignore, folderpath, none = try_call(resolve_path, args.folder, expected='folder')
-    else:
-        folderpath = None
+    folderpath = None
+    if args.output_folder is not None:
+        try:
+            ignore, folderpath, none = resolve_path(args.output_folder, expected='folder')
+        except:
+            folderpath = args.output_folder
+    elif args.relative_output_folder is not None:
+        folderpath = args.relative_output_folder
 
     try_call(dxworkflow.update_stage, args.stage,
              executable=new_exec_handler,
