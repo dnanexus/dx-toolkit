@@ -153,7 +153,7 @@ class DXRecordWorkflow(DXDataObject, DXExecutable):
 # DXAnalysisWorkflow #
 ######################
 
-def new_dxworkflow(title=None, summary=None, description=None, init_from=None, **kwargs):
+def new_dxworkflow(title=None, summary=None, description=None, output_folder=None, init_from=None, **kwargs):
     '''
     :param title: Workflow title (optional)
     :type title: string
@@ -161,6 +161,8 @@ def new_dxworkflow(title=None, summary=None, description=None, init_from=None, *
     :type summary: string
     :param description: Workflow description (optional)
     :type description: string
+    :param output_folder: Default output folder of the workflow (optional)
+    :type output_folder: string
     :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
     :type init_from: :class:`~dxpy.bindings.dxworkflow.DXAnalysisWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
     :rtype: :class:`DXAnalysisWorkflow`
@@ -181,7 +183,7 @@ def new_dxworkflow(title=None, summary=None, description=None, init_from=None, *
         dxworkflow.new(**kwargs)
     '''
     dxworkflow = DXAnalysisWorkflow()
-    dxworkflow.new(title=title, summary=summary, description=description, init_from=init_from, **kwargs)
+    dxworkflow.new(title=title, summary=summary, description=description, output_folder=output_folder, init_from=init_from, **kwargs)
     return dxworkflow
 
 class DXAnalysisWorkflow(DXDataObject, DXExecutable):
@@ -215,6 +217,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type summary: string
         :param description: Workflow description (optional)
         :type description: string
+        :param output_folder: Default output folder of the workflow (optional)
+        :type output_folder: string
         :param init_from: Another analysis workflow object handler or and analysis (string or handler) from which to initialize the metadata (optional)
         :type init_from: :class:`~dxpy.bindings.dxworkflow.DXAnalysisWorkflow`, :class:`~dxpy.bindings.dxanalysis.DXAnalysis`, or string (for analysis IDs only)
 
@@ -248,6 +252,11 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             if kwargs["description"] is not None:
                 dx_hash["description"] = kwargs["description"]
             del kwargs["description"]
+
+        if "output_folder" in kwargs:
+            if kwargs["output_folder"] is not None:
+                dx_hash["outputFolder"] = kwargs["output_folder"]
+            del kwargs["output_folder"]
 
         resp = dxpy.api.workflow_new(dx_hash, **kwargs)
         self.set_ids(resp["id"], dx_hash["project"])
@@ -288,6 +297,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type executable: string, DXApplet, or DXApp
         :param name: name for the stage (optional)
         :type name: string
+        :param folder: default output folder for the stage; either a relative or absolute path (optional)
+        :type folder: string
         :param stage_input: input fields to bind as default inputs for the executable (optional)
         :type stage_input: dict
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
@@ -370,7 +381,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         finally:
             self.describe() # update cached describe
 
-    def update(self, title=None, unset_title=False, summary=None, description=None, stages=None,
+    def update(self, title=None, unset_title=False, summary=None, description=None,
+               output_folder=None, unset_output_folder=False, stages=None,
                edit_version=None, **kwargs):
         '''
         :param title: workflow title to set; cannot be provided with *unset_title* set to True
@@ -381,6 +393,10 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type summary: string
         :param description: workflow description to set
         :type description: string
+        :param output_folder: new default output folder for the workflow
+        :type output_folder: string
+        :param unset_folder: whether to unset the default output folder; cannot be True with string value for *output_folder*
+        :type unset_folder: boolean
         :param stages: updates to the stages to make; see API documentation for /workflow-xxxx/update for syntax of this field; use :meth:`update_stage()` to update a single stage
         :type stages: dict
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
@@ -391,14 +407,20 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         update_input = {}
         if title is not None and unset_title:
             raise DXError('dxpy.DXWorkflow.update: cannot provide both "title" and set "unset_title"')
+        if output_folder is not None and unset_output_folder:
+            raise DXError('dxpy.DXWorkflow.update: cannot provide both "output_folder" and set "unset_output_folder"')
         if title is not None:
             update_input["title"] = title
-        if unset_title:
+        elif unset_title:
             update_input["title"] = None
         if summary is not None:
             update_input["summary"] = summary
         if description is not None:
             update_input["description"] = description
+        if output_folder is not None:
+            update_input["outputFolder"] = output_folder
+        elif unset_output_folder:
+            update_input["outputFolder"] = None
         if stages is not None:
             update_input["stages"] = stages
 
@@ -411,7 +433,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
                 self.describe() # update cached describe
 
     def update_stage(self, stage, executable=None, force=False,
-                     name=None, unset_name=False, folder=None, stage_input=None,
+                     name=None, unset_name=False, folder=None, unset_folder=False, stage_input=None,
                      edit_version=None, **kwargs):
         '''
         :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
@@ -420,10 +442,14 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type executable: string, DXApplet, or DXApp
         :param force: whether to use *executable* even if it is incompatible with the previous executable's spec
         :type force: boolean
-        :param name: name for the stage; cannot be provided with *unset_name* set to True
+        :param name: new name for the stage; cannot be provided with *unset_name* set to True
         :type name: string
-        :param unset_name: whether to unset the stage name; cannot be provided with string value for *name*
+        :param unset_name: whether to unset the stage name; cannot be True with string value for *name*
         :type unset_name: boolean
+        :param folder: new default output folder for the stage; either a relative or absolute path (optional)
+        :type folder: string
+        :param unset_folder: whether to unset the stage folder; cannot be True with string value for *folder*
+        :type unset_folder: boolean
         :param stage_input: input fields to bind as default inputs for the executable (optional)
         :type stage_input: dict
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
@@ -435,6 +461,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         if name is not None and unset_name:
             raise DXError('dxpy.DXWorkflow.update_stage: cannot provide both "name" and set "unset_name"')
+        if folder is not None and unset_folder:
+            raise DXError('dxpy.DXWorkflow.update_stage: cannot provide both "folder" and set "unset_folder"')
 
         if executable is not None:
             if isinstance(executable, basestring):
@@ -456,10 +484,12 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         update_stage_input = {}
         if name is not None:
             update_stage_input["name"] = name
-        if unset_name:
+        elif unset_name:
             update_stage_input["name"] = None
         if folder:
             update_stage_input["folder"] = folder
+        elif unset_folder:
+            update_stage_input["folder"] = None
         if stage_input:
             update_stage_input["input"] = stage_input
         if update_stage_input:
