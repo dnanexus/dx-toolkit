@@ -191,7 +191,9 @@ test_python:
 test_perl:
 	(cd perl; prove)
 
-test_java:
+# mvn will compile the Java files, but it doesn't know how to generate the API
+# wrappers and toolkit release file.
+test_java: java
 	(cd java; mvn test)
 
 # Installation
