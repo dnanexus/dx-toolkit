@@ -595,11 +595,11 @@ class TestDXClientDescribe(DXTestCase):
 class TestDXClientRun(DXTestCase):
     def setUp(self):
         self.other_proj_id = run("dx new project other --brief").strip()
-        super(TestDXRun, self).setUp()
+        super(TestDXClientRun, self).setUp()
 
     def tearDown(self):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
-        super(TestDXRun, self).tearDown()
+        super(TestDXClientRun, self).tearDown()
 
     def test_dx_run_tags_and_properties(self):
         # success
