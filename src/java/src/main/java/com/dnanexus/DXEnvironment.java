@@ -147,8 +147,9 @@ public class DXEnvironment {
                     if (getTextValue(jsonConfig, "DX_JOB_ID") != null) {
                         jobId = getTextValue(jsonConfig, "DX_JOB_ID");
                     }
-                    if (getTextValue(jsonConfig, "DX_WORKSPACE_ID") != null) {
-                        workspaceId = getTextValue(jsonConfig, "DX_WORKSPACE_ID");
+                    String maybeWorkspaceId = getTextValue(jsonConfig, "DX_WORKSPACE_ID");
+                    if (maybeWorkspaceId != null && !maybeWorkspaceId.isEmpty()) {
+                        workspaceId = maybeWorkspaceId;
                     }
                     if (getTextValue(jsonConfig, "DX_PROJECT_CONTEXT_ID") != null) {
                         projectContextId = getTextValue(jsonConfig, "DX_PROJECT_CONTEXT_ID");
