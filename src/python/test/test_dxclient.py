@@ -839,6 +839,7 @@ class TestDXClientWorkflow(DXTestCase):
         self.assertIn("Tags bar\n", analysis_desc)
         self.assertIn("Properties foo=bar\n", analysis_desc)
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_new_workflow(self):
         workflow_id = run(u"dx new workflow --title=тitle --summary=SΨmmary --description=DΣsc wØrkflØwname --output-folder /wØrkflØwØutput --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
@@ -860,6 +861,7 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp='Could not resolve', exit_code=3):
             run("dx update workflow " + record_id)
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_add_remove_list_stages(self):
         workflow_id = run(u"dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
@@ -936,6 +938,7 @@ class TestDXClientWorkflow(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
             run("dx remove stage /myworkflow stage-123456789012345678901234")
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_update_workflow(self):
         workflow_id = run(u"dx new workflow myworkflow --brief").strip()
         desc = dxpy.api.workflow_describe(workflow_id)
