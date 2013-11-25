@@ -601,6 +601,7 @@ class TestDXClientRun(DXTestCase):
         dxpy.api.project_destroy(self.other_proj_id, {'terminateJobs': True})
         super(TestDXClientRun, self).tearDown()
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_dx_run_tags_and_properties(self):
         # success
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -794,8 +795,8 @@ class TestDXClientRun(DXTestCase):
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
 class TestDXClientWorkflow(DXTestCase):
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping test that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS and os.environ.get("DX_RUN_NEXT_TESTS"),
+                         'skipping test that would run a job and temporarily skipping test that requires unreleased features')
     def test_dx_run_workflow(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
