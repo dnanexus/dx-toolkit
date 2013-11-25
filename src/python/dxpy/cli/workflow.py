@@ -125,7 +125,7 @@ def list_stages(args):
     print (printing.BOLD() + printing.GREEN() + '{name}' + printing.ENDC() + ' ({id})').format(**desc)
     print
     print 'Title: ' + desc['title']
-    print 'Output Folder: ' + (desc['outputFolder'] if desc['outputFolder'] is not None else '-')
+    print 'Output Folder: ' + (desc.get('outputFolder') if desc.get('outputFolder') is not None else '-')
     if len(desc['stages']) == 0:
         print
         print ' No stages; add stages with the command "dx add stage"'
