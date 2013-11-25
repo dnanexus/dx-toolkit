@@ -209,7 +209,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
     return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, first_page_size, **kwargs)
 
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
-                    state=None, origin_job=None, parent_job=None, parent_analysis=None, root_execution=None,
+                    state=None, origin_job=None, parent_job=None, no_parent_job=False,
+                    parent_analysis=None, no_parent_analysis=False, root_execution=None,
                     created_after=None, created_before=None, describe=False,
                     name=None, name_mode="exact", tags=None, properties=None, limit=None,
                     first_page_size=100, return_handler=False, include_subjobs=True,
@@ -225,10 +226,14 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type state: string
     :param origin_job: ID of the original job that eventually spawned this execution (possibly by way of other executions)
     :type origin_job: string
-    :param parent_job: ID of the parent job, or the string 'none', indicating it should have no parent job
+    :param parent_job: ID of the parent job (deprecated: use the string 'none' to indicate it should have no parent job; use *no_parent_job* instead)
     :type parent_job: string
-    :param parent_analysis: ID of the parent analysis, or the string 'none', indicating it should have no parent analysis
+    :param no_parent_job: Indicate results should have no parent job; cannot be set to True with *parent_job* set to a string
+    :type no_parent_job: boolean
+    :param parent_analysis: ID of the parent analysis (deprecated: use the string 'none' to indicate it should have no parent analysis; use *no_parent_analysis* instead)
     :type parent_analysis: string
+    :param no_parent_analysis: Indicate results should have no parent analysis; cannot be set to True with *parent_analysis* set to a string
+    :type no_parent_job: boolean
     :param root_execution: ID of the top-level (user-initiated) execution (job or analysis) that eventually spawned this execution (possibly by way of other executions)
     :type root_execution: string
     :param created_after: Timestamp after which each result was last created (see note accompanying :meth:`find_data_objects()` for interpretation)
@@ -278,23 +283,44 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
         else:
             query["executable"] = executable
     if project is not None:
-        query["project"] = project
+        if isinstance(project, DXProject):
+            query["project"] = project.get_id()
+        else:
+            query["project"] = project
     if state is not None:
         query["state"] = state
     if origin_job is not None:
-        query["originJob"] = origin_job
+        if isinstance(origin_job, DXJob):
+            query["originJob"] = origin_job.get_id()
+        else:
+            query["originJob"] = origin_job
     if parent_job is not None:
-        if parent_job == "none":
+        if no_parent_job:
+            raise DXError('find_executions: Cannot provide parent_job and set no_parent_job to True')
+        if parent_job == "none": # to be deprecated
             query["parentJob"] = None
+        elif isinstance(parent_job, DXJob):
+            query["parentJob"] = parent_job.get_id()
         else:
             query["parentJob"] = parent_job
+    elif no_parent_job:
+        query["parentJob"] = None
     if parent_analysis is not None:
-        if parent_analysis == "none":
+        if no_parent_analysis:
+            raise DXError('find_executions: Cannot provide parent_analysis and set no_parent_analysis to True')
+        if parent_analysis == "none": # to be deprecated
             query["parentAnalysis"] = None
+        elif isinstance(parent_analysis, DXAnalysis):
+            query["parentAnalysis"] = parent_analysis.get_id()
         else:
             query["parentAnalysis"] = parent_analysis
+    elif no_parent_analysis:
+        query["parentAnalysis"] = None
     if root_execution is not None:
-        query["rootExecution"] = root_execution
+        if isinstance(root_execution, (DXJob, DXAnalysis)):
+            query["rootExecution"] = root_execution.get_id()
+        else:
+            query["rootExecution"] = root_execution
     if created_after is not None or created_before is not None:
         query["created"] = {}
         if created_after is not None:
@@ -310,7 +336,7 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
         elif name_mode == 'regexp':
             query['name'] = {'regexp': name}
         else:
-            raise DXError('find_jobs: Unexpected value found for argument name_mode')
+            raise DXError('find_executions: Unexpected value found for argument name_mode')
     if tags is not None:
         query['tags'] = {'$and': tags}
     if properties is not None:
