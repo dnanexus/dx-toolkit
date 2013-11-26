@@ -1081,6 +1081,7 @@ def main(number):
         self.assertEqual(desc['description'], 'mydescription')
         self.assertEqual(desc['outputFolder'], '/foo')
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_add_move_remove_stages(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1090,16 +1091,24 @@ def main(number):
                      runSpec={"code": "", "interpreter": "bash"})
         # Add stages
         first_stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
-                                           stage_input={"my_input": "hello world"})
+                                           stage_input={"my_input": "hello world"},
+                                           instance_type="dx_m1.large")
         self.assertEqual(dxworkflow.editVersion, 1)
         self.assertEqual(dxworkflow.stages[0]["name"], "stagename")
         self.assertEqual(dxworkflow.stages[0]["folder"], "/outputfolder")
         self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
-        second_stage = dxworkflow.add_stage(dxapplet, folder="relativefolder", edit_version=1)
+        self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
+                         {"*": {"instanceType": "dx_m1.large"}})
+        second_stage = dxworkflow.add_stage(dxapplet, folder="relativefolder",
+                                            instance_type={"main": "dx_m1.large", "foo": "dx_m1.medium"},
+                                            edit_version=1)
         self.assertEqual(dxworkflow.editVersion, 2)
         self.assertEqual(len(dxworkflow.stages), 2)
         self.assertEqual(dxworkflow.stages[1]["executable"], dxapplet.get_id())
         self.assertEqual(dxworkflow.stages[1]["folder"], "relativefolder")
+        self.assertEqual(dxworkflow.stages[1]["systemRequirements"],
+                         {"main": {"instanceType": "dx_m1.large"},
+                          "foo": {"instanceType": "dx_m1.medium"}})
         with self.assertRaises(DXAPIError):
             dxworkflow.add_stage(dxapplet, edit_version=1)
 
@@ -1215,6 +1224,7 @@ def main(number):
         dxworkflow.update()
         self.assertEqual(dxworkflow.editVersion, 5)
 
+    @unittest.skipUnless(os.environ.get("DX_RUN_NEXT_TESTS"), "Temporarily skipping test that requires unreleased features")
     def test_update_stage(self):
         dxworkflow = dxpy.new_dxworkflow()
         dxapplet = dxpy.DXApplet()
@@ -1224,20 +1234,26 @@ def main(number):
                      runSpec={"code": "", "interpreter": "bash"})
         # Add a stage
         stage = dxworkflow.add_stage(dxapplet, name='stagename', folder="/outputfolder",
-                                     stage_input={"my_input": "hello world"})
+                                     stage_input={"my_input": "hello world"},
+                                     instance_type={"main": "dx_m1.large"})
         self.assertEqual(dxworkflow.editVersion, 1)
         self.assertEqual(dxworkflow.stages[0]["executable"], dxapplet.get_id())
         self.assertEqual(dxworkflow.stages[0]["name"], "stagename")
         self.assertEqual(dxworkflow.stages[0]["folder"], "/outputfolder")
         self.assertEqual(dxworkflow.stages[0]["input"]["my_input"], "hello world")
+        self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
+                         {"main": {"instanceType": "dx_m1.large"}})
 
         # Update just its metadata
         dxworkflow.update_stage(stage, unset_name=True, folder="/newoutputfolder",
-                                stage_input={"my_input": None})
+                                stage_input={"my_input": None},
+                                instance_type="dx_m1.medium")
         self.assertEqual(dxworkflow.editVersion, 2)
         self.assertIsNone(dxworkflow.stages[0]["name"])
         self.assertEqual(dxworkflow.stages[0]["folder"], "/newoutputfolder")
         self.assertNotIn("my_input", dxworkflow.stages[0]["input"])
+        self.assertEqual(dxworkflow.stages[0]["systemRequirements"],
+                         {"*": {"instanceType": "dx_m1.medium"}})
 
         # Update using stage index
         dxworkflow.update_stage(0, folder="/", stage_input={"my_input": "foo"}, edit_version=2)

@@ -29,12 +29,22 @@ from dxpy.bindings import *
 from dxpy.utils import merge
 
 class DXExecutable:
-    '''Methods in :class:`!DXExecutable` are used by both
-    :class:`~dxpy.bindings.dxapp.DXApp` and
-    :class:`~dxpy.bindings.dxapplet.DXApplet`.
+    '''Methods in :class:`!DXExecutable` are used by
+    :class:`~dxpy.bindings.dxapp.DXApp`
+    :class:`~dxpy.bindings.dxapplet.DXApplet`, and
+    :class:`~dxpy.bindings.dxworkflow.DXAnalysisWorkflow`
     '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
+
+    @staticmethod
+    def _inst_type_to_sys_reqs(instance_type):
+        if isinstance(instance_type, basestring):
+            return {"*": {"instanceType": instance_type}}
+        elif isinstance(instance_type, dict):
+            return {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
+        else:
+            raise DXError('Expected instance_type field to be either a string or a dict')
 
     def run(self, executable_input, project=None, folder="/", name=None, tags=None, properties=None, details=None,
             instance_type=None, depends_on=None, delay_workspace_destruction=None,
@@ -81,12 +91,7 @@ class DXExecutable:
         if properties is not None:
             run_input["properties"] = properties
         if instance_type is not None:
-            if isinstance(instance_type, basestring):
-                run_input["systemRequirements"] = {"*": {"instanceType": instance_type}}
-            elif isinstance(instance_type, dict):
-                run_input["systemRequirements"] = {stage: {"instanceType": stage_inst} for stage, stage_inst in instance_type.iteritems()}
-            else:
-                raise DXError('Expected instance_type field to be either a string or a dict')
+            run_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
 
         if depends_on is not None:
             run_input["dependsOn"] = []

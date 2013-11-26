@@ -291,7 +291,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
         return stage_id
 
-    def add_stage(self, executable, name=None, folder=None, stage_input=None, edit_version=None, **kwargs):
+    def add_stage(self, executable, name=None, folder=None, stage_input=None, instance_type=None,
+                  edit_version=None, **kwargs):
         '''
         :param executable: string or a handler for an app or applet
         :type executable: string, DXApplet, or DXApp
@@ -301,6 +302,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type folder: string
         :param stage_input: input fields to bind as default inputs for the executable (optional)
         :type stage_input: dict
+        :param instance_type: Default instance type on which all jobs will be run for this stage, or a dict mapping function names to instance type requests
+        :type instance_type: string or dict
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
         :type edit_version: int
         :returns: ID of the added stage
@@ -322,6 +325,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             add_stage_input["folder"] = folder
         if stage_input is not None:
             add_stage_input["input"] = stage_input
+        if instance_type is not None:
+            add_stage_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
         self._add_edit_version_to_request(add_stage_input, edit_version)
         try:
             result = dxpy.api.workflow_add_stage(self._dxid, add_stage_input, **kwargs)
@@ -434,7 +439,7 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
 
     def update_stage(self, stage, executable=None, force=False,
                      name=None, unset_name=False, folder=None, unset_folder=False, stage_input=None,
-                     edit_version=None, **kwargs):
+                     instance_type=None, edit_version=None, **kwargs):
         '''
         :param stage: Either a number (for the nth stage, starting from 0), or a stage ID to remove
         :type stage: int or string
@@ -452,6 +457,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
         :type unset_folder: boolean
         :param stage_input: input fields to bind as default inputs for the executable (optional)
         :type stage_input: dict
+        :param instance_type: Default instance type on which all jobs will be run for this stage, or a dict mapping function names to instance type requests
+        :type instance_type: string or dict
         :param edit_version: if provided, the edit version of the workflow that should be modified; if not provided, the current edit version will be used (optional)
         :type edit_version: int
 
@@ -492,6 +499,8 @@ class DXAnalysisWorkflow(DXDataObject, DXExecutable):
             update_stage_input["folder"] = None
         if stage_input:
             update_stage_input["input"] = stage_input
+        if instance_type is not None:
+            update_stage_input["systemRequirements"] = self._inst_type_to_sys_reqs(instance_type)
         if update_stage_input:
             update_input = {"stages": {stage_id: update_stage_input}}
             self._add_edit_version_to_request(update_input, edit_version)
